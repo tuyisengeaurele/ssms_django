@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count, Q
+from django.db.models import Prefetch
 from .models import Farm
 from .serializers import FarmSerializer, FarmDetailSerializer, FarmCreateSerializer, FarmUpdateSerializer
 from core.utils import api_success, api_error
@@ -29,10 +29,17 @@ class FarmListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        from batches.models import Batch
         farms = (
             _farm_queryset(request.user)
             .select_related('owner')
-            .annotate(active_batch_count=Count('batches', filter=Q(batches__is_active=True)))
+            .prefetch_related(
+                Prefetch(
+                    'batches',
+                    queryset=Batch.objects.filter(is_active=True),
+                    to_attr='active_batches',
+                )
+            )
             .order_by('-created_at')
         )
         return api_success(FarmSerializer(farms, many=True).data)
@@ -58,11 +65,17 @@ class FarmDetailView(APIView):
         farm, err = _get_farm_or_403(pk, request.user)
         if err:
             return err
+        from batches.models import Batch
         farm_with_related = (
             Farm.objects
             .select_related('owner')
-            .prefetch_related('batches')
-            .annotate(active_batch_count=Count('batches', filter=Q(batches__is_active=True)))
+            .prefetch_related(
+                Prefetch(
+                    'batches',
+                    queryset=Batch.objects.filter(is_active=True),
+                    to_attr='active_batches',
+                )
+            )
             .get(pk=pk)
         )
         return api_success(FarmDetailSerializer(farm_with_related).data)
