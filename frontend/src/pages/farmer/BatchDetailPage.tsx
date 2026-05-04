@@ -155,8 +155,8 @@ export default function BatchDetailPage() {
           <div className="card">
             <h3 style={{ fontWeight: 600, marginBottom: '1rem' }}>Activity Summary</h3>
             {[
-              { label: 'Disease Detections', value: batch._count?.diseaseDetections ?? batch.diseaseDetections?.length ?? 0, color: 'var(--danger)' },
-              { label: 'Sensor Readings', value: batch._count?.sensorReadings ?? batch.sensorReadings?.length ?? 0, color: 'var(--secondary)' },
+              { label: 'Disease Detections', value: batch.counts?.diseaseDetections ?? batch.diseaseDetections?.length ?? 0, color: 'var(--danger)' },
+              { label: 'Sensor Readings', value: batch.counts?.sensorReadings ?? batch.sensorReadings?.length ?? 0, color: 'var(--secondary)' },
               { label: 'Unread Alerts', value: batch.alertLogs?.filter((a) => !a.isRead).length ?? 0, color: 'var(--warning)' },
             ].map((item) => (
               <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.625rem 0', borderBottom: '1px solid var(--border)' }}>

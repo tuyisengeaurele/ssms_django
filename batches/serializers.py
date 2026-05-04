@@ -9,16 +9,16 @@ class BatchFarmSerializer(serializers.Serializer):
 
 
 class BatchListSerializer(serializers.ModelSerializer):
-    _count = serializers.SerializerMethodField()
+    counts = serializers.SerializerMethodField()
 
     class Meta:
         model = Batch
         fields = [
             'id', 'farm_id', 'stage', 'start_date', 'expected_harvest_date',
-            'notes', 'is_active', 'created_at', 'updated_at', '_count',
+            'notes', 'is_active', 'created_at', 'updated_at', 'counts',
         ]
 
-    def get__count(self, obj):
+    def get_counts(self, obj):
         return {
             'disease_detections': obj.disease_detections.count(),
             'sensor_readings': obj.sensor_readings.count(),

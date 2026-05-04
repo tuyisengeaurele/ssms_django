@@ -58,7 +58,7 @@ export default function FarmsPage() {
                   )}
                   <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border)' }}>
                     <span style={{ fontSize: '0.875rem' }}>
-                      <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{farm._count?.batches ?? 0}</span> active batches
+                      <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{farm.counts?.batches ?? 0}</span> active batches
                     </span>
                   </div>
                 </div>

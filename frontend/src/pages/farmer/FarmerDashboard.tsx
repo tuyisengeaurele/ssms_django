@@ -16,7 +16,7 @@ export default function FarmerDashboard() {
     farmService.getAll().then((r) => setFarms(r.data.data)).finally(() => setLoading(false));
   }, []);
 
-  const totalBatches = farms.reduce((s, f) => s + (f._count?.batches ?? 0), 0);
+  const totalBatches = farms.reduce((s, f) => s + (f.counts?.batches ?? 0), 0);
 
   return (
     <>
@@ -62,7 +62,7 @@ export default function FarmerDashboard() {
                     <h3 style={{ fontWeight: 600 }}>{farm.name}</h3>
                     <p className="text-muted" style={{ marginTop: '0.25rem', fontSize: '0.875rem' }}>📍 {farm.location}</p>
                     <p style={{ marginTop: '0.75rem', fontSize: '0.875rem' }}>
-                      <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{farm._count?.batches ?? 0}</span> batches
+                      <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{farm.counts?.batches ?? 0}</span> batches
                     </p>
                   </div>
                 </Link>

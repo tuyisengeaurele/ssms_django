@@ -96,7 +96,7 @@ export default function FarmDetailPage() {
                       <td><StageBadge stage={batch.stage} /></td>
                       <td className="text-muted">{new Date(batch.startDate).toLocaleDateString()}</td>
                       <td className="text-muted">{new Date(batch.expectedHarvestDate).toLocaleDateString()}</td>
-                      <td>{batch._count?.diseaseDetections ?? 0}</td>
+                      <td>{batch.counts?.diseaseDetections ?? 0}</td>
                       <td><Link to={`/batches/${batch.id}`} className="btn btn-sm btn-secondary">Details</Link></td>
                     </tr>
                   ))}
