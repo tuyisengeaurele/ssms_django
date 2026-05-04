@@ -21,9 +21,9 @@ class FarmSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'owner_id', 'is_active', 'created_at', 'updated_at', 'owner', '_count']
 
     def get__count(self, obj):
-        # Use the annotated value when present (list/detail queries) — avoids N+1
-        if hasattr(obj, 'active_batch_count'):
-            return {'batches': obj.active_batch_count}
+        # Use prefetched active_batches list when available (list/detail queries)
+        if hasattr(obj, 'active_batches'):
+            return {'batches': len(obj.active_batches)}
         return {'batches': obj.batches.filter(is_active=True).count()}
 
 
@@ -35,6 +35,10 @@ class FarmDetailSerializer(FarmSerializer):
 
     def get_batches(self, obj):
         from batches.serializers import BatchListSerializer
+        # Re-use the prefetched active_batches when available
+        if hasattr(obj, 'active_batches'):
+            batches = sorted(obj.active_batches, key=lambda b: b.created_at, reverse=True)
+            return BatchListSerializer(batches, many=True).data
         qs = obj.batches.filter(is_active=True).order_by('-created_at')
         return BatchListSerializer(qs, many=True).data
 
