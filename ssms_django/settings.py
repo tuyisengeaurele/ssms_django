@@ -107,6 +107,8 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = config('FRONTEND_URL', default='http://localhost:5173').split(',')
 CORS_ALLOW_CREDENTIALS = True
 
+APPEND_SLASH = False  # REST API — no trailing-slash redirects
+
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
