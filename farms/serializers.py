@@ -21,6 +21,9 @@ class FarmSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'owner_id', 'is_active', 'created_at', 'updated_at', 'owner', '_count']
 
     def get__count(self, obj):
+        # Use the annotated value when present (list/detail queries) — avoids N+1
+        if hasattr(obj, 'active_batch_count'):
+            return {'batches': obj.active_batch_count}
         return {'batches': obj.batches.filter(is_active=True).count()}
 
 

@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import get_object_or_404
+from django.db.models import Count, Q
 from .models import Farm
 from .serializers import FarmSerializer, FarmDetailSerializer, FarmCreateSerializer, FarmUpdateSerializer
 from core.utils import api_success, api_error
@@ -29,7 +29,12 @@ class FarmListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        farms = _farm_queryset(request.user).select_related('owner').order_by('-created_at')
+        farms = (
+            _farm_queryset(request.user)
+            .select_related('owner')
+            .annotate(active_batch_count=Count('batches', filter=Q(batches__is_active=True)))
+            .order_by('-created_at')
+        )
         return api_success(FarmSerializer(farms, many=True).data)
 
     def post(self, request):
@@ -53,9 +58,13 @@ class FarmDetailView(APIView):
         farm, err = _get_farm_or_403(pk, request.user)
         if err:
             return err
-        farm_with_related = Farm.objects.select_related('owner').prefetch_related(
-            'batches'
-        ).get(pk=pk)
+        farm_with_related = (
+            Farm.objects
+            .select_related('owner')
+            .prefetch_related('batches')
+            .annotate(active_batch_count=Count('batches', filter=Q(batches__is_active=True)))
+            .get(pk=pk)
+        )
         return api_success(FarmDetailSerializer(farm_with_related).data)
 
     def patch(self, request, pk):
