@@ -10,17 +10,17 @@ class OwnerSerializer(serializers.Serializer):
 
 class FarmSerializer(serializers.ModelSerializer):
     owner = OwnerSerializer(read_only=True)
-    _count = serializers.SerializerMethodField()
+    counts = serializers.SerializerMethodField()
 
     class Meta:
         model = Farm
         fields = [
             'id', 'name', 'location', 'owner_id', 'is_active',
-            'created_at', 'updated_at', 'owner', '_count',
+            'created_at', 'updated_at', 'owner', 'counts',
         ]
-        read_only_fields = ['id', 'owner_id', 'is_active', 'created_at', 'updated_at', 'owner', '_count']
+        read_only_fields = ['id', 'owner_id', 'is_active', 'created_at', 'updated_at', 'owner', 'counts']
 
-    def get__count(self, obj):
+    def get_counts(self, obj):
         # Use prefetched active_batches list when available (list/detail queries)
         if hasattr(obj, 'active_batches'):
             return {'batches': len(obj.active_batches)}
