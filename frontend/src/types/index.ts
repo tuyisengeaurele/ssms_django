@@ -22,7 +22,7 @@ export interface Farm {
   createdAt: string;
   updatedAt: string;
   owner?: Pick<User, 'id' | 'name' | 'email'>;
-  _count?: { batches: number };
+  counts?: { batches: number };
   batches?: Batch[];
 }
 
@@ -37,7 +37,7 @@ export interface Batch {
   createdAt: string;
   updatedAt: string;
   farm?: Pick<Farm, 'id' | 'name' | 'location'>;
-  _count?: { diseaseDetections: number; sensorReadings: number; alertLogs: number };
+  counts?: { diseaseDetections: number; sensorReadings: number; alertLogs: number };
   diseaseDetections?: DiseaseDetection[];
   sensorReadings?: SensorReading[];
   alertLogs?: AlertLog[];

@@ -14,7 +14,7 @@ export default function SupervisorDashboard() {
     farmService.getAll().then((r) => setFarms(r.data.data)).finally(() => setLoading(false));
   }, []);
 
-  const totalBatches = farms.reduce((s, f) => s + (f._count?.batches ?? 0), 0);
+  const totalBatches = farms.reduce((s, f) => s + (f.counts?.batches ?? 0), 0);
 
   return (
     <>
@@ -51,7 +51,7 @@ export default function SupervisorDashboard() {
                       <td style={{ fontWeight: 500 }}>{farm.name}</td>
                       <td className="text-muted">{farm.location}</td>
                       <td>{farm.owner?.name ?? '—'}</td>
-                      <td>{farm._count?.batches ?? 0}</td>
+                      <td>{farm.counts?.batches ?? 0}</td>
                       <td><Link to={`/farms/${farm.id}`} className="btn btn-sm btn-secondary">View</Link></td>
                     </tr>
                   ))}

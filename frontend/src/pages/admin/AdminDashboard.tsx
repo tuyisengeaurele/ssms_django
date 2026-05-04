@@ -16,7 +16,7 @@ export default function AdminDashboard() {
 
   const stats = [
     { label: 'Total Farms', value: farms.length, color: 'var(--primary)' },
-    { label: 'Total Batches', value: farms.reduce((s, f) => s + (f._count?.batches ?? 0), 0), color: 'var(--secondary)' },
+    { label: 'Total Batches', value: farms.reduce((s, f) => s + (f.counts?.batches ?? 0), 0), color: 'var(--secondary)' },
     { label: 'Registered Farmers', value: new Set(farms.map((f) => f.ownerId)).size, color: '#7c3aed' },
     { label: 'System Status', value: 'Online', color: '#059669' },
   ];
@@ -51,7 +51,7 @@ export default function AdminDashboard() {
                       <tr key={f.id}>
                         <td><Link to={`/farms/${f.id}`} style={{ color: 'var(--primary)', fontWeight: 500 }}>{f.name}</Link></td>
                         <td className="text-muted">{f.owner?.name ?? '—'}</td>
-                        <td>{f._count?.batches ?? 0}</td>
+                        <td>{f.counts?.batches ?? 0}</td>
                       </tr>
                     ))}
                   </tbody>
