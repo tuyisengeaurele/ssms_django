@@ -46,15 +46,18 @@ class SensorChartView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        if request.user.role not in ('SUPERVISOR', 'ADMIN'):
+        if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
             return api_error('Forbidden.', 403)
 
         hours = min(int(request.query_params.get('hours', 24)), 168)
         since = timezone.now() - timedelta(hours=hours)
 
+        qs = SensorReading.objects.filter(timestamp__gte=since)
+        if request.user.role == 'FARMER':
+            qs = qs.filter(batch__farm__owner=request.user)
+
         rows = (
-            SensorReading.objects
-            .filter(timestamp__gte=since)
+            qs
             .annotate(hour=TruncHour('timestamp'))
             .values('hour')
             .annotate(avg_temp=Avg('temperature'), avg_humidity=Avg('humidity'))

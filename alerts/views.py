@@ -17,13 +17,15 @@ class AlertListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        if request.user.role not in ('SUPERVISOR', 'ADMIN'):
-            return api_error('Forbidden. Supervisors and admins only.', 403)
+        if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
+            return api_error('Forbidden.', 403)
 
         unread_only = request.query_params.get('unread', 'true').lower() != 'false'
         limit = min(int(request.query_params.get('limit', 100)), 500)
 
         qs = AlertLog.objects.order_by('-created_at')
+        if request.user.role == 'FARMER':
+            qs = qs.filter(batch__farm__owner=request.user)
         if unread_only:
             qs = qs.filter(is_read=False)
         alerts = qs[:limit]
