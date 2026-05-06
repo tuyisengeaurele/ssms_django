@@ -115,4 +115,11 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# AI microservice (FastAPI on port 8001)
+AI_SERVICE_URL = config('AI_SERVICE_URL', default='http://localhost:8001')
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

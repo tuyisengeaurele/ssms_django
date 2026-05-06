@@ -12,6 +12,7 @@ import AddFarmPage from './pages/farmer/AddFarmPage';
 import FarmDetailPage from './pages/farmer/FarmDetailPage';
 import AddBatchPage from './pages/farmer/AddBatchPage';
 import BatchDetailPage from './pages/farmer/BatchDetailPage';
+import AddDetectionPage from './pages/farmer/AddDetectionPage';
 
 function Unauthorized() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
             <Route path="/farms/:id" element={<FarmDetailPage />} />
             <Route path="/farms/:farmId/batches/new" element={<AddBatchPage />} />
             <Route path="/batches/:id" element={<BatchDetailPage />} />
+            <Route path="/batches/:id/detect" element={<AddDetectionPage />} />
           </Route>
 
           {/* Supervisor + Admin */}
