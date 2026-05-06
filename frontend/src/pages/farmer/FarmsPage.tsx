@@ -57,11 +57,19 @@ export default function FarmsPage() {
       ) : filtered.length === 0 ? (
         <div className="table-container">
           {farms.length === 0 ? (
-            <EmptyState icon="🌾" title="No farms yet"
+            <EmptyState
+              icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>}
+              title="No farms yet"
               description="Get started by creating your first farm."
-              action={canCreate ? { label: '+ Create Farm', to: '/farms/new' } : undefined} />
+              action={canCreate ? { label: '+ Create Farm', to: '/farms/new' } : undefined}
+            />
           ) : (
-            <EmptyState icon="🔍" title="No results" description={`No farms match "${search}"`} action={{ label: 'Clear search', onClick: () => setSearch('') }} />
+            <EmptyState
+              icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>}
+              title="No results"
+              description={`No farms match "${search}"`}
+              action={{ label: 'Clear search', onClick: () => setSearch('') }}
+            />
           )}
         </div>
       ) : (
@@ -75,8 +83,8 @@ export default function FarmsPage() {
               <Link to={`/farms/${farm.id}`} style={{ textDecoration: 'none', display: 'block' }}>
                 <div className="card card-hover" style={{ height: '100%' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.875rem' }}>
-                    <div style={{ width: 42, height: 42, borderRadius: 'var(--radius-md)', background: 'var(--brand-50)', border: '1px solid var(--brand-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
-                      🌾
+                    <div style={{ width: 42, height: 42, borderRadius: 'var(--radius-md)', background: 'var(--brand-50)', border: '1px solid var(--brand-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-600)' }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     </div>
                     <span style={{ fontSize: '0.68rem', fontWeight: 600, background: 'var(--brand-100)', color: 'var(--brand-700)', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Active

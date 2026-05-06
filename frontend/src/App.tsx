@@ -17,6 +17,7 @@ import AddDetectionPage   from './pages/farmer/AddDetectionPage';
 import AdminUsersPage     from './pages/admin/AdminUsersPage';
 import DetectionReportsPage from './pages/farmer/DetectionReportsPage';
 import AlertsPage         from './pages/shared/AlertsPage';
+import BatchesPage        from './pages/farmer/BatchesPage';
 
 function Unauthorized() {
   return (
@@ -25,7 +26,9 @@ function Unauthorized() {
       alignItems: 'center', justifyContent: 'center', gap: '1rem',
       background: 'var(--bg)',
     }}>
-      <div style={{ fontSize: '3rem' }}>🚫</div>
+      <div style={{ width: 64, height: 64, background: '#fef2f2', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+      </div>
       <h1 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.02em' }}>Access Denied</h1>
       <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
         You don't have permission to view this page.
@@ -55,6 +58,7 @@ export default function App() {
               <Route path="/farms/new"                 element={<AddFarmPage />} />
               <Route path="/farms/:id"                 element={<FarmDetailPage />} />
               <Route path="/farms/:farmId/batches/new" element={<AddBatchPage />} />
+              <Route path="/batches"                   element={<BatchesPage />} />
               <Route path="/batches/:id"               element={<BatchDetailPage />} />
               <Route path="/batches/:id/detect"        element={<AddDetectionPage />} />
               <Route path="/detections/reports"        element={<DetectionReportsPage />} />

@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { ReactNode } from 'react';
 
 interface EmptyStateProps {
-  icon?: string;
+  icon?: ReactNode;
   title: string;
   description?: string;
   action?: {
@@ -12,7 +13,15 @@ interface EmptyStateProps {
   };
 }
 
-export default function EmptyState({ icon = '📭', title, description, action }: EmptyStateProps) {
+const DefaultIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="12" y1="8" x2="12" y2="12"/>
+    <line x1="12" y1="16" x2="12.01" y2="16"/>
+  </svg>
+);
+
+export default function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
     <motion.div
       className="empty-state"
@@ -21,7 +30,7 @@ export default function EmptyState({ icon = '📭', title, description, action }
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="empty-icon">
-        <span>{icon}</span>
+        {icon ?? <DefaultIcon />}
       </div>
       <h3 className="empty-title">{title}</h3>
       {description && <p className="empty-desc">{description}</p>}
@@ -32,7 +41,7 @@ export default function EmptyState({ icon = '📭', title, description, action }
               {action.label}
             </Link>
           ) : (
-            <button onClick={action.onClick} className="btn btn-primary btn-sm">
+            <button onClick={action.onClick} className="btn btn-secondary btn-sm">
               {action.label}
             </button>
           )}

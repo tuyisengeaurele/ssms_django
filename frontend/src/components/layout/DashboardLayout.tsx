@@ -7,32 +7,27 @@ import { alertService } from '../../services/alert.service';
 
 const pageVariants = {
   initial: { opacity: 0, y: 10 },
-  enter:   { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' as const } },
+  enter:   { opacity: 1, y: 0, transition: { duration: 0.28, ease: 'easeOut' as const } },
   exit:    { opacity: 0, y: -6, transition: { duration: 0.15 } },
 };
 
 export default function DashboardLayout() {
   const location = useLocation();
-  const [collapsed,   setCollapsed]   = useState(() => window.innerWidth < 1024);
-  const [mobileOpen,  setMobileOpen]  = useState(false);
-  const [alertCount,  setAlertCount]  = useState(0);
+  const [collapsed,  setCollapsed]  = useState(() => window.innerWidth < 1024);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [alertCount, setAlertCount] = useState(0);
 
-  // Fetch unread alert count
   useEffect(() => {
     alertService.getAll(true)
       .then(r => setAlertCount(r.data.data.length))
       .catch(() => {});
   }, [location.pathname]);
 
-  // Close mobile sidebar on route change
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
-  // Handle window resize
   useEffect(() => {
     function handleResize() {
-      if (window.innerWidth < 768) {
-        setCollapsed(false);
-      }
+      if (window.innerWidth < 768) setCollapsed(false);
     }
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -43,7 +38,6 @@ export default function DashboardLayout() {
       <Sidebar
         collapsed={collapsed}
         mobileOpen={mobileOpen}
-        onCollapse={() => setCollapsed(c => !c)}
         onMobileClose={() => setMobileOpen(false)}
         alertCount={alertCount}
       />
