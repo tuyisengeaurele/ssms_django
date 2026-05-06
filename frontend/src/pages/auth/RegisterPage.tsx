@@ -34,11 +34,8 @@ export default function RegisterPage() {
     }
   };
 
-  const ROLES = [
-    { value: 'FARMER',     label: 'Farmer',     desc: 'Manage your farms and batches' },
-    { value: 'SUPERVISOR', label: 'Supervisor',  desc: 'Monitor all farms & production' },
-    { value: 'ADMIN',      label: 'Admin',       desc: 'Full system access & user management' },
-  ];
+  // Only FARMER is available through public registration.
+  // SUPERVISOR and ADMIN accounts are created by administrators only.
 
   return (
     <div className="auth-layout">
@@ -62,12 +59,17 @@ export default function RegisterPage() {
             Create your account and start monitoring your sericulture operations with AI-powered insights.
           </p>
           <div style={{ marginTop: '2rem', display: 'flex', gap: '0.875rem', justifyContent: 'center' }}>
-            {['🌿', '🔬', '📊', '🚨'].map((icon, i) => (
+            {[
+              <svg key="a" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
+              <svg key="b" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+              <svg key="c" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>,
+              <svg key="d" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+            ].map((icon, i) => (
               <motion.div key={i}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3 + i * 0.1 }}
-                style={{ width: 46, height: 46, borderRadius: 12, background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}
+                style={{ width: 46, height: 46, borderRadius: 12, background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.8)' }}
               >
                 {icon}
               </motion.div>
@@ -130,27 +132,14 @@ export default function RegisterPage() {
               <span className="form-hint">Min 8 characters, one uppercase, one digit</span>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Role</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {ROLES.map(r => (
-                  <label key={r.value} style={{
-                    display: 'flex', alignItems: 'center', gap: '0.75rem',
-                    padding: '0.65rem 0.875rem', border: '1.5px solid',
-                    borderColor: form.role === r.value ? 'var(--brand-400)' : 'var(--border)',
-                    borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                    background: form.role === r.value ? 'var(--brand-50)' : 'var(--surface)',
-                    transition: 'all 0.15s',
-                  }}>
-                    <input type="radio" name="role" value={r.value} checked={form.role === r.value}
-                      onChange={set('role')} style={{ accentColor: 'var(--primary)', width: 15, height: 15 }} />
-                    <div>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)' }}>{r.label}</div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{r.desc}</div>
-                    </div>
-                  </label>
-                ))}
-              </div>
+            {/* Role is always FARMER for public registration */}
+            <div style={{ padding: '0.75rem 0.875rem', background: 'var(--brand-50)', borderRadius: 'var(--radius-md)', border: '1px solid var(--brand-100)', display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.5rem' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <p style={{ fontSize: '0.78rem', color: 'var(--brand-700)', lineHeight: 1.5 }}>
+                Public accounts are registered as <strong>Farmer</strong>. Supervisor and Admin roles are assigned by an administrator.
+              </p>
             </div>
 
             <button type="submit" className="btn btn-primary btn-full btn-lg" disabled={loading} style={{ marginTop: '0.25rem' }}>

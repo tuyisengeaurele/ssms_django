@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { alertService } from '../../services/alert.service';
 import { AlertLog, AlertType } from '../../types';
@@ -119,6 +120,7 @@ export default function AlertsPage() {
                 <tr>
                   <th>Type</th>
                   <th>Message</th>
+                  <th>From</th>
                   <th>Time</th>
                   <th>Status</th>
                   <th>Action</th>
@@ -144,10 +146,23 @@ export default function AlertsPage() {
                           {meta.label}
                         </span>
                       </td>
-                      <td style={{ fontWeight: a.isRead ? 400 : 500, color: a.isRead ? 'var(--text-muted)' : 'var(--text)' }}>
+                      <td style={{ fontWeight: a.isRead ? 400 : 500, color: a.isRead ? 'var(--text-muted)' : 'var(--text)', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {a.message}
                       </td>
-                      <td style={{ color: 'var(--text-faint)', whiteSpace: 'nowrap' }}>
+                      <td>
+                        <div style={{ fontSize: '0.75rem', lineHeight: 1.4 }}>
+                          {a.farmerName && (
+                            <p style={{ fontWeight: 500, color: 'var(--text-2)' }}>{a.farmerName}</p>
+                          )}
+                          {a.batch && (
+                            <Link to={`/batches/${a.batch.id}`} style={{ color: 'var(--text-faint)', fontFamily: 'monospace', fontSize: '0.7rem', textDecoration: 'none' }}>
+                              #{a.batch.id.slice(-6)} · {a.batch.stage}
+                            </Link>
+                          )}
+                          {!a.farmerName && !a.batch && <span style={{ color: 'var(--text-faint)' }}>—</span>}
+                        </div>
+                      </td>
+                      <td style={{ color: 'var(--text-faint)', whiteSpace: 'nowrap', fontSize: '0.78rem' }}>
                         {timeAgo(a.createdAt)}
                       </td>
                       <td>

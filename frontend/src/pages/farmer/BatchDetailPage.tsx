@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, ReferenceLine,
+} from 'recharts';
 import { batchService } from '../../services/batch.service';
 import { detectionService } from '../../services/detection.service';
 import { Batch, BatchStage, DiseaseDetection } from '../../types';
@@ -231,43 +235,112 @@ export default function BatchDetailPage() {
         </motion.div>
       </div>
 
-      {/* Sensor readings */}
-      {batch.sensorReadings && batch.sensorReadings.length > 0 && (
-        <motion.div className="table-container" style={{ marginBottom: '1.5rem' }}
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22, duration: 0.35 }}>
-          <div className="table-header">
-            <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>Recent Sensor Readings</p>
-          </div>
-          <div className="table-wrapper">
-            <table>
-              <thead>
-                <tr><th>Timestamp</th><th>Temperature</th><th>Humidity</th><th>Status</th></tr>
-              </thead>
-              <tbody>
-                {batch.sensorReadings.slice(0, 10).map(r => {
-                  const tempOk = r.temperature >= 22 && r.temperature <= 28;
-                  const humOk  = r.humidity >= 70 && r.humidity <= 85;
-                  return (
-                    <tr key={r.id} className="tbody-row">
-                      <td style={{ fontSize: '0.78rem', color: 'var(--text-faint)' }}>{new Date(r.timestamp).toLocaleString()}</td>
-                      <td><span style={{ fontWeight: 600, color: tempOk ? 'var(--text)' : '#dc2626' }}>{r.temperature.toFixed(1)}°C</span></td>
-                      <td><span style={{ fontWeight: 600, color: humOk ? 'var(--text)' : '#2563eb' }}>{r.humidity.toFixed(1)}%</span></td>
-                      <td>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '9999px', background: (tempOk && humOk) ? '#f0fdf4' : '#fef2f2', color: (tempOk && humOk) ? '#16a34a' : '#dc2626' }}>
-                          {(tempOk && humOk) ? 'Normal' : 'Alert'}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </motion.div>
-      )}
+      {/* Sensor readings — Charts + Table */}
+      {batch.sensorReadings && batch.sensorReadings.length > 0 && (() => {
+        const readings = [...batch.sensorReadings].reverse();
+        const chartData = readings.map(r => ({
+          time: new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          temp: parseFloat(r.temperature.toFixed(1)),
+          hum:  parseFloat(r.humidity.toFixed(1)),
+        }));
+        return (
+          <>
+            {/* Charts */}
+            <motion.div
+              className="grid-2" style={{ marginBottom: '1.5rem' }}
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22, duration: 0.35 }}>
+
+              {/* Temperature chart */}
+              <div className="chart-card">
+                <p className="chart-title">Temperature</p>
+                <p className="chart-subtitle">Optimal range: 22–28 °C</p>
+                <ResponsiveContainer width="100%" height={180}>
+                  <AreaChart data={chartData} margin={{ top: 6, right: 8, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="tempGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor="#d97706" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="#d97706" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" vertical={false} />
+                    <XAxis dataKey="time" tick={{ fontSize: 10, fill: 'var(--text-faint)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                    <YAxis tick={{ fontSize: 10, fill: 'var(--text-faint)' }} axisLine={false} tickLine={false} domain={['auto', 'auto']} />
+                    <ReferenceLine y={22} stroke="#d9770640" strokeDasharray="4 3" />
+                    <ReferenceLine y={28} stroke="#d9770640" strokeDasharray="4 3" />
+                    <Tooltip
+                      contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: '0.78rem', boxShadow: 'var(--shadow-md)' }}
+                      formatter={(v) => [`${v}°C`, 'Temperature']}
+                    />
+                    <Area type="monotone" dataKey="temp" stroke="#d97706" strokeWidth={2} fill="url(#tempGrad)" dot={false} activeDot={{ r: 4, fill: '#d97706' }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Humidity chart */}
+              <div className="chart-card">
+                <p className="chart-title">Humidity</p>
+                <p className="chart-subtitle">Optimal range: 70–85 %</p>
+                <ResponsiveContainer width="100%" height={180}>
+                  <AreaChart data={chartData} margin={{ top: 6, right: 8, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="humGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor="#2563eb" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" vertical={false} />
+                    <XAxis dataKey="time" tick={{ fontSize: 10, fill: 'var(--text-faint)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                    <YAxis tick={{ fontSize: 10, fill: 'var(--text-faint)' }} axisLine={false} tickLine={false} domain={['auto', 'auto']} />
+                    <ReferenceLine y={70} stroke="#2563eb40" strokeDasharray="4 3" />
+                    <ReferenceLine y={85} stroke="#2563eb40" strokeDasharray="4 3" />
+                    <Tooltip
+                      contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: '0.78rem', boxShadow: 'var(--shadow-md)' }}
+                      formatter={(v) => [`${v}%`, 'Humidity']}
+                    />
+                    <Area type="monotone" dataKey="hum" stroke="#2563eb" strokeWidth={2} fill="url(#humGrad)" dot={false} activeDot={{ r: 4, fill: '#2563eb' }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+
+            {/* Table */}
+            <motion.div className="table-container" style={{ marginBottom: '1.5rem' }}
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28, duration: 0.35 }}>
+              <div className="table-header">
+                <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>Recent Sensor Readings</p>
+              </div>
+              <div className="table-wrapper">
+                <table>
+                  <thead>
+                    <tr><th>Timestamp</th><th>Temperature</th><th>Humidity</th><th>Status</th></tr>
+                  </thead>
+                  <tbody>
+                    {readings.slice(0, 10).map(r => {
+                      const tempOk = r.temperature >= 22 && r.temperature <= 28;
+                      const humOk  = r.humidity >= 70 && r.humidity <= 85;
+                      return (
+                        <tr key={r.id} className="tbody-row">
+                          <td style={{ fontSize: '0.78rem', color: 'var(--text-faint)' }}>{new Date(r.timestamp).toLocaleString()}</td>
+                          <td><span style={{ fontWeight: 600, color: tempOk ? 'var(--text)' : '#dc2626' }}>{r.temperature.toFixed(1)}°C</span></td>
+                          <td><span style={{ fontWeight: 600, color: humOk ? 'var(--text)' : '#2563eb' }}>{r.humidity.toFixed(1)}%</span></td>
+                          <td>
+                            <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '9999px', background: (tempOk && humOk) ? '#f0fdf4' : '#fef2f2', color: (tempOk && humOk) ? '#16a34a' : '#dc2626' }}>
+                              {(tempOk && humOk) ? 'Normal' : 'Alert'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </motion.div>
+          </>
+        );
+      })()}
 
       {/* Detection history */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28, duration: 0.35 }}>
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.34, duration: 0.35 }}>
         <div className="table-container">
           <div className="table-header">
             <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>Detection History ({detections.length})</p>

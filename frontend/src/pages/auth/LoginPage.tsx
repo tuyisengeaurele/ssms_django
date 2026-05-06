@@ -6,10 +6,22 @@ import { useAuth } from '../../context/AuthContext';
 import { useApiError } from '../../hooks/useApiError';
 
 const features = [
-  { icon: '🌿', text: 'Real-time farm monitoring' },
-  { icon: '🔬', text: 'AI-powered disease detection' },
-  { icon: '📊', text: 'Production analytics & reports' },
-  { icon: '🚨', text: 'Instant environmental alerts' },
+  {
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
+    text: 'Real-time farm monitoring',
+  },
+  {
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+    text: 'AI-powered disease detection',
+  },
+  {
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>,
+    text: 'Production analytics & reports',
+  },
+  {
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+    text: 'Instant environmental alerts',
+  },
 ];
 
 export default function LoginPage() {
@@ -75,7 +87,7 @@ export default function LoginPage() {
                 transition={{ delay: 0.3 + i * 0.1, duration: 0.4 }}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}
               >
-                <span style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', flexShrink: 0 }}>
+                <span style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'rgba(255,255,255,0.85)' }}>
                   {f.icon}
                 </span>
                 <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.875rem', fontWeight: 500 }}>{f.text}</span>

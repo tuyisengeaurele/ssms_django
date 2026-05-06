@@ -14,6 +14,53 @@ import { SkeletonTable, SkeletonStatCard } from '../../components/ui/SkeletonLoa
 import { useApiError } from '../../hooks/useApiError';
 import { useToast } from '../../context/ToastContext';
 
+function useCountUp(target: number, duration = 900) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!target) { setVal(0); return; }
+    let raf: number;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / duration, 1);
+      setVal(Math.round((1 - Math.pow(1 - t, 3)) * target));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return val;
+}
+
+interface StatCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  color: string;
+  bg: string;
+  delay: number;
+}
+function StatCard({ icon, label, value, color, bg, delay }: StatCardProps) {
+  const count = useCountUp(value);
+  return (
+    <motion.div className="stat-card" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
+      <div className="stat-card-glow" style={{ background: color }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <p style={{ fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-faint)', marginBottom: '0.75rem' }}>{label}</p>
+          <p style={{ fontSize: '2.1rem', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.04em', lineHeight: 1 }}>{count}</p>
+        </div>
+        <div className="stat-card-icon" style={{ background: bg }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            {icon}
+          </svg>
+        </div>
+      </div>
+      <div style={{ marginTop: '1rem', height: 3, borderRadius: 2, background: `linear-gradient(90deg, ${color}60, ${color}10)` }} />
+    </motion.div>
+  );
+}
+
 const DISEASE_COLORS: Record<string, string> = {
   Healthy: '#16a34a', Flacherie: '#dc2626', Grasserie: '#d97706',
   Muscardine: '#7c3aed', Pebrine: '#0284c7',
@@ -116,19 +163,24 @@ export default function DetectionReportsPage() {
 
       {/* Summary cards */}
       <div className="grid-3" style={{ marginBottom: '1.5rem' }}>
-        {[
-          { label: 'Total Detections', val: totalDetections, color: '#2563eb', bg: '#eff6ff'  },
-          { label: 'Healthy',          val: healthyCount,    color: '#16a34a', bg: '#f0fdf4'  },
-          { label: 'Diseased',         val: diseaseCount,    color: '#dc2626', bg: '#fef2f2'  },
-        ].map((c, i) => (
-          loadingH ? <SkeletonStatCard key={i} /> : (
-            <motion.div key={c.label} className="stat-card" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.07, duration: 0.35 }} style={{ borderTop: `3px solid ${c.color}` }}>
-              <p style={{ fontSize: '0.68rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-faint)', marginBottom: '0.4rem' }}>{c.label}</p>
-              <p style={{ fontSize: '2rem', fontWeight: 800, color: c.color, lineHeight: 1 }}>{c.val}</p>
-            </motion.div>
-          )
-        ))}
+        {loadingH ? (
+          [0,1,2].map(i => <SkeletonStatCard key={i} />)
+        ) : (
+          <>
+            <StatCard
+              label="Total Detections" value={totalDetections} color="#2563eb" bg="#eff6ff" delay={0}
+              icon={<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>}
+            />
+            <StatCard
+              label="Healthy" value={healthyCount} color="#16a34a" bg="#f0fdf4" delay={0.07}
+              icon={<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>}
+            />
+            <StatCard
+              label="Diseased" value={diseaseCount} color="#dc2626" bg="#fef2f2" delay={0.14}
+              icon={<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>}
+            />
+          </>
+        )}
       </div>
 
       {/* Chart + breakdown */}
@@ -141,7 +193,7 @@ export default function DetectionReportsPage() {
             <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)' }}>Loading…</div>
           ) : stats.length === 0 ? (
             <div style={{ height: 220 }}>
-              <EmptyState icon="📊" title="No data" description="No detections in the selected range." />
+              <EmptyState icon={<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>} title="No data" description="No detections in the selected range." />
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
@@ -166,7 +218,7 @@ export default function DetectionReportsPage() {
           {loadingS ? (
             <div style={{ color: 'var(--text-faint)', padding: '3rem 0', textAlign: 'center' }}>Loading…</div>
           ) : stats.length === 0 ? (
-            <EmptyState icon="🔬" title="No detections" description="No data for the selected range." />
+            <EmptyState icon={<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>} title="No detections" description="No data for the selected range." />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingTop: '0.25rem' }}>
               {stats.map(s => {
@@ -203,7 +255,7 @@ export default function DetectionReportsPage() {
           {loadingH ? (
             <SkeletonTable rows={6} cols={5} />
           ) : history.length === 0 ? (
-            <EmptyState icon="📋" title="No detections found" description="No records match the selected filters." />
+            <EmptyState icon={<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>} title="No detections found" description="No records match the selected filters." />
           ) : (
             <div className="table-wrapper">
               <table>

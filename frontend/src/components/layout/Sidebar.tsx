@@ -143,14 +143,19 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
 
         {/* Footer */}
         <div className="sidebar-footer">
-          {/* User info (display only — no action) */}
-          <div className="sidebar-user-display">
+          {/* User info — click to open profile */}
+          <button
+            className="sidebar-user-display"
+            onClick={() => { navigate('/profile'); onMobileClose(); }}
+            title={collapsed ? 'My Profile' : undefined}
+            style={{ width: '100%', border: 'none', background: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
+          >
             <div className="sidebar-avatar">{initials}</div>
             <div className="sidebar-user-info">
               <div className="u-name">{user?.name ?? 'User'}</div>
               <div className="u-role">{user?.role ?? ''}</div>
             </div>
-          </div>
+          </button>
 
           {/* Logout button */}
           <button

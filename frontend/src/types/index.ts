@@ -68,6 +68,10 @@ export interface AlertLog {
   message: string;
   isRead: boolean;
   createdAt: string;
+  // enriched fields (optional, returned by some endpoints)
+  farmName?: string;
+  farmerName?: string;
+  batch?: { id: string; stage: string };
 }
 
 export interface ApiResponse<T> {
