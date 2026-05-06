@@ -18,6 +18,7 @@ import AdminUsersPage     from './pages/admin/AdminUsersPage';
 import DetectionReportsPage from './pages/farmer/DetectionReportsPage';
 import AlertsPage         from './pages/shared/AlertsPage';
 import BatchesPage        from './pages/farmer/BatchesPage';
+import ProfilePage        from './pages/shared/ProfilePage';
 
 function Unauthorized() {
   return (
@@ -63,6 +64,7 @@ export default function App() {
               <Route path="/batches/:id/detect"        element={<AddDetectionPage />} />
               <Route path="/detections/reports"        element={<DetectionReportsPage />} />
               <Route path="/alerts"                    element={<AlertsPage />} />
+              <Route path="/profile"                  element={<ProfilePage />} />
 
               {/* Supervisor + Admin */}
               <Route element={<ProtectedRoute allowedRoles={['SUPERVISOR', 'ADMIN']} />}>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { adminService, CreateUserPayload } from '../../services/admin.service';
@@ -17,6 +17,58 @@ const ROLE_META: Record<Role, { color: string; bg: string }> = {
 };
 
 const EMPTY_FORM: CreateUserPayload = { name: '', email: '', password: '', role: 'FARMER' };
+
+function useCountUp(target: number, duration = 900) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!target) { setVal(0); return; }
+    let raf: number;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / duration, 1);
+      setVal(Math.round((1 - Math.pow(1 - t, 3)) * target));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return val;
+}
+
+interface RoleStatCardProps { role: Role; count: number; delay: number; loading: boolean }
+function RoleStatCard({ role, count, delay, loading }: RoleStatCardProps) {
+  const meta = ROLE_META[role];
+  const animCount = useCountUp(count);
+
+  const icons: Record<Role, React.ReactNode> = {
+    ADMIN:      <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>,
+    SUPERVISOR: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,
+    FARMER:     <><path d="M12 22V12M3.5 8.5C3.5 5.46 6.46 3 10 3c2.12 0 4 .9 5.28 2.33A6.5 6.5 0 0 1 21 11.5c0 3.58-2.91 6.5-6.5 6.5H5a1.5 1.5 0 0 1 0-3"/></>,
+  };
+
+  if (loading) return <div className="stat-card skeleton" style={{ height: 110 }} />;
+
+  return (
+    <motion.div className="stat-card" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
+      <div className="stat-card-glow" style={{ background: meta.color }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <p style={{ fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-faint)', marginBottom: '0.75rem' }}>
+            {role === 'ADMIN' ? 'Admins' : role === 'SUPERVISOR' ? 'Supervisors' : 'Farmers'}
+          </p>
+          <p style={{ fontSize: '2.1rem', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.04em', lineHeight: 1 }}>{animCount}</p>
+        </div>
+        <div className="stat-card-icon" style={{ background: meta.bg }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={meta.color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            {icons[role]}
+          </svg>
+        </div>
+      </div>
+      <div style={{ marginTop: '1rem', height: 3, borderRadius: 2, background: `linear-gradient(90deg, ${meta.color}60, ${meta.color}10)` }} />
+    </motion.div>
+  );
+}
 
 export default function AdminUsersPage() {
   const { user: me } = useAuth();
@@ -154,13 +206,7 @@ export default function AdminUsersPage() {
       {/* Role summary */}
       <div className="grid-3" style={{ marginBottom: '1.5rem' }}>
         {(['ADMIN', 'SUPERVISOR', 'FARMER'] as Role[]).map((r, i) => (
-          <motion.div key={r} className="stat-card" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.07, duration: 0.35 }} style={{ borderTop: `3px solid ${ROLE_META[r].color}` }}>
-            <p style={{ fontSize: '0.68rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-faint)', marginBottom: '0.4rem' }}>{r}S</p>
-            <p style={{ fontSize: '2rem', fontWeight: 800, color: ROLE_META[r].color, lineHeight: 1 }}>
-              {loading ? '—' : byRole(r)}
-            </p>
-          </motion.div>
+          <RoleStatCard key={r} role={r} count={byRole(r)} delay={i * 0.07} loading={loading} />
         ))}
       </div>
 
@@ -178,7 +224,7 @@ export default function AdminUsersPage() {
           {loading ? (
             <SkeletonTable rows={5} cols={6} />
           ) : filtered.length === 0 ? (
-            <EmptyState icon="👥" title="No users found" description={search ? `No results for "${search}"` : 'No users in the system.'} />
+            <EmptyState icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>} title="No users found" description={search ? `No results for "${search}"` : 'No users in the system.'} />
           ) : (
             <div className="table-wrapper">
               <table>
