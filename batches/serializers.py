@@ -68,3 +68,21 @@ class BatchCreateSerializer(serializers.ModelSerializer):
 
 class BatchUpdateStageSerializer(serializers.Serializer):
     stage = serializers.ChoiceField(choices=BatchStage.choices)
+
+
+class BatchSupervisorSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for the supervisor dashboard active-batches table."""
+    farm = BatchFarmSerializer(read_only=True)
+    detection_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Batch
+        fields = [
+            'id', 'farm_id', 'stage', 'start_date',
+            'expected_harvest_date', 'is_active', 'created_at',
+            'farm', 'detection_count',
+        ]
+
+    def get_detection_count(self, obj):
+        # Uses annotated value from view queryset (no extra query)
+        return getattr(obj, 'detection_count', 0)

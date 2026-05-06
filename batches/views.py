@@ -7,6 +7,7 @@ from .models import Batch
 from .serializers import (
     BatchListSerializer, BatchDetailSerializer,
     BatchCreateSerializer, BatchUpdateStageSerializer,
+    BatchSupervisorSerializer,
 )
 from core.utils import api_success, api_error
 
@@ -90,6 +91,24 @@ class BatchDetailView(APIView):
         batch.is_active = False
         batch.save(update_fields=['is_active'])
         return api_success(None, 'Batch deleted.')
+
+
+class BatchActiveSupervisorView(APIView):
+    """GET /api/batches/active — all active batches for SUPERVISOR / ADMIN."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in ('SUPERVISOR', 'ADMIN'):
+            return api_error('Forbidden.', 403)
+        from django.db.models import Count
+        batches = (
+            Batch.objects
+            .filter(is_active=True)
+            .select_related('farm')
+            .annotate(detection_count=Count('disease_detections'))
+            .order_by('-created_at')
+        )
+        return api_success(BatchSupervisorSerializer(batches, many=True).data)
 
 
 class BatchUpdateStageView(APIView):
