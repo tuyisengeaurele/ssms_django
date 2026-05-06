@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from batches.models import Batch
 from .models import SensorReading
 from .serializers import SensorReadingSerializer, SensorReadingCreateSerializer
+from alerts.utils import check_sensor_alerts
 from core.utils import api_success, api_error
 
 
@@ -28,6 +29,7 @@ class SensorReadingCreateView(APIView):
             temperature=serializer.validated_data['temperature'],
             humidity=serializer.validated_data['humidity'],
         )
+        check_sensor_alerts(batch_id, reading.temperature, reading.humidity)
         return api_success(SensorReadingSerializer(reading).data, 'Sensor reading recorded.', 201)
 
 
