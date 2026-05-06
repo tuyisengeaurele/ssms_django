@@ -113,3 +113,34 @@ class DiseaseDetectionByBatchView(APIView):
             .order_by('-detected_at')
         )
         return api_success(DiseaseDetectionSerializer(detections, many=True).data)
+
+
+class RecentDetectionsView(APIView):
+    """GET /api/detections/recent?limit=20 — supervisor-wide detection history."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in ('SUPERVISOR', 'ADMIN'):
+            return api_error('Forbidden.', 403)
+
+        limit = min(int(request.query_params.get('limit', 20)), 100)
+
+        detections = (
+            DiseaseDetection.objects
+            .select_related('batch', 'batch__farm')
+            .order_by('-detected_at')[:limit]
+        )
+
+        data = [
+            {
+                'id': d.id,
+                'result': d.result,
+                'confidence': d.confidence,
+                'detected_at': d.detected_at.isoformat(),
+                'batch_id': d.batch_id,
+                'farm_name': d.batch.farm.name if d.batch and d.batch.farm else '—',
+                'farm_id': d.batch.farm_id if d.batch else None,
+            }
+            for d in detections
+        ]
+        return api_success(data)
