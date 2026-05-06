@@ -64,9 +64,11 @@ export default function AdminDashboard() {
             <h2 style={{ fontWeight: 600, marginBottom: '1rem' }}>Quick Actions</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {[
-                { to: '/farms/new', label: '+ Create New Farm', desc: 'Add a farm to the system' },
-                { to: '/farms', label: '🌾 Manage Farms', desc: 'View and edit all farms' },
-                { to: '/supervisor', label: '📊 System Overview', desc: 'Cross-farm metrics' },
+                { to: '/admin/users',          label: '👥 User Management',   desc: 'Create accounts, assign roles, manage access' },
+                { to: '/detections/reports',   label: '🔬 Detection Reports', desc: 'Disease history, frequency analysis' },
+                { to: '/farms/new',            label: '+ Create New Farm',    desc: 'Add a farm to the system' },
+                { to: '/farms',                label: '🌾 Manage Farms',      desc: 'View and edit all farms' },
+                { to: '/supervisor',           label: '📊 System Overview',   desc: 'Cross-farm metrics' },
               ].map((a) => (
                 <Link key={a.to} to={a.to} className="card" style={{ display: 'block', padding: '0.875rem 1rem', cursor: 'pointer' }}>
                   <p style={{ fontWeight: 500 }}>{a.label}</p>
