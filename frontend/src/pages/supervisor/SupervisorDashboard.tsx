@@ -1,24 +1,19 @@
-import { useEffect, useRef, useState, CSSProperties } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
 } from 'recharts';
-
 import { farmService } from '../../services/farm.service';
 import { alertService, buildAlertStreamUrl } from '../../services/alert.service';
-import {
-  sensorService, detectionService2, batchSupervisorService,
-  ChartPoint, RecentDetection, ActiveBatch,
-} from '../../services/sensor.service';
+import { sensorService, batchSupervisorService, ActiveBatch, ChartPoint } from '../../services/sensor.service';
+import { detectionService2 } from '../../services/sensor.service';
 import { Farm, AlertLog, AlertType } from '../../types';
-import Navbar from '../../components/ui/Navbar';
 import StageBadge from '../../components/ui/StageBadge';
-import { BatchStage } from '../../types';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
+import EmptyState from '../../components/ui/EmptyState';
+import { SkeletonStatCard } from '../../components/ui/SkeletonLoader';
+import { useToast } from '../../context/ToastContext';
 
 function useCountUp(target: number, duration = 900) {
   const [val, setVal] = useState(0);
@@ -28,8 +23,7 @@ function useCountUp(target: number, duration = 900) {
     const start = performance.now();
     const tick = (now: number) => {
       const t = Math.min((now - start) / duration, 1);
-      const ease = 1 - Math.pow(1 - t, 3);
-      setVal(Math.round(ease * target));
+      setVal(Math.round((1 - Math.pow(1 - t, 3)) * target));
       if (t < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -38,293 +32,211 @@ function useCountUp(target: number, duration = 900) {
   return val;
 }
 
-function timeAgo(iso: string) {
-  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+function timeAgo(date: Date | string) {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
   if (s < 60)   return `${s}s ago`;
   if (s < 3600) return `${Math.floor(s / 60)}m ago`;
   return `${Math.floor(s / 3600)}h ago`;
 }
 
-function isToday(iso: string) {
-  const d = new Date(iso);
-  const n = new Date();
-  return d.getDate() === n.getDate() && d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear();
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Sub-components
-// ─────────────────────────────────────────────────────────────────────────────
+const ALERT_META: Record<AlertType, { color: string; bg: string; label: string }> = {
+  TEMPERATURE:  { color: '#d97706', bg: '#fef3c7', label: 'Temp'     },
+  HUMIDITY:     { color: '#2563eb', bg: '#dbeafe', label: 'Humidity' },
+  DISEASE:      { color: '#dc2626', bg: '#fee2e2', label: 'Disease'  },
+  STAGE_CHANGE: { color: '#7c3aed', bg: '#f3e8ff', label: 'Stage'    },
+  SYSTEM:       { color: '#4b5563', bg: '#f1f5f9', label: 'System'   },
+};
 
 const DISEASE_COLORS: Record<string, string> = {
-  Healthy: '#059669', Flacherie: '#dc2626',
-  Grasserie: '#d97706', Muscardine: '#7c3aed', Pebrine: '#db2777',
-};
-const dc = (label: string) => DISEASE_COLORS[label] ?? '#6b7280';
-
-const ALERT_META: Record<AlertType, { color: string; label: string; bg: string }> = {
-  TEMPERATURE:  { color: '#d97706', label: 'Temp',    bg: '#fef3c7' },
-  HUMIDITY:     { color: '#2563eb', label: 'Humidity', bg: '#dbeafe' },
-  DISEASE:      { color: '#dc2626', label: 'Disease',  bg: '#fee2e2' },
-  STAGE_CHANGE: { color: '#7c3aed', label: 'Stage',   bg: '#f3e8ff' },
-  SYSTEM:       { color: '#64748b', label: 'System',  bg: '#f1f5f9' },
+  Healthy: '#16a34a', Flacherie: '#dc2626', Grasserie: '#d97706',
+  Muscardine: '#7c3aed', Pebrine: '#0284c7',
 };
 
-// ── Stat card ─────────────────────────────────────────────────────────────────
-interface StatCardProps {
-  icon: string; label: string; value: number;
-  color: string; delay: number;
-  suffix?: string;
-}
-function StatCard({ icon, label, value, color, delay, suffix = '' }: StatCardProps) {
-  const count = useCountUp(value);
+interface StatProps { icon: string; label: string; value: number | string; color: string; bg: string; delay: number; }
+function StatCard({ icon, label, value, color, bg, delay }: StatProps) {
+  const num = typeof value === 'number' ? value : 0;
+  const count = useCountUp(num);
   return (
-    <div
-      className="anim-in"
-      style={{
-        animationDelay: `${delay}ms`,
-        background: '#fff',
-        border: '1px solid #e5e7eb',
-        borderRadius: '12px',
-        padding: '1.25rem 1.5rem',
-        borderTop: `3px solid ${color}`,
-        boxShadow: '0 1px 3px rgba(0,0,0,.07)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.5rem',
-      }}
-    >
+    <motion.div className="stat-card" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.4, ease: [0.22, 1, 0.36, 1] }} style={{ borderTop: `3px solid ${color}` }}>
+      <div className="stat-card-glow" style={{ background: color }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <p style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6b7280' }}>{label}</p>
-        <span style={{ fontSize: '1.4rem', lineHeight: 1 }}>{icon}</span>
-      </div>
-      <p style={{ fontSize: '2rem', fontWeight: 800, color, lineHeight: 1 }}>
-        {count}{suffix}
-      </p>
-    </div>
-  );
-}
-
-// ── Sensor chart ──────────────────────────────────────────────────────────────
-interface SensorChartProps {
-  data: ChartPoint[];
-  dataKey: 'avgTemp' | 'avgHumidity';
-  label: string;
-  color: string;
-  unit: string;
-  refMin: number;
-  refMax: number;
-  domain: [number, number];
-}
-function SensorChart({ data, dataKey, label, color, unit, refMin, refMax, domain }: SensorChartProps) {
-  const gradId = `grad-${dataKey}`;
-  return (
-    <div className="anim-in" style={{ animationDelay: '200ms', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.25rem 1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,.07)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <p style={{ fontWeight: 700, fontSize: '0.95rem' }}>{label}</p>
-        <span style={{ fontSize: '0.72rem', color: '#6b7280', background: '#f1f5f9', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
-          Safe: {refMin}–{refMax}{unit}
-        </span>
-      </div>
-      {data.length === 0 ? (
-        <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: '0.85rem' }}>
-          No readings yet — start the simulator
+        <div>
+          <p style={{ fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-faint)', marginBottom: '0.5rem' }}>{label}</p>
+          <p style={{ fontSize: '2rem', fontWeight: 800, color, letterSpacing: '-0.03em', lineHeight: 1 }}>
+            {typeof value === 'string' ? value : count}
+          </p>
         </div>
-      ) : (
-        <ResponsiveContainer width="100%" height={180}>
-          <AreaChart data={data} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-            <defs>
-              <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="10%" stopColor={color} stopOpacity={0.25} />
-                <stop offset="95%" stopColor={color} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="hour" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} />
-            <YAxis domain={domain} tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} />
-            <Tooltip
-              contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '0.8rem', boxShadow: '0 4px 12px rgba(0,0,0,.08)' }}
-              formatter={(v) => [`${v}${unit}`, label]}
-              labelStyle={{ color: '#6b7280', fontWeight: 600 }}
-            />
-            <ReferenceLine y={refMin} stroke="#f59e0b" strokeDasharray="4 3" strokeWidth={1.5} />
-            <ReferenceLine y={refMax} stroke="#f59e0b" strokeDasharray="4 3" strokeWidth={1.5} />
-            <Area
-              type="monotone"
-              dataKey={dataKey}
-              stroke={color}
-              strokeWidth={2.5}
-              fill={`url(#${gradId})`}
-              dot={false}
-              activeDot={{ r: 4, fill: color }}
-              connectNulls
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      )}
-    </div>
+        <div style={{ width: 40, height: 40, borderRadius: 'var(--radius-md)', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>{icon}</div>
+      </div>
+    </motion.div>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Main dashboard
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function SupervisorDashboard() {
-  const [farms, setFarms]                 = useState<Farm[]>([]);
-  const [batches, setBatches]             = useState<ActiveBatch[]>([]);
-  const [chartData, setChartData]         = useState<ChartPoint[]>([]);
-  const [detections, setDetections]       = useState<RecentDetection[]>([]);
-  const [alerts, setAlerts]               = useState<AlertLog[]>([]);
-  const [sseStatus, setSseStatus]         = useState<'connecting' | 'live' | 'error'>('connecting');
-  const [newAlertIds, setNewAlertIds]     = useState<Set<string>>(new Set());
-  const [lastUpdated, setLastUpdated]     = useState<Date | null>(null);
-  const esRef = useRef<EventSource | null>(null);
+  const { success } = useToast();
+  const [farms,      setFarms]      = useState<Farm[]>([]);
+  const [batches,    setBatches]    = useState<ActiveBatch[]>([]);
+  const [chart,      setChart]      = useState<ChartPoint[]>([]);
+  const [alerts,     setAlerts]     = useState<AlertLog[]>([]);
+  const [recentDet,  setRecentDet]  = useState<any[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [lastUpdated,setLastUpdated]= useState<Date | null>(null);
+  const unreadCount = alerts.filter(a => !a.isRead).length;
 
-  const unreadCount    = alerts.filter(a => !a.isRead).length;
-  const detectionsToday = detections.filter(d => isToday(d.detectedAt)).length;
-
-  // ── initial data load ──────────────────────────────────────────────────────
   useEffect(() => {
     Promise.all([
       farmService.getAll(),
       batchSupervisorService.getActive(),
       sensorService.getChart(24),
+      alertService.getAll(),
       detectionService2.getRecent(20),
-      alertService.getAll(true),
-    ]).then(([f, b, c, d, a]) => {
+    ]).then(([f, b, c, al, det]) => {
       setFarms(f.data.data);
       setBatches(b.data.data);
-      setChartData(c.data.data);
-      setDetections(d.data.data);
-      setAlerts(a.data.data);
+      setChart(c.data.data);
+      setAlerts(al.data.data);
+      setRecentDet(det.data.data);
       setLastUpdated(new Date());
-    }).catch(() => {});
+    }).finally(() => setLoading(false));
   }, []);
 
-  // ── SSE alerts stream ──────────────────────────────────────────────────────
+  // SSE for live alerts
   useEffect(() => {
-    const es = new EventSource(buildAlertStreamUrl());
-    esRef.current = es;
-    es.onopen = () => setSseStatus('live');
-    es.onmessage = (e) => {
-      try {
-        const alert: AlertLog = JSON.parse(e.data);
-        setAlerts(prev => {
-          if (prev.some(a => a.id === alert.id)) return prev;
-          return [alert, ...prev];
-        });
-        setNewAlertIds(prev => new Set(prev).add(alert.id));
-        setTimeout(() => setNewAlertIds(prev => { const n = new Set(prev); n.delete(alert.id); return n; }), 5000);
-      } catch { /* ignore */ }
-    };
-    es.onerror = () => setSseStatus('error');
-    return () => { es.close(); esRef.current = null; };
+    let src: EventSource;
+    try {
+      src = new EventSource(buildAlertStreamUrl());
+      src.onmessage = (e) => {
+        if (!e.data || e.data === 'ping') return;
+        try {
+          const data = JSON.parse(e.data);
+          if (Array.isArray(data) && data.length > 0) {
+            setAlerts(prev => {
+              const ids = new Set(prev.map(a => a.id));
+              const newOnes = data.filter((a: AlertLog) => !ids.has(a.id));
+              if (newOnes.length > 0) {
+                success(`${newOnes.length} new alert${newOnes.length > 1 ? 's' : ''}`);
+                return [...newOnes, ...prev].slice(0, 50);
+              }
+              return prev;
+            });
+            setLastUpdated(new Date());
+          }
+        } catch {/* noop */}
+      };
+    } catch {/* noop */}
+    return () => { src?.close(); };
   }, []);
 
-  const handleMarkAllRead = async () => {
-    await alertService.markAllRead();
-    setAlerts(prev => prev.map(a => ({ ...a, isRead: true })));
-  };
+  if (loading) {
+    return (
+      <div>
+        <div style={{ marginBottom: '1.75rem' }}>
+          <div style={{ height: 28, width: 260, borderRadius: 6 }} className="skeleton" />
+        </div>
+        <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
+          {[0,1,2,3].map(i => <SkeletonStatCard key={i} />)}
+        </div>
+      </div>
+    );
+  }
 
-  // ── SSE status dot ────────────────────────────────────────────────────────
-  const sseDot: CSSProperties = {
-    display: 'inline-block', width: 8, height: 8, borderRadius: '50%', marginRight: 5,
-    background: sseStatus === 'live' ? '#22c55e' : sseStatus === 'error' ? '#dc2626' : '#f59e0b',
-    animation: sseStatus === 'live' ? 'pulse-dot 2s ease infinite' : 'none',
-  };
+  const totalDetections = batches.reduce((sum, b) => sum + (b.detectionCount ?? 0), 0);
 
   return (
-    <>
-      <Navbar />
-      <div className="container page" style={{ maxWidth: '1280px' }}>
+    <div>
+      {/* Header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">System Overview</h1>
+          <p className="page-subtitle">
+            {lastUpdated ? `Updated ${timeAgo(lastUpdated)}` : 'Real-time farm monitoring & disease intelligence'}
+          </p>
+        </div>
+        <div className="page-actions">
+          <Link to="/detections/reports" className="btn btn-secondary btn-sm">🔬 Full Reports</Link>
+          {unreadCount > 0 && (
+            <Link to="/alerts" className="btn btn-danger btn-sm" style={{ gap: '0.4rem' }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#fff', animation: 'pulse-dot 1.5s infinite' }} />
+              {unreadCount} Alerts
+            </Link>
+          )}
+        </div>
+      </div>
 
-        {/* ── header ── */}
-        <div className="flex-between anim-in" style={{ marginBottom: '2rem' }}>
-          <div>
-            <h1 style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.02em' }}>Supervisor Overview</h1>
-            <p style={{ color: '#6b7280', fontSize: '0.875rem', marginTop: '0.2rem' }}>
-              Real-time farm monitoring &amp; disease intelligence
-            </p>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
-            {lastUpdated && (
-            <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
-              Updated {timeAgo(lastUpdated.toISOString())}
-            </p>
+      {/* Stats */}
+      <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
+        <StatCard icon="🌾" label="Total Farms"       value={farms.length}       color="var(--brand-600)" bg="var(--brand-50)" delay={0}    />
+        <StatCard icon="📦" label="Active Batches"    value={batches.length}     color="#1e40af"          bg="#eff6ff"         delay={0.07} />
+        <StatCard icon="🚨" label="Unread Alerts"     value={unreadCount}        color="#dc2626"          bg="#fef2f2"         delay={0.14} />
+        <StatCard icon="🔬" label="Total Detections"  value={totalDetections}    color="#7c3aed"          bg="#f3e8ff"         delay={0.21} />
+      </div>
+
+      {/* Charts */}
+      <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
+        {([
+          { title: 'Temperature', unit: '°C', key: 'avgTemp'     as const, color: '#d97706', min: 22, max: 28, label: 'Safe: 22–28°C' },
+          { title: 'Humidity',    unit: '%',  key: 'avgHumidity' as const, color: '#2563eb', min: 70, max: 85, label: 'Safe: 70–85%'  },
+        ] as const).map((c, i) => (
+          <motion.div key={c.key} className="chart-card"
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.28 + i * 0.08, duration: 0.4 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+              <p className="chart-title">{c.title}</p>
+              <span style={{ fontSize: '0.68rem', background: 'var(--brand-50)', color: 'var(--brand-700)', padding: '0.15rem 0.55rem', borderRadius: 'var(--radius-full)', fontWeight: 600 }}>{c.label}</span>
+            </div>
+            <p className="chart-subtitle">Last 24 hours · all farms</p>
+            {chart.length === 0 ? (
+              <div style={{ height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)', fontSize: '0.82rem' }}>No sensor data yet</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={140}>
+                <AreaChart data={chart} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id={`sg-${c.key}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={c.color} stopOpacity={0.15} />
+                      <stop offset="100%" stopColor={c.color} stopOpacity={0.01} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" vertical={false} />
+                  <XAxis dataKey="hour" tick={{ fontSize: 10, fill: 'var(--text-faint)' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: 'var(--text-faint)' }} axisLine={false} tickLine={false} width={40} />
+                  <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: '0.78rem', boxShadow: 'var(--shadow-md)' }}
+                    formatter={(v) => [`${Number(v).toFixed(1)}${c.unit}`, c.title]} />
+                  <ReferenceLine y={c.min} stroke={c.color} strokeDasharray="4 3" strokeOpacity={0.5} strokeWidth={1} />
+                  <ReferenceLine y={c.max} stroke={c.color} strokeDasharray="4 3" strokeOpacity={0.5} strokeWidth={1} />
+                  <Area type="monotone" dataKey={c.key} stroke={c.color} strokeWidth={2} fill={`url(#sg-${c.key})`} dot={false} activeDot={{ r: 4, fill: c.color }} />
+                </AreaChart>
+              </ResponsiveContainer>
             )}
-            <Link to="/detections/reports" className="btn btn-sm btn-secondary" style={{ fontSize: '0.75rem' }}>🔬 Full Reports</Link>
-          </div>
-        </div>
+          </motion.div>
+        ))}
+      </div>
 
-        {/* ── stat cards ── */}
-        <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
-          <StatCard icon="🌾" label="Total Farms"      value={farms.length}           color="var(--primary)"     delay={0} />
-          <StatCard icon="📦" label="Active Batches"   value={batches.length}          color="#1e40af"            delay={80} />
-          <StatCard icon="🚨" label="Unread Alerts"    value={unreadCount}             color="#dc2626"            delay={160} />
-          <StatCard icon="🔬" label="Detections Today" value={detectionsToday}         color="#7c3aed"            delay={240} />
-        </div>
-
-        {/* ── charts ── */}
-        <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
-          <SensorChart
-            data={chartData}
-            dataKey="avgTemp"
-            label="Temperature (last 24 h)"
-            color="#16a34a"
-            unit="°C"
-            refMin={22} refMax={28}
-            domain={[18, 32]}
-          />
-          <SensorChart
-            data={chartData}
-            dataKey="avgHumidity"
-            label="Humidity (last 24 h)"
-            color="#2563eb"
-            unit="%"
-            refMin={70} refMax={85}
-            domain={[60, 95]}
-          />
-        </div>
-
-        {/* ── active batches + alerts ── */}
-        <div className="grid-2" style={{ marginBottom: '1.5rem', alignItems: 'start' }}>
-
-          {/* Active batches */}
-          <div className="anim-in" style={{ animationDelay: '120ms', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.25rem 1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,.07)' }}>
-            <div className="flex-between" style={{ marginBottom: '1rem' }}>
-              <p style={{ fontWeight: 700, fontSize: '0.95rem' }}>Active Batches ({batches.length})</p>
-              <Link to="/farms" className="btn btn-sm btn-secondary">View all farms</Link>
+      {/* Batches + Alerts */}
+      <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
+        {/* Active batches */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.42, duration: 0.4 }}>
+          <div className="table-container">
+            <div className="table-header">
+              <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>Active Batches ({batches.length})</p>
+              <Link to="/farms" className="btn btn-ghost btn-sm">View farms →</Link>
             </div>
             {batches.length === 0 ? (
-              <p style={{ color: '#9ca3af', fontSize: '0.85rem', padding: '1.5rem 0', textAlign: 'center' }}>No active batches</p>
+              <EmptyState icon="📦" title="No active batches" />
             ) : (
-              <div style={{ maxHeight: 340, overflowY: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <div className="table-wrapper">
+                <table>
                   <thead>
-                    <tr>
-                      {['Farm', 'Stage', 'Started', 'Detections'].map(h => (
-                        <th key={h} style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', fontWeight: 600, borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>{h}</th>
-                      ))}
-                    </tr>
+                    <tr><th>Farm</th><th>Stage</th><th>Detections</th><th></th></tr>
                   </thead>
                   <tbody>
-                    {batches.map((b) => (
-                      <tr key={b.id} style={{ transition: 'background 0.15s' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                      >
-                        <td style={{ padding: '0.6rem 0.75rem', fontSize: '0.82rem', fontWeight: 500 }}>
-                          <Link to={`/farms/${b.farmId}`} style={{ color: 'var(--primary)' }}>{b.farm?.name ?? '—'}</Link>
-                        </td>
-                        <td style={{ padding: '0.6rem 0.75rem' }}>
-                          <StageBadge stage={b.stage as BatchStage} />
-                        </td>
-                        <td style={{ padding: '0.6rem 0.75rem', fontSize: '0.78rem', color: '#6b7280' }}>
-                          {new Date(b.startDate).toLocaleDateString()}
-                        </td>
-                        <td style={{ padding: '0.6rem 0.75rem', fontSize: '0.82rem', fontWeight: 600, color: '#7c3aed' }}>
-                          {b.detectionCount}
-                        </td>
+                    {batches.slice(0, 7).map(b => (
+                      <tr key={b.id} className="tbody-row">
+                        <td style={{ fontWeight: 500 }}>{b.farm?.name ?? '—'}</td>
+                        <td><StageBadge stage={b.stage} /></td>
+                        <td><span style={{ fontWeight: 600, color: 'var(--brand-600)' }}>{b.detectionCount ?? 0}</span></td>
+                        <td><Link to={`/batches/${b.id}`} className="btn btn-ghost btn-xs">Open →</Link></td>
                       </tr>
                     ))}
                   </tbody>
@@ -332,132 +244,100 @@ export default function SupervisorDashboard() {
               </div>
             )}
           </div>
+        </motion.div>
 
-          {/* Live alerts */}
-          <div className="anim-in" style={{ animationDelay: '180ms', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.25rem 1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,.07)' }}>
-            <div className="flex-between" style={{ marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <p style={{ fontWeight: 700, fontSize: '0.95rem' }}>Live Alerts</p>
+        {/* Live alerts */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.48, duration: 0.4 }}>
+          <div className="table-container">
+            <div className="table-header">
+              <div className="flex-start gap-2">
+                <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>Live Alerts</p>
                 {unreadCount > 0 && (
-                  <span style={{ background: '#dc2626', color: '#fff', borderRadius: '9999px', fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.4rem' }}>
+                  <span style={{ background: 'var(--danger)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.45rem', borderRadius: 'var(--radius-full)' }}>
                     {unreadCount}
                   </span>
                 )}
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', animation: 'pulse-dot 2s infinite' }} />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontSize: '0.7rem', color: '#6b7280', display: 'flex', alignItems: 'center' }}>
-                  <span style={sseDot} />
-                  {sseStatus === 'live' ? 'Live' : sseStatus === 'error' ? 'Disconnected' : 'Connecting…'}
-                </span>
-                {unreadCount > 0 && (
-                  <button className="btn btn-sm btn-secondary" onClick={handleMarkAllRead} style={{ fontSize: '0.72rem' }}>
-                    Mark all read
-                  </button>
-                )}
-              </div>
+              <Link to="/alerts" className="btn btn-ghost btn-sm">All alerts →</Link>
             </div>
-
-            <div style={{ maxHeight: 340, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              {alerts.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '2rem 0', color: '#9ca3af' }}>
-                  <p style={{ fontSize: '2rem' }}>✅</p>
-                  <p style={{ fontSize: '0.82rem', marginTop: '0.4rem' }}>All readings in safe range</p>
-                </div>
-              ) : (
-                alerts.slice(0, 40).map((alert) => {
-                  const m = ALERT_META[alert.type] ?? ALERT_META.SYSTEM;
-                  const isNew = newAlertIds.has(alert.id);
+            {alerts.length === 0 ? (
+              <EmptyState icon="🔔" title="No alerts" description="All systems nominal." />
+            ) : (
+              <div style={{ padding: '0.375rem 0', maxHeight: 320, overflowY: 'auto' }}>
+                {alerts.slice(0, 8).map((a) => {
+                  const meta = ALERT_META[a.type];
                   return (
-                    <div
-                      key={alert.id}
-                      className={isNew ? 'anim-in' : ''}
-                      style={{
-                        padding: '0.6rem 0.75rem',
-                        borderRadius: '8px',
-                        borderLeft: `3px solid ${m.color}`,
-                        background: alert.isRead ? '#f9fafb' : m.bg,
-                        opacity: alert.isRead ? 0.65 : 1,
-                        transition: 'background 0.4s ease, opacity 0.4s ease',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.15rem' }}>
-                        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: m.color, background: m.bg, padding: '0.1rem 0.4rem', borderRadius: '4px' }}>{m.label.toUpperCase()}</span>
-                        {isNew && <span style={{ fontSize: '0.62rem', fontWeight: 800, color: '#22c55e' }}>NEW</span>}
+                    <div key={a.id} style={{
+                      display: 'flex', gap: '0.625rem', padding: '0.65rem 1.25rem',
+                      borderLeft: !a.isRead ? `3px solid ${meta.color}` : '3px solid transparent',
+                      opacity: a.isRead ? 0.55 : 1,
+                    }}>
+                      <span style={{ width: 26, height: 26, borderRadius: 7, background: meta.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, color: meta.color, flexShrink: 0 }}>
+                        {meta.label[0]}
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: '0.78rem', fontWeight: a.isRead ? 400 : 600, color: 'var(--text)', lineHeight: 1.4 }}>{a.message}</p>
+                        <p style={{ fontSize: '0.67rem', color: 'var(--text-faint)', marginTop: '0.15rem' }}>{timeAgo(a.createdAt)}</p>
                       </div>
-                      <p style={{ fontSize: '0.8rem', color: '#374151', margin: 0 }}>{alert.message}</p>
-                      <p style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '0.15rem' }}>
-                        Batch …{alert.batchId.slice(-8)} · {timeAgo(alert.createdAt)}
-                      </p>
                     </div>
                   );
-                })
-              )}
+                })}
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Recent detections */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.54, duration: 0.4 }}>
+        <div className="table-container">
+          <div className="table-header">
+            <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>Recent Disease Detections</p>
+            <div className="flex-start gap-2">
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-faint)' }}>Powered by ResNet50 AI</span>
+              <Link to="/detections/reports" className="btn btn-ghost btn-sm">Full report →</Link>
             </div>
           </div>
-        </div>
-
-        {/* ── disease detection history ── */}
-        <div className="anim-in" style={{ animationDelay: '280ms', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.25rem 1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,.07)' }}>
-          <div className="flex-between" style={{ marginBottom: '1rem' }}>
-            <p style={{ fontWeight: 700, fontSize: '0.95rem' }}>Detection History (last 20)</p>
-            <span style={{ fontSize: '0.72rem', color: '#9ca3af' }}>Powered by ResNet50 AI</span>
-          </div>
-
-          {detections.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem 0', color: '#9ca3af' }}>
-              <p style={{ fontSize: '2rem' }}>🔬</p>
-              <p style={{ fontSize: '0.85rem', marginTop: '0.4rem' }}>No detections yet. Open a batch and run a detection.</p>
-            </div>
+          {recentDet.length === 0 ? (
+            <EmptyState icon="🔬" title="No detections yet" description="Run your first disease detection from a batch page." />
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr>
-                    {['Diagnosis', 'Confidence', 'Farm', 'Batch', 'Time'].map(h => (
-                      <th key={h} style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', fontWeight: 600, borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
+            <div className="table-wrapper">
+              <table>
+                <thead><tr><th>Farm</th><th>Result</th><th>Confidence</th><th>Date</th></tr></thead>
                 <tbody>
-                  {detections.map((d) => (
-                    <tr key={d.id}
-                      style={{ transition: 'background 0.15s' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <td style={{ padding: '0.65rem 0.75rem' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.2rem 0.6rem', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: 700, background: `${dc(d.result)}18`, color: dc(d.result) }}>
-                          {d.result === 'Healthy' ? '✅' : '⚠️'} {d.result}
-                        </span>
-                      </td>
-                      <td style={{ padding: '0.65rem 0.75rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <div style={{ width: 80, height: 6, background: '#e5e7eb', borderRadius: 9999, overflow: 'hidden' }}>
-                            <div style={{ width: `${(d.confidence * 100).toFixed(0)}%`, height: '100%', background: dc(d.result), borderRadius: 9999 }} />
-                          </div>
-                          <span style={{ fontSize: '0.78rem', fontWeight: 600, color: dc(d.result) }}>
-                            {(d.confidence * 100).toFixed(1)}%
+                  {recentDet.slice(0, 8).map((d) => {
+                    const col = DISEASE_COLORS[d.result] ?? '#6b7280';
+                    const pct = Math.round(d.confidence * 100);
+                    return (
+                      <tr key={d.id} className="tbody-row">
+                        <td style={{ fontWeight: 500, fontSize: '0.82rem' }}>{d.farmName ?? '—'}</td>
+                        <td>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.18rem 0.55rem', borderRadius: '9999px', fontSize: '0.72rem', fontWeight: 700, background: col + '18', color: col }}>
+                            <span style={{ width: 5, height: 5, borderRadius: '50%', background: col }} />
+                            {d.result}
                           </span>
-                        </div>
-                      </td>
-                      <td style={{ padding: '0.65rem 0.75rem', fontSize: '0.82rem', fontWeight: 500 }}>
-                        <Link to={`/farms/${d.farmId}`} style={{ color: 'var(--primary)' }}>{d.farmName}</Link>
-                      </td>
-                      <td style={{ padding: '0.65rem 0.75rem', fontSize: '0.78rem', color: '#6b7280', fontFamily: 'monospace' }}>
-                        <Link to={`/batches/${d.batchId}`} style={{ color: '#6b7280' }}>…{d.batchId.slice(-8)}</Link>
-                      </td>
-                      <td style={{ padding: '0.65rem 0.75rem', fontSize: '0.78rem', color: '#9ca3af' }}>
-                        {timeAgo(d.detectedAt)}
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div className="progress-bar" style={{ width: 60 }}>
+                              <div className="progress-fill" style={{ width: `${pct}%`, background: col }} />
+                            </div>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: col }}>{pct}%</span>
+                          </div>
+                        </td>
+                        <td style={{ fontSize: '0.75rem', color: 'var(--text-faint)', whiteSpace: 'nowrap' }}>
+                          {new Date(d.detectedAt).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
         </div>
-
-      </div>
-    </>
+      </motion.div>
+    </div>
   );
 }

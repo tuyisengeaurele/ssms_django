@@ -1,265 +1,308 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { batchService } from '../../services/batch.service';
 import { detectionService } from '../../services/detection.service';
 import { Batch, BatchStage, DiseaseDetection } from '../../types';
-import Navbar from '../../components/ui/Navbar';
-import PageHeader from '../../components/ui/PageHeader';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import StageBadge from '../../components/ui/StageBadge';
+import EmptyState from '../../components/ui/EmptyState';
+import { SkeletonTable } from '../../components/ui/SkeletonLoader';
+import Modal from '../../components/ui/Modal';
 import { useAuth } from '../../context/AuthContext';
 import { useApiError } from '../../hooks/useApiError';
+import { useToast } from '../../context/ToastContext';
 import { STAGE_ORDER, STAGE_LABELS, STAGE_COLORS } from '../../utils/constants';
 
 const DISEASE_COLORS: Record<string, string> = {
-  Healthy: '#059669',
-  Flacherie: '#dc2626',
-  Grasserie: '#d97706',
-  Muscardine: '#7c3aed',
-  Pebrine: '#db2777',
+  Healthy: '#16a34a', Flacherie: '#dc2626', Grasserie: '#d97706',
+  Muscardine: '#7c3aed', Pebrine: '#db2777',
 };
-function diseaseColor(label: string) { return DISEASE_COLORS[label] ?? '#6b7280'; }
+const dc = (r: string) => DISEASE_COLORS[r] ?? '#6b7280';
 
 export default function BatchDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id }   = useParams<{ id: string }>();
   const { user } = useAuth();
   const { getErrorMessage } = useApiError();
+  const { success, error: showError } = useToast();
   const navigate = useNavigate();
 
-  const [batch, setBatch] = useState<Batch | null>(null);
+  const [batch,      setBatch]      = useState<Batch | null>(null);
   const [detections, setDetections] = useState<DiseaseDetection[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [loading,    setLoading]    = useState(true);
+  const [updating,   setUpdating]   = useState(false);
+  const [error,      setError]      = useState('');
+  const [showArchive,setShowArchive]= useState(false);
+  const [archiving,  setArchiving]  = useState(false);
 
   const fetchBatch = () => {
     if (!id) return;
-    Promise.all([
-      batchService.getById(id),
-      detectionService.getByBatch(id),
-    ])
-      .then(([batchRes, detRes]) => {
-        setBatch(batchRes.data.data);
-        setDetections(detRes.data.data);
-      })
-      .catch((err) => setError(getErrorMessage(err)))
+    Promise.all([batchService.getById(id), detectionService.getByBatch(id)])
+      .then(([bRes, dRes]) => { setBatch(bRes.data.data); setDetections(dRes.data.data); })
+      .catch(err => setError(getErrorMessage(err)))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { fetchBatch(); }, [id]);
 
   const handleStageUpdate = async (stage: BatchStage) => {
-    if (!id || !confirm(`Advance stage to "${STAGE_LABELS[stage]}"?`)) return;
+    if (!id) return;
     setUpdating(true);
-    setError('');
     try {
       const res = await batchService.updateStage(id, stage);
-      setBatch((prev) => prev ? { ...prev, stage: res.data.data.stage } : prev);
-      setSuccess(`Stage updated to ${STAGE_LABELS[stage]}.`);
-      setTimeout(() => setSuccess(''), 3000);
+      setBatch(prev => prev ? { ...prev, stage: res.data.data.stage } : prev);
+      success(`Stage advanced to ${STAGE_LABELS[stage]}.`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      showError(getErrorMessage(err));
     } finally {
       setUpdating(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!id || !confirm('Archive this batch?')) return;
+  const handleArchive = async () => {
+    if (!id) return;
+    setArchiving(true);
     try {
       await batchService.delete(id);
+      success('Batch archived.');
       navigate(`/farms/${batch?.farmId}`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      showError(getErrorMessage(err));
+      setArchiving(false);
     }
   };
 
-  const canEdit = user?.role === 'FARMER' || user?.role === 'ADMIN';
+  const canEdit   = user?.role === 'FARMER' || user?.role === 'ADMIN';
   const currentIdx = batch ? STAGE_ORDER.indexOf(batch.stage) : -1;
 
-  if (loading) return <><Navbar /><LoadingSpinner fullPage /></>;
-  if (!batch) return <><Navbar /><div className="container page"><div className="alert alert-error">Batch not found.</div></div></>;
+  if (loading) {
+    return (
+      <div>
+        <div style={{ height: 28, width: 220, borderRadius: 6, marginBottom: '1.5rem' }} className="skeleton" />
+        <SkeletonTable rows={5} cols={4} />
+      </div>
+    );
+  }
+
+  if (error || !batch) {
+    return (
+      <div>
+        <div className="alert alert-error">{error || 'Batch not found.'}</div>
+        <Link to="/farms" className="btn btn-secondary btn-sm">← Farms</Link>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <Navbar />
-      <div className="container page">
-        <PageHeader
-          title={`Batch ${batch.id.slice(-8).toUpperCase()}`}
-          subtitle={`Farm: ${batch.farm?.name ?? '—'}`}
-          action={
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <Link to={`/batches/${id}/detect`} className="btn btn-primary btn-sm">🔬 Run Detection</Link>
-              {canEdit && <button onClick={handleDelete} className="btn btn-danger btn-sm">Archive</button>}
-              <Link to={`/farms/${batch.farmId}`} className="btn btn-secondary btn-sm">← Back</Link>
-            </div>
-          }
-        />
+    <div>
+      {/* Archive modal */}
+      <Modal open={showArchive} onClose={() => setShowArchive(false)} title="Archive batch?"
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setShowArchive(false)}>Cancel</button>
+            <button className="btn btn-danger" onClick={handleArchive} disabled={archiving}>
+              {archiving ? <><span className="spinner" />Archiving…</> : 'Archive'}
+            </button>
+          </>
+        }
+      >
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+          This will archive batch <strong>#{id?.slice(-8).toUpperCase()}</strong>. You can still view it but it will no longer appear as active.
+        </p>
+      </Modal>
 
-        {error && <div className="alert alert-error">{error}</div>}
-        {success && <div className="alert alert-success">{success}</div>}
+      {/* Header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Batch #{id?.slice(-8).toUpperCase()}</h1>
+          <p className="page-subtitle">Farm: <strong>{batch.farm?.name ?? '—'}</strong></p>
+        </div>
+        <div className="page-actions">
+          <Link to={`/batches/${id}/detect`} className="btn btn-primary btn-sm">🔬 Run Detection</Link>
+          {canEdit && <button onClick={() => setShowArchive(true)} className="btn btn-secondary btn-sm" style={{ color: 'var(--danger)', borderColor: 'var(--danger-border)' }}>Archive</button>}
+          <Link to={`/farms/${batch.farmId}`} className="btn btn-ghost btn-sm">← Farm</Link>
+        </div>
+      </div>
 
-        {/* Stage progress bar */}
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ fontWeight: 600, marginBottom: '1.25rem' }}>Lifecycle Stage</h3>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            {STAGE_ORDER.map((stage, idx) => {
-              const isActive = stage === batch.stage;
-              const isPast = idx < currentIdx;
-              const isFuture = idx > currentIdx;
-              const color = STAGE_COLORS[stage];
-              return (
-                <div key={stage} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <div
-                    style={{
-                      padding: '0.5rem 1rem',
-                      borderRadius: '9999px',
-                      fontWeight: isActive ? 700 : 500,
-                      fontSize: '0.875rem',
-                      background: isActive ? color : isPast ? color + '30' : 'var(--border)',
-                      color: isActive ? '#fff' : isPast ? color : 'var(--text-muted)',
-                      border: isActive ? `2px solid ${color}` : '2px solid transparent',
-                      cursor: canEdit && isFuture && idx === currentIdx + 1 ? 'pointer' : 'default',
-                      transition: 'all 0.15s',
-                    }}
-                    onClick={() => {
-                      if (canEdit && isFuture && idx === currentIdx + 1 && !updating) {
-                        handleStageUpdate(stage as BatchStage);
-                      }
-                    }}
-                    title={canEdit && idx === currentIdx + 1 ? `Click to advance to ${STAGE_LABELS[stage]}` : ''}
-                  >
-                    {STAGE_LABELS[stage]}
-                    {isActive && ' ●'}
-                  </div>
-                  {idx < STAGE_ORDER.length - 1 && (
-                    <div style={{ width: '2rem', height: '2px', background: isPast ? color : 'var(--border)', borderRadius: '2px' }} />
-                  )}
-                </div>
-              );
-            })}
-          </div>
+      {/* Stage progression */}
+      <motion.div className="card" style={{ marginBottom: '1.5rem' }}
+        initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3 style={{ fontWeight: 700, fontSize: '0.875rem' }}>Lifecycle Progress</h3>
           {canEdit && currentIdx < STAGE_ORDER.length - 1 && (
-            <p className="text-muted" style={{ marginTop: '0.75rem', fontSize: '0.8rem' }}>
-              Click the next stage to advance the lifecycle.
-            </p>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Click next stage to advance</span>
           )}
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0', overflow: 'auto' }}>
+          {STAGE_ORDER.map((stage, idx) => {
+            const isActive  = stage === batch.stage;
+            const isPast    = idx < currentIdx;
+            const isNext    = canEdit && idx === currentIdx + 1;
+            const color     = STAGE_COLORS[stage];
+            return (
+              <div key={stage} style={{ display: 'flex', alignItems: 'center', flex: idx < STAGE_ORDER.length - 1 ? 1 : 'none' }}>
+                <div
+                  onClick={() => { if (isNext && !updating) handleStageUpdate(stage as BatchStage); }}
+                  title={isNext ? `Click to advance to ${STAGE_LABELS[stage]}` : ''}
+                  style={{
+                    padding: '0.45rem 0.875rem',
+                    borderRadius: '9999px',
+                    fontWeight: isActive ? 700 : 500,
+                    fontSize: '0.75rem',
+                    whiteSpace: 'nowrap',
+                    cursor: isNext ? 'pointer' : 'default',
+                    background: isActive ? color : isPast ? color + '25' : 'var(--gray-100)',
+                    color: isActive ? '#fff' : isPast ? color : 'var(--text-muted)',
+                    border: `1.5px solid ${isActive ? color : isPast ? color + '50' : 'var(--border)'}`,
+                    transition: 'all 0.2s',
+                    boxShadow: isActive ? `0 2px 8px ${color}40` : 'none',
+                    transform: isNext ? 'scale(1.02)' : 'scale(1)',
+                  }}
+                  onMouseEnter={e => { if (isNext) (e.currentTarget as HTMLElement).style.transform = 'scale(1.06)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = isNext ? 'scale(1.02)' : 'scale(1)'; }}
+                >
+                  {isPast && '✓ '}{STAGE_LABELS[stage]}{isActive && ' ●'}
+                </div>
+                {idx < STAGE_ORDER.length - 1 && (
+                  <div style={{ flex: 1, height: 2, background: isPast ? color + '60' : 'var(--border-light)', minWidth: 16, margin: '0 2px' }} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </motion.div>
 
-        <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
-          <div className="card">
-            <h3 style={{ fontWeight: 600, marginBottom: '1rem' }}>Details</h3>
+      {/* Details + Activity */}
+      <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
+        <motion.div className="card" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.35 }}>
+          <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '1rem' }}>Batch Details</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
             {[
-              { label: 'Current Stage', value: <StageBadge stage={batch.stage} /> },
-              { label: 'Start Date', value: new Date(batch.startDate).toLocaleDateString() },
-              { label: 'Expected Harvest', value: new Date(batch.expectedHarvestDate).toLocaleDateString() },
-              { label: 'Farm', value: batch.farm?.name ?? '—' },
-              { label: 'Location', value: batch.farm?.location ?? '—' },
-            ].map((row) => (
-              <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--border)' }}>
-                <span className="text-muted" style={{ fontSize: '0.875rem' }}>{row.label}</span>
-                <span style={{ fontWeight: 500, fontSize: '0.875rem' }}>{row.value}</span>
+              { label: 'Stage',           value: <StageBadge stage={batch.stage} /> },
+              { label: 'Start Date',      value: new Date(batch.startDate).toLocaleDateString() },
+              { label: 'Expected Harvest',value: new Date(batch.expectedHarvestDate).toLocaleDateString() },
+              { label: 'Farm',            value: batch.farm?.name ?? '—' },
+              { label: 'Location',        value: batch.farm?.location ?? '—' },
+            ].map(row => (
+              <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid var(--border-light)' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{row.label}</span>
+                <span style={{ fontSize: '0.82rem', fontWeight: 500 }}>{row.value}</span>
               </div>
             ))}
             {batch.notes && (
-              <div style={{ marginTop: '0.75rem' }}>
-                <p className="text-muted" style={{ fontSize: '0.8rem', marginBottom: '0.25rem' }}>NOTES</p>
-                <p style={{ fontSize: '0.875rem' }}>{batch.notes}</p>
+              <div style={{ paddingTop: '0.75rem' }}>
+                <p style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-faint)', marginBottom: '0.3rem' }}>Notes</p>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-2)', lineHeight: 1.6 }}>{batch.notes}</p>
               </div>
             )}
           </div>
+        </motion.div>
 
-          <div className="card">
-            <h3 style={{ fontWeight: 600, marginBottom: '1rem' }}>Activity Summary</h3>
-            {[
-              { label: 'Disease Detections', value: batch.counts?.diseaseDetections ?? batch.diseaseDetections?.length ?? 0, color: 'var(--danger)' },
-              { label: 'Sensor Readings', value: batch.counts?.sensorReadings ?? batch.sensorReadings?.length ?? 0, color: 'var(--secondary)' },
-              { label: 'Unread Alerts', value: batch.alertLogs?.filter((a) => !a.isRead).length ?? 0, color: 'var(--warning)' },
-            ].map((item) => (
-              <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.625rem 0', borderBottom: '1px solid var(--border)' }}>
-                <span className="text-muted" style={{ fontSize: '0.875rem' }}>{item.label}</span>
-                <span style={{ fontWeight: 700, color: item.color }}>{item.value}</span>
-              </div>
-            ))}
-
-            {batch.alertLogs && batch.alertLogs.length > 0 && (
-              <div style={{ marginTop: '1rem' }}>
-                <p className="text-muted" style={{ fontSize: '0.8rem', marginBottom: '0.5rem' }}>RECENT ALERTS</p>
-                {batch.alertLogs.slice(0, 3).map((alert) => (
-                  <div key={alert.id} style={{ padding: '0.5rem', background: 'var(--bg)', borderRadius: 'var(--radius)', marginBottom: '0.25rem', fontSize: '0.8rem' }}>
-                    <span style={{ fontWeight: 500 }}>{alert.type}</span>: {alert.message}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {batch.sensorReadings && batch.sensorReadings.length > 0 && (
-          <div className="card" style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontWeight: 600, marginBottom: '1rem' }}>Recent Sensor Readings</h3>
-            <div className="table-wrapper">
-              <table>
-                <thead><tr><th>Timestamp</th><th>Temperature (°C)</th><th>Humidity (%)</th></tr></thead>
-                <tbody>
-                  {batch.sensorReadings.slice(0, 10).map((r) => (
-                    <tr key={r.id}>
-                      <td className="text-muted">{new Date(r.timestamp).toLocaleString()}</td>
-                      <td style={{ fontWeight: 500 }}>{r.temperature.toFixed(1)}</td>
-                      <td style={{ fontWeight: 500 }}>{r.humidity.toFixed(1)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        <motion.div className="card" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16, duration: 0.35 }}>
+          <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '1rem' }}>Activity Summary</h3>
+          {[
+            { label: 'Disease Detections', val: batch.counts?.diseaseDetections ?? detections.length, color: '#dc2626', bg: '#fef2f2' },
+            { label: 'Sensor Readings',   val: batch.counts?.sensorReadings ?? 0,   color: '#2563eb', bg: '#eff6ff' },
+            { label: 'Unread Alerts',     val: batch.alertLogs?.filter(a => !a.isRead).length ?? 0, color: '#d97706', bg: '#fef3c7' },
+          ].map(item => (
+            <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.7rem 0', borderBottom: '1px solid var(--border-light)' }}>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{item.label}</span>
+              <span style={{ fontWeight: 800, fontSize: '1.1rem', color: item.color }}>{item.val}</span>
             </div>
-          </div>
-        )}
+          ))}
+          {batch.alertLogs && batch.alertLogs.length > 0 && (
+            <div style={{ marginTop: '0.875rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+              {batch.alertLogs.slice(0, 3).map(a => (
+                <div key={a.id} style={{ padding: '0.5rem 0.625rem', background: 'var(--gray-50)', borderRadius: 'var(--radius)', fontSize: '0.75rem', color: 'var(--text-2)', borderLeft: '3px solid var(--warning)' }}>
+                  <strong>{a.type}</strong>: {a.message}
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      </div>
 
-        {/* Disease Detection History */}
-        <div className="card">
-          <div className="flex-between" style={{ marginBottom: '1rem' }}>
-            <h3 style={{ fontWeight: 600 }}>Detection History ({detections.length})</h3>
-            <Link to={`/batches/${id}/detect`} className="btn btn-sm btn-primary">🔬 New Detection</Link>
+      {/* Sensor readings */}
+      {batch.sensorReadings && batch.sensorReadings.length > 0 && (
+        <motion.div className="table-container" style={{ marginBottom: '1.5rem' }}
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22, duration: 0.35 }}>
+          <div className="table-header">
+            <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>Recent Sensor Readings</p>
+          </div>
+          <div className="table-wrapper">
+            <table>
+              <thead>
+                <tr><th>Timestamp</th><th>Temperature</th><th>Humidity</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                {batch.sensorReadings.slice(0, 10).map(r => {
+                  const tempOk = r.temperature >= 22 && r.temperature <= 28;
+                  const humOk  = r.humidity >= 70 && r.humidity <= 85;
+                  return (
+                    <tr key={r.id} className="tbody-row">
+                      <td style={{ fontSize: '0.78rem', color: 'var(--text-faint)' }}>{new Date(r.timestamp).toLocaleString()}</td>
+                      <td><span style={{ fontWeight: 600, color: tempOk ? 'var(--text)' : '#dc2626' }}>{r.temperature.toFixed(1)}°C</span></td>
+                      <td><span style={{ fontWeight: 600, color: humOk ? 'var(--text)' : '#2563eb' }}>{r.humidity.toFixed(1)}%</span></td>
+                      <td>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '9999px', background: (tempOk && humOk) ? '#f0fdf4' : '#fef2f2', color: (tempOk && humOk) ? '#16a34a' : '#dc2626' }}>
+                          {(tempOk && humOk) ? 'Normal' : 'Alert'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Detection history */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28, duration: 0.35 }}>
+        <div className="table-container">
+          <div className="table-header">
+            <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>Detection History ({detections.length})</p>
+            <Link to={`/batches/${id}/detect`} className="btn btn-primary btn-sm">🔬 New Detection</Link>
           </div>
           {detections.length === 0 ? (
-            <div className="text-center" style={{ padding: '2rem 0', color: 'var(--text-muted)' }}>
-              <p style={{ fontSize: '2rem' }}>🔬</p>
-              <p style={{ marginTop: '0.5rem' }}>No detections yet. <Link to={`/batches/${id}/detect`} style={{ color: 'var(--primary)' }}>Run the first one</Link></p>
-            </div>
+            <EmptyState icon="🔬" title="No detections yet"
+              description="Run your first disease detection to get AI-powered insights on this batch."
+              action={{ label: '🔬 Run Detection', to: `/batches/${id}/detect` }} />
           ) : (
             <div className="table-wrapper">
               <table>
-                <thead>
-                  <tr><th>Date</th><th>Diagnosis</th><th>Confidence</th><th>Notes</th></tr>
-                </thead>
+                <thead><tr><th>Date</th><th>Diagnosis</th><th>Confidence</th><th>Notes</th></tr></thead>
                 <tbody>
-                  {detections.map((d) => (
-                    <tr key={d.id}>
-                      <td className="text-muted">{new Date(d.detectedAt).toLocaleString()}</td>
-                      <td>
-                        <span style={{
-                          display: 'inline-block',
-                          padding: '0.2rem 0.6rem',
-                          borderRadius: '9999px',
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                          background: `${diseaseColor(d.result)}20`,
-                          color: diseaseColor(d.result),
-                        }}>
-                          {d.result}
-                        </span>
-                      </td>
-                      <td style={{ fontWeight: 600 }}>{(d.confidence * 100).toFixed(1)}%</td>
-                      <td className="text-muted" style={{ fontSize: '0.8rem' }}>{d.notes ?? '—'}</td>
-                    </tr>
-                  ))}
+                  {detections.map((d, i) => {
+                    const col = dc(d.result);
+                    const pct = Math.round(d.confidence * 100);
+                    return (
+                      <motion.tr key={d.id} className="tbody-row"
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}>
+                        <td style={{ fontSize: '0.78rem', color: 'var(--text-faint)' }}>{new Date(d.detectedAt).toLocaleString()}</td>
+                        <td>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.2rem 0.55rem', borderRadius: '9999px', fontSize: '0.72rem', fontWeight: 700, background: col + '18', color: col }}>
+                            <span style={{ width: 5, height: 5, borderRadius: '50%', background: col }} />
+                            {d.result}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div className="progress-bar" style={{ width: 55 }}>
+                              <div className="progress-fill" style={{ width: `${pct}%`, background: col }} />
+                            </div>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: col }}>{pct}%</span>
+                          </div>
+                        </td>
+                        <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{d.notes ?? '—'}</td>
+                      </motion.tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
         </div>
-      </div>
-    </>
+      </motion.div>
+    </div>
   );
 }
