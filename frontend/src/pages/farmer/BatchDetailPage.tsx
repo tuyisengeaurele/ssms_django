@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { batchService } from '../../services/batch.service';
-import { Batch, BatchStage } from '../../types';
+import { detectionService } from '../../services/detection.service';
+import { Batch, BatchStage, DiseaseDetection } from '../../types';
 import Navbar from '../../components/ui/Navbar';
 import PageHeader from '../../components/ui/PageHeader';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -10,6 +11,15 @@ import { useAuth } from '../../context/AuthContext';
 import { useApiError } from '../../hooks/useApiError';
 import { STAGE_ORDER, STAGE_LABELS, STAGE_COLORS } from '../../utils/constants';
 
+const DISEASE_COLORS: Record<string, string> = {
+  Healthy: '#059669',
+  Flacherie: '#dc2626',
+  Grasserie: '#d97706',
+  Muscardine: '#7c3aed',
+  Pebrine: '#db2777',
+};
+function diseaseColor(label: string) { return DISEASE_COLORS[label] ?? '#6b7280'; }
+
 export default function BatchDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -17,6 +27,7 @@ export default function BatchDetailPage() {
   const navigate = useNavigate();
 
   const [batch, setBatch] = useState<Batch | null>(null);
+  const [detections, setDetections] = useState<DiseaseDetection[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState('');
@@ -24,8 +35,14 @@ export default function BatchDetailPage() {
 
   const fetchBatch = () => {
     if (!id) return;
-    batchService.getById(id)
-      .then((r) => setBatch(r.data.data))
+    Promise.all([
+      batchService.getById(id),
+      detectionService.getByBatch(id),
+    ])
+      .then(([batchRes, detRes]) => {
+        setBatch(batchRes.data.data);
+        setDetections(detRes.data.data);
+      })
       .catch((err) => setError(getErrorMessage(err)))
       .finally(() => setLoading(false));
   };
@@ -73,6 +90,7 @@ export default function BatchDetailPage() {
           subtitle={`Farm: ${batch.farm?.name ?? '—'}`}
           action={
             <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <Link to={`/batches/${id}/detect`} className="btn btn-primary btn-sm">🔬 Run Detection</Link>
               {canEdit && <button onClick={handleDelete} className="btn btn-danger btn-sm">Archive</button>}
               <Link to={`/farms/${batch.farmId}`} className="btn btn-secondary btn-sm">← Back</Link>
             </div>
@@ -179,7 +197,7 @@ export default function BatchDetailPage() {
         </div>
 
         {batch.sensorReadings && batch.sensorReadings.length > 0 && (
-          <div className="card">
+          <div className="card" style={{ marginBottom: '1.5rem' }}>
             <h3 style={{ fontWeight: 600, marginBottom: '1rem' }}>Recent Sensor Readings</h3>
             <div className="table-wrapper">
               <table>
@@ -197,6 +215,50 @@ export default function BatchDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Disease Detection History */}
+        <div className="card">
+          <div className="flex-between" style={{ marginBottom: '1rem' }}>
+            <h3 style={{ fontWeight: 600 }}>Detection History ({detections.length})</h3>
+            <Link to={`/batches/${id}/detect`} className="btn btn-sm btn-primary">🔬 New Detection</Link>
+          </div>
+          {detections.length === 0 ? (
+            <div className="text-center" style={{ padding: '2rem 0', color: 'var(--text-muted)' }}>
+              <p style={{ fontSize: '2rem' }}>🔬</p>
+              <p style={{ marginTop: '0.5rem' }}>No detections yet. <Link to={`/batches/${id}/detect`} style={{ color: 'var(--primary)' }}>Run the first one</Link></p>
+            </div>
+          ) : (
+            <div className="table-wrapper">
+              <table>
+                <thead>
+                  <tr><th>Date</th><th>Diagnosis</th><th>Confidence</th><th>Notes</th></tr>
+                </thead>
+                <tbody>
+                  {detections.map((d) => (
+                    <tr key={d.id}>
+                      <td className="text-muted">{new Date(d.detectedAt).toLocaleString()}</td>
+                      <td>
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: '9999px',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          background: `${diseaseColor(d.result)}20`,
+                          color: diseaseColor(d.result),
+                        }}>
+                          {d.result}
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: 600 }}>{(d.confidence * 100).toFixed(1)}%</td>
+                      <td className="text-muted" style={{ fontSize: '0.8rem' }}>{d.notes ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );
