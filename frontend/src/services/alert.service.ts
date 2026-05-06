@@ -2,9 +2,9 @@ import api from './api';
 import { ApiResponse, AlertLog } from '../types';
 
 export const alertService = {
-  /** GET /api/alerts — all unread alerts (supervisor/admin) */
-  getAll: (unread = true) =>
-    api.get<ApiResponse<AlertLog[]>>(`/alerts${unread ? '?unread=true' : ''}`),
+  /** GET /api/alerts — pass unread=true to filter, false/undefined for all */
+  getAll: (unread?: boolean) =>
+    api.get<ApiResponse<AlertLog[]>>(`/alerts${unread === true ? '?unread=true' : ''}`),
 
   /** GET /api/alerts/batch/<batchId> */
   getByBatch: (batchId: string) =>

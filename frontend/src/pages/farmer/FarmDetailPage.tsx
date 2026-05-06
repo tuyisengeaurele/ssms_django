@@ -1,25 +1,30 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { farmService } from '../../services/farm.service';
 import { batchService } from '../../services/batch.service';
 import { Farm, Batch } from '../../types';
-import Navbar from '../../components/ui/Navbar';
-import PageHeader from '../../components/ui/PageHeader';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import StageBadge from '../../components/ui/StageBadge';
+import EmptyState from '../../components/ui/EmptyState';
+import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import { useAuth } from '../../context/AuthContext';
 import { useApiError } from '../../hooks/useApiError';
+import { useToast } from '../../context/ToastContext';
+import Modal from '../../components/ui/Modal';
 
 export default function FarmDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id }   = useParams<{ id: string }>();
   const { user } = useAuth();
   const { getErrorMessage } = useApiError();
+  const { success, error: showError } = useToast();
   const navigate = useNavigate();
 
-  const [farm, setFarm] = useState<Farm | null>(null);
-  const [batches, setBatches] = useState<Batch[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [farm,      setFarm]      = useState<Farm | null>(null);
+  const [batches,   setBatches]   = useState<Batch[]>([]);
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState('');
+  const [showDel,   setShowDel]   = useState(false);
+  const [deleting,  setDeleting]  = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -28,84 +33,151 @@ export default function FarmDetailPage() {
         setFarm(farmRes.data.data);
         setBatches(batchRes.data.data);
       })
-      .catch((err) => setError(getErrorMessage(err)))
+      .catch(err => setError(getErrorMessage(err)))
       .finally(() => setLoading(false));
   }, [id]);
 
   const handleDelete = async () => {
-    if (!id || !confirm('Delete this farm? All batches will be archived.')) return;
+    if (!id) return;
+    setDeleting(true);
     try {
       await farmService.delete(id);
+      success('Farm deleted.');
       navigate('/farms');
     } catch (err) {
-      setError(getErrorMessage(err));
+      showError(getErrorMessage(err));
+      setDeleting(false);
     }
   };
 
   const canEdit = user?.role === 'FARMER' || user?.role === 'ADMIN';
 
-  if (loading) return <><Navbar /><LoadingSpinner fullPage /></>;
-  if (!farm) return <><Navbar /><div className="container page"><div className="alert alert-error">Farm not found.</div></div></>;
+  if (loading) {
+    return (
+      <div>
+        <div style={{ marginBottom: '1.75rem' }}>
+          <div style={{ height: 28, width: 200, borderRadius: 6 }} className="skeleton" />
+        </div>
+        <SkeletonTable rows={4} cols={5} />
+      </div>
+    );
+  }
+
+  if (error || !farm) {
+    return (
+      <div>
+        <div className="alert alert-error">{error || 'Farm not found.'}</div>
+        <Link to="/farms" className="btn btn-secondary btn-sm">← Back</Link>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <Navbar />
-      <div className="container page">
-        <PageHeader
-          title={farm.name}
-          subtitle={`📍 ${farm.location}`}
-          action={
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              {canEdit && <Link to={`/farms/${id}/batches/new`} className="btn btn-primary">+ New Batch</Link>}
-              {canEdit && <button onClick={handleDelete} className="btn btn-danger btn-sm">Delete Farm</button>}
-              <Link to="/farms" className="btn btn-secondary btn-sm">← Back</Link>
-            </div>
-          }
-        />
+    <div>
+      {/* Delete modal */}
+      <Modal open={showDel} onClose={() => setShowDel(false)} title="Delete farm?"
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setShowDel(false)}>Cancel</button>
+            <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
+              {deleting ? <><span className="spinner" />Deleting…</> : 'Yes, delete'}
+            </button>
+          </>
+        }
+      >
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+          This will permanently delete <strong>{farm.name}</strong> and all associated data. This action cannot be undone.
+        </p>
+      </Modal>
 
-        {error && <div className="alert alert-error">{error}</div>}
-
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ fontWeight: 600, marginBottom: '0.75rem' }}>Farm Info</h3>
-          <div className="grid-3">
-            <div><p className="text-muted" style={{ fontSize: '0.8rem' }}>OWNER</p><p style={{ fontWeight: 500, marginTop: '0.25rem' }}>{farm.owner?.name ?? '—'}</p></div>
-            <div><p className="text-muted" style={{ fontSize: '0.8rem' }}>BATCHES</p><p style={{ fontWeight: 500, marginTop: '0.25rem' }}>{batches.length}</p></div>
-            <div><p className="text-muted" style={{ fontSize: '0.8rem' }}>CREATED</p><p style={{ fontWeight: 500, marginTop: '0.25rem' }}>{new Date(farm.createdAt).toLocaleDateString()}</p></div>
-          </div>
+      {/* Header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">{farm.name}</h1>
+          <p className="page-subtitle" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            {farm.location}
+          </p>
         </div>
+        <div className="page-actions">
+          {canEdit && <Link to={`/farms/${id}/batches/new`} className="btn btn-primary btn-sm">+ New Batch</Link>}
+          {canEdit && <button onClick={() => setShowDel(true)} className="btn btn-secondary btn-sm" style={{ color: 'var(--danger)', borderColor: 'var(--danger-border)' }}>Delete</button>}
+          <Link to="/farms" className="btn btn-ghost btn-sm">← Farms</Link>
+        </div>
+      </div>
 
-        <div className="card">
-          <div className="flex-between" style={{ marginBottom: '1rem' }}>
-            <h3 style={{ fontWeight: 600 }}>Batches ({batches.length})</h3>
-            {canEdit && <Link to={`/farms/${id}/batches/new`} className="btn btn-sm btn-primary">+ Add Batch</Link>}
+      {/* Farm info */}
+      <motion.div className="card" style={{ marginBottom: '1.5rem' }}
+        initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.5rem' }}>
+          {[
+            { label: 'Owner',   value: farm.owner?.name ?? '—' },
+            { label: 'Batches', value: batches.length },
+            { label: 'Created', value: new Date(farm.createdAt).toLocaleDateString() },
+            { label: 'Status',  value: farm.isActive ? 'Active' : 'Inactive' },
+          ].map(item => (
+            <div key={item.label}>
+              <p style={{ fontSize: '0.68rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-faint)', marginBottom: '0.3rem' }}>{item.label}</p>
+              <p style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text)' }}>{item.value}</p>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Batches table */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.35 }}>
+        <div className="table-container">
+          <div className="table-header">
+            <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>Batches ({batches.length})</p>
+            {canEdit && <Link to={`/farms/${id}/batches/new`} className="btn btn-primary btn-sm">+ Add Batch</Link>}
           </div>
 
           {batches.length === 0 ? (
-            <div className="text-center" style={{ padding: '2.5rem 0', color: 'var(--text-muted)' }}>
-              <p style={{ fontSize: '2rem' }}></p>
-              <p style={{ marginTop: '0.5rem' }}>No batches yet.{canEdit && <> <Link to={`/farms/${id}/batches/new`} style={{ color: 'var(--primary)' }}>Start one</Link></>}</p>
-            </div>
+            <EmptyState icon="📦" title="No batches yet"
+              description="Add your first batch to start tracking production."
+              action={canEdit ? { label: '+ Add Batch', to: `/farms/${id}/batches/new` } : undefined} />
           ) : (
             <div className="table-wrapper">
               <table>
-                <thead><tr><th>ID</th><th>Stage</th><th>Started</th><th>Expected Harvest</th><th>Detections</th><th></th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Batch ID</th>
+                    <th>Stage</th>
+                    <th>Started</th>
+                    <th>Expected Harvest</th>
+                    <th>Detections</th>
+                    <th></th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {batches.map((batch) => (
-                    <tr key={batch.id}>
-                      <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{batch.id.slice(-8)}</td>
-                      <td><StageBadge stage={batch.stage} /></td>
-                      <td className="text-muted">{new Date(batch.startDate).toLocaleDateString()}</td>
-                      <td className="text-muted">{new Date(batch.expectedHarvestDate).toLocaleDateString()}</td>
-                      <td>{batch.counts?.diseaseDetections ?? 0}</td>
-                      <td><Link to={`/batches/${batch.id}`} className="btn btn-sm btn-secondary">Details</Link></td>
-                    </tr>
+                  {batches.map((b, i) => (
+                    <motion.tr key={b.id} className="tbody-row"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: i * 0.04 }}>
+                      <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--text-faint)' }}>
+                        #{b.id.slice(-8)}
+                      </td>
+                      <td><StageBadge stage={b.stage} /></td>
+                      <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{new Date(b.startDate).toLocaleDateString()}</td>
+                      <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{new Date(b.expectedHarvestDate).toLocaleDateString()}</td>
+                      <td>
+                        <span style={{ fontWeight: 600, color: 'var(--brand-600)' }}>{b.counts?.diseaseDetections ?? 0}</span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.375rem' }}>
+                          <Link to={`/batches/${b.id}`} className="btn btn-ghost btn-xs">Details</Link>
+                          <Link to={`/batches/${b.id}/detect`} className="btn btn-xs btn-outline-primary">🔬</Link>
+                        </div>
+                      </td>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
         </div>
-      </div>
-    </>
+      </motion.div>
+    </div>
   );
 }

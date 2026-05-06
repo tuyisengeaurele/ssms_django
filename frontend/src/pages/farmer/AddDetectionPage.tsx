@@ -1,67 +1,50 @@
-import { useState, useRef, DragEvent, ChangeEvent } from 'react';
+import { useState, useRef, DragEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import Navbar from '../../components/ui/Navbar';
-import PageHeader from '../../components/ui/PageHeader';
+import { motion, AnimatePresence } from 'framer-motion';
 import { detectionService, DetectionResult } from '../../services/detection.service';
 import { useApiError } from '../../hooks/useApiError';
+import { useToast } from '../../context/ToastContext';
 
 const DISEASE_COLORS: Record<string, string> = {
-  Healthy: '#059669',
-  Flacherie: '#dc2626',
-  Grasserie: '#d97706',
-  Muscardine: '#7c3aed',
-  Pebrine: '#db2777',
+  Healthy: '#16a34a', Flacherie: '#dc2626', Grasserie: '#d97706',
+  Muscardine: '#7c3aed', Pebrine: '#db2777',
 };
-
-function getColor(label: string) {
-  return DISEASE_COLORS[label] ?? '#6b7280';
-}
+const gc = (l: string) => DISEASE_COLORS[l] ?? '#6b7280';
 
 export default function AddDetectionPage() {
   const { id: batchId } = useParams<{ id: string }>();
   const { getErrorMessage } = useApiError();
+  const { success } = useToast();
 
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [notes, setNotes] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [result, setResult] = useState<DetectionResult | null>(null);
+  const [file,     setFile]     = useState<File | null>(null);
+  const [preview,  setPreview]  = useState<string | null>(null);
+  const [notes,    setNotes]    = useState('');
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState('');
+  const [result,   setResult]   = useState<DetectionResult | null>(null);
   const [dragging, setDragging] = useState(false);
-
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (f: File) => {
-    if (!f.type.startsWith('image/')) {
-      setError('Please select a JPEG or PNG image.');
-      return;
-    }
-    setFile(f);
-    setError('');
-    setResult(null);
+    if (!f.type.startsWith('image/')) { setError('Please select a JPEG or PNG image.'); return; }
+    setFile(f); setError(''); setResult(null);
     const reader = new FileReader();
-    reader.onload = (e) => setPreview(e.target?.result as string);
+    reader.onload = e => setPreview(e.target?.result as string);
     reader.readAsDataURL(f);
   };
 
-  const onInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) handleFile(e.target.files[0]);
-  };
-
   const onDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragging(false);
+    e.preventDefault(); setDragging(false);
     if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]);
   };
 
   const handleSubmit = async () => {
     if (!file || !batchId) return;
-    setLoading(true);
-    setError('');
-    setResult(null);
+    setLoading(true); setError(''); setResult(null);
     try {
       const res = await detectionService.create(batchId, file, notes || undefined);
       setResult(res.data.data);
+      success(`Detection complete: ${res.data.data.result}`);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -70,11 +53,7 @@ export default function AddDetectionPage() {
   };
 
   const reset = () => {
-    setFile(null);
-    setPreview(null);
-    setNotes('');
-    setResult(null);
-    setError('');
+    setFile(null); setPreview(null); setNotes(''); setResult(null); setError('');
     if (inputRef.current) inputRef.current.value = '';
   };
 
@@ -83,177 +62,190 @@ export default function AddDetectionPage() {
     : [];
 
   return (
-    <>
-      <Navbar />
-      <div className="container page" style={{ maxWidth: '720px' }}>
-        <PageHeader
-          title="Disease Detection"
-          subtitle="Upload a silkworm image for AI-powered disease analysis"
-          action={<Link to={`/batches/${batchId}`} className="btn btn-secondary btn-sm">← Back to Batch</Link>}
-        />
+    <div>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Disease Detection</h1>
+          <p className="page-subtitle">Upload a silkworm image for AI-powered disease analysis</p>
+        </div>
+        <Link to={`/batches/${batchId}`} className="btn btn-secondary btn-sm">← Back to Batch</Link>
+      </div>
 
-        {error && <div className="alert alert-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+      <div style={{ display: 'grid', gridTemplateColumns: result ? '1fr' : '1fr 1fr', gap: '1.5rem', maxWidth: result ? 700 : 900, transition: 'all 0.3s' }}>
 
-        {!result ? (
-          <div className="card">
-            {/* Drop Zone */}
-            <div
-              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={onDrop}
-              onClick={() => inputRef.current?.click()}
-              style={{
-                border: `2px dashed ${dragging ? 'var(--primary)' : 'var(--border)'}`,
-                borderRadius: 'var(--radius)',
-                padding: '2.5rem 1rem',
-                textAlign: 'center',
-                cursor: 'pointer',
-                background: dragging ? 'var(--primary-light, #eff6ff)' : 'var(--bg)',
-                transition: 'all 0.15s',
-                marginBottom: '1rem',
-              }}
-            >
-              {preview ? (
-                <img
-                  src={preview}
-                  alt="preview"
-                  style={{ maxHeight: '260px', maxWidth: '100%', borderRadius: 'var(--radius)', objectFit: 'contain' }}
-                />
-              ) : (
-                <>
-                  <p style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🖼️</p>
-                  <p style={{ fontWeight: 600, color: 'var(--primary)' }}>Click or drag an image here</p>
-                  <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>JPEG · PNG · WebP — max 10 MB</p>
-                </>
-              )}
-            </div>
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/jpeg,image/jpg,image/png,image/webp"
-              style={{ display: 'none' }}
-              onChange={onInputChange}
-            />
+        <AnimatePresence mode="wait">
+          {!result ? (
+            <motion.div key="upload" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}>
+              <div className="card">
+                <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '1.25rem' }}>Upload Image</h3>
 
-            {file && (
-              <p className="text-muted" style={{ fontSize: '0.8rem', marginBottom: '1rem' }}>
-                📎 {file.name} ({(file.size / 1024).toFixed(1)} KB)
-                <button
-                  onClick={(e) => { e.stopPropagation(); reset(); }}
-                  style={{ marginLeft: '0.5rem', background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.8rem' }}
+                {error && <motion.div className="alert alert-error" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}>{error}</motion.div>}
+
+                {/* Drop zone */}
+                <div
+                  onDragOver={e => { e.preventDefault(); setDragging(true); }}
+                  onDragLeave={() => setDragging(false)}
+                  onDrop={onDrop}
+                  onClick={() => inputRef.current?.click()}
+                  style={{
+                    border: `2px dashed ${dragging ? 'var(--brand-400)' : file ? 'var(--brand-300)' : 'var(--border)'}`,
+                    borderRadius: 'var(--radius-lg)',
+                    padding: preview ? '1rem' : '2.5rem 1rem',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    background: dragging ? 'var(--brand-50)' : file ? 'var(--brand-50)' : 'var(--gray-50)',
+                    transition: 'all 0.2s',
+                    marginBottom: '1rem',
+                    position: 'relative',
+                  }}
                 >
-                  ✕ Remove
-                </button>
-              </p>
-            )}
-
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ fontSize: '0.85rem', fontWeight: 500, display: 'block', marginBottom: '0.35rem' }}>Notes (optional)</label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add any observations about the silkworm sample…"
-                rows={3}
-                style={{ width: '100%', padding: '0.625rem', border: '1px solid var(--border)', borderRadius: 'var(--radius)', resize: 'vertical', fontSize: '0.875rem', fontFamily: 'inherit', boxSizing: 'border-box' }}
-              />
-            </div>
-
-            <button
-              className="btn btn-primary"
-              disabled={!file || loading}
-              onClick={handleSubmit}
-              style={{ width: '100%' }}
-            >
-              {loading ? '🔬 Analysing…' : '🔬 Run Detection'}
-            </button>
-          </div>
-        ) : (
-          /* ── Result card ── */
-          <div>
-            <div
-              className="card"
-              style={{ borderTop: `4px solid ${getColor(result.result)}`, marginBottom: '1rem' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                {preview && (
-                  <img
-                    src={preview}
-                    alt="analysed"
-                    style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: 'var(--radius)', flexShrink: 0 }}
-                  />
-                )}
-                <div style={{ flex: 1 }}>
-                  <p className="text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Diagnosis</p>
-                  <p style={{ fontSize: '1.75rem', fontWeight: 800, color: getColor(result.result), lineHeight: 1.1 }}>
-                    {result.result}
-                  </p>
-                  <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>
-                    Confidence: <strong style={{ color: getColor(result.result) }}>{(result.confidence * 100).toFixed(1)}%</strong>
-                  </p>
-                </div>
-              </div>
-
-              {/* Confidence bar */}
-              <div style={{ marginTop: '1.25rem' }}>
-                <div style={{ height: '8px', background: 'var(--border)', borderRadius: '9999px', overflow: 'hidden' }}>
-                  <div
-                    style={{
-                      width: `${(result.confidence * 100).toFixed(1)}%`,
-                      height: '100%',
-                      background: getColor(result.result),
-                      borderRadius: '9999px',
-                      transition: 'width 0.6s ease',
-                    }}
-                  />
-                </div>
-              </div>
-
-              {result.notes && (
-                <p className="text-muted" style={{ marginTop: '0.75rem', fontSize: '0.85rem' }}>
-                  📝 {result.notes}
-                </p>
-              )}
-            </div>
-
-            {/* All scores breakdown */}
-            {allScores.length > 0 && (
-              <div className="card" style={{ marginBottom: '1rem' }}>
-                <h3 style={{ fontWeight: 600, marginBottom: '1rem', fontSize: '0.95rem' }}>All Class Probabilities</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                  {allScores.map(([label, score]) => (
-                    <div key={label}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.2rem' }}>
-                        <span style={{ fontWeight: label === result.result ? 700 : 400, color: label === result.result ? getColor(label) : 'inherit' }}>{label}</span>
-                        <span style={{ color: 'var(--text-muted)' }}>{(score * 100).toFixed(1)}%</span>
-                      </div>
-                      <div style={{ height: '6px', background: 'var(--border)', borderRadius: '9999px', overflow: 'hidden' }}>
-                        <div
-                          style={{
-                            width: `${(score * 100).toFixed(1)}%`,
-                            height: '100%',
-                            background: getColor(label),
-                            opacity: label === result.result ? 1 : 0.4,
-                            borderRadius: '9999px',
-                          }}
-                        />
-                      </div>
+                  {preview ? (
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                      <img src={preview} alt="preview" style={{ maxHeight: 220, maxWidth: '100%', borderRadius: 'var(--radius-md)', objectFit: 'contain' }} />
+                      <button
+                        onClick={e => { e.stopPropagation(); reset(); }}
+                        style={{ position: 'absolute', top: -8, right: -8, width: 24, height: 24, borderRadius: '50%', background: 'var(--danger)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >✕</button>
                     </div>
-                  ))}
+                  ) : (
+                    <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}>
+                      <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🖼️</div>
+                      <p style={{ fontWeight: 600, color: 'var(--brand-600)', fontSize: '0.875rem' }}>Click or drag an image here</p>
+                      <p style={{ color: 'var(--text-faint)', fontSize: '0.78rem', marginTop: '0.3rem' }}>JPEG · PNG · WebP — max 10 MB</p>
+                    </motion.div>
+                  )}
                 </div>
-              </div>
-            )}
 
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button className="btn btn-secondary" onClick={reset} style={{ flex: 1 }}>
-                🔄 Test Another Image
-              </button>
-              <Link to={`/batches/${batchId}`} className="btn btn-primary" style={{ flex: 1, textAlign: 'center' }}>
-                ← Back to Batch
-              </Link>
+                <input ref={inputRef} type="file" accept="image/jpeg,image/jpg,image/png,image/webp" style={{ display: 'none' }} onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
+
+                {file && (
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+                    {file.name} <span style={{ color: 'var(--text-faint)' }}>({(file.size / 1024).toFixed(1)} KB)</span>
+                  </p>
+                )}
+
+                <div className="form-group" style={{ marginBottom: '1.125rem' }}>
+                  <label className="form-label">Notes <span style={{ color: 'var(--text-faint)', fontWeight: 400 }}>(optional)</span></label>
+                  <textarea value={notes} onChange={e => setNotes(e.target.value)}
+                    className="form-textarea" placeholder="Observations about this sample…" rows={2} maxLength={500} />
+                </div>
+
+                <button className="btn btn-primary btn-full btn-lg" disabled={!file || loading} onClick={handleSubmit}>
+                  {loading ? (
+                    <><span className="spinner" />Analysing with AI…</>
+                  ) : '🔬 Run Detection'}
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div key="result" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.35 }}>
+              {/* Result card */}
+              <div className="card" style={{ borderTop: `4px solid ${gc(result.result)}`, marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+                  {preview && (
+                    <img src={preview} alt="analysed" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 'var(--radius-md)', flexShrink: 0, border: `2px solid ${gc(result.result)}30` }} />
+                  )}
+                  <div>
+                    <p style={{ fontSize: '0.68rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-faint)', marginBottom: '0.3rem' }}>AI Diagnosis</p>
+                    <p style={{ fontSize: '2rem', fontWeight: 900, color: gc(result.result), lineHeight: 1, letterSpacing: '-0.03em' }}>{result.result}</p>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
+                      Confidence: <strong style={{ color: gc(result.result) }}>{(result.confidence * 100).toFixed(1)}%</strong>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="progress-bar" style={{ height: 8 }}>
+                  <motion.div className="progress-fill" style={{ background: gc(result.result) }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${result.confidence * 100}%` }}
+                    transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                  />
+                </div>
+
+                {result.result !== 'Healthy' && (
+                  <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#fef2f2', borderRadius: 'var(--radius-md)', border: '1px solid #fecaca' }}>
+                    <p style={{ fontSize: '0.78rem', color: '#991b1b', fontWeight: 500 }}>
+                      ⚠️ Disease detected. Consider isolating this batch and consulting a silkworm health specialist.
+                    </p>
+                  </div>
+                )}
+                {result.result === 'Healthy' && (
+                  <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#f0fdf4', borderRadius: 'var(--radius-md)', border: '1px solid #bbf7d0' }}>
+                    <p style={{ fontSize: '0.78rem', color: '#15803d', fontWeight: 500 }}>
+                      ✓ No disease detected. Continue normal monitoring.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* All probabilities */}
+              {allScores.length > 0 && (
+                <div className="card" style={{ marginBottom: '1.25rem' }}>
+                  <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '1rem' }}>All Class Probabilities</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+                    {allScores.map(([label, score]) => {
+                      const pct = (score * 100).toFixed(1);
+                      const col = gc(label);
+                      const isTop = label === result.result;
+                      return (
+                        <div key={label}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                            <span style={{ fontSize: '0.82rem', fontWeight: isTop ? 700 : 500, color: isTop ? col : 'var(--text-2)' }}>{label}</span>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: col }}>{pct}%</span>
+                          </div>
+                          <div className="progress-bar">
+                            <motion.div className="progress-fill" style={{ background: col, opacity: isTop ? 1 : 0.4 }}
+                              initial={{ width: 0 }}
+                              animate={{ width: `${pct}%` }}
+                              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button className="btn btn-secondary" onClick={reset} style={{ flex: 1 }}>🔄 Test Another</button>
+                <Link to={`/batches/${batchId}`} className="btn btn-primary" style={{ flex: 1, textAlign: 'center' }}>← Back to Batch</Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Info sidebar — only visible when not showing result */}
+        {!result && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.35 }}>
+            <div className="card">
+              <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '1.25rem' }}>About AI Detection</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+                {[
+                  { icon: '🤖', title: 'ResNet50 Model', desc: 'State-of-the-art deep learning model trained on silkworm disease images' },
+                  { icon: '🎯', title: '5 Disease Classes', desc: 'Healthy, Flacherie, Grasserie, Muscardine, Pebrine' },
+                  { icon: '⚡', title: 'Instant Results', desc: 'AI analysis completes in under 5 seconds' },
+                  { icon: '📊', title: 'Confidence Scores', desc: 'Get probability scores for all disease classes' },
+                ].map(item => (
+                  <div key={item.title} style={{ display: 'flex', gap: '0.75rem' }}>
+                    <span style={{ width: 34, height: 34, borderRadius: 'var(--radius)', background: 'var(--brand-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', flexShrink: 0 }}>{item.icon}</span>
+                    <div>
+                      <p style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)', marginBottom: '0.15rem' }}>{item.title}</p>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: '1.25rem', padding: '0.875rem', background: 'var(--warning-bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--warning-border)' }}>
+                <p style={{ fontSize: '0.75rem', color: '#92400e', lineHeight: 1.6 }}>
+                  <strong>Tip:</strong> Use clear, close-up images of the silkworms for best accuracy. Avoid blurry or overexposed photos.
+                </p>
+              </div>
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
-    </>
+    </div>
   );
 }
