@@ -32,23 +32,24 @@ from sensors.models import SensorReading
 
 def _temperature() -> float:
     """
-    22–28 °C with a gentle sine-wave tied to the hour of day.
-    Cooler at night (22–24 °C), warmer mid-afternoon (26–28 °C).
+    Centres around 25 C with time-of-day variation.
+    Gaussian noise (std=1.5) means ~15% of readings fall outside 22-28 C,
+    which triggers TEMPERATURE alerts to keep the system testable.
     """
     hour = datetime.now().hour
-    # peaks at hour 14 (2 pm), troughs at hour 2 (2 am)
     base = 25.0 + 1.5 * math.sin((hour - 2) * math.pi / 12)
-    return round(max(22.0, min(28.0, base + random.gauss(0, 0.4))), 1)
+    return round(base + random.gauss(0, 1.5), 1)
 
 
 def _humidity() -> float:
     """
-    70–85 % with mild inverse correlation to temperature
-    (higher humidity at cooler parts of the day).
+    Centres around 77.5 % with mild inverse correlation to temperature.
+    Gaussian noise (std=3.0) means ~15% of readings fall outside 70-85 %,
+    which triggers HUMIDITY alerts.
     """
     hour = datetime.now().hour
     base = 77.5 - 2.5 * math.sin((hour - 2) * math.pi / 12)
-    return round(max(70.0, min(85.0, base + random.gauss(0, 0.8))), 1)
+    return round(base + random.gauss(0, 3.0), 1)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -128,10 +129,18 @@ class Command(BaseCommand):
         ]
         SensorReading.objects.bulk_create(readings)
 
+        # Check each reading against alert thresholds
+        from alerts.utils import check_sensor_alerts
+        alert_count = 0
+        for r in readings:
+            triggered = check_sensor_alerts(r.batch_id, r.temperature, r.humidity)
+            alert_count += len(triggered)
+
         ts = timezone.now().strftime('%Y-%m-%d %H:%M:%S UTC')
         self.stdout.write(
             self.style.SUCCESS(
                 f'[{ts}] OK — Inserted {len(readings)} reading(s) across {len(batches)} batch(es).'
+                + (f' {alert_count} alert(s) triggered.' if alert_count else '')
             )
         )
         for r in readings:
