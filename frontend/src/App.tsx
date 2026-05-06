@@ -13,6 +13,8 @@ import FarmDetailPage from './pages/farmer/FarmDetailPage';
 import AddBatchPage from './pages/farmer/AddBatchPage';
 import BatchDetailPage from './pages/farmer/BatchDetailPage';
 import AddDetectionPage from './pages/farmer/AddDetectionPage';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
+import DetectionReportsPage from './pages/farmer/DetectionReportsPage';
 
 function Unauthorized() {
   return (
@@ -50,9 +52,15 @@ export default function App() {
             <Route path="/supervisor" element={<SupervisorDashboard />} />
           </Route>
 
+          {/* Shared — all authenticated roles */}
+          <Route element={<ProtectedRoute allowedRoles={['FARMER', 'SUPERVISOR', 'ADMIN']} />}>
+            <Route path="/detections/reports" element={<DetectionReportsPage />} />
+          </Route>
+
           {/* Admin only */}
           <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminUsersPage />} />
           </Route>
 
           {/* Default redirect */}

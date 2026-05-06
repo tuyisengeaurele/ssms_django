@@ -128,6 +128,7 @@ export default function FarmerDashboard() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '0.6rem' }}>
+            <Link to="/detections/reports" className="btn btn-secondary btn-sm">🔬 Reports</Link>
             <Link to="/farms/new" className="btn btn-secondary btn-sm">+ New Farm</Link>
             <Link to="/farms" className="btn btn-primary btn-sm">My Farms</Link>
           </div>

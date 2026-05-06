@@ -115,6 +115,91 @@ class DiseaseDetectionByBatchView(APIView):
         return api_success(DiseaseDetectionSerializer(detections, many=True).data)
 
 
+class DetectionHistoryView(APIView):
+    """
+    GET /api/detections/history
+    Query params: farm_id, date_from (YYYY-MM-DD), date_to (YYYY-MM-DD), limit (default 200)
+    FARMER sees only their own farms. SUPERVISOR/ADMIN see all.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
+            return api_error('Forbidden.', 403)
+
+        qs = DiseaseDetection.objects.select_related('batch', 'batch__farm').order_by('-detected_at')
+
+        if request.user.role == 'FARMER':
+            qs = qs.filter(batch__farm__owner=request.user)
+
+        farm_id   = request.query_params.get('farm_id')
+        date_from = request.query_params.get('date_from')
+        date_to   = request.query_params.get('date_to')
+        limit     = min(int(request.query_params.get('limit', 200)), 500)
+
+        if farm_id:
+            qs = qs.filter(batch__farm_id=farm_id)
+        if date_from:
+            qs = qs.filter(detected_at__date__gte=date_from)
+        if date_to:
+            qs = qs.filter(detected_at__date__lte=date_to)
+
+        qs = qs[:limit]
+
+        data = [
+            {
+                'id': d.id,
+                'result': d.result,
+                'confidence': d.confidence,
+                'detected_at': d.detected_at.isoformat(),
+                'batch_id': d.batch_id,
+                'farm_name': d.batch.farm.name if d.batch and d.batch.farm else '—',
+                'farm_id': d.batch.farm_id if d.batch else None,
+                'notes': d.notes,
+            }
+            for d in qs
+        ]
+        return api_success(data)
+
+
+class DetectionStatsView(APIView):
+    """
+    GET /api/detections/stats
+    Returns {result: count} aggregate — used for the frequency chart.
+    Same filters as DetectionHistoryView.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
+            return api_error('Forbidden.', 403)
+
+        from django.db.models import Count
+
+        qs = DiseaseDetection.objects.all()
+
+        if request.user.role == 'FARMER':
+            qs = qs.filter(batch__farm__owner=request.user)
+
+        farm_id   = request.query_params.get('farm_id')
+        date_from = request.query_params.get('date_from')
+        date_to   = request.query_params.get('date_to')
+
+        if farm_id:
+            qs = qs.filter(batch__farm_id=farm_id)
+        if date_from:
+            qs = qs.filter(detected_at__date__gte=date_from)
+        if date_to:
+            qs = qs.filter(detected_at__date__lte=date_to)
+
+        stats = (
+            qs.values('result')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+        return api_success(list(stats))
+
+
 class RecentDetectionsView(APIView):
     """GET /api/detections/recent?limit=20 — supervisor-wide detection history."""
     permission_classes = [IsAuthenticated]

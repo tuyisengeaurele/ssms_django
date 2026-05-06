@@ -246,11 +246,14 @@ export default function SupervisorDashboard() {
               Real-time farm monitoring &amp; disease intelligence
             </p>
           </div>
-          {lastUpdated && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
+            {lastUpdated && (
             <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
               Updated {timeAgo(lastUpdated.toISOString())}
             </p>
-          )}
+            )}
+            <Link to="/detections/reports" className="btn btn-sm btn-secondary" style={{ fontSize: '0.75rem' }}>🔬 Full Reports</Link>
+          </div>
         </div>
 
         {/* ── stat cards ── */}
