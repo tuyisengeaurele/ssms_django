@@ -94,21 +94,27 @@ class BatchDetailView(APIView):
 
 
 class BatchActiveSupervisorView(APIView):
-    """GET /api/batches/active — all active batches for SUPERVISOR / ADMIN."""
+    """
+    GET /api/batches/active
+    SUPERVISOR / ADMIN  → all active batches.
+    FARMER              → only batches belonging to their own farms.
+    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        if request.user.role not in ('SUPERVISOR', 'ADMIN'):
+        if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
             return api_error('Forbidden.', 403)
         from django.db.models import Count
-        batches = (
+        qs = (
             Batch.objects
             .filter(is_active=True)
             .select_related('farm')
             .annotate(detection_count=Count('disease_detections'))
             .order_by('-created_at')
         )
-        return api_success(BatchSupervisorSerializer(batches, many=True).data)
+        if request.user.role == 'FARMER':
+            qs = qs.filter(farm__owner=request.user)
+        return api_success(BatchSupervisorSerializer(qs, many=True).data)
 
 
 class BatchUpdateStageView(APIView):
