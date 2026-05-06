@@ -117,9 +117,19 @@ export default function BatchDetailPage() {
           <p className="page-subtitle">Farm: <strong>{batch.farm?.name ?? '—'}</strong></p>
         </div>
         <div className="page-actions">
-          <Link to={`/batches/${id}/detect`} className="btn btn-primary btn-sm">🔬 Run Detection</Link>
-          {canEdit && <button onClick={() => setShowArchive(true)} className="btn btn-secondary btn-sm" style={{ color: 'var(--danger)', borderColor: 'var(--danger-border)' }}>Archive</button>}
-          <Link to={`/farms/${batch.farmId}`} className="btn btn-ghost btn-sm">← Farm</Link>
+          <Link to={`/batches/${id}/detect`} className="btn btn-primary btn-sm">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Run Detection
+          </Link>
+          {canEdit && (
+            <button onClick={() => setShowArchive(true)} className="btn btn-secondary btn-sm" style={{ color: 'var(--danger)', borderColor: 'var(--danger-border)' }}>
+              Archive
+            </button>
+          )}
+          <Link to={`/farms/${batch.farmId}`} className="btn btn-ghost btn-sm">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Farm
+          </Link>
         </div>
       </div>
 
@@ -261,12 +271,18 @@ export default function BatchDetailPage() {
         <div className="table-container">
           <div className="table-header">
             <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>Detection History ({detections.length})</p>
-            <Link to={`/batches/${id}/detect`} className="btn btn-primary btn-sm">🔬 New Detection</Link>
+            <Link to={`/batches/${id}/detect`} className="btn btn-primary btn-sm">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              New Detection
+            </Link>
           </div>
           {detections.length === 0 ? (
-            <EmptyState icon="🔬" title="No detections yet"
+            <EmptyState
+              icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>}
+              title="No detections yet"
               description="Run your first disease detection to get AI-powered insights on this batch."
-              action={{ label: '🔬 Run Detection', to: `/batches/${id}/detect` }} />
+              action={{ label: 'Run Detection', to: `/batches/${id}/detect` }}
+            />
           ) : (
             <div className="table-wrapper">
               <table>

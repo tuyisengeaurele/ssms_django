@@ -133,9 +133,12 @@ export default function FarmDetailPage() {
           </div>
 
           {batches.length === 0 ? (
-            <EmptyState icon="📦" title="No batches yet"
+            <EmptyState
+              icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>}
+              title="No batches yet"
               description="Add your first batch to start tracking production."
-              action={canEdit ? { label: '+ Add Batch', to: `/farms/${id}/batches/new` } : undefined} />
+              action={canEdit ? { label: '+ Add Batch', to: `/farms/${id}/batches/new` } : undefined}
+            />
           ) : (
             <div className="table-wrapper">
               <table>
@@ -167,7 +170,9 @@ export default function FarmDetailPage() {
                       <td>
                         <div style={{ display: 'flex', gap: '0.375rem' }}>
                           <Link to={`/batches/${b.id}`} className="btn btn-ghost btn-xs">Details</Link>
-                          <Link to={`/batches/${b.id}/detect`} className="btn btn-xs btn-outline-primary">🔬</Link>
+                          <Link to={`/batches/${b.id}/detect`} className="btn btn-xs btn-outline-primary" title="Run Detection">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                          </Link>
                         </div>
                       </td>
                     </motion.tr>

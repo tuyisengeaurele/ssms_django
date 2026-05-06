@@ -53,23 +53,27 @@ const DISEASE_COLORS: Record<string, string> = {
   Muscardine: '#7c3aed', Pebrine: '#0284c7',
 };
 
-interface StatProps { icon: string; label: string; value: number | string; color: string; bg: string; delay: number; }
-function StatCard({ icon, label, value, color, bg, delay }: StatProps) {
+interface StatProps { icon: React.ReactNode; label: string; value: number | string; color: string; bg: string; delay: number; trend?: string; }
+function StatCard({ icon, label, value, color, bg, delay, trend }: StatProps) {
   const num = typeof value === 'number' ? value : 0;
   const count = useCountUp(num);
   return (
     <motion.div className="stat-card" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.4, ease: [0.22, 1, 0.36, 1] }} style={{ borderTop: `3px solid ${color}` }}>
+      transition={{ delay, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
       <div className="stat-card-glow" style={{ background: color }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <p style={{ fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-faint)', marginBottom: '0.5rem' }}>{label}</p>
-          <p style={{ fontSize: '2rem', fontWeight: 800, color, letterSpacing: '-0.03em', lineHeight: 1 }}>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-faint)', marginBottom: '0.75rem' }}>{label}</p>
+          <p style={{ fontSize: '2.1rem', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.04em', lineHeight: 1 }}>
             {typeof value === 'string' ? value : count}
           </p>
+          {trend && <p style={{ fontSize: '0.72rem', color: 'var(--text-faint)', marginTop: '0.375rem' }}>{trend}</p>}
         </div>
-        <div style={{ width: 40, height: 40, borderRadius: 'var(--radius-md)', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>{icon}</div>
+        <div className="stat-card-icon" style={{ background: bg, marginLeft: '1rem' }}>
+          <div style={{ color, width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</div>
+        </div>
       </div>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${color}60, ${color}10)`, borderRadius: '0 0 16px 16px' }} />
     </motion.div>
   );
 }
@@ -155,7 +159,10 @@ export default function SupervisorDashboard() {
           </p>
         </div>
         <div className="page-actions">
-          <Link to="/detections/reports" className="btn btn-secondary btn-sm">🔬 Full Reports</Link>
+          <Link to="/detections/reports" className="btn btn-secondary btn-sm">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+            Full Reports
+          </Link>
           {unreadCount > 0 && (
             <Link to="/alerts" className="btn btn-danger btn-sm" style={{ gap: '0.4rem' }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#fff', animation: 'pulse-dot 1.5s infinite' }} />
@@ -167,10 +174,26 @@ export default function SupervisorDashboard() {
 
       {/* Stats */}
       <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
-        <StatCard icon="🌾" label="Total Farms"       value={farms.length}       color="var(--brand-600)" bg="var(--brand-50)" delay={0}    />
-        <StatCard icon="📦" label="Active Batches"    value={batches.length}     color="#1e40af"          bg="#eff6ff"         delay={0.07} />
-        <StatCard icon="🚨" label="Unread Alerts"     value={unreadCount}        color="#dc2626"          bg="#fef2f2"         delay={0.14} />
-        <StatCard icon="🔬" label="Total Detections"  value={totalDetections}    color="#7c3aed"          bg="#f3e8ff"         delay={0.21} />
+        <StatCard
+          icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>}
+          label="Total Farms" value={farms.length} color="var(--brand-600)" bg="var(--brand-50)" delay={0}
+          trend={`${farms.length} registered`}
+        />
+        <StatCard
+          icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>}
+          label="Active Batches" value={batches.length} color="#1e40af" bg="#eff6ff" delay={0.07}
+          trend="Currently running"
+        />
+        <StatCard
+          icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>}
+          label="Unread Alerts" value={unreadCount} color={unreadCount > 0 ? '#dc2626' : '#16a34a'} bg={unreadCount > 0 ? '#fef2f2' : '#f0fdf4'} delay={0.14}
+          trend={unreadCount > 0 ? 'Needs attention' : 'All clear'}
+        />
+        <StatCard
+          icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>}
+          label="Total Detections" value={totalDetections} color="#7c3aed" bg="#f3e8ff" delay={0.21}
+          trend="AI analyses run"
+        />
       </div>
 
       {/* Charts */}
@@ -223,7 +246,10 @@ export default function SupervisorDashboard() {
               <Link to="/farms" className="btn btn-ghost btn-sm">View farms →</Link>
             </div>
             {batches.length === 0 ? (
-              <EmptyState icon="📦" title="No active batches" />
+              <EmptyState
+              icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>}
+              title="No active batches"
+            />
             ) : (
               <div className="table-wrapper">
                 <table>
@@ -262,7 +288,7 @@ export default function SupervisorDashboard() {
               <Link to="/alerts" className="btn btn-ghost btn-sm">All alerts →</Link>
             </div>
             {alerts.length === 0 ? (
-              <EmptyState icon="🔔" title="No alerts" description="All systems nominal." />
+              <EmptyState icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>} title="No alerts" description="All systems nominal." />
             ) : (
               <div style={{ padding: '0.375rem 0', maxHeight: 320, overflowY: 'auto' }}>
                 {alerts.slice(0, 8).map((a) => {
@@ -300,7 +326,7 @@ export default function SupervisorDashboard() {
             </div>
           </div>
           {recentDet.length === 0 ? (
-            <EmptyState icon="🔬" title="No detections yet" description="Run your first disease detection from a batch page." />
+            <EmptyState icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>} title="No detections yet" description="Run your first disease detection from a batch page." />
           ) : (
             <div className="table-wrapper">
               <table>

@@ -7,12 +7,12 @@ import { useToast } from '../../context/ToastContext';
 import EmptyState from '../../components/ui/EmptyState';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 
-const ALERT_META: Record<AlertType, { color: string; bg: string; label: string; icon: string }> = {
-  TEMPERATURE:  { color: '#d97706', bg: '#fef3c7', label: 'Temperature', icon: '🌡️' },
-  HUMIDITY:     { color: '#2563eb', bg: '#dbeafe', label: 'Humidity',    icon: '💧' },
-  DISEASE:      { color: '#dc2626', bg: '#fee2e2', label: 'Disease',     icon: '🦠' },
-  STAGE_CHANGE: { color: '#7c3aed', bg: '#f3e8ff', label: 'Stage',       icon: '🔄' },
-  SYSTEM:       { color: '#4b5563', bg: '#f1f5f9', label: 'System',      icon: '⚙️' },
+const ALERT_META: Record<AlertType, { color: string; bg: string; label: string }> = {
+  TEMPERATURE:  { color: '#d97706', bg: '#fef3c7', label: 'Temperature' },
+  HUMIDITY:     { color: '#2563eb', bg: '#dbeafe', label: 'Humidity'    },
+  DISEASE:      { color: '#dc2626', bg: '#fee2e2', label: 'Disease'     },
+  STAGE_CHANGE: { color: '#7c3aed', bg: '#f3e8ff', label: 'Stage'       },
+  SYSTEM:       { color: '#4b5563', bg: '#f1f5f9', label: 'System'      },
 };
 
 function timeAgo(iso: string) {
@@ -109,7 +109,7 @@ export default function AlertsPage() {
         <SkeletonTable rows={6} cols={4} />
       ) : alerts.length === 0 ? (
         <div className="table-container">
-          <EmptyState icon="🔔" title="No alerts" description="You have no alerts at the moment. We'll notify you when something needs attention." />
+          <EmptyState icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>} title="No alerts" description="You have no alerts at the moment. We'll notify you when something needs attention." />
         </div>
       ) : (
         <div className="table-container">
@@ -126,7 +126,7 @@ export default function AlertsPage() {
               </thead>
               <tbody>
                 {alerts.map((a, i) => {
-                  const meta = ALERT_META[a.type] ?? { color: '#4b5563', bg: '#f3f4f6', label: a.type, icon: '📢' };
+                  const meta = ALERT_META[a.type] ?? { color: '#4b5563', bg: '#f3f4f6', label: a.type };
                   return (
                     <motion.tr key={a.id} className="tbody-row"
                       initial={{ opacity: 0, x: -8 }}
@@ -141,7 +141,7 @@ export default function AlertsPage() {
                           fontSize: '0.7rem', fontWeight: 700,
                           background: meta.bg, color: meta.color,
                         }}>
-                          {meta.icon} {meta.label}
+                          {meta.label}
                         </span>
                       </td>
                       <td style={{ fontWeight: a.isRead ? 400 : 500, color: a.isRead ? 'var(--text-muted)' : 'var(--text)' }}>
