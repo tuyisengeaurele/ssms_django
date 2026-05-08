@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from .serializers import UserSerializer, RegisterSerializer
 from core.utils import api_success, api_error
+from cooperatives.models import Cooperative
 
 User = get_user_model()
 
@@ -80,3 +81,32 @@ class AdminUserDeactivateView(APIView):
         user.is_active = False
         user.save(update_fields=['is_active'])
         return api_success(None, 'User deactivated.')
+
+
+class AdminUserCooperativeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, user_id):
+        """PATCH /api/admin/users/<id>/cooperative — assign or remove cooperative."""
+        err = _require_admin(request.user)
+        if err:
+            return err
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return api_error('User not found.', 404)
+
+        cooperative_id = request.data.get('cooperativeId')
+
+        if cooperative_id is None or cooperative_id == '':
+            # Unassign
+            user.cooperative = None
+        else:
+            try:
+                coop = Cooperative.objects.get(pk=cooperative_id, is_active=True)
+            except Cooperative.DoesNotExist:
+                return api_error('Cooperative not found.', 404)
+            user.cooperative = coop
+
+        user.save(update_fields=['cooperative'])
+        return api_success(UserSerializer(user).data, 'Cooperative updated.')

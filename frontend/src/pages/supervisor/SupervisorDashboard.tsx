@@ -5,6 +5,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
 } from 'recharts';
+import { useAuth } from '../../context/AuthContext';
 import { farmService } from '../../services/farm.service';
 import { alertService, buildAlertStreamUrl } from '../../services/alert.service';
 import { sensorService, batchSupervisorService, ActiveBatch, ChartPoint } from '../../services/sensor.service';
@@ -79,6 +80,7 @@ function StatCard({ icon, label, value, color, bg, delay, trend }: StatProps) {
 }
 
 export default function SupervisorDashboard() {
+  const { user } = useAuth();
   const { success } = useToast();
   const [farms,      setFarms]      = useState<Farm[]>([]);
   const [batches,    setBatches]    = useState<ActiveBatch[]>([]);
@@ -154,8 +156,14 @@ export default function SupervisorDashboard() {
       <div className="page-header">
         <div>
           <h1 className="page-title">System Overview</h1>
-          <p className="page-subtitle">
+          <p className="page-subtitle" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             {lastUpdated ? `Updated ${timeAgo(lastUpdated)}` : 'Real-time farm monitoring & disease intelligence'}
+            {user?.cooperativeName && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.15rem 0.55rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700, background: '#f3e8ff', color: '#7c3aed', border: '1px solid #e9d5ff' }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                {user.cooperativeName}
+              </span>
+            )}
           </p>
         </div>
         <div className="page-actions">
@@ -171,6 +179,19 @@ export default function SupervisorDashboard() {
           )}
         </div>
       </div>
+
+      {/* Cooperative notice if not assigned */}
+      {!user?.cooperativeId && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+          style={{ marginBottom: '1.25rem', padding: '0.875rem 1rem', background: '#fef3c7', borderRadius: 'var(--radius-md)', border: '1px solid #fde68a', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <p style={{ fontSize: '0.82rem', color: '#92400e', fontWeight: 500 }}>
+            You are not assigned to a cooperative yet. Contact an admin to be assigned — you'll only see farms from farmers in your cooperative.
+          </p>
+        </motion.div>
+      )}
 
       {/* Stats */}
       <div className="grid-4" style={{ marginBottom: '1.5rem' }}>

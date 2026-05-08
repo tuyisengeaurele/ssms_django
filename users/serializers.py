@@ -6,10 +6,15 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+    cooperative_name = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'name', 'email', 'role', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'email', 'role', 'cooperative_id', 'cooperative_name', 'created_at', 'updated_at']
         read_only_fields = fields
+
+    def get_cooperative_name(self, obj):
+        return obj.cooperative.name if obj.cooperative_id and obj.cooperative else None
 
 
 class RegisterSerializer(serializers.Serializer):

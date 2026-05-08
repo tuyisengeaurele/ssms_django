@@ -12,7 +12,8 @@ urlpatterns = [
     path('api/sensors', include('sensors.urls')),      # /api/sensors, /api/sensors/batch/<id>
     path('api/alerts', include('alerts.urls')),        # /api/alerts/batch/<id>, /api/alerts/<id>/read
     path('api/detections', include('sensors.detection_urls')),  # /api/detections, /api/detections/batch/<id>
-    path('api/admin', include('users.admin_urls')),             # /api/admin/users, /api/admin/users/<id>/role
+    path('api/cooperatives', include('cooperatives.urls')),      # /api/cooperatives, /api/cooperatives/<id>
+    path('api/admin', include('users.admin_urls')),              # /api/admin/users, /api/admin/users/<id>/role
     path('api/auth/token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
 ]
 

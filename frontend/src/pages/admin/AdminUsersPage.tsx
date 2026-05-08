@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { adminService, CreateUserPayload } from '../../services/admin.service';
-import { User, Role } from '../../types';
+import { cooperativeService } from '../../services/cooperative.service';
+import { User, Role, Cooperative } from '../../types';
 import { useApiError } from '../../hooks/useApiError';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -75,22 +76,35 @@ export default function AdminUsersPage() {
   const { getErrorMessage } = useApiError();
   const { success, error: showError } = useToast();
 
-  const [users,      setUsers]      = useState<User[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
+  const [users,       setUsers]       = useState<User[]>([]);
+  const [coops,       setCoops]       = useState<Cooperative[]>([]);
+  const [loading,     setLoading]     = useState(true);
+  const [showCreate,  setShowCreate]  = useState(false);
   const [confirmDeact, setConfirmDeact] = useState<User | null>(null);
-  const [form,       setForm]       = useState<CreateUserPayload>(EMPTY_FORM);
-  const [formError,  setFormError]  = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [form,        setForm]        = useState<CreateUserPayload>(EMPTY_FORM);
+  const [formError,   setFormError]   = useState('');
+  const [submitting,  setSubmitting]  = useState(false);
   const [deactivating, setDeactivating] = useState(false);
-  const [search,     setSearch]     = useState('');
+  const [search,      setSearch]      = useState('');
 
   useEffect(() => {
-    adminService.getUsers()
-      .then(r => setUsers(r.data.data))
-      .catch(e => showError(getErrorMessage(e)))
+    Promise.all([
+      adminService.getUsers(),
+      cooperativeService.getAll(),
+    ]).then(([usersRes, coopsRes]) => {
+      setUsers(usersRes.data.data);
+      setCoops(coopsRes.data.data);
+    }).catch(e => showError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleCooperativeChange = async (userId: string, cooperativeId: string) => {
+    try {
+      const res = await adminService.updateCooperative(userId, cooperativeId || null);
+      setUsers(prev => prev.map(u => u.id === userId ? res.data.data : u));
+      success('Cooperative updated.');
+    } catch (e) { showError(getErrorMessage(e)); }
+  };
 
   const handleRoleChange = async (userId: string, newRole: Role) => {
     try {
@@ -233,6 +247,7 @@ export default function AdminUsersPage() {
                     <th>Name</th>
                     <th>Email</th>
                     <th>Role</th>
+                    <th>Cooperative</th>
                     <th>Joined</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -265,6 +280,25 @@ export default function AdminUsersPage() {
                             <option value="FARMER">FARMER</option>
                             <option value="SUPERVISOR">SUPERVISOR</option>
                             <option value="ADMIN">ADMIN</option>
+                          </select>
+                        )}
+                      </td>
+                      {/* Cooperative column */}
+                      <td>
+                        {u.id === me?.id ? (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {u.cooperativeName ?? <span style={{ color: 'var(--text-faint)' }}>—</span>}
+                          </span>
+                        ) : (
+                          <select
+                            value={u.cooperativeId ?? ''}
+                            onChange={e => handleCooperativeChange(u.id, e.target.value)}
+                            style={{ padding: '0.25rem 0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: '0.75rem', background: 'var(--surface)', color: 'var(--text)', cursor: 'pointer', minWidth: 130 }}
+                          >
+                            <option value="">— None —</option>
+                            {coops.map(c => (
+                              <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
                           </select>
                         )}
                       </td>
