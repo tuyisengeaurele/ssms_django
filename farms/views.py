@@ -9,19 +9,32 @@ from core.utils import api_success, api_error
 def _farm_queryset(user):
     if user.role == 'FARMER':
         return Farm.objects.filter(owner=user, is_active=True)
+    if user.role == 'SUPERVISOR':
+        # Only see farms owned by farmers in the same cooperative
+        if user.cooperative_id:
+            return Farm.objects.filter(
+                is_active=True,
+                owner__cooperative_id=user.cooperative_id,
+                owner__role='FARMER',
+            )
+        return Farm.objects.none()
+    # ADMIN sees everything active
     return Farm.objects.filter(is_active=True)
 
 
 def _get_farm_or_403(pk, user):
-    """Return (farm, error_response). Farmers can only access their own farms."""
+    """Return (farm, error_response). Access is role+cooperative scoped."""
     try:
-        farm = Farm.objects.get(pk=pk)
+        farm = Farm.objects.select_related('owner').get(pk=pk)
     except Farm.DoesNotExist:
         return None, api_error('Farm not found.', 404)
     if not farm.is_active:
         return None, api_error('Farm not found.', 404)
     if user.role == 'FARMER' and farm.owner_id != user.id:
         return None, api_error('Farm not found.', 404)
+    if user.role == 'SUPERVISOR':
+        if not user.cooperative_id or farm.owner.cooperative_id != user.cooperative_id:
+            return None, api_error('Farm not found.', 404)
     return farm, None
 
 

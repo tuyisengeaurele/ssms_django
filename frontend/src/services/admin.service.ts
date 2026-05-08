@@ -18,6 +18,9 @@ export const adminService = {
   updateRole: (userId: string, role: Role) =>
     api.patch<ApiResponse<User>>(`/admin/users/${userId}/role`, { role }),
 
+  updateCooperative: (userId: string, cooperativeId: string | null) =>
+    api.patch<ApiResponse<User>>(`/admin/users/${userId}/cooperative`, { cooperativeId }),
+
   deactivateUser: (userId: string) =>
     api.delete<ApiResponse<null>>(`/admin/users/${userId}`),
 };

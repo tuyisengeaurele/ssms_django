@@ -14,8 +14,9 @@ const ICONS = {
   users:      'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75',
   overview:   'M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',
   shield:     'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
-  logout:     'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9',
-  activity:   'M22 12h-4l-3 9L9 3l-3 9H2',
+  logout:      'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9',
+  activity:    'M22 12h-4l-3 9L9 3l-3 9H2',
+  cooperative: 'cooperative',  // handled in SideIcon
 };
 
 interface NavItem {
@@ -40,12 +41,13 @@ function getNavItems(role: Role | undefined, alertCount: number): NavItem[] {
     { to: '/alerts',              label: 'Alerts',            icon: 'alerts', badge: alertCount },
   ];
   if (role === 'ADMIN') return [
-    { to: '/admin',               label: 'Dashboard',         icon: 'shield' },
-    { to: '/admin/users',         label: 'User Management',   icon: 'users' },
-    { to: '/farms',               label: 'Farms',             icon: 'farmLeaf' },
-    { to: '/supervisor',          label: 'System Overview',   icon: 'overview' },
-    { to: '/detections/reports',  label: 'Detection Reports', icon: 'reports' },
-    { to: '/alerts',              label: 'Alerts',            icon: 'alerts', badge: alertCount },
+    { to: '/admin',                  label: 'Dashboard',         icon: 'shield' },
+    { to: '/admin/users',            label: 'User Management',   icon: 'users' },
+    { to: '/admin/cooperatives',     label: 'Cooperatives',      icon: 'cooperative' },
+    { to: '/farms',                  label: 'Farms',             icon: 'farmLeaf' },
+    { to: '/supervisor',             label: 'System Overview',   icon: 'overview' },
+    { to: '/detections/reports',     label: 'Detection Reports', icon: 'reports' },
+    { to: '/alerts',                 label: 'Alerts',            icon: 'alerts', badge: alertCount },
   ];
   return [];
 }
@@ -73,6 +75,16 @@ function SideIcon({ name }: { name: keyof typeof ICONS }) {
       <>
         <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
         <circle cx="12" cy="12" r="3" />
+      </>
+    );
+  }
+  if (name === 'cooperative') {
+    return (
+      <>
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <path d="M9 22V12h2v10" />
+        <path d="M13 22V12h2v10" />
+        <circle cx="12" cy="4" r="1.5" />
       </>
     );
   }

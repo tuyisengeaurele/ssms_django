@@ -95,6 +95,17 @@ export default function ProfilePage() {
                     {user?.id?.slice(-8).toUpperCase() ?? '—'}
                   </span>
                 </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-faint)' }}>Cooperative</span>
+                  {user?.cooperativeName ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', fontWeight: 600, color: '#7c3aed', background: '#f3e8ff', padding: '0.1rem 0.45rem', borderRadius: '9999px' }}>
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                      {user.cooperativeName}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-faint)' }}>Not assigned</span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -152,6 +163,23 @@ export default function ProfilePage() {
                   <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 500 }}>{roleMeta.label}</span>
                   <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: 'var(--text-faint)' }}>Assigned by admin</span>
                 </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Cooperative</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.55rem 0.875rem', background: 'var(--gray-50)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                  <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                    {user?.cooperativeName ?? 'Not assigned to a cooperative'}
+                  </span>
+                  <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: 'var(--text-faint)' }}>Managed by admin</span>
+                </div>
+                {!user?.cooperativeId && (
+                  <span className="form-hint">Contact your administrator to be assigned to a cooperative.</span>
+                )}
               </div>
 
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>

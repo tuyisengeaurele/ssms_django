@@ -14,8 +14,9 @@ import FarmDetailPage     from './pages/farmer/FarmDetailPage';
 import AddBatchPage       from './pages/farmer/AddBatchPage';
 import BatchDetailPage    from './pages/farmer/BatchDetailPage';
 import AddDetectionPage   from './pages/farmer/AddDetectionPage';
-import AdminUsersPage     from './pages/admin/AdminUsersPage';
-import DetectionReportsPage from './pages/farmer/DetectionReportsPage';
+import AdminUsersPage          from './pages/admin/AdminUsersPage';
+import AdminCooperativesPage   from './pages/admin/AdminCooperativesPage';
+import DetectionReportsPage    from './pages/farmer/DetectionReportsPage';
 import AlertsPage         from './pages/shared/AlertsPage';
 import BatchesPage        from './pages/farmer/BatchesPage';
 import ProfilePage        from './pages/shared/ProfilePage';
@@ -73,8 +74,9 @@ export default function App() {
 
               {/* Admin only */}
               <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
-                <Route path="/admin"       element={<AdminDashboard />} />
-                <Route path="/admin/users" element={<AdminUsersPage />} />
+                <Route path="/admin"                  element={<AdminDashboard />} />
+                <Route path="/admin/users"            element={<AdminUsersPage />} />
+                <Route path="/admin/cooperatives"     element={<AdminCooperativesPage />} />
               </Route>
 
             </Route>

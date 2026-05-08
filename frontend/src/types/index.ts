@@ -4,11 +4,30 @@ export type BatchStage = 'EGG' | 'LARVA' | 'PUPA' | 'COCOON' | 'HARVEST';
 
 export type AlertType = 'TEMPERATURE' | 'HUMIDITY' | 'DISEASE' | 'STAGE_CHANGE' | 'SYSTEM';
 
+export interface Cooperative {
+  id: string;
+  name: string;
+  description?: string;
+  location?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  memberCount: number;
+  farmCount: number;
+}
+
+export interface CooperativeDetail extends Cooperative {
+  members: Array<{ id: string; name: string; email: string; role: Role; createdAt: string }>;
+  farms: Array<{ id: string; name: string; location: string; ownerId: string; ownerName: string }>;
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
   role: Role;
+  cooperativeId?: string | null;
+  cooperativeName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
