@@ -9,4 +9,13 @@ export const authService = {
     api.post<ApiResponse<AuthResponse>>('/auth/login', data),
 
   getProfile: () => api.get<ApiResponse<User>>('/auth/me'),
+
+  updateProfile: (data: { name: string }) =>
+    api.patch<ApiResponse<User>>('/auth/me', data),
+
+  requestPasswordReset: (data: { email: string }) =>
+    api.post<ApiResponse<null>>('/auth/password-reset/request', data),
+
+  confirmPasswordReset: (data: { uid: string; token: string; newPassword: string }) =>
+    api.post<ApiResponse<null>>('/auth/password-reset/confirm', data),
 };

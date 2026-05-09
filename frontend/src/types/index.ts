@@ -93,6 +93,30 @@ export interface AlertLog {
   batch?: { id: string; stage: string };
 }
 
+export type QualityGrade = 'A' | 'B' | 'C';
+
+export interface HarvestRecord {
+  id: string;
+  batchId: string;
+  cocoonWeightKg: number;
+  silkYieldG?: number | null;
+  qualityGrade: QualityGrade;
+  notes?: string | null;
+  harvestedAt: string;
+  createdAt: string;
+  // enriched fields (returned by /harvest global list)
+  farmName?: string | null;
+  farmId?: string | null;
+}
+
+export interface HarvestStats {
+  totalWeightKg: number;
+  totalSilkG: number;
+  avgWeightKg: number;
+  recordCount: number;
+  byGrade: Array<{ grade: QualityGrade; count: number; totalKg: number }>;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -102,4 +126,5 @@ export interface ApiResponse<T> {
 export interface AuthResponse {
   user: User;
   token: string;
+  refreshToken: string;
 }

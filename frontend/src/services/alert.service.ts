@@ -2,9 +2,11 @@ import api from './api';
 import { ApiResponse, AlertLog } from '../types';
 
 export const alertService = {
-  /** GET /api/alerts — pass unread=true to filter, false/undefined for all */
-  getAll: (unread?: boolean) =>
-    api.get<ApiResponse<AlertLog[]>>(`/alerts${unread === true ? '?unread=true' : ''}`),
+  /** GET /api/alerts — unread=true: only unread | unread=false: all | omit: backend default (unread) */
+  getAll: (unread?: boolean) => {
+    const q = unread === true ? '?unread=true' : unread === false ? '?unread=false' : '';
+    return api.get<ApiResponse<AlertLog[]>>(`/alerts${q}`);
+  },
 
   /** GET /api/alerts/batch/<batchId> */
   getByBatch: (batchId: string) =>

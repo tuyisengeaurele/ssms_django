@@ -58,4 +58,34 @@ export const detectionReportService = {
     if (params.dateTo)   q.set('date_to',   params.dateTo);
     return api.get<ApiResponse<DetectionStat[]>>(`/detections/stats?${q.toString()}`);
   },
+
+  exportCsv: async (params: { farmId?: string; dateFrom?: string; dateTo?: string; limit?: number }): Promise<void> => {
+    // Use native fetch (not Axios) — Axios interceptors don't handle blob errors well.
+    // The auth token is read directly from localStorage and attached as a Bearer header.
+    // Use ?export=csv (NOT ?format=csv — DRF intercepts ?format= for its own content negotiation)
+    const q = new URLSearchParams({ export: 'csv' });
+    if (params.farmId)   q.set('farm_id',   params.farmId);
+    if (params.dateFrom) q.set('date_from', params.dateFrom);
+    if (params.dateTo)   q.set('date_to',   params.dateTo);
+    if (params.limit)    q.set('limit',     String(params.limit));
+
+    const base  = (import.meta.env.VITE_API_BASE_URL as string) ?? '/api';
+    const token = localStorage.getItem('ssms_token') ?? '';
+    const res   = await fetch(`${base}/detections/history?${q.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => `HTTP ${res.status}`);
+      throw new Error(text || `Export failed (${res.status})`);
+    }
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `disease_detections_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
 };

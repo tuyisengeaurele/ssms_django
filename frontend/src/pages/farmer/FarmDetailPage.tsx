@@ -25,6 +25,10 @@ export default function FarmDetailPage() {
   const [error,     setError]     = useState('');
   const [showDel,   setShowDel]   = useState(false);
   const [deleting,  setDeleting]  = useState(false);
+  // Edit modal
+  const [showEdit,  setShowEdit]  = useState(false);
+  const [editForm,  setEditForm]  = useState({ name: '', location: '' });
+  const [saving,    setSaving]    = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -36,6 +40,28 @@ export default function FarmDetailPage() {
       .catch(err => setError(getErrorMessage(err)))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const openEdit = () => {
+    if (!farm) return;
+    setEditForm({ name: farm.name, location: farm.location });
+    setShowEdit(true);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !farm) return;
+    setSaving(true);
+    try {
+      const res = await farmService.update(id, editForm);
+      setFarm(res.data.data);
+      setShowEdit(false);
+      success('Farm updated.');
+    } catch (err) {
+      showError(getErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!id) return;
@@ -74,6 +100,43 @@ export default function FarmDetailPage() {
 
   return (
     <div>
+      {/* Edit modal */}
+      <Modal open={showEdit} onClose={() => setShowEdit(false)} title="Edit farm"
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setShowEdit(false)}>Cancel</button>
+            <button className="btn btn-primary" form="farm-edit-form" type="submit" disabled={saving}>
+              {saving ? <><span className="spinner" />Saving…</> : 'Save changes'}
+            </button>
+          </>
+        }
+      >
+        <form id="farm-edit-form" onSubmit={handleSave}>
+          <div className="form-group">
+            <label className="form-label">Farm Name</label>
+            <input
+              type="text"
+              value={editForm.name}
+              onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+              className="form-input"
+              required
+              maxLength={100}
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Location</label>
+            <input
+              type="text"
+              value={editForm.location}
+              onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))}
+              className="form-input"
+              required
+              maxLength={200}
+            />
+          </div>
+        </form>
+      </Modal>
+
       {/* Delete modal */}
       <Modal open={showDel} onClose={() => setShowDel(false)} title="Delete farm?"
         footer={
@@ -101,6 +164,7 @@ export default function FarmDetailPage() {
         </div>
         <div className="page-actions">
           {canEdit && <Link to={`/farms/${id}/batches/new`} className="btn btn-primary btn-sm">+ New Batch</Link>}
+          {canEdit && <button onClick={openEdit} className="btn btn-secondary btn-sm">Edit</button>}
           {canEdit && <button onClick={() => setShowDel(true)} className="btn btn-secondary btn-sm" style={{ color: 'var(--danger)', borderColor: 'var(--danger-border)' }}>Delete</button>}
           <Link to="/farms" className="btn btn-ghost btn-sm">← Farms</Link>
         </div>

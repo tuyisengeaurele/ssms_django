@@ -14,6 +14,7 @@ urlpatterns = [
     path('api/detections', include('sensors.detection_urls')),  # /api/detections, /api/detections/batch/<id>
     path('api/cooperatives', include('cooperatives.urls')),      # /api/cooperatives, /api/cooperatives/<id>
     path('api/admin', include('users.admin_urls')),              # /api/admin/users, /api/admin/users/<id>/role
+    path('api/harvest', include('harvest.urls')),               # /api/harvest/batch/<id>, /api/harvest/stats
     path('api/auth/token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
 ]
 

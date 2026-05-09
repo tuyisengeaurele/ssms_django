@@ -23,8 +23,8 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const res = await authService.register(form);
-      const { user, token } = res.data.data;
-      login(user, token);
+      const { user, token, refreshToken } = res.data.data;
+      login(user, token, refreshToken);
       const path = user.role === 'ADMIN' ? '/admin' : user.role === 'SUPERVISOR' ? '/supervisor' : '/farmer';
       navigate(path, { replace: true });
     } catch (err) {

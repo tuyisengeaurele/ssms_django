@@ -158,12 +158,17 @@ export default function SupervisorDashboard() {
           <h1 className="page-title">System Overview</h1>
           <p className="page-subtitle" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             {lastUpdated ? `Updated ${timeAgo(lastUpdated)}` : 'Real-time farm monitoring & disease intelligence'}
-            {user?.cooperativeName && (
+            {user?.role === 'ADMIN' ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.15rem 0.55rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700, background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                All Cooperatives
+              </span>
+            ) : user?.cooperativeName ? (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.15rem 0.55rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700, background: '#f3e8ff', color: '#7c3aed', border: '1px solid #e9d5ff' }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 {user.cooperativeName}
               </span>
-            )}
+            ) : null}
           </p>
         </div>
         <div className="page-actions">
@@ -180,8 +185,8 @@ export default function SupervisorDashboard() {
         </div>
       </div>
 
-      {/* Cooperative notice if not assigned */}
-      {!user?.cooperativeId && (
+      {/* Cooperative notice — only for supervisors not yet assigned */}
+      {user?.role === 'SUPERVISOR' && !user?.cooperativeId && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
           style={{ marginBottom: '1.25rem', padding: '0.875rem 1rem', background: '#fef3c7', borderRadius: 'var(--radius-md)', border: '1px solid #fde68a', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -230,7 +235,9 @@ export default function SupervisorDashboard() {
               <p className="chart-title">{c.title}</p>
               <span style={{ fontSize: '0.68rem', background: 'var(--brand-50)', color: 'var(--brand-700)', padding: '0.15rem 0.55rem', borderRadius: 'var(--radius-full)', fontWeight: 600 }}>{c.label}</span>
             </div>
-            <p className="chart-subtitle">Last 24 hours · all farms</p>
+            <p className="chart-subtitle">
+              Last 24 hours · {user?.role === 'ADMIN' ? 'all cooperatives' : user?.cooperativeName ?? 'your cooperative'}
+            </p>
             {chart.length === 0 ? (
               <div style={{ height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)', fontSize: '0.82rem' }}>No sensor data yet</div>
             ) : (

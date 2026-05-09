@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Role } from '../../types';
+import Modal from '../ui/Modal';
 
 // ── SVG Icon paths ────────────────────────────────────────────────────────────
 const ICONS = {
+  harvest:    'M12 22V12M3.5 8.5C3.5 5.46 6.46 3 10 3c2.12 0 4 .9 5.28 2.33A6.5 6.5 0 0 1 21 11.5c0 3.58-2.91 6.5-6.5 6.5H5a1.5 1.5 0 0 1 0-3',
   dashboard:  'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10',
   farms:      'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10',
   farmLeaf:   'M12 22V12M3.5 8.5C3.5 5.46 6.46 3 10 3c2.12 0 4 .9 5.28 2.33A6.5 6.5 0 0 1 21 11.5c0 3.58-2.91 6.5-6.5 6.5H5a1.5 1.5 0 0 1 0-3',
@@ -31,12 +34,14 @@ function getNavItems(role: Role | undefined, alertCount: number): NavItem[] {
     { to: '/farmer',              label: 'Dashboard',         icon: 'dashboard' },
     { to: '/farms',               label: 'My Farms',          icon: 'farmLeaf' },
     { to: '/batches',             label: 'Batches',           icon: 'batch' },
+    { to: '/harvests',            label: 'Harvests',          icon: 'harvest' },
     { to: '/detections/reports',  label: 'Detection Reports', icon: 'reports' },
     { to: '/alerts',              label: 'Alerts',            icon: 'alerts', badge: alertCount },
   ];
   if (role === 'SUPERVISOR') return [
     { to: '/supervisor',          label: 'Overview',          icon: 'overview' },
     { to: '/farms',               label: 'Farms',             icon: 'farmLeaf' },
+    { to: '/harvests',            label: 'Harvests',          icon: 'harvest' },
     { to: '/detections/reports',  label: 'Detection Reports', icon: 'reports' },
     { to: '/alerts',              label: 'Alerts',            icon: 'alerts', badge: alertCount },
   ];
@@ -45,6 +50,7 @@ function getNavItems(role: Role | undefined, alertCount: number): NavItem[] {
     { to: '/admin/users',            label: 'User Management',   icon: 'users' },
     { to: '/admin/cooperatives',     label: 'Cooperatives',      icon: 'cooperative' },
     { to: '/farms',                  label: 'Farms',             icon: 'farmLeaf' },
+    { to: '/harvests',               label: 'Harvests',          icon: 'harvest' },
     { to: '/supervisor',             label: 'System Overview',   icon: 'overview' },
     { to: '/detections/reports',     label: 'Detection Reports', icon: 'reports' },
     { to: '/alerts',                 label: 'Alerts',            icon: 'alerts', badge: alertCount },
@@ -95,8 +101,10 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const navItems = getNavItems(user?.role, alertCount);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = () => {
+    setShowLogoutConfirm(false);
     logout();
     navigate('/login', { replace: true });
   };
@@ -107,6 +115,23 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
 
   return (
     <>
+      {/* Sign-out confirmation */}
+      <Modal
+        open={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        title="Sign Out"
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setShowLogoutConfirm(false)}>Cancel</button>
+            <button className="btn btn-danger" onClick={handleLogout}>Sign Out</button>
+          </>
+        }
+      >
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+          Are you sure you want to sign out?
+        </p>
+      </Modal>
+
       {/* Mobile overlay */}
       <div
         className={`sidebar-overlay ${mobileOpen ? 'active' : ''}`}
@@ -155,23 +180,22 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
 
         {/* Footer */}
         <div className="sidebar-footer">
-          {/* User info — click to open profile */}
-          <button
+          {/* User info — display only (profile accessible from top-right corner) */}
+          <div
             className="sidebar-user-display"
-            onClick={() => { navigate('/profile'); onMobileClose(); }}
-            title={collapsed ? 'My Profile' : undefined}
-            style={{ width: '100%', border: 'none', background: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
+            title={collapsed ? (user?.name ?? 'User') : undefined}
+            style={{ width: '100%', padding: 0 }}
           >
             <div className="sidebar-avatar">{initials}</div>
             <div className="sidebar-user-info">
               <div className="u-name">{user?.name ?? 'User'}</div>
               <div className="u-role">{user?.role ?? ''}</div>
             </div>
-          </button>
+          </div>
 
-          {/* Logout button */}
+          {/* Logout button — shows confirm modal */}
           <button
-            onClick={handleLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             className="sidebar-item sidebar-logout-btn"
             title={collapsed ? 'Sign out' : undefined}
             style={{ width: '100%', border: 'none', background: 'none', marginTop: '0.25rem' }}

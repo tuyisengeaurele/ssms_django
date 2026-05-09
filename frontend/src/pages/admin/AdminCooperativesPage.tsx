@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { cooperativeService, CreateCooperativePayload } from '../../services/cooperative.service';
-import { Cooperative, CooperativeDetail } from '../../types';
+import { adminService } from '../../services/admin.service';
+import { Cooperative, CooperativeDetail, User } from '../../types';
 import { useApiError } from '../../hooks/useApiError';
 import { useToast } from '../../context/ToastContext';
 import Modal from '../../components/ui/Modal';
@@ -49,22 +50,52 @@ function StatCard({ icon, label, value, color, bg, delay }: StatCardProps) {
 
 const EMPTY_FORM: CreateCooperativePayload = { name: '', description: '', location: '' };
 
+// ── CoopForm lives OUTSIDE the parent so React never unmounts it on re-render ──
+interface CoopFormProps {
+  form: CreateCooperativePayload;
+  setForm: React.Dispatch<React.SetStateAction<CreateCooperativePayload>>;
+  formError: string;
+}
+function CoopForm({ form, setForm, formError }: CoopFormProps) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+      {formError && <div className="alert alert-error" style={{ marginBottom: '1rem' }}>{formError}</div>}
+      <div className="form-group">
+        <label className="form-label">Name <span style={{ color: 'var(--danger)' }}>*</span></label>
+        <input className="form-input" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Nyamagabe Silk Cooperative" maxLength={150} />
+      </div>
+      <div className="form-group">
+        <label className="form-label">Location</label>
+        <input className="form-input" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="e.g. Nyamagabe District, Rwanda" maxLength={250} />
+      </div>
+      <div className="form-group">
+        <label className="form-label">Description</label>
+        <textarea className="form-textarea" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Short description of this cooperative…" rows={3} maxLength={500} />
+      </div>
+    </div>
+  );
+}
+
 export default function AdminCooperativesPage() {
   const { getErrorMessage } = useApiError();
   const { success, error: showError } = useToast();
 
-  const [coops,       setCoops]       = useState<Cooperative[]>([]);
-  const [loading,     setLoading]     = useState(true);
-  const [showCreate,  setShowCreate]  = useState(false);
-  const [editCoop,    setEditCoop]    = useState<Cooperative | null>(null);
-  const [viewDetail,  setViewDetail]  = useState<CooperativeDetail | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [confirmDel,  setConfirmDel]  = useState<Cooperative | null>(null);
-  const [deleting,    setDeleting]    = useState(false);
-  const [form,        setForm]        = useState<CreateCooperativePayload>(EMPTY_FORM);
-  const [formError,   setFormError]   = useState('');
-  const [submitting,  setSubmitting]  = useState(false);
-  const [search,      setSearch]      = useState('');
+  const [coops,          setCoops]          = useState<Cooperative[]>([]);
+  const [loading,        setLoading]        = useState(true);
+  const [showCreate,     setShowCreate]     = useState(false);
+  const [editCoop,       setEditCoop]       = useState<Cooperative | null>(null);
+  const [viewDetail,     setViewDetail]     = useState<CooperativeDetail | null>(null);
+  const [detailLoading,  setDetailLoading]  = useState(false);
+  const [confirmDel,     setConfirmDel]     = useState<Cooperative | null>(null);
+  const [deleting,       setDeleting]       = useState(false);
+  const [form,           setForm]           = useState<CreateCooperativePayload>(EMPTY_FORM);
+  const [formError,      setFormError]      = useState('');
+  const [submitting,     setSubmitting]     = useState(false);
+  const [search,         setSearch]         = useState('');
+  // Member management inside detail modal
+  const [allUsers,       setAllUsers]       = useState<User[]>([]);
+  const [addMemberId,    setAddMemberId]    = useState('');
+  const [memberChanging, setMemberChanging] = useState(false);
 
   const fetchCoops = () => {
     cooperativeService.getAll()
@@ -122,12 +153,49 @@ export default function AdminCooperativesPage() {
   const openView = async (coop: Cooperative) => {
     setDetailLoading(true);
     setViewDetail(null);
+    setAddMemberId('');
     try {
-      const res = await cooperativeService.getById(coop.id);
-      setViewDetail(res.data.data);
+      const [detailRes, usersRes] = await Promise.all([
+        cooperativeService.getById(coop.id),
+        adminService.getUsers(),
+      ]);
+      setViewDetail(detailRes.data.data);
+      // Only non-admin users can be assigned to cooperatives
+      setAllUsers(usersRes.data.data.filter(u => u.role !== 'ADMIN'));
     } catch (e) {
       showError(getErrorMessage(e));
     } finally { setDetailLoading(false); }
+  };
+
+  const handleAddMember = async () => {
+    if (!viewDetail || !addMemberId) return;
+    setMemberChanging(true);
+    try {
+      await adminService.updateCooperative(addMemberId, viewDetail.id);
+      const res = await cooperativeService.getById(viewDetail.id);
+      setViewDetail(res.data.data);
+      setCoops(prev => prev.map(c => c.id === viewDetail.id
+        ? { ...c, memberCount: res.data.data.memberCount }
+        : c));
+      setAddMemberId('');
+      success('Member added to cooperative.');
+    } catch (e) { showError(getErrorMessage(e)); }
+    finally { setMemberChanging(false); }
+  };
+
+  const handleRemoveMember = async (userId: string) => {
+    if (!viewDetail) return;
+    setMemberChanging(true);
+    try {
+      await adminService.updateCooperative(userId, null);
+      const res = await cooperativeService.getById(viewDetail.id);
+      setViewDetail(res.data.data);
+      setCoops(prev => prev.map(c => c.id === viewDetail.id
+        ? { ...c, memberCount: res.data.data.memberCount }
+        : c));
+      success('Member removed from cooperative.');
+    } catch (e) { showError(getErrorMessage(e)); }
+    finally { setMemberChanging(false); }
   };
 
   const openEdit = (coop: Cooperative) => {
@@ -144,24 +212,6 @@ export default function AdminCooperativesPage() {
   const totalMembers = coops.reduce((a, c) => a + c.memberCount, 0);
   const totalFarms   = coops.reduce((a, c) => a + c.farmCount, 0);
 
-  // ── CoopForm ──────────────────────────────────────────────────────────────
-  const CoopForm = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-      {formError && <div className="alert alert-error" style={{ marginBottom: '1rem' }}>{formError}</div>}
-      <div className="form-group">
-        <label className="form-label">Name <span style={{ color: 'var(--danger)' }}>*</span></label>
-        <input className="form-input" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Nyamagabe Silk Cooperative" maxLength={150} />
-      </div>
-      <div className="form-group">
-        <label className="form-label">Location</label>
-        <input className="form-input" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="e.g. Nyamagabe District, Rwanda" maxLength={250} />
-      </div>
-      <div className="form-group">
-        <label className="form-label">Description</label>
-        <textarea className="form-textarea" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Short description of this cooperative…" rows={3} maxLength={500} />
-      </div>
-    </div>
-  );
 
   return (
     <div>
@@ -176,13 +226,13 @@ export default function AdminCooperativesPage() {
       {/* Create modal */}
       <Modal open={showCreate} onClose={() => { setShowCreate(false); setForm(EMPTY_FORM); setFormError(''); }} title="Create Cooperative"
         footer={<><button className="btn btn-secondary" onClick={() => { setShowCreate(false); setForm(EMPTY_FORM); }}>Cancel</button><button className="btn btn-primary" disabled={submitting} onClick={handleCreate}>{submitting ? <><span className="spinner"/>Creating…</> : 'Create'}</button></>}>
-        <CoopForm />
+        <CoopForm form={form} setForm={setForm} formError={formError} />
       </Modal>
 
       {/* Edit modal */}
       <Modal open={!!editCoop} onClose={() => { setEditCoop(null); setForm(EMPTY_FORM); setFormError(''); }} title="Edit Cooperative"
         footer={<><button className="btn btn-secondary" onClick={() => setEditCoop(null)}>Cancel</button><button className="btn btn-primary" disabled={submitting} onClick={handleUpdate}>{submitting ? <><span className="spinner"/>Saving…</> : 'Save changes'}</button></>}>
-        <CoopForm />
+        <CoopForm form={form} setForm={setForm} formError={formError} />
       </Modal>
 
       {/* View detail modal */}
@@ -212,11 +262,45 @@ export default function AdminCooperativesPage() {
             )}
 
             {/* Members */}
-            <p style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-faint)', marginBottom: '0.5rem' }}>Members ({viewDetail.members.length})</p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <p style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-faint)' }}>Members ({viewDetail.members.length})</p>
+            </div>
+
+            {/* Add member row */}
+            {(() => {
+              const memberIds = new Set(viewDetail.members.map(m => m.id));
+              const available = allUsers.filter(u => !memberIds.has(u.id));
+              return available.length > 0 ? (
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                  <select
+                    value={addMemberId}
+                    onChange={e => setAddMemberId(e.target.value)}
+                    style={{ flex: 1, padding: '0.35rem 0.6rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: '0.78rem', background: 'var(--surface)', color: 'var(--text)' }}
+                  >
+                    <option value="">— Select user to add —</option>
+                    {available.map(u => (
+                      <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                    ))}
+                  </select>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    disabled={!addMemberId || memberChanging}
+                    onClick={handleAddMember}
+                    style={{ whiteSpace: 'nowrap' }}
+                  >
+                    {memberChanging ? <span className="spinner" /> : (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    )}
+                    Add
+                  </button>
+                </div>
+              ) : null;
+            })()}
+
             {viewDetail.members.length === 0 ? (
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-faint)', marginBottom: '1rem' }}>No members yet.</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-faint)', marginBottom: '1rem' }}>No members yet. Add users above.</p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', marginBottom: '1.25rem', maxHeight: 200, overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', marginBottom: '1.25rem', maxHeight: 220, overflowY: 'auto' }}>
                 {viewDetail.members.map(m => {
                   const roleColor: Record<string, string> = { ADMIN: '#d97706', SUPERVISOR: '#2563eb', FARMER: '#16a34a' };
                   return (
@@ -229,16 +313,28 @@ export default function AdminCooperativesPage() {
                         <p style={{ fontSize: '0.7rem', color: 'var(--text-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</p>
                       </div>
                       <span style={{ fontSize: '0.62rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '9999px', background: (roleColor[m.role] ?? '#6b7280') + '18', color: roleColor[m.role] ?? '#6b7280', flexShrink: 0 }}>{m.role}</span>
+                      <button
+                        className="btn btn-xs btn-secondary"
+                        disabled={memberChanging}
+                        onClick={() => handleRemoveMember(m.id)}
+                        style={{ color: 'var(--danger)', borderColor: 'var(--danger-border)', flexShrink: 0 }}
+                        title="Remove from cooperative"
+                      >
+                        Remove
+                      </button>
                     </div>
                   );
                 })}
               </div>
             )}
 
-            {/* Farms */}
-            <p style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-faint)', marginBottom: '0.5rem' }}>Farms ({viewDetail.farms.length})</p>
+            {/* Farms — derived automatically from farmer membership */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <p style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-faint)' }}>Farms ({viewDetail.farms.length})</p>
+              <span style={{ fontSize: '0.65rem', color: 'var(--text-faint)', fontStyle: 'italic' }}>— owned by member farmers</span>
+            </div>
             {viewDetail.farms.length === 0 ? (
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-faint)' }}>No farms in this cooperative yet.</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-faint)' }}>No farms yet. Farms appear automatically when farmer members are added.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', maxHeight: 180, overflowY: 'auto' }}>
                 {viewDetail.farms.map(f => (

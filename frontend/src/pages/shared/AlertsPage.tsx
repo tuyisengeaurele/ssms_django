@@ -34,7 +34,7 @@ export default function AlertsPage() {
 
   const fetchAlerts = () => {
     setLoading(true);
-    alertService.getAll(filter === 'unread' ? true : undefined)
+    alertService.getAll(filter === 'unread' ? true : false)
       .then(r => setAlerts(r.data.data))
       .catch(e => showError(getErrorMessage(e)))
       .finally(() => setLoading(false));
