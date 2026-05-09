@@ -285,9 +285,12 @@ export default function AdminUsersPage() {
                       </td>
                       {/* Cooperative column */}
                       <td>
-                        {u.id === me?.id ? (
+                        {u.role === 'ADMIN' ? (
+                          /* Admins manage cooperatives globally — not assigned to any */
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-faint)', fontStyle: 'italic' }}>N/A</span>
+                        ) : u.id === me?.id ? (
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            {u.cooperativeName ?? <span style={{ color: 'var(--text-faint)' }}>—</span>}
+                            {u.cooperativeName ?? '—'}
                           </span>
                         ) : (
                           <select

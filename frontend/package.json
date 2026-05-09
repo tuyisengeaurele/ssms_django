@@ -10,6 +10,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives"
   },
   "dependencies": {
+    "@sentry/react": "^10.52.0",
     "axios": "^1.7.2",
     "framer-motion": "^12.38.0",
     "react": "^18.3.1",

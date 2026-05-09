@@ -114,6 +114,15 @@ class BatchActiveSupervisorView(APIView):
         )
         if request.user.role == 'FARMER':
             qs = qs.filter(farm__owner=request.user)
+        elif request.user.role == 'SUPERVISOR':
+            if request.user.cooperative_id:
+                qs = qs.filter(
+                    farm__owner__cooperative_id=request.user.cooperative_id,
+                    farm__owner__role='FARMER',
+                )
+            else:
+                qs = qs.none()
+        # ADMIN: no filter, sees all batches
         return api_success(BatchSupervisorSerializer(qs, many=True).data)
 
 

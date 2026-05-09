@@ -96,7 +96,12 @@ class AdminUserCooperativeView(APIView):
         except User.DoesNotExist:
             return api_error('User not found.', 404)
 
-        cooperative_id = request.data.get('cooperativeId')
+        # CamelCaseJSONParser converts incoming camelCase → snake_case
+        cooperative_id = request.data.get('cooperative_id')
+
+        # Admins manage cooperatives globally — they cannot belong to one
+        if user.role == 'ADMIN':
+            return api_error('Admin users cannot be assigned to a cooperative.', 400)
 
         if cooperative_id is None or cooperative_id == '':
             # Unassign

@@ -5,7 +5,10 @@ export const farmService = {
   create: (data: { name: string; location: string }) =>
     api.post<ApiResponse<Farm>>('/farms', data),
 
-  getAll: () => api.get<ApiResponse<Farm[]>>('/farms'),
+  getAll: (page?: number) => {
+    const q = page ? `?page=${page}` : '';
+    return api.get<ApiResponse<Farm[]>>(`/farms${q}`);
+  },
 
   getById: (id: string) => api.get<ApiResponse<Farm>>(`/farms/${id}`),
 

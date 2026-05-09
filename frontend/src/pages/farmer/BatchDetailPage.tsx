@@ -52,9 +52,14 @@ export default function BatchDetailPage() {
     if (!id) return;
     setUpdating(true);
     try {
-      const res = await batchService.updateStage(id, stage);
-      setBatch(prev => prev ? { ...prev, stage: res.data.data.stage } : prev);
+      await batchService.updateStage(id, stage);
       success(`Stage advanced to ${STAGE_LABELS[stage]}.`);
+      if (stage === 'HARVEST') {
+        // Automatically open harvest records when batch reaches harvest stage
+        navigate(`/batches/${id}/harvest`);
+      } else {
+        setBatch(prev => prev ? { ...prev, stage } : prev);
+      }
     } catch (err) {
       showError(getErrorMessage(err));
     } finally {
@@ -125,6 +130,12 @@ export default function BatchDetailPage() {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             Run Detection
           </Link>
+          {batch.stage === 'HARVEST' && (
+            <Link to={`/batches/${id}/harvest`} className="btn btn-secondary btn-sm" style={{ color: '#16a34a', borderColor: '#bbf7d0' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22V12M3.5 8.5C3.5 5.46 6.46 3 10 3c2.12 0 4 .9 5.28 2.33A6.5 6.5 0 0 1 21 11.5c0 3.58-2.91 6.5-6.5 6.5H5a1.5 1.5 0 0 1 0-3"/></svg>
+              Harvest Records
+            </Link>
+          )}
           {canEdit && (
             <button onClick={() => setShowArchive(true)} className="btn btn-secondary btn-sm" style={{ color: 'var(--danger)', borderColor: 'var(--danger-border)' }}>
               Archive

@@ -4,8 +4,11 @@ Accepts an image upload, calls the FastAPI AI service, persists the result.
 """
 
 import os
+import csv
+import io
 import httpx
 from django.conf import settings
+from django.http import StreamingHttpResponse
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
@@ -13,6 +16,7 @@ from batches.models import Batch
 from .models import DiseaseDetection
 from .serializers import DiseaseDetectionSerializer
 from core.utils import api_success, api_error
+from core.pagination import StandardPagination
 
 
 def _save_image(uploaded_file) -> str:
@@ -131,6 +135,15 @@ class DetectionHistoryView(APIView):
 
         if request.user.role == 'FARMER':
             qs = qs.filter(batch__farm__owner=request.user)
+        elif request.user.role == 'SUPERVISOR':
+            if request.user.cooperative_id:
+                qs = qs.filter(
+                    batch__farm__owner__cooperative_id=request.user.cooperative_id,
+                    batch__farm__owner__role='FARMER',
+                )
+            else:
+                qs = qs.none()
+        # ADMIN: no filter
 
         farm_id   = request.query_params.get('farm_id')
         date_from = request.query_params.get('date_from')
@@ -144,22 +157,61 @@ class DetectionHistoryView(APIView):
         if date_to:
             qs = qs.filter(detected_at__date__lte=date_to)
 
-        qs = qs[:limit]
+        def _serialize(qs_slice):
+            return [
+                {
+                    'id': d.id,
+                    'result': d.result,
+                    'confidence': d.confidence,
+                    'detected_at': d.detected_at.isoformat(),
+                    'batch_id': d.batch_id,
+                    'farm_name': d.batch.farm.name if d.batch and d.batch.farm else '—',
+                    'farm_id': d.batch.farm_id if d.batch else None,
+                    'notes': d.notes,
+                }
+                for d in qs_slice
+            ]
 
-        data = [
-            {
-                'id': d.id,
-                'result': d.result,
-                'confidence': d.confidence,
-                'detected_at': d.detected_at.isoformat(),
-                'batch_id': d.batch_id,
-                'farm_name': d.batch.farm.name if d.batch and d.batch.farm else '—',
-                'farm_id': d.batch.farm_id if d.batch else None,
-                'notes': d.notes,
-            }
-            for d in qs
-        ]
-        return api_success(data)
+        # ── CSV export ──────────────────────────────────────────────────────────
+        # NOTE: we deliberately avoid ?format= because DRF intercepts that param
+        # for its own content-negotiation pipeline before the view method runs.
+        if request.query_params.get('export') == 'csv':
+            def _csv_rows(queryset):
+                header = ['ID', 'Date', 'Result', 'Confidence (%)', 'Farm', 'Farm ID', 'Batch ID', 'Notes']
+                yield header
+                for d in queryset:
+                    yield [
+                        d.id,
+                        d.detected_at.strftime('%Y-%m-%d %H:%M:%S'),
+                        d.result,
+                        f'{d.confidence * 100:.1f}' if d.confidence is not None else '',
+                        d.batch.farm.name if d.batch and d.batch.farm else '',
+                        d.batch.farm_id if d.batch else '',
+                        d.batch_id,
+                        d.notes or '',
+                    ]
+
+            def _stream():
+                buffer = io.StringIO()
+                writer = csv.writer(buffer)
+                for row in _csv_rows(qs[:limit]):
+                    writer.writerow(row)
+                    yield buffer.getvalue()
+                    buffer.seek(0)
+                    buffer.truncate(0)
+
+            response = StreamingHttpResponse(_stream(), content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="disease_detections.csv"'
+            return response
+
+        # ── Paginated JSON ───────────────────────────────────────────────────────
+        if 'page' in request.query_params:
+            paginator = StandardPagination()
+            page = paginator.paginate_queryset(qs, request)
+            if page is not None:
+                return paginator.get_paginated_response(_serialize(page))
+
+        return api_success(_serialize(qs[:limit]))
 
 
 class DetectionStatsView(APIView):
@@ -180,6 +232,15 @@ class DetectionStatsView(APIView):
 
         if request.user.role == 'FARMER':
             qs = qs.filter(batch__farm__owner=request.user)
+        elif request.user.role == 'SUPERVISOR':
+            if request.user.cooperative_id:
+                qs = qs.filter(
+                    batch__farm__owner__cooperative_id=request.user.cooperative_id,
+                    batch__farm__owner__role='FARMER',
+                )
+            else:
+                qs = qs.none()
+        # ADMIN: no filter
 
         farm_id   = request.query_params.get('farm_id')
         date_from = request.query_params.get('date_from')
@@ -213,8 +274,18 @@ class RecentDetectionsView(APIView):
         detections = (
             DiseaseDetection.objects
             .select_related('batch', 'batch__farm')
-            .order_by('-detected_at')[:limit]
+            .order_by('-detected_at')
         )
+        if request.user.role == 'SUPERVISOR':
+            if request.user.cooperative_id:
+                detections = detections.filter(
+                    batch__farm__owner__cooperative_id=request.user.cooperative_id,
+                    batch__farm__owner__role='FARMER',
+                )
+            else:
+                detections = detections.none()
+        # ADMIN: no filter
+        detections = detections[:limit]
 
         data = [
             {

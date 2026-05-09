@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, get_tokens_for_user
 from core.utils import api_success, api_error
+from core.throttles import LoginRateThrottle
 
 
 class RegisterView(APIView):
@@ -12,9 +13,9 @@ class RegisterView(APIView):
         if not serializer.is_valid():
             return api_error('Validation failed.', 422, serializer.errors)
         user = serializer.save()
-        token = get_tokens_for_user(user)
+        tokens = get_tokens_for_user(user)
         return api_success(
-            {'user': UserSerializer(user).data, 'token': token},
+            {'user': UserSerializer(user).data, 'token': tokens['access'], 'refreshToken': tokens['refresh']},
             'Account created successfully.',
             201,
         )
@@ -22,6 +23,7 @@ class RegisterView(APIView):
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data, context={'request': request})
@@ -33,9 +35,9 @@ class LoginView(APIView):
                 return api_error(str(non_field[0]), 401)
             return api_error('Validation failed.', 422, errors)
         user = serializer.validated_data['user']
-        token = get_tokens_for_user(user)
+        tokens = get_tokens_for_user(user)
         return api_success(
-            {'user': UserSerializer(user).data, 'token': token},
+            {'user': UserSerializer(user).data, 'token': tokens['access'], 'refreshToken': tokens['refresh']},
             'Logged in successfully.',
         )
 
@@ -45,3 +47,13 @@ class ProfileView(APIView):
 
     def get(self, request):
         return api_success(UserSerializer(request.user).data)
+
+    def patch(self, request):
+        name = request.data.get('name', '').strip()
+        if not name:
+            return api_error('Name is required.', 422)
+        if len(name) > 100:
+            return api_error('Name cannot exceed 100 characters.', 422)
+        request.user.name = name
+        request.user.save(update_fields=['name'])
+        return api_success(UserSerializer(request.user).data, 'Profile updated.')

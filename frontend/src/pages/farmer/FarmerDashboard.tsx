@@ -176,20 +176,29 @@ export default function FarmerDashboard() {
   const unreadCount = alerts.filter(a => !a.isRead).length;
 
   useEffect(() => {
-    Promise.all([
+    // Use allSettled so a single failed endpoint doesn't blank every widget
+    Promise.allSettled([
       farmService.getAll(),
       batchSupervisorService.getActive(),
       sensorService.getChart(24),
       alertService.getAll(true),
-    ])
-      .then(([farmsRes, batchRes, chartRes, alertRes]) => {
-        setFarms(farmsRes.data.data);
-        setBatches(batchRes.data.data);
-        setChart(chartRes.data.data);
-        setAlerts(alertRes.data.data);
-      })
-      .catch(e => showError(getErrorMessage(e)))
-      .finally(() => setLoading(false));
+    ]).then(([farmsResult, batchResult, chartResult, alertResult]) => {
+      if (farmsResult.status === 'fulfilled') {
+        const d = farmsResult.value.data as any;
+        setFarms(d.data ?? d);
+      }
+      if (batchResult.status === 'fulfilled') {
+        setBatches(batchResult.value.data.data as any);
+      }
+      if (chartResult.status === 'fulfilled') {
+        setChart(chartResult.value.data.data as any);
+      } else {
+        showError(getErrorMessage(chartResult.reason));
+      }
+      if (alertResult.status === 'fulfilled') {
+        setAlerts(alertResult.value.data.data as any);
+      }
+    }).finally(() => setLoading(false));
   }, []);
 
   const handleMarkRead = async (id: string) => {

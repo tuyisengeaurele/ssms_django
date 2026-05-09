@@ -4,6 +4,7 @@ from django.db.models import Prefetch
 from .models import Farm
 from .serializers import FarmSerializer, FarmDetailSerializer, FarmCreateSerializer, FarmUpdateSerializer
 from core.utils import api_success, api_error
+from core.pagination import StandardPagination
 
 
 def _farm_queryset(user):
@@ -55,6 +56,10 @@ class FarmListCreateView(APIView):
             )
             .order_by('-created_at')
         )
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(farms, request)
+        if page is not None:
+            return paginator.get_paginated_response(FarmSerializer(page, many=True).data)
         return api_success(FarmSerializer(farms, many=True).data)
 
     def post(self, request):

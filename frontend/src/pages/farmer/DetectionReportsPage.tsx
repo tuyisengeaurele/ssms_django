@@ -85,20 +85,37 @@ export default function DetectionReportsPage() {
   const { getErrorMessage } = useApiError();
   const { error: showError } = useToast();
 
-  const [farms,    setFarms]    = useState<Farm[]>([]);
-  const [farmId,   setFarmId]   = useState('');
-  const [dateFrom, setDateFrom] = useState(monthAgoStr());
-  const [dateTo,   setDateTo]   = useState(todayStr());
-  const [history,  setHistory]  = useState<DetectionHistoryItem[]>([]);
-  const [stats,    setStats]    = useState<DetectionStat[]>([]);
-  const [loadingH, setLoadingH] = useState(true);
-  const [loadingS, setLoadingS] = useState(true);
+  const [farms,       setFarms]       = useState<Farm[]>([]);
+  const [farmId,      setFarmId]      = useState('');
+  const [dateFrom,    setDateFrom]    = useState(monthAgoStr());
+  const [dateTo,      setDateTo]      = useState(todayStr());
+  const [history,     setHistory]     = useState<DetectionHistoryItem[]>([]);
+  const [stats,       setStats]       = useState<DetectionStat[]>([]);
+  const [loadingH,    setLoadingH]    = useState(true);
+  const [loadingS,    setLoadingS]    = useState(true);
+  const [exporting,   setExporting]   = useState(false);
 
   useEffect(() => {
     if (me?.role !== 'FARMER') {
       farmService.getAll().then(r => setFarms(r.data.data)).catch(() => {});
     }
   }, [me]);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      await detectionReportService.exportCsv({
+        farmId: farmId || undefined,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+        limit: 500,
+      });
+    } catch (e) {
+      showError(getErrorMessage(e));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const fetchData = useCallback(() => {
     const params = { farmId: farmId || undefined, dateFrom: dateFrom || undefined, dateTo: dateTo || undefined };
@@ -130,7 +147,28 @@ export default function DetectionReportsPage() {
           <h1 className="page-title">Detection Reports</h1>
           <p className="page-subtitle">Disease detection history and frequency analysis</p>
         </div>
-        <Link to={backPath} className="btn btn-secondary btn-sm">← Back</Link>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={handleExport}
+            disabled={exporting || loadingH}
+            title="Export filtered results as CSV"
+          >
+            {exporting ? (
+              <><span className="spinner" />Exporting…</>
+            ) : (
+              <>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Export CSV
+              </>
+            )}
+          </button>
+          <Link to={backPath} className="btn btn-secondary btn-sm">← Back</Link>
+        </div>
       </div>
 
       {/* Filters */}

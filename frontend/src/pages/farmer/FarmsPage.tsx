@@ -8,6 +8,9 @@ import EmptyState from '../../components/ui/EmptyState';
 import { SkeletonCard } from '../../components/ui/SkeletonLoader';
 import { useToast } from '../../context/ToastContext';
 import { useApiError } from '../../hooks/useApiError';
+import Pagination from '../../components/ui/Pagination';
+
+interface PaginationMeta { page: number; pageSize: number; totalItems: number; totalPages: number; hasNext: boolean; hasPrev: boolean; }
 
 export default function FarmsPage() {
   const { user }  = useAuth();
@@ -16,13 +19,24 @@ export default function FarmsPage() {
   const [farms,   setFarms]   = useState<Farm[]>([]);
   const [search,  setSearch]  = useState('');
   const [loading, setLoading] = useState(true);
+  const [page,    setPage]    = useState(1);
+  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta | null>(null);
 
-  useEffect(() => {
-    farmService.getAll()
-      .then(r => setFarms(r.data.data))
+  const load = (p = 1) => {
+    setLoading(true);
+    farmService.getAll(p)
+      .then(r => {
+        const res = r.data as any;
+        // Paginated response: { data: [...], pagination: {...} }
+        // Flat response (no ?page):  { data: [...] }
+        setFarms(res.data ?? res);
+        if (res.pagination) setPaginationMeta(res.pagination);
+      })
       .catch(e => showError(getErrorMessage(e)))
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { load(page); }, [page]);
 
   const canCreate = user?.role === 'FARMER' || user?.role === 'ADMIN';
   const filtered  = farms.filter(f =>
@@ -73,6 +87,7 @@ export default function FarmsPage() {
           )}
         </div>
       ) : (
+        <>
         <div className="grid-auto">
           {filtered.map((farm, i) => (
             <motion.div key={farm.id}
@@ -114,6 +129,12 @@ export default function FarmsPage() {
             </motion.div>
           ))}
         </div>
+        {paginationMeta && paginationMeta.totalPages > 1 && (
+          <div className="table-container" style={{ marginTop: '1rem' }}>
+            <Pagination meta={paginationMeta} onPage={setPage} />
+          </div>
+        )}
+        </>
       )}
     </div>
   );

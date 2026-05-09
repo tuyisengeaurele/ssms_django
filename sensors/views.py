@@ -55,6 +55,15 @@ class SensorChartView(APIView):
         qs = SensorReading.objects.filter(timestamp__gte=since)
         if request.user.role == 'FARMER':
             qs = qs.filter(batch__farm__owner=request.user)
+        elif request.user.role == 'SUPERVISOR':
+            if request.user.cooperative_id:
+                qs = qs.filter(
+                    batch__farm__owner__cooperative_id=request.user.cooperative_id,
+                    batch__farm__owner__role='FARMER',
+                )
+            else:
+                qs = qs.none()
+        # ADMIN: no filter, sees all
 
         rows = (
             qs

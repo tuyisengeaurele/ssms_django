@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { authService } from '../../services/auth.service';
+import { useApiError } from '../../hooks/useApiError';
+import { useLanguage } from '../../context/LanguageContext';
+import { LOCALE_LABELS, Locale } from '../../i18n/translations';
 
 const ROLE_META: Record<string, { label: string; color: string; bg: string }> = {
   FARMER:     { label: 'Farmer',     color: '#16a34a', bg: '#dcfce7' },
@@ -10,11 +14,21 @@ const ROLE_META: Record<string, { label: string; color: string; bg: string }> = 
 };
 
 export default function ProfilePage() {
-  const { user } = useAuth();
-  const { success } = useToast();
+  const { user, refreshUser, updateUser } = useAuth();
+  const { success, error: showError } = useToast();
+  const { getErrorMessage } = useApiError();
+  const { locale, setLocale } = useLanguage();
 
   const [name, setName] = useState(user?.name ?? '');
   const [saving, setSaving] = useState(false);
+
+  // Refresh user data from server so cooperative/name is always up to date
+  useEffect(() => { refreshUser(); }, []);
+
+  // Sync name field if refreshUser updates user
+  useEffect(() => {
+    if (user?.name) setName(user.name);
+  }, [user?.name]);
 
   const initials = user?.name
     ? user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
@@ -25,10 +39,15 @@ export default function ProfilePage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    // In a full implementation this would call an API to update name
-    await new Promise(r => setTimeout(r, 600));
-    setSaving(false);
-    success('Profile updated successfully.');
+    try {
+      const res = await authService.updateProfile({ name });
+      updateUser(res.data.data);
+      success('Profile updated successfully.');
+    } catch (err) {
+      showError(getErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const joinedDate = user?.createdAt
@@ -215,6 +234,34 @@ export default function ProfilePage() {
               <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '9999px', background: '#f0fdf4', color: '#16a34a' }}>
                 Active
               </span>
+            </div>
+          </div>
+
+          {/* Language selector card */}
+          <div className="card" style={{ marginTop: '1rem' }}>
+            <h3 style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '1rem' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                Language / Langue / Ururimi
+              </span>
+            </h3>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-faint)', marginBottom: '0.875rem' }}>
+              Choose the interface language. Your preference is saved in this browser.
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {(Object.entries(LOCALE_LABELS) as [Locale, string][]).map(([code, label]) => (
+                <button
+                  key={code}
+                  onClick={() => setLocale(code)}
+                  className={locale === code ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'}
+                  style={{ minWidth: 110 }}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
         </motion.div>

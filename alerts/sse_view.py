@@ -54,14 +54,14 @@ class AlertStreamView(View):
             )
 
         response = StreamingHttpResponse(
-            self._stream(),
+            self._stream(user),
             content_type='text/event-stream',
         )
         response['Cache-Control'] = 'no-cache'
         response['X-Accel-Buffering'] = 'no'   # disable nginx / gunicorn buffering
         return response
 
-    def _stream(self):
+    def _stream(self, user):
         # Seed: deliver all unread alerts from the last 24 hours on connect
         since = timezone.now() - timedelta(hours=24)
         last_ping = time.time()
@@ -74,6 +74,15 @@ class AlertStreamView(View):
                 .filter(created_at__gt=since)
                 .order_by('created_at')
             )
+            # Scope to cooperative for supervisors
+            if user.role == 'SUPERVISOR':
+                if user.cooperative_id:
+                    new_alerts = new_alerts.filter(
+                        batch__farm__owner__cooperative_id=user.cooperative_id,
+                        batch__farm__owner__role='FARMER',
+                    )
+                else:
+                    new_alerts = new_alerts.none()
 
             for alert in new_alerts:
                 payload = {

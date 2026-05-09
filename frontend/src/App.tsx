@@ -1,10 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ui/ProtectedRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
 
+import LandingPage        from './pages/LandingPage';
 import LoginPage          from './pages/auth/LoginPage';
 import RegisterPage       from './pages/auth/RegisterPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage  from './pages/auth/ResetPasswordPage';
 import FarmerDashboard    from './pages/farmer/FarmerDashboard';
 import SupervisorDashboard from './pages/supervisor/SupervisorDashboard';
 import AdminDashboard     from './pages/admin/AdminDashboard';
@@ -17,6 +21,8 @@ import AddDetectionPage   from './pages/farmer/AddDetectionPage';
 import AdminUsersPage          from './pages/admin/AdminUsersPage';
 import AdminCooperativesPage   from './pages/admin/AdminCooperativesPage';
 import DetectionReportsPage    from './pages/farmer/DetectionReportsPage';
+import HarvestPage             from './pages/farmer/HarvestPage';
+import HarvestsPage            from './pages/farmer/HarvestsPage';
 import AlertsPage         from './pages/shared/AlertsPage';
 import BatchesPage        from './pages/farmer/BatchesPage';
 import ProfilePage        from './pages/shared/ProfilePage';
@@ -42,13 +48,16 @@ function Unauthorized() {
 
 export default function App() {
   return (
+    <LanguageProvider>
     <AuthProvider>
       <BrowserRouter>
         <Routes>
           {/* Public */}
-          <Route path="/login"        element={<LoginPage />} />
-          <Route path="/register"     element={<RegisterPage />} />
-          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/login"            element={<LoginPage />} />
+          <Route path="/register"         element={<RegisterPage />} />
+          <Route path="/forgot-password"  element={<ForgotPasswordPage />} />
+          <Route path="/reset-password"   element={<ResetPasswordPage />} />
+          <Route path="/unauthorized"     element={<Unauthorized />} />
 
           {/* All authenticated — inside DashboardLayout (sidebar + topbar) */}
           <Route element={<ProtectedRoute allowedRoles={['FARMER', 'SUPERVISOR', 'ADMIN']} />}>
@@ -63,6 +72,8 @@ export default function App() {
               <Route path="/batches"                   element={<BatchesPage />} />
               <Route path="/batches/:id"               element={<BatchDetailPage />} />
               <Route path="/batches/:id/detect"        element={<AddDetectionPage />} />
+              <Route path="/batches/:id/harvest"       element={<HarvestPage />} />
+              <Route path="/harvests"                  element={<HarvestsPage />} />
               <Route path="/detections/reports"        element={<DetectionReportsPage />} />
               <Route path="/alerts"                    element={<AlertsPage />} />
               <Route path="/profile"                  element={<ProfilePage />} />
@@ -83,10 +94,11 @@ export default function App() {
           </Route>
 
           {/* Default */}
-          <Route path="/"  element={<Navigate to="/login" replace />} />
-          <Route path="*"  element={<Navigate to="/login" replace />} />
+          <Route path="/"  element={<LandingPage />} />
+          <Route path="*"  element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </LanguageProvider>
   );
 }

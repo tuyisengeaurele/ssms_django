@@ -40,8 +40,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await authService.login({ email, password });
-      const { user, token } = res.data.data;
-      login(user, token);
+      const { user, token, refreshToken } = res.data.data;
+      login(user, token, refreshToken);
       const path = user.role === 'ADMIN' ? '/admin' : user.role === 'SUPERVISOR' ? '/supervisor' : '/farmer';
       navigate(path, { replace: true });
     } catch (err) {
@@ -150,7 +150,10 @@ export default function LoginPage() {
             </div>
 
             <div className="form-group">
-              <label className="form-label" htmlFor="password">Password</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
+                <label className="form-label" htmlFor="password" style={{ marginBottom: 0 }}>Password</label>
+                <Link to="/forgot-password" style={{ fontSize: '0.78rem', color: 'var(--primary)', fontWeight: 500 }}>Forgot password?</Link>
+              </div>
               <div className="input-wrapper">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="input-icon-left"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 <input
