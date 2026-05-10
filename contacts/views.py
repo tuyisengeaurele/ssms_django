@@ -6,6 +6,7 @@ from core.utils import api_success, api_error
 from .models import ContactMessage
 
 
+
 class ContactCreateView(APIView):
     """POST /api/contact — public, no auth required."""
     permission_classes = [AllowAny]
@@ -70,6 +71,18 @@ class ContactCreateView(APIView):
         )
 
 
+def _serialize_message(m):
+    return {
+        'id':        m.id,
+        'name':      m.name,
+        'email':     m.email,
+        'subject':   m.subject,
+        'message':   m.message,
+        'isRead':    m.is_read,
+        'createdAt': m.created_at.isoformat(),
+    }
+
+
 class ContactListView(APIView):
     """GET /api/admin/contacts — admin only."""
     permission_classes = [IsAuthenticated]
@@ -77,20 +90,8 @@ class ContactListView(APIView):
     def get(self, request):
         if request.user.role != 'ADMIN':
             return api_error('Admin access required.', 403)
-        messages = ContactMessage.objects.all()
-        data = [
-            {
-                'id':        m.id,
-                'name':      m.name,
-                'email':     m.email,
-                'subject':   m.subject,
-                'message':   m.message,
-                'isRead':    m.is_read,
-                'createdAt': m.created_at.isoformat(),
-            }
-            for m in messages
-        ]
-        return api_success(data)
+        messages = ContactMessage.objects.all().order_by('-created_at')
+        return api_success([_serialize_message(m) for m in messages])
 
     def patch(self, request, pk):
         """PATCH /api/admin/contacts/:id/read — mark as read."""
@@ -103,3 +104,21 @@ class ContactListView(APIView):
         msg.is_read = True
         msg.save(update_fields=['is_read'])
         return api_success({'id': msg.id, 'isRead': True})
+
+
+class ContactUnreadView(APIView):
+    """
+    GET /api/admin/contacts/unread
+    Returns unread count + latest 5 unread messages for admin notification bell.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != 'ADMIN':
+            return api_error('Admin access required.', 403)
+        unread = ContactMessage.objects.filter(is_read=False).order_by('-created_at')
+        data = {
+            'count':    unread.count(),
+            'messages': [_serialize_message(m) for m in unread[:5]],
+        }
+        return api_success(data)
