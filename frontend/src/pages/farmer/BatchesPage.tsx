@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { batchSupervisorService, ActiveBatch } from '../../services/sensor.service';
 import { useToast } from '../../context/ToastContext';
 import { useApiError } from '../../hooks/useApiError';
+import { useLanguage } from '../../context/LanguageContext';
 import StageBadge from '../../components/ui/StageBadge';
 import EmptyState from '../../components/ui/EmptyState';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
@@ -13,6 +14,7 @@ const STAGE_ORDER = ['EGG', 'LARVA', 'PUPA', 'COCOON', 'HARVEST'];
 export default function BatchesPage() {
   const { error: showError } = useToast();
   const { getErrorMessage }  = useApiError();
+  const { t } = useLanguage();
   const [batches,  setBatches]  = useState<ActiveBatch[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [search,   setSearch]   = useState('');
@@ -38,7 +40,7 @@ export default function BatchesPage() {
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Batches</h1>
+          <h1 className="page-title">{t('pageTitleBatches')}</h1>
           <p className="page-subtitle">
             {batches.length} active batch{batches.length !== 1 ? 'es' : ''} across your farms
           </p>

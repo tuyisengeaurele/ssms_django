@@ -44,19 +44,26 @@ export const translations: TranslationMap = {
   pageTitleCooperatives: { en: 'Cooperatives',        fr: 'Coopératives',              rw: 'Amakoperative' },
   pageTitleProfile:      { en: 'My Profile',          fr: 'Mon profil',                rw: 'Umwirondoro Wanjye' },
   pageTitleHarvest:      { en: 'Harvest Records',     fr: 'Relevés de récolte',        rw: "Amakuru y'Isarura" },
+  pageTitleDevices:      { en: 'IoT Devices',         fr: 'Appareils IoT',             rw: 'Ibikoresho IoT' },
+  pageTitleMessages:     { en: 'Contact Messages',    fr: 'Messages de contact',       rw: 'Ubutumwa bw\'Itumanahana' },
 
   // ── Buttons / actions ────────────────────────────────────────────────────────
   btnNewFarm:      { en: '+ New Farm',       fr: '+ Nouvelle ferme',        rw: '+ Umuhindu Mushya' },
   btnNewBatch:     { en: '+ New Batch',      fr: '+ Nouveau lot',           rw: '+ Itsinda Rishya' },
   btnAddHarvest:   { en: '+ Add Harvest',    fr: '+ Ajouter une récolte',   rw: '+ Ongeramo Isarura' },
+  btnAddDevice:    { en: '+ Add Device',     fr: '+ Ajouter un appareil',   rw: '+ Ongeramo Igikoresho' },
   btnSave:         { en: 'Save',             fr: 'Enregistrer',             rw: 'Bika' },
   btnCancel:       { en: 'Cancel',           fr: 'Annuler',                 rw: 'Reka' },
   btnDelete:       { en: 'Delete',           fr: 'Supprimer',               rw: 'Siba' },
+  btnRefresh:      { en: 'Refresh',          fr: 'Actualiser',              rw: 'Vugurura' },
   btnExportCsv:    { en: 'Export CSV',       fr: 'Exporter CSV',            rw: 'Kohereza CSV' },
   btnMarkAllRead:  { en: 'Mark all read',    fr: 'Tout marquer comme lu',   rw: 'Shyira byose nk\'ibirasomwe' },
   btnRunDetection: { en: 'Run Detection',    fr: 'Lancer la détection',     rw: 'Tangira Gusuzuma' },
   btnViewFarm:     { en: 'View farm',        fr: 'Voir la ferme',           rw: 'Reba Umuhindu' },
   btnViewBatch:    { en: 'View batch',       fr: 'Voir le lot',             rw: 'Reba Itsinda' },
+  btnSignOut:      { en: 'Sign Out',         fr: 'Se déconnecter',          rw: 'Sohoka' },
+  btnMyProfile:    { en: 'My Profile',       fr: 'Mon profil',              rw: 'Umwirondoro Wanjye' },
+  btnViewAll:      { en: 'View all alerts',  fr: 'Voir toutes les alertes', rw: 'Reba Ibiburaniswa Byose' },
 
   // ── Form labels ──────────────────────────────────────────────────────────────
   labelName:           { en: 'Name',             fr: 'Nom',                    rw: 'Izina' },
@@ -88,6 +95,11 @@ export const translations: TranslationMap = {
   statusInactive: { en: 'Inactive',   fr: 'Inactif',     rw: 'Ntiikorana' },
   statusRead:     { en: 'Read',       fr: 'Lu',          rw: 'Byasomwe' },
   statusUnread:   { en: 'Unread',     fr: 'Non lu',      rw: 'Ntibisomwe' },
+  statusOnline:   { en: 'Online',     fr: 'En ligne',    rw: 'Igikorana' },
+  statusOffline:  { en: 'Offline',    fr: 'Hors ligne',  rw: 'Ntiikorana' },
+  labelSearch:    { en: 'Search…',    fr: 'Rechercher…', rw: 'Shakisha…' },
+  labelNoResults: { en: 'No results', fr: 'Aucun résultat', rw: 'Nta bisubizo' },
+  labelAll:       { en: 'All',        fr: 'Tous',        rw: 'Byose' },
 
   // ── Empty states ─────────────────────────────────────────────────────────────
   emptyFarms:      { en: 'No farms yet',          fr: 'Aucune ferme',          rw: 'Nta mahindu' },

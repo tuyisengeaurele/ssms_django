@@ -4,6 +4,7 @@ import { contactsService } from '../../services/contacts.service';
 import { ContactMessage } from '../../types';
 import { useToast } from '../../context/ToastContext';
 import { useApiError } from '../../hooks/useApiError';
+import { useLanguage } from '../../context/LanguageContext';
 import EmptyState from '../../components/ui/EmptyState';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 
@@ -138,6 +139,7 @@ function MessageModal({
 export default function AdminContactsPage() {
   const { error: showError } = useToast();
   const { getErrorMessage }  = useApiError();
+  const { t } = useLanguage();
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [selected, setSelected] = useState<ContactMessage | null>(null);
@@ -181,7 +183,7 @@ export default function AdminContactsPage() {
       {/* Page header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Contact Messages</h1>
+          <h1 className="page-title">{t('pageTitleMessages')}</h1>
           <p className="page-subtitle">
             {messages.length} total · {unreadCount} unread
           </p>
