@@ -24,8 +24,10 @@ import DetectionReportsPage    from './pages/farmer/DetectionReportsPage';
 import HarvestPage             from './pages/farmer/HarvestPage';
 import HarvestsPage            from './pages/farmer/HarvestsPage';
 import AlertsPage         from './pages/shared/AlertsPage';
+import DevicesPage        from './pages/shared/DevicesPage';
 import BatchesPage        from './pages/farmer/BatchesPage';
 import ProfilePage        from './pages/shared/ProfilePage';
+import AdminContactsPage  from './pages/admin/AdminContactsPage';
 
 function Unauthorized() {
   return (
@@ -76,6 +78,7 @@ export default function App() {
               <Route path="/harvests"                  element={<HarvestsPage />} />
               <Route path="/detections/reports"        element={<DetectionReportsPage />} />
               <Route path="/alerts"                    element={<AlertsPage />} />
+              <Route path="/devices"                   element={<DevicesPage />} />
               <Route path="/profile"                  element={<ProfilePage />} />
 
               {/* Supervisor + Admin */}
@@ -88,6 +91,7 @@ export default function App() {
                 <Route path="/admin"                  element={<AdminDashboard />} />
                 <Route path="/admin/users"            element={<AdminUsersPage />} />
                 <Route path="/admin/cooperatives"     element={<AdminCooperativesPage />} />
+                <Route path="/admin/contacts"         element={<AdminContactsPage />} />
               </Route>
 
             </Route>

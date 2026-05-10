@@ -117,6 +117,42 @@ export interface HarvestStats {
   byGrade: Array<{ grade: QualityGrade; count: number; totalKg: number }>;
 }
 
+export type DeviceStatus = 'online' | 'offline' | 'error';
+
+export interface IoTDevice {
+  id: string;
+  name: string;
+  deviceKey: string;
+  farmId: string | null;
+  farmName: string | null;
+  batchId: string | null;
+  location: string;
+  status: DeviceStatus;
+  lastSeen: string | null;
+  isActive: boolean;
+  createdAt: string;
+  latestReading: {
+    temperature: number;
+    humidity: number;
+    timestamp: string;
+  } | null;
+  recentReadings?: Array<{
+    temperature: number;
+    humidity: number;
+    timestamp: string;
+  }>;
+}
+
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
