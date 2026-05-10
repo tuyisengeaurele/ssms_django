@@ -3,6 +3,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_simplejwt.views import TokenRefreshView
 from core.utils import health_check
+from contacts.urls import admin_urlpatterns as contacts_admin_urlpatterns
+from sensors.urls import device_urlpatterns
 
 urlpatterns = [
     path('api/health', health_check),
@@ -15,6 +17,9 @@ urlpatterns = [
     path('api/cooperatives', include('cooperatives.urls')),      # /api/cooperatives, /api/cooperatives/<id>
     path('api/admin', include('users.admin_urls')),              # /api/admin/users, /api/admin/users/<id>/role
     path('api/harvest', include('harvest.urls')),               # /api/harvest/batch/<id>, /api/harvest/stats
+    path('api/devices', include((device_urlpatterns, 'devices'))),          # GET /api/devices, /api/devices/:id
+    path('api/contact', include('contacts.urls')),              # POST /api/contact (public)
+    path('api/admin/contacts', include((contacts_admin_urlpatterns, 'contacts_admin'))),  # GET/PATCH admin
     path('api/auth/token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
 ]
 

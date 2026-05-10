@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'sensors',
     'alerts',
     'harvest',
+    'contacts',
 ]
 
 # ── Password reset token TTL (hours) ──────────────────────────────────────────

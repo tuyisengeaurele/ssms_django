@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { Role } from '../../types';
 import Modal from '../ui/Modal';
 
@@ -20,6 +21,8 @@ const ICONS = {
   logout:      'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9',
   activity:    'M22 12h-4l-3 9L9 3l-3 9H2',
   cooperative: 'cooperative',  // handled in SideIcon
+  devices:     'devices',      // handled in SideIcon
+  mail:        'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6',
 };
 
 interface NavItem {
@@ -29,31 +32,39 @@ interface NavItem {
   badge?: number;
 }
 
-function getNavItems(role: Role | undefined, alertCount: number): NavItem[] {
+function getNavItems(
+  role: Role | undefined,
+  alertCount: number,
+  t: (k: string) => string,
+): NavItem[] {
   if (role === 'FARMER') return [
-    { to: '/farmer',              label: 'Dashboard',         icon: 'dashboard' },
-    { to: '/farms',               label: 'My Farms',          icon: 'farmLeaf' },
-    { to: '/batches',             label: 'Batches',           icon: 'batch' },
-    { to: '/harvests',            label: 'Harvests',          icon: 'harvest' },
-    { to: '/detections/reports',  label: 'Detection Reports', icon: 'reports' },
-    { to: '/alerts',              label: 'Alerts',            icon: 'alerts', badge: alertCount },
+    { to: '/farmer',              label: t('navDashboard'), icon: 'dashboard' },
+    { to: '/farms',               label: t('navMyFarms'),   icon: 'farmLeaf' },
+    { to: '/batches',             label: t('navBatches'),   icon: 'batch' },
+    { to: '/harvests',            label: t('navHarvests'),  icon: 'harvest' },
+    { to: '/detections/reports',  label: t('navReports'),   icon: 'reports' },
+    { to: '/devices',             label: t('navDevices'),   icon: 'devices' },
+    { to: '/alerts',              label: t('navAlerts'),    icon: 'alerts', badge: alertCount },
   ];
   if (role === 'SUPERVISOR') return [
-    { to: '/supervisor',          label: 'Overview',          icon: 'overview' },
-    { to: '/farms',               label: 'Farms',             icon: 'farmLeaf' },
-    { to: '/harvests',            label: 'Harvests',          icon: 'harvest' },
-    { to: '/detections/reports',  label: 'Detection Reports', icon: 'reports' },
-    { to: '/alerts',              label: 'Alerts',            icon: 'alerts', badge: alertCount },
+    { to: '/supervisor',          label: t('navOverview'),  icon: 'overview' },
+    { to: '/farms',               label: t('navFarms'),     icon: 'farmLeaf' },
+    { to: '/harvests',            label: t('navHarvests'),  icon: 'harvest' },
+    { to: '/detections/reports',  label: t('navReports'),   icon: 'reports' },
+    { to: '/devices',             label: t('navDevices'),   icon: 'devices' },
+    { to: '/alerts',              label: t('navAlerts'),    icon: 'alerts', badge: alertCount },
   ];
   if (role === 'ADMIN') return [
-    { to: '/admin',                  label: 'Dashboard',         icon: 'shield' },
-    { to: '/admin/users',            label: 'User Management',   icon: 'users' },
-    { to: '/admin/cooperatives',     label: 'Cooperatives',      icon: 'cooperative' },
-    { to: '/farms',                  label: 'Farms',             icon: 'farmLeaf' },
-    { to: '/harvests',               label: 'Harvests',          icon: 'harvest' },
-    { to: '/supervisor',             label: 'System Overview',   icon: 'overview' },
-    { to: '/detections/reports',     label: 'Detection Reports', icon: 'reports' },
-    { to: '/alerts',                 label: 'Alerts',            icon: 'alerts', badge: alertCount },
+    { to: '/admin',               label: t('navDashboard'), icon: 'shield' },
+    { to: '/admin/users',         label: t('navUserMgmt'),  icon: 'users' },
+    { to: '/admin/cooperatives',  label: t('navCooperatives'), icon: 'cooperative' },
+    { to: '/farms',               label: t('navFarms'),     icon: 'farmLeaf' },
+    { to: '/harvests',            label: t('navHarvests'),  icon: 'harvest' },
+    { to: '/supervisor',          label: t('navOverview'),  icon: 'overview' },
+    { to: '/detections/reports',  label: t('navReports'),   icon: 'reports' },
+    { to: '/devices',             label: t('navDevices'),   icon: 'devices' },
+    { to: '/admin/contacts',      label: t('navMessages'),  icon: 'mail' },
+    { to: '/alerts',              label: t('navAlerts'),    icon: 'alerts', badge: alertCount },
   ];
   return [];
 }
@@ -94,13 +105,23 @@ function SideIcon({ name }: { name: keyof typeof ICONS }) {
       </>
     );
   }
+  if (name === 'devices') {
+    return (
+      <>
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <path d="M8 21h8M12 17v4" />
+        <circle cx="12" cy="10" r="2" fill="currentColor" fillOpacity="0.25" />
+      </>
+    );
+  }
   return <path d={ICONS[name]} />;
 }
 
 export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCount = 0 }: SidebarProps) {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
-  const navItems = getNavItems(user?.role, alertCount);
+  const navItems = getNavItems(user?.role, alertCount, t);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = () => {
@@ -119,7 +140,7 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
       <Modal
         open={showLogoutConfirm}
         onClose={() => setShowLogoutConfirm(false)}
-        title="Sign Out"
+        title={t('navLogout')}
         footer={
           <>
             <button className="btn btn-secondary" onClick={() => setShowLogoutConfirm(false)}>Cancel</button>
@@ -206,7 +227,7 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
               className="sidebar-item-icon">
               <path d={ICONS.logout} />
             </svg>
-            <span className="sidebar-item-label">Sign Out</span>
+            <span className="sidebar-item-label">{t('navLogout')}</span>
           </button>
         </div>
       </aside>
