@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { alertService } from '../../services/alert.service';
 import { AlertLog, AlertType } from '../../types';
+import Modal from '../ui/Modal';
 
 const BREADCRUMB_MAP: Record<string, string> = {
   farmer:     'Dashboard',
@@ -70,11 +72,13 @@ interface TopBarProps {
 
 export default function TopBar({ onMenuToggle, alertCount = 0 }: TopBarProps) {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   // User dropdown
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropRef = useRef<HTMLDivElement>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Notification dropdown
   const [notifOpen, setNotifOpen]       = useState(false);
@@ -112,6 +116,11 @@ export default function TopBar({ onMenuToggle, alertCount = 0 }: TopBarProps) {
 
   const handleSignOut = () => {
     setDropdownOpen(false);
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmSignOut = () => {
+    setShowLogoutConfirm(false);
     logout();
     navigate('/login', { replace: true });
   };
@@ -121,6 +130,22 @@ export default function TopBar({ onMenuToggle, alertCount = 0 }: TopBarProps) {
     : 'U';
 
   return (
+    <>
+    <Modal
+      open={showLogoutConfirm}
+      onClose={() => setShowLogoutConfirm(false)}
+      title={t('btnSignOut')}
+      footer={
+        <>
+          <button className="btn btn-secondary" onClick={() => setShowLogoutConfirm(false)}>{t('btnCancel')}</button>
+          <button className="btn btn-danger" onClick={confirmSignOut}>{t('btnSignOut')}</button>
+        </>
+      }
+    >
+      <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+        Are you sure you want to sign out?
+      </p>
+    </Modal>
     <header className="app-topbar">
       {/* Hamburger */}
       <button className="topbar-toggle" onClick={onMenuToggle} aria-label="Toggle menu">
@@ -156,7 +181,7 @@ export default function TopBar({ onMenuToggle, alertCount = 0 }: TopBarProps) {
             <div className="topbar-dropdown" style={{ width: 320, right: 0, left: 'auto' }}>
               {/* Header */}
               <div style={{ padding: '0.75rem 0.875rem 0.5rem', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <p style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>Notifications</p>
+                <p style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>{t('navAlerts')}</p>
                 {alertCount > 0 && (
                   <span style={{ fontSize: '0.62rem', fontWeight: 700, background: 'var(--danger)', color: '#fff', padding: '0.1rem 0.45rem', borderRadius: '9999px' }}>
                     {alertCount} unread
@@ -204,7 +229,7 @@ export default function TopBar({ onMenuToggle, alertCount = 0 }: TopBarProps) {
                   onClick={() => setNotifOpen(false)}
                   style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
                 >
-                  View all alerts
+                  {t('btnViewAll')}
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
@@ -255,7 +280,7 @@ export default function TopBar({ onMenuToggle, alertCount = 0 }: TopBarProps) {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
                   </svg>
-                  My Profile
+                  {t('btnMyProfile')}
                 </Link>
 
                 <Link to="/alerts"
@@ -264,7 +289,7 @@ export default function TopBar({ onMenuToggle, alertCount = 0 }: TopBarProps) {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
                   </svg>
-                  Notifications
+                  {t('navAlerts')}
                   {alertCount > 0 && (
                     <span style={{ marginLeft: 'auto', background: 'var(--danger)', color: '#fff', fontSize: '0.62rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>
                       {alertCount}
@@ -278,7 +303,7 @@ export default function TopBar({ onMenuToggle, alertCount = 0 }: TopBarProps) {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 20V10M12 20V4M6 20v-6" />
                   </svg>
-                  Detection Reports
+                  {t('navReports')}
                 </Link>
 
                 <Link to="/farms"
@@ -288,7 +313,7 @@ export default function TopBar({ onMenuToggle, alertCount = 0 }: TopBarProps) {
                     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                     <polyline points="9 22 9 12 15 12 15 22" />
                   </svg>
-                  My Farms
+                  {t('navMyFarms')}
                 </Link>
 
                 <div style={{ height: 1, background: 'var(--border-light)', margin: '0.375rem 0' }} />
@@ -303,7 +328,7 @@ export default function TopBar({ onMenuToggle, alertCount = 0 }: TopBarProps) {
                     <polyline points="16 17 21 12 16 7" />
                     <line x1="21" y1="12" x2="9" y2="12" />
                   </svg>
-                  Sign Out
+                  {t('btnSignOut')}
                 </button>
               </div>
             </div>
@@ -311,5 +336,6 @@ export default function TopBar({ onMenuToggle, alertCount = 0 }: TopBarProps) {
         </div>
       </div>
     </header>
+    </>
   );
 }

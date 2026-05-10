@@ -130,10 +130,6 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
     navigate('/login', { replace: true });
   };
 
-  const initials = user?.name
-    ? user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
-    : 'U';
-
   return (
     <>
       {/* Sign-out confirmation */}
@@ -201,25 +197,12 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
 
         {/* Footer */}
         <div className="sidebar-footer">
-          {/* User info — display only (profile accessible from top-right corner) */}
-          <div
-            className="sidebar-user-display"
-            title={collapsed ? (user?.name ?? 'User') : undefined}
-            style={{ width: '100%', padding: 0 }}
-          >
-            <div className="sidebar-avatar">{initials}</div>
-            <div className="sidebar-user-info">
-              <div className="u-name">{user?.name ?? 'User'}</div>
-              <div className="u-role">{user?.role ?? ''}</div>
-            </div>
-          </div>
-
           {/* Logout button — shows confirm modal */}
           <button
             onClick={() => setShowLogoutConfirm(true)}
             className="sidebar-item sidebar-logout-btn"
-            title={collapsed ? 'Sign out' : undefined}
-            style={{ width: '100%', border: 'none', background: 'none', marginTop: '0.25rem' }}
+            title={collapsed ? t('navLogout') : undefined}
+            style={{ width: '100%', border: 'none', background: 'none' }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="1.8"

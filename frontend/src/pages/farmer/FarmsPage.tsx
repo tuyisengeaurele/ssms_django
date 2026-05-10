@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { farmService } from '../../services/farm.service';
 import { Farm } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import EmptyState from '../../components/ui/EmptyState';
 import { SkeletonCard } from '../../components/ui/SkeletonLoader';
 import { useToast } from '../../context/ToastContext';
@@ -14,6 +15,7 @@ interface PaginationMeta { page: number; pageSize: number; totalItems: number; t
 
 export default function FarmsPage() {
   const { user }  = useAuth();
+  const { t } = useLanguage();
   const { error: showError } = useToast();
   const { getErrorMessage }  = useApiError();
   const [farms,   setFarms]   = useState<Farm[]>([]);
@@ -48,11 +50,11 @@ export default function FarmsPage() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Farms</h1>
+          <h1 className="page-title">{t('pageTitleFarms')}</h1>
           <p className="page-subtitle">{farms.length} farm{farms.length !== 1 ? 's' : ''} registered</p>
         </div>
         <div className="page-actions">
-          {canCreate && <Link to="/farms/new" className="btn btn-primary btn-sm">+ New Farm</Link>}
+          {canCreate && <Link to="/farms/new" className="btn btn-primary btn-sm">{t('btnNewFarm')}</Link>}
         </div>
       </div>
 
@@ -60,7 +62,7 @@ export default function FarmsPage() {
       <div style={{ marginBottom: '1.25rem', maxWidth: 340 }}>
         <div className="input-wrapper">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="input-icon-left"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input className="form-input has-left" placeholder="Search farms…" value={search} onChange={e => setSearch(e.target.value)} />
+          <input className="form-input has-left" placeholder={t('labelSearchFarms')} value={search} onChange={e => setSearch(e.target.value)} />
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import { alertService } from '../../services/alert.service';
 import { AlertLog, AlertType } from '../../types';
 import { useApiError } from '../../hooks/useApiError';
 import { useToast } from '../../context/ToastContext';
+import { useLanguage } from '../../context/LanguageContext';
 import EmptyState from '../../components/ui/EmptyState';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 
@@ -27,6 +28,7 @@ function timeAgo(iso: string) {
 export default function AlertsPage() {
   const { getErrorMessage } = useApiError();
   const { success, error: showError } = useToast();
+  const { t } = useLanguage();
   const [alerts, setAlerts]     = useState<AlertLog[]>([]);
   const [loading, setLoading]   = useState(true);
   const [filter, setFilter]     = useState<'all' | 'unread'>('all');
@@ -71,7 +73,7 @@ export default function AlertsPage() {
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Alerts</h1>
+          <h1 className="page-title">{t('pageTitleAlerts')}</h1>
           <p className="page-subtitle">
             {unreadCount > 0 ? `${unreadCount} unread alert${unreadCount !== 1 ? 's' : ''}` : 'All caught up'}
           </p>
@@ -100,7 +102,7 @@ export default function AlertsPage() {
           </div>
           {unreadCount > 0 && (
             <button className="btn btn-secondary btn-sm" onClick={handleMarkAll} disabled={markingAll}>
-              {markingAll ? 'Marking…' : 'Mark all read'}
+              {markingAll ? t('loading') : t('btnMarkAllRead')}
             </button>
           )}
         </div>
