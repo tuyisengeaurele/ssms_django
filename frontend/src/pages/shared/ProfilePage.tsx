@@ -22,6 +22,12 @@ export default function ProfilePage() {
   const [name, setName] = useState(user?.name ?? '');
   const [saving, setSaving] = useState(false);
 
+  const [showPwForm, setShowPwForm]     = useState(false);
+  const [currentPw, setCurrentPw]       = useState('');
+  const [newPw, setNewPw]               = useState('');
+  const [confirmPw, setConfirmPw]       = useState('');
+  const [changingPw, setChangingPw]     = useState(false);
+
   // Refresh user data from server so cooperative/name is always up to date
   useEffect(() => { refreshUser(); }, []);
 
@@ -47,6 +53,21 @@ export default function ProfilePage() {
       showError(getErrorMessage(err));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setChangingPw(true);
+    try {
+      await authService.changePassword({ currentPassword: currentPw, newPassword: newPw, confirmPassword: confirmPw });
+      success('Password changed successfully.');
+      setShowPwForm(false);
+      setCurrentPw(''); setNewPw(''); setConfirmPw('');
+    } catch (err) {
+      showError(getErrorMessage(err));
+    } finally {
+      setChangingPw(false);
     }
   };
 
@@ -214,22 +235,51 @@ export default function ProfilePage() {
             </form>
           </div>
 
-          {/* Security info card */}
+          {/* Security card */}
           <div className="card" style={{ marginTop: '1rem' }}>
             <h3 style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '1rem' }}>Security</h3>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid var(--border-light)' }}>
-              <div>
-                <p style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)' }}>Password</p>
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-faint)', marginTop: '0.1rem' }}>Last changed: unknown</p>
+
+            <div style={{ padding: '0.75rem 0', borderBottom: '1px solid var(--border-light)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)' }}>Password</p>
+                  <p style={{ fontSize: '0.72rem', color: 'var(--text-faint)', marginTop: '0.1rem' }}>
+                    {showPwForm ? 'Enter your current and new password below' : 'Click to update your password'}
+                  </p>
+                </div>
+                <button
+                  className={showPwForm ? 'btn btn-secondary btn-sm' : 'btn btn-primary btn-sm'}
+                  onClick={() => { setShowPwForm(v => !v); setCurrentPw(''); setNewPw(''); setConfirmPw(''); }}
+                >
+                  {showPwForm ? 'Cancel' : 'Change password'}
+                </button>
               </div>
-              <button className="btn btn-secondary btn-sm" disabled style={{ opacity: 0.5, cursor: 'not-allowed' }}>
-                Change password
-              </button>
+
+              {showPwForm && (
+                <form onSubmit={handleChangePassword} style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Current password</label>
+                    <input type="password" className="form-input" value={currentPw} onChange={e => setCurrentPw(e.target.value)} required placeholder="Your current password" />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">New password</label>
+                    <input type="password" className="form-input" value={newPw} onChange={e => setNewPw(e.target.value)} required placeholder="Min 8 chars, upper + lower + digit" />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Confirm new password</label>
+                    <input type="password" className="form-input" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} required placeholder="Repeat new password" />
+                  </div>
+                  <button type="submit" className="btn btn-primary" disabled={changingPw} style={{ alignSelf: 'flex-start' }}>
+                    {changingPw ? <><span className="spinner" />Updating…</> : 'Update password'}
+                  </button>
+                </form>
+              )}
             </div>
+
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.75rem' }}>
               <div>
                 <p style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)' }}>Session</p>
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-faint)', marginTop: '0.1rem' }}>JWT token — expires on browser close</p>
+                <p style={{ fontSize: '0.72rem', color: 'var(--text-faint)', marginTop: '0.1rem' }}>JWT token — active until expiry</p>
               </div>
               <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '9999px', background: '#f0fdf4', color: '#16a34a' }}>
                 Active
