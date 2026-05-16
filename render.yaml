@@ -1,0 +1,82 @@
+##############################################################################
+# render.yaml — Infrastructure as Code for Render
+# Defines the Django API web service.
+# Database: use Render's PostgreSQL add-on (created separately in dashboard)
+#           or Railway — set DATABASE_URL env var accordingly.
+##############################################################################
+
+services:
+  - type: web
+    name: ssms-api
+    env: python
+    region: oregon          # closest to Rwanda via EU routing; change to frankfurt if preferred
+    plan: free              # upgrade to starter ($7/mo) to remove cold starts
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn ssms_django.wsgi:application --config gunicorn.conf.py"
+    healthCheckPath: /api/health
+
+    envVars:
+      # ── Django core ──────────────────────────────────────────────────────────
+      - key: SECRET_KEY
+        generateValue: true          # Render generates a secure random value
+
+      - key: DEBUG
+        value: false
+
+      - key: DJANGO_ENV
+        value: production
+
+      - key: ALLOWED_HOSTS
+        value: "ssms-api.onrender.com"   # update after first deploy with your actual URL
+
+      # ── Database — set DATABASE_URL to connect Railway / Render PostgreSQL ──
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ssms-db
+          property: connectionString
+
+      # ── JWT ─────────────────────────────────────────────────────────────────
+      - key: JWT_SECRET
+        generateValue: true
+
+      - key: JWT_EXPIRES_DAYS
+        value: "7"
+
+      # ── CORS / Frontend ──────────────────────────────────────────────────────
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://ssms.vercel.app"  # update with your actual Vercel URL
+
+      - key: FRONTEND_URL
+        value: "https://ssms.vercel.app"  # used in email links
+
+      # ── Email (Gmail SMTP) ───────────────────────────────────────────────────
+      - key: EMAIL_HOST_USER
+        value: "smartsericulturerw@gmail.com"
+
+      - key: EMAIL_HOST_PASSWORD
+        sync: false    # set manually in Render dashboard — never commit this value
+
+      - key: DEFAULT_FROM_EMAIL
+        value: "SSMS <smartsericulturerw@gmail.com>"
+
+      # ── Cloudinary ───────────────────────────────────────────────────────────
+      - key: CLOUDINARY_CLOUD_NAME
+        value: "dsmpn69ux"
+
+      - key: CLOUDINARY_UPLOAD_PRESET
+        value: "ssms_images"
+
+      # ── AI Service ───────────────────────────────────────────────────────────
+      - key: AI_SERVICE_URL
+        value: "https://your-ai-service.onrender.com"  # update after deploying AI service
+
+      # ── Sentry (optional) ────────────────────────────────────────────────────
+      - key: SENTRY_DSN
+        value: ""    # paste your Sentry DSN here when ready
+
+  # ── PostgreSQL database ────────────────────────────────────────────────────
+  - type: pserv
+    name: ssms-db
+    env: docker
+    plan: free
+    ipAllowList: []   # only accessible from within Render's private network
