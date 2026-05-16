@@ -49,4 +49,23 @@ def custom_exception_handler(exc, context):
 
 def health_check(request):
     from django.utils import timezone
-    return JsonResponse({'status': 'ok', 'timestamp': timezone.now().isoformat()})
+    from django.db import connection
+
+    # Verify the database is reachable — Render uses this endpoint to route
+    # traffic; return 503 so unhealthy instances are taken out of rotation.
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT 1')
+        db_ok = True
+    except Exception:
+        db_ok = False
+
+    status_code = 200 if db_ok else 503
+    return JsonResponse(
+        {
+            'status':    'ok' if db_ok else 'degraded',
+            'database':  'ok' if db_ok else 'unreachable',
+            'timestamp': timezone.now().isoformat(),
+        },
+        status=status_code,
+    )

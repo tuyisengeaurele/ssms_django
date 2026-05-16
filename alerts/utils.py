@@ -7,8 +7,12 @@ Safe ranges for silkworm farming:
 
 Email throttle: only one email per (batch, alert_type) per 60 minutes so
 farmers are not flooded during extended out-of-range periods.
+
+Emails are sent in a background daemon thread so SMTP latency never blocks
+the sensor-reading API response.
 """
 
+import threading
 from datetime import timedelta
 from django.conf import settings
 from django.core.mail import send_mail
@@ -22,6 +26,12 @@ HUM_MIN  = 70.0
 HUM_MAX  = 85.0
 
 EMAIL_THROTTLE_MINUTES = 60   # one alert email per batch+type per hour
+
+
+def _send_mail_async(*args, **kwargs):
+    """Fire-and-forget: run send_mail in a daemon thread so SMTP never blocks the request."""
+    t = threading.Thread(target=send_mail, args=args, kwargs=kwargs, daemon=True)
+    t.start()
 
 
 def _should_send_email(batch_id: str, alert_type: str) -> bool:
@@ -43,6 +53,7 @@ def _send_farmer_alert(batch, alert: AlertLog) -> None:
     """
     Send an alert email to the farm owner (farmer) for the given alert.
     Silently skips if the batch has no associated farm / owner / email.
+    Email is dispatched asynchronously — never blocks the caller.
     """
     try:
         farm  = getattr(batch, 'farm', None)
@@ -68,11 +79,11 @@ def _send_farmer_alert(batch, alert: AlertLog) -> None:
             f'  • Temperature : {TEMP_MIN} °C – {TEMP_MAX} °C\n'
             f'  • Humidity    : {HUM_MIN} % – {HUM_MAX} %\n\n'
             f'Log in to SSMS to view all alerts and sensor readings:\n'
-            f'{getattr(settings, "FRONTEND_URL", "http://localhost:5173")}/alerts\n\n'
+            f'{settings.FRONTEND_URL}/alerts\n\n'
             f'Best regards,\nSSMS — Silkworm Smart Management System, Rwanda'
         )
 
-        send_mail(
+        _send_mail_async(
             subject=subject,
             message=body,
             from_email=settings.DEFAULT_FROM_EMAIL,
@@ -139,7 +150,7 @@ def check_sensor_alerts(batch_id: str, temperature: float, humidity: float) -> l
 
     AlertLog.objects.bulk_create(to_create)
 
-    # Refresh from DB so created_at is populated, then email
+    # Refresh from DB so created_at is populated, then email asynchronously
     if send_for_types:
         from batches.models import Batch
         try:

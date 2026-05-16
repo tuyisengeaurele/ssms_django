@@ -1,3 +1,4 @@
+import threading
 from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework.views import APIView
@@ -5,6 +6,11 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from core.utils import api_success, api_error
 from .models import ContactMessage
 
+
+def _send_mail_async(*args, **kwargs):
+    """Fire-and-forget email — never blocks the HTTP response."""
+    t = threading.Thread(target=send_mail, args=args, kwargs=kwargs, daemon=True)
+    t.start()
 
 
 class ContactCreateView(APIView):
@@ -26,43 +32,37 @@ class ContactCreateView(APIView):
             name=name, email=email, subject=subject, message=message
         )
 
-        # Confirmation email to sender
-        try:
-            send_mail(
-                subject=f'We received your message — {subject}',
-                message=(
-                    f'Hi {name},\n\n'
-                    f'Thank you for reaching out to SSMS. We have received your inquiry and will get back to you shortly.\n\n'
-                    f'Your message:\n"{message}"\n\n'
-                    f'Best regards,\nThe SSMS Team\nSilkworm Smart Management System — Rwanda'
-                ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                fail_silently=True,
-            )
-        except Exception:
-            pass
+        # Confirmation email to sender — async so SMTP never delays the response
+        _send_mail_async(
+            f'We received your message — {subject}',
+            (
+                f'Hi {name},\n\n'
+                f'Thank you for reaching out to SSMS. We have received your inquiry and will get back to you shortly.\n\n'
+                f'Your message:\n"{message}"\n\n'
+                f'Best regards,\nThe SSMS Team\nSilkworm Smart Management System — Rwanda'
+            ),
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=True,
+        )
 
-        # Notification email to admin
+        # Notification email to admin — async
         admin_email = getattr(settings, 'EMAIL_HOST_USER', None)
         if admin_email:
-            try:
-                send_mail(
-                    subject=f'[SSMS Contact] {subject} — from {name}',
-                    message=(
-                        f'New contact form submission:\n\n'
-                        f'Name:    {name}\n'
-                        f'Email:   {email}\n'
-                        f'Subject: {subject}\n\n'
-                        f'Message:\n{message}\n\n'
-                        f'ID: #{msg.id}'
-                    ),
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[admin_email],
-                    fail_silently=True,
-                )
-            except Exception:
-                pass
+            _send_mail_async(
+                f'[SSMS Contact] {subject} — from {name}',
+                (
+                    f'New contact form submission:\n\n'
+                    f'Name:    {name}\n'
+                    f'Email:   {email}\n'
+                    f'Subject: {subject}\n\n'
+                    f'Message:\n{message}\n\n'
+                    f'ID: #{msg.id}'
+                ),
+                settings.DEFAULT_FROM_EMAIL,
+                [admin_email],
+                fail_silently=True,
+            )
 
         return api_success(
             {'id': msg.id},

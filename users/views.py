@@ -2,11 +2,12 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, get_tokens_for_user
 from core.utils import api_success, api_error
-from core.throttles import LoginRateThrottle
+from core.throttles import LoginRateThrottle, RegisterRateThrottle
 
 
 class RegisterView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes  = [AllowAny]
+    throttle_classes    = [RegisterRateThrottle]   # 20 registrations/minute per IP
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data, context={'request': request})
