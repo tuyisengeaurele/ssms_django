@@ -126,6 +126,10 @@ class BatchActiveSupervisorView(APIView):
         return api_success(BatchSupervisorSerializer(qs, many=True).data)
 
 
+# Enforced one-way progression — a batch can only move forward, never backward.
+STAGE_ORDER = ['EGG', 'LARVA', 'PUPA', 'COCOON', 'HARVEST']
+
+
 class BatchUpdateStageView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -140,6 +144,17 @@ class BatchUpdateStageView(APIView):
             return api_error('Validation failed.', 422, serializer.errors)
 
         new_stage = serializer.validated_data['stage']
+
+        # Guard: reject backwards or same-stage moves
+        current_idx = STAGE_ORDER.index(batch.stage)
+        new_idx     = STAGE_ORDER.index(new_stage)
+        if new_idx <= current_idx:
+            return api_error(
+                f'Cannot move batch from {batch.stage} to {new_stage}. '
+                f'Stages must progress forward: {" → ".join(STAGE_ORDER)}.',
+                400,
+            )
+
         with transaction.atomic():
             batch.stage = new_stage
             batch.save(update_fields=['stage'])
