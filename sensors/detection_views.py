@@ -1,11 +1,15 @@
 """
 Disease Detection views — POST /api/detections, GET /api/detections/batch/<batch_id>
 Accepts an image upload, calls the FastAPI AI service, persists the result.
+
+Images are uploaded to Cloudinary using an unsigned preset so no API secret
+is required on the server.  The returned secure_url is stored in image_url.
 """
 
-import os
 import csv
 import io
+import cloudinary
+import cloudinary.uploader
 import httpx
 from django.conf import settings
 from django.http import StreamingHttpResponse
@@ -19,22 +23,20 @@ from core.utils import api_success, api_error
 from core.pagination import StandardPagination
 
 
-def _save_image(uploaded_file) -> str:
-    """Persist the uploaded image under MEDIA_ROOT/detections/ and return the relative URL."""
-    save_dir = os.path.join(settings.MEDIA_ROOT, 'detections')
-    os.makedirs(save_dir, exist_ok=True)
-
-    # Use the DiseaseDetection id generator to get a unique filename
-    from sensors.models import _generate_id
-    ext = os.path.splitext(uploaded_file.name)[-1].lower() or '.jpg'
-    filename = f'{_generate_id()}{ext}'
-    filepath = os.path.join(save_dir, filename)
-
-    with open(filepath, 'wb') as f:
-        for chunk in uploaded_file.chunks():
-            f.write(chunk)
-
-    return f'{settings.MEDIA_URL}detections/{filename}'
+def _upload_to_cloudinary(uploaded_file) -> str:
+    """
+    Upload an image to Cloudinary using the unsigned preset.
+    No API key or secret needed — the preset is configured in the Cloudinary dashboard.
+    Returns the permanent HTTPS URL of the uploaded image.
+    """
+    cloudinary.config(cloud_name=settings.CLOUDINARY_CLOUD_NAME)
+    result = cloudinary.uploader.unsigned_upload(
+        uploaded_file.read(),
+        settings.CLOUDINARY_UPLOAD_PRESET,
+        folder='ssms/detections',
+        resource_type='image',
+    )
+    return result.get('secure_url') or result.get('url', '')
 
 
 class DiseaseDetectionCreateView(APIView):
@@ -80,11 +82,14 @@ class DiseaseDetectionCreateView(APIView):
         except Exception as exc:
             return api_error(f'Failed to reach AI service: {exc}', 502)
 
-        # Reset file pointer so we can save it
+        # Reset file pointer so we can upload it
         image_file.seek(0)
 
-        # Save image to disk
-        image_url = _save_image(image_file)
+        # Upload image to Cloudinary (persistent CDN — survives redeploys)
+        try:
+            image_url = _upload_to_cloudinary(image_file)
+        except Exception as exc:
+            return api_error(f'Image upload failed: {exc}', 502)
 
         # Persist detection record
         detection = DiseaseDetection.objects.create(
