@@ -16,6 +16,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useApiError } from '../../hooks/useApiError';
 import { useToast } from '../../context/ToastContext';
 import { STAGE_ORDER, STAGE_LABELS, STAGE_COLORS } from '../../utils/constants';
+import { useLanguage } from '../../context/LanguageContext';
 
 const DISEASE_COLORS: Record<string, string> = {
   Healthy: '#16a34a', Flacherie: '#dc2626', Grasserie: '#d97706',
@@ -28,6 +29,7 @@ export default function BatchDetailPage() {
   const { user } = useAuth();
   const { getErrorMessage } = useApiError();
   const { success, error: showError } = useToast();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const [batch,      setBatch]      = useState<Batch | null>(null);
@@ -128,17 +130,17 @@ export default function BatchDetailPage() {
         <div className="page-actions">
           <Link to={`/batches/${id}/detect`} className="btn btn-primary btn-sm">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            Run Detection
+            {t('btnRunDetection')}
           </Link>
           {batch.stage === 'HARVEST' && (
             <Link to={`/batches/${id}/harvest`} className="btn btn-secondary btn-sm" style={{ color: '#16a34a', borderColor: '#bbf7d0' }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22V12M3.5 8.5C3.5 5.46 6.46 3 10 3c2.12 0 4 .9 5.28 2.33A6.5 6.5 0 0 1 21 11.5c0 3.58-2.91 6.5-6.5 6.5H5a1.5 1.5 0 0 1 0-3"/></svg>
-              Harvest Records
+              {t('batchHarvestRecords')}
             </Link>
           )}
           {canEdit && (
             <button onClick={() => setShowArchive(true)} className="btn btn-secondary btn-sm" style={{ color: 'var(--danger)', borderColor: 'var(--danger-border)' }}>
-              Archive
+              {t('batchArchive')}
             </button>
           )}
           <Link to={`/farms/${batch.farmId}`} className="btn btn-ghost btn-sm">
@@ -152,7 +154,7 @@ export default function BatchDetailPage() {
       <motion.div className="card" style={{ marginBottom: '1.5rem' }}
         initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h3 style={{ fontWeight: 700, fontSize: '0.875rem' }}>Lifecycle Progress</h3>
+          <h3 style={{ fontWeight: 700, fontSize: '0.875rem' }}>{t('batchLifecycle')}</h3>
           {canEdit && currentIdx < STAGE_ORDER.length - 1 && (
             <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Click next stage to advance</span>
           )}
@@ -199,14 +201,14 @@ export default function BatchDetailPage() {
       {/* Details + Activity */}
       <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
         <motion.div className="card" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.35 }}>
-          <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '1rem' }}>Batch Details</h3>
+          <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '1rem' }}>{t('batchDetailTitle')}</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
             {[
-              { label: 'Stage',           value: <StageBadge stage={batch.stage} /> },
-              { label: 'Start Date',      value: new Date(batch.startDate).toLocaleDateString() },
-              { label: 'Expected Harvest',value: new Date(batch.expectedHarvestDate).toLocaleDateString() },
-              { label: 'Farm',            value: batch.farm?.name ?? '—' },
-              { label: 'Location',        value: batch.farm?.location ?? '—' },
+              { label: t('thStage'),           value: <StageBadge stage={batch.stage} /> },
+              { label: t('batchStartDate'),      value: new Date(batch.startDate).toLocaleDateString() },
+              { label: t('batchExpectedHarvest'),value: new Date(batch.expectedHarvestDate).toLocaleDateString() },
+              { label: t('thFarm'),            value: batch.farm?.name ?? '—' },
+              { label: t('labelLocation'),     value: batch.farm?.location ?? '—' },
             ].map(row => (
               <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid var(--border-light)' }}>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{row.label}</span>
@@ -223,7 +225,7 @@ export default function BatchDetailPage() {
         </motion.div>
 
         <motion.div className="card" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16, duration: 0.35 }}>
-          <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '1rem' }}>Activity Summary</h3>
+          <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '1rem' }}>{t('batchActivity')}</h3>
           {[
             { label: 'Disease Detections', val: batch.counts?.diseaseDetections ?? detections.length, color: '#dc2626', bg: '#fef2f2' },
             { label: 'Sensor Readings',   val: batch.counts?.sensorReadings ?? 0,   color: '#2563eb', bg: '#eff6ff' },
@@ -263,8 +265,8 @@ export default function BatchDetailPage() {
 
               {/* Temperature chart */}
               <div className="chart-card">
-                <p className="chart-title">Temperature</p>
-                <p className="chart-subtitle">Optimal range: 22–28 °C</p>
+                <p className="chart-title">{t('batchTemperature')}</p>
+                <p className="chart-subtitle">{t('batchOptimalTemp')}</p>
                 <ResponsiveContainer width="100%" height={180}>
                   <AreaChart data={chartData} margin={{ top: 6, right: 8, left: -20, bottom: 0 }}>
                     <defs>
@@ -289,8 +291,8 @@ export default function BatchDetailPage() {
 
               {/* Humidity chart */}
               <div className="chart-card">
-                <p className="chart-title">Humidity</p>
-                <p className="chart-subtitle">Optimal range: 70–85 %</p>
+                <p className="chart-title">{t('batchHumidity')}</p>
+                <p className="chart-subtitle">{t('batchOptimalHumid')}</p>
                 <ResponsiveContainer width="100%" height={180}>
                   <AreaChart data={chartData} margin={{ top: 6, right: 8, left: -20, bottom: 0 }}>
                     <defs>
@@ -318,7 +320,7 @@ export default function BatchDetailPage() {
             <motion.div className="table-container" style={{ marginBottom: '1.5rem' }}
               initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28, duration: 0.35 }}>
               <div className="table-header">
-                <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>Recent Sensor Readings</p>
+                <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>{t('batchSensorReadings')}</p>
               </div>
               <div className="table-wrapper">
                 <table>

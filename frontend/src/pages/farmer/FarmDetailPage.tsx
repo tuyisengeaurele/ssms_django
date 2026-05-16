@@ -16,6 +16,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useApiError } from '../../hooks/useApiError';
 import { useToast } from '../../context/ToastContext';
 import Modal from '../../components/ui/Modal';
+import { useLanguage } from '../../context/LanguageContext';
 
 // ── Status badge ──────────────────────────────────────────────────────────────
 
@@ -133,6 +134,7 @@ export default function FarmDetailPage() {
   const { user } = useAuth();
   const { getErrorMessage } = useApiError();
   const { success, error: showError } = useToast();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const [farm,      setFarm]      = useState<Farm | null>(null);
@@ -267,7 +269,7 @@ export default function FarmDetailPage() {
   return (
     <div>
       {/* Edit modal */}
-      <Modal open={showEdit} onClose={() => setShowEdit(false)} title="Edit Farm"
+      <Modal open={showEdit} onClose={() => setShowEdit(false)} title={t('farmEditTitle')}
         footer={
           <>
             <button className="btn btn-secondary" onClick={() => setShowEdit(false)}>Cancel</button>
@@ -290,7 +292,7 @@ export default function FarmDetailPage() {
       </Modal>
 
       {/* Delete modal */}
-      <Modal open={showDel} onClose={() => setShowDel(false)} title="Delete Farm?"
+      <Modal open={showDel} onClose={() => setShowDel(false)} title={t('farmDeleteTitle')}
         footer={
           <>
             <button className="btn btn-secondary" onClick={() => setShowDel(false)}>Cancel</button>
@@ -318,7 +320,7 @@ export default function FarmDetailPage() {
       >
         <form id="farm-add-device-form" onSubmit={handleAddDevice}>
           <div className="form-group">
-            <label className="form-label">Device Name <span style={{ color: 'var(--danger)' }}>*</span></label>
+            <label className="form-label">{t('farmDeviceName')} <span style={{ color: 'var(--danger)' }}>*</span></label>
             <input className="form-input" value={deviceForm.name} onChange={e => setDeviceForm(f => ({ ...f, name: e.target.value }))} required placeholder="e.g. DHT22-Sector-A" maxLength={100} />
             <p className="form-hint">Sensor type + location descriptor.</p>
           </div>
@@ -327,7 +329,7 @@ export default function FarmDetailPage() {
             <input className="form-input" value={deviceForm.location} onChange={e => setDeviceForm(f => ({ ...f, location: e.target.value }))} placeholder="e.g. Rearing Room B" maxLength={200} />
           </div>
           <div className="form-group">
-            <label className="form-label">Device Key <span style={{ color: 'var(--text-faint)', fontWeight: 400, fontSize: '0.75rem' }}>(auto-generated if empty)</span></label>
+            <label className="form-label">{t('farmDeviceKey')} <span style={{ color: 'var(--text-faint)', fontWeight: 400, fontSize: '0.75rem' }}>(auto-generated if empty)</span></label>
             <input className="form-input" value={deviceForm.deviceKey} onChange={e => setDeviceForm(f => ({ ...f, deviceKey: e.target.value }))} placeholder="ssms-abc123..." maxLength={80} style={{ fontFamily: 'monospace' }} />
           </div>
         </form>
@@ -375,7 +377,7 @@ export default function FarmDetailPage() {
           <div className="table-header">
             <div>
               <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>
-                IoT Devices ({devices.length})
+                {t('farmDevicesTitle')} ({devices.length})
               </p>
               {devices.length > 0 && (
                 <p style={{ fontSize: '0.72rem', color: 'var(--text-faint)', marginTop: '0.1rem' }}>
