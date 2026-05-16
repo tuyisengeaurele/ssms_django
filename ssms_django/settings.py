@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'alerts',
     'harvest',
     'contacts',
+    'audit_log',
 ]
 
 # ── Password reset token TTL (1 hour) ─────────────────────────────────────────

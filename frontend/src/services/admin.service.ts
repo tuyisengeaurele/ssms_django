@@ -25,6 +25,47 @@ export const adminService = {
     api.delete<ApiResponse<null>>(`/admin/users/${userId}`),
 };
 
+export interface AuditLogEntry {
+  id: number;
+  userEmail: string;
+  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'OTHER';
+  resource: string;
+  resourceId: string;
+  detail: string;
+  ipAddress: string | null;
+  createdAt: string;
+}
+
+export const auditLogService = {
+  getList: (params: { page?: number; action?: string; resource?: string; search?: string }) => {
+    const q = new URLSearchParams();
+    if (params.page)     q.set('page',     String(params.page));
+    if (params.action)   q.set('action',   params.action);
+    if (params.resource) q.set('resource', params.resource);
+    if (params.search)   q.set('search',   params.search);
+    return api.get<{ success: boolean; data: AuditLogEntry[]; pagination: { page: number; pageSize: number; totalItems: number; totalPages: number; hasNext: boolean; hasPrev: boolean } }>(`/admin/audit-log?${q.toString()}`);
+  },
+
+  exportCsv: async (params: { action?: string; resource?: string; search?: string }): Promise<void> => {
+    const q = new URLSearchParams({ export: 'csv' });
+    if (params.action)   q.set('action',   params.action);
+    if (params.resource) q.set('resource', params.resource);
+    if (params.search)   q.set('search',   params.search);
+    const base  = (import.meta.env.VITE_API_BASE_URL as string) ?? '/api';
+    const token = localStorage.getItem('ssms_token') ?? '';
+    const res   = await fetch(`${base}/admin/audit-log?${q.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error(`Export failed (${res.status})`);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `audit_log_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  },
+};
+
 export interface DetectionHistoryItem {
   id: string;
   result: string;
