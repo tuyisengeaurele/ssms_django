@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { detectionService, DetectionResult } from '../../services/detection.service';
 import { useApiError } from '../../hooks/useApiError';
 import { useToast } from '../../context/ToastContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 const DISEASE_COLORS: Record<string, string> = {
   Healthy: '#16a34a', Flacherie: '#dc2626', Grasserie: '#d97706',
@@ -15,6 +16,7 @@ export default function AddDetectionPage() {
   const { id: batchId } = useParams<{ id: string }>();
   const { getErrorMessage } = useApiError();
   const { success } = useToast();
+  const { t } = useLanguage();
 
   const [file,     setFile]     = useState<File | null>(null);
   const [preview,  setPreview]  = useState<string | null>(null);
@@ -65,10 +67,10 @@ export default function AddDetectionPage() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Disease Detection</h1>
-          <p className="page-subtitle">Upload a silkworm image for AI-powered disease analysis</p>
+          <h1 className="page-title">{t('detectionTitle')}</h1>
+          <p className="page-subtitle">{t('detectionSubtitle')}</p>
         </div>
-        <Link to={`/batches/${batchId}`} className="btn btn-secondary btn-sm">← Back to Batch</Link>
+        <Link to={`/batches/${batchId}`} className="btn btn-secondary btn-sm">← {t('detectionBackToBatch')}</Link>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: result ? '1fr' : '1fr 1fr', gap: '1.5rem', maxWidth: result ? 700 : 900, transition: 'all 0.3s' }}>
@@ -77,7 +79,7 @@ export default function AddDetectionPage() {
           {!result ? (
             <motion.div key="upload" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}>
               <div className="card">
-                <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '1.25rem' }}>Upload Image</h3>
+                <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '1.25rem' }}>{t('detectionUpload')}</h3>
 
                 {error && <motion.div className="alert alert-error" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}>{error}</motion.div>}
 
@@ -114,8 +116,8 @@ export default function AddDetectionPage() {
                           <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
                         </svg>
                       </div>
-                      <p style={{ fontWeight: 600, color: 'var(--brand-600)', fontSize: '0.875rem' }}>Click or drag an image here</p>
-                      <p style={{ color: 'var(--text-faint)', fontSize: '0.78rem', marginTop: '0.3rem' }}>JPEG · PNG · WebP — max 10 MB</p>
+                      <p style={{ fontWeight: 600, color: 'var(--brand-600)', fontSize: '0.875rem' }}>{t('detectionDragDrop')}</p>
+                      <p style={{ color: 'var(--text-faint)', fontSize: '0.78rem', marginTop: '0.3rem' }}>{t('detectionFileHint')}</p>
                     </motion.div>
                   )}
                 </div>
@@ -137,13 +139,13 @@ export default function AddDetectionPage() {
 
                 <button className="btn btn-primary btn-full btn-lg" disabled={!file || loading} onClick={handleSubmit}>
                   {loading ? (
-                    <><span className="spinner" />Analysing with AI…</>
+                    <><span className="spinner" />{t('detectionRunning')}</>
                   ) : (
                     <>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                       </svg>
-                      Run Detection
+                      {t('detectionRunBtn')}
                     </>
                   )}
                 </button>
@@ -158,7 +160,7 @@ export default function AddDetectionPage() {
                     <img src={preview} alt="analysed" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 'var(--radius-md)', flexShrink: 0, border: `2px solid ${gc(result.result)}30` }} />
                   )}
                   <div>
-                    <p style={{ fontSize: '0.68rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-faint)', marginBottom: '0.3rem' }}>AI Diagnosis</p>
+                    <p style={{ fontSize: '0.68rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-faint)', marginBottom: '0.3rem' }}>{t('detectionResult')}</p>
                     <p style={{ fontSize: '2rem', fontWeight: 900, color: gc(result.result), lineHeight: 1, letterSpacing: '-0.03em' }}>{result.result}</p>
                     <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
                       Confidence: <strong style={{ color: gc(result.result) }}>{(result.confidence * 100).toFixed(1)}%</strong>
@@ -180,7 +182,7 @@ export default function AddDetectionPage() {
                       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                     </svg>
                     <p style={{ fontSize: '0.78rem', color: '#991b1b', fontWeight: 500 }}>
-                      Disease detected. Consider isolating this batch and consulting a silkworm health specialist.
+                      {t('detectionWarning')}
                     </p>
                   </div>
                 )}
@@ -190,7 +192,7 @@ export default function AddDetectionPage() {
                       <polyline points="20 6 9 17 4 12"/>
                     </svg>
                     <p style={{ fontSize: '0.78rem', color: '#15803d', fontWeight: 500 }}>
-                      No disease detected. Continue normal monitoring.
+                      {t('detectionOk')}
                     </p>
                   </div>
                 )}
@@ -199,7 +201,7 @@ export default function AddDetectionPage() {
               {/* All probabilities */}
               {allScores.length > 0 && (
                 <div className="card" style={{ marginBottom: '1.25rem' }}>
-                  <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '1rem' }}>All Class Probabilities</h3>
+                  <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '1rem' }}>{t('detectionProbabilities')}</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
                     {allScores.map(([label, score]) => {
                       const pct = (score * 100).toFixed(1);
@@ -230,13 +232,13 @@ export default function AddDetectionPage() {
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
                   </svg>
-                  Test Another
+                  {t('detectionTestAnother')}
                 </button>
                 <Link to={`/batches/${batchId}`} className="btn btn-primary" style={{ flex: 1, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="15 18 9 12 15 6"/>
                   </svg>
-                  Back to Batch
+                  {t('detectionBackToBatch')}
                 </Link>
               </div>
             </motion.div>
