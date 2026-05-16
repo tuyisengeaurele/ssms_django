@@ -1,6 +1,9 @@
+import csv
+import io
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Avg, Count
+from django.http import StreamingHttpResponse
 from batches.models import Batch
 from core.utils import api_success, api_error
 from .models import HarvestRecord
@@ -9,25 +12,56 @@ from .serializers import HarvestRecordSerializer, HarvestRecordCreateSerializer
 
 class HarvestAllView(APIView):
     """
-    GET /api/harvest
-    Returns all harvest records visible to the current user (role-scoped).
-    FARMER → own batches only.  SUPERVISOR → cooperative.  ADMIN → all.
+    GET /api/harvest                — paginated JSON list (role-scoped)
+    GET /api/harvest?export=csv    — streaming CSV download
     """
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def _scoped_qs(self, user):
         qs = HarvestRecord.objects.select_related('batch__farm').order_by('-harvested_at')
-        if request.user.role == 'FARMER':
-            qs = qs.filter(batch__farm__owner=request.user)
-        elif request.user.role == 'SUPERVISOR':
-            if request.user.cooperative_id:
+        if user.role == 'FARMER':
+            qs = qs.filter(batch__farm__owner=user)
+        elif user.role == 'SUPERVISOR':
+            if user.cooperative_id:
                 qs = qs.filter(
-                    batch__farm__owner__cooperative_id=request.user.cooperative_id,
+                    batch__farm__owner__cooperative_id=user.cooperative_id,
                     batch__farm__owner__role='FARMER',
                 )
             else:
                 qs = qs.none()
         # ADMIN: no filter
+        return qs
+
+    def get(self, request):
+        qs = self._scoped_qs(request.user)
+
+        if request.query_params.get('export') == 'csv':
+            def _rows(queryset):
+                yield ['ID', 'Farm', 'Batch ID', 'Cocoon Weight (kg)', 'Silk Yield (g)', 'Quality Grade', 'Notes', 'Harvested At']
+                for r in queryset:
+                    yield [
+                        r.id,
+                        r.batch.farm.name if r.batch and r.batch.farm else '',
+                        r.batch_id,
+                        r.cocoon_weight_kg,
+                        r.silk_yield_g or '',
+                        r.quality_grade,
+                        r.notes or '',
+                        r.harvested_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    ]
+
+            def _stream():
+                buf = io.StringIO()
+                writer = csv.writer(buf)
+                for row in _rows(qs):
+                    writer.writerow(row)
+                    yield buf.getvalue()
+                    buf.seek(0); buf.truncate(0)
+
+            response = StreamingHttpResponse(_stream(), content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="harvest_records.csv"'
+            return response
+
         return api_success(HarvestRecordSerializer(qs, many=True).data)
 
 
