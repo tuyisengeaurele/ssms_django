@@ -21,4 +21,7 @@ export const harvestService = {
 
   delete: (id: string) =>
     api.delete<ApiResponse<null>>(`/harvest/${id}`),
+
+  exportCsv: () =>
+    api.get('/harvest?export=csv', { responseType: 'blob' }),
 };
