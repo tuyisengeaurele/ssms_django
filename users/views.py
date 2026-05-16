@@ -2,6 +2,8 @@ import re
 from django.contrib.auth import authenticate
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, get_tokens_for_user
 from core.utils import api_success, api_error
 from core.throttles import LoginRateThrottle, RegisterRateThrottle
@@ -60,6 +62,27 @@ class ProfileView(APIView):
         request.user.name = name
         request.user.save(update_fields=['name'])
         return api_success(UserSerializer(request.user).data, 'Profile updated.')
+
+
+class LogoutView(APIView):
+    """
+    POST /api/auth/logout
+    Blacklists the submitted refresh token so it cannot be used again.
+    The client must also clear tokens from localStorage.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        refresh_token = request.data.get('refreshToken') or request.data.get('refresh')
+        if not refresh_token:
+            return api_error('Refresh token is required.', 400)
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+        except TokenError:
+            # Already blacklisted or invalid — treat as successful logout
+            pass
+        return api_success(None, 'Logged out successfully.')
 
 
 class ChangePasswordView(APIView):

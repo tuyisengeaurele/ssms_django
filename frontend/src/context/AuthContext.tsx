@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { User } from '../types';
 import api from '../services/api';
+import { authService } from '../services/auth.service';
 
 interface AuthContextValue {
   user: User | null;
@@ -40,13 +41,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (refreshJwt) localStorage.setItem('ssms_refresh_token', refreshJwt);
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
+    // Blacklist the refresh token on the server so it cannot be reused,
+    // even if someone captured it before the user signed out.
+    const refreshToken = localStorage.getItem('ssms_refresh_token');
+    if (refreshToken) {
+      authService.logout(refreshToken).catch(() => {
+        // Ignore — token may already be expired or blacklisted; local clear still happens
+      });
+    }
     setUser(null);
     setToken(null);
     localStorage.removeItem('ssms_token');
     localStorage.removeItem('ssms_user');
     localStorage.removeItem('ssms_refresh_token');
-  };
+  }, []);
 
   const updateUser = useCallback((userData: User) => {
     setUser(userData);
