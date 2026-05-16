@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useLanguage } from '../../context/LanguageContext';
 import { farmService } from '../../services/farm.service';
 import { Farm } from '../../types';
 import EmptyState from '../../components/ui/EmptyState';
@@ -61,6 +62,7 @@ const QUICK_ACTIONS = [
 export default function AdminDashboard() {
   const [farms,   setFarms]   = useState<Farm[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     farmService.getAll()
@@ -76,8 +78,8 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Admin Dashboard</h1>
-          <p className="page-subtitle">Full system oversight and management</p>
+          <h1 className="page-title">{t('adminTitle')}</h1>
+          <p className="page-subtitle">{t('adminSubtitle')}</p>
         </div>
         <div className="page-actions">
           <Link to="/admin/users" className="btn btn-secondary btn-sm">
@@ -98,10 +100,10 @@ export default function AdminDashboard() {
         </div>
       ) : (
         <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
-          <StatCard icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>} label="Total Farms"    value={farms.length}  color="var(--brand-600)" bg="var(--brand-50)" delay={0}    trend={`${farms.length} registered`} />
-          <StatCard icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>} label="Total Batches"  value={totalBatches}  color="#1e40af"          bg="#eff6ff"         delay={0.07} trend="Across all farms" />
-          <StatCard icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>} label="Unique Farmers" value={uniqueFarmers} color="#7c3aed"          bg="#f3e8ff"         delay={0.14} trend="Active accounts" />
-          <StatCard icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>} label="System Status"  value="Online"        color="#16a34a"          bg="#f0fdf4"         delay={0.21} trend="All services healthy" />
+          <StatCard icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>} label={t('adminTotalFarms')}    value={farms.length}  color="var(--brand-600)" bg="var(--brand-50)" delay={0}    trend={`${farms.length} registered`} />
+          <StatCard icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>} label={t('adminTotalBatches')}  value={totalBatches}  color="#1e40af"          bg="#eff6ff"         delay={0.07} trend="Across all farms" />
+          <StatCard icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>} label={t('adminUniqueFarmers')} value={uniqueFarmers} color="#7c3aed"          bg="#f3e8ff"         delay={0.14} trend="Active accounts" />
+          <StatCard icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>} label={t('adminSystemStatus')}  value="Online"        color="#16a34a"          bg="#f0fdf4"         delay={0.21} trend="All services healthy" />
         </div>
       )}
 
@@ -111,7 +113,7 @@ export default function AdminDashboard() {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28, duration: 0.4 }}>
           <div className="table-container">
             <div className="table-header">
-              <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>Quick Actions</p>
+              <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>{t('adminQuickActions')}</p>
             </div>
             <div style={{ padding: '0.875rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {QUICK_ACTIONS.map(a => (
@@ -140,7 +142,7 @@ export default function AdminDashboard() {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.34, duration: 0.4 }}>
           <div className="table-container">
             <div className="table-header">
-              <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>Farm Registry ({farms.length})</p>
+              <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>{t('adminFarmRegistry')} ({farms.length})</p>
               <Link to="/farms/new" className="btn btn-primary btn-sm">+ Add Farm</Link>
             </div>
             {loading ? (

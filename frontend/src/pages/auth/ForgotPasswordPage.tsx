@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { authService } from '../../services/auth.service';
 import { useApiError } from '../../hooks/useApiError';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function ForgotPasswordPage() {
   const [email,   setEmail]   = useState('');
@@ -10,6 +11,7 @@ export default function ForgotPasswordPage() {
   const [sent,    setSent]    = useState(false);
   const [error,   setError]   = useState('');
   const { getErrorMessage } = useApiError();
+  const { t } = useLanguage();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -41,10 +43,10 @@ export default function ForgotPasswordPage() {
         >
           <img src="/logo.png" alt="SSMS Logo" style={{ width: 90, height: 90, objectFit: 'contain', marginBottom: '1.5rem', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))' }} />
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1.2, marginBottom: '0.625rem' }}>
-            Password Reset
+            {t('forgotTitle')}
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.875rem', lineHeight: 1.6 }}>
-            Enter your email and we'll send you a secure link to reset your password.
+            {t('forgotDesc')}
           </p>
         </motion.div>
       </div>
@@ -65,7 +67,7 @@ export default function ForgotPasswordPage() {
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
                   </svg>
                 </div>
-                <h2 style={{ fontWeight: 800, fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--text)' }}>Check your inbox</h2>
+                <h2 style={{ fontWeight: 800, fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--text)' }}>{t('forgotCheckInbox')}</h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
                   If <strong>{email}</strong> is registered, you'll receive a password reset link within a few minutes.
                 </p>
@@ -79,7 +81,7 @@ export default function ForgotPasswordPage() {
             <>
               <div style={{ marginBottom: '2rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)', marginBottom: '0.375rem' }}>
-                  Forgot password?
+                  {t('forgotTitle')}
                 </h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
                   Enter the email address linked to your account.
@@ -95,7 +97,7 @@ export default function ForgotPasswordPage() {
 
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
-                  <label className="form-label" htmlFor="email">Email address</label>
+                  <label className="form-label" htmlFor="email">{t('loginEmailLabel')}</label>
                   <div className="input-wrapper">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="input-icon-left"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                     <input
@@ -112,13 +114,13 @@ export default function ForgotPasswordPage() {
                 </div>
 
                 <button type="submit" className="btn btn-primary btn-full btn-lg" disabled={loading} style={{ marginTop: '0.5rem' }}>
-                  {loading ? <><span className="spinner" />Sending…</> : 'Send reset link'}
+                  {loading ? <><span className="spinner" />{t('forgotSending')}</> : t('forgotSendLink')}
                 </button>
               </form>
 
               <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                Remember your password?{' '}
-                <Link to="/login" style={{ color: 'var(--primary)', fontWeight: 600 }}>Sign in</Link>
+                {t('forgotRemember')}{' '}
+                <Link to="/login" style={{ color: 'var(--primary)', fontWeight: 600 }}>{t('loginSignIn')}</Link>
               </p>
             </>
           )}

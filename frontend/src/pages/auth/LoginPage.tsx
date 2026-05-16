@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { authService } from '../../services/auth.service';
 import { useAuth } from '../../context/AuthContext';
 import { useApiError } from '../../hooks/useApiError';
+import { useLanguage } from '../../context/LanguageContext';
 
 const features = [
   {
@@ -33,6 +34,7 @@ export default function LoginPage() {
   const { login }  = useAuth();
   const navigate   = useNavigate();
   const { getErrorMessage } = useApiError();
+  const { t } = useLanguage();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -117,10 +119,10 @@ export default function LoginPage() {
 
           <div style={{ marginBottom: '2rem' }}>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)', marginBottom: '0.375rem' }}>
-              Welcome back
+              {t('loginWelcome')}
             </h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-              Sign in to your SSMS account
+              {t('loginSubtitle')}
             </p>
           </div>
 
@@ -133,7 +135,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label className="form-label" htmlFor="email">Email address</label>
+              <label className="form-label" htmlFor="email">{t('loginEmailLabel')}</label>
               <div className="input-wrapper">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="input-icon-left"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 <input
@@ -151,8 +153,8 @@ export default function LoginPage() {
 
             <div className="form-group">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
-                <label className="form-label" htmlFor="password" style={{ marginBottom: 0 }}>Password</label>
-                <Link to="/forgot-password" style={{ fontSize: '0.78rem', color: 'var(--primary)', fontWeight: 500 }}>Forgot password?</Link>
+                <label className="form-label" htmlFor="password" style={{ marginBottom: 0 }}>{t('loginPasswordLabel')}</label>
+                <Link to="/forgot-password" style={{ fontSize: '0.78rem', color: 'var(--primary)', fontWeight: 500 }}>{t('loginForgot')}</Link>
               </div>
               <div className="input-wrapper">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="input-icon-left"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -179,14 +181,14 @@ export default function LoginPage() {
             <button type="submit" className="btn btn-primary btn-full btn-lg" disabled={loading}
               style={{ marginTop: '0.5rem' }}>
               {loading ? (
-                <><span className="spinner" />Signing in…</>
-              ) : 'Sign in'}
+                <><span className="spinner" />{t('loginSigningIn')}</>
+              ) : t('loginSignIn')}
             </button>
           </form>
 
           <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-            Don't have an account?{' '}
-            <Link to="/register" style={{ color: 'var(--primary)', fontWeight: 600 }}>Create account</Link>
+            {t('loginNoAccount')}{' '}
+            <Link to="/register" style={{ color: 'var(--primary)', fontWeight: 600 }}>{t('loginCreateAccount')}</Link>
           </p>
         </motion.div>
       </div>

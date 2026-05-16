@@ -14,6 +14,7 @@ import { useApiError } from '../../hooks/useApiError';
 import Modal from '../../components/ui/Modal';
 import EmptyState from '../../components/ui/EmptyState';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
+import { useLanguage } from '../../context/LanguageContext';
 
 const GRADE_META: Record<QualityGrade, { label: string; color: string; bg: string }> = {
   A: { label: 'Grade A', color: '#16a34a', bg: '#f0fdf4' },
@@ -27,6 +28,7 @@ export default function HarvestPage() {
   const { id: batchId } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { success, error: showError } = useToast();
+  const { t } = useLanguage();
   const { getErrorMessage } = useApiError();
 
   const [batch,   setBatch]   = useState<Batch | null>(null);
@@ -112,36 +114,36 @@ export default function HarvestPage() {
   return (
     <div>
       {/* Add Modal */}
-      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Log Harvest Record"
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title={t('harvestLogRecord')}
         footer={
           <>
             <button className="btn btn-secondary" onClick={() => setShowAdd(false)}>Cancel</button>
             <button className="btn btn-primary" form="harvest-form" type="submit" disabled={saving}>
-              {saving ? <><span className="spinner" />Saving…</> : 'Save Record'}
+              {saving ? <><span className="spinner" />Saving…</> : t('harvestSaveRecord')}
             </button>
           </>
         }
       >
         <form id="harvest-form" onSubmit={handleAdd}>
           <div className="form-group">
-            <label className="form-label">Cocoon Weight (kg) *</label>
+            <label className="form-label">{t('labelCocoonWeight')} *</label>
             <input type="number" step="0.01" min="0.01" required className="form-input"
               value={form.cocoonWeightKg}
               onChange={e => setForm(f => ({ ...f, cocoonWeightKg: e.target.value }))} />
           </div>
           <div className="form-group">
-            <label className="form-label">Silk Yield (g) <span style={{ fontWeight: 400, color: 'var(--text-faint)' }}>optional</span></label>
+            <label className="form-label">{t('labelSilkYield')} <span style={{ fontWeight: 400, color: 'var(--text-faint)' }}>optional</span></label>
             <input type="number" step="0.01" min="0" className="form-input"
               value={form.silkYieldG}
               onChange={e => setForm(f => ({ ...f, silkYieldG: e.target.value }))} />
           </div>
           <div className="form-group">
-            <label className="form-label">Quality Grade *</label>
+            <label className="form-label">{t('labelQualityGrade')} *</label>
             <select className="form-input" value={form.qualityGrade}
               onChange={e => setForm(f => ({ ...f, qualityGrade: e.target.value as QualityGrade }))}>
-              <option value="A">Grade A — Premium</option>
-              <option value="B">Grade B — Standard</option>
-              <option value="C">Grade C — Below standard</option>
+              <option value="A">{t('harvestGradeA')}</option>
+              <option value="B">{t('harvestGradeB')}</option>
+              <option value="C">{t('harvestGradeC')}</option>
             </select>
           </div>
           <div className="form-group">
@@ -156,7 +158,7 @@ export default function HarvestPage() {
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Harvest Records</h1>
+          <h1 className="page-title">{t('pageTitleHarvest')}</h1>
           <p className="page-subtitle">
             Batch #{batchId?.slice(-8).toUpperCase()} · {batch?.farm?.name ?? '…'}
           </p>
@@ -174,9 +176,9 @@ export default function HarvestPage() {
       {/* Summary stat cards */}
       <div className="grid-3" style={{ marginBottom: '1.5rem' }}>
         {[
-          { label: 'Total Records',    value: records.length,                         unit: '',    color: '#2563eb', bg: '#eff6ff' },
-          { label: 'Total Cocoon',     value: parseFloat(totalKg.toFixed(2)),         unit: ' kg', color: '#16a34a', bg: '#f0fdf4' },
-          { label: 'Total Silk Yield', value: parseFloat(totalSilk.toFixed(1)),       unit: ' g',  color: '#7c3aed', bg: '#f3e8ff' },
+          { label: t('harvestTotalRecords'), value: records.length,                         unit: '',    color: '#2563eb', bg: '#eff6ff' },
+          { label: t('harvestTotalCocoon'),  value: parseFloat(totalKg.toFixed(2)),         unit: ' kg', color: '#16a34a', bg: '#f0fdf4' },
+          { label: t('harvestTotalSilk'),    value: parseFloat(totalSilk.toFixed(1)),       unit: ' g',  color: '#7c3aed', bg: '#f3e8ff' },
         ].map((s, i) => (
           <motion.div key={s.label} className="stat-card"
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
