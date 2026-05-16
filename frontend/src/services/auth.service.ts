@@ -18,4 +18,7 @@ export const authService = {
 
   confirmPasswordReset: (data: { uid: string; token: string; newPassword: string }) =>
     api.post<ApiResponse<null>>('/auth/password-reset/confirm', data),
+
+  changePassword: (data: { currentPassword: string; newPassword: string; confirmPassword: string }) =>
+    api.patch<ApiResponse<null>>('/auth/change-password', data),
 };

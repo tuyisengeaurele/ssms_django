@@ -1,3 +1,5 @@
+import re
+from django.contrib.auth import authenticate
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, get_tokens_for_user
@@ -58,3 +60,39 @@ class ProfileView(APIView):
         request.user.name = name
         request.user.save(update_fields=['name'])
         return api_success(UserSerializer(request.user).data, 'Profile updated.')
+
+
+class ChangePasswordView(APIView):
+    """PATCH /api/auth/change-password — authenticated users only."""
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        current  = (request.data.get('currentPassword') or '').strip()
+        new_pass = (request.data.get('newPassword') or '').strip()
+        confirm  = (request.data.get('confirmPassword') or '').strip()
+
+        if not current or not new_pass or not confirm:
+            return api_error('All fields are required.', 422)
+
+        # Verify current password
+        user = authenticate(request=request, email=request.user.email, password=current)
+        if not user:
+            return api_error('Current password is incorrect.', 400)
+
+        # Validate new password strength
+        if len(new_pass) < 8:
+            return api_error('New password must be at least 8 characters.', 422)
+        if not re.search(r'[A-Z]', new_pass):
+            return api_error('New password must contain at least one uppercase letter.', 422)
+        if not re.search(r'[a-z]', new_pass):
+            return api_error('New password must contain at least one lowercase letter.', 422)
+        if not re.search(r'\d', new_pass):
+            return api_error('New password must contain at least one digit.', 422)
+        if new_pass != confirm:
+            return api_error('Passwords do not match.', 422)
+        if new_pass == current:
+            return api_error('New password must be different from the current password.', 422)
+
+        request.user.set_password(new_pass)
+        request.user.save(update_fields=['password'])
+        return api_success(None, 'Password changed successfully.')
