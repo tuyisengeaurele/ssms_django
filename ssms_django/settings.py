@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',   # JWT blacklist on logout
     'corsheaders',
     'users',
     'cooperatives',
@@ -138,6 +139,8 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
+    'ROTATE_REFRESH_TOKENS':   True,   # issue a new refresh token on every refresh
+    'BLACKLIST_AFTER_ROTATION': True,  # blacklist the old refresh token after rotation
 }
 
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173').split(',')
