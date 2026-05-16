@@ -7,6 +7,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, get_tokens_for_user
 from core.utils import api_success, api_error
 from core.throttles import LoginRateThrottle, RegisterRateThrottle
+from audit_log.utils import log_action
 
 
 class RegisterView(APIView):
@@ -19,6 +20,7 @@ class RegisterView(APIView):
             return api_error('Validation failed.', 422, serializer.errors)
         user = serializer.save()
         tokens = get_tokens_for_user(user)
+        log_action(request, 'CREATE', 'User', user.pk, f'Registered: {user.email}')
         return api_success(
             {'user': UserSerializer(user).data, 'token': tokens['access'], 'refreshToken': tokens['refresh']},
             'Account created successfully.',
@@ -41,6 +43,7 @@ class LoginView(APIView):
             return api_error('Validation failed.', 422, errors)
         user = serializer.validated_data['user']
         tokens = get_tokens_for_user(user)
+        log_action(request, 'LOGIN', 'User', user.pk, f'Login: {user.email}')
         return api_success(
             {'user': UserSerializer(user).data, 'token': tokens['access'], 'refreshToken': tokens['refresh']},
             'Logged in successfully.',
@@ -82,6 +85,7 @@ class LogoutView(APIView):
         except TokenError:
             # Already blacklisted or invalid — treat as successful logout
             pass
+        log_action(request, 'LOGOUT', 'User', request.user.pk, f'Logout: {request.user.email}')
         return api_success(None, 'Logged out successfully.')
 
 
