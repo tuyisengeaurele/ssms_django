@@ -55,6 +55,7 @@ const QUICK_ACTIONS = [
   { to: '/farms/new',          svgPath: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10',                                           label: 'Create Farm',       desc: 'Register a new farm in the system',             color: '#d97706'          },
   { to: '/farms',              svgPath: 'M21 10.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l2.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z', label: 'Manage Farms', desc: 'View, edit and organise all farms', color: '#0891b2' },
   { to: '/alerts',             svgPath: 'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0',                                  label: 'View Alerts',       desc: 'Review all system alerts and notifications',    color: '#dc2626'          },
+  { to: '/admin/audit-log',   svgPath: 'M9 11l3 3L22 4 M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',                                  label: 'Audit Log',         desc: 'Track all user actions and system events',      color: '#0891b2'          },
 ];
 
 export default function AdminDashboard() {

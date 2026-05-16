@@ -23,6 +23,7 @@ const ICONS = {
   cooperative: 'cooperative',  // handled in SideIcon
   devices:     'devices',      // handled in SideIcon
   mail:        'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6',
+  audit:       'M9 11l3 3L22 4 M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
 };
 
 interface NavItem {
@@ -64,6 +65,7 @@ function getNavItems(
     { to: '/detections/reports',  label: t('navReports'),   icon: 'reports' },
     { to: '/devices',             label: t('navDevices'),   icon: 'devices' },
     { to: '/admin/contacts',      label: t('navMessages'),  icon: 'mail' },
+    { to: '/admin/audit-log',     label: 'Audit Log',       icon: 'audit' },
     { to: '/alerts',              label: t('navAlerts'),    icon: 'alerts', badge: alertCount },
   ];
   return [];
