@@ -21,6 +21,7 @@ urlpatterns = [
     path('api/contact', include('contacts.urls')),              # POST /api/contact (public)
     path('api/admin/contacts', include((contacts_admin_urlpatterns, 'contacts_admin'))),  # GET/PATCH admin
     path('api/auth/token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/admin/audit-log', include('audit_log.urls')),  # GET /api/admin/audit-log (admin only)
 ]
 
 if settings.DEBUG:

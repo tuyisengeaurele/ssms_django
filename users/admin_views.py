@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from .serializers import UserSerializer, RegisterSerializer
 from core.utils import api_success, api_error
 from cooperatives.models import Cooperative
+from audit_log.utils import log_action
 
 User = get_user_model()
 
@@ -36,6 +37,7 @@ class AdminUserListCreateView(APIView):
         if not serializer.is_valid():
             return api_error('Validation failed.', 422, serializer.errors)
         user = serializer.save()
+        log_action(request, 'CREATE', 'User', user.pk, f'Admin created user {user.email} with role {user.role}')
         return api_success(UserSerializer(user).data, 'User created.', 201)
 
 
@@ -58,8 +60,10 @@ class AdminUserRoleView(APIView):
         if new_role not in ('ADMIN', 'SUPERVISOR', 'FARMER'):
             return api_error('role must be ADMIN, SUPERVISOR, or FARMER.', 400)
 
+        old_role = user.role
         user.role = new_role
         user.save(update_fields=['role'])
+        log_action(request, 'UPDATE', 'User', user.pk, f'Role changed {old_role} → {new_role} for {user.email}')
         return api_success(UserSerializer(user).data, 'Role updated.')
 
 
@@ -80,6 +84,7 @@ class AdminUserDeactivateView(APIView):
 
         user.is_active = False
         user.save(update_fields=['is_active'])
+        log_action(request, 'DELETE', 'User', user.pk, f'Deactivated user {user.email}')
         return api_success(None, 'User deactivated.')
 
 

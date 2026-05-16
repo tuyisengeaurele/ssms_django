@@ -28,6 +28,7 @@ import DevicesPage        from './pages/shared/DevicesPage';
 import BatchesPage        from './pages/farmer/BatchesPage';
 import ProfilePage        from './pages/shared/ProfilePage';
 import AdminContactsPage  from './pages/admin/AdminContactsPage';
+import AdminAuditLogPage  from './pages/admin/AdminAuditLogPage';
 
 function Unauthorized() {
   return (
@@ -92,6 +93,7 @@ export default function App() {
                 <Route path="/admin/users"            element={<AdminUsersPage />} />
                 <Route path="/admin/cooperatives"     element={<AdminCooperativesPage />} />
                 <Route path="/admin/contacts"         element={<AdminContactsPage />} />
+                <Route path="/admin/audit-log"        element={<AdminAuditLogPage />} />
               </Route>
 
             </Route>
