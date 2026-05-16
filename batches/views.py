@@ -7,6 +7,7 @@ from .models import Batch
 from .serializers import (
     BatchListSerializer, BatchDetailSerializer,
     BatchCreateSerializer, BatchUpdateStageSerializer,
+    BatchSupervisorSerializer,
 )
 from core.utils import api_success, api_error
 
@@ -90,6 +91,39 @@ class BatchDetailView(APIView):
         batch.is_active = False
         batch.save(update_fields=['is_active'])
         return api_success(None, 'Batch deleted.')
+
+
+class BatchActiveSupervisorView(APIView):
+    """
+    GET /api/batches/active
+    SUPERVISOR / ADMIN  → all active batches.
+    FARMER              → only batches belonging to their own farms.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
+            return api_error('Forbidden.', 403)
+        from django.db.models import Count
+        qs = (
+            Batch.objects
+            .filter(is_active=True)
+            .select_related('farm')
+            .annotate(detection_count=Count('disease_detections'))
+            .order_by('-created_at')
+        )
+        if request.user.role == 'FARMER':
+            qs = qs.filter(farm__owner=request.user)
+        elif request.user.role == 'SUPERVISOR':
+            if request.user.cooperative_id:
+                qs = qs.filter(
+                    farm__owner__cooperative_id=request.user.cooperative_id,
+                    farm__owner__role='FARMER',
+                )
+            else:
+                qs = qs.none()
+        # ADMIN: no filter, sees all batches
+        return api_success(BatchSupervisorSerializer(qs, many=True).data)
 
 
 class BatchUpdateStageView(APIView):

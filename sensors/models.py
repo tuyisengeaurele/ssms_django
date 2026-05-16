@@ -10,6 +10,45 @@ def _generate_id():
     return f'c{ts}{rand}'
 
 
+class IoTDevice(models.Model):
+    """A named IoT sensor device (physical or simulated) attached to a farm/batch."""
+
+    STATUS_ONLINE  = 'online'
+    STATUS_OFFLINE = 'offline'
+    STATUS_ERROR   = 'error'
+    STATUS_CHOICES = [
+        (STATUS_ONLINE,  'Online'),
+        (STATUS_OFFLINE, 'Offline'),
+        (STATUS_ERROR,   'Error'),
+    ]
+
+    id         = models.CharField(primary_key=True, max_length=36, default=_generate_id, editable=False)
+    name       = models.CharField(max_length=100)          # e.g. "DHT22-Sector-A"
+    device_key = models.CharField(max_length=80, unique=True)  # stable unique identifier
+    farm       = models.ForeignKey(
+        'farms.Farm',
+        on_delete=models.SET_NULL, null=True, blank=True,
+        db_column='farmId', related_name='devices',
+    )
+    batch      = models.ForeignKey(
+        'batches.Batch',
+        on_delete=models.SET_NULL, null=True, blank=True,
+        db_column='batchId', related_name='devices',
+    )
+    location   = models.CharField(max_length=200, blank=True, default='')
+    status     = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_OFFLINE)
+    last_seen  = models.DateTimeField(null=True, blank=True)
+    is_active  = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'iot_devices'
+        indexes  = [models.Index(fields=['farm'], name='device_farm_idx')]
+
+    def __str__(self):
+        return f'{self.name} [{self.status}]'
+
+
 class SensorReading(models.Model):
     id = models.CharField(primary_key=True, max_length=36, default=_generate_id, editable=False)
     batch = models.ForeignKey(
@@ -17,6 +56,11 @@ class SensorReading(models.Model):
         on_delete=models.CASCADE,
         db_column='batchId',
         related_name='sensor_readings',
+    )
+    device = models.ForeignKey(
+        IoTDevice,
+        on_delete=models.SET_NULL, null=True, blank=True,
+        db_column='deviceId', related_name='readings',
     )
     temperature = models.FloatField()
     humidity = models.FloatField()

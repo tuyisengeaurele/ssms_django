@@ -38,6 +38,14 @@ class User(AbstractBaseUser):
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.FARMER)
+    cooperative = models.ForeignKey(
+        'cooperatives.Cooperative',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='cooperativeId',
+        related_name='members',
+    )
     is_active = models.BooleanField(db_column='isActive', default=True)
     created_at = models.DateTimeField(db_column='createdAt', auto_now_add=True)
     updated_at = models.DateTimeField(db_column='updatedAt', auto_now=True)
