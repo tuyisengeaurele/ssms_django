@@ -205,7 +205,7 @@ function DeviceDetailDrawer({
                   <YAxis tick={{ fontSize: 9, fill: 'var(--text-faint)' }} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: '0.75rem' }}
-                    formatter={(v: number, name: string) => [
+                    formatter={(v, name) => [
                       name === 'temp' ? `${v}°C` : `${v}%`,
                       name === 'temp' ? 'Temperature' : 'Humidity',
                     ]}

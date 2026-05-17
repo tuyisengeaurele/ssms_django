@@ -170,7 +170,7 @@ export default function AdminReportsPage() {
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
-                  <Pie data={batches.byStage} dataKey="count" nameKey="stage" cx="50%" cy="50%" outerRadius={75} label={({ stage, count }) => `${stage} (${count})`} labelLine={false}>
+                  <Pie data={batches.byStage} dataKey="count" nameKey="stage" cx="50%" cy="50%" outerRadius={75} label={(props: Record<string, unknown>) => `${props['stage']} (${props['count']})`} labelLine={false}>
                     {batches.byStage.map(entry => (
                       <Cell key={entry.stage} fill={STAGE_COLORS[entry.stage] ?? '#94a3b8'} />
                     ))}
@@ -284,7 +284,7 @@ export default function AdminReportsPage() {
                     cx="50%"
                     cy="50%"
                     outerRadius={75}
-                    label={({ role, count }) => `${role} (${count})`}
+                    label={(props: Record<string, unknown>) => `${props['role']} (${props['count']})`}
                     labelLine={false}
                   >
                     {users.byRole.map(entry => (
