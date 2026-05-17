@@ -7,7 +7,7 @@ temperature & humidity readings for all active batches.
 Usage (one-shot):
     python manage.py simulate_sensors
 
-Usage (continuous loop, every 5 min by default):
+Usage (continuous loop, every 24 h by default):
     python manage.py simulate_sensors --loop
 
 Usage (custom interval, e.g. every 30 s for testing):
@@ -85,9 +85,9 @@ class Command(BaseCommand):
         parser.add_argument(
             '--interval',
             type=int,
-            default=300,
+            default=86400,
             metavar='SECONDS',
-            help='Seconds between rounds when --loop is active (default: 300 = 5 min).',
+            help='Seconds between rounds when --loop is active (default: 86400 = 24 h).',
         )
         parser.add_argument(
             '--batch',
