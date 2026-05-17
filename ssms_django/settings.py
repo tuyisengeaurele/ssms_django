@@ -10,6 +10,12 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
+# Railway injects RAILWAY_PUBLIC_DOMAIN — add it automatically so the
+# health checker and public domain both work without manual config.
+_railway_domain = config('RAILWAY_PUBLIC_DOMAIN', default='')
+if _railway_domain and _railway_domain not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_railway_domain)
+
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.auth',
