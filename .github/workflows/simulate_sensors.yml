@@ -1,0 +1,33 @@
+name: Daily Sensor Simulation
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # runs every day at midnight UTC
+  workflow_dispatch:        # allows manual trigger from GitHub Actions tab
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      DEBUG: "False"
+      ALLOWED_HOSTS: "*"
+      DJANGO_SETTINGS_MODULE: ssms_django.settings
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run sensor simulation
+        run: python manage.py simulate_sensors
