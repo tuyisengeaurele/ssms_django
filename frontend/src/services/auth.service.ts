@@ -30,6 +30,6 @@ export const authService = {
   changePassword: (data: { currentPassword: string; newPassword: string; confirmPassword: string }) =>
     api.patch<ApiResponse<null>>('/auth/change-password', data),
 
-  logout: (refreshToken: string) =>
-    api.post<ApiResponse<null>>('/auth/logout', { refreshToken }),
+  logout: () =>
+    api.post<ApiResponse<null>>('/auth/logout', {}),
 };
