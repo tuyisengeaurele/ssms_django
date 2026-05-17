@@ -42,7 +42,8 @@ api.interceptors.response.use(
       err.response?.status === 401 &&
       !originalConfig._retry &&
       !originalConfig.url?.includes('/auth/login') &&
-      !originalConfig.url?.includes('/auth/token/refresh')
+      !originalConfig.url?.includes('/auth/token/refresh') &&
+      !originalConfig.url?.includes('/auth/logout')
     ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {

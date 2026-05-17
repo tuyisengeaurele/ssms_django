@@ -82,14 +82,29 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        refresh_token = request.COOKIES.get(REFRESH_COOKIE)
-        if refresh_token:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        refresh_token_str = request.COOKIES.get(REFRESH_COOKIE)
+
+        # Identify the real actor from the refresh cookie (set at login time).
+        # This is more reliable than request.user, which could be wrong if the
+        # access token was silently refreshed by a concurrent session's cookie
+        # before this request was retried.
+        actor = request.user if request.user.is_authenticated else None
+
+        if refresh_token_str:
             try:
-                token = RefreshToken(refresh_token)
+                token = RefreshToken(refresh_token_str)
+                cookie_user = User.objects.get(pk=token.payload['user_id'])
+                actor = cookie_user  # trust the cookie — it was set at login
                 token.blacklist()
-            except TokenError:
+            except (TokenError, KeyError, User.DoesNotExist):
                 pass  # Already blacklisted or invalid — still clear the cookie
-        log_action(request, 'LOGOUT', 'User', request.user.pk, f'Logout: {request.user.email}')
+
+        if actor:
+            log_action(request, 'LOGOUT', 'User', actor.pk, f'Logout: {actor.email}', actor=actor)
+
         response = api_success(None, 'Logged out successfully.')
         clear_refresh_cookie(response)
         return response
