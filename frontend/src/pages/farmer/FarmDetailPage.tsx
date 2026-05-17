@@ -102,7 +102,7 @@ function DeviceReadingsMini({ device }: { device: IoTDevice }) {
                   <YAxis tick={{ fontSize: 8, fill: 'var(--text-faint)' }} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: '0.72rem' }}
-                    formatter={(v: number, name: string) => [
+                    formatter={(v, name) => [
                       name === 'temp' ? `${v}°C` : `${v}%`,
                       name === 'temp' ? 'Temp' : 'Humidity',
                     ]}
