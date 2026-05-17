@@ -83,9 +83,9 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME':     config('DB_NAME'),
-            'USER':     config('DB_USER'),
-            'PASSWORD': config('DB_PASSWORD'),
+            'NAME':     config('DB_NAME', default=''),
+            'USER':     config('DB_USER', default=''),
+            'PASSWORD': config('DB_PASSWORD', default=''),
             'HOST':     config('DB_HOST', default='localhost'),
             'PORT':     config('DB_PORT', default='5432'),
             'CONN_MAX_AGE': 60,
@@ -173,10 +173,10 @@ EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST          = 'smtp.gmail.com'
 EMAIL_PORT          = 587
 EMAIL_USE_TLS       = True
-EMAIL_HOST_USER     = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL  = config('DEFAULT_FROM_EMAIL', default='SSMS <smartsericulturerw@gmail.com>')
-FRONTEND_URL        = config('FRONTEND_URL')       # e.g. https://ssms.vercel.app
+EMAIL_HOST_USER     = config('EMAIL_HOST_USER',     default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL  = config('DEFAULT_FROM_EMAIL',  default='SSMS <smartsericulturerw@gmail.com>')
+FRONTEND_URL        = config('FRONTEND_URL',        default='http://localhost:5173')
 
 # AI microservice (FastAPI — deployed separately)
 AI_SERVICE_URL = config('AI_SERVICE_URL', default='http://localhost:8001')
