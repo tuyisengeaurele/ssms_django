@@ -12,6 +12,9 @@ const STAGE_COLORS: Record<string, string> = {
   EGG: '#a3e635', LARVA: '#34d399', PUPA: '#60a5fa',
   COCOON: '#f59e0b', HARVEST: '#f97316',
 };
+const ROLE_COLORS: Record<string, string> = {
+  ADMIN: '#7c3aed', SUPERVISOR: '#2563eb', FARMER: '#16a34a',
+};
 const GRADE_COLORS: Record<string, string> = { A: '#16a34a', B: '#2563eb', C: '#d97706' };
 const ACTION_COLORS: Record<string, string> = {
   CREATE: '#16a34a', UPDATE: '#2563eb', DELETE: '#dc2626',
@@ -264,6 +267,48 @@ export default function AdminReportsPage() {
           </ChartCard>
         </div>
 
+        {/* Charts row 4: Users by role + Top Farmers */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+
+          {/* Users by role pie */}
+          <ChartCard title={t('reportUsersByRole')}>
+            {users.byRole.length === 0 ? (
+              <p style={{ color: 'var(--text-faint)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem 0' }}>No users.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={users.byRole}
+                    dataKey="count"
+                    nameKey="role"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={75}
+                    label={({ role, count }) => `${role} (${count})`}
+                    labelLine={false}
+                  >
+                    {users.byRole.map(entry => (
+                      <Cell key={entry.role} fill={ROLE_COLORS[entry.role] ?? '#94a3b8'} />
+                    ))}
+                  </Pie>
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v, n) => [v, n]} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </ChartCard>
+
+          {/* Harvest summary */}
+          <ChartCard title={t('reportHarvestByGrade')}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', paddingTop: '0.5rem' }}>
+              <StatCard label={t('reportTotalCocoonKg')}  value={`${harvests.totalKg.toFixed(1)} kg`} />
+              <StatCard label={t('reportTotalSilkG')}     value={`${harvests.totalSilkG.toFixed(0)} g`} />
+              <StatCard label={t('reportAvgCocoonKg')}    value={`${harvests.avgKg.toFixed(2)} kg`} />
+              <StatCard label={t('reportTotalHarvests')}  value={harvests.total} />
+            </div>
+          </ChartCard>
+        </div>
+
         {/* Top Farmers table */}
         {topFarmers.length > 0 && (
           <ChartCard title={t('reportTopFarmers')}>
@@ -290,14 +335,6 @@ export default function AdminReportsPage() {
             </table>
           </ChartCard>
         )}
-
-        {/* Harvest summary numbers */}
-        <div style={{ marginTop: '1.25rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
-          <StatCard label={t('reportTotalCocoonKg')}  value={`${harvests.totalKg.toFixed(1)} kg`} />
-          <StatCard label={t('reportTotalSilkG')}     value={`${harvests.totalSilkG.toFixed(0)} g`} />
-          <StatCard label={t('reportAvgCocoonKg')}    value={`${harvests.avgKg.toFixed(2)} kg`} />
-          <StatCard label={t('reportUsersByRole')}    value={users.byRole.map(r => `${r.role}: ${r.count}`).join(' · ')} />
-        </div>
       </motion.div>
     </>
   );

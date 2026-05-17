@@ -244,6 +244,7 @@ export const translations: TranslationMap = {
 
   // ── Audit log nav ─────────────────────────────────────────────────────────────
   navAuditLog:      { en: 'Audit Log',           fr: 'Journal d\'audit',        rw: 'Ibitabo by\'Ibikorwa' },
+  navSystemReport:  { en: 'System Report',       fr: 'Rapport système',         rw: 'Raporo y\'Uburyo' },
 
   // ── System report ─────────────────────────────────────────────────────────────
   reportTitle:           { en: 'System Report',              fr: 'Rapport système',                  rw: 'Raporo y\'Uburyo' },

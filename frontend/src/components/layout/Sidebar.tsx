@@ -10,7 +10,7 @@ const ICONS = {
   harvest:    'M12 22V12M3.5 8.5C3.5 5.46 6.46 3 10 3c2.12 0 4 .9 5.28 2.33A6.5 6.5 0 0 1 21 11.5c0 3.58-2.91 6.5-6.5 6.5H5a1.5 1.5 0 0 1 0-3',
   dashboard:  'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10',
   farms:      'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10',
-  farmLeaf:   'M12 22V12M3.5 8.5C3.5 5.46 6.46 3 10 3c2.12 0 4 .9 5.28 2.33A6.5 6.5 0 0 1 21 11.5c0 3.58-2.91 6.5-6.5 6.5H5a1.5 1.5 0 0 1 0-3',
+  farmLeaf:   'farmLeaf',  // handled in SideIcon — map-pin icon distinct from harvest leaf
   batch:      'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z',
   microscope: 'M6 18h8 M3 22h18 M14 22a7 7 0 1 0 0-14h-1 M9 14H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h5l2 3-2 3 2 3-2 3z',
   reports:    'M18 20V10M12 20V4M6 20v-6',
@@ -65,8 +65,8 @@ function getNavItems(
     { to: '/detections/reports',  label: t('navReports'),   icon: 'reports' },
     { to: '/devices',             label: t('navDevices'),   icon: 'devices' },
     { to: '/admin/contacts',      label: t('navMessages'),  icon: 'mail' },
-    { to: '/admin/audit-log',     label: t('navAuditLog'),  icon: 'audit' },
-    { to: '/admin/reports',       label: t('navReports'),   icon: 'activity' },
+    { to: '/admin/audit-log',     label: t('navAuditLog'),      icon: 'audit' },
+    { to: '/admin/reports',       label: t('navSystemReport'),  icon: 'activity' },
     { to: '/alerts',              label: t('navAlerts'),    icon: 'alerts', badge: alertCount },
   ];
   return [];
@@ -80,6 +80,15 @@ interface SidebarProps {
 }
 
 function SideIcon({ name }: { name: keyof typeof ICONS }) {
+  if (name === 'farmLeaf') {
+    // Map-pin icon — represents a farm location, distinct from the harvest leaf/cloud
+    return (
+      <>
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+        <circle cx="12" cy="10" r="3" />
+      </>
+    );
+  }
   if (name === 'users') {
     return (
       <>

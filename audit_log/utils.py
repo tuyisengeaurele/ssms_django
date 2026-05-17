@@ -9,10 +9,13 @@ def _get_ip(request) -> str | None:
     return request.META.get('REMOTE_ADDR')
 
 
-def log_action(request, action: str, resource: str, resource_id='', detail=''):
-    """Fire-and-forget audit entry. Safe to call from any view."""
-    user       = getattr(request, 'user', None)
-    is_auth    = user and user.is_authenticated
+def log_action(request, action: str, resource: str, resource_id='', detail='', actor=None):
+    """Fire-and-forget audit entry. Safe to call from any view.
+
+    Pass actor= when request.user is still AnonymousUser (e.g. during login).
+    """
+    user       = actor or getattr(request, 'user', None)
+    is_auth    = user and getattr(user, 'is_authenticated', False) and not getattr(user, 'is_anonymous', True)
     user_id    = user.pk    if is_auth else None
     user_email = user.email if is_auth else ''
     user_name  = getattr(user, 'name', '') if is_auth else ''
