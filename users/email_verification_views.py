@@ -17,7 +17,7 @@ from rest_framework.permissions import AllowAny
 from core.utils import api_success, api_error
 from core.throttles import PasswordResetRateThrottle
 from .serializers import UserSerializer, get_tokens_for_user
-from .views import _set_refresh_cookie
+from .cookie_utils import set_refresh_cookie
 
 User = get_user_model()
 
@@ -68,7 +68,7 @@ class VerifyEmailView(APIView):
                 {'user': UserSerializer(user).data, 'token': tokens['access']},
                 'Email already verified.',
             )
-            _set_refresh_cookie(response, tokens['refresh'])
+            set_refresh_cookie(response, tokens['refresh'])
             return response
 
         if not default_token_generator.check_token(user, token):
@@ -82,7 +82,7 @@ class VerifyEmailView(APIView):
             {'user': UserSerializer(user).data, 'token': tokens['access']},
             'Email verified successfully.',
         )
-        _set_refresh_cookie(response, tokens['refresh'])
+        set_refresh_cookie(response, tokens['refresh'])
         return response
 
 

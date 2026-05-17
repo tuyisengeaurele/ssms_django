@@ -1,5 +1,4 @@
 import re
-from django.conf import settings
 from django.contrib.auth import authenticate
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,27 +7,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, get_tokens_for_user
 from .email_verification_views import _send_verification_email
+from .cookie_utils import REFRESH_COOKIE, set_refresh_cookie, clear_refresh_cookie
 from core.utils import api_success, api_error
 from core.throttles import LoginRateThrottle, RegisterRateThrottle
 from audit_log.utils import log_action
-
-REFRESH_COOKIE = 'ssms_refresh'
-REFRESH_MAX_AGE = 30 * 24 * 60 * 60  # 30 days
-
-
-def _set_refresh_cookie(response, refresh_token: str):
-    response.set_cookie(
-        REFRESH_COOKIE,
-        refresh_token,
-        httponly=True,
-        secure=not settings.DEBUG,
-        samesite='Lax',
-        max_age=REFRESH_MAX_AGE,
-    )
-
-
-def _clear_refresh_cookie(response):
-    response.delete_cookie(REFRESH_COOKIE)
 
 
 class RegisterView(APIView):
@@ -71,7 +53,7 @@ class LoginView(APIView):
             {'user': UserSerializer(user).data, 'token': tokens['access']},
             'Logged in successfully.',
         )
-        _set_refresh_cookie(response, tokens['refresh'])
+        set_refresh_cookie(response, tokens['refresh'])
         return response
 
 
@@ -109,7 +91,7 @@ class LogoutView(APIView):
                 pass  # Already blacklisted or invalid — still clear the cookie
         log_action(request, 'LOGOUT', 'User', request.user.pk, f'Logout: {request.user.email}')
         response = api_success(None, 'Logged out successfully.')
-        _clear_refresh_cookie(response)
+        clear_refresh_cookie(response)
         return response
 
 
@@ -136,7 +118,7 @@ class CookieTokenRefreshView(APIView):
         except TokenError:
             return Response({'detail': 'Token is invalid or expired.'}, status=401)
         response = Response({'access': access_token})
-        _set_refresh_cookie(response, new_refresh_str)
+        set_refresh_cookie(response, new_refresh_str)
         return response
 
 
