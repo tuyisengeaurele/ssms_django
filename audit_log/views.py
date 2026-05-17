@@ -49,10 +49,10 @@ class AuditLogListView(APIView):
 
         def rows():
             writer = csv.writer(Echo())
-            yield writer.writerow(['ID', 'User Email', 'Action', 'Resource', 'Resource ID', 'Detail', 'IP Address', 'Timestamp'])
+            yield writer.writerow(['ID', 'User Name', 'User Email', 'Action', 'Resource', 'Resource ID', 'Detail', 'IP Address', 'Timestamp'])
             for entry in qs.iterator(chunk_size=200):
                 yield writer.writerow([
-                    entry.id, entry.user_email, entry.action,
+                    entry.id, entry.user_name, entry.user_email, entry.action,
                     entry.resource, entry.resource_id, entry.detail,
                     entry.ip_address or '', entry.created_at.isoformat(),
                 ])
