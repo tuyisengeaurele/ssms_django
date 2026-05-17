@@ -21,3 +21,5 @@ dj-database-url==2.2.0
 
 # Image processing (used by AI service image handling)
 Pillow==10.4.0
+
+# cache-bust: 2026-05-17
