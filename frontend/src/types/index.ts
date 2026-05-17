@@ -28,6 +28,7 @@ export interface User {
   role: Role;
   cooperativeId?: string | null;
   cooperativeName?: string | null;
+  isEmailVerified: boolean;
   createdAt: string;
   updatedAt: string;
 }

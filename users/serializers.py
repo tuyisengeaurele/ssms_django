@@ -10,8 +10,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'name', 'email', 'role', 'cooperative_id', 'cooperative_name', 'created_at', 'updated_at']
-        read_only_fields = fields
+        fields = ['id', 'name', 'email', 'role', 'cooperative_id', 'cooperative_name', 'is_email_verified', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'name', 'email', 'role', 'cooperative_id', 'cooperative_name', 'is_email_verified', 'created_at', 'updated_at']
 
     def get_cooperative_name(self, obj):
         return obj.cooperative.name if obj.cooperative_id and obj.cooperative else None
@@ -63,6 +63,8 @@ class LoginSerializer(serializers.Serializer):
         )
         if not user:
             raise serializers.ValidationError('Invalid email or password.')
+        if not user.is_email_verified:
+            raise serializers.ValidationError('email_not_verified')
         attrs['user'] = user
         return attrs
 

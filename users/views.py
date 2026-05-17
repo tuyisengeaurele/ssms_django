@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, get_tokens_for_user
+from .email_verification_views import _send_verification_email
 from core.utils import api_success, api_error
 from core.throttles import LoginRateThrottle, RegisterRateThrottle
 from audit_log.utils import log_action
@@ -19,11 +20,14 @@ class RegisterView(APIView):
         if not serializer.is_valid():
             return api_error('Validation failed.', 422, serializer.errors)
         user = serializer.save()
-        tokens = get_tokens_for_user(user)
         log_action(request, 'CREATE', 'User', user.pk, f'Registered: {user.email}')
+        try:
+            _send_verification_email(user)
+        except Exception:
+            pass  # email failure must not block account creation
         return api_success(
-            {'user': UserSerializer(user).data, 'token': tokens['access'], 'refreshToken': tokens['refresh']},
-            'Account created successfully.',
+            {'user': UserSerializer(user).data},
+            'Account created. Please check your email to verify your address.',
             201,
         )
 
