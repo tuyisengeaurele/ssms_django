@@ -2,7 +2,6 @@ import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { authService } from '../../services/auth.service';
-import { useAuth } from '../../context/AuthContext';
 import { useApiError } from '../../hooks/useApiError';
 
 export default function RegisterPage() {
@@ -10,7 +9,6 @@ export default function RegisterPage() {
   const [showPwd, setShowPwd] = useState(false);
   const [error,   setError]   = useState('');
   const [loading, setLoading] = useState(false);
-  const { login }  = useAuth();
   const navigate   = useNavigate();
   const { getErrorMessage } = useApiError();
 
@@ -22,11 +20,8 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
     try {
-      const res = await authService.register(form);
-      const { user, token, refreshToken } = res.data.data;
-      login(user, token, refreshToken);
-      const path = user.role === 'ADMIN' ? '/admin' : user.role === 'SUPERVISOR' ? '/supervisor' : '/farmer';
-      navigate(path, { replace: true });
+      await authService.register(form);
+      navigate(`/check-email?email=${encodeURIComponent(form.email)}`, { replace: true });
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
