@@ -3,6 +3,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,  // send httpOnly refresh cookie on every request
 });
 
 api.interceptors.request.use((config) => {
@@ -43,16 +44,7 @@ api.interceptors.response.use(
       !originalConfig.url?.includes('/auth/login') &&
       !originalConfig.url?.includes('/auth/token/refresh')
     ) {
-      const refreshToken = localStorage.getItem('ssms_refresh_token');
-
-      if (!refreshToken) {
-        // No refresh token available — log out immediately
-        _doLogout();
-        return Promise.reject(err);
-      }
-
       if (isRefreshing) {
-        // Queue this request to retry once the refresh completes
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject, config: originalConfig });
         });
@@ -62,9 +54,11 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        // Cookie is sent automatically (withCredentials: true) — no body needed
         const response = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL ?? '/api'}/auth/token/refresh`,
-          { refresh: refreshToken },
+          {},
+          { withCredentials: true },
         );
         const newAccessToken: string = response.data.access;
         localStorage.setItem('ssms_token', newAccessToken);
@@ -88,7 +82,6 @@ api.interceptors.response.use(
 function _doLogout() {
   localStorage.removeItem('ssms_token');
   localStorage.removeItem('ssms_user');
-  localStorage.removeItem('ssms_refresh_token');
   window.location.href = '/login';
 }
 
