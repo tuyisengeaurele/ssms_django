@@ -7,7 +7,7 @@ interface AuthContextValue {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (user: User, token: string, refreshToken?: string) => void;
+  login: (user: User, token: string) => void;
   logout: () => void;
   /** Overwrite the in-memory + localStorage user snapshot (e.g. after profile edit). */
   updateUser: (user: User) => void;
@@ -33,28 +33,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = (userData: User, jwt: string, refreshJwt?: string) => {
+  const login = (userData: User, jwt: string) => {
     setUser(userData);
     setToken(jwt);
     localStorage.setItem('ssms_token', jwt);
     localStorage.setItem('ssms_user', JSON.stringify(userData));
-    if (refreshJwt) localStorage.setItem('ssms_refresh_token', refreshJwt);
   };
 
   const logout = useCallback(() => {
-    // Blacklist the refresh token on the server so it cannot be reused,
-    // even if someone captured it before the user signed out.
-    const refreshToken = localStorage.getItem('ssms_refresh_token');
-    if (refreshToken) {
-      authService.logout(refreshToken).catch(() => {
-        // Ignore — token may already be expired or blacklisted; local clear still happens
-      });
-    }
+    // Tell server to blacklist the refresh cookie and clear it
+    authService.logout().catch(() => {
+      // Ignore — cookie will be cleared client-side regardless
+    });
     setUser(null);
     setToken(null);
     localStorage.removeItem('ssms_token');
     localStorage.removeItem('ssms_user');
-    localStorage.removeItem('ssms_refresh_token');
   }, []);
 
   const updateUser = useCallback((userData: User) => {

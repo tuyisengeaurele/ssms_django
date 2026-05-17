@@ -42,8 +42,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await authService.login({ email, password });
-      const { user, token, refreshToken } = res.data.data;
-      login(user, token, refreshToken);
+      const { user, token } = res.data.data;
+      login(user, token);
       const path = user.role === 'ADMIN' ? '/admin' : user.role === 'SUPERVISOR' ? '/supervisor' : '/farmer';
       navigate(path, { replace: true });
     } catch (err: unknown) {

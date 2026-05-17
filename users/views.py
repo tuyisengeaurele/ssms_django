@@ -1,5 +1,7 @@
 import re
+from django.conf import settings
 from django.contrib.auth import authenticate
+from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -9,6 +11,24 @@ from .email_verification_views import _send_verification_email
 from core.utils import api_success, api_error
 from core.throttles import LoginRateThrottle, RegisterRateThrottle
 from audit_log.utils import log_action
+
+REFRESH_COOKIE = 'ssms_refresh'
+REFRESH_MAX_AGE = 30 * 24 * 60 * 60  # 30 days
+
+
+def _set_refresh_cookie(response, refresh_token: str):
+    response.set_cookie(
+        REFRESH_COOKIE,
+        refresh_token,
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite='Lax',
+        max_age=REFRESH_MAX_AGE,
+    )
+
+
+def _clear_refresh_cookie(response):
+    response.delete_cookie(REFRESH_COOKIE)
 
 
 class RegisterView(APIView):
@@ -40,7 +60,6 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data, context={'request': request})
         if not serializer.is_valid():
             errors = serializer.errors
-            # Flatten non_field_errors to a single message
             non_field = errors.get('non_field_errors', [])
             if non_field:
                 return api_error(str(non_field[0]), 401)
@@ -48,10 +67,12 @@ class LoginView(APIView):
         user = serializer.validated_data['user']
         tokens = get_tokens_for_user(user)
         log_action(request, 'LOGIN', 'User', user.pk, f'Login: {user.email}')
-        return api_success(
-            {'user': UserSerializer(user).data, 'token': tokens['access'], 'refreshToken': tokens['refresh']},
+        response = api_success(
+            {'user': UserSerializer(user).data, 'token': tokens['access']},
             'Logged in successfully.',
         )
+        _set_refresh_cookie(response, tokens['refresh'])
+        return response
 
 
 class ProfileView(APIView):
@@ -74,23 +95,49 @@ class ProfileView(APIView):
 class LogoutView(APIView):
     """
     POST /api/auth/logout
-    Blacklists the submitted refresh token so it cannot be used again.
-    The client must also clear tokens from localStorage.
+    Blacklists the refresh token from the httpOnly cookie.
     """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        refresh_token = request.data.get('refreshToken') or request.data.get('refresh')
-        if not refresh_token:
-            return api_error('Refresh token is required.', 400)
-        try:
-            token = RefreshToken(refresh_token)
-            token.blacklist()
-        except TokenError:
-            # Already blacklisted or invalid — treat as successful logout
-            pass
+        refresh_token = request.COOKIES.get(REFRESH_COOKIE)
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except TokenError:
+                pass  # Already blacklisted or invalid — still clear the cookie
         log_action(request, 'LOGOUT', 'User', request.user.pk, f'Logout: {request.user.email}')
-        return api_success(None, 'Logged out successfully.')
+        response = api_success(None, 'Logged out successfully.')
+        _clear_refresh_cookie(response)
+        return response
+
+
+class CookieTokenRefreshView(APIView):
+    """
+    POST /api/auth/token/refresh
+    Reads the refresh token from the httpOnly cookie, returns a new access token,
+    and rotates the refresh token (sets a new cookie).
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        refresh_token_str = request.COOKIES.get(REFRESH_COOKIE)
+        if not refresh_token_str:
+            return Response({'detail': 'No refresh token.'}, status=401)
+        try:
+            refresh = RefreshToken(refresh_token_str)
+            access_token = str(refresh.access_token)
+            # Rotate: blacklist old, generate new refresh token
+            refresh.blacklist()
+            refresh.set_jti()
+            refresh.set_exp()
+            new_refresh_str = str(refresh)
+        except TokenError:
+            return Response({'detail': 'Token is invalid or expired.'}, status=401)
+        response = Response({'access': access_token})
+        _set_refresh_cookie(response, new_refresh_str)
+        return response
 
 
 class ChangePasswordView(APIView):
@@ -105,12 +152,10 @@ class ChangePasswordView(APIView):
         if not current or not new_pass or not confirm:
             return api_error('All fields are required.', 422)
 
-        # Verify current password
         user = authenticate(request=request, email=request.user.email, password=current)
         if not user:
             return api_error('Current password is incorrect.', 400)
 
-        # Validate new password strength
         if len(new_pass) < 8:
             return api_error('New password must be at least 8 characters.', 422)
         if not re.search(r'[A-Z]', new_pass):
