@@ -55,3 +55,26 @@ htmlcov/
 .coverage.*
 coverage.xml
 .pytest_cache/
+
+# ML models — too large for git (use DVC or object storage)
+*.keras
+*.h5
+*.pt
+*.pth
+*.onnx
+
+# Large media / test assets
+*.mp4
+*.avi
+*.mov
+1.jpg
+2.jpg
+
+# Postman app cache
+.postman/
+
+# Vite dev cache
+frontend/.vite/
+
+# Compiled binaries in ai_service
+ai_service/uvicorn
