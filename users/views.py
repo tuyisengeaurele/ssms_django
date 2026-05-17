@@ -48,7 +48,7 @@ class LoginView(APIView):
             return api_error('Validation failed.', 422, errors)
         user = serializer.validated_data['user']
         tokens = get_tokens_for_user(user)
-        log_action(request, 'LOGIN', 'User', user.pk, f'Login: {user.email}')
+        log_action(request, 'LOGIN', 'User', user.pk, f'Login: {user.email}', actor=user)
         response = api_success(
             {'user': UserSerializer(user).data, 'token': tokens['access']},
             'Logged in successfully.',
