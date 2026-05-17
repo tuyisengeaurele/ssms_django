@@ -17,6 +17,7 @@ from rest_framework.permissions import AllowAny
 from core.utils import api_success, api_error
 from core.throttles import PasswordResetRateThrottle
 from .serializers import UserSerializer, get_tokens_for_user
+from .views import _set_refresh_cookie
 
 User = get_user_model()
 
@@ -62,12 +63,13 @@ class VerifyEmailView(APIView):
             return api_error('This account has been deactivated.', 400)
 
         if user.is_email_verified:
-            # Already verified — still return tokens so the user can log in
             tokens = get_tokens_for_user(user)
-            return api_success(
-                {'user': UserSerializer(user).data, 'token': tokens['access'], 'refreshToken': tokens['refresh']},
+            response = api_success(
+                {'user': UserSerializer(user).data, 'token': tokens['access']},
                 'Email already verified.',
             )
+            _set_refresh_cookie(response, tokens['refresh'])
+            return response
 
         if not default_token_generator.check_token(user, token):
             return api_error('Invalid or expired verification link.', 400)
@@ -76,10 +78,12 @@ class VerifyEmailView(APIView):
         user.save(update_fields=['is_email_verified'])
 
         tokens = get_tokens_for_user(user)
-        return api_success(
-            {'user': UserSerializer(user).data, 'token': tokens['access'], 'refreshToken': tokens['refresh']},
+        response = api_success(
+            {'user': UserSerializer(user).data, 'token': tokens['access']},
             'Email verified successfully.',
         )
+        _set_refresh_cookie(response, tokens['refresh'])
+        return response
 
 
 class ResendVerificationView(APIView):

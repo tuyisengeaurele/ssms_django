@@ -26,8 +26,8 @@ export default function VerifyEmailPage() {
 
     authService.verifyEmail({ uid, token })
       .then(res => {
-        const { user, token: jwt, refreshToken } = res.data.data;
-        login(user, jwt, refreshToken);
+        const { user, token: jwt } = res.data.data;
+        login(user, jwt);
         setStatus('success');
         setTimeout(() => {
           const path = user.role === 'ADMIN' ? '/admin' : user.role === 'SUPERVISOR' ? '/supervisor' : '/farmer';
