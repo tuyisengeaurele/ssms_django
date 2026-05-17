@@ -21,6 +21,7 @@ from .models import DiseaseDetection
 from .serializers import DiseaseDetectionSerializer
 from core.utils import api_success, api_error
 from core.pagination import StandardPagination
+from audit_log.utils import log_action
 
 
 def _upload_to_cloudinary(uploaded_file) -> str:
@@ -103,6 +104,8 @@ class DiseaseDetectionCreateView(APIView):
         payload = DiseaseDetectionSerializer(detection).data
         payload['allScores'] = ai_data.get('allScores', {})
 
+        log_action(request, 'CREATE', 'DiseaseDetection', detection.pk,
+                   f'Detection: {detection.result} ({detection.confidence:.0%}) on batch {batch_id}')
         return api_success(payload, 'Disease detection completed.', 201)
 
 

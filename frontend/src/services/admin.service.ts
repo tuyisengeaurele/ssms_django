@@ -27,6 +27,7 @@ export const adminService = {
 
 export interface AuditLogEntry {
   id: number;
+  userName: string;
   userEmail: string;
   action: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'OTHER';
   resource: string;
@@ -34,6 +35,21 @@ export interface AuditLogEntry {
   detail: string;
   ipAddress: string | null;
   createdAt: string;
+}
+
+export interface ReportSummary {
+  generatedAt: string;
+  users: {
+    total: number;
+    byRole: { role: string; count: number }[];
+    registrations30d: { day: string; count: number }[];
+  };
+  farms: { total: number };
+  batches: { total: number; byStage: { stage: string; count: number }[] };
+  harvests: { total: number; totalKg: number; totalSilkG: number; avgKg: number; byGrade: { grade: string; count: number; totalKg: number }[] };
+  detections: { total: number; byResult: { result: string; count: number }[]; detections30d: { day: string; count: number }[] };
+  audit: { actions30d: { action: string; count: number }[] };
+  topFarmers: { name: string; email: string; farmCount: number }[];
 }
 
 export const auditLogService = {
@@ -61,6 +77,26 @@ export const auditLogService = {
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href = url; a.download = `audit_log_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  },
+};
+
+export const reportService = {
+  getSummary: () =>
+    api.get<ApiResponse<ReportSummary>>('/admin/reports'),
+
+  exportCsv: async (): Promise<void> => {
+    const base  = (import.meta.env.VITE_API_BASE_URL as string) ?? '/api';
+    const token = localStorage.getItem('ssms_token') ?? '';
+    const res   = await fetch(`${base}/admin/reports?export=csv`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error(`Export failed (${res.status})`);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `ssms_report_${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a); a.click();
     document.body.removeChild(a); URL.revokeObjectURL(url);
   },

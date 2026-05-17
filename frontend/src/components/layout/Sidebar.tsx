@@ -65,7 +65,8 @@ function getNavItems(
     { to: '/detections/reports',  label: t('navReports'),   icon: 'reports' },
     { to: '/devices',             label: t('navDevices'),   icon: 'devices' },
     { to: '/admin/contacts',      label: t('navMessages'),  icon: 'mail' },
-    { to: '/admin/audit-log',     label: 'Audit Log',       icon: 'audit' },
+    { to: '/admin/audit-log',     label: t('navAuditLog'),  icon: 'audit' },
+    { to: '/admin/reports',       label: t('navReports'),   icon: 'activity' },
     { to: '/alerts',              label: t('navAlerts'),    icon: 'alerts', badge: alertCount },
   ];
   return [];
