@@ -47,6 +47,7 @@ class User(AbstractBaseUser):
         related_name='members',
     )
     is_active = models.BooleanField(db_column='isActive', default=True)
+    is_email_verified = models.BooleanField(db_column='isEmailVerified', default=False)
     created_at = models.DateTimeField(db_column='createdAt', auto_now_add=True)
     updated_at = models.DateTimeField(db_column='updatedAt', auto_now=True)
 
