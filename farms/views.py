@@ -5,6 +5,7 @@ from .models import Farm
 from .serializers import FarmSerializer, FarmDetailSerializer, FarmCreateSerializer, FarmUpdateSerializer
 from core.utils import api_success, api_error
 from core.pagination import StandardPagination
+from audit_log.utils import log_action
 
 
 def _farm_queryset(user):
@@ -73,6 +74,7 @@ class FarmListCreateView(APIView):
             **serializer.validated_data,
         )
         farm.refresh_from_db()
+        log_action(request, 'CREATE', 'Farm', farm.pk, f'Created farm: {farm.name}')
         return api_success(FarmSerializer(farm).data, 'Farm created.', 201)
 
 
@@ -108,6 +110,7 @@ class FarmDetailView(APIView):
         if not serializer.is_valid():
             return api_error('Validation failed.', 422, serializer.errors)
         serializer.save()
+        log_action(request, 'UPDATE', 'Farm', farm.pk, f'Updated farm: {farm.name}')
         return api_success(FarmSerializer(farm).data, 'Farm updated.')
 
     def delete(self, request, pk):
@@ -118,4 +121,5 @@ class FarmDetailView(APIView):
             return err
         farm.is_active = False
         farm.save(update_fields=['is_active'])
+        log_action(request, 'DELETE', 'Farm', farm.pk, f'Deleted farm: {farm.name}')
         return api_success(None, 'Farm deleted.')

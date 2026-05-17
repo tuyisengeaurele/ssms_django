@@ -18,6 +18,7 @@ class AuditLog(models.Model):
         related_name='audit_logs',
     )
     user_email  = models.EmailField(blank=True)
+    user_name   = models.CharField(max_length=100, blank=True)
     action      = models.CharField(max_length=10, choices=Action.choices)
     resource    = models.CharField(max_length=100)
     resource_id = models.CharField(max_length=100, blank=True)

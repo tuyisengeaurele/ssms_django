@@ -6,6 +6,7 @@ from django.db.models import Sum, Avg, Count
 from django.http import StreamingHttpResponse
 from batches.models import Batch
 from core.utils import api_success, api_error
+from audit_log.utils import log_action
 from .models import HarvestRecord
 from .serializers import HarvestRecordSerializer, HarvestRecordCreateSerializer
 
@@ -117,6 +118,7 @@ class HarvestListCreateView(APIView):
         )
         # Re-fetch with select_related so farm_name / farm_id resolve without extra queries
         record = HarvestRecord.objects.select_related('batch__farm').get(pk=record.pk)
+        log_action(request, 'CREATE', 'HarvestRecord', record.pk, f'Logged harvest {record.cocoon_weight_kg} kg for batch {batch_id}')
         return api_success(HarvestRecordSerializer(record).data, 'Harvest record saved.', 201)
 
 
@@ -171,5 +173,6 @@ class HarvestDeleteView(APIView):
             return api_error('Record not found.', 404)
         if request.user.role == 'FARMER' and record.batch.farm.owner_id != request.user.id:
             return api_error('Record not found.', 404)
+        log_action(request, 'DELETE', 'HarvestRecord', pk, f'Deleted harvest record {pk}')
         record.delete()
         return api_success(None, 'Harvest record deleted.')
