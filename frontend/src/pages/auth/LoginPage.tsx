@@ -46,7 +46,12 @@ export default function LoginPage() {
       login(user, token, refreshToken);
       const path = user.role === 'ADMIN' ? '/admin' : user.role === 'SUPERVISOR' ? '/supervisor' : '/farmer';
       navigate(path, { replace: true });
-    } catch (err) {
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || '';
+      if (msg === 'email_not_verified') {
+        navigate(`/check-email?email=${encodeURIComponent(email)}`, { replace: true });
+        return;
+      }
       setError(getErrorMessage(err));
     } finally {
       setLoading(false);

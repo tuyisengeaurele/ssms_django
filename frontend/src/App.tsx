@@ -7,8 +7,10 @@ import DashboardLayout from './components/layout/DashboardLayout';
 import LandingPage        from './pages/LandingPage';
 import LoginPage          from './pages/auth/LoginPage';
 import RegisterPage       from './pages/auth/RegisterPage';
-import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
-import ResetPasswordPage  from './pages/auth/ResetPasswordPage';
+import ForgotPasswordPage  from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage   from './pages/auth/ResetPasswordPage';
+import CheckEmailPage      from './pages/auth/CheckEmailPage';
+import VerifyEmailPage     from './pages/auth/VerifyEmailPage';
 import FarmerDashboard    from './pages/farmer/FarmerDashboard';
 import SupervisorDashboard from './pages/supervisor/SupervisorDashboard';
 import AdminDashboard     from './pages/admin/AdminDashboard';
@@ -65,6 +67,8 @@ export default function App() {
           <Route path="/register"         element={<RegisterPage />} />
           <Route path="/forgot-password"  element={<ForgotPasswordPage />} />
           <Route path="/reset-password"   element={<ResetPasswordPage />} />
+          <Route path="/check-email"      element={<CheckEmailPage />} />
+          <Route path="/verify-email"     element={<VerifyEmailPage />} />
           <Route path="/unauthorized"     element={<Unauthorized />} />
 
           {/* All authenticated — inside DashboardLayout (sidebar + topbar) */}
