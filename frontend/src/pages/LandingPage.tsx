@@ -506,11 +506,21 @@ export default function LandingPage() {
                 <Link to="/register" style={{ color: 'rgba(255,255,255,0.48)', fontSize: '0.875rem', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.8)')} onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.48)')}>Register</Link>
               </div>
             </div>
+            <div>
+              <p style={{ color: 'rgba(255,255,255,0.28)', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.875rem' }}>Legal</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                <Link to="/privacy" style={{ color: 'rgba(255,255,255,0.48)', fontSize: '0.875rem', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.8)')} onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.48)')}>Privacy Policy</Link>
+                <Link to="/terms"   style={{ color: 'rgba(255,255,255,0.48)', fontSize: '0.875rem', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.8)')} onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.48)')}>Terms of Service</Link>
+              </div>
+            </div>
           </div>
         </div>
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
           <p style={{ color: 'rgba(255,255,255,0.22)', fontSize: '0.8rem' }}>© 2026 SSMS — Silkworm Smart Management System · Rwanda</p>
-          <p style={{ color: 'rgba(255,255,255,0.22)', fontSize: '0.8rem' }}>Built for Rwanda's sericulture farmers and cooperatives</p>
+          <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <Link to="/privacy" style={{ color: 'rgba(255,255,255,0.28)', fontSize: '0.78rem', textDecoration: 'none' }} onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')} onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.28)')}>Privacy</Link>
+            <Link to="/terms"   style={{ color: 'rgba(255,255,255,0.28)', fontSize: '0.78rem', textDecoration: 'none' }} onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')} onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.28)')}>Terms</Link>
+          </div>
         </div>
       </div>
     </footer>
