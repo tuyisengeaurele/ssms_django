@@ -220,4 +220,25 @@ export const translations: TranslationMap = {
   detectionWarning:     { en: 'Disease detected. Consider isolating this batch.',   fr: 'Maladie détectée. Envisagez d\'isoler ce lot.',  rw: 'Indwara iraboneka. Tekereza gutuza iri tsinda.' },
   detectionOk:          { en: 'No disease detected. Continue normal monitoring.',   fr: 'Aucune maladie détectée. Continuez la surveillance normale.', rw: 'Nta ndwara iraboneka. Komeza gukurikirana bisanzwe.' },
   detectionProbabilities: { en: 'All Class Probabilities',                  fr: 'Toutes les probabilités',                 rw: "Amahirwe Yose y'Amoko" },
+
+  // ── Email verification ────────────────────────────────────────────────────────
+  checkEmailTitle:      { en: 'Verify your email',                fr: 'Vérifiez votre email',                   rw: 'Emeza imeyili yawe' },
+  checkEmailDesc:       { en: 'One last step before you get started', fr: 'Dernière étape avant de commencer', rw: 'Intambwe imwe ya nyuma' },
+  checkEmailHeading:    { en: 'Check your inbox',                 fr: 'Vérifiez votre boîte mail',             rw: 'Reba aho imeyili zigenda' },
+  checkEmailSent:       { en: 'We sent a verification link to',   fr: 'Nous avons envoyé un lien à',           rw: 'Twahaye igisomo cy\'imeyili kuri' },
+  checkEmailSpam:       { en: "Didn't receive it? Check your spam folder or click below to resend.", fr: "Pas reçu ? Vérifiez les spams ou renvoyez.", rw: "Ntabwo wayikeye? Reba spam cyangwa ongera uhereze." },
+  checkEmailNoEmail:    { en: "Didn't get it?",                   fr: "Vous ne l'avez pas reçu ?",             rw: "Ntabwo wayikeye?" },
+  checkEmailResend:     { en: 'Resend verification email',        fr: 'Renvoyer le lien',                      rw: 'Ongera uhereze imeyili' },
+  checkEmailResending:  { en: 'Sending…',                         fr: 'Envoi en cours…',                       rw: 'Kohereza…' },
+  checkEmailResentOk:   { en: 'Verification email resent!',       fr: 'Email de vérification renvoyé !',       rw: 'Imeyili yoherejwe!' },
+  checkEmailResendError:{ en: 'Failed to resend. Please try again.', fr: 'Échec de renvoi. Réessayez.',        rw: 'Kohereza byanze. Ongera ugerageze.' },
+
+  verifyEmailVerifying: { en: 'Verifying your email…',            fr: 'Vérification en cours…',                rw: 'Emeza imeyili…' },
+  verifyEmailWait:      { en: 'Please wait a moment.',            fr: 'Veuillez patienter.',                   rw: 'Tegereza gato.' },
+  verifyEmailSuccess:   { en: 'Email verified!',                  fr: 'Email vérifié !',                       rw: 'Imeyili emejwe!' },
+  verifyEmailRedirecting: { en: 'You will be redirected to your dashboard shortly.', fr: 'Vous allez être redirigé vers votre tableau de bord.', rw: 'Uzajyanywa ku kibaho cyawe vuba.' },
+  verifyEmailFailed:    { en: 'Verification failed',              fr: 'Échec de vérification',                 rw: 'Kwemeza byanze' },
+  verifyEmailExpired:   { en: 'This verification link has expired or is invalid. Please request a new one.', fr: 'Ce lien a expiré ou est invalide.', rw: 'Iri link ryararangiye cyangwa ntirikorana. Saba rishya.' },
+  verifyEmailInvalidLink: { en: 'Invalid verification link.',      fr: 'Lien de vérification invalide.',        rw: 'Igisomo cy\'imeyili ntikikorana.' },
+  verifyEmailResendLink:{ en: 'Request new link',                  fr: 'Demander un nouveau lien',              rw: 'Saba link rishya' },
 };

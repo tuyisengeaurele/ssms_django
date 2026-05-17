@@ -1,12 +1,20 @@
 import api from './api';
 import { ApiResponse, AuthResponse, User } from '../types';
 
+export interface RegisterResponse { user: User }
+
 export const authService = {
   register: (data: { name: string; email: string; password: string; role?: string }) =>
-    api.post<ApiResponse<AuthResponse>>('/auth/register', data),
+    api.post<ApiResponse<RegisterResponse>>('/auth/register', data),
 
   login: (data: { email: string; password: string }) =>
     api.post<ApiResponse<AuthResponse>>('/auth/login', data),
+
+  verifyEmail: (data: { uid: string; token: string }) =>
+    api.post<ApiResponse<AuthResponse>>('/auth/verify-email', data),
+
+  resendVerification: (email: string) =>
+    api.post<ApiResponse<null>>('/auth/resend-verification', { email }),
 
   getProfile: () => api.get<ApiResponse<User>>('/auth/me'),
 
