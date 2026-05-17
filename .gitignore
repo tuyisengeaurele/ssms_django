@@ -56,8 +56,7 @@ htmlcov/
 coverage.xml
 .pytest_cache/
 
-# ML models — too large for git (use DVC or object storage)
-*.keras
+# ML models — tracked via Git LFS
 *.h5
 *.pt
 *.pth
