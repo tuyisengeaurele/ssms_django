@@ -78,26 +78,21 @@ class LogoutView(APIView):
     """
     POST /api/auth/logout
     Blacklists the refresh token from the httpOnly cookie.
+    Does not require a valid access token — the cookie is the sole credential.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         from django.contrib.auth import get_user_model
         User = get_user_model()
 
         refresh_token_str = request.COOKIES.get(REFRESH_COOKIE)
-
-        # Identify the real actor from the refresh cookie (set at login time).
-        # This is more reliable than request.user, which could be wrong if the
-        # access token was silently refreshed by a concurrent session's cookie
-        # before this request was retried.
-        actor = request.user if request.user.is_authenticated else None
+        actor = None
 
         if refresh_token_str:
             try:
                 token = RefreshToken(refresh_token_str)
-                cookie_user = User.objects.get(pk=token.payload['user_id'])
-                actor = cookie_user  # trust the cookie — it was set at login
+                actor = User.objects.get(pk=token.payload['user_id'])
                 token.blacklist()
             except (TokenError, KeyError, User.DoesNotExist):
                 pass  # Already blacklisted or invalid — still clear the cookie
