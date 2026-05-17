@@ -143,7 +143,7 @@ export default function AdminAuditLogPage() {
       {/* Table */}
       <div style={{ background: 'var(--surface)', borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden' }}>
         {loading ? (
-          <SkeletonTable rows={10} cols={6} />
+          <SkeletonTable rows={10} cols={7} />
         ) : entries.length === 0 ? (
           <EmptyState title="No events found" description="Try adjusting your filters." />
         ) : (
@@ -151,7 +151,7 @@ export default function AdminAuditLogPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
               <thead>
                 <tr style={{ borderBottom: '1.5px solid var(--border)', background: 'var(--surface-alt, var(--surface))' }}>
-                  {['User', 'Action', 'Resource', 'Detail', 'IP', 'Timestamp'].map(h => (
+                  {['Name', 'Email', 'Action', 'Resource', 'Detail', 'IP', 'Timestamp'].map(h => (
                     <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 700, color: 'var(--text-faint)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.07em', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
@@ -159,7 +159,8 @@ export default function AdminAuditLogPage() {
               <tbody>
                 {entries.map((e, i) => (
                   <tr key={e.id} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.015)' }}>
-                    <td style={{ padding: '0.65rem 1rem', color: 'var(--text)', fontWeight: 500, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.userEmail || '—'}</td>
+                    <td style={{ padding: '0.65rem 1rem', color: 'var(--text)', fontWeight: 600, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.userName || '—'}</td>
+                    <td style={{ padding: '0.65rem 1rem', color: 'var(--text-faint)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.userEmail || '—'}</td>
                     <td style={{ padding: '0.65rem 1rem' }}><ActionBadge action={e.action} /></td>
                     <td style={{ padding: '0.65rem 1rem', color: 'var(--text-faint)' }}>
                       {e.resource}{e.resourceId ? <span style={{ color: 'var(--text-faint)', fontSize: '0.75rem' }}> #{e.resourceId}</span> : null}

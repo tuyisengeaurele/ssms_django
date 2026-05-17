@@ -31,6 +31,7 @@ import BatchesPage        from './pages/farmer/BatchesPage';
 import ProfilePage        from './pages/shared/ProfilePage';
 import AdminContactsPage  from './pages/admin/AdminContactsPage';
 import AdminAuditLogPage  from './pages/admin/AdminAuditLogPage';
+import AdminReportsPage   from './pages/admin/AdminReportsPage';
 import PrivacyPolicyPage  from './pages/PrivacyPolicyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
 import NotFoundPage       from './pages/NotFoundPage';
@@ -103,6 +104,7 @@ export default function App() {
                 <Route path="/admin/cooperatives"     element={<AdminCooperativesPage />} />
                 <Route path="/admin/contacts"         element={<AdminContactsPage />} />
                 <Route path="/admin/audit-log"        element={<AdminAuditLogPage />} />
+                <Route path="/admin/reports"          element={<AdminReportsPage />} />
               </Route>
 
             </Route>

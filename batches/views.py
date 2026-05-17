@@ -10,6 +10,7 @@ from .serializers import (
     BatchSupervisorSerializer,
 )
 from core.utils import api_success, api_error
+from audit_log.utils import log_action
 
 
 def _get_accessible_farm(farm_id, user):
@@ -53,6 +54,7 @@ class BatchCreateView(APIView):
             notes=serializer.validated_data.get('notes'),
         )
         batch.refresh_from_db()
+        log_action(request, 'CREATE', 'Batch', batch.pk, f'Created batch on farm {farm.name}')
         return api_success(BatchListSerializer(batch).data, 'Batch created.', 201)
 
 
@@ -90,6 +92,7 @@ class BatchDetailView(APIView):
             return err
         batch.is_active = False
         batch.save(update_fields=['is_active'])
+        log_action(request, 'DELETE', 'Batch', batch.pk, f'Deleted batch {batch.pk}')
         return api_success(None, 'Batch deleted.')
 
 
@@ -164,4 +167,5 @@ class BatchUpdateStageView(APIView):
                 message=f'Batch stage updated to {new_stage}.',
             )
         batch.refresh_from_db()
+        log_action(request, 'UPDATE', 'Batch', batch.pk, f'Stage advanced to {new_stage}')
         return api_success(BatchListSerializer(batch).data, 'Stage updated.')

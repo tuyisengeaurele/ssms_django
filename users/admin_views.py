@@ -119,4 +119,6 @@ class AdminUserCooperativeView(APIView):
             user.cooperative = coop
 
         user.save(update_fields=['cooperative'])
+        coop_name = user.cooperative.name if user.cooperative else 'none'
+        log_action(request, 'UPDATE', 'User', user.pk, f'Cooperative set to {coop_name} for {user.email}')
         return api_success(UserSerializer(user).data, 'Cooperative updated.')
