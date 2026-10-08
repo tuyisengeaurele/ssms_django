@@ -6,9 +6,20 @@ const api = axios.create({
   withCredentials: true,  // send httpOnly refresh cookie on every request
 });
 
+// Pages anyone can open. A token left over in the browser must not be sent to them.
+const PUBLIC_PATHS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/password-reset',
+  '/auth/resend-verification',
+  '/auth/verify-email',
+  '/auth/token/refresh',
+];
+
 api.interceptors.request.use((config) => {
+  const isPublic = PUBLIC_PATHS.some((path) => config.url?.includes(path));
   const token = localStorage.getItem('ssms_token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token && !isPublic) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
