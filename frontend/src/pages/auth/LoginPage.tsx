@@ -15,6 +15,16 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const { getErrorMessage } = useApiError();
   const { t } = useLanguage();
+  // Set when a saved session could not be renewed. Shown once.
+  const [sessionEnded] = useState(() => {
+    try {
+      const found = sessionStorage.getItem('ssms_notice') === 'session_ended';
+      sessionStorage.removeItem('ssms_notice');
+      return found;
+    } catch {
+      return false;
+    }
+  });
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -40,6 +50,11 @@ export default function LoginPage() {
 
   return (
     <AuthShell title={t('loginWelcome')} subtitle={t('loginSubtitle')}>
+      {sessionEnded && !error ? (
+        <p className="l-auth__note l-auth__note--gap" role="status">
+          {t('loginSessionEnded')}
+        </p>
+      ) : null}
       {error ? <AuthAlert>{error}</AuthAlert> : null}
 
       <form onSubmit={handleSubmit}>

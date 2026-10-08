@@ -39,3 +39,12 @@ describe('API client', () => {
     expect(headers.Authorization).toBeUndefined();
   });
 });
+
+describe('When the session cannot be renewed', () => {
+  it('leaves a note for the login page', async () => {
+    const { endSession } = await import('./api');
+    endSession();
+    expect(sessionStorage.getItem('ssms_notice')).toBe('session_ended');
+    expect(localStorage.getItem('ssms_token')).toBeNull();
+  });
+});

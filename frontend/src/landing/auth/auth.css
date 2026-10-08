@@ -403,6 +403,10 @@
   font-size: 0.88rem;
 }
 
+.landing .l-auth__note--gap {
+  margin-bottom: 18px;
+}
+
 .landing .l-auth__rules {
   display: grid;
   gap: 8px;
