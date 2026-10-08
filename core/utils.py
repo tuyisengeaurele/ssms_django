@@ -54,8 +54,9 @@ def custom_exception_handler(exc, context):
     data = response.data
     message = _friendly_message(exc, status_code, data)
 
+    # Sign in problems carry token internals. People do not need to see those.
     errors = None
-    if isinstance(data, dict) and any(k != 'detail' for k in data):
+    if status_code not in (401, 403) and isinstance(data, dict) and any(k != 'detail' for k in data):
         errors = {k: v for k, v in data.items() if k != 'detail'}
 
     response.data = {'success': False, 'message': message}

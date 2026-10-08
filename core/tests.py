@@ -69,6 +69,10 @@ class PublicEndpointsIgnoreStaleTokens(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(res.json()['message'], 'Your session has ended. Please sign in again.')
 
+    def test_expired_session_reply_carries_no_technical_details(self):
+        res = self.client.get('/api/auth/me', **STALE)
+        self.assertNotIn('errors', res.json())
+
     def test_private_pages_still_need_a_real_token(self):
         res = self.client.get('/api/auth/me', **STALE)
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
