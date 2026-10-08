@@ -42,6 +42,9 @@ const REQUIRED = [
   'lpCtaTitle', 'lpCtaButton',
   'lpFooterName', 'lpFooterTagline', 'lpFooterBlurb', 'lpFooterExplore', 'lpFooterAccount',
   'lpFooterLegal', 'lpFooterCreate', 'lpFooterPrivacy', 'lpFooterTerms', 'lpFooterPhotos',
+  'lpAuthBack', 'lpAuthShowPwd', 'lpAuthHidePwd',
+  'lpNotFoundTitle', 'lpNotFoundBody', 'lpGoBack', 'lpGoHome', 'lpDashboard',
+  'lpDeniedTitle', 'lpDeniedBody',
 ];
 
 describe('landing copy', () => {

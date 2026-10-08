@@ -411,6 +411,26 @@ export const landingTranslations = {
   lpFooterPrivacy: k('Privacy', 'Confidentialité', 'Ibanga'),
   lpFooterTerms: k('Terms', 'Conditions', 'Amabwiriza'),
   lpFooterPhotos: k('Photos from Pexels.', 'Photos de Pexels.', 'Amafoto aturuka kuri Pexels.'),
+
+  // Sign in pages, not found and access denied
+  lpAuthBack: k('Back to home', "Retour à l'accueil", "Subira ku rupapuro rwa mbere"),
+  lpAuthShowPwd: k('Show password', 'Afficher le mot de passe', "Erekana ijambo ry'ibanga"),
+  lpAuthHidePwd: k('Hide password', 'Masquer le mot de passe', "Hisha ijambo ry'ibanga"),
+  lpNotFoundTitle: k('This page is not here.', 'Cette page est introuvable.', 'Uru rupapuro ntirurimo.'),
+  lpNotFoundBody: k(
+    'The link may be old, or the address may have a typo.',
+    "Le lien est peut-être ancien, ou l'adresse contient une faute de frappe.",
+    'Ihuza rishobora kuba rishaje, cyangwa aderesi ifite ikosa.',
+  ),
+  lpGoBack: k('Go back', 'Retour', 'Subira inyuma'),
+  lpGoHome: k('Go home', "Aller à l'accueil", 'Ku rupapuro rwa mbere'),
+  lpDashboard: k('Open dashboard', 'Ouvrir le tableau de bord', 'Fungura dashboard'),
+  lpDeniedTitle: k("You can't open this page.", 'Vous ne pouvez pas ouvrir cette page.', 'Ntushobora gufungura uru rupapuro.'),
+  lpDeniedBody: k(
+    'Your account does not have access to it. If you think this is a mistake, contact your cooperative or an administrator.',
+    "Votre compte n'y a pas accès. Si vous pensez qu'il s'agit d'une erreur, contactez votre coopérative ou un administrateur.",
+    "Konti yawe nta burenganzira ifite bwo kuyifungura. Niba utekereza ko ari ikosa, vugana n'amakoperative yawe cyangwa umuyobozi.",
+  ),
 } satisfies Record<string, Entry>;
 
 export type LandingKey = keyof typeof landingTranslations;
