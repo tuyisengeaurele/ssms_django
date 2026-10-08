@@ -24,7 +24,7 @@ export default function AddBatchPage() {
     setLoading(true);
     try {
       await batchService.create({ farmId, expectedHarvestDate: form.expectedHarvestDate, notes: form.notes || undefined });
-      success('Batch created! Starting at EGG stage.');
+      success('Batch created. It starts at the egg stage.');
       navigate(`/farms/${farmId}`);
     } catch (err) {
       setError(getErrorMessage(err));

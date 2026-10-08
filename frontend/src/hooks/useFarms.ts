@@ -12,7 +12,7 @@ export function useFarms() {
     farmService
       .getAll()
       .then((r) => setFarms(r.data.data))
-      .catch(() => setError('Failed to load farms.'))
+      .catch(() => setError("We couldn't load your farms. Please try again."))
       .finally(() => setLoading(false));
   };
 

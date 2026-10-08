@@ -71,5 +71,5 @@ class CooperativeWriteSerializer(serializers.ModelSerializer):
 
     def validate_name(self, value):
         if not value.strip():
-            raise serializers.ValidationError('Cooperative name is required.')
+            raise serializers.ValidationError('Please enter a name for the cooperative.')
         return value.strip()

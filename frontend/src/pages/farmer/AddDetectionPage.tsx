@@ -28,7 +28,7 @@ export default function AddDetectionPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (f: File) => {
-    if (!f.type.startsWith('image/')) { setError('Please select a JPEG or PNG image.'); return; }
+    if (!f.type.startsWith('image/')) { setError('Please choose a JPEG or PNG photo.'); return; }
     setFile(f); setError(''); setResult(null);
     const reader = new FileReader();
     reader.onload = e => setPreview(e.target?.result as string);

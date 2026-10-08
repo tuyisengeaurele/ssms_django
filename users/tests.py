@@ -21,7 +21,9 @@ NO_THROTTLE = {'DEFAULT_THROTTLE_CLASSES': [], 'DEFAULT_THROTTLE_RATES': {}}
 
 
 def make_user(email='farmer@test.com', password='Pass1234', name='Test Farmer', role='FARMER', is_active=True):
-    return User.objects.create_user(email=email, password=password, name=name, role=role, is_active=is_active)
+    return User.objects.create_user(
+        email=email, password=password, name=name, role=role, is_active=is_active, is_email_verified=True,
+    )
 
 
 @override_settings(REST_FRAMEWORK={
@@ -38,8 +40,10 @@ class RegisterViewTests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         data = res.json()
         self.assertTrue(data['success'])
-        self.assertIn('token', data['data'])
         self.assertEqual(data['data']['user']['email'], 'alice@test.com')
+        # The person confirms their email first, so no sign in token is handed out yet.
+        self.assertNotIn('token', data['data'])
+        self.assertFalse(data['data']['user']['isEmailVerified'])
 
     def test_register_duplicate_email(self):
         make_user(email='dup@test.com')
@@ -69,11 +73,12 @@ class RegisterViewTests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(res.json()['data']['user']['role'], 'FARMER')
 
-    def test_register_explicit_admin_role(self):
+    def test_register_ignores_a_requested_admin_role(self):
         payload = {'name': 'Grace', 'email': 'grace@test.com', 'password': 'SecurePass1', 'role': 'ADMIN'}
         res = self.client.post(REGISTER_URL, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(res.json()['data']['user']['role'], 'ADMIN')
+        # Public sign up is always a farmer account, whatever the request asks for.
+        self.assertEqual(res.json()['data']['user']['role'], 'FARMER')
 
     def test_register_email_normalised_lowercase(self):
         payload = {'name': 'Hank', 'email': 'HANK@TEST.COM', 'password': 'SecurePass1'}
@@ -99,7 +104,9 @@ class LoginViewTests(APITestCase):
         data = res.json()
         self.assertTrue(data['success'])
         self.assertIn('token', data['data'])
-        self.assertIn('refreshToken', data['data'])
+        # The refresh token travels in an httpOnly cookie, never in the body.
+        self.assertNotIn('refreshToken', data['data'])
+        self.assertIn('ssms_refresh', res.cookies)
 
     def test_login_wrong_password(self):
         res = self.client.post(LOGIN_URL, {'email': 'login@test.com', 'password': 'WrongPass1'}, format='json')

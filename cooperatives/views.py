@@ -9,7 +9,7 @@ from core.utils import api_success, api_error
 
 def _require_admin(user):
     if user.role != 'ADMIN':
-        return api_error('Forbidden. Admin only.', 403)
+        return api_error('Only administrators can do that.', 403)
     return None
 
 
@@ -33,7 +33,7 @@ class CooperativeListCreateView(APIView):
             return err
         serializer = CooperativeWriteSerializer(data=request.data)
         if not serializer.is_valid():
-            return api_error('Validation failed.', 422, serializer.errors)
+            return api_error('Please check what you entered and try again.', 422, serializer.errors)
         coop = serializer.save()
         return api_success(CooperativeSerializer(coop).data, 'Cooperative created.', 201)
 
@@ -45,10 +45,10 @@ class CooperativeDetailView(APIView):
         try:
             coop = Cooperative.objects.get(pk=pk, is_active=True)
         except Cooperative.DoesNotExist:
-            return None, api_error('Cooperative not found.', 404)
+            return None, api_error("We couldn't find that cooperative.", 404)
         # Non-admin users can only access their own cooperative
         if user.role != 'ADMIN' and user.cooperative_id != coop.id:
-            return None, api_error('Cooperative not found.', 404)
+            return None, api_error("We couldn't find that cooperative.", 404)
         return coop, None
 
     def get(self, request, pk):
@@ -68,7 +68,7 @@ class CooperativeDetailView(APIView):
             return err
         serializer = CooperativeWriteSerializer(coop, data=request.data, partial=True)
         if not serializer.is_valid():
-            return api_error('Validation failed.', 422, serializer.errors)
+            return api_error('Please check what you entered and try again.', 422, serializer.errors)
         serializer.save()
         return api_success(CooperativeSerializer(coop).data, 'Cooperative updated.')
 

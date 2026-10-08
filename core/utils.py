@@ -1,4 +1,7 @@
+import math
+
 from django.http import JsonResponse
+from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated, ParseError, Throttled
 from rest_framework.views import exception_handler
 from rest_framework.response import Response
 from rest_framework import status
@@ -15,6 +18,33 @@ def api_error(message='Error', status_code=status.HTTP_400_BAD_REQUEST, errors=N
     return Response(body, status=status_code)
 
 
+def _friendly_message(exc, status_code, data):
+    """Plain, kind wording for every error the API can raise."""
+    if isinstance(exc, Throttled):
+        if exc.wait:
+            seconds = int(math.ceil(exc.wait))
+            unit = 'second' if seconds == 1 else 'seconds'
+            return f'Too many attempts. Please try again in {seconds} {unit}.'
+        return 'Too many attempts. Please wait a moment and try again.'
+    if isinstance(exc, AuthenticationFailed) and getattr(exc.detail, 'code', '') == 'user_inactive':
+        return 'This account has been turned off. Please contact your administrator.'
+    if isinstance(exc, NotAuthenticated):
+        return 'Please sign in to continue.'
+    if status_code == 401:
+        return 'Your session has ended. Please sign in again.'
+    if status_code == 403:
+        return "You don't have permission to do that."
+    if status_code == 404:
+        return "We couldn't find what you were looking for."
+    if status_code == 405:
+        return "That action isn't available here."
+    if isinstance(exc, ParseError):
+        return "We couldn't read that request. Please check it and try again."
+    if isinstance(data, dict) and 'detail' in data:
+        return str(data['detail'])
+    return 'Something went wrong. Please try again.'
+
+
 def custom_exception_handler(exc, context):
     response = exception_handler(exc, context)
     if response is None:
@@ -22,22 +52,11 @@ def custom_exception_handler(exc, context):
 
     status_code = response.status_code
     data = response.data
+    message = _friendly_message(exc, status_code, data)
 
-    if status_code == 401:
-        message = 'Access denied. No token provided or token is invalid.'
-    elif status_code == 403:
-        message = 'Forbidden. Insufficient permissions.'
-    elif status_code == 404:
-        message = 'Resource not found.'
-    elif status_code == 405:
-        message = 'Method not allowed.'
-    elif isinstance(data, dict) and 'detail' in data:
-        message = str(data['detail'])
-    else:
-        message = 'An error occurred.'
-
+    # Sign in problems carry token internals. People do not need to see those.
     errors = None
-    if isinstance(data, dict) and any(k != 'detail' for k in data):
+    if status_code not in (401, 403) and isinstance(data, dict) and any(k != 'detail' for k in data):
         errors = {k: v for k, v in data.items() if k != 'detail'}
 
     response.data = {'success': False, 'message': message}

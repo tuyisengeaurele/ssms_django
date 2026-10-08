@@ -22,13 +22,15 @@ User = get_user_model()
 
 
 class PasswordResetRequestView(APIView):
+    # A leftover token in the browser must not block a public page.
+    authentication_classes = []
     permission_classes = [AllowAny]
     throttle_classes = [PasswordResetRateThrottle]
 
     def post(self, request):
         email = request.data.get('email', '').strip().lower()
         if not email:
-            return api_error('Email is required.', 422)
+            return api_error('Please enter your email address.', 422)
 
         # Always respond with 200 to avoid user enumeration
         try:
@@ -64,6 +66,8 @@ class PasswordResetRequestView(APIView):
 
 
 class PasswordResetConfirmView(APIView):
+    # A leftover token in the browser must not block a public page.
+    authentication_classes = []
     permission_classes = [AllowAny]
     throttle_classes = [PasswordResetRateThrottle]
 
@@ -73,30 +77,30 @@ class PasswordResetConfirmView(APIView):
         new_password = request.data.get('newPassword', '')
 
         if not all([uid_b64, token, new_password]):
-            return api_error('uid, token, and newPassword are required.', 422)
+            return api_error('This reset link is incomplete. Please request a new one.', 422)
 
         # Validate password strength
         if len(new_password) < 8:
-            return api_error('Password must be at least 8 characters.', 422)
+            return api_error('Your password needs at least 8 characters.', 422)
         if not re.search(r'[A-Z]', new_password):
-            return api_error('Password must contain at least one uppercase letter.', 422)
+            return api_error('Your password needs at least one uppercase letter.', 422)
         if not re.search(r'[a-z]', new_password):
-            return api_error('Password must contain at least one lowercase letter.', 422)
+            return api_error('Your password needs at least one lowercase letter.', 422)
         if not re.search(r'\d', new_password):
-            return api_error('Password must contain at least one digit.', 422)
+            return api_error('Your password needs at least one number.', 422)
 
         # Decode uid
         try:
             uid = force_str(urlsafe_base64_decode(uid_b64))
             user = User.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            return api_error('Invalid or expired reset link.', 400)
+            return api_error("This reset link has expired or isn't valid. Please request a new one.", 400)
 
         if not user.is_active:
-            return api_error('This account has been deactivated.', 400)
+            return api_error('This account has been turned off. Please contact your administrator.', 400)
 
         if not default_token_generator.check_token(user, token):
-            return api_error('Invalid or expired reset link.', 400)
+            return api_error("This reset link has expired or isn't valid. Please request a new one.", 400)
 
         user.set_password(new_password)
         user.save(update_fields=['password'])
