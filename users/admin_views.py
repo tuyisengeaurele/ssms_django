@@ -1,4 +1,4 @@
-"""Admin-only user management views — /api/admin/users."""
+"""Admin-only user management views, /api/admin/users."""
 
 from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
@@ -21,7 +21,7 @@ class AdminUserListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """GET /api/admin/users — list every user."""
+        """GET /api/admin/users, list every user."""
         err = _require_admin(request.user)
         if err:
             return err
@@ -29,7 +29,7 @@ class AdminUserListCreateView(APIView):
         return api_success(UserSerializer(users, many=True).data)
 
     def post(self, request):
-        """POST /api/admin/users — admin creates a user with any role."""
+        """POST /api/admin/users, admin creates a user with any role."""
         err = _require_admin(request.user)
         if err:
             return err
@@ -45,7 +45,7 @@ class AdminUserRoleView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, user_id):
-        """PATCH /api/admin/users/<id>/role — change a user's role."""
+        """PATCH /api/admin/users/<id>/role, change a user's role."""
         err = _require_admin(request.user)
         if err:
             return err
@@ -71,7 +71,7 @@ class AdminUserDeactivateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, user_id):
-        """DELETE /api/admin/users/<id> — deactivate a user (soft delete)."""
+        """DELETE /api/admin/users/<id>, deactivate a user (soft delete)."""
         err = _require_admin(request.user)
         if err:
             return err
@@ -92,7 +92,7 @@ class AdminUserCooperativeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, user_id):
-        """PATCH /api/admin/users/<id>/cooperative — assign or remove cooperative."""
+        """PATCH /api/admin/users/<id>/cooperative, assign or remove cooperative."""
         err = _require_admin(request.user)
         if err:
             return err
@@ -104,7 +104,7 @@ class AdminUserCooperativeView(APIView):
         # CamelCaseJSONParser converts incoming camelCase → snake_case
         cooperative_id = request.data.get('cooperative_id')
 
-        # Admins manage cooperatives globally — they cannot belong to one
+        # Admins manage cooperatives globally, they cannot belong to one
         if user.role == 'ADMIN':
             return api_error("Administrators don't belong to a cooperative.", 400)
 

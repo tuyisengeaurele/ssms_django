@@ -13,8 +13,8 @@ from .serializers import HarvestRecordSerializer, HarvestRecordCreateSerializer
 
 class HarvestAllView(APIView):
     """
-    GET /api/harvest                — paginated JSON list (role-scoped)
-    GET /api/harvest?export=csv    — streaming CSV download
+    GET /api/harvest               , paginated JSON list (role-scoped)
+    GET /api/harvest?export=csv   , streaming CSV download
     """
     permission_classes = [IsAuthenticated]
 

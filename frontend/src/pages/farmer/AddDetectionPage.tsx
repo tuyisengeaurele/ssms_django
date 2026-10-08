@@ -245,7 +245,7 @@ export default function AddDetectionPage() {
           )}
         </AnimatePresence>
 
-        {/* Info sidebar — only visible when not showing result */}
+        {/* Info sidebar, only visible when not showing result */}
         {!result && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.35 }}>
             <div className="card">

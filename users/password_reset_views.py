@@ -55,7 +55,7 @@ class PasswordResetRequestView(APIView):
                 f'Click the link below to set a new password (valid for 1 hour):\n'
                 f'{reset_url}\n\n'
                 f'If you did not request a password reset, you can safely ignore this email.\n\n'
-                f'— The SSMS Team'
+                f', The SSMS Team'
             ),
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],

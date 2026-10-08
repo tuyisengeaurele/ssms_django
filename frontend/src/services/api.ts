@@ -66,7 +66,7 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Cookie is sent automatically (withCredentials: true) — no body needed
+        // Cookie is sent automatically (withCredentials: true), no body needed
         const response = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL ?? '/api'}/auth/token/refresh`,
           {},

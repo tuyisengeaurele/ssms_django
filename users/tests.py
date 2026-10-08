@@ -3,7 +3,7 @@ Unit tests for authentication:
   - RegisterView  (POST /api/auth/register)
   - LoginView     (POST /api/auth/login)
   - ProfileView   (GET/PATCH /api/auth/me)
-  - ActiveUserJWTAuthentication — inactive user is rejected
+  - ActiveUserJWTAuthentication, inactive user is rejected
 """
 from django.test import override_settings
 from rest_framework.test import APITestCase
@@ -134,7 +134,7 @@ class LoginViewTests(APITestCase):
 
 
 class ProfileViewTests(APITestCase):
-    """GET/PATCH /api/auth/me — uses force_authenticate (not testing login)."""
+    """GET/PATCH /api/auth/me, uses force_authenticate (not testing login)."""
 
     def setUp(self):
         self.user = make_user(email='profile@test.com', password='Pass1234', name='Original Name')

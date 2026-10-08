@@ -110,7 +110,7 @@ class SensorReadingByBatchView(APIView):
 
 
 def _serialize_device(device: IoTDevice) -> dict:
-    """Shared serializer for IoTDevice — includes latest reading."""
+    """Shared serializer for IoTDevice, includes latest reading."""
     latest = (
         SensorReading.objects
         .filter(device=device)
@@ -139,8 +139,8 @@ def _serialize_device(device: IoTDevice) -> dict:
 
 class IoTDeviceListView(APIView):
     """
-    GET  /api/devices          — list (role-scoped, optional ?farm=<id> filter)
-    POST /api/devices          — create device (ADMIN or SUPERVISOR only)
+    GET  /api/devices         , list (role-scoped, optional ?farm=<id> filter)
+    POST /api/devices         , create device (ADMIN or SUPERVISOR only)
     """
     permission_classes = [IsAuthenticated]
 
@@ -211,8 +211,8 @@ class IoTDeviceListView(APIView):
 
 class IoTDeviceDetailView(APIView):
     """
-    GET    /api/devices/:id — device detail with last 20 readings
-    DELETE /api/devices/:id — deactivate device (ADMIN or SUPERVISOR)
+    GET    /api/devices/:id, device detail with last 20 readings
+    DELETE /api/devices/:id, deactivate device (ADMIN or SUPERVISOR)
     """
     permission_classes = [IsAuthenticated]
 
