@@ -364,6 +364,14 @@
   animation: l-auth-spin 0.7s linear infinite;
 }
 
+/* Larger spinner on the light page */
+.landing .l-auth__spinner--dark {
+  width: 28px;
+  height: 28px;
+  border-width: 3px;
+  color: var(--l-leaf);
+}
+
 @keyframes l-auth-spin {
   to {
     transform: rotate(360deg);
