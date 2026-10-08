@@ -90,7 +90,7 @@ export function Nav() {
   return (
     <header className={`l-nav${condensed ? ' is-condensed' : ''}`}>
       <nav className="l-nav__pill" aria-label="Main">
-        <Link to="/" className="l-nav__brand" aria-label={t('lpFooterName')}>
+        <Link to="/" className="l-nav__brand" aria-label={`SSMS, ${t('lpFooterName')}`}>
           <Mark />
           <span className="l-nav__word">SSMS</span>
         </Link>

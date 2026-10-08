@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
 import { AlertsMock } from './mockups/AlertsMock';
 import { DashboardMock } from './mockups/DashboardMock';
@@ -8,6 +7,7 @@ import { DiseaseMock } from './mockups/DiseaseMock';
 import { useCountUp } from './motion/useCountUp';
 import { useMagnetic } from './motion/useMagnetic';
 import { prefersReducedMotion, usePrefersReducedMotion } from './motion/usePrefersReducedMotion';
+import { useScrollProgress } from './motion/useScrollProgress';
 import './hero.css';
 
 const BG_WIDTHS = [640, 1280, 1920, 2560];
@@ -47,16 +47,13 @@ function Stat({ value, label, play }: { value: string; label: string; play: bool
 export function Hero() {
   const { t } = useLanguage();
   const reduced = usePrefersReducedMotion();
-  const cardRef = useRef<HTMLDivElement>(null);
   const frame = useRef(0);
   const primaryRef = useMagnetic<HTMLAnchorElement>(0.28);
 
-  // Three layers move at three speeds as the page scrolls.
-  const { scrollYProgress } = useScroll({ target: cardRef, offset: ['start start', 'end start'] });
-  const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '9%']);
-  const ghostY = useTransform(scrollYProgress, [0, 1], ['0%', '26%']);
-  const wormY = useTransform(scrollYProgress, [0, 1], ['0%', '-9%']);
-  const layer = (y: typeof bgY) => (reduced ? undefined : { y });
+  // Three layers move at three speeds as the page scrolls. The CSS reads --p.
+  const cardRef = useScrollProgress<HTMLDivElement>((p) => {
+    cardRef.current?.style.setProperty('--p', String(p));
+  }, 'leave');
 
   const [live, setLive] = useState(false);
   useEffect(() => {
@@ -99,7 +96,7 @@ export function Hero() {
   return (
     <section className="l-hero" aria-labelledby="hero-title">
       <div className="l-hero__card" ref={cardRef} onPointerMove={onPointerMove}>
-        <motion.div className="l-hero__layer l-hero__bg" style={layer(bgY)}>
+        <div className="l-hero__layer l-hero__bg">
           <picture>
             <source type="image/avif" srcSet={bgSet('avif')} sizes="(min-width: 1400px) 1360px, 100vw" />
             <source type="image/webp" srcSet={bgSet('webp')} sizes="(min-width: 1400px) 1360px, 100vw" />
@@ -112,21 +109,21 @@ export function Hero() {
               {...{ fetchpriority: 'high' }}
             />
           </picture>
-        </motion.div>
+        </div>
         <div className="l-hero__shade" aria-hidden="true" />
 
-        <motion.div className="l-hero__layer" style={layer(ghostY)}>
+        <div className="l-hero__layer">
           <div className="l-hero__ghost" aria-hidden="true">
             {t('lpGhostWord')}
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div className="l-hero__layer l-hero__layer--worm" style={layer(wormY)}>
+        <div className="l-hero__layer l-hero__layer--worm">
           <picture className="l-hero__worm">
             <source type="image/avif" srcSet={wormSet('avif')} sizes="(min-width: 900px) 40vw, 70vw" />
             <img src="/images/worm-1280.webp" srcSet={wormSet('webp')} sizes="(min-width: 900px) 40vw, 70vw" alt="" width={1600} height={1664} decoding="async" />
           </picture>
-        </motion.div>
+        </div>
 
         <div className="l-hero__content">
           <div className="l-hero__copy">

@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { motion, useMotionValueEvent, useScroll } from 'framer-motion';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { AlertsMock } from './mockups/AlertsMock';
 import { DashboardMock } from './mockups/DashboardMock';
 import { DiseaseMock } from './mockups/DiseaseMock';
 import { Reveal } from './motion/Reveal';
 import { usePrefersReducedMotion } from './motion/usePrefersReducedMotion';
+import { useScrollProgress } from './motion/useScrollProgress';
 import './how.css';
 
 const STEP_COUNT = 4;
@@ -83,11 +83,13 @@ function Stacked() {
 
 function Pinned() {
   const steps = useSteps();
-  const outerRef = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
 
-  const { scrollYProgress } = useScroll({ target: outerRef, offset: ['start start', 'end end'] });
-  useMotionValueEvent(scrollYProgress, 'change', (value) => setActive(stepForProgress(value, STEP_COUNT)));
+  // The rail reads --p from CSS. Only the active step goes through React state.
+  const outerRef = useScrollProgress<HTMLElement>((p) => {
+    outerRef.current?.style.setProperty('--p', String(p));
+    setActive(stepForProgress(p, STEP_COUNT));
+  }, 'pin');
 
   return (
     <section id="how" ref={outerRef} className="l-how" aria-labelledby="how-title" style={{ ['--steps' as string]: STEP_COUNT }}>
@@ -97,7 +99,7 @@ function Pinned() {
             <Title />
             <div className="l-how__list">
               <span className="l-how__rail" aria-hidden="true">
-                <motion.i style={{ scaleY: scrollYProgress }} />
+                <i />
               </span>
               <ol className="l-how__steps">
                 {steps.map((step, i) => (

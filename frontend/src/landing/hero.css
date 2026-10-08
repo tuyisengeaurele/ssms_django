@@ -38,6 +38,7 @@
 /* Background photo */
 .landing .l-hero__bg {
   inset: -4% 0 -4% 0;
+  transform: translate3d(0, calc(var(--p, 0) * 9%), 0);
 }
 
 .landing .l-hero__bg picture,
@@ -76,6 +77,7 @@
 .landing .l-hero__layer:has(.l-hero__ghost) {
   z-index: 2;
   pointer-events: none;
+  transform: translate3d(0, calc(var(--p, 0) * 26%), 0);
 }
 
 .landing .l-hero__ghost {
@@ -107,6 +109,7 @@
 .landing .l-hero__layer--worm {
   z-index: 3;
   pointer-events: none;
+  transform: translate3d(0, calc(var(--p, 0) * -9%), 0);
 }
 
 .landing .l-hero__worm {
