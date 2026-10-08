@@ -36,7 +36,7 @@ describe('getErrorMessage', () => {
   });
 
   it('asks the person to check the form when no detail comes back', () => {
-    expect(getErrorMessage(withResponse(422, { message: 'Validation failed.' }))).toBe(
+    expect(getErrorMessage(withResponse(422, {}))).toBe(
       'Please check what you entered and try again.',
     );
   });

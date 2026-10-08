@@ -61,6 +61,7 @@ function fill(label: string, value: string) {
 
 beforeEach(() => {
   localStorage.clear();
+  sessionStorage.clear();
   vi.clearAllMocks();
 });
 
@@ -104,6 +105,18 @@ describe('Login page', () => {
     fill('Password', 'Secret123');
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/check-email?email=a%40b.rw'));
+  });
+
+  it('explains why the person was sent back when their session ended', () => {
+    sessionStorage.setItem('ssms_notice', 'session_ended');
+    open();
+    expect(screen.getByRole('status')).toHaveTextContent('Your session ended, so we signed you out. Please sign in again.');
+    expect(sessionStorage.getItem('ssms_notice')).toBeNull();
+  });
+
+  it('shows no notice on a normal visit', () => {
+    open();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
   it('shows the password on request', () => {
@@ -202,7 +215,7 @@ describe('Check email page', () => {
     api.resendVerification.mockRejectedValue(new Error('x'));
     renderAt('/check-email?email=a%40b.rw', <CheckEmailPage />, '/check-email');
     fireEvent.click(screen.getByRole('button', { name: 'Resend verification email' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to resend');
+    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't resend the email");
   });
 });
 
@@ -217,8 +230,8 @@ describe('Verify email page', () => {
 
   it('explains a bad link and offers a new one', async () => {
     renderAt('/verify-email', <VerifyEmailPage />, '/verify-email');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Verification failed' })).toBeInTheDocument();
-    expect(screen.getByText('Invalid verification link.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: "We couldn't verify your email" })).toBeInTheDocument();
+    expect(screen.getByText("This verification link isn't valid. Please request a new one.")).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Request new link' })).toHaveAttribute('href', '/check-email');
   });
 });

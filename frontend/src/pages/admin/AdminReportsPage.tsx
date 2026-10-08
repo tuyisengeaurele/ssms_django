@@ -52,7 +52,7 @@ export default function AdminReportsPage() {
   useEffect(() => {
     reportService.getSummary()
       .then(res => setData(res.data.data))
-      .catch(() => toast('Failed to load report data.', 'error'))
+      .catch(() => toast("We couldn't load the report data. Please try again.", 'error'))
       .finally(() => setLoading(false));
   }, [toast]);
 
@@ -63,7 +63,7 @@ export default function AdminReportsPage() {
     try {
       await reportService.exportCsv();
     } catch {
-      toast('CSV export failed.', 'error');
+      toast("We couldn't create the CSV file. Please try again.", 'error');
     } finally {
       setExporting(false);
     }

@@ -44,7 +44,7 @@ export default function ResetPasswordPage() {
     setLoading(true);
     try {
       await authService.confirmPasswordReset({ uid, token, newPassword: password });
-      success('Password reset! You can now sign in.');
+      success('Your password is updated. You can sign in now.');
       navigate('/login', { replace: true });
     } catch (err) {
       setError(getErrorMessage(err));

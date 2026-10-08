@@ -52,7 +52,7 @@ export default function AdminAuditLogPage() {
       setTotalPages(res.data.pagination.totalPages);
       setTotalItems(res.data.pagination.totalItems);
     } catch {
-      toast('Failed to load audit log.', 'error');
+      toast("We couldn't load the audit log. Please try again.", 'error');
     } finally {
       setLoading(false);
     }
@@ -66,7 +66,7 @@ export default function AdminAuditLogPage() {
       await auditLogService.exportCsv({ action, resource, search });
       toast('CSV downloaded.', 'success');
     } catch {
-      toast('Export failed.', 'error');
+      toast("We couldn't create the file. Please try again.", 'error');
     } finally {
       setExporting(false);
     }

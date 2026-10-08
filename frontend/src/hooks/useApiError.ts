@@ -30,7 +30,7 @@ export function useApiError() {
     const detail = firstFieldError(body.errors);
     if (detail) return detail;
 
-    if (status === 422 && (!body.message || body.message === 'Validation failed.')) {
+    if (status === 422 && !body.message) {
       return 'Please check what you entered and try again.';
     }
     if (typeof body.message === 'string' && body.message.trim()) return body.message;
