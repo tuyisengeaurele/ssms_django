@@ -5,6 +5,7 @@
  */
 
 import { landingTranslations } from './landing';
+import { pageTranslations } from './pages';
 
 export type Locale = 'en' | 'fr' | 'rw';
 
@@ -18,6 +19,7 @@ type TranslationMap = Record<string, Record<Locale, string>>;
 
 export const translations: TranslationMap = {
   ...landingTranslations,
+  ...pageTranslations,
 
   // ── Navigation ──────────────────────────────────────────────────────────────
   navDashboard:     { en: 'Dashboard',         fr: 'Tableau de bord',   rw: 'Ikibaho' },
