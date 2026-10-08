@@ -891,3 +891,4 @@ tr.is-off td:last-child { opacity: 1; }
   .progress-fill { transition: none; }
 }
 .alert-feed--short { max-height: 380px; overflow-y: auto; }
+.form-optional { color: var(--text-muted); font-weight: 400; }
