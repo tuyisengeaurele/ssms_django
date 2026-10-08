@@ -11,7 +11,7 @@ const originals = resolve(root, 'design/stock-originals');
 const out = resolve(here, '../public/images');
 
 const COCOONS = resolve(originals, 'pexels-32277772-silkworm-cocoons-bamboo-trays.jpeg');
-const LOGO = resolve(here, '../public/logo.png');
+const LOGO = resolve(here, '../public/logo-on-dark.png');
 
 // Size budgets in KB for the AVIF files. Quality is lowered until each one fits.
 const HERO_WIDTHS = [
@@ -85,11 +85,11 @@ async function share() {
     </linearGradient></defs>
     <rect width="1200" height="630" fill="url(#g)"/>
   </svg>`);
-  const logo = await sharp(LOGO).resize({ height: 260, fit: 'inside' }).toBuffer();
+  const logo = await sharp(LOGO).resize({ height: 200, fit: 'inside' }).toBuffer();
   const buf = await pipe
     .composite([
       { input: shade, blend: 'over' },
-      { input: logo, left: 72, top: 185 },
+      { input: logo, left: 72, top: 215 },
     ])
     .jpeg({ quality: 78, mozjpeg: true })
     .toBuffer();

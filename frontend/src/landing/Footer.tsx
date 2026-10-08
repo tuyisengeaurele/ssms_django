@@ -13,6 +13,7 @@ export function Footer() {
       <div className="l-container">
         <div className="l-footer__top">
           <div className="l-footer__about">
+            <img className="l-footer__logo" src="/logo-on-dark.png" alt="" width="64" height="64" loading="lazy" decoding="async" />
             <strong className="l-footer__name">{t('lpFooterName')}</strong>
             <p>{t('lpFooterBlurb')}</p>
             <span className="l-footer__tagline">{t('lpFooterTagline')}</span>

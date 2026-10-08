@@ -27,6 +27,13 @@ describe('Footer', () => {
     expect(within(footer).getByText('Built in Rwanda.')).toBeInTheDocument();
   });
 
+  it('shows the logo made for dark backgrounds', () => {
+    const { container } = renderFooter();
+    const logo = container.querySelector('.l-footer__logo') as HTMLImageElement;
+    expect(logo).toHaveAttribute('src', '/logo-on-dark.png');
+    expect(logo).toHaveAttribute('alt', '');
+  });
+
   it('groups links under Explore, Account and Legal', () => {
     renderFooter();
     const explore = screen.getByRole('navigation', { name: 'Explore' });

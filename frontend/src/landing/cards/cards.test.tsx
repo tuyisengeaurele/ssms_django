@@ -31,6 +31,19 @@ describe('paper cards', () => {
     expect(container.querySelectorAll(INTERACTIVE)).toHaveLength(0);
   });
 
+  it('puts the new logo on every card instead of a drawn icon', () => {
+    const { container } = wrap(
+      <>
+        <ReportCard />
+        <HarvestCard />
+      </>,
+    );
+    const marks = container.querySelectorAll<HTMLImageElement>('.l-paper__mark img');
+    expect(marks).toHaveLength(2);
+    marks.forEach((img) => expect(img).toHaveAttribute('src', '/logo-mark.png'));
+    expect(container.querySelector('.l-paper__mark svg')).toBeNull();
+  });
+
   it('has no window chrome, sample badge or dot counters', () => {
     const { container } = wrap(
       <>

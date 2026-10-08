@@ -16,11 +16,7 @@ interface PaperProps {
 function Mark() {
   return (
     <span className="l-paper__mark" aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
-        <ellipse cx="12" cy="13" rx="5.6" ry="7.4" fill="none" stroke="currentColor" strokeWidth="1.6" />
-        <path d="M12 5.8c1.9 2.2 2.7 4.7 2.7 7.2S13 17.8 12 20.2" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-        <circle cx="18.5" cy="5" r="1.8" fill="currentColor" />
-      </svg>
+      <img src="/logo-mark.png" alt="" width="28" height="28" decoding="async" />
     </span>
   );
 }

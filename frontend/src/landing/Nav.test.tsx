@@ -50,6 +50,14 @@ describe('Nav', () => {
     expect(screen.getByRole('link', { name: 'How it works' })).toHaveAttribute('href', '/#how');
   });
 
+  it('shows the new logo in the brand link', () => {
+    const { container } = renderNav();
+    const logo = container.querySelector('.l-nav__brand img') as HTMLImageElement;
+    expect(logo).toHaveAttribute('src', '/logo-mark.png');
+    expect(logo).toHaveAttribute('alt', '');
+    expect(container.querySelector('.l-nav__brand svg')).toBeNull();
+  });
+
   it('links the logo to the home page', () => {
     renderNav();
     expect(screen.getByRole('link', { name: /Smart Sericulture Management System/i })).toHaveAttribute('href', '/');

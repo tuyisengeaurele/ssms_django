@@ -170,7 +170,7 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
       <aside className={`app-sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
         {/* Logo */}
         <div className="sidebar-logo">
-          <img src="/logo.png" alt="SSMS" />
+          <img src="/logo-on-dark.png" alt="SSMS" />
           <div className="sidebar-logo-text">
             <span className="name">SSMS</span>
             <span className="tagline">Sericulture Management</span>

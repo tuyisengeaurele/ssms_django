@@ -19,6 +19,12 @@
   max-width: 340px;
 }
 
+.landing .l-footer__logo {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 4px;
+}
+
 .landing .l-footer__name {
   font: 500 clamp(1.5rem, 2.2vw, 1.9rem) / 1.15 var(--l-font-display);
   color: var(--l-ivory);

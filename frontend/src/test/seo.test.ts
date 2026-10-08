@@ -71,11 +71,27 @@ describe('icons and static files', () => {
     expect(meta.height).toBe(size);
   });
 
-  it('has an optimized logo that is light', async () => {
-    expect(statSync(pub('logo.png')).size / 1024).toBeLessThan(110);
-    const meta = await sharp(pub('logo.png')).metadata();
-    expect(meta.width).toBeGreaterThanOrEqual(256);
+  it.each([
+    ['logo.png', 512, 70],
+    ['logo-on-dark.png', 512, 70],
+    ['logo-mark.png', 96, 14],
+  ])('%s is a light, transparent square logo', async (name, size, maxKb) => {
+    expect(statSync(pub(name)).size / 1024).toBeLessThan(maxKb);
+    const meta = await sharp(pub(name)).metadata();
+    expect(meta.width).toBe(size);
+    expect(meta.height).toBe(size);
     expect(meta.hasAlpha).toBe(true);
+  });
+
+  it('keeps the supplied logo files as originals', () => {
+    for (const name of ['logo-for-light.png', 'logo-for-dark.png', 'logo-updated.png']) {
+      expect(existsSync(resolve(root, '../design/logo', name)), name).toBe(true);
+    }
+  });
+
+  it('uses the new emblem: no text lockup, so the logo is nearly square after trimming', async () => {
+    const { info } = await sharp(pub('logo.png')).trim({ threshold: 10 }).toBuffer({ resolveWithObject: true });
+    expect(Math.abs(info.width - info.height) / info.width).toBeLessThan(0.15);
   });
 
   it('has a manifest with the project name and icons', () => {

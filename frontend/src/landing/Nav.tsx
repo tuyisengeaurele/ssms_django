@@ -14,14 +14,7 @@ const LINKS = [
 const FOCUSABLE = 'a[href], button:not([disabled]), select, [tabindex]:not([tabindex="-1"])';
 
 function Mark() {
-  return (
-    <svg className="l-nav__mark" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" focusable="false">
-      <ellipse cx="16" cy="17" rx="8.5" ry="11" fill="#2D6A4F" />
-      <path d="M16 6c3 3 4.5 7 4.5 11.5S19 25.5 16 28" fill="none" stroke="#FBF9F4" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M16 6c-3 3-4.5 7-4.5 11.5S13 25.5 16 28" fill="none" stroke="#FBF9F4" strokeWidth="1.6" strokeLinecap="round" opacity="0.55" />
-      <circle cx="24.5" cy="7" r="3" fill="#C8923A" />
-    </svg>
-  );
+  return <img className="l-nav__mark" src="/logo-mark.png" alt="" width="34" height="34" decoding="async" />;
 }
 
 export function Nav() {
