@@ -655,6 +655,22 @@ export const pageTranslations = {
   hpNoneBody: k("Log the first harvest to start tracking cocoon weight and silk.", "Enregistrez la première récolte pour suivre le poids des cocons et la soie.", "Andika isarura rya mbere ukurikirane uburemere bw'imideri n'ubudodo."),
   hpNoneAction: k("Log the first harvest", "Enregistrer la première récolte", "Andika isarura rya mbere"),
   hpLoadError: k("We couldn't load the harvest records for this batch.", "Nous n'avons pas pu charger les relevés de récolte de ce lot.", "Ntitwabashije gufungura inyandiko z'isarura z'iri tsinda."),
+  // All harvests page
+  hvSubtitleOne: k("{n} record across all your batches.", "{n} relevé sur tous vos lots.", "Inyandiko {n} mu matsinda yawe yose."),
+  hvSubtitleMany: k("{n} records across all your batches.", "{n} relevés sur tous vos lots.", "Inyandiko {n} mu matsinda yawe yose."),
+  hvAvg: k("Average per record", "Moyenne par relevé", "Impuzandengo kuri buri nyandiko"),
+  hvByFarm: k("Cocoons by farm", "Cocons par ferme", "Imideri ku hinga"),
+  hvByFarmNote: k("Total weight for each farm, top eight.", "Poids total par ferme, les huit premières.", "Uburemere bwose kuri buri hinga, umunani ba mbere."),
+  hvColFarm: k("Farm", "Ferme", "Ihinga"),
+  hvAll: k("All records", "Tous les relevés", "Inyandiko zose"),
+  hvSearch: k("Search by farm, grade or note", "Rechercher par ferme, grade ou note", "Shakisha ku hinga, urwego cyangwa inyandiko"),
+  hvOpen: k("Open batch", "Ouvrir le lot", "Fungura itsinda"),
+  hvNone: k("No harvest records yet", "Aucun relevé de récolte pour le moment", "Nta nyandiko y'isarura iraboneka"),
+  hvNoneBody: k("Records appear here once a batch reaches the harvest stage.", "Les relevés apparaissent ici dès qu'un lot atteint l'étape de la récolte.", "Inyandiko zigaragara hano iyo itsinda rigeze ku cyiciro cy'isarura."),
+  hvNoMatch: k("No records match", "Aucun relevé ne correspond", "Nta nyandiko ihuye"),
+  hvNoMatchBody: k("Try another word, or clear the search.", "Essayez un autre mot, ou effacez la recherche.", "Gerageza irindi jambo, cyangwa usibe ishakisha."),
+  hvClear: k("Clear search", "Effacer la recherche", "Siba ishakisha"),
+  hvLoadError: k("We couldn't load the harvest records. Please try again.", "Nous n'avons pas pu charger les relevés de récolte. Veuillez réessayer.", "Ntitwabashije gufungura inyandiko z'isarura. Ongera ugerageze."),
 } satisfies Record<string, Entry>;
 
 export type PageKey = keyof typeof pageTranslations;
