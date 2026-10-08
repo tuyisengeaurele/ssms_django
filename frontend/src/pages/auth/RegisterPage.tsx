@@ -48,10 +48,6 @@ export default function RegisterPage() {
           required
         />
 
-        <p className="l-auth__note">
-          Public accounts are registered as <strong>Farmer</strong>. An administrator assigns Supervisor and Admin roles.
-        </p>
-
         <AuthButton loading={loading} loadingLabel="Creating account">
           Create account
         </AuthButton>

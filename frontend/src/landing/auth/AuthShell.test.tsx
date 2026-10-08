@@ -49,6 +49,13 @@ describe('AuthShell', () => {
     expect(aside.querySelector('picture, img[src*="images"], .l-auth__photo, .l-auth__shade')).toBeNull();
   });
 
+  it('has a faded logo behind the text that screen readers skip', () => {
+    const { container } = renderShell(<AuthShell title="Hello">x</AuthShell>);
+    const mark = container.querySelector('.l-auth__watermark') as HTMLElement;
+    expect(mark).toHaveAttribute('aria-hidden', 'true');
+    expect(mark.querySelector('img')).toHaveAttribute('src', '/logo-on-dark.png');
+  });
+
   it('links back home, to the legal pages, and switches language', () => {
     renderShell(<AuthShell title="Hello">x</AuthShell>);
     expect(screen.getByRole('link', { name: /Back to home/ })).toHaveAttribute('href', '/');

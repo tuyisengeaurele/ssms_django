@@ -128,9 +128,10 @@ describe('Register page', () => {
     expect(api.register).toHaveBeenCalledWith({ name: 'Aline U', email: 'aline@b.rw', password: 'Secret123', role: 'FARMER' });
   });
 
-  it('says public accounts are farmers and links to sign in', () => {
-    open();
-    expect(screen.getByText(/registered as/)).toHaveTextContent('Farmer');
+  it('has no note about roles and links to sign in', () => {
+    const { container } = open();
+    expect(container.querySelector('.l-auth__note')).toBeNull();
+    expect(screen.queryByText(/farmer account|administrator/i)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
   });
 

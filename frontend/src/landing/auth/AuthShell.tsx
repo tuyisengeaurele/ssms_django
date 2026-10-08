@@ -30,6 +30,10 @@ export function AuthShell({ title, subtitle, children }: AuthShellProps) {
       </a>
 
       <aside className="l-auth__aside">
+        <div className="l-auth__watermark" aria-hidden="true">
+          <img src="/logo-on-dark.png" alt="" width="640" height="640" decoding="async" />
+        </div>
+
         <Link to="/" className="l-auth__brand" aria-label={`SSMS, ${t('lpFooterName')}`}>
           <img src="/logo-on-dark.png" alt="" width="44" height="44" decoding="async" />
           <span>SSMS</span>
