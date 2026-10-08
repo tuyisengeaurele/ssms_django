@@ -8,12 +8,13 @@ export const STAGE_LABELS: Record<string, string> = {
 
 export const STAGE_ORDER = ['EGG', 'LARVA', 'PUPA', 'COCOON', 'HARVEST'] as const;
 
+/** One colour per life stage, shared by badges, charts and timelines. */
 export const STAGE_COLORS: Record<string, string> = {
-  EGG: '#f59e0b',
-  LARVA: '#10b981',
-  PUPA: '#3b82f6',
-  COCOON: '#8b5cf6',
-  HARVEST: '#ef4444',
+  EGG: '#C8923A',
+  LARVA: '#2D6A4F',
+  PUPA: '#3A7CA5',
+  COCOON: '#8F7F66',
+  HARVEST: '#0B1F17',
 };
 
 export const ALERT_TYPE_LABELS: Record<string, string> = {

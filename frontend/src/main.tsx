@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 import './styles/shell.css';
+import './styles/components.css';
 import { ToastProvider } from './context/ToastContext';
 import { LanguageProvider } from './context/LanguageContext';
 

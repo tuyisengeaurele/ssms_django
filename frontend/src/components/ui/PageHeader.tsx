@@ -3,17 +3,18 @@ import { ReactNode } from 'react';
 interface Props {
   title: string;
   subtitle?: string;
-  action?: ReactNode;
+  actions?: ReactNode;
 }
 
-export default function PageHeader({ title, subtitle, action }: Props) {
+/** The big serif title at the top of a page, with what the page is for and its main actions. */
+export default function PageHeader({ title, subtitle, actions }: Props) {
   return (
-    <div className="flex-between mb-4" style={{ marginBottom: '1.5rem' }}>
+    <div className="page-header">
       <div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text)' }}>{title}</h1>
-        {subtitle && <p className="text-muted mt-1">{subtitle}</p>}
+        <h1 className="page-title">{title}</h1>
+        {subtitle ? <p className="page-subtitle">{subtitle}</p> : null}
       </div>
-      {action && <div>{action}</div>}
+      {actions ? <div className="page-actions">{actions}</div> : null}
     </div>
   );
 }
