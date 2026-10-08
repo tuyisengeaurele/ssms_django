@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import { ToastProvider } from '../../context/ToastContext';
 import { setReducedMotion } from '../../test/setup';
@@ -41,6 +41,11 @@ function open() {
     </MemoryRouter>,
   );
 }
+
+// The toast list loads on the first toast. Load it once up front so a busy machine cannot make a test time out.
+beforeAll(async () => {
+  await import('../../context/ToastList');
+}, 30000);
 
 beforeEach(() => {
   localStorage.clear();
