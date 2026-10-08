@@ -1,4 +1,4 @@
-"""Cooperative management views — /api/cooperatives."""
+"""Cooperative management views, /api/cooperatives."""
 
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -17,7 +17,7 @@ class CooperativeListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """GET /api/cooperatives — admin sees all, others see only their own."""
+        """GET /api/cooperatives, admin sees all, others see only their own."""
         if request.user.role == 'ADMIN':
             coops = Cooperative.objects.filter(is_active=True)
         elif request.user.cooperative_id:
@@ -27,7 +27,7 @@ class CooperativeListCreateView(APIView):
         return api_success(CooperativeSerializer(coops, many=True).data)
 
     def post(self, request):
-        """POST /api/cooperatives — create a cooperative (admin only)."""
+        """POST /api/cooperatives, create a cooperative (admin only)."""
         err = _require_admin(request.user)
         if err:
             return err
@@ -52,14 +52,14 @@ class CooperativeDetailView(APIView):
         return coop, None
 
     def get(self, request, pk):
-        """GET /api/cooperatives/<id> — detail view with members and farms."""
+        """GET /api/cooperatives/<id>, detail view with members and farms."""
         coop, err = self._get_coop(pk, request.user)
         if err:
             return err
         return api_success(CooperativeDetailSerializer(coop).data)
 
     def patch(self, request, pk):
-        """PATCH /api/cooperatives/<id> — update (admin only)."""
+        """PATCH /api/cooperatives/<id>, update (admin only)."""
         err = _require_admin(request.user)
         if err:
             return err
@@ -73,7 +73,7 @@ class CooperativeDetailView(APIView):
         return api_success(CooperativeSerializer(coop).data, 'Cooperative updated.')
 
     def delete(self, request, pk):
-        """DELETE /api/cooperatives/<id> — deactivate (admin only)."""
+        """DELETE /api/cooperatives/<id>, deactivate (admin only)."""
         err = _require_admin(request.user)
         if err:
             return err

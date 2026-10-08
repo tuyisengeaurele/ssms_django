@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
+import { Icon } from './Icon';
 
 interface EmptyStateProps {
   icon?: ReactNode;
@@ -13,40 +13,26 @@ interface EmptyStateProps {
   };
 }
 
-const DefaultIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"/>
-    <line x1="12" y1="8" x2="12" y2="12"/>
-    <line x1="12" y1="16" x2="12.01" y2="16"/>
-  </svg>
-);
-
+/** What a list says when it has nothing to show, and the next step. */
 export default function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <motion.div
-      className="empty-state"
-      initial={{ opacity: 0, scale: 0.97 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <div className="empty-icon">
-        {icon ?? <DefaultIcon />}
-      </div>
+    <div className="empty-state">
+      <div className="empty-icon">{icon ?? <Icon name="inbox" size={22} />}</div>
       <h3 className="empty-title">{title}</h3>
       {description && <p className="empty-desc">{description}</p>}
       {action && (
-        <div style={{ marginTop: '1.5rem' }}>
+        <div style={{ marginTop: 20 }}>
           {action.to ? (
             <Link to={action.to} className="btn btn-primary btn-sm">
               {action.label}
             </Link>
           ) : (
-            <button onClick={action.onClick} className="btn btn-secondary btn-sm">
+            <button type="button" onClick={action.onClick} className="btn btn-secondary btn-sm">
               {action.label}
             </button>
           )}
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }

@@ -12,8 +12,8 @@ class AlertListView(APIView):
     GET /api/alerts
     Returns all unread alerts across every batch (SUPERVISOR / ADMIN only).
     Optional query params:
-      ?unread=true   — only unread (default)
-      ?limit=N       — cap results (default 100)
+      ?unread=true  , only unread (default)
+      ?limit=N      , cap results (default 100)
     """
     permission_classes = [IsAuthenticated]
 
@@ -53,7 +53,7 @@ class AlertListView(APIView):
 
 
 class AlertMarkAllReadView(APIView):
-    """POST /api/alerts/mark-all-read — mark every unread alert as read."""
+    """POST /api/alerts/mark-all-read, mark every unread alert as read."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):

@@ -129,7 +129,7 @@ class BatchActiveSupervisorView(APIView):
         return api_success(BatchSupervisorSerializer(qs, many=True).data)
 
 
-# Enforced one-way progression — a batch can only move forward, never backward.
+# Enforced one-way progression, a batch can only move forward, never backward.
 STAGE_ORDER = ['EGG', 'LARVA', 'PUPA', 'COCOON', 'HARVEST']
 
 

@@ -10,8 +10,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'name', 'email', 'role', 'cooperative_id', 'cooperative_name', 'is_email_verified', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'name', 'email', 'role', 'cooperative_id', 'cooperative_name', 'is_email_verified', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'email', 'role', 'cooperative_id', 'cooperative_name', 'is_email_verified', 'is_active', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'name', 'email', 'role', 'cooperative_id', 'cooperative_name', 'is_email_verified', 'is_active', 'created_at', 'updated_at']
 
     def get_cooperative_name(self, obj):
         return obj.cooperative.name if obj.cooperative_id and obj.cooperative else None
@@ -24,7 +24,7 @@ class RegisterSerializer(serializers.Serializer):
 
     # Public registration always creates a FARMER.
     # ADMIN and SUPERVISOR roles are assigned by an admin after account creation.
-    # The role field is intentionally NOT exposed here — any role value sent
+    # The role field is intentionally NOT exposed here, any role value sent
     # by the client is silently ignored.
 
     def validate_email(self, value):
@@ -47,7 +47,7 @@ class RegisterSerializer(serializers.Serializer):
             email=validated_data['email'],
             password=validated_data['password'],
             name=validated_data['name'],
-            role='FARMER',   # hard-coded — never trust client-supplied role
+            role='FARMER',   # hard-coded, never trust client-supplied role
         )
 
 

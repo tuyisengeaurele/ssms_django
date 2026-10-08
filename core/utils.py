@@ -70,7 +70,7 @@ def health_check(request):
     from django.utils import timezone
     from django.db import connection
 
-    # Verify the database is reachable — Render uses this endpoint to route
+    # Verify the database is reachable, Render uses this endpoint to route
     # traffic; return 503 so unhealthy instances are taken out of rotation.
     try:
         with connection.cursor() as cursor:

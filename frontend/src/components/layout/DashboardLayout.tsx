@@ -1,3 +1,7 @@
+import '@fontsource-variable/fraunces/wght.css';
+import '@fontsource-variable/geist';
+import '../../styles/shell.css';
+import '../../styles/components.css';
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
