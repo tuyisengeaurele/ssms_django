@@ -77,3 +77,8 @@ frontend/.vite/
 
 # Compiled binaries in ai_service
 ai_service/uvicorn
+
+# Local planning notes and database dumps
+docs/superpowers/
+backups/
+*.dump
