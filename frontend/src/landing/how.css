@@ -1,0 +1,148 @@
+.landing .l-how {
+  --steps: 4;
+  position: relative;
+  background: var(--l-ink);
+  color: var(--l-paper);
+}
+
+/* Pinned: a tall section with a sticky stage inside. */
+.landing .l-how:not(.how--stacked) {
+  height: calc(var(--steps) * 90svh + 40svh);
+}
+
+.landing .l-how__sticky {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.landing .l-how__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  align-items: center;
+  gap: clamp(32px, 6vw, 96px);
+}
+
+.landing .l-how__title {
+  max-width: 12ch;
+  margin-bottom: clamp(24px, 4vh, 48px);
+  font-size: clamp(2.2rem, 4.6vw, 4rem);
+  font-weight: 450;
+  color: var(--l-ivory);
+}
+
+.landing .l-how__list {
+  position: relative;
+  padding-left: 28px;
+}
+
+.landing .l-how__rail {
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: rgba(246, 243, 236, 0.16);
+}
+
+.landing .l-how__rail i {
+  display: block;
+  height: 100%;
+  background: var(--l-gold);
+  transform-origin: top center;
+}
+
+.landing .l-how__steps {
+  display: grid;
+  gap: clamp(18px, 3.4vh, 34px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.landing .l-how__step {
+  display: grid;
+  gap: 6px;
+  opacity: 0.38;
+  transition: opacity 0.6s var(--l-ease), transform 0.6s var(--l-ease);
+}
+
+.landing .l-how__step[aria-current='step'] {
+  opacity: 1;
+  transform: translateX(6px);
+}
+
+.landing .l-how__num {
+  font: 600 0.8rem var(--l-font-ui);
+  letter-spacing: 0.14em;
+  color: var(--l-gold);
+}
+
+.landing .l-how__step h3 {
+  font-size: clamp(1.4rem, 2.3vw, 2rem);
+  font-weight: 500;
+  color: var(--l-ivory);
+}
+
+.landing .l-how__step p {
+  max-width: 38ch;
+  color: rgba(246, 243, 236, 0.78);
+}
+
+/* Screens on the right, cross fading */
+.landing .l-how__screens {
+  position: relative;
+  aspect-ratio: 1.12;
+  width: min(100%, 560px);
+  justify-self: end;
+}
+
+.landing .l-how__screen {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translateY(28px) scale(0.97);
+  transition: opacity 0.7s var(--l-ease), transform 0.9s var(--l-ease);
+  pointer-events: none;
+}
+
+.landing .l-how__screen.is-active {
+  opacity: 1;
+  transform: none;
+}
+
+.landing .l-how__screen .l-mock {
+  height: 100%;
+  box-shadow: 0 40px 90px rgba(0, 0, 0, 0.5);
+}
+
+/* Stacked: a normal list, each step with its own screen. */
+.landing .how--stacked {
+  padding: var(--l-section) 0;
+}
+
+.landing .how--stacked .l-how__title {
+  max-width: 14ch;
+}
+
+.landing .how--stacked .l-how__steps {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(32px, 5vw, 64px) clamp(24px, 4vw, 48px);
+}
+
+.landing .how--stacked .l-how__step {
+  opacity: 1;
+}
+
+.landing .how--stacked .l-how__inline-screen {
+  margin-top: 16px;
+}
+
+@media (max-width: 760px) {
+  .landing .how--stacked .l-how__steps {
+    grid-template-columns: 1fr;
+  }
+}

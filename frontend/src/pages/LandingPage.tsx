@@ -4,6 +4,7 @@ import '@fontsource-variable/geist';
 import '../landing/tokens.css';
 import { Features } from '../landing/Features';
 import { Hero } from '../landing/Hero';
+import { HowItWorks } from '../landing/HowItWorks';
 import { Nav } from '../landing/Nav';
 import { Problem } from '../landing/Problem';
 import { SmoothScroll } from '../landing/motion/SmoothScroll';
@@ -17,6 +18,7 @@ export default function LandingPage() {
           <Hero />
           <Problem />
           <Features />
+          <HowItWorks />
         </main>
       </SmoothScroll>
     </div>
