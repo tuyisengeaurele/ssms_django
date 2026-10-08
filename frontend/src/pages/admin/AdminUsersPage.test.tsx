@@ -116,7 +116,7 @@ describe('Users page', () => {
     api.deactivateUser.mockResolvedValue({ data: { data: null } });
     open();
     const row = await rowOf('Bruce Ishimwe');
-    fireEvent.click(within(row).getByRole('button', { name: 'Turn off' }));
+    fireEvent.click(within(row).getByRole('button', { name: /^Turn off/ }));
     const dialog = await screen.findByRole('dialog', { name: 'Turn off this account?' });
     expect(dialog).toHaveTextContent('Bruce Ishimwe (bruce@gmail.com) will not be able to sign in any more.');
     expect(api.deactivateUser).not.toHaveBeenCalled();
@@ -127,7 +127,7 @@ describe('Users page', () => {
 
   it('does not offer to turn off an account that is already off', async () => {
     open();
-    expect(within(await rowOf('Gad Anaclet')).queryByRole('button', { name: 'Turn off' })).not.toBeInTheDocument();
+    expect(within(await rowOf('Gad Anaclet')).queryByRole('button', { name: /^Turn off/ })).not.toBeInTheDocument();
   });
 
   it('creates a user and adds them to the list', async () => {

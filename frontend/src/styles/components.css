@@ -547,6 +547,25 @@ tr.is-off td:last-child { opacity: 1; }
   border: 0;
 }
 
+/* Detail dialog parts */
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0 0 16px; }
+.facts > div { padding: 12px 14px; border: 1px solid var(--border-light); border-radius: 14px; background: var(--ivory); }
+.facts dt { color: var(--text-muted); font: 600 0.66rem var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; }
+.facts dd { margin: 4px 0 0; color: var(--ink); font-weight: 600; font-size: 0.95rem; }
+
+.coop-description { margin-bottom: 18px; padding: 12px 14px; border-radius: 14px; background: var(--ivory); color: var(--text-2); font-size: 0.9rem; line-height: 1.55; }
+.coop-empty { margin-bottom: 18px; color: var(--text-muted); font-size: 0.9rem; }
+
+.mini-heading { display: flex; align-items: baseline; gap: 10px; margin: 8px 0 10px; font: 600 0.7rem var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
+.mini-note { letter-spacing: 0; text-transform: none; font-weight: 400; font-style: italic; }
+
+.add-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.add-row .form-select { flex: 1; min-width: 0; padding-block: 0.5rem; font-size: 0.88rem; }
+
+.people-list { display: grid; gap: 6px; margin: 0 0 18px; padding: 0; list-style: none; max-height: 240px; overflow-y: auto; }
+.people-list li { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border-light); border-radius: 14px; }
+.people-list .cell-stack { flex: 1; }
+
 /* ── Loading ───────────────────────────────────────────────────────────────── */
 .skeleton {
   background: linear-gradient(90deg, #ebe6da 25%, #f3efe5 50%, #ebe6da 75%);

@@ -301,7 +301,7 @@ export default function AdminUsersPage() {
                       <td data-label="">
                         <div className="table-actions">
                           {!isMe && active && (
-                            <button className="btn btn-ghost btn-xs btn-quiet-danger" onClick={() => setConfirmOff(u)}>
+                            <button className="btn btn-ghost btn-xs btn-quiet-danger" aria-label={`${t('usTurnOff')} ${u.name}`} onClick={() => setConfirmOff(u)}>
                               {t('usTurnOff')}
                             </button>
                           )}
