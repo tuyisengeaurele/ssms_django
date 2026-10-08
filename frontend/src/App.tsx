@@ -75,7 +75,7 @@ export default function App() {
           <Route path="/verify-email"     element={<VerifyEmailPage />} />
           <Route path="/unauthorized"     element={<Unauthorized />} />
 
-          {/* All authenticated — inside DashboardLayout (sidebar + topbar) */}
+          {/* All authenticated pages, inside DashboardLayout (sidebar + topbar) */}
           <Route element={<ProtectedRoute allowedRoles={['FARMER', 'SUPERVISOR', 'ADMIN']} />}>
             <Route element={<DashboardLayout />}>
 

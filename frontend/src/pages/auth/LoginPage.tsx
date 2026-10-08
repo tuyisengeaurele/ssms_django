@@ -83,7 +83,7 @@ export default function LoginPage() {
             Smart Sericulture<br />Management System
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.875rem', marginBottom: '2.5rem', lineHeight: 1.6 }}>
-            Monitor farms, detect diseases, and optimise silk production — all in one platform.
+            Monitor farms, detect diseases, and optimise silk production, all in one platform.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', textAlign: 'left' }}>
