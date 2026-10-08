@@ -58,11 +58,10 @@ describe('Footer', () => {
     expect(within(explore).getByRole('link', { name: 'How it works' })).toHaveAttribute('href', '/#how');
   });
 
-  it('has a large wordmark that screen readers skip', () => {
+  it('has no oversized wordmark', () => {
     const { container } = renderFooter();
-    const mark = container.querySelector('.l-footer__wordmark');
-    expect(mark).toHaveAttribute('aria-hidden', 'true');
-    expect(mark).toHaveTextContent('SSMS');
+    expect(container.querySelector('.l-footer__wordmark')).toBeNull();
+    expect(within(screen.getByRole('contentinfo')).queryByText('SSMS')).not.toBeInTheDocument();
   });
 
   it('credits the photos and shows the year', () => {
