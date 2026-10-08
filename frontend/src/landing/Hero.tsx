@@ -1,27 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { AlertsMock } from './mockups/AlertsMock';
-import { DashboardMock } from './mockups/DashboardMock';
-import { DiseaseMock } from './mockups/DiseaseMock';
+import { DiseaseCard } from './cards/DiseaseCard';
+import { ReportCard } from './cards/ReportCard';
 import { useCountUp } from './motion/useCountUp';
 import { useMagnetic } from './motion/useMagnetic';
-import { prefersReducedMotion, usePrefersReducedMotion } from './motion/usePrefersReducedMotion';
+import { prefersReducedMotion } from './motion/usePrefersReducedMotion';
 import { useScrollProgress } from './motion/useScrollProgress';
 import './hero.css';
 
 const BG_WIDTHS = [640, 1280, 1920, 2560];
-const WORM_WIDTHS = [640, 1280, 1600];
 const bgSet = (ext: string) => BG_WIDTHS.map((w) => `/images/hero-bg-${w}.${ext} ${w}w`).join(', ');
-const wormSet = (ext: string) => WORM_WIDTHS.map((w) => `/images/worm-${w}.${ext} ${w}w`).join(', ');
-
-const SCREEN_MS = 5000;
 
 /** The longest word carries the italic gold accent, whatever the language. */
 function accentIndex(words: string[]): number {
+  const size = (w: string) => w.replace(/[^\p{L}]/gu, '').length;
   let best = 0;
   words.forEach((word, i) => {
-    if (word.replace(/[^\p{L}]/gu, '').length > words[best].replace(/[^\p{L}]/gu, '').length) best = i;
+    if (size(word) > size(words[best])) best = i;
   });
   return best;
 }
@@ -34,23 +30,12 @@ function Arrow() {
   );
 }
 
-function Stat({ value, label, play }: { value: string; label: string; play: boolean }) {
-  const shown = useCountUp(Number(value), { play });
-  return (
-    <li>
-      <strong>{shown}</strong>
-      <span>{label}</span>
-    </li>
-  );
-}
-
 export function Hero() {
   const { t } = useLanguage();
-  const reduced = usePrefersReducedMotion();
   const frame = useRef(0);
   const primaryRef = useMagnetic<HTMLAnchorElement>(0.28);
 
-  // Three layers move at three speeds as the page scrolls. The CSS reads --p.
+  // The background and the ghost word move at two speeds as the page scrolls. The CSS reads --p.
   const cardRef = useScrollProgress<HTMLDivElement>((p) => {
     cardRef.current?.style.setProperty('--p', String(p));
   }, 'leave');
@@ -60,8 +45,9 @@ export function Hero() {
     const id = requestAnimationFrame(() => setLive(true));
     return () => cancelAnimationFrame(id);
   }, []);
+  const stat = useCountUp(Number(t('lpStatValue')), { play: live });
 
-  // Pointer parallax writes two CSS variables. The layers read them.
+  // Pointer parallax writes two CSS variables. The cards and the photo read them.
   const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (prefersReducedMotion() || event.pointerType === 'touch') return;
     const card = cardRef.current;
@@ -73,22 +59,6 @@ export function Hero() {
       card.style.setProperty('--py', String(((event.clientY - box.top) / box.height - 0.5) * 2));
     });
   };
-
-  const screens = [
-    { name: t('lpPreviewDashboard'), node: <DashboardMock /> },
-    { name: t('lpPreviewDisease'), node: <DiseaseMock /> },
-    { name: t('lpPreviewAlerts'), node: <AlertsMock /> },
-  ];
-  const [index, setIndex] = useState(0);
-  const [hovering, setHovering] = useState(false);
-  const [chosen, setChosen] = useState(false);
-  const paused = reduced || hovering || chosen;
-
-  useEffect(() => {
-    if (paused) return;
-    const id = setTimeout(() => setIndex((i) => (i + 1) % screens.length), SCREEN_MS);
-    return () => clearTimeout(id);
-  }, [index, paused, screens.length]);
 
   const words = t('lpHeroTitle').split(' ');
   const accent = accentIndex(words);
@@ -111,22 +81,15 @@ export function Hero() {
           </picture>
         </div>
         <div className="l-hero__shade" aria-hidden="true" />
-
-        <div className="l-hero__layer">
+        <div className="l-hero__layer l-hero__layer--ghost">
           <div className="l-hero__ghost" aria-hidden="true">
             {t('lpGhostWord')}
           </div>
         </div>
 
-        <div className="l-hero__layer l-hero__layer--worm">
-          <picture className="l-hero__worm">
-            <source type="image/avif" srcSet={wormSet('avif')} sizes="(min-width: 900px) 40vw, 70vw" />
-            <img src="/images/worm-1280.webp" srcSet={wormSet('webp')} sizes="(min-width: 900px) 40vw, 70vw" alt="" width={1600} height={1664} decoding="async" />
-          </picture>
-        </div>
-
         <div className="l-hero__content">
           <div className="l-hero__copy">
+            <p className="l-hero__eyebrow">{t('lpHeroEyebrow')}</p>
             <h1 id="hero-title" className="l-hero__title" aria-label={t('lpHeroTitle')}>
               {words.map((word, i) => (
                 <span key={`${word}-${i}`} aria-hidden="true">
@@ -151,49 +114,19 @@ export function Hero() {
                 {t('lpHeroSecondary')}
               </a>
             </div>
-            <ul className="l-hero__stats" aria-label={t('lpStatsLabel')}>
-              <Stat value={t('lpStat1Value')} label={t('lpStat1Label')} play={live} />
-              <Stat value={t('lpStat2Value')} label={t('lpStat2Label')} play={live} />
-              <Stat value={t('lpStat3Value')} label={t('lpStat3Label')} play={live} />
-            </ul>
+            <p className="l-hero__note">{t('lpHeroNote')}</p>
+            <p className="l-hero__stat" aria-label={t('lpStatsLabel')}>
+              <strong>{stat}</strong>
+              <span>{t('lpStatLabel')}</span>
+            </p>
           </div>
 
-          <aside
-            className="l-hero__preview"
-            aria-label={t('lpPreviewLabel')}
-            onPointerEnter={() => setHovering(true)}
-            onPointerLeave={() => setHovering(false)}
-          >
-            <div className="l-hero__screen" key={index}>
-              {screens[index].node}
+          <div className="l-hero__stack">
+            <div aria-hidden="true" className="l-hero__back-wrap">
+              <DiseaseCard className="l-hero__back" />
             </div>
-            <div className="l-hero__preview-foot">
-              <span className="l-hero__counter">{`0${index + 1} / 0${screens.length}`}</span>
-              <span className="l-hero__track" aria-hidden="true">
-                {!reduced && (
-                  <i
-                    key={`${index}-${paused}`}
-                    className="l-hero__fill"
-                    style={{ animationDuration: `${SCREEN_MS}ms`, animationPlayState: paused ? 'paused' : 'running' }}
-                  />
-                )}
-              </span>
-              <span className="l-hero__dots">
-                {screens.map((screen, i) => (
-                  <button
-                    key={screen.name}
-                    type="button"
-                    aria-label={t('lpPreviewShow').replace('{name}', screen.name)}
-                    aria-current={i === index ? 'true' : undefined}
-                    onClick={() => {
-                      setIndex(i);
-                      setChosen(true);
-                    }}
-                  />
-                ))}
-              </span>
-            </div>
-          </aside>
+            <ReportCard className="l-hero__front" />
+          </div>
         </div>
       </div>
     </section>

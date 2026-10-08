@@ -4,7 +4,6 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { cutoutWorm } from './cutout.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '../..');
@@ -12,7 +11,6 @@ const originals = resolve(root, 'design/stock-originals');
 const out = resolve(here, '../public/images');
 
 const COCOONS = resolve(originals, 'pexels-32277772-silkworm-cocoons-bamboo-trays.jpeg');
-const WORM = resolve(originals, 'pexels-12214772-silkworm-macro-autumn-leaf.jpeg');
 const LOGO = resolve(here, '../public/logo.png');
 
 // Size budgets in KB for the AVIF files. Quality is lowered until each one fits.
@@ -99,15 +97,9 @@ async function share() {
   console.log(`og: ${(buf.length / 1024).toFixed(0)} KB`);
 }
 
-// Usage: node scripts/make-images.mjs [hero|share|cutout]. No argument runs everything.
+// Usage: node scripts/make-images.mjs [hero|share]. No argument runs everything.
 const only = process.argv[2];
-const debugPath = process.env.CUTOUT_DEBUG;
 
 await mkdir(out, { recursive: true });
 if (!only || only === 'hero') await hero();
 if (!only || only === 'share') await share();
-const thresholds = {
-  minValue: Number(process.env.CUTOUT_MIN_VALUE ?? 0.6),
-  maxSat: Number(process.env.CUTOUT_MAX_SAT ?? 0.3),
-};
-if (!only || only === 'cutout') await cutoutWorm({ source: WORM, outDir: out, thresholds, debugPath });

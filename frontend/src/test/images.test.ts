@@ -37,33 +37,6 @@ describe('hero background', () => {
   });
 });
 
-describe('worm cutout', () => {
-  const widths = [640, 1280, 1600];
-
-  it.each(widths)('has transparency at %d px', async (w) => {
-    const meta = await sharp(file(`worm-${w}.webp`)).metadata();
-    expect(meta.hasAlpha).toBe(true);
-    expect(existsSync(file(`worm-${w}.avif`))).toBe(true);
-  });
-
-  it('is mostly transparent around the worm and mostly opaque inside it', async () => {
-    const { data, info } = await sharp(file('worm-640.webp')).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-    let clear = 0;
-    let solid = 0;
-    for (let i = 3; i < data.length; i += 4) {
-      if (data[i] < 20) clear += 1;
-      else if (data[i] > 235) solid += 1;
-    }
-    const total = info.width * info.height;
-    expect(clear / total).toBeGreaterThan(0.1);
-    expect(solid / total).toBeGreaterThan(0.25);
-  });
-
-  it('stays light', () => {
-    expect(kb('worm-1600.avif')).toBeLessThan(260);
-  });
-});
-
 describe('share image', () => {
   it('is 1200 by 630 and light', async () => {
     const meta = await sharp(file('og-1200x630.jpg')).metadata();

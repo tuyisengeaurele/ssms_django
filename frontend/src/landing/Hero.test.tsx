@@ -1,6 +1,6 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { LanguageProvider } from '../context/LanguageContext';
 import { setReducedMotion } from '../test/setup';
 import { Hero } from './Hero';
@@ -19,103 +19,55 @@ describe('Hero', () => {
   beforeEach(() => {
     localStorage.clear();
   });
-  afterEach(() => {
-    vi.useRealTimers();
-  });
 
-  it('has one headline and the sub line', () => {
+  it('has one headline, an eyebrow and the sub line', () => {
     renderHero();
     expect(screen.getByRole('heading', { level: 1, name: 'Raise healthier silkworms.' })).toBeInTheDocument();
-    expect(screen.getByText('Watch every batch, catch disease early, harvest at the right time.')).toBeInTheDocument();
+    expect(screen.getByText('Silk farming software for Rwanda')).toBeInTheDocument();
+    expect(screen.getByText(/SSMS watches the temperature and humidity in your rearing room/)).toBeInTheDocument();
   });
 
-  it('links the two actions', () => {
+  it('links the two actions and adds a short note', () => {
     renderHero();
-    expect(screen.getByRole('link', { name: /Get started/ })).toHaveAttribute('href', '/register');
+    expect(screen.getByRole('link', { name: /Create your account/ })).toHaveAttribute('href', '/register');
     expect(screen.getByRole('link', { name: 'See how it works' })).toHaveAttribute('href', '#how');
+    expect(screen.getByText('Works in any phone browser.')).toBeInTheDocument();
   });
 
-  it('shows the three true stats immediately when motion is reduced', () => {
+  it('shows one honest number about the platform', () => {
     setReducedMotion(true);
     renderHero();
-    const stats = screen.getByRole('list', { name: 'Key facts' });
-    const items = within(stats).getAllByRole('listitem');
-    expect(items).toHaveLength(3);
-    expect(items[0]).toHaveTextContent('4');
-    expect(items[0]).toHaveTextContent('diseases spotted from one photo');
-    expect(items[1]).toHaveTextContent('5');
-    expect(items[1]).toHaveTextContent('stages, egg to harvest');
-    expect(items[2]).toHaveTextContent('3');
-    expect(items[2]).toHaveTextContent('languages');
+    const stat = screen.getByLabelText('Key fact');
+    expect(stat).toHaveTextContent('4');
+    expect(stat).toHaveTextContent('diseases the platform identifies');
+    expect(screen.queryByText(/stages, egg to harvest/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^languages$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/from one photo/)).not.toBeInTheDocument();
   });
 
   it('describes the photo and hides the decoration from screen readers', () => {
     const { container } = renderHero();
-    expect(screen.getByAltText('Silkworm cocoons resting in bamboo trays')).toBeInTheDocument();
+    expect(screen.getByAltText('Silkworm cocoons resting in bamboo trays')).toHaveAttribute('fetchpriority', 'high');
     const ghost = container.querySelector('.l-hero__ghost');
     expect(ghost).toHaveAttribute('aria-hidden', 'true');
     expect(ghost).toHaveTextContent('SILK');
-    expect(container.querySelector('.l-hero__worm img')).toHaveAttribute('alt', '');
   });
 
-  it('marks the hero photo as high priority', () => {
-    renderHero();
-    expect(screen.getByAltText('Silkworm cocoons resting in bamboo trays')).toHaveAttribute('fetchpriority', 'high');
-  });
-
-  it('shows one sample screen at a time with a counter', () => {
-    renderHero();
-    expect(screen.getAllByRole('img', { name: /^Sample/ })).toHaveLength(1);
-    expect(screen.getByText('01 / 03')).toBeInTheDocument();
-  });
-
-  it('moves to the next screen after five seconds', () => {
-    vi.useFakeTimers();
-    renderHero();
-    expect(screen.getByRole('img', { name: /sample dashboard/i })).toBeInTheDocument();
-    act(() => {
-      vi.advanceTimersByTime(5100);
-    });
-    expect(screen.getByRole('img', { name: /sample disease check/i })).toBeInTheDocument();
-    expect(screen.getByText('02 / 03')).toBeInTheDocument();
-  });
-
-  it('stays on the first screen when motion is reduced', () => {
-    setReducedMotion(true);
-    vi.useFakeTimers();
-    renderHero();
-    act(() => {
-      vi.advanceTimersByTime(12000);
-    });
-    expect(screen.getByRole('img', { name: /sample dashboard/i })).toBeInTheDocument();
-  });
-
-  it('lets people pick a screen and then stops rotating', () => {
-    vi.useFakeTimers();
-    renderHero();
-    fireEvent.click(screen.getByRole('button', { name: 'Show Alerts' }));
-    expect(screen.getByRole('img', { name: /sample list of three alerts/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Show Alerts' })).toHaveAttribute('aria-current', 'true');
-    act(() => {
-      vi.advanceTimersByTime(20000);
-    });
-    expect(screen.getByRole('img', { name: /sample list of three alerts/i })).toBeInTheDocument();
-  });
-
-  it('pauses while the pointer rests on the preview', () => {
-    vi.useFakeTimers();
+  it('has no silkworm cutout and no rotating preview', () => {
     const { container } = renderHero();
-    const preview = container.querySelector('.l-hero__preview') as HTMLElement;
-    fireEvent.pointerEnter(preview);
-    act(() => {
-      vi.advanceTimersByTime(12000);
-    });
-    expect(screen.getByRole('img', { name: /sample dashboard/i })).toBeInTheDocument();
-    fireEvent.pointerLeave(preview);
-    act(() => {
-      vi.advanceTimersByTime(5100);
-    });
-    expect(screen.getByRole('img', { name: /sample disease check/i })).toBeInTheDocument();
+    expect(container.querySelector('.l-hero__worm')).toBeNull();
+    expect(container.querySelector('img[src*="worm"]')).toBeNull();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/\d\d? \/ 0?\d|sample/i);
+  });
+
+  it('shows a stack of two paper cards but announces only one', () => {
+    const { container } = renderHero();
+    expect(container.querySelectorAll('.l-paper')).toHaveLength(2);
+    const announced = screen.getAllByRole('img', { name: /^Illustration/ });
+    expect(announced).toHaveLength(1);
+    expect(within(announced[0]).getByText('Gasabo Silk Farm')).toBeInTheDocument();
+    expect(container.querySelector('.l-hero__back')?.closest('[aria-hidden="true"]')).not.toBeNull();
   });
 
   it('shows the French headline after switching language', () => {
