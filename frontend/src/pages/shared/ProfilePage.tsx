@@ -127,6 +127,7 @@ export default function ProfilePage() {
           <Panel
             title={t('pfSecurity')}
             note={t('pfSecurityHint')}
+            flush={!showPassword}
             actions={
               showPassword ? undefined : (
                 <button className="btn btn-secondary btn-sm" onClick={() => setShowPassword(true)}>{t('pfChangePassword')}</button>
