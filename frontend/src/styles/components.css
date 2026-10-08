@@ -566,6 +566,59 @@ tr.is-off td:last-child { opacity: 1; }
 .people-list li { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border-light); border-radius: 14px; }
 .people-list .cell-stack { flex: 1; }
 
+/* Tabs and the message list */
+.tabs { display: flex; gap: 4px; padding: 0 20px; border-bottom: 1px solid var(--border-light); overflow-x: auto; }
+.tabs button { position: relative; padding: 12px 14px 14px; border: 0; background: none; color: var(--text-muted); font: 500 0.9rem var(--font-ui); white-space: nowrap; }
+.tabs button:hover { color: var(--ink); }
+.tabs button.is-on { color: var(--ink); font-weight: 600; }
+.tabs button.is-on::after { content: ''; position: absolute; inset: auto 14px 0; height: 2px; border-radius: 2px; background: var(--ink); }
+
+.inbox { margin: 0; padding: 0; list-style: none; }
+.inbox li + li { border-top: 1px solid var(--border-light); }
+.inbox-row { display: grid; grid-template-columns: 10px 160px minmax(0, 1fr) auto auto; align-items: center; gap: 16px; width: 100%; padding: 16px 24px; border: 0; background: none; color: var(--text-2); text-align: left; transition: background-color 0.2s var(--ease-out); }
+.inbox-row:hover { background: #faf8f3; }
+.inbox-dot { width: 8px; height: 8px; border-radius: 50%; background: transparent; }
+.inbox-row.is-unread .inbox-dot { background: var(--gold); }
+.inbox-who { overflow: hidden; color: var(--ink); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.inbox-row.is-unread .inbox-who, .inbox-row.is-unread .inbox-subject { font-weight: 700; color: var(--ink); }
+.inbox-text { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.inbox-subject { overflow: hidden; color: var(--text-2); font-size: 0.95rem; text-overflow: ellipsis; white-space: nowrap; }
+.inbox-preview { overflow: hidden; color: var(--text-muted); font-size: 0.85rem; text-overflow: ellipsis; white-space: nowrap; }
+.inbox-when { color: var(--text-muted); font-size: 0.82rem; white-space: nowrap; }
+
+.message-date { margin: 0 0 14px; color: var(--text-muted); font-size: 0.82rem; }
+.message-body { color: var(--ink); font-size: 0.98rem; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+@media (max-width: 760px) {
+  .inbox-row { grid-template-columns: 10px minmax(0, 1fr) auto; row-gap: 4px; padding: 14px 16px; }
+  .inbox-who { grid-column: 2; }
+  .inbox-when { grid-column: 3; }
+  .inbox-text { grid-column: 2 / 4; }
+  .inbox-row .badge { display: none; }
+}
+
+/* Filter bar above a table */
+.filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; padding: 16px 24px; border-bottom: 1px solid var(--border-light); }
+.filters .search-box { align-self: flex-end; width: min(100%, 300px); }
+.filter-field { display: flex; flex-direction: column; gap: 6px; }
+.filter-field > span { color: var(--text-muted); font: 600 0.68rem var(--font-ui); letter-spacing: 0.12em; text-transform: uppercase; }
+.filter-input { width: 200px; padding: 0.5rem 0.9rem; border-radius: 999px; font-size: 0.88rem; }
+.filter-buttons { display: flex; gap: 6px; margin-left: auto; }
+.panel-alert { margin: 20px 24px; }
+.cell-detail { max-width: 320px; color: var(--text-2); }
+.cell-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; }
+
+/* Pagination */
+.pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px; border-top: 1px solid var(--border-light); }
+.pager-count { color: var(--text-muted); font-size: 0.84rem; }
+.pager-count strong { color: var(--ink); font-weight: 600; }
+.pager-buttons { display: flex; align-items: center; gap: 4px; }
+.pager-btn { display: inline-grid; min-width: 36px; height: 36px; padding: 0 8px; place-items: center; border: 1px solid transparent; border-radius: 999px; background: none; color: var(--text-2); font: 500 0.86rem var(--font-ui); transition: background-color 0.2s var(--ease-out), border-color 0.2s var(--ease-out); }
+.pager-btn:hover:not(:disabled):not(.is-current) { background: rgba(11, 31, 23, 0.06); }
+.pager-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.pager-btn.is-current { background: var(--ink); color: var(--ivory); }
+.pager-gap { padding: 0 4px; color: var(--text-faint); }
+
 /* ── Loading ───────────────────────────────────────────────────────────────── */
 .skeleton {
   background: linear-gradient(90deg, #ebe6da 25%, #f3efe5 50%, #ebe6da 75%);

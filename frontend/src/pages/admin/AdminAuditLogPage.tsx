@@ -1,203 +1,207 @@
-import { useEffect, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { auditLogService, AuditLogEntry } from '../../services/admin.service';
+import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
+import { fill } from '../../utils/fill';
 import EmptyState from '../../components/ui/EmptyState';
+import { Icon } from '../../components/ui/Icon';
+import PageHeader from '../../components/ui/PageHeader';
+import Pagination from '../../components/ui/Pagination';
+import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 
-const ACTION_COLORS: Record<string, { color: string; bg: string }> = {
-  CREATE: { color: '#16a34a', bg: '#dcfce7' },
-  UPDATE: { color: '#2563eb', bg: '#dbeafe' },
-  DELETE: { color: '#dc2626', bg: '#fee2e2' },
-  LOGIN:  { color: '#7c3aed', bg: '#ede9fe' },
-  LOGOUT: { color: '#d97706', bg: '#fef3c7' },
-  OTHER:  { color: '#6b7280', bg: '#f3f4f6' },
+const ACTIONS = ['CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'OTHER'] as const;
+
+const ACTION_LABEL: Record<string, string> = {
+  CREATE: 'auCreate',
+  UPDATE: 'auUpdate',
+  DELETE: 'auDelete',
+  LOGIN: 'auLogin',
+  LOGOUT: 'auLogout',
+  OTHER: 'auOther',
 };
 
-const ACTIONS = ['', 'CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'OTHER'];
+const ACTION_BADGE: Record<string, string> = {
+  CREATE: 'badge-green',
+  UPDATE: 'badge-blue',
+  DELETE: 'badge-red',
+  LOGIN: 'badge-teal',
+  LOGOUT: 'badge-yellow',
+  OTHER: 'badge-gray',
+};
 
-function ActionBadge({ action }: { action: string }) {
-  const meta = ACTION_COLORS[action] ?? ACTION_COLORS.OTHER;
-  return (
-    <span style={{
-      display: 'inline-block', padding: '2px 8px', borderRadius: 999,
-      fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em',
-      color: meta.color, background: meta.bg,
-    }}>
-      {action}
-    </span>
-  );
+/** Record ids can be long. Show the end of them, and the whole id on hover. */
+const shortId = (id: string) => (id.length > 8 ? `…${id.slice(-6)}` : id);
+
+interface Filters {
+  search: string;
+  action: string;
+  resource: string;
 }
 
+const NO_FILTERS: Filters = { search: '', action: '', resource: '' };
+
 export default function AdminAuditLogPage() {
-  const { toast } = useToast();
+  const { t, locale } = useLanguage();
+  const { success, error: showError } = useToast();
 
-  const [entries, setEntries]     = useState<AuditLogEntry[]>([]);
-  const [loading, setLoading]     = useState(true);
+  const [entries, setEntries] = useState<AuditLogEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [page, setPage]           = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
+  const [meta, setMeta] = useState({ page: 1, pageSize: 25, totalItems: 0, totalPages: 1, hasNext: false, hasPrev: false });
 
-  const [search,   setSearch]   = useState('');
-  const [action,   setAction]   = useState('');
-  const [resource, setResource] = useState('');
+  const [draft, setDraft] = useState<Filters>(NO_FILTERS);
+  const [applied, setApplied] = useState<Filters>(NO_FILTERS);
 
-  const load = useCallback(async (p = 1) => {
-    setLoading(true);
-    try {
-      const res = await auditLogService.getList({ page: p, action, resource, search });
-      setEntries(res.data.data);
-      setPage(res.data.pagination.page);
-      setTotalPages(res.data.pagination.totalPages);
-      setTotalItems(res.data.pagination.totalItems);
-    } catch {
-      toast("We couldn't load the audit log. Please try again.", 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [action, resource, search, toast]);
+  const load = useCallback(
+    async (page: number, filters: Filters) => {
+      setLoading(true);
+      setFailed(false);
+      try {
+        const res = await auditLogService.getList({ page, ...filters });
+        setEntries(res.data.data);
+        setMeta(res.data.pagination);
+      } catch {
+        setFailed(true);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
-  useEffect(() => { load(1); }, [load]);
+  useEffect(() => {
+    load(1, applied);
+  }, [load, applied]);
+
+  const apply = (next: Filters) => {
+    setDraft(next);
+    setApplied(next);
+  };
+
+  const onFilter = (e: FormEvent) => {
+    e.preventDefault();
+    setApplied(draft);
+  };
 
   const handleExport = async () => {
     setExporting(true);
     try {
-      await auditLogService.exportCsv({ action, resource, search });
-      toast('CSV downloaded.', 'success');
+      await auditLogService.exportCsv(applied);
+      success(t('auExported'));
     } catch {
-      toast("We couldn't create the file. Please try again.", 'error');
+      showError(t('auExportError'));
     } finally {
       setExporting(false);
     }
   };
 
+  const when = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+
   return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}
-      style={{ padding: '1.5rem 2rem', maxWidth: 1200 }}>
+    <div>
+      <PageHeader
+        title={t('ptAudit')}
+        subtitle={loading && entries.length === 0 ? undefined : fill(t(meta.totalItems === 1 ? 'auSummaryOne' : 'auSummary'), { n: meta.totalItems.toLocaleString(locale) })}
+        actions={
+          <button className="btn btn-primary btn-sm" onClick={handleExport} disabled={exporting}>
+            <Icon name="download" size={15} />
+            {exporting ? t('auExporting') : t('auExport')}
+          </button>
+        }
+      />
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div>
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text)', margin: 0 }}>Audit Log</h1>
-          <p style={{ color: 'var(--text-faint)', fontSize: '0.85rem', margin: '0.25rem 0 0' }}>
-            {totalItems.toLocaleString()} recorded events
-          </p>
-        </div>
-        <button
-          onClick={handleExport}
-          disabled={exporting}
-          style={{
-            padding: '0.5rem 1rem', borderRadius: 8, border: 'none',
-            background: 'var(--brand-600)', color: '#fff', fontWeight: 600,
-            fontSize: '0.85rem', cursor: exporting ? 'not-allowed' : 'pointer',
-            opacity: exporting ? 0.7 : 1, display: 'flex', alignItems: 'center', gap: 6,
-          }}
-        >
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-          </svg>
-          {exporting ? 'Exporting…' : 'Export CSV'}
-        </button>
-      </div>
+      <Panel title={t('auRecent')} flush>
+        <form className="filters" onSubmit={onFilter}>
+          <div className="search-box">
+            <Icon name="search" size={16} className="icon" />
+            <input
+              type="search"
+              aria-label={t('auSearch')}
+              placeholder={t('auSearch')}
+              value={draft.search}
+              onChange={(e) => setDraft((d) => ({ ...d, search: e.target.value }))}
+            />
+          </div>
 
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-        <input
-          type="text"
-          placeholder="Search email or detail…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && load(1)}
-          style={{ padding: '0.45rem 0.75rem', borderRadius: 8, border: '1.5px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '0.85rem', width: 240 }}
-        />
-        <select
-          value={action}
-          onChange={e => setAction(e.target.value)}
-          style={{ padding: '0.45rem 0.75rem', borderRadius: 8, border: '1.5px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '0.85rem' }}
-        >
-          {ACTIONS.map(a => <option key={a} value={a}>{a || 'All actions'}</option>)}
-        </select>
-        <input
-          type="text"
-          placeholder="Resource (Farm, User…)"
-          value={resource}
-          onChange={e => setResource(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && load(1)}
-          style={{ padding: '0.45rem 0.75rem', borderRadius: 8, border: '1.5px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '0.85rem', width: 180 }}
-        />
-        <button
-          onClick={() => load(1)}
-          style={{ padding: '0.45rem 1rem', borderRadius: 8, border: 'none', background: 'var(--brand-600)', color: '#fff', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
-        >
-          Filter
-        </button>
-        <button
-          onClick={() => { setSearch(''); setAction(''); setResource(''); }}
-          style={{ padding: '0.45rem 0.75rem', borderRadius: 8, border: '1.5px solid var(--border)', background: 'transparent', color: 'var(--text-faint)', fontWeight: 500, fontSize: '0.85rem', cursor: 'pointer' }}
-        >
-          Clear
-        </button>
-      </div>
+          <label className="filter-field">
+            <span>{t('auFieldAction')}</span>
+            <select
+              className="inline-select"
+              value={draft.action}
+              onChange={(e) => apply({ ...draft, action: e.target.value })}
+            >
+              <option value="">{t('auAllActions')}</option>
+              {ACTIONS.map((a) => <option key={a} value={a}>{t(ACTION_LABEL[a])}</option>)}
+            </select>
+          </label>
 
-      {/* Table */}
-      <div style={{ background: 'var(--surface)', borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden' }}>
-        {loading ? (
-          <SkeletonTable rows={10} cols={7} />
+          <label className="filter-field">
+            <span>{t('auFieldResource')}</span>
+            <input
+              className="form-input filter-input"
+              placeholder={t('auResourcePlaceholder')}
+              value={draft.resource}
+              onChange={(e) => setDraft((d) => ({ ...d, resource: e.target.value }))}
+            />
+          </label>
+
+          <div className="filter-buttons">
+            <button type="submit" className="btn btn-secondary btn-sm">{t('auFilter')}</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => apply(NO_FILTERS)}>{t('auClear')}</button>
+          </div>
+        </form>
+
+        {failed ? (
+          <div className="alert alert-error panel-alert" role="alert">
+            <span style={{ flex: 1 }}>{t('auLoadError')}</span>
+            <button type="button" className="btn btn-secondary btn-xs" onClick={() => load(meta.page, applied)}>{t('btnRetry')}</button>
+          </div>
+        ) : loading ? (
+          <SkeletonTable rows={8} cols={6} />
         ) : entries.length === 0 ? (
-          <EmptyState title="No events found" description="Try adjusting your filters." />
+          <EmptyState icon={<Icon name="audit" size={22} />} title={t('auNone')} description={t('auNoneBody')} />
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+          <div className="table-wrapper">
+            <table className="table-stack">
               <thead>
-                <tr style={{ borderBottom: '1.5px solid var(--border)', background: 'var(--surface-alt, var(--surface))' }}>
-                  {['Name', 'Email', 'Action', 'Resource', 'Detail', 'IP', 'Timestamp'].map(h => (
-                    <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 700, color: 'var(--text-faint)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.07em', whiteSpace: 'nowrap' }}>{h}</th>
-                  ))}
+                <tr>
+                  <th>{t('auColWho')}</th>
+                  <th>{t('auColAction')}</th>
+                  <th>{t('auColResource')}</th>
+                  <th>{t('auColDetail')}</th>
+                  <th>{t('auColIp')}</th>
+                  <th>{t('auColWhen')}</th>
                 </tr>
               </thead>
               <tbody>
-                {entries.map((e, i) => (
-                  <tr key={e.id} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.015)' }}>
-                    <td style={{ padding: '0.65rem 1rem', color: 'var(--text)', fontWeight: 600, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.userName || '—'}</td>
-                    <td style={{ padding: '0.65rem 1rem', color: 'var(--text-faint)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.userEmail || '—'}</td>
-                    <td style={{ padding: '0.65rem 1rem' }}><ActionBadge action={e.action} /></td>
-                    <td style={{ padding: '0.65rem 1rem', color: 'var(--text-faint)' }}>
-                      {e.resource}{e.resourceId ? <span style={{ color: 'var(--text-faint)', fontSize: '0.75rem' }}> #{e.resourceId}</span> : null}
+                {entries.map((e) => (
+                  <tr key={e.id} className="tbody-row">
+                    <td className="cell-lead">
+                      <div className="cell-stack">
+                        <span className="cell-strong">{e.userName || t('auSystem')}</span>
+                        {e.userEmail ? <span className="cell-sub">{e.userEmail}</span> : null}
+                      </div>
                     </td>
-                    <td style={{ padding: '0.65rem 1rem', color: 'var(--text)', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.detail || '—'}</td>
-                    <td style={{ padding: '0.65rem 1rem', color: 'var(--text-faint)', fontFamily: 'monospace', fontSize: '0.78rem' }}>{e.ipAddress || '—'}</td>
-                    <td style={{ padding: '0.65rem 1rem', color: 'var(--text-faint)', whiteSpace: 'nowrap', fontSize: '0.78rem' }}>
-                      {new Date(e.createdAt).toLocaleString()}
+                    <td data-label={t('auColAction')}>
+                      <span className={`badge ${ACTION_BADGE[e.action] ?? 'badge-gray'}`}>{t(ACTION_LABEL[e.action] ?? 'auOther')}</span>
                     </td>
+                    <td data-label={t('auColResource')} className="cell-muted" title={e.resourceId || undefined}>
+                      {e.resource}{e.resourceId ? ` #${shortId(e.resourceId)}` : ''}
+                    </td>
+                    <td data-label={t('auColDetail')} className="cell-trim cell-detail">{e.detail || '-'}</td>
+                    <td data-label={t('auColIp')} className="cell-muted cell-mono">{e.ipAddress || '-'}</td>
+                    <td data-label={t('auColWhen')} className="cell-muted cell-nowrap">{when.format(new Date(e.createdAt))}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-      </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '1.25rem' }}>
-          <button
-            disabled={page <= 1}
-            onClick={() => load(page - 1)}
-            style={{ padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid var(--border)', background: 'transparent', color: page <= 1 ? 'var(--text-faint)' : 'var(--text)', cursor: page <= 1 ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: '0.85rem' }}
-          >
-            ← Prev
-          </button>
-          <span style={{ color: 'var(--text-faint)', fontSize: '0.85rem' }}>Page {page} of {totalPages}</span>
-          <button
-            disabled={page >= totalPages}
-            onClick={() => load(page + 1)}
-            style={{ padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid var(--border)', background: 'transparent', color: page >= totalPages ? 'var(--text-faint)' : 'var(--text)', cursor: page >= totalPages ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: '0.85rem' }}
-          >
-            Next →
-          </button>
-        </div>
-      )}
-    </motion.div>
+        {!failed && !loading && <Pagination meta={meta} onPage={(p) => load(p, applied)} />}
+      </Panel>
+    </div>
   );
 }
