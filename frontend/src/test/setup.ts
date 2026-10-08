@@ -6,16 +6,28 @@ afterEach(() => {
   cleanup();
 });
 
-// jsdom has no matchMedia. Tests can flip reduced motion with setReducedMotion.
-let reduced = false;
+// jsdom has no matchMedia. Tests flip these flags to simulate user settings.
+const media = { reduced: false, coarse: false };
 export function setReducedMotion(value: boolean) {
-  reduced = value;
+  media.reduced = value;
 }
+export function setCoarsePointer(value: boolean) {
+  media.coarse = value;
+}
+
+afterEach(() => {
+  media.reduced = false;
+  media.coarse = false;
+});
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: (query: string) => ({
-    matches: query.includes('prefers-reduced-motion') ? reduced : false,
+    matches: query.includes('prefers-reduced-motion')
+      ? media.reduced
+      : query.includes('pointer: coarse')
+        ? media.coarse
+        : false,
     media: query,
     onchange: null,
     addEventListener: () => {},
