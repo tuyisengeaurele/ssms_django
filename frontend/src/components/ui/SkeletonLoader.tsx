@@ -33,13 +33,10 @@ export function SkeletonText({ lines = 3, lastWidth = '60%' }: { lines?: number;
 
 export function SkeletonStatCard() {
   return (
-    <div className="skeleton-card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-        <Skeleton width={80} height={12} className="skeleton-text" />
-        <Skeleton width={36} height={36} className="skeleton-circle" />
-      </div>
-      <Skeleton width={60} height={28} style={{ marginBottom: '0.5rem', borderRadius: '6px' }} />
-      <Skeleton width={100} height={10} className="skeleton-text" />
+    <div className="skeleton-card" aria-hidden="true">
+      <Skeleton width={90} height={11} className="skeleton-text" style={{ marginBottom: 18 }} />
+      <Skeleton width={64} height={34} style={{ marginBottom: 12, borderRadius: 8 }} />
+      <Skeleton width={110} height={11} className="skeleton-text" />
     </div>
   );
 }
