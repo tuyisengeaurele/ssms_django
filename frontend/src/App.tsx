@@ -1,10 +1,10 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ui/ProtectedRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
 
-import LandingPage        from './pages/LandingPage';
 import LoginPage          from './pages/auth/LoginPage';
 import RegisterPage       from './pages/auth/RegisterPage';
 import ForgotPasswordPage  from './pages/auth/ForgotPasswordPage';
@@ -36,6 +36,9 @@ import PrivacyPolicyPage  from './pages/PrivacyPolicyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
 import NotFoundPage       from './pages/NotFoundPage';
 import { ErrorBoundary }  from './components/ui/ErrorBoundary';
+
+// The landing page brings its own fonts and animation code, so load it only when visited.
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 
 function Unauthorized() {
   return (
@@ -115,7 +118,14 @@ export default function App() {
           <Route path="/terms"   element={<TermsOfServicePage />} />
 
           {/* Default */}
-          <Route path="/"  element={<LandingPage />} />
+          <Route
+            path="/"
+            element={
+              <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F6F3EC' }} />}>
+                <LandingPage />
+              </Suspense>
+            }
+          />
           <Route path="*"  element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
