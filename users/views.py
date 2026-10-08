@@ -22,7 +22,7 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data, context={'request': request})
         if not serializer.is_valid():
-            return api_error('Validation failed.', 422, serializer.errors)
+            return api_error('Please check what you entered and try again.', 422, serializer.errors)
         user = serializer.save()
         log_action(request, 'CREATE', 'User', user.pk, f'Registered: {user.email}')
         try:
@@ -49,7 +49,7 @@ class LoginView(APIView):
             non_field = errors.get('non_field_errors', [])
             if non_field:
                 return api_error(str(non_field[0]), 401)
-            return api_error('Validation failed.', 422, errors)
+            return api_error('Please check what you entered and try again.', 422, errors)
         user = serializer.validated_data['user']
         tokens = get_tokens_for_user(user)
         log_action(request, 'LOGIN', 'User', user.pk, f'Login: {user.email}', actor=user)
@@ -70,9 +70,9 @@ class ProfileView(APIView):
     def patch(self, request):
         name = request.data.get('name', '').strip()
         if not name:
-            return api_error('Name is required.', 422)
+            return api_error('Please enter your name.', 422)
         if len(name) > 100:
-            return api_error('Name cannot exceed 100 characters.', 422)
+            return api_error('Please keep your name under 100 characters.', 422)
         request.user.name = name
         request.user.save(update_fields=['name'])
         return api_success(UserSerializer(request.user).data, 'Profile updated.')
@@ -148,24 +148,24 @@ class ChangePasswordView(APIView):
         confirm  = (request.data.get('confirmPassword') or '').strip()
 
         if not current or not new_pass or not confirm:
-            return api_error('All fields are required.', 422)
+            return api_error('Please fill in every field.', 422)
 
         user = authenticate(request=request, email=request.user.email, password=current)
         if not user:
-            return api_error('Current password is incorrect.', 400)
+            return api_error("Your current password isn't right. Please try again.", 400)
 
         if len(new_pass) < 8:
-            return api_error('New password must be at least 8 characters.', 422)
+            return api_error('Your new password needs at least 8 characters.', 422)
         if not re.search(r'[A-Z]', new_pass):
-            return api_error('New password must contain at least one uppercase letter.', 422)
+            return api_error('Your new password needs at least one uppercase letter.', 422)
         if not re.search(r'[a-z]', new_pass):
-            return api_error('New password must contain at least one lowercase letter.', 422)
+            return api_error('Your new password needs at least one lowercase letter.', 422)
         if not re.search(r'\d', new_pass):
-            return api_error('New password must contain at least one digit.', 422)
+            return api_error('Your new password needs at least one number.', 422)
         if new_pass != confirm:
-            return api_error('Passwords do not match.', 422)
+            return api_error("The two passwords don't match.", 422)
         if new_pass == current:
-            return api_error('New password must be different from the current password.', 422)
+            return api_error('Please choose a new password that is different from the current one.', 422)
 
         request.user.set_password(new_pass)
         request.user.save(update_fields=['password'])

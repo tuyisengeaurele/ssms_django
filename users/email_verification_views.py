@@ -53,16 +53,16 @@ class VerifyEmailView(APIView):
         token = request.data.get('token', '')
 
         if not uid_b64 or not token:
-            return api_error('uid and token are required.', 422)
+            return api_error('This link is incomplete. Please request a new one.', 422)
 
         try:
             uid = force_str(urlsafe_base64_decode(uid_b64))
             user = User.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            return api_error('Invalid or expired verification link.', 400)
+            return api_error("This verification link has expired or isn't valid. Please request a new one.", 400)
 
         if not user.is_active:
-            return api_error('This account has been deactivated.', 400)
+            return api_error('This account has been turned off. Please contact your administrator.', 400)
 
         if user.is_email_verified:
             tokens = get_tokens_for_user(user)
@@ -74,7 +74,7 @@ class VerifyEmailView(APIView):
             return response
 
         if not default_token_generator.check_token(user, token):
-            return api_error('Invalid or expired verification link.', 400)
+            return api_error("This verification link has expired or isn't valid. Please request a new one.", 400)
 
         user.is_email_verified = True
         user.save(update_fields=['is_email_verified'])
@@ -97,7 +97,7 @@ class ResendVerificationView(APIView):
     def post(self, request):
         email = request.data.get('email', '').strip().lower()
         if not email:
-            return api_error('Email is required.', 422)
+            return api_error('Please enter your email address.', 422)
 
         try:
             user = User.objects.get(email=email)

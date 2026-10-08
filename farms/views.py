@@ -29,14 +29,14 @@ def _get_farm_or_403(pk, user):
     try:
         farm = Farm.objects.select_related('owner').get(pk=pk)
     except Farm.DoesNotExist:
-        return None, api_error('Farm not found.', 404)
+        return None, api_error("We couldn't find that farm.", 404)
     if not farm.is_active:
-        return None, api_error('Farm not found.', 404)
+        return None, api_error("We couldn't find that farm.", 404)
     if user.role == 'FARMER' and farm.owner_id != user.id:
-        return None, api_error('Farm not found.', 404)
+        return None, api_error("We couldn't find that farm.", 404)
     if user.role == 'SUPERVISOR':
         if not user.cooperative_id or farm.owner.cooperative_id != user.cooperative_id:
-            return None, api_error('Farm not found.', 404)
+            return None, api_error("We couldn't find that farm.", 404)
     return farm, None
 
 
@@ -65,10 +65,10 @@ class FarmListCreateView(APIView):
 
     def post(self, request):
         if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error('Forbidden. Insufficient permissions.', 403)
+            return api_error("You don't have permission to do that.", 403)
         serializer = FarmCreateSerializer(data=request.data)
         if not serializer.is_valid():
-            return api_error('Validation failed.', 422, serializer.errors)
+            return api_error('Please check what you entered and try again.', 422, serializer.errors)
         farm = Farm.objects.create(
             owner=request.user,
             **serializer.validated_data,
@@ -102,20 +102,20 @@ class FarmDetailView(APIView):
 
     def patch(self, request, pk):
         if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error('Forbidden. Insufficient permissions.', 403)
+            return api_error("You don't have permission to do that.", 403)
         farm, err = _get_farm_or_403(pk, request.user)
         if err:
             return err
         serializer = FarmUpdateSerializer(farm, data=request.data, partial=True)
         if not serializer.is_valid():
-            return api_error('Validation failed.', 422, serializer.errors)
+            return api_error('Please check what you entered and try again.', 422, serializer.errors)
         serializer.save()
         log_action(request, 'UPDATE', 'Farm', farm.pk, f'Updated farm: {farm.name}')
         return api_success(FarmSerializer(farm).data, 'Farm updated.')
 
     def delete(self, request, pk):
         if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error('Forbidden. Insufficient permissions.', 403)
+            return api_error("You don't have permission to do that.", 403)
         farm, err = _get_farm_or_403(pk, request.user)
         if err:
             return err

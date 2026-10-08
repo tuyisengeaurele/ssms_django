@@ -29,17 +29,17 @@ class RegisterSerializer(serializers.Serializer):
 
     def validate_email(self, value):
         if User.objects.filter(email=value.lower()).exists():
-            raise serializers.ValidationError('An account with this email already exists.')
+            raise serializers.ValidationError('An account with this email already exists. Try signing in instead.')
         return value.lower()
 
     def validate_password(self, value):
         import re
         if not re.search(r'[A-Z]', value):
-            raise serializers.ValidationError('Password must contain at least one uppercase letter.')
+            raise serializers.ValidationError('Your password needs at least one uppercase letter.')
         if not re.search(r'[a-z]', value):
-            raise serializers.ValidationError('Password must contain at least one lowercase letter.')
+            raise serializers.ValidationError('Your password needs at least one lowercase letter.')
         if not re.search(r'\d', value):
-            raise serializers.ValidationError('Password must contain at least one digit.')
+            raise serializers.ValidationError('Your password needs at least one number.')
         return value
 
     def create(self, validated_data):

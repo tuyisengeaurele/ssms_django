@@ -26,9 +26,9 @@ class ContactCreateView(APIView):
         message = (request.data.get('message') or '').strip()
 
         if not name or not email or not subject or not message:
-            return api_error('All fields are required.', 400)
+            return api_error('Please fill in every field.', 400)
         if len(message) < 10:
-            return api_error('Message must be at least 10 characters.', 400)
+            return api_error('Please write a little more, at least 10 characters.', 400)
 
         msg = ContactMessage.objects.create(
             name=name, email=email, subject=subject, message=message
@@ -91,18 +91,18 @@ class ContactListView(APIView):
 
     def get(self, request):
         if request.user.role != 'ADMIN':
-            return api_error('Admin access required.', 403)
+            return api_error('Only administrators can do that.', 403)
         messages = ContactMessage.objects.all().order_by('-created_at')
         return api_success([_serialize_message(m) for m in messages])
 
     def patch(self, request, pk):
         """PATCH /api/admin/contacts/:id/read, mark as read."""
         if request.user.role != 'ADMIN':
-            return api_error('Admin access required.', 403)
+            return api_error('Only administrators can do that.', 403)
         try:
             msg = ContactMessage.objects.get(pk=pk)
         except ContactMessage.DoesNotExist:
-            return api_error('Message not found.', 404)
+            return api_error("We couldn't find that message.", 404)
         msg.is_read = True
         msg.save(update_fields=['is_read'])
         return api_success({'id': msg.id, 'isRead': True})
@@ -117,7 +117,7 @@ class ContactUnreadView(APIView):
 
     def get(self, request):
         if request.user.role != 'ADMIN':
-            return api_error('Admin access required.', 403)
+            return api_error('Only administrators can do that.', 403)
         unread = ContactMessage.objects.filter(is_read=False).order_by('-created_at')
         data = {
             'count':    unread.count(),

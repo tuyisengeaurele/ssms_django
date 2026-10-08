@@ -13,7 +13,7 @@ User = get_user_model()
 
 def _require_admin(user):
     if user.role != 'ADMIN':
-        return api_error('Forbidden. Admin only.', 403)
+        return api_error('Only administrators can do that.', 403)
     return None
 
 
@@ -35,7 +35,7 @@ class AdminUserListCreateView(APIView):
             return err
         serializer = RegisterSerializer(data=request.data, context={'request': request})
         if not serializer.is_valid():
-            return api_error('Validation failed.', 422, serializer.errors)
+            return api_error('Please check what you entered and try again.', 422, serializer.errors)
         user = serializer.save()
         log_action(request, 'CREATE', 'User', user.pk, f'Admin created user {user.email} with role {user.role}')
         return api_success(UserSerializer(user).data, 'User created.', 201)
@@ -50,15 +50,15 @@ class AdminUserRoleView(APIView):
         if err:
             return err
         if user_id == request.user.id:
-            return api_error('You cannot change your own role.', 400)
+            return api_error("You can't change your own role.", 400)
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
-            return api_error('User not found.', 404)
+            return api_error("We couldn't find that user.", 404)
 
         new_role = request.data.get('role')
         if new_role not in ('ADMIN', 'SUPERVISOR', 'FARMER'):
-            return api_error('role must be ADMIN, SUPERVISOR, or FARMER.', 400)
+            return api_error('Please choose a valid role.', 400)
 
         old_role = user.role
         user.role = new_role
@@ -76,11 +76,11 @@ class AdminUserDeactivateView(APIView):
         if err:
             return err
         if user_id == request.user.id:
-            return api_error('You cannot deactivate yourself.', 400)
+            return api_error("You can't turn off your own account.", 400)
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
-            return api_error('User not found.', 404)
+            return api_error("We couldn't find that user.", 404)
 
         user.is_active = False
         user.save(update_fields=['is_active'])
@@ -99,14 +99,14 @@ class AdminUserCooperativeView(APIView):
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
-            return api_error('User not found.', 404)
+            return api_error("We couldn't find that user.", 404)
 
         # CamelCaseJSONParser converts incoming camelCase → snake_case
         cooperative_id = request.data.get('cooperative_id')
 
         # Admins manage cooperatives globally — they cannot belong to one
         if user.role == 'ADMIN':
-            return api_error('Admin users cannot be assigned to a cooperative.', 400)
+            return api_error("Administrators don't belong to a cooperative.", 400)
 
         if cooperative_id is None or cooperative_id == '':
             # Unassign
@@ -115,7 +115,7 @@ class AdminUserCooperativeView(APIView):
             try:
                 coop = Cooperative.objects.get(pk=cooperative_id, is_active=True)
             except Cooperative.DoesNotExist:
-                return api_error('Cooperative not found.', 404)
+                return api_error("We couldn't find that cooperative.", 404)
             user.cooperative = coop
 
         user.save(update_fields=['cooperative'])

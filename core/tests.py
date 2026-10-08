@@ -115,3 +115,57 @@ class FriendlyErrorMessages(SimpleTestCase):
             self.assertNotIn(chr(0x2014), text)
             self.assertNotIn(chr(0x2013), text)
             self.assertNotRegex(text, r'(?i)token|credentials|forbidden|unauthori[sz]ed|resource')
+
+
+class FriendlyWordingInSource(SimpleTestCase):
+    """Every message a person can read must be kind, plain and free of internals."""
+
+    BANNED = [
+        (r'Forbidden', 'say what the person cannot do instead'),
+        (r'Insufficient', 'say what the person cannot do instead'),
+        (r'Validation failed', 'ask them to check what they entered'),
+        (r'AI service|port \d{4}|\{exc\}|\{response', 'do not expose internals'),
+        (r'Invalid or expired', 'explain the next step'),
+        (r'\b(uid|newPassword|batchId)\b', 'do not name request fields'),
+        (r'is required\.', 'ask politely, for example "Please enter ..."'),
+        (r'\b\w+ not found\.', 'say "We couldn\'t find that ..."'),
+        (r'\bmust\b', 'say what is needed instead'),
+        (r'access required|out of range', 'say it in plain words'),
+    ]
+
+    def messages(self):
+        import ast
+        import pathlib
+
+        root = pathlib.Path(__file__).resolve().parent.parent
+        skip = {'venv', 'migrations', 'node_modules', 'scripts', 'frontend', 'ai_service', 'docs'}
+        for path in root.rglob('*.py'):
+            parts = set(path.relative_to(root).parts)
+            if parts & skip or path.name.startswith('test'):
+                continue
+            tree = ast.parse(path.read_text(encoding='utf-8'))
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.Call):
+                    continue
+                func = node.func
+                name = getattr(func, 'id', None) or getattr(func, 'attr', None)
+                if name not in ('api_error', 'ValidationError'):
+                    continue
+                for sub in ast.walk(node):
+                    if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
+                        yield path.relative_to(root), sub.lineno, sub.value
+
+    def test_no_message_uses_cold_or_technical_wording(self):
+        import re
+
+        problems = []
+        for path, line, text in self.messages():
+            for pattern, hint in self.BANNED:
+                if re.search(pattern, text):
+                    problems.append(f'{path}:{line}: {text!r} ({hint})')
+        self.assertEqual(problems, [], '\n' + '\n'.join(problems))
+
+    def test_no_message_uses_dashes(self):
+        for path, line, text in self.messages():
+            self.assertNotIn(chr(0x2014), text, f'{path}:{line}')
+            self.assertNotIn(chr(0x2013), text, f'{path}:{line}')

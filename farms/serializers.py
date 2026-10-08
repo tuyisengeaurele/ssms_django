@@ -50,12 +50,12 @@ class FarmCreateSerializer(serializers.ModelSerializer):
 
     def validate_name(self, value):
         if not value.strip():
-            raise serializers.ValidationError('Farm name is required.')
+            raise serializers.ValidationError('Please enter a name for the farm.')
         return value.strip()
 
     def validate_location(self, value):
         if not value.strip():
-            raise serializers.ValidationError('Location is required.')
+            raise serializers.ValidationError('Please enter where the farm is.')
         return value.strip()
 
 
