@@ -42,7 +42,7 @@ export default function PrivacyPolicyPage() {
         <p style={{ fontSize: '0.8rem', color: 'var(--text-faint)', marginBottom: '0.5rem' }}>Last updated: {LAST_UPDATED}</p>
         <h1 style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.03em', marginBottom: '0.5rem' }}>Privacy Policy</h1>
         <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '2.5rem' }}>
-          This Privacy Policy explains how the Silkworm Smart Management System (<strong>"SSMS"</strong>, <strong>"we"</strong>, <strong>"our"</strong>) collects, uses, and protects information about users of the platform. By registering or using SSMS you agree to this policy.
+          This Privacy Policy explains how the Smart Sericulture Management System (<strong>"SSMS"</strong>, <strong>"we"</strong>, <strong>"our"</strong>) collects, uses, and protects information about users of the platform. By registering or using SSMS you agree to this policy.
         </p>
 
         <Section title="1. Information We Collect">
@@ -69,7 +69,7 @@ export default function PrivacyPolicyPage() {
 
         <Section title="3. Data Storage & Security">
           <p>
-            Your data is stored on PostgreSQL databases hosted on Railway/Render infrastructure. Disease-detection images are stored on Cloudinary (Cloudinary's privacy policy applies to that data). We use industry-standard measures — JWT authentication with token blacklisting, bcrypt password hashing, HTTPS/TLS in transit, and HSTS headers — to protect your information.
+            Your data is stored on PostgreSQL databases hosted on Railway/Render infrastructure. Disease-detection images are stored on Cloudinary (Cloudinary's privacy policy applies to that data). We use industry-standard measures: JWT authentication with token blacklisting, bcrypt password hashing, HTTPS/TLS in transit, and HSTS headers, to protect your information.
           </p>
           <p style={{ marginTop: '0.5rem' }}>
             No method of transmission or storage is 100 % secure. We will notify affected users promptly in the event of a confirmed data breach.
@@ -78,7 +78,7 @@ export default function PrivacyPolicyPage() {
 
         <Section title="4. Cookies & Local Storage">
           <p>
-            SSMS stores your authentication token and language preference in browser localStorage. We do not use third-party tracking cookies or advertising cookies. You can clear localStorage at any time via your browser settings.
+            SSMS stores your authentication token and language preference in browser localStorage. We do not use third-party tracking cookies or advertising cookies. Because we store only these two things, the site does not show a cookie banner. You can clear localStorage at any time via your browser settings.
           </p>
         </Section>
 
@@ -104,9 +104,9 @@ export default function PrivacyPolicyPage() {
         <Section title="7. Third-Party Services">
           <p>SSMS integrates with the following external services:</p>
           <ul style={{ paddingLeft: '1.25rem', marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-            <li><strong>Cloudinary</strong> — image storage for disease-detection uploads.</li>
-            <li><strong>Sentry</strong> — anonymous error monitoring (PII is not sent).</li>
-            <li><strong>Railway / Render</strong> — cloud hosting infrastructure.</li>
+            <li><strong>Cloudinary</strong>: image storage for disease-detection uploads.</li>
+            <li><strong>Sentry</strong>: anonymous error monitoring (PII is not sent).</li>
+            <li><strong>Railway / Render</strong>: cloud hosting infrastructure.</li>
           </ul>
           <p style={{ marginTop: '0.75rem' }}>Each third-party service has its own privacy policy. We do not share personal data with them beyond what is technically required.</p>
         </Section>

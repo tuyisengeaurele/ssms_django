@@ -1,6 +1,6 @@
-# SSMS — Silkworm Smart Management System
+# SSMS: Smart Sericulture Management System
 
-A full-stack web application for managing silkworm farming operations — tracking farms, batches, lifecycle stages, sensor readings, disease detections, and automated alerts.
+A full-stack web application for managing silkworm farming operations. It tracks farms, batches, lifecycle stages, sensor readings, disease detections, and automated alerts.
 
 ## Tech Stack
 
@@ -66,8 +66,8 @@ All responses follow the envelope: `{ "success": bool, "message": str, "data": a
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| POST | `/auth/register` | — | Register new user |
-| POST | `/auth/login` | — | Login, receive JWT |
+| POST | `/auth/register` | None | Register new user |
+| POST | `/auth/login` | None | Login, receive JWT |
 | GET | `/auth/me` | JWT | Current user profile |
 | GET | `/farms/` | JWT | List farms (role-filtered) |
 | POST | `/farms/` | JWT FARMER/ADMIN | Create farm |
@@ -83,7 +83,7 @@ All responses follow the envelope: `{ "success": bool, "message": str, "data": a
 | GET | `/sensors/batch/<batchId>` | JWT | Last 100 readings |
 | GET | `/alerts/batch/<batchId>` | JWT | Alerts for batch |
 | PATCH | `/alerts/<id>/read` | JWT | Mark alert as read |
-| GET | `/health/` | — | Health check |
+| GET | `/health/` | None | Health check |
 
 ## Demo Accounts
 

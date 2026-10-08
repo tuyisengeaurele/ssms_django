@@ -4,7 +4,7 @@ html { scroll-behavior: smooth; }
 
 /* ── Design Tokens ──────────────────────────────────────────────────────────── */
 :root {
-  /* Brand — extracted from SSMS logo */
+  /* Brand: extracted from SSMS logo */
   --brand-950:  #071410;
   --brand-900:  #0D1F15;
   --brand-850:  #142A1D;
@@ -19,7 +19,7 @@ html { scroll-behavior: smooth; }
   --brand-100:  #D8F3DC;
   --brand-50:   #F0FDF4;
 
-  /* Accent — bright lime from logo "SERICULTURE" text */
+  /* Accent: bright lime from logo "SERICULTURE" text */
   --accent-600: #4CAF50;
   --accent-500: #5DBE54;
   --accent-400: #74C96B;
@@ -1350,7 +1350,7 @@ tr.tbody-row:hover td { background: var(--gray-50); }
   .table-header { padding: 0.875rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
 }
 
-/* Stat cards — single column on phones */
+/* Stat cards: single column on phones */
 @media (max-width: 640px) {
   .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
   .stat-card { padding: 1rem 1.125rem 0.875rem; }
@@ -1370,7 +1370,7 @@ tr.tbody-row:hover td { background: var(--gray-50); }
   .auth-card { max-width: 100%; }
 }
 
-/* Modal — full-width on phones */
+/* Modal: full-width on phones */
 @media (max-width: 520px) {
   .modal-overlay { align-items: flex-end; padding: 0; }
   .modal-box {

@@ -42,7 +42,7 @@ export default function TermsOfServicePage() {
         <p style={{ fontSize: '0.8rem', color: 'var(--text-faint)', marginBottom: '0.5rem' }}>Last updated: {LAST_UPDATED}</p>
         <h1 style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.03em', marginBottom: '0.5rem' }}>Terms of Service</h1>
         <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '2.5rem' }}>
-          Please read these Terms of Service carefully before using the Silkworm Smart Management System (<strong>"SSMS"</strong>). By creating an account or accessing the platform you agree to be bound by these terms.
+          Please read these Terms of Service carefully before using the Smart Sericulture Management System (<strong>"SSMS"</strong>). By creating an account or accessing the platform you agree to be bound by these terms.
         </p>
 
         <Section title="1. Acceptance of Terms">
@@ -109,7 +109,7 @@ export default function TermsOfServicePage() {
 
         <Section title="10. Limitation of Liability">
           <p>
-            To the maximum extent permitted by law, SSMS and its developers shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of — or inability to use — the platform, including but not limited to crop losses, data loss, or business interruption.
+            To the maximum extent permitted by law, SSMS and its developers shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of, or inability to use, the platform, including but not limited to crop losses, data loss, or business interruption.
           </p>
         </Section>
 
