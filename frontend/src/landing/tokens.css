@@ -1,0 +1,88 @@
+/* Landing page tokens. Scoped to .landing so the app shell keeps its own look. */
+.landing {
+  --l-ink: #0B1F17;
+  --l-paper: #F6F3EC;
+  --l-ivory: #FBF9F4;
+  --l-leaf: #2D6A4F;
+  --l-gold: #C8923A;
+  --l-muted: #5B6B63;
+
+  --l-font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
+  --l-font-ui: 'Geist Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --l-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --l-radius-card: 28px;
+  --l-radius-tile: 16px;
+  --l-hairline: rgba(11, 31, 23, 0.08);
+  --l-shadow-soft: 0 1px 2px rgba(11, 31, 23, 0.06), 0 12px 32px rgba(11, 31, 23, 0.1);
+  --l-shadow-lift: 0 2px 4px rgba(11, 31, 23, 0.08), 0 28px 64px rgba(11, 31, 23, 0.18);
+
+  --l-gutter: clamp(16px, 4vw, 48px);
+  --l-width: 1200px;
+  --l-section: clamp(72px, 12vw, 160px);
+
+  background: var(--l-paper);
+  color: var(--l-ink);
+  font-family: var(--l-font-ui);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.landing *,
+.landing *::before,
+.landing *::after {
+  box-sizing: border-box;
+}
+
+.landing h1,
+.landing h2,
+.landing h3 {
+  font-family: var(--l-font-display);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.landing p {
+  text-wrap: pretty;
+}
+
+.landing a {
+  color: inherit;
+}
+
+.landing :focus-visible {
+  outline: 2px solid var(--l-gold);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.landing .l-container {
+  width: min(100% - var(--l-gutter) * 2, var(--l-width));
+  margin-inline: auto;
+}
+
+.landing .l-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing *,
+  .landing *::before,
+  .landing *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
