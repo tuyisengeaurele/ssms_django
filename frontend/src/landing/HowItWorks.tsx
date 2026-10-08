@@ -1,8 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { AlertsMock } from './mockups/AlertsMock';
-import { DashboardMock } from './mockups/DashboardMock';
-import { DiseaseMock } from './mockups/DiseaseMock';
+import { DiseaseCard } from './cards/DiseaseCard';
+import { HarvestCard } from './cards/HarvestCard';
+import { NewBatchCard } from './cards/NewBatchCard';
+import { ReadingsCard } from './cards/ReadingsCard';
 import { Reveal } from './motion/Reveal';
 import { usePrefersReducedMotion } from './motion/usePrefersReducedMotion';
 import { useScrollProgress } from './motion/useScrollProgress';
@@ -42,19 +43,22 @@ interface Step {
 function useSteps(): Step[] {
   const { t } = useLanguage();
   return [
-    { title: t('lpStep1Title'), body: t('lpStep1Body'), screen: <DashboardMock /> },
-    { title: t('lpStep2Title'), body: t('lpStep2Body'), screen: <AlertsMock /> },
-    { title: t('lpStep3Title'), body: t('lpStep3Body'), screen: <DiseaseMock /> },
-    { title: t('lpStep4Title'), body: t('lpStep4Body'), screen: <DashboardMock variant="harvest" /> },
+    { title: t('lpStep1Title'), body: t('lpStep1Body'), screen: <NewBatchCard /> },
+    { title: t('lpStep2Title'), body: t('lpStep2Body'), screen: <ReadingsCard /> },
+    { title: t('lpStep3Title'), body: t('lpStep3Body'), screen: <DiseaseCard /> },
+    { title: t('lpStep4Title'), body: t('lpStep4Body'), screen: <HarvestCard /> },
   ];
 }
 
 function Title() {
   const { t } = useLanguage();
   return (
-    <h2 id="how-title" className="l-how__title">
-      {t('lpHowTitle')}
-    </h2>
+    <>
+      <p className="l-eyebrow">{t('lpHowEyebrow')}</p>
+      <h2 id="how-title" className="l-how__title">
+        {t('lpHowTitle')}
+      </h2>
+    </>
   );
 }
 

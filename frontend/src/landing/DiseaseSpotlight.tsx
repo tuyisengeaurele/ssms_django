@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { DiseaseMock } from './mockups/DiseaseMock';
+import { DiseaseCard } from './cards/DiseaseCard';
 import { Reveal } from './motion/Reveal';
 import { useInViewOnce } from './motion/useInViewOnce';
 import './spotlight.css';
@@ -14,7 +14,10 @@ export function DiseaseSpotlight() {
     <section className="l-spot" aria-labelledby="spot-title">
       <div className="l-container l-spot__grid">
         <div className="l-spot__copy">
-          <Reveal as="h2" className="l-spot__title">
+          <Reveal as="p" className="l-eyebrow">
+            {t('lpSpotEyebrow')}
+          </Reveal>
+          <Reveal as="h2" className="l-spot__title" delay={60}>
             <span id="spot-title">{t('lpSpotTitle')}</span>
           </Reveal>
           <Reveal as="p" delay={120} className="l-spot__body">
@@ -25,7 +28,7 @@ export function DiseaseSpotlight() {
           </Reveal>
         </div>
         <div className="l-spot__stage" ref={stageRef}>
-          <DiseaseMock className={live ? 'is-live' : undefined} />
+          <DiseaseCard className={live ? 'is-live' : undefined} />
         </div>
       </div>
     </section>

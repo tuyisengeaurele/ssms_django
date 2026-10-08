@@ -59,14 +59,14 @@ describe('HowItWorks', () => {
     const current = container.querySelectorAll('[aria-current="step"]');
     expect(current).toHaveLength(1);
     expect(current[0]).toHaveTextContent('Register your batch');
-    expect(screen.getAllByRole('img', { name: /^Sample/ })).toHaveLength(1);
+    expect(screen.getAllByRole('img', { name: /^Illustration/ })).toHaveLength(1);
   });
 
   it('stacks every step with its own screen when motion is reduced', () => {
     setReducedMotion(true);
     const { container } = renderHow();
     expect(container.querySelector('section')).toHaveClass('how--stacked');
-    expect(screen.getAllByRole('img', { name: /^Sample/ })).toHaveLength(4);
+    expect(screen.getAllByRole('img', { name: /^Illustration/ })).toHaveLength(4);
   });
 
   it('stacks on short screens such as a phone held sideways', () => {

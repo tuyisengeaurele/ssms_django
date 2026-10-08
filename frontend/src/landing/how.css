@@ -16,6 +16,7 @@
   display: flex;
   align-items: center;
   height: 100svh;
+  padding-top: 84px;
   overflow: hidden;
 }
 
@@ -27,9 +28,9 @@
 }
 
 .landing .l-how__title {
-  max-width: 12ch;
-  margin-bottom: clamp(24px, 4vh, 48px);
-  font-size: clamp(2.2rem, 4.6vw, 4rem);
+  max-width: 18ch;
+  margin: 14px 0 clamp(20px, 3.4vh, 40px);
+  font-size: clamp(2rem, 3.8vw, 3.4rem);
   font-weight: 450;
   color: var(--l-ivory);
 }
@@ -115,9 +116,17 @@
   transform: none;
 }
 
-.landing .l-how__screen .l-mock {
-  height: 100%;
+.landing .l-how__screen {
+  display: grid;
+  align-items: center;
+}
+
+.landing .l-how__screen .l-paper {
   box-shadow: 0 40px 90px rgba(0, 0, 0, 0.5);
+}
+
+.landing .l-how .l-eyebrow {
+  color: #e6b865;
 }
 
 /* Stacked: a normal list, each step with its own screen. */

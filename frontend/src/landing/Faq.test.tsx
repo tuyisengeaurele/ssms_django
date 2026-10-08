@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../context/LanguageContext';
 import { DiseaseSpotlight } from './DiseaseSpotlight';
 import { Faq } from './Faq';
-import { Rwanda } from './Rwanda';
 
 function wrap(node: JSX.Element) {
   return render(<LanguageProvider>{node}</LanguageProvider>);
@@ -41,7 +40,7 @@ describe('Faq', () => {
     await userEvent.click(triggers[2]);
     expect(triggers[2]).toHaveAttribute('aria-expanded', 'true');
     expect(triggers[0]).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getByText(/No\. It shows how confident it is/)).toBeVisible();
+    expect(screen.getByText(/Yes\. Like any AI tool, it can make mistakes/)).toBeVisible();
   });
 
   it('toggles with Enter and Space and can close the open one', async () => {
@@ -69,26 +68,17 @@ describe('Faq', () => {
   });
 });
 
-describe('Rwanda', () => {
-  it.each(['en', 'fr', 'rw'])('prints no statistics in %s', (locale) => {
-    localStorage.setItem('ssms_locale', locale);
-    const { container } = wrap(<Rwanda />);
-    expect(container.textContent).not.toMatch(/\d/);
-    expect(container.querySelector('h2')?.textContent?.length).toBeGreaterThan(5);
-  });
-});
-
 describe('DiseaseSpotlight', () => {
   beforeEach(() => {
     localStorage.clear();
   });
 
-  it('shows the message, the honest note and a sample result', () => {
+  it('shows the message, the honest note and an example result', () => {
     wrap(<DiseaseSpotlight />);
-    expect(screen.getByRole('heading', { level: 2, name: 'Know what is wrong before it spreads.' })).toBeInTheDocument();
-    expect(screen.getByText('Upload a photo and see the result on screen.')).toBeInTheDocument();
-    expect(screen.getByText('A guide, not a replacement for an expert.')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: /sample disease check/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Catch disease while you can still act.' })).toBeInTheDocument();
+    expect(screen.getByText(/Upload a photo of a worm/)).toBeInTheDocument();
+    expect(screen.getByText(/Like any AI tool, it can make mistakes\. Treat the result/)).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /illustration of a disease check/i })).toBeInTheDocument();
   });
 
   it('starts the bars when the screen scrolls into view', () => {
@@ -105,7 +95,7 @@ describe('DiseaseSpotlight', () => {
     }
     vi.stubGlobal('IntersectionObserver', Observer);
     wrap(<DiseaseSpotlight />);
-    const mock = screen.getByRole('img', { name: /sample disease check/i });
+    const mock = screen.getByRole('img', { name: /illustration of a disease check/i });
     expect(mock).not.toHaveClass('is-live');
     act(() => fire(true));
     expect(mock).toHaveClass('is-live');

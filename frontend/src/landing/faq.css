@@ -12,6 +12,7 @@
 
 .landing .l-faq__title {
   max-width: 10ch;
+  margin-top: 18px;
   font-size: clamp(2.2rem, 4.6vw, 4rem);
   font-weight: 450;
 }

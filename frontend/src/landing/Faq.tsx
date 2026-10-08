@@ -26,9 +26,14 @@ export function Faq() {
   return (
     <section id="faq" className="l-faq" aria-labelledby="faq-title">
       <div className="l-container l-faq__grid">
-        <Reveal as="h2" className="l-faq__title">
-          <span id="faq-title">{t('lpFaqTitle')}</span>
-        </Reveal>
+        <div>
+          <Reveal as="p" className="l-eyebrow">
+            {t('lpFaqEyebrow')}
+          </Reveal>
+          <Reveal as="h2" className="l-faq__title" delay={60}>
+            <span id="faq-title">{t('lpFaqTitle')}</span>
+          </Reveal>
+        </div>
 
         <div className="l-faq__list">
           {Array.from({ length: COUNT }, (_, i) => {

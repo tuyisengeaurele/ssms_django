@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { LOCALE_LABELS, type Locale } from '../i18n/translations';
 import './nav.css';
 
 const LINKS = [
-  { href: '#product', key: 'lpNavProduct' },
-  { href: '#how', key: 'lpNavHow' },
-  { href: '#contact', key: 'lpNavContact' },
+  { id: 'about', key: 'lpNavAbout' },
+  { id: 'product', key: 'lpNavProduct' },
+  { id: 'how', key: 'lpNavHow' },
+  { id: 'contact', key: 'lpNavContact' },
 ] as const;
 
 const FOCUSABLE = 'a[href], button:not([disabled]), select, [tabindex]:not([tabindex="-1"])';
@@ -25,6 +26,8 @@ function Mark() {
 
 export function Nav() {
   const { t, locale, setLocale } = useLanguage();
+  // On the home page a plain #hash scrolls. On other pages it must go home first.
+  const base = useLocation().pathname === '/' ? '' : '/';
   const [condensed, setCondensed] = useState(false);
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -97,8 +100,8 @@ export function Nav() {
 
         <ul className="l-nav__links">
           {LINKS.map((link) => (
-            <li key={link.href}>
-              <a href={link.href}>{t(link.key)}</a>
+            <li key={link.id}>
+              <a href={`${base}#${link.id}`}>{t(link.key)}</a>
             </li>
           ))}
         </ul>
@@ -138,8 +141,8 @@ export function Nav() {
         >
           <ul>
             {LINKS.map((link) => (
-              <li key={link.href}>
-                <a href={link.href} onClick={() => setOpen(false)}>
+              <li key={link.id}>
+                <a href={`${base}#${link.id}`} onClick={() => setOpen(false)}>
                   {t(link.key)}
                 </a>
               </li>

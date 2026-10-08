@@ -56,7 +56,7 @@
   display: flex;
   align-items: center;
   gap: 20px;
-  width: min(100%, 1040px);
+  width: min(100%, 1120px);
   height: 60px;
   padding: 0 10px 0 18px;
   border: 1px solid var(--l-hairline);
@@ -72,7 +72,7 @@
 }
 
 .landing .l-nav.is-condensed .l-nav__pill {
-  width: min(100%, 860px);
+  width: min(100%, 1000px);
   height: 52px;
   background: rgba(251, 249, 244, 0.9);
   box-shadow: var(--l-shadow-soft);
@@ -106,6 +106,7 @@
   font-size: 0.9rem;
   font-weight: 500;
   text-decoration: none;
+  white-space: nowrap;
   color: var(--l-ink);
   transition: background-color 0.3s var(--l-ease);
 }
@@ -122,6 +123,7 @@
 
 .landing .l-nav__login {
   padding: 8px 12px;
+  white-space: nowrap;
   font-size: 0.9rem;
   font-weight: 500;
   text-decoration: none;
@@ -253,7 +255,7 @@
   padding: 18px 24px;
 }
 
-@media (max-width: 820px) {
+@media (max-width: 1020px) {
   .landing .l-nav__links,
   .landing .l-nav__actions {
     display: none;

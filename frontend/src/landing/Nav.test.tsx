@@ -31,11 +31,23 @@ describe('Nav', () => {
 
   it('shows the English labels and the two actions', () => {
     renderNav();
-    expect(screen.getByRole('link', { name: 'Product' })).toHaveAttribute('href', '#product');
+    expect(screen.getByRole('link', { name: 'Sericulture' })).toHaveAttribute('href', '#about');
+    expect(screen.getByRole('link', { name: 'What it does' })).toHaveAttribute('href', '#product');
     expect(screen.getByRole('link', { name: 'How it works' })).toHaveAttribute('href', '#how');
     expect(screen.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '#contact');
     expect(screen.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
-    expect(screen.getByRole('link', { name: 'Get started' })).toHaveAttribute('href', '/register');
+    expect(screen.getByRole('link', { name: 'Create account' })).toHaveAttribute('href', '/register');
+  });
+
+  it('points the section links at the home page when it is shown on another page', () => {
+    render(
+      <MemoryRouter initialEntries={['/privacy']}>
+        <LanguageProvider>
+          <Nav />
+        </LanguageProvider>
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('link', { name: 'How it works' })).toHaveAttribute('href', '/#how');
   });
 
   it('links the logo to the home page', () => {
