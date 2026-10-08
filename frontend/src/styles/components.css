@@ -667,6 +667,18 @@ tr.is-off td:last-child { opacity: 1; }
 .filter-field--inline { flex-direction: row; align-items: center; }
 @media (max-width: 640px) { .alert-feed li { padding: 14px 16px; flex-wrap: wrap; } .alert-feed li .btn { margin-left: 28px; } }
 
+/* Device details */
+.device-detail-status { margin: 0 0 14px; }
+.reading-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
+.reading-pair > div { padding: 16px; border: 1px solid var(--border-light); border-radius: 16px; background: var(--ivory); }
+.reading-value { color: var(--ink); font: 450 1.9rem/1 var(--font-display); letter-spacing: -0.01em; font-variant-numeric: lining-nums tabular-nums; }
+.reading-label { margin-top: 6px; color: var(--text-muted); font-size: 0.82rem; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 8px 0 0; padding: 0; list-style: none; color: var(--text-muted); font-size: 0.82rem; }
+.legend li { display: inline-flex; align-items: center; gap: 8px; }
+.legend-key { display: inline-block; width: 16px; height: 3px; border-radius: 2px; }
+.danger-zone { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border-light); }
+.danger-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
 /* ── Loading ───────────────────────────────────────────────────────────────── */
 .skeleton {
   background: linear-gradient(90deg, #ebe6da 25%, #f3efe5 50%, #ebe6da 75%);
