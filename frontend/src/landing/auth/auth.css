@@ -1,0 +1,498 @@
+/* Sign in, sign up and account email pages. Same tokens as the landing page. */
+.landing.l-auth {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  min-height: 100svh;
+  padding: 12px;
+  gap: 12px;
+  background: var(--l-paper);
+}
+
+/* Photo panel */
+.landing .l-auth__aside {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+  min-height: 560px;
+  padding: clamp(24px, 3.4vw, 48px);
+  overflow: hidden;
+  border-radius: var(--l-radius-card);
+  background: var(--l-ink);
+  color: var(--l-ivory);
+  box-shadow: var(--l-shadow-lift);
+}
+
+.landing .l-auth__photo,
+.landing .l-auth__photo img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.landing .l-auth__shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(11, 31, 23, 0.55) 0%, rgba(11, 31, 23, 0.1) 32%, rgba(11, 31, 23, 0.82) 100%);
+}
+
+.landing .l-auth__brand {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 12px;
+  text-decoration: none;
+  font: 700 1.1rem var(--l-font-ui);
+  letter-spacing: 0.04em;
+  color: var(--l-ivory);
+}
+
+.landing .l-auth__brand img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.landing .l-auth__pitch {
+  display: grid;
+  gap: 14px;
+  max-width: 460px;
+}
+
+.landing .l-auth__eyebrow {
+  font: 600 0.74rem var(--l-font-ui);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #e6b865;
+}
+
+.landing .l-auth__statement {
+  font: 450 clamp(2rem, 3.6vw, 3.3rem) / 1.04 var(--l-font-display);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.landing .l-auth__sub {
+  max-width: 40ch;
+  color: rgba(246, 243, 236, 0.82);
+  font-size: 1rem;
+}
+
+/* Form side */
+.landing .l-auth__side {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: clamp(8px, 1.6vw, 20px) clamp(8px, 3vw, 40px);
+}
+
+.landing .l-auth__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.landing .l-auth__back {
+  display: inline-flex;
+  gap: 8px;
+  padding: 8px 4px;
+  color: var(--l-muted);
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: color 0.3s var(--l-ease), transform 0.4s var(--l-ease);
+}
+
+.landing .l-auth__back:hover {
+  color: var(--l-ink);
+  transform: translateX(-3px);
+}
+
+.landing .l-auth__lang {
+  appearance: none;
+  padding: 9px 34px 9px 16px;
+  border: 1px solid var(--l-hairline);
+  border-radius: 999px;
+  background: var(--l-ivory)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230B1F17' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 14px center;
+  color: var(--l-ink);
+  font: 500 0.875rem var(--l-font-ui);
+  cursor: pointer;
+}
+
+.landing .l-auth__main {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  padding-block: clamp(24px, 5vw, 56px);
+}
+
+.landing .l-auth__main:focus {
+  outline: none;
+}
+
+.landing .l-auth__panel {
+  width: 100%;
+  max-width: 420px;
+  animation: l-auth-in 0.9s var(--l-ease) both;
+}
+
+@keyframes l-auth-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.landing .l-auth__head {
+  margin-bottom: 28px;
+}
+
+.landing .l-auth__head h1 {
+  font-size: clamp(2.1rem, 3.4vw, 2.9rem);
+  font-weight: 450;
+}
+
+.landing .l-auth__head p {
+  margin-top: 12px;
+  color: var(--l-muted);
+}
+
+.landing .l-auth__foot {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  font-size: 0.82rem;
+}
+
+.landing .l-auth__foot a {
+  color: var(--l-muted);
+  text-decoration: none;
+}
+
+.landing .l-auth__foot a:hover {
+  color: var(--l-ink);
+  text-decoration: underline;
+}
+
+/* Fields */
+.landing .l-auth form {
+  display: grid;
+  gap: 18px;
+}
+
+.landing .l-field {
+  display: grid;
+  gap: 8px;
+}
+
+.landing .l-field__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.landing .l-field label {
+  font: 600 0.84rem var(--l-font-ui);
+  color: var(--l-ink);
+}
+
+.landing .l-field__control {
+  position: relative;
+}
+
+.landing .l-field input {
+  width: 100%;
+  height: 52px;
+  padding: 0 16px;
+  border: 1px solid rgba(11, 31, 23, 0.18);
+  border-radius: 14px;
+  background: var(--l-ivory);
+  color: var(--l-ink);
+  /* 16px stops phones from zooming the page on focus */
+  font: 400 1rem var(--l-font-ui);
+  transition: border-color 0.25s var(--l-ease), box-shadow 0.25s var(--l-ease);
+}
+
+.landing .l-field input::placeholder {
+  color: #8a968f;
+}
+
+.landing .l-field input:hover {
+  border-color: rgba(11, 31, 23, 0.34);
+}
+
+.landing .l-field input:focus {
+  outline: none;
+  border-color: var(--l-leaf);
+  box-shadow: 0 0 0 4px rgba(45, 106, 79, 0.16);
+}
+
+.landing .l-field input[type='password'],
+.landing .l-field__control:has(.l-field__toggle) input {
+  padding-right: 52px;
+}
+
+.landing .l-field__toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--l-muted);
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: color 0.2s var(--l-ease), background-color 0.2s var(--l-ease);
+}
+
+.landing .l-field__toggle:hover {
+  color: var(--l-ink);
+  background: rgba(11, 31, 23, 0.06);
+}
+
+.landing .l-field__hint {
+  color: var(--l-muted);
+  font-size: 0.8rem;
+}
+
+/* Inline links */
+.landing .l-auth__link {
+  color: var(--l-leaf);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgba(45, 106, 79, 0.35);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.2s var(--l-ease);
+}
+
+.landing .l-auth__link:hover {
+  text-decoration-color: currentColor;
+}
+
+.landing .l-field__row .l-auth__link {
+  font-size: 0.82rem;
+}
+
+.landing .l-auth__alt {
+  margin-top: 24px;
+  text-align: center;
+  color: var(--l-muted);
+  font-size: 0.92rem;
+}
+
+/* Submit and secondary buttons */
+.landing .l-auth__submit,
+.landing .l-auth__ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 54px;
+  padding: 0 24px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: 600 1rem var(--l-font-ui);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.5s var(--l-ease),
+    background-color 0.3s var(--l-ease),
+    box-shadow 0.5s var(--l-ease),
+    border-color 0.3s var(--l-ease);
+}
+
+.landing .l-auth__submit {
+  margin-top: 6px;
+  background: var(--l-ink);
+  color: var(--l-paper);
+}
+
+.landing .l-auth__submit:hover:not(:disabled) {
+  background: var(--l-leaf);
+  box-shadow: 0 12px 30px rgba(11, 31, 23, 0.26);
+  transform: translateY(-1px);
+}
+
+.landing .l-auth__submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.landing .l-auth__ghost {
+  border-color: rgba(11, 31, 23, 0.22);
+  background: transparent;
+  color: var(--l-ink);
+}
+
+.landing .l-auth__ghost:hover:not(:disabled) {
+  border-color: var(--l-ink);
+  background: rgba(11, 31, 23, 0.04);
+}
+
+.landing .l-auth__ghost:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.landing .l-auth__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: l-auth-spin 0.7s linear infinite;
+}
+
+@keyframes l-auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Messages */
+.landing .l-alert {
+  margin-bottom: 18px;
+  padding: 12px 16px;
+  border: 1px solid rgba(160, 52, 40, 0.28);
+  border-radius: 14px;
+  background: #fbefec;
+  color: #8a2c20;
+  font-size: 0.9rem;
+}
+
+.landing .l-auth__note {
+  padding: 14px 16px;
+  border: 1px solid var(--l-hairline);
+  border-radius: 14px;
+  background: var(--l-ivory);
+  color: #33443b;
+  font-size: 0.88rem;
+}
+
+.landing .l-auth__rules {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.landing .l-auth__rules li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--l-muted);
+}
+
+.landing .l-auth__rules li::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border: 1.5px solid rgba(11, 31, 23, 0.25);
+  border-radius: 50%;
+  transition: background-color 0.2s var(--l-ease), border-color 0.2s var(--l-ease);
+}
+
+.landing .l-auth__rules li.is-met {
+  color: var(--l-leaf);
+}
+
+.landing .l-auth__rules li.is-met::before {
+  border-color: var(--l-leaf);
+  background: var(--l-leaf) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / 11px no-repeat;
+}
+
+/* Status screens (check your email, verified, failed) */
+.landing .l-auth__status {
+  display: grid;
+  gap: 18px;
+}
+
+.landing .l-auth__badge {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(45, 106, 79, 0.12);
+  color: var(--l-leaf);
+}
+
+.landing .l-auth__badge--error {
+  background: #fbefec;
+  color: #8a2c20;
+}
+
+.landing .l-auth__status strong {
+  overflow-wrap: anywhere;
+}
+
+.landing .l-auth__actions {
+  display: grid;
+  gap: 12px;
+}
+
+.landing .l-auth__ok {
+  color: var(--l-leaf);
+  font-weight: 600;
+}
+
+/* Tablets and phones: the photo becomes a short banner */
+@media (max-width: 900px) {
+  .landing.l-auth {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 8px;
+    gap: 0;
+  }
+
+  .landing .l-auth__aside {
+    min-height: 0;
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .landing .l-auth__sub {
+    display: none;
+  }
+
+  .landing .l-auth__statement {
+    font-size: clamp(1.6rem, 6vw, 2.1rem);
+  }
+
+  .landing .l-auth__side {
+    padding-inline: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing .l-auth__panel {
+    animation: none;
+  }
+
+  .landing .l-auth__spinner {
+    animation-duration: 1.6s;
+  }
+}
