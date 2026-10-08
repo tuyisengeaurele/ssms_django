@@ -97,6 +97,7 @@ class DiffParsing(unittest.TestCase):
         self.assertTrue(cc.is_excluded("scripts/check_content.py"))
         self.assertTrue(cc.is_excluded("docs/superpowers/specs/a.md"))
         self.assertTrue(cc.is_excluded("frontend/public/logo.png"))
+        self.assertTrue(cc.is_excluded("frontend/src/i18n/landing.test.ts"))
         self.assertFalse(cc.is_excluded("frontend/src/pages/LandingPage.tsx"))
         self.assertFalse(cc.is_excluded("README.md"))
 

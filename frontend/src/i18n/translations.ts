@@ -4,6 +4,8 @@
  * Usage: const { t } = useLanguage();  t('navFarms') → 'Farms' / 'Fermes' / 'Amahindu'
  */
 
+import { landingTranslations } from './landing';
+
 export type Locale = 'en' | 'fr' | 'rw';
 
 export const LOCALE_LABELS: Record<Locale, string> = {
@@ -15,6 +17,7 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 type TranslationMap = Record<string, Record<Locale, string>>;
 
 export const translations: TranslationMap = {
+  ...landingTranslations,
 
   // ── Navigation ──────────────────────────────────────────────────────────────
   navDashboard:     { en: 'Dashboard',         fr: 'Tableau de bord',   rw: 'Ikibaho' },
