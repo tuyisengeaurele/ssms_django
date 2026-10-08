@@ -3,7 +3,7 @@ import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
 afterEach(() => {
-  cleanup();
+  if (typeof document !== 'undefined') cleanup();
 });
 
 // jsdom has no matchMedia. Tests flip these flags to simulate user settings.
@@ -20,33 +20,35 @@ afterEach(() => {
   media.coarse = false;
 });
 
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: (query: string) => ({
-    matches: query.includes('prefers-reduced-motion')
-      ? media.reduced
-      : query.includes('pointer: coarse')
-        ? media.coarse
-        : false,
-    media: query,
-    onchange: null,
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    addListener: () => {},
-    removeListener: () => {},
-    dispatchEvent: () => false,
-  }),
-});
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: (query: string) => ({
+      matches: query.includes('prefers-reduced-motion')
+        ? media.reduced
+        : query.includes('pointer: coarse')
+          ? media.coarse
+          : false,
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }),
+  });
 
-class NoopObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-  takeRecords() {
-    return [];
+  class NoopObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return [];
+    }
   }
-}
-vi.stubGlobal('IntersectionObserver', NoopObserver);
-vi.stubGlobal('ResizeObserver', NoopObserver);
+  vi.stubGlobal('IntersectionObserver', NoopObserver);
+  vi.stubGlobal('ResizeObserver', NoopObserver);
 
-window.scrollTo = (() => {}) as typeof window.scrollTo;
+  window.scrollTo = (() => {}) as typeof window.scrollTo;
+}
