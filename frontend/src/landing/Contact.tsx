@@ -140,7 +140,10 @@ export function Contact() {
     <section id="contact" className="l-contact" aria-labelledby="contact-title">
       <div className="l-container l-contact__grid">
         <div>
-          <Reveal as="h2" className="l-contact__title">
+          <Reveal as="p" className="l-eyebrow">
+            {t('lpNavContact')}
+          </Reveal>
+          <Reveal as="h2" className="l-contact__title" delay={60}>
             <span id="contact-title">{t('lpContactTitle')}</span>
           </Reveal>
           <Reveal as="p" delay={120} className="l-contact__sub">

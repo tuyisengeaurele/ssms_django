@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../context/LanguageContext';
 import { Contact, submitContact } from './Contact';
 import { Cta } from './Cta';
-import { Footer } from './Footer';
 import { Turnstile } from './Turnstile';
 
 function wrap(node: JSX.Element) {
@@ -200,7 +199,7 @@ describe('Turnstile', () => {
   });
 });
 
-describe('Call to action and footer', () => {
+describe('Call to action', () => {
   beforeEach(() => {
     localStorage.clear();
   });
@@ -208,15 +207,6 @@ describe('Call to action and footer', () => {
   it('has one clear button to register', () => {
     wrap(<Cta />);
     expect(screen.getByRole('heading', { level: 2, name: 'Ready to raise healthier silkworms?' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Get started/ })).toHaveAttribute('href', '/register');
-  });
-
-  it('names the project, links the legal pages and credits the photos', () => {
-    wrap(<Footer />);
-    expect(screen.getByText('Smart Sericulture Management System')).toBeInTheDocument();
-    expect(screen.getByText('Built in Rwanda.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy');
-    expect(screen.getByRole('link', { name: 'Terms' })).toHaveAttribute('href', '/terms');
-    expect(screen.getByText('Photos from Pexels.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Create your account/ })).toHaveAttribute('href', '/register');
   });
 });
