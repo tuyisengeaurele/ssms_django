@@ -44,6 +44,8 @@ def _send_verification_email(user):
 
 
 class VerifyEmailView(APIView):
+    # A leftover token in the browser must not block a public page.
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -87,6 +89,8 @@ class VerifyEmailView(APIView):
 
 
 class ResendVerificationView(APIView):
+    # A leftover token in the browser must not block a public page.
+    authentication_classes = []
     permission_classes = [AllowAny]
     throttle_classes = [PasswordResetRateThrottle]
 

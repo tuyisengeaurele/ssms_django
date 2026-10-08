@@ -62,7 +62,7 @@ class LoginSerializer(serializers.Serializer):
             password=attrs['password'],
         )
         if not user:
-            raise serializers.ValidationError('Invalid email or password.')
+            raise serializers.ValidationError("That email or password doesn't look right. Please try again.")
         if not user.is_email_verified:
             raise serializers.ValidationError('email_not_verified')
         attrs['user'] = user

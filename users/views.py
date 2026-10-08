@@ -14,6 +14,8 @@ from audit_log.utils import log_action
 
 
 class RegisterView(APIView):
+    # A leftover token in the browser must not block a public page.
+    authentication_classes = []
     permission_classes  = [AllowAny]
     throttle_classes    = [RegisterRateThrottle]   # 20 registrations/minute per IP
 
@@ -35,6 +37,8 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
+    # A leftover token in the browser must not block a public page.
+    authentication_classes = []
     permission_classes = [AllowAny]
     throttle_classes = [LoginRateThrottle]
 
@@ -111,12 +115,14 @@ class CookieTokenRefreshView(APIView):
     Reads the refresh token from the httpOnly cookie, returns a new access token,
     and rotates the refresh token (sets a new cookie).
     """
+    # A leftover token in the browser must not block a public page.
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def post(self, request):
         refresh_token_str = request.COOKIES.get(REFRESH_COOKIE)
         if not refresh_token_str:
-            return Response({'detail': 'No refresh token.'}, status=401)
+            return api_error('Your session has ended. Please sign in again.', 401)
         try:
             refresh = RefreshToken(refresh_token_str)
             access_token = str(refresh.access_token)
@@ -126,7 +132,7 @@ class CookieTokenRefreshView(APIView):
             refresh.set_exp()
             new_refresh_str = str(refresh)
         except TokenError:
-            return Response({'detail': 'Token is invalid or expired.'}, status=401)
+            return api_error('Your session has ended. Please sign in again.', 401)
         response = Response({'access': access_token})
         set_refresh_cookie(response, new_refresh_str)
         return response

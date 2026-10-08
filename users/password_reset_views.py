@@ -22,6 +22,8 @@ User = get_user_model()
 
 
 class PasswordResetRequestView(APIView):
+    # A leftover token in the browser must not block a public page.
+    authentication_classes = []
     permission_classes = [AllowAny]
     throttle_classes = [PasswordResetRateThrottle]
 
@@ -64,6 +66,8 @@ class PasswordResetRequestView(APIView):
 
 
 class PasswordResetConfirmView(APIView):
+    # A leftover token in the browser must not block a public page.
+    authentication_classes = []
     permission_classes = [AllowAny]
     throttle_classes = [PasswordResetRateThrottle]
 

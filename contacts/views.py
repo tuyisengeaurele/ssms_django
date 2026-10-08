@@ -15,6 +15,8 @@ def _send_mail_async(*args, **kwargs):
 
 class ContactCreateView(APIView):
     """POST /api/contact, public, no auth required."""
+    # A leftover token in the browser must not block a public page.
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def post(self, request):
