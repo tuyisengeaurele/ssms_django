@@ -2,11 +2,14 @@ import '@fontsource-variable/fraunces/wght.css';
 import '@fontsource-variable/fraunces/wght-italic.css';
 import '@fontsource-variable/geist';
 import '../landing/tokens.css';
+import { DiseaseSpotlight } from '../landing/DiseaseSpotlight';
+import { Faq } from '../landing/Faq';
 import { Features } from '../landing/Features';
 import { Hero } from '../landing/Hero';
 import { HowItWorks } from '../landing/HowItWorks';
 import { Nav } from '../landing/Nav';
 import { Problem } from '../landing/Problem';
+import { Rwanda } from '../landing/Rwanda';
 import { SmoothScroll } from '../landing/motion/SmoothScroll';
 
 export default function LandingPage() {
@@ -19,6 +22,9 @@ export default function LandingPage() {
           <Problem />
           <Features />
           <HowItWorks />
+          <DiseaseSpotlight />
+          <Rwanda />
+          <Faq />
         </main>
       </SmoothScroll>
     </div>

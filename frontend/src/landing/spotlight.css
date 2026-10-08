@@ -1,0 +1,112 @@
+.landing .l-spot {
+  padding: var(--l-section) 0;
+  background: var(--l-paper);
+}
+
+.landing .l-spot__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: clamp(32px, 6vw, 96px);
+}
+
+.landing .l-spot__title {
+  max-width: 13ch;
+  font-size: clamp(2.2rem, 4.6vw, 4rem);
+  font-weight: 450;
+}
+
+.landing .l-spot__body {
+  max-width: 32ch;
+  margin-top: clamp(16px, 2vw, 24px);
+  font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+}
+
+.landing .l-spot__note {
+  margin-top: 14px;
+  color: var(--l-muted);
+  font-style: italic;
+}
+
+.landing .l-spot__stage {
+  position: relative;
+  max-width: 600px;
+  justify-self: end;
+  width: 100%;
+}
+
+.landing .l-spot__stage::before {
+  content: '';
+  position: absolute;
+  inset: -12% -8%;
+  z-index: 0;
+  background: radial-gradient(closest-side, rgba(200, 146, 58, 0.22), transparent 70%);
+  pointer-events: none;
+}
+
+.landing .l-spot__stage .l-mock {
+  position: relative;
+  z-index: 1;
+  font-size: 1.1em;
+}
+
+/* Rwanda */
+.landing .l-rwanda {
+  padding: var(--l-section) 0;
+  background: var(--l-ivory);
+}
+
+.landing .l-rwanda__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 560px);
+  align-items: center;
+  gap: clamp(32px, 6vw, 96px);
+}
+
+.landing .l-rwanda__title {
+  max-width: 14ch;
+  font-size: clamp(2.2rem, 4.6vw, 4rem);
+  font-weight: 450;
+}
+
+.landing .l-rwanda__body {
+  max-width: 40ch;
+  margin-top: clamp(16px, 2vw, 24px);
+  font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+  color: var(--l-muted);
+}
+
+.landing .l-rwanda__photo {
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--l-radius-card);
+  box-shadow: var(--l-shadow-lift);
+}
+
+.landing .l-rwanda__photo picture,
+.landing .l-rwanda__photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.landing .l-rwanda__photo img {
+  object-fit: cover;
+  object-position: 15% 85%;
+  transition: transform 1.6s var(--l-ease);
+}
+
+.landing .l-rwanda__photo:hover img {
+  transform: scale(1.04);
+}
+
+@media (max-width: 860px) {
+  .landing .l-spot__grid,
+  .landing .l-rwanda__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing .l-spot__stage {
+    justify-self: stretch;
+  }
+}

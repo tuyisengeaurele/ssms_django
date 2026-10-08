@@ -1,0 +1,120 @@
+.landing .l-faq {
+  padding: var(--l-section) 0;
+  background: var(--l-paper);
+}
+
+.landing .l-faq__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: clamp(32px, 6vw, 96px);
+  align-items: start;
+}
+
+.landing .l-faq__title {
+  max-width: 10ch;
+  font-size: clamp(2.2rem, 4.6vw, 4rem);
+  font-weight: 450;
+}
+
+.landing .l-faq__list {
+  border-top: 1px solid var(--l-hairline);
+}
+
+.landing .l-faq__item {
+  border-bottom: 1px solid var(--l-hairline);
+}
+
+.landing .l-faq__item h3 {
+  font-family: var(--l-font-ui);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+
+.landing .l-faq__item button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100%;
+  padding: 22px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--l-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.landing .l-faq__item button:hover span:first-child {
+  color: var(--l-leaf);
+}
+
+.landing .l-faq__icon {
+  position: relative;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--l-hairline);
+  border-radius: 50%;
+  transition: transform 0.5s var(--l-ease), background-color 0.3s var(--l-ease);
+}
+
+.landing .l-faq__icon::before,
+.landing .l-faq__icon::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 1.5px;
+  background: var(--l-ink);
+  translate: -50% -50%;
+  transition: transform 0.5s var(--l-ease);
+}
+
+.landing .l-faq__icon::after {
+  transform: rotate(90deg);
+}
+
+.landing .l-faq__item.is-open .l-faq__icon {
+  background: var(--l-ink);
+  transform: rotate(180deg);
+}
+
+.landing .l-faq__item.is-open .l-faq__icon::before,
+.landing .l-faq__item.is-open .l-faq__icon::after {
+  background: var(--l-paper);
+}
+
+.landing .l-faq__item.is-open .l-faq__icon::after {
+  transform: rotate(0deg);
+}
+
+.landing .l-faq__item [role='region'] {
+  padding: 0 52px 24px 4px;
+  color: var(--l-muted);
+  animation: l-fade-up 0.6s var(--l-ease) both;
+}
+
+.landing .l-faq__item [role='region'] p {
+  max-width: 56ch;
+}
+
+@keyframes l-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .landing .l-faq__grid {
+    grid-template-columns: 1fr;
+  }
+}
