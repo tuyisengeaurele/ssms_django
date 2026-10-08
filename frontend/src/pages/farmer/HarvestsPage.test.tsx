@@ -96,6 +96,19 @@ describe('Harvests page', () => {
     expect(await screen.findByText('First picking')).toBeInTheDocument();
   });
 
+  it('says "1 record" when the search leaves one', async () => {
+    open();
+    await screen.findByText('First picking');
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search by farm, grade or note' }), { target: { value: 'odd' } });
+    expect(screen.getByText('1 record')).toBeInTheDocument();
+  });
+
+  it('keeps the search placeholder short enough to read', async () => {
+    open();
+    await screen.findByText('First picking');
+    expect(screen.getByRole('searchbox', { name: 'Search by farm, grade or note' })).toHaveAttribute('placeholder', 'Search records');
+  });
+
   it('downloads the records as a file', async () => {
     api.exportCsv.mockResolvedValue({ data: 'a,b' });
     const create = vi.fn(() => 'blob:harvests');

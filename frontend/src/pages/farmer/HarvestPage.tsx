@@ -234,7 +234,7 @@ export default function HarvestPage() {
           </div>
         )}
 
-        <Panel title={t('hpRecords')} note={records.length > 0 ? fill(t('hpCount'), { n: records.length }) : undefined} flush>
+        <Panel title={t('hpRecords')} note={records.length > 0 ? fill(t(records.length === 1 ? 'hpCountOne' : 'hpCount'), { n: records.length }) : undefined} flush>
           {records.length === 0 ? (
             <EmptyState
               icon={<Icon name="harvests" size={22} />}

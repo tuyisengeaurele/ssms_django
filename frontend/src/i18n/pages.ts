@@ -694,6 +694,9 @@ export const pageTranslations = {
   fhNoBatchesBody: k("Create a batch on one of your farms to get started.", "Créez un lot dans l'une de vos fermes pour commencer.", "Fungura itsinda mu rimwe mu mahinga yawe utangire."),
   fhNoAlerts: k("No unread alerts", "Aucune alerte non lue", "Nta biburaniswa bitasomwe"),
   fhNoAlertsBody: k("You are all caught up.", "Vous êtes à jour.", "Wasomye byose."),
+  hpCountOne: k("{n} record", "{n} relevé", "Inyandiko {n}"),
+  drHistoryCountOne: k("{n} check shown", "{n} contrôle affiché", "Isuzuma {n} ryerekanwe"),
+  hvSearchShort: k("Search records", "Rechercher", "Shakisha"),
 } satisfies Record<string, Entry>;
 
 export type PageKey = keyof typeof pageTranslations;

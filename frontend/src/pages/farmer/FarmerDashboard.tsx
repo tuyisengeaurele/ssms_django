@@ -169,9 +169,8 @@ export default function FarmerDashboard() {
                         <td data-label="">
                           <div className="table-actions">
                             <Link to={`/batches/${b.id}`} className="btn btn-ghost btn-xs" aria-label={`${t('btDetails')} ${b.farm?.name ?? ''}`}>{t('btDetails')}</Link>
-                            <Link to={`/batches/${b.id}/detect`} className="btn btn-ghost btn-xs" aria-label={`${t('btCheck')} ${b.farm?.name ?? ''}`}>
-                              <Icon name="detections" size={14} />
-                              {t('btCheck')}
+                            <Link to={`/batches/${b.id}/detect`} className="btn btn-ghost btn-xs" aria-label={`${t('btCheck')} ${b.farm?.name ?? ''}`} title={t('btCheck')}>
+                              <Icon name="detections" size={15} />
                             </Link>
                           </div>
                         </td>

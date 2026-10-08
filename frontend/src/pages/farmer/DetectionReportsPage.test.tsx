@@ -74,6 +74,13 @@ describe('Detection reports page', () => {
     expect(rows).toEqual(['Flacherie2', 'Healthy1']);
   });
 
+  it('says "1 check shown" and not "1 checks shown"', async () => {
+    api.history.mockResolvedValue({ data: { data: [history[0]] } });
+    open();
+    await screen.findByText("Serge's farm", { selector: 'a' });
+    expect(screen.getByText('1 check shown')).toBeInTheDocument();
+  });
+
   it('lists each check with links, a plain percentage and the date', async () => {
     open();
     const row = (await screen.findAllByText("Gad's farm", { selector: 'a' }))[0].closest('tr') as HTMLElement;

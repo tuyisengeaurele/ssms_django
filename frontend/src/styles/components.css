@@ -896,7 +896,8 @@ tr.is-off td:last-child { opacity: 1; }
 /* Batch page */
 .split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
 @media (max-width: 960px) { .split { grid-template-columns: minmax(0, 1fr); } }
-.facts--one { grid-template-columns: minmax(0, 1fr); margin-bottom: 0; }
+.facts--pairs { margin-bottom: 0; }
+@media (max-width: 480px) { .facts--pairs { grid-template-columns: minmax(0, 1fr); } }
 .facts--three { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 0; }
 @media (max-width: 420px) { .facts--three { grid-template-columns: minmax(0, 1fr); } }
 .facts dd .link, .link { color: var(--ink); text-decoration: underline; text-decoration-color: var(--gold); text-underline-offset: 3px; }

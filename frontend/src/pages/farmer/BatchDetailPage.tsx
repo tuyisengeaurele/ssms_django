@@ -175,7 +175,7 @@ export default function BatchDetailPage() {
 
         <div className="split">
           <Panel title={t('bdDetails')}>
-            <dl className="facts facts--one">
+            <dl className="facts facts--pairs">
               <div>
                 <dt>{t('bdStage')}</dt>
                 <dd>{STAGE_LABELS[batch.stage]}</dd>

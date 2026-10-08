@@ -85,6 +85,14 @@ describe('Harvest page', () => {
     expect(rows).toEqual(['Grade A2', 'Grade B1', 'Grade C0']);
   });
 
+  it('says "1 record" and not "1 records"', async () => {
+    api.list.mockResolvedValue({ data: { data: [records[0]] } });
+    open();
+    await screen.findByText('First picking');
+    expect(screen.getByText('1 record')).toBeInTheDocument();
+    expect(screen.queryByText('1 records')).not.toBeInTheDocument();
+  });
+
   it('lists each record with plain numbers and a dash for missing silk', async () => {
     open();
     const row = (await screen.findByText('First picking')).closest('tr') as HTMLElement;

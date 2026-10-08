@@ -173,7 +173,7 @@ export default function DetectionReportsPage() {
               )}
             </Panel>
 
-            <Panel title={t('drHistory')} note={loading ? undefined : fill(t('drHistoryCount'), { n: history.length })} flush>
+            <Panel title={t('drHistory')} note={loading ? undefined : fill(t(history.length === 1 ? 'drHistoryCountOne' : 'drHistoryCount'), { n: history.length })} flush>
               {loading ? (
                 <SkeletonTable rows={6} cols={6} />
               ) : history.length === 0 ? (

@@ -134,12 +134,12 @@ export default function HarvestsPage() {
 
           <Panel
             title={t('hvAll')}
-            note={fill(t('hpCount'), { n: visible.length })}
+            note={fill(t(visible.length === 1 ? 'hpCountOne' : 'hpCount'), { n: visible.length })}
             flush
             actions={
               <div className="search-box">
                 <Icon name="search" size={16} className="icon" />
-                <input type="search" aria-label={t('hvSearch')} placeholder={t('hvSearch')} value={search} onChange={(e) => setSearch(e.target.value)} />
+                <input type="search" aria-label={t('hvSearch')} placeholder={t('hvSearchShort')} value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
             }
           >
