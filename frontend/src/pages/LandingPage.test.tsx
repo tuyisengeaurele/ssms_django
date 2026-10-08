@@ -44,19 +44,16 @@ describe('LandingPage', () => {
     expect(skip).toHaveAttribute('href', '#main');
   });
 
-  it('shows the sections in the agreed order', () => {
+  it('tells the story in the agreed order', () => {
     const { container } = renderPage();
     const ids = Array.from(container.querySelectorAll('section[id]')).map((el) => el.id);
-    expect(ids.indexOf('product')).toBeGreaterThan(-1);
-    expect(ids.indexOf('product')).toBeLessThan(ids.indexOf('how'));
-    expect(ids.indexOf('how')).toBeLessThan(ids.indexOf('rwanda'));
-    expect(ids.indexOf('rwanda')).toBeLessThan(ids.indexOf('faq'));
-    expect(ids.indexOf('faq')).toBeLessThan(ids.indexOf('contact'));
+    expect(ids).toEqual(['about', 'challenge', 'product', 'how', 'cooperatives', 'faq', 'contact']);
   });
 
   it('has the roles section removed', () => {
     const { container } = renderPage();
     expect(container.textContent).not.toMatch(/For farmers|For supervisors|For admins/i);
+    expect(container.textContent).not.toMatch(/Three languages/);
   });
 
   it('follows the saved language', () => {

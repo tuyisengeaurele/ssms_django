@@ -38,3 +38,11 @@
   overflow-wrap: anywhere;
   hyphens: auto;
 }
+
+/* Small caps label above a section title. */
+.landing .l-eyebrow {
+  font: 600 0.78rem var(--l-font-ui);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--l-leaf);
+}
