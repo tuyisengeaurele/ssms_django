@@ -496,6 +496,57 @@ td .cell-muted { color: var(--text-muted); }
 .admin-split { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; }
 @media (max-width: 960px) { .admin-split { grid-template-columns: minmax(0, 1fr); } }
 
+/* A select that sits inside a table row */
+.inline-select {
+  appearance: none;
+  min-width: 140px;
+  max-width: 100%;
+  padding: 6px 30px 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230B1F17' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
+  color: var(--ink);
+  font: 500 0.84rem var(--font-ui);
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease-out);
+}
+
+.inline-select:hover { border-color: var(--ink); }
+.inline-select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.cell-stack { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+.cell-sub { overflow: hidden; color: var(--text-muted); font-size: 0.82rem; text-overflow: ellipsis; white-space: nowrap; }
+.cell-nowrap { white-space: nowrap; }
+
+.cell-tag {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(11, 31, 23, 0.07);
+  color: var(--text-muted);
+  font: 600 0.68rem var(--font-ui);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+tr.is-off td { opacity: 0.62; }
+tr.is-off td:last-child { opacity: 1; }
+
+.btn-quiet-danger { color: #9b3526; }
+.btn-quiet-danger:hover:not(:disabled) { background: #fbefec; color: #7f2a1e; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ── Loading ───────────────────────────────────────────────────────────────── */
 .skeleton {
   background: linear-gradient(90deg, #ebe6da 25%, #f3efe5 50%, #ebe6da 75%);
