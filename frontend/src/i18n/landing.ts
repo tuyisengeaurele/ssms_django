@@ -53,6 +53,9 @@ export const landingTranslations = {
   lpPreviewDisease: k('Disease check', 'Détection de maladie', "Isuzuma ry'indwara"),
   lpPreviewAlerts: k('Alerts', 'Alertes', 'Ibiburaniswa'),
   lpSample: k('Sample', 'Exemple', 'Urugero'),
+  lpPreviewShow: k('Show {name}', 'Afficher {name}', 'Erekana {name}'),
+  lpPreviewLabel: k('Product preview', 'Aperçu du produit', 'Ishusho ya porogaramu'),
+  lpStatsLabel: k('Key facts', 'Chiffres clés', "Imibare y'ingenzi"),
 
   // Problem
   lpProblem1: k(

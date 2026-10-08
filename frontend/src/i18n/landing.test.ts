@@ -34,6 +34,7 @@ const REQUIRED = [
   'lpMockToday', 'lpMockBatch', 'lpMockTemperature', 'lpMockHumidity', 'lpMockInRange',
   'lpMockHarvestTitle', 'lpMockWeight', 'lpMockGrade', 'lpMockConfidence', 'lpMockResult',
   'lpMockAlert1', 'lpMockAlert2', 'lpMockAlert3', 'lpMockAgo1', 'lpMockAgo2', 'lpMockAgo3',
+  'lpPreviewShow', 'lpPreviewLabel', 'lpStatsLabel',
   'lpMockAriaDashboard', 'lpMockAriaHarvest', 'lpMockAriaDisease', 'lpMockAriaAlerts',
 ];
 
