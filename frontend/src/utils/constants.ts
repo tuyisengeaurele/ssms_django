@@ -1,3 +1,5 @@
+import { colorFor } from './chartColors';
+
 export const STAGE_LABELS: Record<string, string> = {
   EGG: 'Egg',
   LARVA: 'Larva',
@@ -9,13 +11,9 @@ export const STAGE_LABELS: Record<string, string> = {
 export const STAGE_ORDER = ['EGG', 'LARVA', 'PUPA', 'COCOON', 'HARVEST'] as const;
 
 /** One colour per life stage, shared by badges, charts and timelines. */
-export const STAGE_COLORS: Record<string, string> = {
-  EGG: '#C8923A',
-  LARVA: '#2D6A4F',
-  PUPA: '#3A7CA5',
-  COCOON: '#8F7F66',
-  HARVEST: '#0B1F17',
-};
+export const STAGE_COLORS: Record<string, string> = Object.fromEntries(
+  STAGE_ORDER.map((stage) => [stage, colorFor('stage', stage)]),
+);
 
 export const ALERT_TYPE_LABELS: Record<string, string> = {
   TEMPERATURE: 'Temperature',
