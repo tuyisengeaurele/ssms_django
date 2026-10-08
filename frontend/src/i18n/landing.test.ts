@@ -3,8 +3,8 @@ import { LANDING_KEYS, landingTranslations } from './landing';
 import { translations } from './translations';
 
 const LOCALES = ['en', 'fr', 'rw'] as const;
-const EM_DASH = '—';
-const EN_DASH = '–';
+const EM_DASH = String.fromCharCode(0x2014);
+const EN_DASH = String.fromCharCode(0x2013);
 const FILLER = /seamless|leverag|empower|revolutioni|cutting-edge|game-changer|delve/i;
 
 const REQUIRED = [
