@@ -1,4 +1,12 @@
-import { createElement, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  createElement,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEventHandler,
+  type ReactNode,
+} from 'react';
 import { usePrefersReducedMotion } from './usePrefersReducedMotion';
 import './motion.css';
 
@@ -7,7 +15,8 @@ interface RevealProps {
   delay?: number;
   y?: number;
   className?: string;
-  as?: 'div' | 'li' | 'p' | 'h2' | 'h3' | 'span';
+  as?: 'div' | 'li' | 'p' | 'h2' | 'h3' | 'span' | 'article' | 'section';
+  onPointerMove?: PointerEventHandler<HTMLElement>;
 }
 
 /**
@@ -15,7 +24,7 @@ interface RevealProps {
  * mount, and only when we can actually observe scrolling, so content is
  * never stuck invisible.
  */
-export function Reveal({ children, delay = 0, y = 24, className = '', as = 'div' }: RevealProps) {
+export function Reveal({ children, delay = 0, y = 24, className = '', as = 'div', onPointerMove }: RevealProps) {
   const ref = useRef<HTMLElement | null>(null);
   const reduced = usePrefersReducedMotion();
   const [armed, setArmed] = useState(false);
@@ -47,5 +56,5 @@ export function Reveal({ children, delay = 0, y = 24, className = '', as = 'div'
     '--l-reveal-y': `${y}px`,
   } as CSSProperties;
 
-  return createElement(as, { ref, className: classes || undefined, style }, children);
+  return createElement(as, { ref, className: classes || undefined, style, onPointerMove }, children);
 }

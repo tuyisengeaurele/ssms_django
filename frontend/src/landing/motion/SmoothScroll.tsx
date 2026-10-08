@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import Lenis from 'lenis';
+import 'lenis/dist/lenis.css';
 import { prefersReducedMotion } from './usePrefersReducedMotion';
 
 /** Smooth wheel scrolling on desktop only. Touch and reduced motion keep native scrolling. */

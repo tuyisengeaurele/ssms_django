@@ -1,0 +1,26 @@
+.landing .l-problem {
+  padding: var(--l-section) 0 calc(var(--l-section) * 0.7);
+  background: var(--l-paper);
+}
+
+.landing .l-problem .l-container {
+  display: grid;
+  gap: clamp(16px, 2.4vw, 28px);
+  max-width: 980px;
+}
+
+.landing .l-problem__line {
+  font: 450 clamp(1.9rem, 4.6vw, 4rem) / 1.08 var(--l-font-display);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.landing .l-problem__line:nth-child(2) {
+  max-width: 22ch;
+  color: var(--l-ink);
+}
+
+.landing .l-problem__line:nth-child(3) {
+  font-style: italic;
+  color: var(--l-leaf);
+}
