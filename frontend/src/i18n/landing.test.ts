@@ -31,6 +31,10 @@ const REQUIRED = [
   'lpFormRequired', 'lpFormEmailInvalid', 'lpFormMessageShort',
   'lpCtaTitle', 'lpCtaButton',
   'lpFooterName', 'lpFooterTagline', 'lpFooterPrivacy', 'lpFooterTerms', 'lpFooterPhotos',
+  'lpMockToday', 'lpMockBatch', 'lpMockTemperature', 'lpMockHumidity', 'lpMockInRange',
+  'lpMockHarvestTitle', 'lpMockWeight', 'lpMockGrade', 'lpMockConfidence', 'lpMockResult',
+  'lpMockAlert1', 'lpMockAlert2', 'lpMockAlert3', 'lpMockAgo1', 'lpMockAgo2', 'lpMockAgo3',
+  'lpMockAriaDashboard', 'lpMockAriaHarvest', 'lpMockAriaDisease', 'lpMockAriaAlerts',
 ];
 
 describe('landing copy', () => {

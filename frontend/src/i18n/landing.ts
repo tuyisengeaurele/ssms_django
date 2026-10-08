@@ -295,6 +295,48 @@ export const landingTranslations = {
   lpFooterPrivacy: k('Privacy', 'Confidentialité', 'Ibanga'),
   lpFooterTerms: k('Terms', 'Conditions', 'Amabwiriza'),
   lpFooterPhotos: k('Photos from Pexels.', 'Photos de Pexels.', 'Amafoto aturuka kuri Pexels.'),
+
+  // Sample content inside the product mockups
+  lpMockToday: k('Today', "Aujourd'hui", 'Uyu munsi'),
+  lpMockBatch: k('Batch', 'Lot', 'Itsinda'),
+  lpMockTemperature: k('Temperature', 'Température', 'Ubushyuhe'),
+  lpMockHumidity: k('Humidity', 'Humidité', 'Ubuhehere'),
+  lpMockInRange: k('In range', 'Dans la plage', 'Mu rugero'),
+  lpMockHarvestTitle: k('Harvest records', 'Registres de récolte', "Amakuru y'isarura"),
+  lpMockWeight: k('Weight', 'Poids', 'Ibiro'),
+  lpMockGrade: k('Grade', 'Qualité', 'Ubwiza'),
+  lpMockConfidence: k('Confidence', 'Confiance', 'Icyizere'),
+  lpMockResult: k('Result', 'Résultat', 'Igisubizo'),
+  lpMockAlert1: k(
+    'Temperature too high on Batch B',
+    'Température trop élevée sur le lot B',
+    'Ubushyuhe ni bwinshi mu itsinda B',
+  ),
+  lpMockAlert2: k('Humidity low on Batch C', 'Humidité basse sur le lot C', 'Ubuhehere ni buke mu itsinda C'),
+  lpMockAlert3: k('Batch A moved to Pupa', 'Le lot A est passé au stade Pupa', 'Itsinda A ryageze ku cyiciro cya Pupa'),
+  lpMockAgo1: k('2 min ago', 'Il y a 2 min', 'Hashize iminota 2'),
+  lpMockAgo2: k('40 min ago', 'Il y a 40 min', 'Hashize iminota 40'),
+  lpMockAgo3: k('Yesterday', 'Hier', 'Ejo hashize'),
+  lpMockAriaDashboard: k(
+    'Sample dashboard showing three batches with temperature and humidity',
+    'Exemple de tableau de bord avec trois lots, leur température et leur humidité',
+    "Urugero rw'ikibaho rufite amatsinda atatu, ubushyuhe n'ubuhehere",
+  ),
+  lpMockAriaHarvest: k(
+    'Sample harvest records table with weight and grade',
+    'Exemple de tableau de registres de récolte avec poids et qualité',
+    "Urugero rw'imbonerahamwe y'amakuru y'isarura, ibiro n'ubwiza",
+  ),
+  lpMockAriaDisease: k(
+    'Sample disease check result with confidence bars',
+    'Exemple de résultat de détection de maladie avec barres de confiance',
+    "Urugero rw'igisubizo cy'isuzuma ry'indwara n'imirongo y'icyizere",
+  ),
+  lpMockAriaAlerts: k(
+    'Sample list of three alerts',
+    'Exemple de liste de trois alertes',
+    "Urugero rw'urutonde rw'ibiburaniswa bitatu",
+  ),
 } satisfies Record<string, Entry>;
 
 export type LandingKey = keyof typeof landingTranslations;
