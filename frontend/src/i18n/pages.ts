@@ -248,6 +248,27 @@ export const pageTranslations = {
   rpColFarms: k("Farms", "Fermes", "Amahindu"),
   rpLoadError: k("We couldn't load the report data. Please try again.", "Nous n'avons pas pu charger les données du rapport. Veuillez réessayer.", "Ntitwabashije kubona amakuru y'raporo. Ongera ugerageze."),
   rpCsvError: k("We couldn't create the CSV file. Please try again.", "Nous n'avons pas pu créer le fichier CSV. Veuillez réessayer.", "Ntitwabashije gukora dosiye ya CSV. Ongera ugerageze."),
+  // Alerts page
+  alUnreadMany: k("{n} unread", "{n} non lues", "{n} bitasomwe"),
+  alUnreadOne: k("1 unread", "1 non lue", "1 gitasomwe"),
+  alCaughtUp: k("You are all caught up.", "Vous êtes à jour.", "Byose wabibonye."),
+  alTabAll: k("All", "Toutes", "Byose"),
+  alTabUnread: k("Unread", "Non lues", "Bitasomwe"),
+  alFieldType: k("Type", "Type", "Ubwoko"),
+  alAllTypes: k("All types", "Tous les types", "Ubwoko bwose"),
+  alTypeTemperature: k("Temperature", "Température", "Ubushyuhe"),
+  alTypeHumidity: k("Humidity", "Humidité", "Ubuhehere"),
+  alTypeDisease: k("Disease", "Maladie", "Indwara"),
+  alTypeStage: k("Stage change", "Changement de stade", "Impinduka y'icyiciro"),
+  alTypeSystem: k("System", "Système", "Sisitemu"),
+  alMarkRead: k("Mark as read", "Marquer comme lue", "Soma"),
+  alMarkAll: k("Mark all as read", "Tout marquer comme lu", "Bisome byose"),
+  alMarkedAll: k("All alerts are marked as read.", "Toutes les alertes sont marquées comme lues.", "Ibiburaniswa byose byasomwe."),
+  alNone: k("No alerts", "Aucune alerte", "Nta biburaniswa"),
+  alNoneBody: k("We will let you know here when something needs attention.", "Nous vous le dirons ici quand quelque chose demande votre attention.", "Tuzakubwira hano igihe hari ikintu gikeneye kwitabwaho."),
+  alNoneUnread: k("No unread alerts", "Aucune alerte non lue", "Nta biburaniswa bitasomwe"),
+  alNoMatch: k("No alerts of this type", "Aucune alerte de ce type", "Nta biburaniswa by'ubu bwoko"),
+  alBatch: k("Batch", "Lot", "Itsinda"),
 } satisfies Record<string, Entry>;
 
 export type PageKey = keyof typeof pageTranslations;

@@ -7,6 +7,7 @@ import { alertService } from '../../services/alert.service';
 import { contactsService } from '../../services/contacts.service';
 import { AlertLog, AlertType, ContactMessage } from '../../types';
 import { usePageTitle } from '../../utils/pageTitle';
+import { timeAgo } from '../../utils/timeAgo';
 import { Icon } from '../ui/Icon';
 import Modal from '../ui/Modal';
 import { ROLE_LABEL_KEY } from './Sidebar';
@@ -19,14 +20,6 @@ const ALERT_DOT: Record<AlertType, string> = {
   SYSTEM: 'system',
 };
 
-function timeAgo(iso: string) {
-  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (s < 60) return 'just now';
-  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
-  return `${Math.floor(s / 86400)} d ago`;
-}
-
 interface TopBarProps {
   onMenuToggle: () => void;
   alertCount?: number;
@@ -35,7 +28,7 @@ interface TopBarProps {
 // ── Notifications ────────────────────────────────────────────────────────────
 
 function NotificationPanel({ isAdmin, alertCount, onClose }: { isAdmin: boolean; alertCount: number; onClose: () => void }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [tab, setTab] = useState<'alerts' | 'messages'>('alerts');
   const [alerts, setAlerts] = useState<AlertLog[]>([]);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
@@ -91,7 +84,7 @@ function NotificationPanel({ isAdmin, alertCount, onClose }: { isAdmin: boolean;
                 <span className={`note-dot note-dot--${ALERT_DOT[a.type] ?? 'system'}`} aria-hidden="true" />
                 <div>
                   <p className="note-text">{a.message}</p>
-                  <p className="note-meta">{a.type.replace('_', ' ').toLowerCase()} · {timeAgo(a.createdAt)}</p>
+                  <p className="note-meta">{a.type.replace('_', ' ').toLowerCase()} · {timeAgo(a.createdAt, locale)}</p>
                 </div>
               </div>
             ))
@@ -104,7 +97,7 @@ function NotificationPanel({ isAdmin, alertCount, onClose }: { isAdmin: boolean;
               <span className="note-dot note-dot--humidity" aria-hidden="true" />
               <div>
                 <p className="note-text">{m.subject}</p>
-                <p className="note-meta">{m.name} · {timeAgo(m.createdAt)}</p>
+                <p className="note-meta">{m.name} · {timeAgo(m.createdAt, locale)}</p>
               </div>
             </Link>
           ))

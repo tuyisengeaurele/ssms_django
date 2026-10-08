@@ -1,53 +1,64 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { alertService } from '../../services/alert.service';
 import { AlertLog, AlertType } from '../../types';
 import { useApiError } from '../../hooks/useApiError';
 import { useToast } from '../../context/ToastContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { fill } from '../../utils/fill';
+import { timeAgo } from '../../utils/timeAgo';
+import { STAGE_LABELS } from '../../utils/constants';
 import EmptyState from '../../components/ui/EmptyState';
+import { Icon } from '../../components/ui/Icon';
+import PageHeader from '../../components/ui/PageHeader';
+import Pagination from '../../components/ui/Pagination';
+import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 
-const ALERT_META: Record<AlertType, { color: string; bg: string; label: string }> = {
-  TEMPERATURE:  { color: '#d97706', bg: '#fef3c7', label: 'Temperature' },
-  HUMIDITY:     { color: '#2563eb', bg: '#dbeafe', label: 'Humidity'    },
-  DISEASE:      { color: '#dc2626', bg: '#fee2e2', label: 'Disease'     },
-  STAGE_CHANGE: { color: '#7c3aed', bg: '#f3e8ff', label: 'Stage'       },
-  SYSTEM:       { color: '#4b5563', bg: '#f1f5f9', label: 'System'      },
+const PAGE_SIZE = 15;
+
+const TYPE_KEY: Record<AlertType, string> = {
+  TEMPERATURE: 'alTypeTemperature',
+  HUMIDITY: 'alTypeHumidity',
+  DISEASE: 'alTypeDisease',
+  STAGE_CHANGE: 'alTypeStage',
+  SYSTEM: 'alTypeSystem',
 };
 
-function timeAgo(iso: string) {
-  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (s < 60) return `${s}s ago`;
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  return `${Math.floor(s / 86400)}d ago`;
-}
+const TYPE_DOT: Record<AlertType, string> = {
+  TEMPERATURE: 'temperature',
+  HUMIDITY: 'humidity',
+  DISEASE: 'disease',
+  STAGE_CHANGE: 'stage',
+  SYSTEM: 'system',
+};
 
 export default function AlertsPage() {
   const { getErrorMessage } = useApiError();
   const { success, error: showError } = useToast();
-  const { t } = useLanguage();
-  const [alerts, setAlerts]     = useState<AlertLog[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [filter, setFilter]     = useState<'all' | 'unread'>('all');
+  const { t, locale } = useLanguage();
+
+  const [alerts, setAlerts] = useState<AlertLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<'all' | 'unread'>('all');
+  const [type, setType] = useState<AlertType | ''>('');
+  const [page, setPage] = useState(1);
   const [markingAll, setMarkingAll] = useState(false);
 
-  const fetchAlerts = () => {
+  useEffect(() => {
     setLoading(true);
-    alertService.getAll(filter === 'unread' ? true : false)
-      .then(r => setAlerts(r.data.data))
-      .catch(e => showError(getErrorMessage(e)))
+    alertService.getAll(tab === 'unread')
+      .then((r) => setAlerts(r.data.data))
+      .catch((e) => showError(getErrorMessage(e)))
       .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { fetchAlerts(); }, [filter]);
+    setPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
 
   const handleMarkRead = async (id: string) => {
     try {
       await alertService.markRead(id);
-      setAlerts(prev => prev.map(a => a.id === id ? { ...a, isRead: true } : a));
+      setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, isRead: true } : a)));
     } catch (e) {
       showError(getErrorMessage(e));
     }
@@ -57,8 +68,8 @@ export default function AlertsPage() {
     setMarkingAll(true);
     try {
       await alertService.markAllRead();
-      setAlerts(prev => prev.map(a => ({ ...a, isRead: true })));
-      success('All alerts marked as read.');
+      setAlerts((prev) => prev.map((a) => ({ ...a, isRead: true })));
+      success(t('alMarkedAll'));
     } catch (e) {
       showError(getErrorMessage(e));
     } finally {
@@ -66,136 +77,98 @@ export default function AlertsPage() {
     }
   };
 
-  const unreadCount = alerts.filter(a => !a.isRead).length;
+  const unread = alerts.filter((a) => !a.isRead).length;
+  const shown = type ? alerts.filter((a) => a.type === type) : alerts;
+  const totalPages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
+  const current = Math.min(page, totalPages);
+  const pageItems = shown.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+
+  const subtitle = loading
+    ? undefined
+    : unread === 0 ? t('alCaughtUp') : fill(t(unread === 1 ? 'alUnreadOne' : 'alUnreadMany'), { n: unread });
 
   return (
     <div>
-      {/* Header */}
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">{t('pageTitleAlerts')}</h1>
-          <p className="page-subtitle">
-            {unreadCount > 0 ? `${unreadCount} unread alert${unreadCount !== 1 ? 's' : ''}` : 'All caught up'}
-          </p>
-        </div>
-        <div className="page-actions">
-          {/* Filter tabs */}
-          <div style={{ display: 'flex', background: 'var(--gray-100)', borderRadius: 'var(--radius-md)', padding: '3px', gap: '2px' }}>
-            {(['all', 'unread'] as const).map(f => (
-              <button key={f} onClick={() => setFilter(f)}
-                style={{
-                  padding: '0.35rem 0.875rem',
-                  borderRadius: 'var(--radius)',
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  background: filter === f ? 'var(--surface)' : 'transparent',
-                  color: filter === f ? 'var(--text)' : 'var(--text-muted)',
-                  boxShadow: filter === f ? 'var(--shadow-xs)' : 'none',
-                  textTransform: 'capitalize',
-                }}>
-                {f}
-              </button>
-            ))}
-          </div>
-          {unreadCount > 0 && (
+      <PageHeader
+        title={t('ptAlerts')}
+        subtitle={subtitle}
+        actions={
+          unread > 0 ? (
             <button className="btn btn-secondary btn-sm" onClick={handleMarkAll} disabled={markingAll}>
-              {markingAll ? t('loading') : t('btnMarkAllRead')}
+              <Icon name="check" size={15} />
+              {t('alMarkAll')}
             </button>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
 
-      {loading ? (
-        <SkeletonTable rows={6} cols={4} />
-      ) : alerts.length === 0 ? (
-        <div className="table-container">
-          <EmptyState icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>} title="No alerts" description="You have no alerts at the moment. We'll notify you when something needs attention." />
+      <Panel
+        title={t('ptAlerts')}
+        flush
+        actions={
+          <label className="filter-field filter-field--inline">
+            <span className="sr-only">{t('alFieldType')}</span>
+            <select
+              className="inline-select"
+              aria-label={t('alFieldType')}
+              value={type}
+              onChange={(e) => { setType(e.target.value as AlertType | ''); setPage(1); }}
+            >
+              <option value="">{t('alAllTypes')}</option>
+              {(Object.keys(TYPE_KEY) as AlertType[]).map((k) => <option key={k} value={k}>{t(TYPE_KEY[k])}</option>)}
+            </select>
+          </label>
+        }
+      >
+        <div className="tabs" role="tablist">
+          {(['all', 'unread'] as const).map((id) => (
+            <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? 'is-on' : ''} onClick={() => setTab(id)}>
+              {id === 'all' ? t('alTabAll') : t('alTabUnread')}
+            </button>
+          ))}
         </div>
-      ) : (
-        <div className="table-container">
-          <div className="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Message</th>
-                  <th>From</th>
-                  <th>Time</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {alerts.map((a, i) => {
-                  const meta = ALERT_META[a.type] ?? { color: '#4b5563', bg: '#f3f4f6', label: a.type };
-                  return (
-                    <motion.tr key={a.id} className="tbody-row"
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.03, duration: 0.25 }}
-                      style={{ opacity: a.isRead ? 0.6 : 1 }}
-                    >
-                      <td>
-                        <span style={{
-                          display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-                          padding: '0.2rem 0.6rem', borderRadius: '9999px',
-                          fontSize: '0.7rem', fontWeight: 700,
-                          background: meta.bg, color: meta.color,
-                        }}>
-                          {meta.label}
-                        </span>
-                      </td>
-                      <td style={{ fontWeight: a.isRead ? 400 : 500, color: a.isRead ? 'var(--text-muted)' : 'var(--text)', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {a.message}
-                      </td>
-                      <td>
-                        <div style={{ fontSize: '0.75rem', lineHeight: 1.4 }}>
-                          {a.farmerName && (
-                            <p style={{ fontWeight: 500, color: 'var(--text-2)' }}>{a.farmerName}</p>
-                          )}
-                          {a.batch && (
-                            <Link to={`/batches/${a.batch.id}`} style={{ color: 'var(--text-faint)', fontFamily: 'monospace', fontSize: '0.7rem', textDecoration: 'none' }}>
-                              #{a.batch.id.slice(-6)} · {a.batch.stage}
-                            </Link>
-                          )}
-                          {!a.farmerName && !a.batch && <span style={{ color: 'var(--text-faint)' }}>—</span>}
-                        </div>
-                      </td>
-                      <td style={{ color: 'var(--text-faint)', whiteSpace: 'nowrap', fontSize: '0.78rem' }}>
-                        {timeAgo(a.createdAt)}
-                      </td>
-                      <td>
-                        {a.isRead ? (
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-faint)', fontWeight: 500 }}>Read</span>
-                        ) : (
-                          <span style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-                            fontSize: '0.72rem', fontWeight: 700,
-                            color: 'var(--primary)',
-                          }}>
-                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)', display: 'inline-block', animation: 'pulse-dot 1.5s ease infinite' }} />
-                            Unread
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        {!a.isRead && (
-                          <button className="btn btn-ghost btn-xs" onClick={() => handleMarkRead(a.id)}>
-                            Mark read
-                          </button>
-                        )}
-                      </td>
-                    </motion.tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+
+        {loading ? (
+          <SkeletonTable rows={6} cols={3} />
+        ) : shown.length === 0 ? (
+          <EmptyState
+            icon={<Icon name="alerts" size={22} />}
+            title={type ? t('alNoMatch') : tab === 'unread' ? t('alNoneUnread') : t('alNone')}
+            description={type ? undefined : t('alNoneBody')}
+          />
+        ) : (
+          <ul className="alert-feed">
+            {pageItems.map((a) => (
+              <li key={a.id} className={a.isRead ? 'is-read' : ''}>
+                <span className={`note-dot note-dot--${TYPE_DOT[a.type] ?? 'system'}`} aria-hidden="true" />
+                <div className="alert-feed-main">
+                  <p className="alert-feed-message">{a.message}</p>
+                  <p className="alert-feed-meta">
+                    <span className="alert-type">{t(TYPE_KEY[a.type] ?? 'alTypeSystem')}</span>
+                    {a.farmerName ? <span>{a.farmerName}</span> : null}
+                    {a.batch ? (
+                      <Link to={`/batches/${a.batch.id}`} className="cell-link">
+                        {t('alBatch')} {a.batch.stage ? (STAGE_LABELS[a.batch.stage] ?? a.batch.stage) : ''}
+                      </Link>
+                    ) : null}
+                    <span>{timeAgo(a.createdAt, locale)}</span>
+                  </p>
+                </div>
+                {!a.isRead && (
+                  <button className="btn btn-ghost btn-xs" onClick={() => handleMarkRead(a.id)}>{t('alMarkRead')}</button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {!loading && shown.length > PAGE_SIZE && (
+          <Pagination
+            meta={{ page: current, pageSize: PAGE_SIZE, totalItems: shown.length, totalPages, hasNext: current < totalPages, hasPrev: current > 1 }}
+            onPage={setPage}
+          />
+        )}
+      </Panel>
     </div>
   );
 }
