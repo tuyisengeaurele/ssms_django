@@ -1,6 +1,5 @@
 import type { PointerEvent, ReactNode } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { LOCALE_LABELS } from '../i18n/translations';
 import { Reveal } from './motion/Reveal';
 import { prefersReducedMotion } from './motion/usePrefersReducedMotion';
 import './features.css';
@@ -24,16 +23,15 @@ function Live() {
         <b>
           78<small>%</small>
         </b>
-        <i className="l-feat__pulse" />
       </div>
-      <svg viewBox="0 0 320 90" preserveAspectRatio="none" focusable="false">
+      <svg viewBox="0 0 320 70" preserveAspectRatio="none" focusable="false">
         <path
           className="l-feat__line"
           pathLength="1"
-          d="M0 62 C30 58 40 30 70 36 S110 70 140 52 S190 14 220 30 S270 56 320 24"
+          d="M0 46 C30 44 40 22 70 28 S110 54 140 40 S190 10 220 22 S270 42 320 16"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2.5"
+          strokeWidth="2.2"
           strokeLinecap="round"
         />
       </svg>
@@ -41,15 +39,15 @@ function Live() {
   );
 }
 
-function Chips() {
-  const names = ['Healthy', 'Flacherie', 'Grasserie', 'Muscardine', 'Pebrine'];
+function Result() {
+  const { t } = useLanguage();
   return (
-    <div className="l-feat__viz l-feat__chips" aria-hidden="true">
-      {names.map((name) => (
-        <span key={name} className={name === 'Grasserie' ? 'is-hit' : undefined}>
-          {name}
-        </span>
-      ))}
+    <div className="l-feat__viz l-feat__result" aria-hidden="true">
+      <small>{t('lpCardResult')}</small>
+      <b>{t('lpCardHealthy')}</b>
+      <span>
+        {t('lpCardConfidence')} 96 %
+      </span>
     </div>
   );
 }
@@ -58,49 +56,37 @@ function Mail() {
   const { t } = useLanguage();
   return (
     <div className="l-feat__viz l-feat__mail" aria-hidden="true">
-      <i />
-      <span>{t('lpMockAlert1')}</span>
-      <small>{t('lpMockAgo1')}</small>
+      <small>SSMS</small>
+      <b>{t('lpMockAlert1')}</b>
+      <span>{t('lpMockAgo1')}</span>
     </div>
   );
 }
 
-function Crew() {
+function Total() {
+  const { t } = useLanguage();
   return (
-    <div className="l-feat__viz l-feat__crew" aria-hidden="true">
-      {['A', 'B', 'C', 'D', 'E'].map((letter) => (
-        <span key={letter}>{letter}</span>
-      ))}
+    <div className="l-feat__viz l-feat__total" aria-hidden="true">
+      <small>{t('lpMockTotal')}</small>
+      <b>107.9 kg</b>
     </div>
   );
 }
 
-function Bars() {
-  const bars = [
-    { grade: 'A', h: 78 },
-    { grade: 'A', h: 62 },
-    { grade: 'B', h: 40 },
+function Farms() {
+  const { t } = useLanguage();
+  const rows = [
+    { name: 'Huye Farm', ok: true },
+    { name: 'Musanze Farm', ok: true },
+    { name: 'Gasabo Farm', ok: false },
   ];
   return (
-    <div className="l-feat__viz l-feat__bars" aria-hidden="true">
-      {bars.map((bar, i) => (
-        <span key={i} style={{ ['--h' as string]: bar.h }}>
-          <i />
-          <small>{bar.grade}</small>
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function Tongues() {
-  return (
-    <div className="l-feat__viz l-feat__tongues" aria-hidden="true">
-      {(['en', 'fr', 'rw'] as const).map((code) => (
-        <span key={code}>
-          <b>{code.toUpperCase()}</b>
-          {LOCALE_LABELS[code]}
-        </span>
+    <div className="l-feat__viz l-feat__farms" aria-hidden="true">
+      {rows.map((row) => (
+        <div key={row.name} className={row.ok ? undefined : 'is-watch'}>
+          <span>{row.name}</span>
+          <span>{row.ok ? t('lpCardInRange') : t('lpMockAttention')}</span>
+        </div>
       ))}
     </div>
   );
@@ -110,18 +96,20 @@ export function Features() {
   const { t } = useLanguage();
   const tiles: Array<{ id: string; title: string; body: string; viz: ReactNode }> = [
     { id: 'live', title: t('lpFeat1Title'), body: t('lpFeat1Body'), viz: <Live /> },
-    { id: 'disease', title: t('lpFeat2Title'), body: t('lpFeat2Body'), viz: <Chips /> },
+    { id: 'disease', title: t('lpFeat2Title'), body: t('lpFeat2Body'), viz: <Result /> },
     { id: 'mail', title: t('lpFeat3Title'), body: t('lpFeat3Body'), viz: <Mail /> },
-    { id: 'coop', title: t('lpFeat4Title'), body: t('lpFeat4Body'), viz: <Crew /> },
-    { id: 'harvest', title: t('lpFeat5Title'), body: t('lpFeat5Body'), viz: <Bars /> },
-    { id: 'tongues', title: t('lpFeat6Title'), body: t('lpFeat6Body'), viz: <Tongues /> },
+    { id: 'harvest', title: t('lpFeat4Title'), body: t('lpFeat4Body'), viz: <Total /> },
+    { id: 'coop', title: t('lpFeat5Title'), body: t('lpFeat5Body'), viz: <Farms /> },
   ];
 
   return (
     <section id="product" className="l-features" aria-labelledby="features-title">
       <div className="l-container">
-        <Reveal as="h2" className="l-features__title">
-          <span id="features-title">{t('lpFeaturesTitle')}</span>
+        <Reveal as="p" className="l-eyebrow">
+          {t('lpSolutionEyebrow')}
+        </Reveal>
+        <Reveal as="h2" className="l-features__title" delay={80}>
+          <span id="features-title">{t('lpSolutionTitle')}</span>
         </Reveal>
 
         <div className="l-feat-grid">
