@@ -1,0 +1,107 @@
+.landing .l-footer {
+  overflow: hidden;
+  padding: clamp(56px, 8vw, 104px) 0 28px;
+  background: var(--l-ink);
+  color: rgba(246, 243, 236, 0.74);
+}
+
+.landing .l-footer__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 0.7fr));
+  gap: clamp(28px, 5vw, 72px);
+  padding-bottom: clamp(40px, 6vw, 72px);
+}
+
+.landing .l-footer__about {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  max-width: 340px;
+}
+
+.landing .l-footer__logo {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 4px;
+}
+
+.landing .l-footer__name {
+  font: 500 clamp(1.5rem, 2.2vw, 1.9rem) / 1.15 var(--l-font-display);
+  color: var(--l-ivory);
+}
+
+.landing .l-footer__about p {
+  color: rgba(246, 243, 236, 0.72);
+}
+
+.landing .l-footer__tagline {
+  color: #e6b865;
+  font-style: italic;
+  font-family: var(--l-font-display);
+}
+
+.landing .l-footer__col h2 {
+  margin-bottom: 18px;
+  font: 600 0.74rem var(--l-font-ui);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(246, 243, 236, 0.5);
+}
+
+.landing .l-footer__col ul {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.landing .l-footer__col a {
+  display: inline-block;
+  color: rgba(246, 243, 236, 0.86);
+  text-decoration: none;
+  transition: color 0.3s var(--l-ease), transform 0.4s var(--l-ease);
+}
+
+.landing .l-footer__col a:hover {
+  color: var(--l-ivory);
+  transform: translateX(3px);
+}
+
+/* A very large outlined wordmark across the bottom */
+.landing .l-footer__wordmark {
+  margin: 0 0 -0.12em;
+  font: 800 clamp(6rem, 24vw, 21rem) / 0.8 var(--l-font-ui);
+  letter-spacing: -0.05em;
+  text-align: center;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(246, 243, 236, 0.14);
+  user-select: none;
+  pointer-events: none;
+}
+
+.landing .l-footer__base {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(246, 243, 236, 0.14);
+  color: rgba(246, 243, 236, 0.55);
+}
+
+@media (max-width: 860px) {
+  .landing .l-footer__top {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .landing .l-footer__about {
+    grid-column: 1 / -1;
+    max-width: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .landing .l-footer__top {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

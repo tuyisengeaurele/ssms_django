@@ -77,13 +77,13 @@ export default function LoginPage() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: 380 }}
         >
-          <img src="/logo.png" alt="SSMS Logo" style={{ width: 90, height: 90, objectFit: 'contain', marginBottom: '1.5rem', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))' }} />
+          <img src="/logo-on-dark.png" alt="SSMS Logo" style={{ width: 90, height: 90, objectFit: 'contain', marginBottom: '1.5rem', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))' }} />
 
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1.2, marginBottom: '0.625rem' }}>
             Smart Sericulture<br />Management System
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.875rem', marginBottom: '2.5rem', lineHeight: 1.6 }}>
-            Monitor farms, detect diseases, and optimise silk production — all in one platform.
+            Monitor farms, detect diseases, and optimise silk production, all in one platform.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', textAlign: 'left' }}>

@@ -1,135 +1,129 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { LegalLayout, type LegalSection } from '../landing/legal/LegalLayout';
 
-const LAST_UPDATED = 'May 17, 2026';
+const MAIL = 'smartsericulturerw@gmail.com';
 
-interface SectionProps { title: string; children: React.ReactNode }
-function Section({ title, children }: SectionProps) {
-  return (
-    <section style={{ marginBottom: '2.5rem' }}>
-      <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1.5px solid var(--border)' }}>
-        {title}
-      </h2>
-      <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.75 }}>
-        {children}
-      </div>
-    </section>
-  );
-}
+const sections: LegalSection[] = [
+  {
+    title: 'Acceptance of terms',
+    body: (
+      <p>
+        These terms are a binding agreement between you and SSMS. If you do not agree, do not use the platform. We may update the terms at any time, and if you keep using SSMS after a change you accept it.
+      </p>
+    ),
+  },
+  {
+    title: 'Eligibility',
+    body: (
+      <p>
+        SSMS is for farmers, cooperative supervisors and administrators who work in silk farming. You must be at least 18, or have a legal guardian's consent, to create an account. You confirm that the information you give when you register is accurate and current.
+      </p>
+    ),
+  },
+  {
+    title: 'Account responsibilities',
+    body: (
+      <ul>
+        <li>Keep your sign in details confidential.</li>
+        <li>Tell us straight away if someone uses your account without permission.</li>
+        <li>Do not share, sell or transfer your account to another person.</li>
+        <li>You are responsible for everything that happens under your account.</li>
+      </ul>
+    ),
+  },
+  {
+    title: 'Acceptable use',
+    body: (
+      <>
+        <p>You agree not to:</p>
+        <ul>
+          <li>Upload content that is unlawful, harmful or infringes intellectual property rights.</li>
+          <li>Try to reach other users' data or the platform's infrastructure without permission.</li>
+          <li>Use the disease check for anything other than assessing silkworm health.</li>
+          <li>Reverse engineer, scrape or exploit the platform in a way that harms the service for others.</li>
+          <li>Pretend to be someone else or claim a cooperative you do not belong to.</li>
+        </ul>
+      </>
+    ),
+  },
+  {
+    title: 'Disease check disclaimer',
+    body: (
+      <p>
+        The disease check is an AI tool, and like any AI tool it <strong>can make mistakes</strong>. Each result shows a confidence score. Treat the result as a quick second opinion, not a diagnosis, and consult a qualified expert before you act on it. SSMS is not a substitute for professional agricultural advice, and we accept no liability for crop or business losses that come from relying on a result.
+      </p>
+    ),
+  },
+  {
+    title: 'Intellectual property',
+    body: (
+      <p>
+        The software, design and content of SSMS belong to SSMS and its developers and are protected by intellectual property law. Your farm data and uploaded images stay yours. By uploading them you give SSMS a limited licence to process them in order to provide the service.
+      </p>
+    ),
+  },
+  {
+    title: 'Data and privacy',
+    body: (
+      <p>
+        Your use of SSMS is also covered by our <Link to="/privacy">Privacy Policy</Link>, which forms part of these terms.
+      </p>
+    ),
+  },
+  {
+    title: 'Service availability',
+    body: (
+      <p>
+        We work to keep SSMS available but cannot promise uninterrupted service. We may pause access for maintenance or in response to abuse. We are not liable for losses caused by downtime.
+      </p>
+    ),
+  },
+  {
+    title: 'Termination',
+    body: (
+      <p>
+        We may suspend or end your account if we believe you broke these terms. You may delete your account at any time by contacting us. Ending an account does not cancel rights or duties that arose before it ended.
+      </p>
+    ),
+  },
+  {
+    title: 'Limitation of liability',
+    body: (
+      <p>
+        As far as the law allows, SSMS and its developers are not liable for indirect, incidental, special or consequential damages that arise from your use of, or inability to use, the platform. This includes crop losses, data loss and business interruption.
+      </p>
+    ),
+  },
+  {
+    title: 'Governing law',
+    body: (
+      <p>
+        These terms are governed by the laws of the Republic of Rwanda. Rwandan courts have exclusive jurisdiction over any dispute.
+      </p>
+    ),
+  },
+  {
+    title: 'Contact',
+    body: (
+      <p>
+        Questions about these terms? Write to <a href={`mailto:${MAIL}`}>{MAIL}</a>.
+      </p>
+    ),
+  },
+];
 
 export default function TermsOfServicePage() {
-  useEffect(() => { window.scrollTo(0, 0); }, []);
-
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg, #f8faf9)' }}>
-      {/* Top bar */}
-      <header style={{ background: '#0D1F15', padding: '1rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <img src="/logo.png" alt="SSMS" style={{ height: 28 }} />
-          <span style={{ fontWeight: 900, fontSize: '1rem', color: '#fff', letterSpacing: '-0.03em' }}>SSMS</span>
-        </Link>
-        <Link to="/" style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>← Back to home</Link>
-      </header>
-
-      {/* Content */}
-      <motion.main
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        style={{ maxWidth: 780, margin: '0 auto', padding: '3rem 2rem 5rem' }}
-      >
-        <p style={{ fontSize: '0.8rem', color: 'var(--text-faint)', marginBottom: '0.5rem' }}>Last updated: {LAST_UPDATED}</p>
-        <h1 style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.03em', marginBottom: '0.5rem' }}>Terms of Service</h1>
-        <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '2.5rem' }}>
-          Please read these Terms of Service carefully before using the Silkworm Smart Management System (<strong>"SSMS"</strong>). By creating an account or accessing the platform you agree to be bound by these terms.
-        </p>
-
-        <Section title="1. Acceptance of Terms">
-          <p>
-            These Terms of Service constitute a legally binding agreement between you and SSMS. If you do not agree, do not use the platform. We reserve the right to update these terms at any time; continued use after changes constitutes acceptance.
-          </p>
-        </Section>
-
-        <Section title="2. Eligibility">
-          <p>
-            SSMS is intended for use by farmers, cooperative supervisors, and administrators involved in silk farming operations. You must be at least 18 years old, or have the consent of a legal guardian, to create an account. You represent that all registration information you provide is accurate and current.
-          </p>
-        </Section>
-
-        <Section title="3. Account Responsibilities">
-          <ul style={{ paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-            <li>You are responsible for maintaining the confidentiality of your login credentials.</li>
-            <li>You must notify us immediately of any unauthorised use of your account.</li>
-            <li>You may not share, sell, or transfer your account to another person.</li>
-            <li>You are responsible for all activity that occurs under your account.</li>
-          </ul>
-        </Section>
-
-        <Section title="4. Acceptable Use">
-          <p>You agree not to:</p>
-          <ul style={{ paddingLeft: '1.25rem', marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-            <li>Upload content that is unlawful, harmful, or infringes on intellectual property rights.</li>
-            <li>Attempt to gain unauthorised access to other users' data or the platform's infrastructure.</li>
-            <li>Use the disease-detection feature for any purpose other than silkworm health assessment.</li>
-            <li>Reverse-engineer, scrape, or exploit the platform in any way that degrades service for other users.</li>
-            <li>Misrepresent your identity or affiliation with a cooperative.</li>
-          </ul>
-        </Section>
-
-        <Section title="5. Disease Detection Disclaimer">
-          <p>
-            The AI disease-detection feature provides <strong>diagnostic suggestions only</strong>. Results are generated by a machine-learning model and may not be accurate in all cases. SSMS is not a substitute for professional agricultural or veterinary advice. Always consult a qualified expert before taking action based on detection results. We accept no liability for crop or business losses arising from reliance on detection outputs.
-          </p>
-        </Section>
-
-        <Section title="6. Intellectual Property">
-          <p>
-            All software, design, and content comprising the SSMS platform is the property of SSMS and its developers, and is protected by applicable intellectual property laws. Your farm data and uploaded images remain your property; by uploading you grant SSMS a limited licence to process that data to provide the service.
-          </p>
-        </Section>
-
-        <Section title="7. Data & Privacy">
-          <p>
-            Your use of SSMS is also governed by our <Link to="/privacy" style={{ color: 'var(--brand-600)' }}>Privacy Policy</Link>, which is incorporated into these Terms by reference.
-          </p>
-        </Section>
-
-        <Section title="8. Service Availability">
-          <p>
-            We strive for high availability but do not guarantee uninterrupted service. We may suspend access temporarily for maintenance or in response to abuse. We are not liable for losses arising from downtime.
-          </p>
-        </Section>
-
-        <Section title="9. Termination">
-          <p>
-            We may suspend or terminate your account at any time if we believe you have violated these Terms. You may delete your account at any time by contacting us. Termination does not affect any rights or obligations accrued prior to termination.
-          </p>
-        </Section>
-
-        <Section title="10. Limitation of Liability">
-          <p>
-            To the maximum extent permitted by law, SSMS and its developers shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of — or inability to use — the platform, including but not limited to crop losses, data loss, or business interruption.
-          </p>
-        </Section>
-
-        <Section title="11. Governing Law">
-          <p>
-            These Terms shall be governed by and construed in accordance with the laws of the Republic of Rwanda. Any disputes shall be subject to the exclusive jurisdiction of Rwandan courts.
-          </p>
-        </Section>
-
-        <Section title="12. Contact">
-          <p>
-            Questions about these Terms? Contact us at <a href="mailto:smartsericulturerw@gmail.com" style={{ color: 'var(--brand-600)' }}>smartsericulturerw@gmail.com</a>.
-          </p>
-        </Section>
-
-        <div style={{ marginTop: '3rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)', display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-          <Link to="/privacy" style={{ fontSize: '0.85rem', color: 'var(--brand-600)', fontWeight: 600 }}>Privacy Policy →</Link>
-          <Link to="/" style={{ fontSize: '0.85rem', color: 'var(--text-faint)' }}>← Home</Link>
-        </div>
-      </motion.main>
-    </div>
+    <LegalLayout
+      title="Terms of Service"
+      updated="October 8, 2026"
+      intro={
+        <>
+          Please read these terms before you use the Smart Sericulture Management System (SSMS). By creating an account or using the platform you agree to be bound by them.
+        </>
+      }
+      sections={sections}
+      other={{ to: '/privacy', label: 'Read the Privacy Policy' }}
+    />
   );
 }

@@ -4,6 +4,8 @@
  * Usage: const { t } = useLanguage();  t('navFarms') → 'Farms' / 'Fermes' / 'Amahindu'
  */
 
+import { landingTranslations } from './landing';
+
 export type Locale = 'en' | 'fr' | 'rw';
 
 export const LOCALE_LABELS: Record<Locale, string> = {
@@ -15,6 +17,7 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 type TranslationMap = Record<string, Record<Locale, string>>;
 
 export const translations: TranslationMap = {
+  ...landingTranslations,
 
   // ── Navigation ──────────────────────────────────────────────────────────────
   navDashboard:     { en: 'Dashboard',         fr: 'Tableau de bord',   rw: 'Ikibaho' },
@@ -115,19 +118,6 @@ export const translations: TranslationMap = {
   successSaved:    { en: 'Saved successfully',    fr: 'Enregistré avec succès', rw: 'Byabitswe neza' },
 
   // ── Landing page ──────────────────────────────────────────────────────────────
-  landingHero:          { en: "Rwanda's Silk Farming, Reimagined",         fr: "L'Agriculture de la Soie au Rwanda, Réinventée",  rw: "Ubuhinzi bw'Hariri mu Rwanda, Bunashywa Bushya" },
-  landingSubhero:       { en: 'AI-powered disease detection, real-time IoT monitoring, and smart farm management for sericulture cooperatives.', fr: "Détection des maladies par IA, surveillance IoT en temps réel et gestion intelligente des fermes pour les coopératives séricicoles.", rw: "Gusuzuma indwara hakoreshejwe AI, gukurikirana IoT mu gihe nyacyo, no gucunga amahindu y'amakoperative." },
-  landingGetStarted:    { en: 'Get Started Free',       fr: 'Commencer Gratuitement', rw: 'Tangira Ubuntu' },
-  landingContactUs:     { en: 'Contact Us',             fr: 'Contactez-nous',         rw: 'Twandikire' },
-  landingChallenge:     { en: 'The Challenge',          fr: 'Le Défi',                rw: 'Ikibazo' },
-  landingSolution:      { en: 'Our Solution',           fr: 'Notre Solution',         rw: 'Igisubizo Cyacu' },
-  landingFeatures:      { en: 'Key Features',           fr: 'Fonctionnalités Clés',   rw: 'Ibintu Bifatika' },
-  landingMission:       { en: 'Our Mission',            fr: 'Notre Mission',          rw: 'Intego Yacu' },
-  landingGetInTouch:    { en: 'Get in Touch',           fr: 'Prendre Contact',        rw: 'Tuganire' },
-  landingFullName:      { en: 'Full Name',              fr: 'Nom complet',            rw: 'Amazina Yombi' },
-  landingSubject:       { en: 'Subject',                fr: 'Sujet',                  rw: 'Insanganyamatsiko' },
-  landingMessage:       { en: 'Message',                fr: 'Message',                rw: 'Ubutumwa' },
-  landingSendMessage:   { en: 'Send Message',           fr: 'Envoyer le message',     rw: 'Ohereza Ubutumwa' },
 
   // ── Login / Auth pages ────────────────────────────────────────────────────────
   loginWelcome:         { en: 'Welcome back',                           fr: 'Bon retour',                               rw: 'Murakaza neza' },
@@ -157,8 +147,8 @@ export const translations: TranslationMap = {
   batchSensorReadings:  { en: 'Recent Sensor Readings', fr: 'Lectures récentes',     rw: 'Amakuru ya Sensors Ashya' },
   batchTemperature:     { en: 'Temperature',         fr: 'Température',              rw: 'Ubushyuhe' },
   batchHumidity:        { en: 'Humidity',            fr: 'Humidité',                 rw: 'Ubunyilyuhe' },
-  batchOptimalTemp:     { en: 'Optimal: 22–28 °C',   fr: 'Optimal : 22–28 °C',       rw: 'Byiza: 22–28 °C' },
-  batchOptimalHumid:    { en: 'Optimal: 70–85 %',    fr: 'Optimal : 70–85 %',        rw: 'Byiza: 70–85 %' },
+  batchOptimalTemp:     { en: 'Optimal: 22 to 28 °C',   fr: 'Optimal : 22 à 28 °C',       rw: 'Byiza: 22 kugeza 28 °C' },
+  batchOptimalHumid:    { en: 'Optimal: 70 to 85 %',    fr: 'Optimal : 70 à 85 %',        rw: 'Byiza: 70 kugeza 85 %' },
   batchArchive:         { en: 'Archive',             fr: 'Archiver',                 rw: 'Bika' },
   batchHarvestRecords:  { en: 'Harvest Records',     fr: 'Relevés de récolte',       rw: "Amakuru y'Isarura" },
 
@@ -177,9 +167,9 @@ export const translations: TranslationMap = {
   // ── Harvest page ──────────────────────────────────────────────────────────────
   harvestLogRecord:     { en: 'Log Harvest Record',  fr: 'Enregistrer une récolte',  rw: "Shyiraho Amakuru y'Isarura" },
   harvestSaveRecord:    { en: 'Save Record',         fr: "Enregistrer",              rw: 'Bika Amakuru' },
-  harvestGradeA:        { en: 'Grade A — Premium',   fr: 'Grade A — Premium',        rw: 'Urwego A — Rwiza cyane' },
-  harvestGradeB:        { en: 'Grade B — Standard',  fr: 'Grade B — Standard',       rw: 'Urwego B — Bisanzwe' },
-  harvestGradeC:        { en: 'Grade C — Below standard', fr: 'Grade C — Inférieur au standard', rw: 'Urwego C — Hepfo' },
+  harvestGradeA:        { en: 'Grade A: Premium',   fr: 'Grade A: Premium',        rw: 'Urwego A: Rwiza cyane' },
+  harvestGradeB:        { en: 'Grade B: Standard',  fr: 'Grade B: Standard',       rw: 'Urwego B: Bisanzwe' },
+  harvestGradeC:        { en: 'Grade C: Below standard', fr: 'Grade C: Inférieur au standard', rw: 'Urwego C: Hepfo' },
   harvestTotalRecords:  { en: 'Total Records',       fr: 'Total des relevés',        rw: 'Umubare w\'Amakuru' },
   harvestTotalCocoon:   { en: 'Total Cocoon (kg)',   fr: 'Total Cocons (kg)',        rw: 'Imideri Yose (kg)' },
   harvestTotalSilk:     { en: 'Total Silk Yield (g)',fr: 'Total Soie (g)',           rw: 'Umubare w\'Hariri (g)' },
@@ -203,15 +193,15 @@ export const translations: TranslationMap = {
   supervisorDetections:    { en: 'Total Detections', fr: 'Total détections', rw: 'Gusuzuma Kwose' },
   supervisorLiveAlerts:    { en: 'Live Alerts',    fr: 'Alertes en direct', rw: 'Ibiburaniswa Bizima' },
   supervisorRecentDetections: { en: 'Recent Disease Detections', fr: 'Détections récentes', rw: 'Gusuzuma Indwara Bishya' },
-  supervisorSafeTemp:   { en: 'Safe: 22–28 °C',    fr: 'Sûr: 22–28 °C',    rw: 'Byakiriwe: 22–28 °C' },
-  supervisorSafeHumid:  { en: 'Safe: 70–85 %',     fr: 'Sûr: 70–85 %',     rw: 'Byakiriwe: 70–85 %' },
+  supervisorSafeTemp:   { en: 'Safe: 22 to 28 °C',    fr: 'Sûr: 22 à 28 °C',    rw: 'Byakiriwe: 22 kugeza 28 °C' },
+  supervisorSafeHumid:  { en: 'Safe: 70 to 85 %',     fr: 'Sûr: 70 à 85 %',     rw: 'Byakiriwe: 70 kugeza 85 %' },
 
   // ── Disease detection page ────────────────────────────────────────────────────
   detectionTitle:       { en: 'Disease Detection',                          fr: 'Détection des maladies',                  rw: 'Gusuzuma Indwara' },
   detectionSubtitle:    { en: 'Upload a silkworm image for AI-powered disease analysis', fr: "Téléchargez une image d'un ver à soie pour une analyse IA", rw: 'Shyiraho ifoto ya umunyabukwe kugirango AI isuzume indwara' },
   detectionUpload:      { en: 'Upload Image',                               fr: "Télécharger l'image",                     rw: 'Ohereza Ifoto' },
   detectionDragDrop:    { en: 'Click or drag an image here',                fr: 'Cliquez ou glissez une image ici',        rw: 'Kanda cyangwa kuzana ifoto hano' },
-  detectionFileHint:    { en: 'JPEG · PNG · WebP — max 10 MB',              fr: 'JPEG · PNG · WebP — max 10 Mo',           rw: 'JPEG · PNG · WebP — ntarengwa 10 MB' },
+  detectionFileHint:    { en: 'JPEG · PNG · WebP, max 10 MB',              fr: 'JPEG · PNG · WebP, max 10 Mo',           rw: 'JPEG · PNG · WebP, ntarengwa 10 MB' },
   detectionRunBtn:      { en: 'Run Detection',                              fr: 'Lancer la détection',                     rw: 'Tangira Gusuzuma' },
   detectionRunning:     { en: 'Analysing…',                                 fr: 'Analyse en cours…',                       rw: 'Gusuzuma…' },
   detectionResult:      { en: 'AI Diagnosis',                               fr: 'Diagnostic IA',                           rw: 'Isuzuma rya AI' },

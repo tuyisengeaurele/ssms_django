@@ -48,6 +48,7 @@ EXCLUDED_GLOBS = [
     "staticfiles/*", "media/*", "backups/*", "*/migrations/*",
     "docs/superpowers/*", "design/*",
     "scripts/check_content.py", "scripts/tests/*",
+    "frontend/src/i18n/landing.test.ts",
     "*package-lock.json", "*.lock", "*.keras", "*.dump",
     "*.png", "*.jpg", "*.jpeg", "*.webp", "*.avif", "*.gif", "*.ico",
     "*.mp4", "*.woff", "*.woff2", "*.pdf",

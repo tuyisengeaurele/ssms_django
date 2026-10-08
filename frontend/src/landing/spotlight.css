@@ -1,0 +1,61 @@
+.landing .l-spot {
+  padding: var(--l-section) 0;
+  background: var(--l-paper);
+}
+
+.landing .l-spot__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: clamp(32px, 6vw, 96px);
+}
+
+.landing .l-spot__title {
+  max-width: 14ch;
+  margin-top: 18px;
+  font-size: clamp(2.2rem, 4.6vw, 4rem);
+  font-weight: 450;
+}
+
+.landing .l-spot__body {
+  max-width: 32ch;
+  margin-top: clamp(16px, 2vw, 24px);
+  font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+}
+
+.landing .l-spot__note {
+  margin-top: 14px;
+  color: var(--l-muted);
+  font-style: italic;
+}
+
+.landing .l-spot__stage {
+  position: relative;
+  max-width: 600px;
+  justify-self: end;
+  width: 100%;
+}
+
+.landing .l-spot__stage::before {
+  content: '';
+  position: absolute;
+  inset: -12% -8%;
+  z-index: 0;
+  background: radial-gradient(closest-side, rgba(200, 146, 58, 0.22), transparent 70%);
+  pointer-events: none;
+}
+
+.landing .l-spot__stage .l-paper {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 860px) {
+  .landing .l-spot__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing .l-spot__stage {
+    justify-self: stretch;
+  }
+}
