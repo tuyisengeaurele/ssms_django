@@ -8,16 +8,18 @@ import Modal from '../../components/ui/Modal';
 
 interface Props {
   farms: Farm[];
+  /** Pre-selects a farm, when the dialog is opened from that farm's page. */
+  defaultFarmId?: string;
   onClose: () => void;
   onCreated: (device: IoTDevice) => void;
 }
 
-export default function AddDeviceModal({ farms, onClose, onCreated }: Props) {
+export default function AddDeviceModal({ farms, defaultFarmId = '', onClose, onCreated }: Props) {
   const { t } = useLanguage();
   const { success, error: showError } = useToast();
   const { getErrorMessage } = useApiError();
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: '', farmId: '', location: '', deviceKey: '' });
+  const [form, setForm] = useState({ name: '', farmId: defaultFarmId, location: '', deviceKey: '' });
 
   const change = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
