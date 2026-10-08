@@ -1146,43 +1146,6 @@ tr.tbody-row:hover td { background: var(--gray-50); }
   line-height: 1.6;
 }
 
-/* ── Auth Page ───────────────────────────────────────────────────────────────── */
-.auth-layout {
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  background: var(--bg);
-}
-
-@media (max-width: 768px) {
-  .auth-layout { grid-template-columns: 1fr; }
-  .auth-panel-left { display: none; }
-}
-
-.auth-panel-left {
-  background: var(--brand-900);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 2rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.auth-panel-right {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-}
-
-.auth-card {
-  width: 100%;
-  max-width: 420px;
-}
-
 /* ── Misc utilities ──────────────────────────────────────────────────────────── */
 .flex          { display: flex; }
 .flex-center   { display: flex; align-items: center; justify-content: center; }
@@ -1366,8 +1329,6 @@ tr.tbody-row:hover td { background: var(--gray-50); }
 
 /* Auth card */
 @media (max-width: 480px) {
-  .auth-panel-right { padding: 1.25rem 1rem; }
-  .auth-card { max-width: 100%; }
 }
 
 /* Modal: full-width on phones */

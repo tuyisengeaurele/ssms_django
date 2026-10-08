@@ -190,7 +190,7 @@
 }
 
 /* Fields */
-.landing .l-auth form {
+.landing.l-auth form {
   display: grid;
   gap: 18px;
 }
