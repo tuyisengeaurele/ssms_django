@@ -21,10 +21,11 @@ describe('About sericulture', () => {
     expect(container.querySelector('section')).toHaveAttribute('id', 'about');
     expect(screen.getByText('Sericulture', { selector: 'p' })).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Silk begins with a worm that eats mulberry leaves.' }),
+      screen.getByRole('heading', { level: 2, name: 'Sericulture turns mulberry leaves into silk.' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Sericulture is the farming of silkworms/)).toBeInTheDocument();
-    expect(screen.getByText(/In Rwanda, silk gives rural families and cooperatives an income/)).toBeInTheDocument();
+    expect(screen.getByText(/Sericulture is silk farming/)).toBeInTheDocument();
+    expect(screen.getByText(/built for Rwandan farmers and cooperatives/)).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/rural famil/i);
   });
 
   it('lists the five stages of a batch in order', () => {
@@ -44,14 +45,14 @@ describe('The challenge', () => {
   it('names the three problems in order', () => {
     const { container } = wrap(<Challenge />);
     expect(container.querySelector('section')).toHaveAttribute('id', 'challenge');
-    expect(screen.getByRole('heading', { level: 2, name: 'One bad night can cost a batch.' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'A small change in the room can cost you a batch.' })).toBeInTheDocument();
     const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
     expect(titles).toEqual(['Conditions drift', 'Disease goes unnoticed', 'Records stay on paper']);
   });
 
   it('keeps the old fragile-silkworms lines out', () => {
     const { container } = wrap(<Challenge />);
-    expect(container.textContent).not.toMatch(/Silkworms are fragile|misses the night/);
+    expect(container.textContent).not.toMatch(/Silkworms are fragile|misses the night|bad night/);
   });
 });
 

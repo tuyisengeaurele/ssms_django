@@ -81,12 +81,13 @@
 
 .landing .l-hero__ghost {
   position: absolute;
-  right: -2%;
-  bottom: -6%;
-  font: 800 clamp(9rem, 30vw, 26rem) / 0.8 var(--l-font-ui);
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  font: 800 clamp(5.5rem, 17vw, 15rem) / 0.8 var(--l-font-ui);
   letter-spacing: -0.05em;
-  color: rgba(251, 249, 244, 0.1);
-  -webkit-text-stroke: 1px rgba(251, 249, 244, 0.16);
+  color: rgba(251, 249, 244, 0.09);
+  -webkit-text-stroke: 1px rgba(251, 249, 244, 0.14);
   white-space: nowrap;
   user-select: none;
   transform: translate3d(calc(var(--px) * 10px), calc(var(--py) * 6px), 0);
@@ -109,7 +110,7 @@
   position: relative;
   z-index: 4;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
   align-items: center;
   gap: clamp(32px, 5vw, 80px);
   min-height: inherit;
@@ -245,33 +246,10 @@
   animation: l-fade-up 1s var(--l-ease) 1.2s both;
 }
 
-.landing .l-hero__stat {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  margin-top: clamp(10px, 2vw, 22px);
-  padding-top: clamp(14px, 2vw, 20px);
-  border-top: 1px solid rgba(251, 249, 244, 0.2);
-  max-width: 420px;
-  animation: l-fade-up 1s var(--l-ease) 1.3s both;
-}
-
-.landing .l-hero__stat strong {
-  font: 500 clamp(2.2rem, 3.4vw, 3rem) / 1 var(--l-font-display);
-  font-variant-numeric: tabular-nums;
-}
-
-.landing .l-hero__stat span {
-  max-width: 18ch;
-  font-size: 0.9rem;
-  line-height: 1.35;
-  color: rgba(251, 249, 244, 0.8);
-}
-
 /* Stacked paper cards */
 .landing .l-hero__stack {
   position: relative;
-  width: min(100%, 420px);
+  width: min(100%, 340px);
   justify-self: end;
   animation: l-fade-up 1.2s var(--l-ease) 0.9s both;
 }
@@ -306,7 +284,7 @@
 
   .landing .l-hero__stack {
     justify-self: start;
-    width: min(100%, 380px);
+    width: min(100%, 320px);
     margin-bottom: 8px;
   }
 

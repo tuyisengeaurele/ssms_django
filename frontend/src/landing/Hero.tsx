@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { DiseaseCard } from './cards/DiseaseCard';
 import { ReportCard } from './cards/ReportCard';
-import { useCountUp } from './motion/useCountUp';
 import { useMagnetic } from './motion/useMagnetic';
 import { prefersReducedMotion } from './motion/usePrefersReducedMotion';
 import { useScrollProgress } from './motion/useScrollProgress';
@@ -39,13 +38,6 @@ export function Hero() {
   const cardRef = useScrollProgress<HTMLDivElement>((p) => {
     cardRef.current?.style.setProperty('--p', String(p));
   }, 'leave');
-
-  const [live, setLive] = useState(false);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setLive(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-  const stat = useCountUp(Number(t('lpStatValue')), { play: live });
 
   // Pointer parallax writes two CSS variables. The cards and the photo read them.
   const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -115,10 +107,6 @@ export function Hero() {
               </a>
             </div>
             <p className="l-hero__note">{t('lpHeroNote')}</p>
-            <p className="l-hero__stat" aria-label={t('lpStatsLabel')}>
-              <strong>{stat}</strong>
-              <span>{t('lpStatLabel')}</span>
-            </p>
           </div>
 
           <div className="l-hero__stack">

@@ -11,7 +11,7 @@ const REQUIRED = [
   'lpSkip', 'lpNavAbout', 'lpNavProduct', 'lpNavHow', 'lpNavFaq', 'lpNavContact', 'lpNavLogin',
   'lpNavStart', 'lpNavMenu', 'lpNavClose', 'lpLangLabel',
   'lpHeroEyebrow', 'lpHeroTitle', 'lpHeroSub', 'lpHeroCta', 'lpHeroSecondary', 'lpHeroNote',
-  'lpHeroImageAlt', 'lpGhostWord', 'lpStatValue', 'lpStatLabel', 'lpStatsLabel',
+  'lpHeroImageAlt', 'lpGhostWord',
   'lpCardReport', 'lpCardBatch', 'lpCardStage', 'lpCardTemp', 'lpCardHumidity', 'lpCardSafe',
   'lpCardHarvestIn', 'lpCardInRange', 'lpCardDays', 'lpCardDisease', 'lpCardResult',
   'lpCardConfidence', 'lpCardHealthy',
@@ -80,14 +80,23 @@ describe('landing copy', () => {
     }
   });
 
-  it('only claims the one number the product can back up', () => {
-    expect(landingTranslations.lpStatValue.en).toBe('4');
-    expect(landingTranslations.lpStatLabel.en).toBe('diseases the platform identifies');
+  it('names the full project in the hero eyebrow in every language', () => {
+    for (const locale of LOCALES) {
+      expect(landingTranslations.lpHeroEyebrow[locale]).toBe('Smart Sericulture Management System');
+    }
   });
 
-  it('translates the stat label instead of copying English', () => {
-    expect(landingTranslations.lpStatLabel.fr).not.toBe(landingTranslations.lpStatLabel.en);
-    expect(landingTranslations.lpStatLabel.rw).not.toBe(landingTranslations.lpStatLabel.en);
+  it('has no hero statistic', () => {
+    expect(LANDING_KEYS.filter((key) => key.startsWith('lpStat'))).toEqual([]);
+  });
+
+  it('keeps the wording the owner rejected out', () => {
+    const banned = /rural famil|familles rurales|imiryango yo mu cyaro|bad night|mauvaise nuit|ijoro rimwe ribi|Silk farming software for Rwanda/i;
+    for (const key of LANDING_KEYS) {
+      for (const locale of LOCALES) {
+        expect(banned.test(landingTranslations[key][locale]), `${key} ${locale}`).toBe(false);
+      }
+    }
   });
 
   it('says the disease check can make mistakes, in every language', () => {

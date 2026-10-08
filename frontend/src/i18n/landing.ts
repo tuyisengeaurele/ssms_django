@@ -20,9 +20,9 @@ export const landingTranslations = {
 
   // Hero
   lpHeroEyebrow: k(
-    'Silk farming software for Rwanda',
-    'Logiciel de sériciculture pour le Rwanda',
-    "Porogaramu y'ubworozi bw'inyo z'ubudodo mu Rwanda",
+    "Smart Sericulture Management System",
+    "Smart Sericulture Management System",
+    "Smart Sericulture Management System",
   ),
   lpHeroTitle: k(
     'Raise healthier silkworms.',
@@ -47,14 +47,6 @@ export const landingTranslations = {
     "Ibishishwa by'inyo z'ubudodo biri mu bitebo by'imigano",
   ),
   lpGhostWord: k('SILK', 'SILK', 'SILK'),
-  lpStatValue: k('4', '4', '4'),
-  lpStatLabel: k(
-    'diseases the platform identifies',
-    'maladies identifiées par la plateforme',
-    "indwara porogaramu imenya",
-  ),
-  lpStatsLabel: k('Key fact', 'Chiffre clé', "Umubare w'ingenzi"),
-
   // Paper cards
   lpCardReport: k('Batch report', 'Rapport de lot', "Raporo y'itsinda"),
   lpCardBatch: k('Batch', 'Lot', 'Itsinda'),
@@ -124,24 +116,24 @@ export const landingTranslations = {
   // About sericulture
   lpAboutEyebrow: k('Sericulture', 'Sériciculture', "Ubworozi bw'inyo z'ubudodo"),
   lpAboutTitle: k(
-    'Silk begins with a worm that eats mulberry leaves.',
-    'La soie commence par un ver qui mange des feuilles de mûrier.',
-    'Ubudodo butangira ku nyo irya amababi ya mulberry.',
+    "Sericulture turns mulberry leaves into silk.",
+    "La sériciculture transforme les feuilles de mûrier en soie.",
+    "Ubworozi bw'inyo z'ubudodo buhindura amababi ya mulberry ubudodo.",
   ),
   lpAboutBody1: k(
-    'Sericulture is the farming of silkworms. For a few weeks you feed the worms mulberry leaves. Each worm then spins a cocoon, and the cocoon is reeled into silk thread.',
-    "La sériciculture est l'élevage des vers à soie. Pendant quelques semaines, vous nourrissez les vers de feuilles de mûrier. Chaque ver file ensuite un cocon, et le cocon est dévidé en fil de soie.",
-    "Ubworozi bw'inyo z'ubudodo ni ukorora inyo zitanga ubudodo. Mu byumweru bike uziha amababi ya mulberry. Buri nyo ikora igishishwa, hanyuma igishishwa kigahindurwa umugozi w'ubudodo.",
+    "Sericulture is silk farming. Silkworms eat mulberry leaves for a few weeks, then each one spins a cocoon. The cocoon is reeled into silk thread.",
+    "La sériciculture est l'élevage du ver à soie. Pendant quelques semaines, les vers mangent des feuilles de mûrier, puis chacun file un cocon. Le cocon est dévidé en fil de soie.",
+    "Ubworozi bw'inyo z'ubudodo ni ugukora ubudodo. Inyo ziryaho amababi ya mulberry mu byumweru bike, hanyuma buri nyo igakora igishishwa. Igishishwa kigahindurwa umugozi w'ubudodo.",
   ),
   lpAboutBody2: k(
-    'A batch moves through five stages. Each stage needs its own care, and a mistake in one shows up in the next.',
-    "Un lot traverse cinq stades. Chacun demande des soins propres, et une erreur à un stade se voit au suivant.",
-    "Itsinda ritambuka ibyiciro bitanu. Buri cyiciro gisaba kwitabwaho kwacyo, kandi ikosa mu cyiciro kimwe rigaragara mu gikurikiyeho.",
+    "Every batch passes through five stages, from egg to harvest. Each stage has its own needs, and a mistake in one shows up in the next.",
+    "Chaque lot passe par cinq stades, de l'œuf à la récolte. Chaque stade a ses besoins, et une erreur à l'un se voit au suivant.",
+    "Buri tsinda ritambuka ibyiciro bitanu, kuva ku igi kugeza ku isarura. Buri cyiciro gifite ibyo gikenera, kandi ikosa mu cyiciro kimwe rigaragara mu gikurikiyeho.",
   ),
   lpAboutBody3: k(
-    'In Rwanda, silk gives rural families and cooperatives an income from land they already farm.',
-    "Au Rwanda, la soie offre aux familles rurales et aux coopératives un revenu tiré de terres qu'elles cultivent déjà.",
-    "Mu Rwanda, ubudodo buha imiryango yo mu cyaro n'amakoperative amafaranga ava mu butaka basanzwe bahinga.",
+    "SSMS is built for Rwandan farmers and cooperatives who want to raise silk with confidence.",
+    "SSMS est conçu pour les agriculteurs et les coopératives du Rwanda qui veulent élever la soie en toute confiance.",
+    "SSMS yakorewe abahinzi n'amakoperative byo mu Rwanda bashaka korora ubudodo bafite icyizere.",
   ),
   lpStagesLabel: k('The five stages of a batch', "Les cinq stades d'un lot", "Ibyiciro bitanu by'itsinda"),
   lpStage1: k('Egg', 'Œuf', 'Igi'),
@@ -153,9 +145,9 @@ export const landingTranslations = {
   // The challenge
   lpChallengeEyebrow: k('The challenge', 'Le défi', 'Ikibazo'),
   lpChallengeTitle: k(
-    'One bad night can cost a batch.',
-    'Une mauvaise nuit peut coûter un lot.',
-    'Ijoro rimwe ribi rishobora gutwara itsinda.',
+    "A small change in the room can cost you a batch.",
+    "Un petit changement dans la salle peut vous coûter un lot.",
+    "Impinduka nto mu cyumba zishobora kugutwara itsinda.",
   ),
   lpChallengeIntro: k(
     'Silkworms are sensitive to heat, damp and disease, and a rearing room is hard to watch around the clock.',

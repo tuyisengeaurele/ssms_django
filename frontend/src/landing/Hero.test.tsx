@@ -23,7 +23,8 @@ describe('Hero', () => {
   it('has one headline, an eyebrow and the sub line', () => {
     renderHero();
     expect(screen.getByRole('heading', { level: 1, name: 'Raise healthier silkworms.' })).toBeInTheDocument();
-    expect(screen.getByText('Silk farming software for Rwanda')).toBeInTheDocument();
+    expect(screen.getByText('Smart Sericulture Management System')).toBeInTheDocument();
+    expect(screen.queryByText(/Silk farming software for Rwanda/)).not.toBeInTheDocument();
     expect(screen.getByText(/SSMS watches the temperature and humidity in your rearing room/)).toBeInTheDocument();
   });
 
@@ -34,15 +35,12 @@ describe('Hero', () => {
     expect(screen.getByText('Works in any phone browser.')).toBeInTheDocument();
   });
 
-  it('shows one honest number about the platform', () => {
+  it('has no statistic in the hero', () => {
     setReducedMotion(true);
-    renderHero();
-    const stat = screen.getByLabelText('Key fact');
-    expect(stat).toHaveTextContent('4');
-    expect(stat).toHaveTextContent('diseases the platform identifies');
-    expect(screen.queryByText(/stages, egg to harvest/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/^languages$/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/from one photo/)).not.toBeInTheDocument();
+    const { container } = renderHero();
+    expect(screen.queryByLabelText('Key fact')).not.toBeInTheDocument();
+    expect(container.querySelector('.l-hero__stat')).toBeNull();
+    expect(screen.queryByText(/diseases the platform identifies/)).not.toBeInTheDocument();
   });
 
   it('describes the photo and hides the decoration from screen readers', () => {
