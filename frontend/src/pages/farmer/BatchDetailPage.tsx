@@ -244,7 +244,7 @@ export default function BatchDetailPage() {
           <>
             <div className="split">
               <Panel title={t('bdTempChart')} note={t('bdSafeTemp')}>
-                <RangeChart label={t('bdTempChart')} data={series} dataKey="temp" unit="°C" color={colorFor('stage', 'EGG')} safe={TEMP_RANGE} />
+                <RangeChart label={t('bdTempChart')} data={series} dataKey="temp" unit="°C" color={colorFor('stage', 'COCOON')} safe={TEMP_RANGE} />
               </Panel>
               <Panel title={t('bdHumChart')} note={t('bdSafeHum')}>
                 <RangeChart label={t('bdHumChart')} data={series} dataKey="hum" unit="%" color={colorFor('stage', 'PUPA')} safe={HUM_RANGE} />
