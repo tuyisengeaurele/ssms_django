@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import * as Sentry from '@sentry/react';
 import App from './App';
 import '@fontsource-variable/inter';
 import './index.css';
@@ -9,7 +8,9 @@ import { LanguageProvider } from './context/LanguageContext';
 
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN as string | undefined;
 
+// Loaded on demand so visitors without monitoring never download it.
 if (SENTRY_DSN) {
+  void import('@sentry/react').then((Sentry) => {
   Sentry.init({
     dsn: SENTRY_DSN,
     environment: import.meta.env.MODE,            // "development" | "production"
@@ -28,6 +29,7 @@ if (SENTRY_DSN) {
     // Capture 100 % of sessions with errors
     replaysOnErrorSampleRate: 1.0,
     sendDefaultPii: false,
+  });
   });
 }
 
