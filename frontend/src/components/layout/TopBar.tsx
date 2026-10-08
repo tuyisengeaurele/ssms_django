@@ -5,20 +5,13 @@ import { useLanguage } from '../../context/LanguageContext';
 import { LOCALE_LABELS, type Locale } from '../../i18n/translations';
 import { alertService } from '../../services/alert.service';
 import { contactsService } from '../../services/contacts.service';
-import { AlertLog, AlertType, ContactMessage } from '../../types';
+import { AlertLog, ContactMessage } from '../../types';
+import { ALERT_DOT, ALERT_TYPE_KEY } from '../../utils/alertTypes';
 import { usePageTitle } from '../../utils/pageTitle';
 import { timeAgo } from '../../utils/timeAgo';
 import { Icon } from '../ui/Icon';
 import Modal from '../ui/Modal';
 import { ROLE_LABEL_KEY } from './Sidebar';
-
-const ALERT_DOT: Record<AlertType, string> = {
-  TEMPERATURE: 'temperature',
-  HUMIDITY: 'humidity',
-  DISEASE: 'disease',
-  STAGE_CHANGE: 'stage',
-  SYSTEM: 'system',
-};
 
 interface TopBarProps {
   onMenuToggle: () => void;
@@ -84,7 +77,7 @@ function NotificationPanel({ isAdmin, alertCount, onClose }: { isAdmin: boolean;
                 <span className={`note-dot note-dot--${ALERT_DOT[a.type] ?? 'system'}`} aria-hidden="true" />
                 <div>
                   <p className="note-text">{a.message}</p>
-                  <p className="note-meta">{a.type.replace('_', ' ').toLowerCase()} · {timeAgo(a.createdAt, locale)}</p>
+                  <p className="note-meta">{t(ALERT_TYPE_KEY[a.type] ?? 'alTypeSystem')} · {timeAgo(a.createdAt, locale)}</p>
                 </div>
               </div>
             ))

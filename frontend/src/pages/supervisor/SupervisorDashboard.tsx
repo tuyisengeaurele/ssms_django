@@ -6,7 +6,8 @@ import { useToast } from '../../context/ToastContext';
 import { farmService } from '../../services/farm.service';
 import { alertService, buildAlertStreamUrl } from '../../services/alert.service';
 import { sensorService, batchSupervisorService, detectionService2, ActiveBatch, ChartPoint, RecentDetection } from '../../services/sensor.service';
-import { Farm, AlertLog, AlertType } from '../../types';
+import { Farm, AlertLog } from '../../types';
+import { ALERT_DOT } from '../../utils/alertTypes';
 import { colorFor } from '../../utils/chartColors';
 import { fill } from '../../utils/fill';
 import { timeAgo } from '../../utils/timeAgo';
@@ -18,14 +19,6 @@ import RangeChart from '../../components/ui/RangeChart';
 import { SkeletonStatCard } from '../../components/ui/SkeletonLoader';
 import StageBadge from '../../components/ui/StageBadge';
 import StatTile from '../../components/ui/StatTile';
-
-const ALERT_DOT: Record<AlertType, string> = {
-  TEMPERATURE: 'temperature',
-  HUMIDITY: 'humidity',
-  DISEASE: 'disease',
-  STAGE_CHANGE: 'stage',
-  SYSTEM: 'system',
-};
 
 export default function SupervisorDashboard() {
   const { user } = useAuth();

@@ -8,6 +8,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
 import { timeAgo } from '../../utils/timeAgo';
 import { STAGE_LABELS } from '../../utils/constants';
+import { ALERT_DOT, ALERT_TYPE_KEY } from '../../utils/alertTypes';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
 import PageHeader from '../../components/ui/PageHeader';
@@ -16,22 +17,6 @@ import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 
 const PAGE_SIZE = 15;
-
-const TYPE_KEY: Record<AlertType, string> = {
-  TEMPERATURE: 'alTypeTemperature',
-  HUMIDITY: 'alTypeHumidity',
-  DISEASE: 'alTypeDisease',
-  STAGE_CHANGE: 'alTypeStage',
-  SYSTEM: 'alTypeSystem',
-};
-
-const TYPE_DOT: Record<AlertType, string> = {
-  TEMPERATURE: 'temperature',
-  HUMIDITY: 'humidity',
-  DISEASE: 'disease',
-  STAGE_CHANGE: 'stage',
-  SYSTEM: 'system',
-};
 
 export default function AlertsPage() {
   const { getErrorMessage } = useApiError();
@@ -115,7 +100,7 @@ export default function AlertsPage() {
               onChange={(e) => { setType(e.target.value as AlertType | ''); setPage(1); }}
             >
               <option value="">{t('alAllTypes')}</option>
-              {(Object.keys(TYPE_KEY) as AlertType[]).map((k) => <option key={k} value={k}>{t(TYPE_KEY[k])}</option>)}
+              {(Object.keys(ALERT_TYPE_KEY) as AlertType[]).map((k) => <option key={k} value={k}>{t(ALERT_TYPE_KEY[k])}</option>)}
             </select>
           </label>
         }
@@ -140,11 +125,11 @@ export default function AlertsPage() {
           <ul className="alert-feed">
             {pageItems.map((a) => (
               <li key={a.id} className={a.isRead ? 'is-read' : ''}>
-                <span className={`note-dot note-dot--${TYPE_DOT[a.type] ?? 'system'}`} aria-hidden="true" />
+                <span className={`note-dot note-dot--${ALERT_DOT[a.type] ?? 'system'}`} aria-hidden="true" />
                 <div className="alert-feed-main">
                   <p className="alert-feed-message">{a.message}</p>
                   <p className="alert-feed-meta">
-                    <span className="alert-type">{t(TYPE_KEY[a.type] ?? 'alTypeSystem')}</span>
+                    <span className="alert-type">{t(ALERT_TYPE_KEY[a.type] ?? 'alTypeSystem')}</span>
                     {a.farmerName ? <span>{a.farmerName}</span> : null}
                     {a.batch ? (
                       <Link to={`/batches/${a.batch.id}`} className="cell-link">
