@@ -1,0 +1,6 @@
+#!/bin/sh
+# Block new em dashes and filler wording in staged changes.
+python scripts/check_content.py --staged || {
+  echo "Fix the lines above, then commit again." >&2
+  exit 1
+}

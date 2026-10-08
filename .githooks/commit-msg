@@ -1,0 +1,6 @@
+#!/bin/sh
+# Short, human commit messages. See CONTRIBUTING.md.
+python scripts/check_content.py --commit-msg "$1" || {
+  echo "Commit message rejected. Fix it and try again." >&2
+  exit 1
+}
