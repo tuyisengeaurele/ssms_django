@@ -33,7 +33,7 @@ describe('AuthShell', () => {
     expect(screen.getByRole('main')).toHaveAttribute('id', 'main');
   });
 
-  it('names the product beside the photo and shows the new logo', () => {
+  it('names the product in the panel and shows the new logo', () => {
     const { container } = renderShell(<AuthShell title="Hello">x</AuthShell>);
     const aside = container.querySelector('.l-auth__aside') as HTMLElement;
     expect(within(aside).getByText('Smart Sericulture Management System')).toBeInTheDocument();
@@ -41,6 +41,12 @@ describe('AuthShell', () => {
     const logo = aside.querySelector('img[src="/logo-on-dark.png"]');
     expect(logo).not.toBeNull();
     expect(container.querySelector('img[src*="worm"]')).toBeNull();
+  });
+
+  it('uses a plain color panel with no photo', () => {
+    const { container } = renderShell(<AuthShell title="Hello">x</AuthShell>);
+    const aside = container.querySelector('.l-auth__aside') as HTMLElement;
+    expect(aside.querySelector('picture, img[src*="images"], .l-auth__photo, .l-auth__shade')).toBeNull();
   });
 
   it('links back home, to the legal pages, and switches language', () => {

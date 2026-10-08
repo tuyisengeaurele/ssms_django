@@ -9,9 +9,6 @@ import { useLanguage } from '../../context/LanguageContext';
 import { LOCALE_LABELS, type Locale } from '../../i18n/translations';
 import './auth.css';
 
-const BG_WIDTHS = [640, 1280, 1920];
-const bgSet = (ext: string) => BG_WIDTHS.map((w) => `/images/hero-bg-${w}.${ext} ${w}w`).join(', ');
-
 interface AuthShellProps {
   title: string;
   subtitle?: ReactNode;
@@ -33,13 +30,6 @@ export function AuthShell({ title, subtitle, children }: AuthShellProps) {
       </a>
 
       <aside className="l-auth__aside">
-        <picture className="l-auth__photo" aria-hidden="true">
-          <source type="image/avif" srcSet={bgSet('avif')} sizes="(min-width: 900px) 46vw, 100vw" />
-          <source type="image/webp" srcSet={bgSet('webp')} sizes="(min-width: 900px) 46vw, 100vw" />
-          <img src="/images/hero-bg-1280.webp" alt="" width={1920} height={1280} decoding="async" />
-        </picture>
-        <div className="l-auth__shade" aria-hidden="true" />
-
         <Link to="/" className="l-auth__brand" aria-label={`SSMS, ${t('lpFooterName')}`}>
           <img src="/logo-on-dark.png" alt="" width="44" height="44" decoding="async" />
           <span>SSMS</span>
