@@ -1,0 +1,321 @@
+/* Paper cards. They scale from their own width, so they fit any slot. */
+.landing .l-paper {
+  container-type: inline-size;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #fff;
+  color: var(--l-ink);
+  text-align: left;
+  box-shadow:
+    0 1px 0 rgba(11, 31, 23, 0.04),
+    0 2px 6px rgba(11, 31, 23, 0.06),
+    0 30px 60px -16px rgba(11, 31, 23, 0.32);
+}
+
+.landing .l-paper__sheet {
+  padding: 1.9em 1.9em 1.7em;
+  font-size: clamp(11px, 3.5cqw, 17px);
+  line-height: 1.4;
+}
+
+.landing .l-paper__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1em;
+  padding-bottom: 1.2em;
+  border-bottom: 1px solid var(--l-hairline);
+}
+
+.landing .l-paper__who {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75em;
+  min-width: 0;
+}
+
+.landing .l-paper__who b {
+  font: 600 1.4em/1.1 var(--l-font-display);
+  letter-spacing: -0.01em;
+}
+
+.landing .l-paper__mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.3em;
+  height: 2.3em;
+  border-radius: 0.65em;
+  background: var(--l-leaf);
+  color: var(--l-paper);
+}
+
+.landing .l-paper__mark svg {
+  width: 60%;
+  height: 60%;
+}
+
+.landing .l-paper__tag {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.landing .l-paper__tag small {
+  display: block;
+  color: var(--l-muted);
+  font-size: 0.74em;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.landing .l-paper__tag strong {
+  font-size: 1.05em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.landing .l-paper__body {
+  padding-top: 0.7em;
+}
+
+.landing .l-paper__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1em;
+  padding: 0.55em 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.landing .l-paper__row > span:first-child {
+  color: #4b5b53;
+}
+
+.landing .l-paper__ok {
+  display: inline-flex;
+  align-items: center;
+  color: #1f6b47;
+  font-weight: 500;
+}
+
+.landing .l-paper__ok i {
+  width: 0.55em;
+  height: 0.55em;
+  margin-right: 0.5em;
+  border-radius: 50%;
+  background: #2d8a5b;
+}
+
+.landing .l-paper__total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1em;
+  margin-top: 0.8em;
+  padding-top: 1em;
+  border-top: 1px solid var(--l-hairline);
+}
+
+.landing .l-paper__total span {
+  color: #4b5b53;
+}
+
+.landing .l-paper__total strong {
+  font: 700 1.55em/1 var(--l-font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.landing .l-paper__cta {
+  margin-top: 1.1em;
+  padding: 0.95em 1em;
+  border-radius: 0.85em;
+  background: var(--l-ink);
+  color: var(--l-paper);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Disease check */
+.landing .l-paper__disease {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 1.2em;
+  align-items: center;
+  padding: 0.5em 0 1em;
+}
+
+.landing .l-paper__photo {
+  aspect-ratio: 4 / 3;
+  border-radius: 0.8em;
+  background: url('/images/hero-bg-640.webp') 30% 60% / cover no-repeat;
+}
+
+.landing .l-paper__result small {
+  display: block;
+  color: var(--l-muted);
+  font-size: 0.74em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.landing .l-paper__result strong {
+  display: block;
+  margin: 0.15em 0;
+  font: 600 2em/1.05 var(--l-font-display);
+  letter-spacing: -0.01em;
+}
+
+.landing .l-paper__result span {
+  color: #1f6b47;
+  font-weight: 500;
+}
+
+.landing .l-paper__scores {
+  display: grid;
+  gap: 0.65em;
+  padding-top: 0.5em;
+  border-top: 1px solid var(--l-hairline);
+}
+
+.landing .l-paper__score {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25em 1em;
+  color: #4b5b53;
+  font-size: 0.92em;
+  font-variant-numeric: tabular-nums;
+}
+
+.landing .l-paper__score i {
+  grid-column: 1 / -1;
+  display: block;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, currentColor var(--w), rgba(11, 31, 23, 0.08) var(--w));
+}
+
+.landing .l-paper__score.is-top {
+  color: var(--l-ink);
+  font-weight: 600;
+}
+
+.landing .l-paper__score.is-top i {
+  color: var(--l-leaf);
+}
+
+/* Readings */
+.landing .l-paper__nums {
+  display: flex;
+  gap: 2.4em;
+  padding: 0.6em 0 1em;
+}
+
+.landing .l-paper__nums small {
+  display: block;
+  color: var(--l-muted);
+  font-size: 0.74em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.landing .l-paper__nums b {
+  font: 500 2.9em/1 var(--l-font-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.landing .l-paper__nums i {
+  margin-left: 0.2em;
+  color: var(--l-muted);
+  font-style: normal;
+  font-size: 1.1em;
+}
+
+.landing .l-paper__chart {
+  position: relative;
+  color: var(--l-leaf);
+  padding-top: 0.9em;
+  border-top: 1px solid var(--l-hairline);
+}
+
+.landing .l-paper__chart small {
+  color: var(--l-muted);
+  font-size: 0.8em;
+}
+
+.landing .l-paper__chart svg {
+  display: block;
+  width: 100%;
+  height: 6.8em;
+  margin-top: 0.4em;
+}
+
+.landing .l-paper__band {
+  fill: rgba(45, 106, 79, 0.1);
+}
+
+.landing .l-paper__axis {
+  display: block;
+  margin-top: 0.2em;
+  color: var(--l-muted);
+  font-size: 0.78em;
+  text-align: right;
+}
+
+.landing .l-paper__axis i {
+  font-style: normal;
+}
+
+/* Harvest table */
+.landing .l-paper__table {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 0.6fr;
+  align-items: center;
+  gap: 1em;
+  padding: 0.6em 0;
+  border-bottom: 1px solid var(--l-hairline);
+  font-variant-numeric: tabular-nums;
+}
+
+.landing .l-paper__table--head {
+  color: var(--l-muted);
+  font-size: 0.74em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.landing .l-paper__grade {
+  display: inline-block;
+  min-width: 1.9em;
+  padding: 0.1em 0.65em;
+  border-radius: 999px;
+  font-style: normal;
+  font-weight: 600;
+  text-align: center;
+}
+
+.landing .l-paper__grade.grade-A {
+  background: rgba(45, 106, 79, 0.12);
+  color: #1f6b47;
+}
+
+.landing .l-paper__grade.grade-B {
+  background: rgba(200, 146, 58, 0.18);
+  color: #7a5214;
+}
+
+/* Bars draw in when the owning section marks the card with is-live. */
+.landing .l-paper.is-live .l-paper__score i {
+  animation: l-bar-in 1.2s var(--l-ease) both;
+}
+
+@keyframes l-bar-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
