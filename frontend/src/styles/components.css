@@ -679,6 +679,31 @@ tr.is-off td:last-child { opacity: 1; }
 .danger-zone { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border-light); }
 .danger-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
 
+/* Profile */
+.profile-layout { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 20px; max-width: 980px; align-items: start; }
+.profile-stack { display: grid; gap: 20px; }
+@media (max-width: 860px) { .profile-layout { grid-template-columns: minmax(0, 1fr); } }
+
+.identity { display: grid; justify-items: center; gap: 6px; padding: 32px 24px; text-align: center; }
+.identity-avatar { display: grid; width: 84px; height: 84px; margin-bottom: 10px; place-items: center; border-radius: 50%; background: var(--ink); color: var(--ivory); font: 450 1.9rem var(--font-display); }
+.identity-name { font: 450 1.45rem var(--font-display); color: var(--ink); overflow-wrap: anywhere; }
+.identity-email { margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem; overflow-wrap: anywhere; }
+.identity-facts { display: grid; gap: 12px; width: 100%; margin: 20px 0 0; padding-top: 18px; border-top: 1px solid var(--border-light); text-align: left; }
+.identity-facts > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.identity-facts dt { color: var(--text-muted); font-size: 0.84rem; }
+.identity-facts dd { margin: 0; color: var(--ink); font-weight: 600; font-size: 0.88rem; text-align: right; overflow-wrap: anywhere; }
+
+.form-input.is-fixed { background: var(--surface-2); color: var(--text-muted); cursor: not-allowed; }
+.profile-note { margin: 4px 0 18px; }
+.fixed-value { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 0.72rem 0.95rem; border: 1px solid var(--border-light); border-radius: 14px; background: var(--surface-2); color: var(--text-2); }
+.fixed-value small { color: var(--text-muted); font-size: 0.8rem; }
+.profile-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.segmented { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(11, 31, 23, 0.06); }
+.segmented button { padding: 8px 18px; border: 0; border-radius: 999px; background: none; color: var(--text-2); font: 500 0.88rem var(--font-ui); transition: background-color 0.25s var(--ease-out), color 0.25s var(--ease-out); }
+.segmented button:hover:not(.is-on) { color: var(--ink); }
+.segmented button.is-on { background: var(--ink); color: var(--ivory); }
+
 /* ── Loading ───────────────────────────────────────────────────────────────── */
 .skeleton {
   background: linear-gradient(90deg, #ebe6da 25%, #f3efe5 50%, #ebe6da 75%);
