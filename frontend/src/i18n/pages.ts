@@ -409,6 +409,28 @@ export const pageTranslations = {
   fmNoMatch: k("No farms match", "Aucune ferme ne correspond", "Nta hinga rihuye"),
   fmNoMatchBody: k("Nothing matches \"{q}\". Try a different name or place.", "Rien ne correspond à « {q} ». Essayez un autre nom ou lieu.", "Nta kihuye na \"{q}\". Gerageza irindi zina cyangwa ahandi."),
   fmClear: k("Clear search", "Effacer la recherche", "Siba ishakisha"),
+  // New farm page
+  afSubtitle: k("Add a silkworm farm to your account.", "Ajoutez une ferme de vers à soie à votre compte.", "Ongeraho ihinga ry'inyo z'ubudodo kuri konti yawe."),
+  afBack: k("Back to farms", "Retour aux fermes", "Subira ku mahindu"),
+  afPanel: k("Farm details", "Détails de la ferme", "Amakuru y'ihinga"),
+  afName: k("Farm name", "Nom de la ferme", "Izina ry'ihinga"),
+  afNameHint: k("A name you will recognise, such as the village or the owner.", "Un nom que vous reconnaîtrez, comme le village ou le propriétaire.", "Izina uzamenya, nk'umudugudu cyangwa nyirubwite."),
+  afNamePlace: k("For example, Karame Silk Farm", "Par exemple, Ferme de soie de Karame", "Urugero, Ihinga ry'ubudodo rya Karame"),
+  afLocation: k("Location", "Lieu", "Aho riherereye"),
+  afLocationHint: k("The district, the sector or a full address.", "Le district, le secteur ou une adresse complète.", "Akarere, umurenge cyangwa aderesi yuzuye."),
+  afLocationPlace: k("For example, Gatsibo, Eastern Province", "Par exemple, Gatsibo, Province de l'Est", "Urugero, Gatsibo, Intara y'Iburasirazuba"),
+  afCreate: k("Create farm", "Créer la ferme", "Fungura ihinga"),
+  afCreating: k("Creating", "Création", "Kurema"),
+  afCreated: k("Farm created.", "Ferme créée.", "Ihinga ryafunguwe."),
+  afNextTitle: k("What comes next", "Et ensuite", "Ibikurikira"),
+  afStep1: k("Add a batch", "Ajouter un lot", "Ongeraho itsinda"),
+  afStep1Body: k("A batch is one group of silkworms, from egg to harvest.", "Un lot est un groupe de vers à soie, de l'œuf à la récolte.", "Itsinda ni itsinda rimwe ry'inyo, kuva ku igi kugeza ku isarura."),
+  afStep2: k("Watch the room", "Surveiller la salle", "Kurikirana icyumba"),
+  afStep2Body: k("Connect a sensor to see temperature and humidity.", "Connectez un capteur pour voir la température et l'humidité.", "Shyiraho igikoresho urebe ubushyuhe n'ubuhehere."),
+  afStep3: k("Check for disease", "Vérifier les maladies", "Suzuma indwara"),
+  afStep3Body: k("Photograph a worm and get a quick second opinion.", "Photographiez un ver et obtenez un second avis rapide.", "Fata ifoto y'inyo ubone igitekerezo cya kabiri vuba."),
+  afStep4: k("Record the harvest", "Enregistrer la récolte", "Andika isarura"),
+  afStep4Body: k("Write down the weight and the quality when the cocoons are ready.", "Notez le poids et la qualité quand les cocons sont prêts.", "Andika ibiro n'ubuziranenge igihe ibifuko biteguye."),
 } satisfies Record<string, Entry>;
 
 export type PageKey = keyof typeof pageTranslations;
