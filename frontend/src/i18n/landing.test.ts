@@ -8,21 +8,31 @@ const EN_DASH = String.fromCharCode(0x2013);
 const FILLER = /seamless|leverag|empower|revolutioni|cutting-edge|game-changer|delve/i;
 
 const REQUIRED = [
-  'lpSkip', 'lpNavProduct', 'lpNavHow', 'lpNavContact', 'lpNavLogin', 'lpNavStart',
-  'lpNavMenu', 'lpNavClose', 'lpLangLabel',
-  'lpHeroTitle', 'lpHeroSub', 'lpHeroCta', 'lpHeroSecondary', 'lpHeroImageAlt', 'lpGhostWord',
-  'lpStat1Value', 'lpStat1Label', 'lpStat2Value', 'lpStat2Label', 'lpStat3Value', 'lpStat3Label',
-  'lpPreviewDashboard', 'lpPreviewDisease', 'lpPreviewAlerts', 'lpSample',
-  'lpProblem1', 'lpProblem2', 'lpProblem3',
-  'lpHowTitle',
+  'lpSkip', 'lpNavAbout', 'lpNavProduct', 'lpNavHow', 'lpNavFaq', 'lpNavContact', 'lpNavLogin',
+  'lpNavStart', 'lpNavMenu', 'lpNavClose', 'lpLangLabel',
+  'lpHeroEyebrow', 'lpHeroTitle', 'lpHeroSub', 'lpHeroCta', 'lpHeroSecondary', 'lpHeroNote',
+  'lpHeroImageAlt', 'lpGhostWord', 'lpStatValue', 'lpStatLabel', 'lpStatsLabel',
+  'lpCardReport', 'lpCardBatch', 'lpCardStage', 'lpCardTemp', 'lpCardHumidity', 'lpCardSafe',
+  'lpCardHarvestIn', 'lpCardInRange', 'lpCardDays', 'lpCardDisease', 'lpCardResult',
+  'lpCardConfidence', 'lpCardHealthy',
+  'lpMockNewBatch', 'lpMockFarm', 'lpMockStartDate', 'lpMockExpected', 'lpMockCreate',
+  'lpMockReadings', 'lpMockNow', 'lpMockLast24', 'lpMockBatch', 'lpMockWeight', 'lpMockGrade',
+  'lpMockYield', 'lpMockHarvestTitle', 'lpCardRange', 'lpMockInDays', 'lpMockTotal', 'lpMockStatus', 'lpMockAttention', 'lpMockAlert1', 'lpMockAgo1',
+  'lpAriaReport', 'lpAriaNewBatch', 'lpAriaReadings', 'lpAriaDisease', 'lpAriaHarvest',
+  'lpAboutEyebrow', 'lpAboutTitle', 'lpAboutBody1', 'lpAboutBody2', 'lpAboutBody3', 'lpStagesLabel',
+  'lpStage1', 'lpStage2', 'lpStage3', 'lpStage4', 'lpStage5',
+  'lpChallengeEyebrow', 'lpChallengeTitle', 'lpChallengeIntro',
+  'lpChallenge1Title', 'lpChallenge1Body', 'lpChallenge2Title', 'lpChallenge2Body',
+  'lpChallenge3Title', 'lpChallenge3Body',
+  'lpSolutionEyebrow', 'lpSolutionTitle',
+  'lpFeat1Title', 'lpFeat1Body', 'lpFeat2Title', 'lpFeat2Body', 'lpFeat3Title', 'lpFeat3Body',
+  'lpFeat4Title', 'lpFeat4Body', 'lpFeat5Title', 'lpFeat5Body',
+  'lpHowEyebrow', 'lpHowTitle',
   'lpStep1Title', 'lpStep1Body', 'lpStep2Title', 'lpStep2Body',
   'lpStep3Title', 'lpStep3Body', 'lpStep4Title', 'lpStep4Body',
-  'lpFeaturesTitle',
-  'lpFeat1Title', 'lpFeat1Body', 'lpFeat2Title', 'lpFeat2Body', 'lpFeat3Title', 'lpFeat3Body',
-  'lpFeat4Title', 'lpFeat4Body', 'lpFeat5Title', 'lpFeat5Body', 'lpFeat6Title', 'lpFeat6Body',
-  'lpSpotTitle', 'lpSpotBody', 'lpSpotNote',
-  'lpRwandaTitle', 'lpRwandaBody',
-  'lpFaqTitle',
+  'lpSpotEyebrow', 'lpSpotTitle', 'lpSpotBody', 'lpSpotNote',
+  'lpCoopEyebrow', 'lpCoopTitle', 'lpCoopBody', 'lpCoopPoint1', 'lpCoopPoint2',
+  'lpFaqEyebrow', 'lpFaqTitle',
   'lpFaq1Q', 'lpFaq1A', 'lpFaq2Q', 'lpFaq2A', 'lpFaq3Q', 'lpFaq3A',
   'lpFaq4Q', 'lpFaq4A', 'lpFaq5Q', 'lpFaq5A', 'lpFaq6Q', 'lpFaq6A',
   'lpContactTitle', 'lpContactSub',
@@ -30,12 +40,8 @@ const REQUIRED = [
   'lpFormSentTitle', 'lpFormSentBody', 'lpFormErrorGeneric', 'lpFormErrorNetwork', 'lpFormErrorBusy',
   'lpFormRequired', 'lpFormEmailInvalid', 'lpFormMessageShort',
   'lpCtaTitle', 'lpCtaButton',
-  'lpFooterName', 'lpFooterTagline', 'lpFooterPrivacy', 'lpFooterTerms', 'lpFooterPhotos',
-  'lpMockToday', 'lpMockBatch', 'lpMockTemperature', 'lpMockHumidity', 'lpMockInRange',
-  'lpMockHarvestTitle', 'lpMockWeight', 'lpMockGrade', 'lpMockConfidence', 'lpMockResult',
-  'lpMockAlert1', 'lpMockAlert2', 'lpMockAlert3', 'lpMockAgo1', 'lpMockAgo2', 'lpMockAgo3',
-  'lpPreviewShow', 'lpPreviewLabel', 'lpStatsLabel',
-  'lpMockAriaDashboard', 'lpMockAriaHarvest', 'lpMockAriaDisease', 'lpMockAriaAlerts',
+  'lpFooterName', 'lpFooterTagline', 'lpFooterBlurb', 'lpFooterExplore', 'lpFooterAccount',
+  'lpFooterLegal', 'lpFooterCreate', 'lpFooterPrivacy', 'lpFooterTerms', 'lpFooterPhotos',
 ];
 
 describe('landing copy', () => {
@@ -74,17 +80,20 @@ describe('landing copy', () => {
     }
   });
 
-  it('only claims the numbers the product can back up', () => {
-    expect(landingTranslations.lpStat1Value.en).toBe('4');
-    expect(landingTranslations.lpStat2Value.en).toBe('5');
-    expect(landingTranslations.lpStat3Value.en).toBe('3');
+  it('only claims the one number the product can back up', () => {
+    expect(landingTranslations.lpStatValue.en).toBe('4');
+    expect(landingTranslations.lpStatLabel.en).toBe('diseases the platform identifies');
   });
 
-  it('translates the stat labels instead of copying English', () => {
-    for (const key of ['lpStat1Label', 'lpStat2Label', 'lpStat3Label'] as const) {
-      expect(landingTranslations[key].fr).not.toBe(landingTranslations[key].en);
-      expect(landingTranslations[key].rw).not.toBe(landingTranslations[key].en);
-    }
+  it('translates the stat label instead of copying English', () => {
+    expect(landingTranslations.lpStatLabel.fr).not.toBe(landingTranslations.lpStatLabel.en);
+    expect(landingTranslations.lpStatLabel.rw).not.toBe(landingTranslations.lpStatLabel.en);
+  });
+
+  it('says the disease check can make mistakes, in every language', () => {
+    expect(landingTranslations.lpSpotNote.en).toMatch(/can make mistakes/);
+    expect(landingTranslations.lpFaq3A.en).toMatch(/can make mistakes/);
+    expect(landingTranslations.lpFaq3A.fr).toMatch(/se tromper/);
   });
 
   it('is available through the shared translations map', () => {
