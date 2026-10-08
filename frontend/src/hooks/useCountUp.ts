@@ -3,10 +3,11 @@ import { prefersReducedMotion } from '../landing/motion/usePrefersReducedMotion'
 
 /** Counts from 0 up to the target. Shows the target at once for people who asked for less motion. */
 export function useCountUp(target: number, duration = 900): number {
-  const [value, setValue] = useState(() => (prefersReducedMotion() ? target : 0));
+  const reduced = prefersReducedMotion();
+  const [value, setValue] = useState(() => (reduced ? target : 0));
 
   useEffect(() => {
-    if (!target || prefersReducedMotion()) {
+    if (!target || reduced) {
       setValue(target || 0);
       return;
     }
@@ -20,7 +21,8 @@ export function useCountUp(target: number, duration = 900): number {
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [target, duration]);
+  }, [target, duration, reduced]);
 
-  return value;
+  // Read the target straight away so a change never shows one stale render first.
+  return reduced ? target || 0 : value;
 }

@@ -28,6 +28,20 @@ describe('useCountUp', () => {
     expect(result.current).toBe(12);
   });
 
+  it('never shows a stale number when the target changes under reduced motion', () => {
+    setReducedMotion(true);
+    const seen: number[] = [];
+    const { rerender } = renderHook(({ target }) => {
+      const value = useCountUp(target);
+      seen.push(value);
+      return value;
+    }, { initialProps: { target: 0 } });
+    seen.length = 0;
+    rerender({ target: 7 });
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.every((v) => v === 7)).toBe(true);
+  });
+
   it('stays at zero for zero', () => {
     const { result } = renderHook(() => useCountUp(0));
     expect(result.current).toBe(0);
