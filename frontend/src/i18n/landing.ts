@@ -36,17 +36,11 @@ export const landingTranslations = {
   ),
   lpHeroCta: k('Create your account', 'Créer votre compte', 'Fungura konti yawe'),
   lpHeroSecondary: k('See how it works', 'Voir comment ça marche', 'Reba uko ikora'),
-  lpHeroNote: k(
-    'Works in any phone browser.',
-    "Fonctionne dans n'importe quel navigateur de téléphone.",
-    'Ikora kuri telefone iyo ari yo yose.',
-  ),
   lpHeroImageAlt: k(
     'Silkworm cocoons resting in bamboo trays',
     'Cocons de vers à soie posés dans des plateaux en bambou',
     "Ibishishwa by'inyo z'ubudodo biri mu bitebo by'imigano",
   ),
-  lpGhostWord: k('SILK', 'SILK', 'SILK'),
   // Paper cards
   lpCardReport: k('Batch report', 'Rapport de lot', "Raporo y'itsinda"),
   lpCardBatch: k('Batch', 'Lot', 'Itsinda'),

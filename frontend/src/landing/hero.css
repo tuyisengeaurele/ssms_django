@@ -3,8 +3,6 @@
 }
 
 .landing .l-hero__card {
-  --px: 0;
-  --py: 0;
   position: relative;
   isolation: isolate;
   width: min(100%, 1360px);
@@ -50,7 +48,6 @@
 
 .landing .l-hero__bg img {
   object-fit: cover;
-  transform: translate3d(calc(var(--px) * -8px), calc(var(--py) * -6px), 0);
   animation: l-settle 2s var(--l-ease) both;
 }
 
@@ -70,39 +67,6 @@
   background:
     linear-gradient(90deg, rgba(11, 31, 23, 0.86) 0%, rgba(11, 31, 23, 0.5) 45%, rgba(11, 31, 23, 0.18) 100%),
     linear-gradient(180deg, rgba(11, 31, 23, 0.35) 0%, rgba(11, 31, 23, 0) 30%, rgba(11, 31, 23, 0.7) 100%);
-}
-
-/* Ghost word */
-.landing .l-hero__layer--ghost {
-  z-index: 2;
-  pointer-events: none;
-  transform: translate3d(0, calc(var(--p, 0) * 26%), 0);
-}
-
-.landing .l-hero__ghost {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  translate: -50% -50%;
-  font: 800 clamp(5.5rem, 17vw, 15rem) / 0.8 var(--l-font-ui);
-  letter-spacing: -0.05em;
-  color: rgba(251, 249, 244, 0.09);
-  -webkit-text-stroke: 1px rgba(251, 249, 244, 0.14);
-  white-space: nowrap;
-  user-select: none;
-  transform: translate3d(calc(var(--px) * 10px), calc(var(--py) * 6px), 0);
-  animation: l-ghost-in 1.8s var(--l-ease) 0.2s both;
-}
-
-@keyframes l-ghost-in {
-  from {
-    opacity: 0;
-    letter-spacing: -0.02em;
-  }
-  to {
-    opacity: 1;
-    letter-spacing: -0.05em;
-  }
 }
 
 /* Content */
@@ -240,38 +204,12 @@
   text-decoration-color: var(--l-ivory);
 }
 
-.landing .l-hero__note {
-  font-size: 0.88rem;
-  color: rgba(251, 249, 244, 0.7);
-  animation: l-fade-up 1s var(--l-ease) 1.2s both;
-}
-
-/* Stacked paper cards */
+/* Window for the rotating cards */
 .landing .l-hero__stack {
   position: relative;
   width: min(100%, 340px);
   justify-self: end;
   animation: l-fade-up 1.2s var(--l-ease) 0.9s both;
-}
-
-.landing .l-hero__front {
-  position: relative;
-  z-index: 2;
-  transform: translate3d(calc(var(--px) * -6px), calc(var(--py) * -5px), 0);
-}
-
-.landing .l-hero__back-wrap {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  transform: translate3d(calc(var(--px) * 8px), calc(var(--py) * 6px), 0);
-}
-
-.landing .l-hero__back {
-  height: 100%;
-  transform: translate(4%, -7%) rotate(4.5deg);
-  transform-origin: 20% 90%;
-  opacity: 0.96;
 }
 
 /* Tablet and phone */
@@ -288,9 +226,6 @@
     margin-bottom: 8px;
   }
 
-  .landing .l-hero__back {
-    transform: translate(6%, -5%) rotate(4deg);
-  }
 
   .landing .l-hero__shade {
     background: linear-gradient(180deg, rgba(11, 31, 23, 0.55) 0%, rgba(11, 31, 23, 0.7) 50%, rgba(11, 31, 23, 0.94) 100%);
