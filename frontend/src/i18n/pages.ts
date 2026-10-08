@@ -395,6 +395,20 @@ export const pageTranslations = {
   svNoChecksBody: k("Check a batch from its page and the result will show here.", "Vérifiez un lot depuis sa page et le résultat s'affichera ici.", "Suzuma itsinda uhereye ku rupapuro rwaryo, igisubizo kizagaragara hano."),
   svNewAlerts: k("{n} new alerts", "{n} nouvelles alertes", "Ibiburaniswa bishya {n}"),
   svNewAlertOne: k("1 new alert", "1 nouvelle alerte", "Igiburaniswa gishya 1"),
+  // Farmer farms list
+  fmSubtitleMany: k("{n} farms registered.", "{n} fermes enregistrées.", "Amahindu {n} yanditswe."),
+  fmSubtitleOne: k("1 farm registered.", "1 ferme enregistrée.", "Ihinga 1 ryanditswe."),
+  fmNew: k("New farm", "Nouvelle ferme", "Ihinga rishya"),
+  fmSearch: k("Search farms", "Rechercher une ferme", "Shakisha ihinga"),
+  fmBatchOne: k("1 batch", "1 lot", "Itsinda 1"),
+  fmBatchMany: k("{n} batches", "{n} lots", "Amatsinda {n}"),
+  fmOpen: k("Open", "Ouvrir", "Fungura"),
+  fmNone: k("No farms yet", "Aucune ferme pour le moment", "Nta hinga riraboneka"),
+  fmNoneBody: k("Create your first farm to start tracking batches.", "Créez votre première ferme pour suivre vos lots.", "Fungura ihinga ryawe rya mbere utangire gukurikirana amatsinda."),
+  fmCreateFirst: k("Create a farm", "Créer une ferme", "Fungura ihinga"),
+  fmNoMatch: k("No farms match", "Aucune ferme ne correspond", "Nta hinga rihuye"),
+  fmNoMatchBody: k("Nothing matches \"{q}\". Try a different name or place.", "Rien ne correspond à « {q} ». Essayez un autre nom ou lieu.", "Nta kihuye na \"{q}\". Gerageza irindi zina cyangwa ahandi."),
+  fmClear: k("Clear search", "Effacer la recherche", "Siba ishakisha"),
 } satisfies Record<string, Entry>;
 
 export type PageKey = keyof typeof pageTranslations;
