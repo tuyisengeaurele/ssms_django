@@ -154,6 +154,8 @@ ROWS = [
 
     # ── administration ────────────────────────────────────────────────────────────────────────
     Row('user list', 'GET', lambda w: '/api/admin/users', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
+    Row('restore a user', 'POST', lambda w: f"/api/admin/users/{w.users['farmer_no_coop'].pk}/restore",
+        expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
     Row('audit log', 'GET', lambda w: '/api/admin/audit-log', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
     Row('system report', 'GET', lambda w: '/api/admin/reports', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
     Row('contact messages', 'GET', lambda w: '/api/admin/contacts', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
