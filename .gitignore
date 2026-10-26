@@ -80,3 +80,6 @@ backups/
 *.dump
 *.sqlite3
 .ruff_cache/
+
+# Test environment for the AI service
+.venv/

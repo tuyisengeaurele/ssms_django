@@ -7,6 +7,7 @@ back, and compares the status with the table. Reading the table is the quickest 
 * wrong role for the endpoint: 403 (this is checked before anything else)
 * right role but the record is outside the caller's scope, or deleted: 404
 """
+import io
 from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Callable
@@ -16,6 +17,7 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import transaction
 from django.utils import timezone
+from PIL import Image
 from rest_framework.test import APIClient
 
 from alerts.models import AlertLog
@@ -23,12 +25,15 @@ from tests.security.world import ACTORS, FARMERS, SCOPE, SUPERVISORS
 
 pytestmark = pytest.mark.django_db
 
+
+def _png():
+    buffer = io.BytesIO()
+    Image.new('RGB', (4, 4), (20, 120, 60)).save(buffer, 'PNG')
+    return buffer.getvalue()
+
 OWNER_SIDE = {'farmer_owner', 'supervisor_a', 'admin'}
 STAFF_ONLY_DENIED = [*FARMERS, *SUPERVISORS]
-PNG = (
-    b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89'
-    b'\x00\x00\x00\rIDATx\x9cc\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xa7\x9a\xa0\xa0\x00\x00\x00\x00IEND\xaeB`\x82'
-)
+PNG = _png()
 
 
 def expect(allowed, *, role_denied=(), allowed_code=200, denied_code=404, role_code=403):

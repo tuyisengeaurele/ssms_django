@@ -216,6 +216,8 @@ FRONTEND_URL        = config('FRONTEND_URL',        default='http://localhost:51
 
 # AI microservice (FastAPI — deployed separately)
 AI_SERVICE_URL = config('AI_SERVICE_URL', default='http://localhost:8001')
+# Shared with the AI service, which refuses requests that do not carry it.
+AI_SERVICE_SECRET = config('AI_SERVICE_SECRET', default='')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

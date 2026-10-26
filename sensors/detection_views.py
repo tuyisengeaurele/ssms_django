@@ -15,6 +15,7 @@ import cloudinary.uploader
 import httpx
 from django.conf import settings
 from django.http import StreamingHttpResponse
+from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -26,6 +27,7 @@ from core.utils import api_error, api_success
 
 from .models import DiseaseDetection
 from .serializers import DiseaseDetectionSerializer
+from .uploads import validate_image_upload
 
 logger = logging.getLogger(__name__)
 
@@ -67,16 +69,24 @@ class DiseaseDetectionCreateView(APIView):
         if not image_file:
             return api_error('Please add a photo.', 400)
 
-        # The batch must exist and be one this person may use.
+        # The batch must exist and be one this person may use. Checked first, so a stranger's
+        # request never gets as far as decoding a photo.
         batch_id = get_batch_or_404(request.user, batch_id).pk
+
+        try:
+            image_type = validate_image_upload(image_file)
+        except ValidationError as exc:
+            return api_error(str(exc.detail[0]), 422)
 
         # Call FastAPI AI service
         ai_url = f'{settings.AI_SERVICE_URL}/predict'
+        headers = {'X-Internal-Secret': settings.AI_SERVICE_SECRET} if settings.AI_SERVICE_SECRET else {}
         try:
             with httpx.Client(timeout=30.0) as client:
                 response = client.post(
                     ai_url,
-                    files={'file': (image_file.name, image_file.read(), image_file.content_type)},
+                    files={'file': (image_file.name, image_file.read(), image_type)},
+                    headers=headers,
                 )
             if response.status_code != 200:
                 logger.error('AI service returned %s: %s', response.status_code, response.text[:300])

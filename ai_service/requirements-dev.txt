@@ -1,0 +1,7 @@
+# Enough to run the AI service tests. TensorFlow is optional here (one test is skipped without it).
+fastapi
+httpx
+pillow
+numpy
+python-multipart
+pytest

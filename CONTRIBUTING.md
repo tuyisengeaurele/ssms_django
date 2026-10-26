@@ -21,6 +21,22 @@ venv/Scripts/python -m uvicorn ssms_django.asgi:application --reload --port 8000
 
 or `make dev-api`. After pulling the cache change, run `python manage.py createcachetable` once.
 
+## Running the AI service
+
+The AI service only answers requests that carry the shared secret, and it will not start without one.
+Put the same long random text in the API's `.env` and in the service's environment:
+
+```bash
+# in .env of the API
+AI_SERVICE_SECRET=<long random text>
+
+# when starting the AI service
+AI_SERVICE_SECRET=<the same text> uvicorn main:app --port 8001
+```
+
+For quick local work only, start the service with `AI_ALLOW_INSECURE=1` instead and leave the secret out of both.
+To test the service on its own: `cd ai_service`, create a venv, `pip install -r requirements-dev.txt`, then `pytest`.
+
 ## Branches
 
 - Never commit on `master`.
