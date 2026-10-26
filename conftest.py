@@ -23,6 +23,9 @@ def _quiet_settings(request, settings):
         rest['DEFAULT_THROTTLE_CLASSES'] = []
     settings.REST_FRAMEWORK = rest
     settings.EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+    # A cheap hasher first, so building a dozen users stays fast. The real hashers stay in the list,
+    # so old hashes still verify. Tests about hashing can set PASSWORD_HASHERS themselves.
+    settings.PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher', *settings.PASSWORD_HASHERS]
     _clear_cache()
     yield
     _clear_cache()
@@ -40,6 +43,23 @@ def auth_client():
     def make(user):
         client = APIClient()
         client.force_authenticate(user=user)
+        return client
+
+    return make
+
+
+@pytest.fixture
+def jwt_client():
+    """jwt_client(user) signs in with a real access token, the way a browser does.
+
+    force_authenticate skips the check that rejects deactivated users, so tests about
+    inactive accounts need a real token.
+    """
+    from rest_framework_simplejwt.tokens import AccessToken
+
+    def make(user):
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION=f'Bearer {AccessToken.for_user(user)}')
         return client
 
     return make
