@@ -135,13 +135,8 @@
 
 .sidebar-badge {
   margin-left: auto;
-  min-width: 22px;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: var(--gold-soft);
-  color: var(--ink);
-  font: 700 0.68rem/1.35 var(--font-ui);
-  text-align: center;
+  color: var(--gold-soft);
+  font: 700 0.78rem var(--font-ui);
 }
 
 /* Sign out sits at the end of the list and looks like every other item. */
@@ -194,10 +189,6 @@
   position: absolute;
   top: 3px;
   right: 8px;
-  min-width: 0;
-  padding: 0;
-  background: none;
-  color: var(--gold-soft);
   font-size: 0.66rem;
 }
 
@@ -538,20 +529,6 @@ a.topbar-note:hover {
   opacity: 0.6;
 }
 
-.note-dot {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  margin-top: 7px;
-  border-radius: 50%;
-  background: var(--text-muted);
-}
-
-.note-dot--temperature { background: #c8923a; }
-.note-dot--humidity    { background: #3a7ca5; }
-.note-dot--disease     { background: #b4412f; }
-.note-dot--stage       { background: #2d6a4f; }
-
 .note-text {
   font-size: 0.86rem;
   font-weight: 500;
@@ -645,11 +622,8 @@ a.topbar-note:hover {
 
 .menu-count {
   margin-left: auto;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: var(--ink);
-  color: var(--ivory);
-  font: 600 0.7rem var(--font-ui);
+  color: var(--text-muted);
+  font: 600 0.8rem var(--font-ui);
 }
 
 /* Focus rings that match the public site */
@@ -714,11 +688,7 @@ a.topbar-note:hover {
 
   .app-sidebar.collapsed .sidebar-badge {
     position: static;
-    min-width: 22px;
-    padding: 2px 7px;
-    background: var(--gold-soft);
-    color: var(--ink);
-    font-size: 0.68rem;
+    font-size: 0.78rem;
   }
 
   .topbar-toggle {

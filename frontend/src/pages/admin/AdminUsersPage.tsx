@@ -294,7 +294,7 @@ export default function AdminUsersPage() {
                       </td>
                       <td data-label={t('usColJoined')} className="cell-muted cell-nowrap">{joined.format(new Date(u.createdAt))}</td>
                       <td data-label={t('usColStatus')}>
-                        <span className={`badge badge-dot ${active ? 'badge-green' : 'badge-gray'}`}>
+                        <span className={`badge ${active ? 'badge-green' : 'badge-gray'}`}>
                           {active ? t('usActive') : t('usOff')}
                         </span>
                       </td>

@@ -8,7 +8,6 @@ import { farmService } from '../../services/farm.service';
 import { alertService } from '../../services/alert.service';
 import { sensorService, batchSupervisorService, ActiveBatch, ChartPoint } from '../../services/sensor.service';
 import { Farm, AlertLog } from '../../types';
-import { ALERT_DOT } from '../../utils/alertTypes';
 import { colorFor } from '../../utils/chartColors';
 import { fill } from '../../utils/fill';
 import { timeAgo } from '../../utils/timeAgo';
@@ -193,7 +192,6 @@ export default function FarmerDashboard() {
               <ul className="alert-feed alert-feed--short" aria-label={t('svAlertsTitle')}>
                 {alerts.slice(0, 6).map((a) => (
                   <li key={a.id} className={a.isRead ? 'is-read' : ''}>
-                    <span className={`note-dot note-dot--${ALERT_DOT[a.type] ?? 'system'}`} aria-hidden="true" />
                     <div className="alert-feed-main">
                       <p className="alert-feed-message">{a.message}</p>
                       <p className="alert-feed-meta"><span>{timeAgo(a.createdAt, locale)}</span></p>

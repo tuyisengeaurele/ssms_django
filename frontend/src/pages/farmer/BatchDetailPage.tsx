@@ -271,7 +271,7 @@ export default function BatchDetailPage() {
                           <td data-label={t('bdColTemp')}>{r.temperature.toFixed(1)} °C</td>
                           <td data-label={t('bdColHum')}>{r.humidity.toFixed(0)} %</td>
                           <td data-label={t('bdColState')}>
-                            <span className={`badge badge-dot ${fine ? 'badge-green' : 'badge-red'}`}>{fine ? t('bdInRange') : t('bdOutRange')}</span>
+                            <span className={`badge ${fine ? 'badge-green' : 'badge-red'}`}>{fine ? t('bdInRange') : t('bdOutRange')}</span>
                           </td>
                         </tr>
                       );
@@ -311,7 +311,7 @@ export default function BatchDetailPage() {
                     <tr key={d.id} className="tbody-row">
                       <td className="cell-lead cell-muted cell-nowrap">{clock.format(new Date(d.detectedAt))}</td>
                       <td data-label={t('bdColResult')}>
-                        <span className="badge badge-stage badge-dot" style={{ '--c': colorFor('result', d.result) } as CSSProperties}>{d.result}</span>
+                        <span className="badge badge-stage" style={{ '--c': colorFor('result', d.result) } as CSSProperties}>{d.result}</span>
                       </td>
                       <td data-label={t('bdColConfidence')} className="cell-nowrap">{Math.round(d.confidence * 100)}%</td>
                       <td data-label={t('bdColNotes')} className="cell-muted">{d.notes ?? '-'}</td>

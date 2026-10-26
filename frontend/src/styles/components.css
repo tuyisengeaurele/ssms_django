@@ -302,39 +302,23 @@
 
 /* ── Badges and notices ────────────────────────────────────────────────────── */
 .badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: rgba(11, 31, 23, 0.07);
-  color: var(--ink);
-  font: 600 0.68rem var(--font-ui);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  color: var(--text-2);
+  font: 600 0.84rem var(--font-ui);
   white-space: nowrap;
 }
 
-.badge-green  { background: #e3efe7; color: #1f5a3f; }
-.badge-blue   { background: #e1ecf3; color: #2a6286; }
-.badge-yellow { background: #f6ebd3; color: #805412; }
-.badge-red    { background: #f7e3de; color: #9b3526; }
-.badge-purple { background: #ece6f0; color: #5a4470; }
-.badge-gray   { background: rgba(11, 31, 23, 0.07); color: var(--text-2); }
-.badge-teal   { background: #dcefec; color: #1d6b64; }
-.badge-ink    { background: var(--ink); color: var(--ivory); }
+.badge-green { color: #1f5a3f; }
+.badge-blue { color: #2a6286; }
+.badge-yellow { color: #805412; }
+.badge-red { color: #9b3526; }
+.badge-purple { color: #5a4470; }
+.badge-gray { color: var(--text-muted); }
+.badge-teal { color: #1d6b64; }
+.badge-ink { color: var(--ink); }
 
+/* A stage or a result takes the colour of its category, darkened so the words stay readable. */
 .badge-stage {
-  background: color-mix(in srgb, var(--c) 14%, #fff);
   color: color-mix(in srgb, var(--c) 78%, #000);
-}
-
-.badge-dot::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
 }
 
 .alert {
@@ -575,10 +559,8 @@ tr.is-off td:last-child { opacity: 1; }
 
 .inbox { margin: 0; padding: 0; list-style: none; }
 .inbox li + li { border-top: 1px solid var(--border-light); }
-.inbox-row { display: grid; grid-template-columns: 10px 160px minmax(0, 1fr) auto auto; align-items: center; gap: 16px; width: 100%; padding: 16px 24px; border: 0; background: none; color: var(--text-2); text-align: left; transition: background-color 0.2s var(--ease-out); }
+.inbox-row { display: grid; grid-template-columns: 160px minmax(0, 1fr) auto auto; align-items: center; gap: 16px; width: 100%; padding: 16px 24px; border: 0; background: none; color: var(--text-2); text-align: left; transition: background-color 0.2s var(--ease-out); }
 .inbox-row:hover { background: #faf8f3; }
-.inbox-dot { width: 8px; height: 8px; border-radius: 50%; background: transparent; }
-.inbox-row.is-unread .inbox-dot { background: var(--gold); }
 .inbox-who { overflow: hidden; color: var(--ink); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 .inbox-row.is-unread .inbox-who, .inbox-row.is-unread .inbox-subject { font-weight: 700; color: var(--ink); }
 .inbox-text { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
@@ -590,10 +572,10 @@ tr.is-off td:last-child { opacity: 1; }
 .message-body { color: var(--ink); font-size: 0.98rem; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 @media (max-width: 760px) {
-  .inbox-row { grid-template-columns: 10px minmax(0, 1fr) auto; row-gap: 4px; padding: 14px 16px; }
-  .inbox-who { grid-column: 2; }
-  .inbox-when { grid-column: 3; }
-  .inbox-text { grid-column: 2 / 4; }
+  .inbox-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px; padding: 14px 16px; }
+  .inbox-who { grid-column: 1; }
+  .inbox-when { grid-column: 2; }
+  .inbox-text { grid-column: 1 / 3; }
   .inbox-row .badge { display: none; }
 }
 
@@ -659,13 +641,12 @@ tr.is-off td:last-child { opacity: 1; }
 .alert-feed li { display: flex; align-items: flex-start; gap: 14px; padding: 16px 24px; }
 .alert-feed li + li { border-top: 1px solid var(--border-light); }
 .alert-feed li.is-read .alert-feed-message { color: var(--text-muted); font-weight: 400; }
-.alert-feed .note-dot { margin-top: 8px; }
 .alert-feed-main { flex: 1; min-width: 0; }
 .alert-feed-message { color: var(--ink); font-weight: 600; line-height: 1.45; }
 .alert-feed-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; color: var(--text-muted); font-size: 0.84rem; }
 .alert-type { color: var(--text-2); font-weight: 600; }
 .filter-field--inline { flex-direction: row; align-items: center; }
-@media (max-width: 640px) { .alert-feed li { padding: 14px 16px; flex-wrap: wrap; } .alert-feed li .btn { margin-left: 28px; } }
+@media (max-width: 640px) { .alert-feed li { padding: 14px 16px; flex-wrap: wrap; } .alert-feed li .btn { margin-left: 0; } }
 
 /* Device details */
 .device-detail-status { margin: 0 0 14px; }

@@ -8,7 +8,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
 import { timeAgo } from '../../utils/timeAgo';
 import { STAGE_LABELS } from '../../utils/constants';
-import { ALERT_DOT, ALERT_TYPE_KEY } from '../../utils/alertTypes';
+import { ALERT_TYPE_KEY } from '../../utils/alertTypes';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
 import PageHeader from '../../components/ui/PageHeader';
@@ -125,7 +125,6 @@ export default function AlertsPage() {
           <ul className="alert-feed">
             {pageItems.map((a) => (
               <li key={a.id} className={a.isRead ? 'is-read' : ''}>
-                <span className={`note-dot note-dot--${ALERT_DOT[a.type] ?? 'system'}`} aria-hidden="true" />
                 <div className="alert-feed-main">
                   <p className="alert-feed-message">{a.message}</p>
                   <p className="alert-feed-meta">

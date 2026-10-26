@@ -201,7 +201,7 @@ export default function DetectionReportsPage() {
                             <Link to={`/batches/${d.batchId}`} className="link">#{d.batchId.slice(-8).toUpperCase()}</Link>
                           </td>
                           <td data-label={t('drColResult')}>
-                            <span className="badge badge-stage badge-dot" style={{ '--c': colorFor('result', d.result) } as CSSProperties}>{d.result}</span>
+                            <span className="badge badge-stage" style={{ '--c': colorFor('result', d.result) } as CSSProperties}>{d.result}</span>
                           </td>
                           <td data-label={t('drColSure')} className="cell-nowrap">{Math.round(d.confidence * 100)}%</td>
                           <td data-label={t('drColWhen')} className="cell-muted cell-nowrap">{when.format(new Date(d.detectedAt))}</td>

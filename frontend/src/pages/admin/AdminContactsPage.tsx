@@ -155,7 +155,6 @@ export default function AdminContactsPage() {
             {visible.map((m) => (
               <li key={m.id}>
                 <button type="button" className={`inbox-row${m.isRead ? '' : ' is-unread'}`} onClick={() => openMessage(m)}>
-                  <span className="inbox-dot" aria-hidden="true" />
                   <span className="inbox-who">{m.name}</span>
                   <span className="inbox-text">
                     <span className="inbox-subject">{m.subject}</span>

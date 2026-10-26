@@ -7,7 +7,6 @@ import { farmService } from '../../services/farm.service';
 import { alertService, getAlertStreamUrl } from '../../services/alert.service';
 import { sensorService, batchSupervisorService, detectionService2, ActiveBatch, ChartPoint, RecentDetection } from '../../services/sensor.service';
 import { Farm, AlertLog } from '../../types';
-import { ALERT_DOT } from '../../utils/alertTypes';
 import { colorFor } from '../../utils/chartColors';
 import { fill } from '../../utils/fill';
 import { timeAgo } from '../../utils/timeAgo';
@@ -228,7 +227,6 @@ export default function SupervisorDashboard() {
             <ul className="alert-feed alert-feed--short" aria-label={t('svAlertsTitle')}>
               {alerts.slice(0, 8).map((a) => (
                 <li key={a.id} className={a.isRead ? 'is-read' : ''}>
-                  <span className={`note-dot note-dot--${ALERT_DOT[a.type] ?? 'system'}`} aria-hidden="true" />
                   <div className="alert-feed-main">
                     <p className="alert-feed-message">{a.message}</p>
                     <p className="alert-feed-meta"><span>{timeAgo(a.createdAt, locale)}</span></p>
@@ -263,7 +261,7 @@ export default function SupervisorDashboard() {
                   <tr key={d.id} className="tbody-row">
                     <td className="cell-lead cell-strong">{d.farmName ?? '-'}</td>
                     <td data-label={t('svColResult')}>
-                      <span className="badge badge-stage badge-dot" style={{ '--c': colorFor('result', d.result) } as React.CSSProperties}>{d.result}</span>
+                      <span className="badge badge-stage" style={{ '--c': colorFor('result', d.result) } as React.CSSProperties}>{d.result}</span>
                     </td>
                     <td data-label={t('svColConfidence')} className="cell-strong">{Math.round(d.confidence * 100)}%</td>
                     <td data-label={t('svColDate')} className="cell-muted cell-nowrap">

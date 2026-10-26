@@ -264,7 +264,7 @@ export default function HarvestPage() {
                         <td data-label={t('hpColCocoon')} className="cell-strong cell-nowrap">{trim(num(r.cocoonWeightKg))} kg</td>
                         <td data-label={t('hpColSilk')} className="cell-nowrap">{r.silkYieldG != null ? `${trim(num(r.silkYieldG), 1)} g` : '-'}</td>
                         <td data-label={t('hpColGrade')}>
-                          <span className="badge badge-stage badge-dot" style={{ '--c': colorFor('grade', r.qualityGrade) } as CSSProperties}>
+                          <span className="badge badge-stage" style={{ '--c': colorFor('grade', r.qualityGrade) } as CSSProperties}>
                             {fill(t('hpGradeName'), { g: r.qualityGrade })}
                           </span>
                         </td>

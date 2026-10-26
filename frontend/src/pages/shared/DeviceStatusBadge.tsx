@@ -10,5 +10,5 @@ const META: Record<DeviceStatus, { key: string; tone: string }> = {
 export default function DeviceStatusBadge({ status }: { status: DeviceStatus }) {
   const { t } = useLanguage();
   const meta = META[status] ?? META.offline;
-  return <span className={`badge badge-dot ${meta.tone}`}>{t(meta.key)}</span>;
+  return <span className={`badge ${meta.tone}`}>{t(meta.key)}</span>;
 }
