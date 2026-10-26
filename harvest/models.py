@@ -1,11 +1,5 @@
-import time, random, string
 from django.db import models
-
-
-def _generate_id():
-    ts   = format(int(time.time() * 1000), 'x')
-    rand = ''.join(random.choices(string.ascii_lowercase + string.digits, k=16))
-    return f'c{ts}{rand}'
+from core.ids import new_id as _generate_id  # migrations import this name
 
 
 class QualityGrade(models.TextChoices):

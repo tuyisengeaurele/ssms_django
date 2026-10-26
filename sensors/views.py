@@ -1,22 +1,23 @@
-import random
-import string
+import secrets
 from datetime import timedelta
+
 from django.db.models import Avg
 from django.db.models.functions import TruncHour
 from django.utils import timezone
-from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from batches.models import Batch
-from farms.models import Farm
-from .models import SensorReading, IoTDevice
-from .serializers import SensorReadingSerializer, SensorReadingCreateSerializer
+from rest_framework.views import APIView
+
 from alerts.utils import check_sensor_alerts
-from core.utils import api_success, api_error
+from batches.models import Batch
+from core.utils import api_error, api_success
+from farms.models import Farm
+
+from .models import IoTDevice, SensorReading
+from .serializers import SensorReadingCreateSerializer, SensorReadingSerializer
 
 
 def _gen_device_key():
-    chars = string.ascii_lowercase + string.digits
-    return 'ssms-' + ''.join(random.choices(chars, k=12))
+    return 'ssms-' + secrets.token_urlsafe(16)
 
 
 class SensorReadingCreateView(APIView):
