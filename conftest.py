@@ -7,6 +7,14 @@ from rest_framework.test import APIClient
 import core.throttles  # noqa: F401
 
 
+def _clear_cache():
+    # The cache lives in the database, so tests that have no database simply have nothing to clear.
+    try:
+        cache.clear()
+    except (RuntimeError, AssertionError):  # pytest-django and SimpleTestCase refuse database access differently
+        pass
+
+
 @pytest.fixture(autouse=True)
 def _quiet_settings(request, settings):
     """Real throttles only when a test asks for them, and mail never leaves the machine."""
@@ -15,9 +23,9 @@ def _quiet_settings(request, settings):
         rest['DEFAULT_THROTTLE_CLASSES'] = []
     settings.REST_FRAMEWORK = rest
     settings.EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
-    cache.clear()
+    _clear_cache()
     yield
-    cache.clear()
+    _clear_cache()
 
 
 @pytest.fixture

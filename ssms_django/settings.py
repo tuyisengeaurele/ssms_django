@@ -109,7 +109,21 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
 ]
 
+# How many reverse proxies sit in front of the app. 0 on a laptop. Set to 1 behind a single host
+# proxy such as Render. Throttles and audit logs only believe X-Forwarded-For up to this depth.
+TRUSTED_PROXY_COUNT = config('TRUSTED_PROXY_COUNT', default=0, cast=int)
+
+# Throttle counters must be shared by every worker, so they live in the database.
+# Create the table once with: python manage.py createcachetable
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache',
+    },
+}
+
 REST_FRAMEWORK = {
+    'NUM_PROXIES': TRUSTED_PROXY_COUNT,
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'core.jwt_authentication.ActiveUserJWTAuthentication',
     ),

@@ -1,15 +1,10 @@
 import logging
 
+from core.net import get_client_ip
+
 from .models import AuditLog
 
 logger = logging.getLogger(__name__)
-
-
-def _get_ip(request) -> str | None:
-    xff = request.META.get('HTTP_X_FORWARDED_FOR')
-    if xff:
-        return xff.split(',')[0].strip()
-    return request.META.get('REMOTE_ADDR')
 
 
 def log_action(request, action: str, resource: str, resource_id='', detail='', actor=None) -> None:
@@ -29,7 +24,7 @@ def log_action(request, action: str, resource: str, resource_id='', detail='', a
             resource   = resource,
             resource_id= str(resource_id),
             detail     = detail,
-            ip_address = _get_ip(request),
+            ip_address = get_client_ip(request),
         )
     except Exception:
         logger.exception('Could not write the audit entry %s %s %s', action, resource, resource_id)
