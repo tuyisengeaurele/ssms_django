@@ -1,10 +1,10 @@
 import math
 
 from django.http import JsonResponse
-from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated, ParseError, Throttled
-from rest_framework.views import exception_handler
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated, ParseError, Throttled
+from rest_framework.response import Response
+from rest_framework.views import exception_handler
 
 
 def api_success(data=None, message='Success', status_code=status.HTTP_200_OK):
@@ -67,8 +67,8 @@ def custom_exception_handler(exc, context):
 
 
 def health_check(request):
-    from django.utils import timezone
     from django.db import connection
+    from django.utils import timezone
 
     # Verify the database is reachable, Render uses this endpoint to route
     # traffic; return 503 so unhealthy instances are taken out of rotation.
@@ -88,3 +88,16 @@ def health_check(request):
         },
         status=status_code,
     )
+
+
+def body_field(data, *names, default=''):
+    """The first of these names present in a request body.
+
+    The JSON parser turns camelCase names into snake_case (newPassword becomes new_password), but
+    form bodies keep them as sent. Passing both spellings reads either.
+    """
+    for name in names:
+        value = data.get(name)
+        if value is not None:
+            return value
+    return default

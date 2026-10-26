@@ -154,8 +154,10 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME':  timedelta(days=config('JWT_EXPIRES_DAYS', default=7, cast=int)),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    # Short access tokens, because one cannot be taken back. A refresh token lasts a week and is
+    # replaced every time it is used, so a stolen one stops working as soon as the owner refreshes.
+    'ACCESS_TOKEN_LIFETIME':  timedelta(minutes=config('JWT_ACCESS_MINUTES', default=15, cast=int)),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=config('JWT_REFRESH_DAYS', default=7, cast=int)),
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': config('JWT_SECRET'),
     'AUTH_HEADER_TYPES': ('Bearer',),

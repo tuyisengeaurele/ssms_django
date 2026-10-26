@@ -6,17 +6,19 @@ Password reset flow:
       → validates the token and sets the new password
 """
 import re
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
-from django.conf import settings
-from rest_framework.views import APIView
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
 
-from core.utils import api_success, api_error
 from core.throttles import PasswordResetRateThrottle
+from core.tokens import revoke_all_refresh_tokens
+from core.utils import api_error, api_success, body_field
 
 User = get_user_model()
 
@@ -74,7 +76,7 @@ class PasswordResetConfirmView(APIView):
     def post(self, request):
         uid_b64      = request.data.get('uid', '')
         token        = request.data.get('token', '')
-        new_password = request.data.get('newPassword', '')
+        new_password = body_field(request.data, 'new_password', 'newPassword')
 
         if not all([uid_b64, token, new_password]):
             return api_error('This reset link is incomplete. Please request a new one.', 422)
@@ -104,5 +106,6 @@ class PasswordResetConfirmView(APIView):
 
         user.set_password(new_password)
         user.save(update_fields=['password'])
+        revoke_all_refresh_tokens(user)
 
         return api_success(None, 'Password reset successfully. You can now log in.')

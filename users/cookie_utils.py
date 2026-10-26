@@ -1,7 +1,8 @@
 from django.conf import settings
 
 REFRESH_COOKIE = 'ssms_refresh'
-REFRESH_MAX_AGE = 30 * 24 * 60 * 60  # 30 days
+# The cookie lives exactly as long as the refresh token it carries.
+REFRESH_MAX_AGE = int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds())
 
 
 def set_refresh_cookie(response, refresh_token: str):

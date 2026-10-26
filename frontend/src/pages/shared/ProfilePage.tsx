@@ -71,7 +71,9 @@ export default function ProfilePage() {
     }
     setChanging(true);
     try {
-      await authService.changePassword({ currentPassword: current, newPassword: next, confirmPassword: repeat });
+      const res = await authService.changePassword({ currentPassword: current, newPassword: next, confirmPassword: repeat });
+      // Changing the password signs every other device out and gives this one a fresh session.
+      if (res.data.data?.token) localStorage.setItem('ssms_token', res.data.data.token);
       success(t('pfPasswordChanged'));
       closePassword();
     } catch (err) {

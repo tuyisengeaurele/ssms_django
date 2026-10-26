@@ -1,16 +1,20 @@
 import re
+
 from django.contrib.auth import authenticate
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
-from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, get_tokens_for_user
-from .email_verification_views import _send_verification_email
-from .cookie_utils import REFRESH_COOKIE, set_refresh_cookie, clear_refresh_cookie
-from core.utils import api_success, api_error
-from core.throttles import LoginRateThrottle, RegisterRateThrottle
+from rest_framework_simplejwt.tokens import RefreshToken
+
 from audit_log.utils import log_action
+from core.throttles import LoginRateThrottle, RegisterRateThrottle
+from core.tokens import revoke_all_refresh_tokens
+from core.utils import api_error, api_success, body_field
+
+from .cookie_utils import REFRESH_COOKIE, clear_refresh_cookie, set_refresh_cookie
+from .email_verification_views import _send_verification_email
+from .serializers import LoginSerializer, RegisterSerializer, UserSerializer, get_tokens_for_user
 
 
 class RegisterView(APIView):
@@ -120,11 +124,18 @@ class CookieTokenRefreshView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
         refresh_token_str = request.COOKIES.get(REFRESH_COOKIE)
         if not refresh_token_str:
             return api_error('Your session has ended. Please sign in again.', 401)
         try:
             refresh = RefreshToken(refresh_token_str)
+            # A deactivated or deleted account cannot renew a session.
+            user = User.objects.filter(pk=refresh['user_id']).first()
+            if user is None or not user.is_active:
+                return api_error('Your session has ended. Please sign in again.', 401)
             access_token = str(refresh.access_token)
             # Rotate: blacklist old, generate new refresh token
             refresh.blacklist()
@@ -143,9 +154,9 @@ class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request):
-        current  = (request.data.get('currentPassword') or '').strip()
-        new_pass = (request.data.get('newPassword') or '').strip()
-        confirm  = (request.data.get('confirmPassword') or '').strip()
+        current  = body_field(request.data, 'current_password', 'currentPassword').strip()
+        new_pass = body_field(request.data, 'new_password', 'newPassword').strip()
+        confirm  = body_field(request.data, 'confirm_password', 'confirmPassword').strip()
 
         if not current or not new_pass or not confirm:
             return api_error('Please fill in every field.', 422)
@@ -169,4 +180,10 @@ class ChangePasswordView(APIView):
 
         request.user.set_password(new_pass)
         request.user.save(update_fields=['password'])
-        return api_success(None, 'Password changed successfully.')
+
+        # Every other device is signed out. This one gets a fresh session so the person is not.
+        revoke_all_refresh_tokens(request.user)
+        tokens = get_tokens_for_user(request.user)
+        response = api_success({'token': tokens['access']}, 'Password changed successfully.')
+        set_refresh_cookie(response, tokens['refresh'])
+        return response

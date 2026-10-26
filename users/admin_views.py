@@ -1,12 +1,15 @@
 """Admin-only user management views, /api/admin/users."""
 
 from django.contrib.auth import get_user_model
-from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from .serializers import UserSerializer, RegisterSerializer
-from core.utils import api_success, api_error
-from cooperatives.models import Cooperative
+from rest_framework.views import APIView
+
 from audit_log.utils import log_action
+from cooperatives.models import Cooperative
+from core.tokens import revoke_all_refresh_tokens
+from core.utils import api_error, api_success
+
+from .serializers import RegisterSerializer, UserSerializer
 
 User = get_user_model()
 
@@ -84,6 +87,7 @@ class AdminUserDeactivateView(APIView):
 
         user.is_active = False
         user.save(update_fields=['is_active'])
+        revoke_all_refresh_tokens(user)
         log_action(request, 'DELETE', 'User', user.pk, f'Deactivated user {user.email}')
         return api_success(None, 'User deactivated.')
 
