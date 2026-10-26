@@ -5,7 +5,6 @@ import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { Icon } from '../../components/ui/Icon';
-import NextSteps from '../../components/ui/NextSteps';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 
@@ -44,7 +43,7 @@ export default function AddBatchPage() {
   earliest.setDate(earliest.getDate() + 7);
 
   return (
-    <div>
+    <div className="page-narrow">
       <PageHeader
         title={t('ptBatchNew')}
         subtitle={t('abSubtitle')}
@@ -56,8 +55,7 @@ export default function AddBatchPage() {
         }
       />
 
-      <div className="form-page">
-        <Panel title={t('abPanel')} note={t('abStartsAt')}>
+      <Panel title={t('abPanel')}>
           {error && <div className="alert alert-error" role="alert">{error}</div>}
           <form onSubmit={handleSubmit}>
             <div className="form-group">
@@ -78,19 +76,7 @@ export default function AddBatchPage() {
               <Link to={`/farms/${farmId}`} className="btn btn-ghost">{t('btnCancel')}</Link>
             </div>
           </form>
-        </Panel>
-
-        <NextSteps
-          label={t('abStages')}
-          steps={[
-            { title: 'Egg', body: t('abStageEgg') },
-            { title: 'Larva', body: t('abStageLarva') },
-            { title: 'Pupa', body: t('abStagePupa') },
-            { title: 'Cocoon', body: t('abStageCocoon') },
-            { title: 'Harvest', body: t('abStageHarvest') },
-          ]}
-        />
-      </div>
+      </Panel>
     </div>
   );
 }

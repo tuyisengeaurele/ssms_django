@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
@@ -71,10 +71,11 @@ describe('New farm page', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('A farm with that name already exists.');
   });
 
-  it('lists what comes next without naming the model', () => {
+  it('is one narrow form with nothing beside it', () => {
     const { container } = open();
-    const steps = screen.getByRole('list', { name: 'What comes next' });
-    expect(within(steps).getAllByRole('listitem')).toHaveLength(4);
+    expect(screen.queryByRole('list', { name: 'What comes next' })).not.toBeInTheDocument();
+    expect(container.querySelector('.next-steps, .form-page')).toBeNull();
+    expect(container.querySelector('.page-narrow')).not.toBeNull();
     expect(container.textContent).not.toMatch(/ResNet|AI-powered|\bAI\b/);
   });
 

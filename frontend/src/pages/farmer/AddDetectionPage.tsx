@@ -8,7 +8,6 @@ import { colorFor } from '../../utils/chartColors';
 import { fill } from '../../utils/fill';
 import BarList from '../../components/ui/BarList';
 import { Icon } from '../../components/ui/Icon';
-import NextSteps from '../../components/ui/NextSteps';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 
@@ -83,7 +82,7 @@ export default function AddDetectionPage() {
   const healthy = result?.result === 'Healthy';
 
   return (
-    <div>
+    <div className="page-narrow">
       <PageHeader
         title={t('ptDetect')}
         subtitle={t('ckSubtitle')}
@@ -96,7 +95,7 @@ export default function AddDetectionPage() {
       />
 
       {result ? (
-        <div className="form-page">
+        <>
           <div className="stack-24">
             <Panel title={t('ckResultLabel')}>
               <div className="check-result">
@@ -131,9 +130,9 @@ export default function AddDetectionPage() {
               <Link to={`/batches/${batchId}`} className="btn btn-ghost">{t('ckBack')}</Link>
             </div>
           </div>
-        </div>
+        </>
       ) : (
-        <div className="form-page">
+        <>
           <Panel title={t('ckUpload')}>
             {error && <div className="alert alert-error" role="alert">{error}</div>}
 
@@ -170,19 +169,7 @@ export default function AddDetectionPage() {
             </button>
           </Panel>
 
-          <div className="stack-24">
-            <NextSteps
-              label={t('ckTipsTitle')}
-              steps={[
-                { title: t('ckTip1'), body: t('ckTip1Body') },
-                { title: t('ckTip2'), body: t('ckTip2Body') },
-                { title: t('ckTip3'), body: t('ckTip3Body') },
-                { title: t('ckTip4'), body: t('ckTip4Body') },
-              ]}
-            />
-            <p className="form-hint">{t('ckKnows')}</p>
-          </div>
-        </div>
+        </>
       )}
     </div>
   );

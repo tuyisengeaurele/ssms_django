@@ -5,7 +5,6 @@ import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { Icon } from '../../components/ui/Icon';
-import NextSteps from '../../components/ui/NextSteps';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 
@@ -37,7 +36,7 @@ export default function AddFarmPage() {
   };
 
   return (
-    <div>
+    <div className="page-narrow">
       <PageHeader
         title={t('ptFarmNew')}
         subtitle={t('afSubtitle')}
@@ -49,8 +48,7 @@ export default function AddFarmPage() {
         }
       />
 
-      <div className="form-page">
-        <Panel title={t('afPanel')}>
+      <Panel title={t('afPanel')}>
           {error && <div className="alert alert-error" role="alert">{error}</div>}
           <form onSubmit={handleSubmit}>
             <div className="form-group">
@@ -72,18 +70,7 @@ export default function AddFarmPage() {
               <Link to="/farms" className="btn btn-ghost">{t('btnCancel')}</Link>
             </div>
           </form>
-        </Panel>
-
-        <NextSteps
-          label={t('afNextTitle')}
-          steps={[
-            { title: t('afStep1'), body: t('afStep1Body') },
-            { title: t('afStep2'), body: t('afStep2Body') },
-            { title: t('afStep3'), body: t('afStep3Body') },
-            { title: t('afStep4'), body: t('afStep4Body') },
-          ]}
-        />
-      </div>
+      </Panel>
     </div>
   );
 }
