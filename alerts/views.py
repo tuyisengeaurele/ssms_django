@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 
 from core.access import get_batch_or_404, scope_by_batch
 from core.pagination import StandardPagination
+from core.params import int_param
 from core.utils import api_error, api_success
 
 from .models import AlertLog
@@ -25,7 +26,7 @@ class AlertListView(APIView):
             return api_error("You don't have permission to do that.", 403)
 
         unread_only = request.query_params.get('unread', 'true').lower() != 'false'
-        limit = min(int(request.query_params.get('limit', 100)), 500)
+        limit = int_param(request, 'limit', 100, 1, 500)
 
         qs = scope_by_batch(
             request.user,

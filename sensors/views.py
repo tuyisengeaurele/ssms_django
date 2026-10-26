@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 
 from alerts.utils import check_sensor_alerts
 from core.access import get_batch_or_404, get_farm_or_404, scope_by_batch, scope_by_farm
+from core.params import int_param
 from core.utils import api_error, api_success
 
 from .models import IoTDevice, SensorReading
@@ -54,7 +55,7 @@ class SensorChartView(APIView):
         if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
             return api_error("You don't have permission to do that.", 403)
 
-        hours = min(int(request.query_params.get('hours', 24)), 168)
+        hours = int_param(request, 'hours', 24, 1, 168)
         since = timezone.now() - timedelta(hours=hours)
 
         qs = scope_by_batch(request.user, SensorReading.objects.filter(timestamp__gte=since))

@@ -1,10 +1,10 @@
-import csv
 from django.http import StreamingHttpResponse
-from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from core.utils import api_error
+from rest_framework.views import APIView
+
+from core.csvsafe import safe_writer
 from core.pagination import StandardPagination
-from rest_framework.response import Response
+
 from .models import AuditLog
 from .serializers import AuditLogSerializer
 
@@ -48,7 +48,7 @@ class AuditLogListView(APIView):
             def write(self, value): return value
 
         def rows():
-            writer = csv.writer(Echo())
+            writer = safe_writer(Echo())
             yield writer.writerow(['ID', 'User Name', 'User Email', 'Action', 'Resource', 'Resource ID', 'Detail', 'IP Address', 'Timestamp'])
             for entry in qs.iterator(chunk_size=200):
                 yield writer.writerow([

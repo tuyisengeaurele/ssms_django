@@ -1,4 +1,3 @@
-import csv
 import io
 
 from django.db.models import Avg, Count, Sum
@@ -8,6 +7,7 @@ from rest_framework.views import APIView
 
 from audit_log.utils import log_action
 from core.access import get_batch_or_404, scope_by_batch
+from core.csvsafe import safe_writer
 from core.utils import api_error, api_success
 
 from .models import HarvestRecord
@@ -46,7 +46,7 @@ class HarvestAllView(APIView):
 
             def _stream():
                 buf = io.StringIO()
-                writer = csv.writer(buf)
+                writer = safe_writer(buf)
                 for row in _rows(qs):
                     writer.writerow(row)
                     yield buf.getvalue()

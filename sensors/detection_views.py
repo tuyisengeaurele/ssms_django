@@ -6,7 +6,6 @@ Images are uploaded to Cloudinary using an unsigned preset so no API secret
 is required on the server.  The returned secure_url is stored in image_url.
 """
 
-import csv
 import io
 import logging
 
@@ -22,7 +21,9 @@ from rest_framework.views import APIView
 
 from audit_log.utils import log_action
 from core.access import get_batch_or_404, scope_by_batch
+from core.csvsafe import safe_writer
 from core.pagination import StandardPagination
+from core.params import date_param, int_param
 from core.utils import api_error, api_success
 
 from .models import DiseaseDetection
@@ -157,9 +158,9 @@ class DetectionHistoryView(APIView):
         qs = scope_by_batch(request.user, qs)
 
         farm_id   = request.query_params.get('farm_id')
-        date_from = request.query_params.get('date_from')
-        date_to   = request.query_params.get('date_to')
-        limit     = min(int(request.query_params.get('limit', 200)), 500)
+        date_from = date_param(request, 'date_from')
+        date_to   = date_param(request, 'date_to')
+        limit     = int_param(request, 'limit', 200, 1, 500)
 
         if farm_id:
             qs = qs.filter(batch__farm_id=farm_id)
@@ -204,7 +205,7 @@ class DetectionHistoryView(APIView):
 
             def _stream():
                 buffer = io.StringIO()
-                writer = csv.writer(buffer)
+                writer = safe_writer(buffer)
                 for row in _csv_rows(qs[:limit]):
                     writer.writerow(row)
                     yield buffer.getvalue()
@@ -242,8 +243,8 @@ class DetectionStatsView(APIView):
         qs = scope_by_batch(request.user, DiseaseDetection.objects.all())
 
         farm_id   = request.query_params.get('farm_id')
-        date_from = request.query_params.get('date_from')
-        date_to   = request.query_params.get('date_to')
+        date_from = date_param(request, 'date_from')
+        date_to   = date_param(request, 'date_to')
 
         if farm_id:
             qs = qs.filter(batch__farm_id=farm_id)
@@ -268,7 +269,7 @@ class RecentDetectionsView(APIView):
         if request.user.role not in ('SUPERVISOR', 'ADMIN'):
             return api_error("You don't have permission to do that.", 403)
 
-        limit = min(int(request.query_params.get('limit', 20)), 100)
+        limit = int_param(request, 'limit', 20, 1, 100)
 
         detections = (
             DiseaseDetection.objects
