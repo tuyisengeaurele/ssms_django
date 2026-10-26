@@ -16,10 +16,7 @@ export function ReportCard({ className }: { className?: string }) {
       <Row label={t('lpCardHumidity')}>78 %</Row>
       <Row label={t('lpCardSafe')}>{t('lpCardRange')}</Row>
       <Row label={t('lpMockStatus')}>
-        <span className="l-paper__ok">
-          <i aria-hidden="true" />
-          {t('lpCardInRange')}
-        </span>
+        <span className="l-paper__ok">{t('lpCardInRange')}</span>
       </Row>
       <div className="l-paper__total">
         <span>{t('lpCardHarvestIn')}</span>
