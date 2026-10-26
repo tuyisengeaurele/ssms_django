@@ -20,6 +20,8 @@ from django.views import View
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import AccessToken
 
+from core.access import scope_by_batch
+
 from .models import AlertLog
 
 POLL_INTERVAL  = 5   # seconds between DB polls
@@ -74,15 +76,8 @@ class AlertStreamView(View):
                 .filter(created_at__gt=since)
                 .order_by('created_at')
             )
-            # Scope to cooperative for supervisors
-            if user.role == 'SUPERVISOR':
-                if user.cooperative_id:
-                    new_alerts = new_alerts.filter(
-                        batch__farm__owner__cooperative_id=user.cooperative_id,
-                        batch__farm__owner__role='FARMER',
-                    )
-                else:
-                    new_alerts = new_alerts.none()
+            # Only the alerts this person may see, by the same rules as everywhere else
+            new_alerts = scope_by_batch(user, new_alerts)
 
             for alert in new_alerts:
                 payload = {

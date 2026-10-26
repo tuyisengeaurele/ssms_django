@@ -1,14 +1,17 @@
 import csv
 import io
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Avg, Count
+
+from django.db.models import Avg, Count, Sum
 from django.http import StreamingHttpResponse
-from batches.models import Batch
-from core.utils import api_success, api_error
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+
 from audit_log.utils import log_action
+from core.access import get_batch_or_404, scope_by_batch
+from core.utils import api_error, api_success
+
 from .models import HarvestRecord
-from .serializers import HarvestRecordSerializer, HarvestRecordCreateSerializer
+from .serializers import HarvestRecordCreateSerializer, HarvestRecordSerializer
 
 
 class HarvestAllView(APIView):
@@ -19,19 +22,9 @@ class HarvestAllView(APIView):
     permission_classes = [IsAuthenticated]
 
     def _scoped_qs(self, user):
-        qs = HarvestRecord.objects.select_related('batch__farm').order_by('-harvested_at')
-        if user.role == 'FARMER':
-            qs = qs.filter(batch__farm__owner=user)
-        elif user.role == 'SUPERVISOR':
-            if user.cooperative_id:
-                qs = qs.filter(
-                    batch__farm__owner__cooperative_id=user.cooperative_id,
-                    batch__farm__owner__role='FARMER',
-                )
-            else:
-                qs = qs.none()
-        # ADMIN: no filter
-        return qs
+        return scope_by_batch(
+            user, HarvestRecord.objects.select_related('batch__farm').order_by('-harvested_at'),
+        )
 
     def get(self, request):
         qs = self._scoped_qs(request.user)
@@ -57,7 +50,8 @@ class HarvestAllView(APIView):
                 for row in _rows(qs):
                     writer.writerow(row)
                     yield buf.getvalue()
-                    buf.seek(0); buf.truncate(0)
+                    buf.seek(0)
+                    buf.truncate(0)
 
             response = StreamingHttpResponse(_stream(), content_type='text/csv; charset=utf-8')
             response['Content-Disposition'] = 'attachment; filename="harvest_records.csv"'
@@ -66,42 +60,18 @@ class HarvestAllView(APIView):
         return api_success(HarvestRecordSerializer(qs, many=True).data)
 
 
-def _can_access_batch(batch, user):
-    if user.role == 'ADMIN':
-        return True
-    if user.role == 'FARMER':
-        return batch.farm.owner_id == user.id
-    if user.role == 'SUPERVISOR':
-        return (
-            user.cooperative_id and
-            batch.farm.owner.cooperative_id == user.cooperative_id and
-            batch.farm.owner.role == 'FARMER'
-        )
-    return False
-
-
 class HarvestListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, batch_id):
-        try:
-            batch = Batch.objects.select_related('farm__owner').get(pk=batch_id, is_active=True)
-        except Batch.DoesNotExist:
-            return api_error("We couldn't find that batch.", 404)
-        if not _can_access_batch(batch, request.user):
-            return api_error("We couldn't find that batch.", 404)
+        get_batch_or_404(request.user, batch_id)
         records = HarvestRecord.objects.select_related('batch__farm').filter(batch_id=batch_id)
         return api_success(HarvestRecordSerializer(records, many=True).data)
 
     def post(self, request, batch_id):
         if request.user.role not in ('FARMER', 'ADMIN'):
             return api_error('Only farmers and administrators can record a harvest.', 403)
-        try:
-            batch = Batch.objects.select_related('farm__owner').get(pk=batch_id, is_active=True)
-        except Batch.DoesNotExist:
-            return api_error("We couldn't find that batch.", 404)
-        if not _can_access_batch(batch, request.user):
-            return api_error("We couldn't find that batch.", 404)
+        get_batch_or_404(request.user, batch_id)
 
         data = {**request.data, 'batch_id': batch_id}
         serializer = HarvestRecordCreateSerializer(data=data)
@@ -126,17 +96,7 @@ class HarvestStatsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        qs = HarvestRecord.objects.all()
-        if request.user.role == 'FARMER':
-            qs = qs.filter(batch__farm__owner=request.user)
-        elif request.user.role == 'SUPERVISOR':
-            if request.user.cooperative_id:
-                qs = qs.filter(
-                    batch__farm__owner__cooperative_id=request.user.cooperative_id,
-                    batch__farm__owner__role='FARMER',
-                )
-            else:
-                qs = qs.none()
+        qs = scope_by_batch(request.user, HarvestRecord.objects.all())
 
         agg = qs.aggregate(
             total_weight=Sum('cocoon_weight_kg'),
@@ -167,11 +127,10 @@ class HarvestDeleteView(APIView):
     def delete(self, request, pk):
         if request.user.role not in ('FARMER', 'ADMIN'):
             return api_error("You don't have permission to do that.", 403)
-        try:
-            record = HarvestRecord.objects.select_related('batch__farm').get(pk=pk)
-        except HarvestRecord.DoesNotExist:
-            return api_error("We couldn't find that record.", 404)
-        if request.user.role == 'FARMER' and record.batch.farm.owner_id != request.user.id:
+        record = scope_by_batch(
+            request.user, HarvestRecord.objects.select_related('batch__farm'),
+        ).filter(pk=pk).first()
+        if record is None:
             return api_error("We couldn't find that record.", 404)
         log_action(request, 'DELETE', 'HarvestRecord', pk, f'Deleted harvest record {pk}')
         record.delete()
