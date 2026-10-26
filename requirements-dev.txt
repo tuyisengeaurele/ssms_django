@@ -1,0 +1,8 @@
+-r requirements.txt
+pytest
+pytest-django
+pytest-cov
+pytest-asyncio
+factory_boy
+ruff
+pip-audit
