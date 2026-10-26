@@ -33,25 +33,27 @@ describe('AuthShell', () => {
     expect(screen.getByRole('main')).toHaveAttribute('id', 'main');
   });
 
-  it('shows the product mark above the form and nothing else for decoration', () => {
+  it('names the product in the panel and shows the new logo', () => {
     const { container } = renderShell(<AuthShell title="Hello">x</AuthShell>);
-    const brand = screen.getByRole('link', { name: /SSMS/ });
-    expect(brand).toHaveAttribute('href', '/');
-    expect(brand.querySelector('img')).toHaveAttribute('src', '/logo-mark.png');
-    expect(container.querySelector('.l-auth__aside, .l-auth__watermark, .l-auth__pitch')).toBeNull();
-    expect(container.textContent).not.toContain('Raise healthier silkworms.');
+    const aside = container.querySelector('.l-auth__aside') as HTMLElement;
+    expect(within(aside).getByText('Smart Sericulture Management System')).toBeInTheDocument();
+    expect(within(aside).getByText('Raise healthier silkworms.')).toBeInTheDocument();
+    const logo = aside.querySelector('img[src="/logo-on-dark.png"]');
+    expect(logo).not.toBeNull();
+    expect(container.querySelector('img[src*="worm"]')).toBeNull();
   });
 
-  it('keeps the form in one narrow card', () => {
-    const { container } = renderShell(
-      <AuthShell title="Hello">
-        <p>form here</p>
-      </AuthShell>,
-    );
-    const card = container.querySelector('.l-auth__panel') as HTMLElement;
-    expect(card).not.toBeNull();
-    expect(within(card).getByRole('heading', { level: 1, name: 'Hello' })).toBeInTheDocument();
-    expect(within(card).getByText('form here')).toBeInTheDocument();
+  it('uses a plain color panel with no photo', () => {
+    const { container } = renderShell(<AuthShell title="Hello">x</AuthShell>);
+    const aside = container.querySelector('.l-auth__aside') as HTMLElement;
+    expect(aside.querySelector('picture, img[src*="images"], .l-auth__photo, .l-auth__shade')).toBeNull();
+  });
+
+  it('has a faded logo behind the text that screen readers skip', () => {
+    const { container } = renderShell(<AuthShell title="Hello">x</AuthShell>);
+    const mark = container.querySelector('.l-auth__watermark') as HTMLElement;
+    expect(mark).toHaveAttribute('aria-hidden', 'true');
+    expect(mark.querySelector('img')).toHaveAttribute('src', '/logo-on-dark.png');
   });
 
   it('links back home, to the legal pages, and switches language', () => {

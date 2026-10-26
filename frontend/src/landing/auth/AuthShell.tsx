@@ -15,7 +15,7 @@ interface AuthShellProps {
   children: ReactNode;
 }
 
-/** One calm card, shared by sign in, sign up and the account email pages. */
+/** Split layout shared by sign in, sign up and the account email pages. */
 export function AuthShell({ title, subtitle, children }: AuthShellProps) {
   const { t, locale, setLocale } = useLanguage();
 
@@ -28,6 +28,23 @@ export function AuthShell({ title, subtitle, children }: AuthShellProps) {
       <a className="l-skip" href="#main">
         {t('lpSkip')}
       </a>
+
+      <aside className="l-auth__aside">
+        <div className="l-auth__watermark" aria-hidden="true">
+          <img src="/logo-on-dark.png" alt="" width="640" height="640" decoding="async" />
+        </div>
+
+        <Link to="/" className="l-auth__brand" aria-label={`SSMS, ${t('lpFooterName')}`}>
+          <img src="/logo-on-dark.png" alt="" width="44" height="44" decoding="async" />
+          <span>SSMS</span>
+        </Link>
+
+        <div className="l-auth__pitch">
+          <p className="l-auth__eyebrow">{t('lpHeroEyebrow')}</p>
+          <p className="l-auth__statement">{t('lpHeroTitle')}</p>
+          <p className="l-auth__sub">{t('lpHeroSub')}</p>
+        </div>
+      </aside>
 
       <div className="l-auth__side">
         <div className="l-auth__bar">
@@ -49,10 +66,6 @@ export function AuthShell({ title, subtitle, children }: AuthShellProps) {
         </div>
 
         <main id="main" tabIndex={-1} className="l-auth__main">
-          <Link to="/" className="l-auth__brand" aria-label={`SSMS, ${t('lpFooterName')}`}>
-            <img src="/logo-mark.png" alt="" width="40" height="40" decoding="async" />
-            <span>SSMS</span>
-          </Link>
           <div className="l-auth__panel">
             <header className="l-auth__head">
               <h1>{title}</h1>
