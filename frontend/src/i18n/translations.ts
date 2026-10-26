@@ -5,6 +5,7 @@
  */
 
 import { landingTranslations } from './landing';
+import { pageTranslations } from './pages';
 
 export type Locale = 'en' | 'fr' | 'rw';
 
@@ -18,6 +19,7 @@ type TranslationMap = Record<string, Record<Locale, string>>;
 
 export const translations: TranslationMap = {
   ...landingTranslations,
+  ...pageTranslations,
 
   // ── Navigation ──────────────────────────────────────────────────────────────
   navDashboard:     { en: 'Dashboard',         fr: 'Tableau de bord',   rw: 'Ikibaho' },
@@ -242,21 +244,21 @@ export const translations: TranslationMap = {
   reportGenerated:       { en: 'Generated at:',              fr: 'Généré le :',                      rw: 'Yakozwe ku :' },
   reportExportPdf:       { en: 'Print / PDF',                fr: 'Imprimer / PDF',                   rw: 'Fata / PDF' },
   reportExportCsv:       { en: 'Export CSV',                 fr: 'Exporter CSV',                     rw: 'Kohereza CSV' },
-  reportExporting:       { en: 'Exporting…',                 fr: 'Export en cours…',                 rw: 'Kohereza…' },
-  reportTotalUsers:      { en: 'Total Users',                fr: 'Utilisateurs',                     rw: 'Abakoresha Bose' },
-  reportTotalFarms:      { en: 'Active Farms',               fr: 'Fermes actives',                   rw: 'Amahindu Akora' },
-  reportTotalBatches:    { en: 'Active Batches',             fr: 'Lots actifs',                      rw: 'Amatsinda Akora' },
-  reportTotalHarvests:   { en: 'Harvest Records',            fr: 'Relevés de récolte',               rw: "Amakuru y'Isarura" },
-  reportTotalDetections: { en: 'Total Detections',           fr: 'Total détections',                 rw: 'Gusuzuma Kwose' },
+  reportExporting:       { en: 'Preparing',                 fr: 'Export en cours…',                 rw: 'Kohereza…' },
+  reportTotalUsers:      { en: 'Total users',                fr: 'Utilisateurs',                     rw: 'Abakoresha Bose' },
+  reportTotalFarms:      { en: 'Active farms',               fr: 'Fermes actives',                   rw: 'Amahindu Akora' },
+  reportTotalBatches:    { en: 'Active batches',             fr: 'Lots actifs',                      rw: 'Amatsinda Akora' },
+  reportTotalHarvests:   { en: 'Harvest records',            fr: 'Relevés de récolte',               rw: "Amakuru y'Isarura" },
+  reportTotalDetections: { en: 'Total disease checks',           fr: 'Total détections',                 rw: 'Gusuzuma Kwose' },
   reportRegistrations30d:{ en: 'User Registrations (30 d)', fr: 'Inscriptions (30 j)',               rw: 'Kwiyandikisha (iminsi 30)' },
-  reportBatchesByStage:  { en: 'Batches by Stage',           fr: 'Lots par stade',                   rw: 'Amatsinda ku Rwego' },
+  reportBatchesByStage:  { en: 'Batches by stage',           fr: 'Lots par stade',                   rw: 'Amatsinda ku Rwego' },
   reportDetections30d:   { en: 'Detections (30 d)',          fr: 'Détections (30 j)',                 rw: 'Gusuzuma (iminsi 30)' },
-  reportDetectionResults:{ en: 'Detection Results',          fr: 'Résultats des détections',         rw: 'Ibisubizo bya Gusuzuma' },
-  reportHarvestByGrade:  { en: 'Harvest by Grade',           fr: 'Récolte par grade',                rw: 'Isarura ku Grade' },
-  reportAuditActions:    { en: 'Audit Actions (30 d)',        fr: 'Actions d\'audit (30 j)',           rw: 'Ibikorwa by\'Audit (iminsi 30)' },
-  reportTopFarmers:      { en: 'Top Farmers by Farm Count',  fr: 'Top agriculteurs',                 rw: 'Abahinzi b\'Inzobere' },
-  reportTotalCocoonKg:   { en: 'Total Cocoon Weight',        fr: 'Poids total des cocons',           rw: 'Ibiro Byose bya Cocoon' },
-  reportTotalSilkG:      { en: 'Total Silk Yield',           fr: 'Production totale de soie',        rw: 'Harira Yose' },
-  reportAvgCocoonKg:     { en: 'Avg Cocoon / Record',        fr: 'Moy. cocon / relevé',              rw: 'Maverage ya Cocoon' },
-  reportUsersByRole:     { en: 'Users by Role',              fr: 'Utilisateurs par rôle',            rw: 'Abakoresha ku Nshingano' },
+  reportDetectionResults:{ en: 'Disease check results',          fr: 'Résultats des détections',         rw: 'Ibisubizo bya Gusuzuma' },
+  reportHarvestByGrade:  { en: 'Harvest by grade',           fr: 'Récolte par grade',                rw: 'Isarura ku Grade' },
+  reportAuditActions:    { en: 'Activity by type (30 days)',        fr: 'Actions d\'audit (30 j)',           rw: 'Ibikorwa by\'Audit (iminsi 30)' },
+  reportTopFarmers:      { en: 'Farmers with the most farms',  fr: 'Top agriculteurs',                 rw: 'Abahinzi b\'Inzobere' },
+  reportTotalCocoonKg:   { en: 'Total cocoon weight',        fr: 'Poids total des cocons',           rw: 'Ibiro Byose bya Cocoon' },
+  reportTotalSilkG:      { en: 'Total silk yield',           fr: 'Production totale de soie',        rw: 'Harira Yose' },
+  reportAvgCocoonKg:     { en: 'Average cocoon per record',        fr: 'Moy. cocon / relevé',              rw: 'Maverage ya Cocoon' },
+  reportUsersByRole:     { en: 'Users by role',              fr: 'Utilisateurs par rôle',            rw: 'Abakoresha ku Nshingano' },
 };

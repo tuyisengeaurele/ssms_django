@@ -35,7 +35,7 @@ def _send_verification_email(user):
             f'Welcome to SSMS! Please verify your email address by clicking the link below:\n\n'
             f'{verify_url}\n\n'
             f'This link is valid for 1 hour. If you did not create an account, you can safely ignore this email.\n\n'
-            f'— The SSMS Team'
+            f', The SSMS Team'
         ),
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[user.email],

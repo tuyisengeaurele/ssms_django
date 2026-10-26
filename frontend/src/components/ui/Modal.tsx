@@ -1,6 +1,7 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useId, useRef, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Icon } from './Icon';
 
 interface ModalProps {
   open: boolean;
@@ -11,11 +12,16 @@ interface ModalProps {
   footer?: ReactNode;
 }
 
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export default function Modal({ open, onClose, title, children, maxWidth = 480, footer }: ModalProps) {
+  const titleId = useId();
+  const boxRef = useRef<HTMLDivElement>(null);
+
   // Close on ESC
   useEffect(() => {
     if (!open) return;
-    function handler(e: KeyboardEvent) {
+    function handler(e: globalThis.KeyboardEvent) {
       if (e.key === 'Escape') onClose();
     }
     window.addEventListener('keydown', handler);
@@ -29,6 +35,32 @@ export default function Modal({ open, onClose, title, children, maxWidth = 480, 
     return () => { document.body.style.overflow = ''; };
   }, [open]);
 
+  // Move focus into the dialog, and give it back when the dialog closes.
+  useEffect(() => {
+    if (!open) return;
+    const before = document.activeElement as HTMLElement | null;
+    const box = boxRef.current;
+    const first = box?.querySelector<HTMLElement>('input, select, textarea') ?? box?.querySelector<HTMLElement>(FOCUSABLE);
+    (first ?? box)?.focus();
+    return () => before?.focus?.();
+  }, [open]);
+
+  // Keep Tab inside the dialog.
+  const trapTab = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Tab' || !boxRef.current) return;
+    const items = Array.from(boxRef.current.querySelectorAll<HTMLElement>(FOCUSABLE));
+    if (items.length === 0) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -41,25 +73,27 @@ export default function Modal({ open, onClose, title, children, maxWidth = 480, 
           onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
           <motion.div
+            ref={boxRef}
             className="modal-box"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            tabIndex={-1}
+            onKeyDown={trapTab}
             style={{ maxWidth }}
-            initial={{ opacity: 0, scale: 0.95, y: 12 }}
+            initial={{ opacity: 0, scale: 0.96, y: 14 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, y: 8 }}
-            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            exit={{ opacity: 0, scale: 0.98, y: 8 }}
+            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="modal-header">
-              <h2 className="modal-title">{title}</h2>
-              <button className="modal-close" onClick={onClose} aria-label="Close">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
+              <h2 id={titleId} className="modal-title">{title}</h2>
+              <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
+                <Icon name="close" size={16} />
               </button>
             </div>
 
-            <div>{children}</div>
+            <div className="modal-body">{children}</div>
 
             {footer && <div className="modal-footer">{footer}</div>}
           </motion.div>

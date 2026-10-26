@@ -1,5 +1,5 @@
 """
-Disease Detection views — POST /api/detections, GET /api/detections/batch/<batch_id>
+Disease Detection views, POST /api/detections, GET /api/detections/batch/<batch_id>
 Accepts an image upload, calls the FastAPI AI service, persists the result.
 
 Images are uploaded to Cloudinary using an unsigned preset so no API secret
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 def _upload_to_cloudinary(uploaded_file) -> str:
     """
     Upload an image to Cloudinary using the unsigned preset.
-    No API key or secret needed — the preset is configured in the Cloudinary dashboard.
+    No API key or secret needed, the preset is configured in the Cloudinary dashboard.
     Returns the permanent HTTPS URL of the uploaded image.
     """
     cloudinary.config(cloud_name=settings.CLOUDINARY_CLOUD_NAME)
@@ -92,7 +92,7 @@ class DiseaseDetectionCreateView(APIView):
         # Reset file pointer so we can upload it
         image_file.seek(0)
 
-        # Upload image to Cloudinary (persistent CDN — survives redeploys)
+        # Upload image to Cloudinary (persistent CDN, survives redeploys)
         try:
             image_url = _upload_to_cloudinary(image_file)
         except Exception:
@@ -180,7 +180,7 @@ class DetectionHistoryView(APIView):
                     'confidence': d.confidence,
                     'detected_at': d.detected_at.isoformat(),
                     'batch_id': d.batch_id,
-                    'farm_name': d.batch.farm.name if d.batch and d.batch.farm else '—',
+                    'farm_name': d.batch.farm.name if d.batch and d.batch.farm else ',',
                     'farm_id': d.batch.farm_id if d.batch else None,
                     'notes': d.notes,
                 }
@@ -232,7 +232,7 @@ class DetectionHistoryView(APIView):
 class DetectionStatsView(APIView):
     """
     GET /api/detections/stats
-    Returns {result: count} aggregate — used for the frequency chart.
+    Returns {result: count} aggregate, used for the frequency chart.
     Same filters as DetectionHistoryView.
     """
     permission_classes = [IsAuthenticated]
@@ -277,7 +277,7 @@ class DetectionStatsView(APIView):
 
 
 class RecentDetectionsView(APIView):
-    """GET /api/detections/recent?limit=20 — supervisor-wide detection history."""
+    """GET /api/detections/recent?limit=20, supervisor-wide detection history."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -309,7 +309,7 @@ class RecentDetectionsView(APIView):
                 'confidence': d.confidence,
                 'detected_at': d.detected_at.isoformat(),
                 'batch_id': d.batch_id,
-                'farm_name': d.batch.farm.name if d.batch and d.batch.farm else '—',
+                'farm_name': d.batch.farm.name if d.batch and d.batch.farm else ',',
                 'farm_id': d.batch.farm_id if d.batch else None,
             }
             for d in detections

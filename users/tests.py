@@ -3,7 +3,7 @@ Unit tests for authentication:
   - RegisterView  (POST /api/auth/register)
   - LoginView     (POST /api/auth/login)
   - ProfileView   (GET/PATCH /api/auth/me)
-  - ActiveUserJWTAuthentication — inactive user is rejected
+  - ActiveUserJWTAuthentication, inactive user is rejected
 """
 from django.test import override_settings
 from rest_framework.test import APITestCase
@@ -134,7 +134,7 @@ class LoginViewTests(APITestCase):
 
 
 class ProfileViewTests(APITestCase):
-    """GET/PATCH /api/auth/me — uses force_authenticate (not testing login)."""
+    """GET/PATCH /api/auth/me, uses force_authenticate (not testing login)."""
 
     def setUp(self):
         self.user = make_user(email='profile@test.com', password='Pass1234', name='Original Name')
@@ -200,3 +200,25 @@ class ActiveUserJWTAuthenticationTests(APITestCase):
         res = self.client.get(PROFILE_URL)
         # ActiveUserJWTAuthentication raises AuthenticationFailed → 401
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+@override_settings(REST_FRAMEWORK={
+    **{k: v for k, v in __import__('django.conf', fromlist=['settings']).settings.REST_FRAMEWORK.items()},
+    'DEFAULT_THROTTLE_CLASSES': [],
+    'DEFAULT_THROTTLE_RATES': {},
+})
+class AdminUserListStatusTests(APITestCase):
+    """The user list says whether each account is switched on."""
+
+    def setUp(self):
+        self.admin = make_user(email='boss@test.com', role='ADMIN', name='Boss')
+        self.client.force_authenticate(self.admin)
+
+    def test_list_marks_a_turned_off_account(self):
+        make_user(email='on@test.com', name='On')
+        make_user(email='off@test.com', name='Off', is_active=False)
+        res = self.client.get('/api/admin/users')
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        by_email = {u['email']: u for u in res.json()['data']}
+        self.assertTrue(by_email['on@test.com']['isActive'])
+        self.assertFalse(by_email['off@test.com']['isActive'])

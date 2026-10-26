@@ -29,6 +29,8 @@ export interface User {
   cooperativeId?: string | null;
   cooperativeName?: string | null;
   isEmailVerified: boolean;
+  /** False once an administrator has turned the account off. */
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
 }

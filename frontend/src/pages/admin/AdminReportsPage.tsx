@@ -1,69 +1,53 @@
-import { useEffect, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
-} from 'recharts';
+import { useEffect, useState } from 'react';
 import { reportService, ReportSummary } from '../../services/admin.service';
 import { useToast } from '../../context/ToastContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { fill } from '../../utils/fill';
+import { colorFor } from '../../utils/chartColors';
+import { STAGE_LABELS, STAGE_ORDER } from '../../utils/constants';
+import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
+import { Role } from '../../types';
+import BarList from '../../components/ui/BarList';
+import { Icon } from '../../components/ui/Icon';
+import PageHeader from '../../components/ui/PageHeader';
+import Panel from '../../components/ui/Panel';
+import StatTile from '../../components/ui/StatTile';
+import TimeSeries from '../../components/ui/TimeSeries';
 
-const STAGE_COLORS: Record<string, string> = {
-  EGG: '#a3e635', LARVA: '#34d399', PUPA: '#60a5fa',
-  COCOON: '#f59e0b', HARVEST: '#f97316',
+const ACTION_LABEL: Record<string, string> = {
+  CREATE: 'auCreate', UPDATE: 'auUpdate', DELETE: 'auDelete', LOGIN: 'auLogin', LOGOUT: 'auLogout', OTHER: 'auOther',
 };
-const ROLE_COLORS: Record<string, string> = {
-  ADMIN: '#7c3aed', SUPERVISOR: '#2563eb', FARMER: '#16a34a',
-};
-const GRADE_COLORS: Record<string, string> = { A: '#16a34a', B: '#2563eb', C: '#d97706' };
-const ACTION_COLORS: Record<string, string> = {
-  CREATE: '#16a34a', UPDATE: '#2563eb', DELETE: '#dc2626',
-  LOGIN: '#7c3aed', LOGOUT: '#d97706', OTHER: '#6b7280',
-};
-const RESULT_COLORS = ['#dc2626', '#16a34a', '#d97706', '#2563eb', '#7c3aed', '#6b7280'];
 
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
-  return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '1.25rem 1.5rem' }}>
-      <p style={{ fontSize: '0.75rem', color: 'var(--text-faint)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.375rem' }}>{label}</p>
-      <p style={{ fontSize: '1.9rem', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.03em', lineHeight: 1 }}>{value}</p>
-      {sub && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>{sub}</p>}
-    </div>
-  );
-}
-
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '1.5rem' }}>
-      <h3 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</h3>
-      {children}
-    </div>
-  );
-}
+const stageRank = (stage: string) => {
+  const i = (STAGE_ORDER as readonly string[]).indexOf(stage);
+  return i === -1 ? STAGE_ORDER.length : i;
+};
 
 export default function AdminReportsPage() {
-  const [data,      setData]      = useState<ReportSummary | null>(null);
-  const [loading,   setLoading]   = useState(true);
+  const { t, locale } = useLanguage();
+  const { error: showError } = useToast();
+  const [data, setData] = useState<ReportSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const { toast } = useToast();
-  const { t }     = useLanguage();
-  const printRef  = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const load = () => {
+    setLoading(true);
+    setFailed(false);
     reportService.getSummary()
-      .then(res => setData(res.data.data))
-      .catch(() => toast("We couldn't load the report data. Please try again.", 'error'))
+      .then((res) => setData(res.data.data))
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
-  }, [toast]);
+  };
 
-  const handlePrintPdf = () => window.print();
+  useEffect(load, []);
 
-  const handleCsvExport = async () => {
+  const handleCsv = async () => {
     setExporting(true);
     try {
       await reportService.exportCsv();
     } catch {
-      toast("We couldn't create the CSV file. Please try again.", 'error');
+      showError(t('rpCsvError'));
     } finally {
       setExporting(false);
     }
@@ -71,271 +55,172 @@ export default function AdminReportsPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
-        <span className="spinner" style={{ width: 32, height: 32, borderWidth: 3 }} />
+      <div>
+        <PageHeader title={t('ptSystemReport')} />
+        <p className="panel-loading"><span className="spinner" /></p>
       </div>
     );
   }
 
-  if (!data) return null;
+  if (failed || !data) {
+    return (
+      <div>
+        <PageHeader title={t('ptSystemReport')} />
+        <div className="alert alert-error" role="alert">
+          <span style={{ flex: 1 }}>{t('rpLoadError')}</span>
+          <button type="button" className="btn btn-secondary btn-xs" onClick={load}>{t('btnRetry')}</button>
+        </div>
+      </div>
+    );
+  }
 
   const { users, farms, batches, harvests, detections, audit, topFarmers } = data;
+  const farmers = users.byRole.find((r) => r.role === 'FARMER')?.count ?? 0;
+  const generated = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(data.generatedAt));
 
   return (
-    <>
-      {/* Print-only header */}
-      <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          .print-page { padding: 0 !important; }
-          body { background: white !important; }
-          .recharts-wrapper { break-inside: avoid; }
-        }
-      `}</style>
-
-      <motion.div
-        ref={printRef}
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        style={{ maxWidth: 1100, margin: '0 auto' }}
-        className="print-page"
-      >
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.03em', marginBottom: '0.25rem' }}>
-              {t('reportTitle')}
-            </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-              {t('reportGenerated')} {new Date(data.generatedAt).toLocaleString()}
-            </p>
-          </div>
-          <div className="no-print" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <button
-              onClick={handlePrintPdf}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.55rem 1rem', borderRadius: 10, border: '1.5px solid var(--border)', background: 'transparent', color: 'var(--text)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    <div className="print-page">
+      <PageHeader
+        title={t('ptSystemReport')}
+        subtitle={`${t('reportGenerated')} ${generated}`}
+        actions={
+          <div className="page-actions no-print">
+            <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
+              <Icon name="print" size={15} />
               {t('reportExportPdf')}
             </button>
-            <button
-              onClick={handleCsvExport}
-              disabled={exporting}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.55rem 1rem', borderRadius: 10, border: 'none', background: 'var(--brand-600)', color: '#fff', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
-            >
-              {exporting ? <><span className="spinner" />{t('reportExporting')}</> : (
-                <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  {t('reportExportCsv')}
-                </>
-              )}
+            <button className="btn btn-primary btn-sm" onClick={handleCsv} disabled={exporting}>
+              <Icon name="download" size={15} />
+              {exporting ? t('reportExporting') : t('reportExportCsv')}
             </button>
           </div>
-        </div>
+        }
+      />
 
-        {/* Summary stat cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-          <StatCard label={t('reportTotalUsers')}      value={users.total} sub={`${users.byRole.find(r => r.role === 'FARMER')?.count ?? 0} farmers`} />
-          <StatCard label={t('reportTotalFarms')}      value={farms.total} />
-          <StatCard label={t('reportTotalBatches')}    value={batches.total} />
-          <StatCard label={t('reportTotalHarvests')}   value={harvests.total} sub={`${harvests.totalKg.toFixed(1)} kg total`} />
-          <StatCard label={t('reportTotalDetections')} value={detections.total} />
-        </div>
+      <div className="grid-5">
+        <StatTile label={t('reportTotalUsers')} value={users.total} hint={fill(t('rpFarmersHint'), { n: farmers })} />
+        <StatTile label={t('reportTotalFarms')} value={farms.total} />
+        <StatTile label={t('reportTotalBatches')} value={batches.total} />
+        <StatTile label={t('reportTotalHarvests')} value={harvests.total} hint={fill(t('rpKgHint'), { kg: harvests.totalKg.toFixed(1) })} />
+        <StatTile label={t('reportTotalDetections')} value={detections.total} />
+      </div>
 
-        {/* Charts row 1 */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+      <div className="report-grid">
+        <Panel title={t('rpRegistrations')}>
+          {users.registrations30d.length === 0 ? (
+            <p className="chart-empty">{t('rpNoRegistrations')}</p>
+          ) : (
+            <TimeSeries label={t('rpRegistrations')} unit={t('rpUnitUsers')} data={users.registrations30d} color={colorFor('role', 'FARMER')} />
+          )}
+        </Panel>
 
-          {/* Registrations bar chart */}
-          <ChartCard title={t('reportRegistrations30d')}>
-            {users.registrations30d.length === 0 ? (
-              <p style={{ color: 'var(--text-faint)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem 0' }}>No registrations in the last 30 days.</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={users.registrations30d} margin={{ left: -20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="day" tick={{ fontSize: 10 }} tickFormatter={d => d.slice(5)} />
-                  <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                  <Tooltip formatter={(v) => [v, 'Users']} labelFormatter={l => `Date: ${l}`} />
-                  <Bar dataKey="count" fill="#16a34a" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </ChartCard>
+        <Panel title={t('rpChecks')}>
+          {detections.detections30d.length === 0 ? (
+            <p className="chart-empty">{t('rpNoChecks')}</p>
+          ) : (
+            <TimeSeries label={t('rpChecks')} unit={t('rpUnitChecks')} data={detections.detections30d} color={colorFor('stage', 'PUPA')} />
+          )}
+        </Panel>
 
-          {/* Batches by stage pie */}
-          <ChartCard title={t('reportBatchesByStage')}>
-            {batches.byStage.length === 0 ? (
-              <p style={{ color: 'var(--text-faint)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem 0' }}>No active batches.</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie data={batches.byStage} dataKey="count" nameKey="stage" cx="50%" cy="50%" outerRadius={75} label={(props) => `${(props as unknown as { stage: string; count: number }).stage} (${(props as unknown as { stage: string; count: number }).count})`} labelLine={false}>
-                    {batches.byStage.map(entry => (
-                      <Cell key={entry.stage} fill={STAGE_COLORS[entry.stage] ?? '#94a3b8'} />
-                    ))}
-                  </Pie>
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v, n) => [v, n]} />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </ChartCard>
-        </div>
+        <Panel title={t('reportBatchesByStage')}>
+          {batches.byStage.length === 0 ? (
+            <p className="chart-empty">{t('rpNoBatches')}</p>
+          ) : (
+            <BarList
+              label={t('reportBatchesByStage')}
+              rows={[...batches.byStage]
+                .sort((a, b) => stageRank(a.stage) - stageRank(b.stage))
+                .map((s) => ({ key: s.stage, label: STAGE_LABELS[s.stage] ?? s.stage, value: s.count, color: colorFor('stage', s.stage) }))}
+            />
+          )}
+        </Panel>
 
-        {/* Charts row 2 */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+        <Panel title={t('reportDetectionResults')}>
+          {detections.byResult.length === 0 ? (
+            <p className="chart-empty">{t('rpNoResults')}</p>
+          ) : (
+            <BarList
+              label={t('reportDetectionResults')}
+              rows={detections.byResult.map((r) => ({ key: r.result, label: r.result, value: r.count, color: colorFor('result', r.result) }))}
+            />
+          )}
+        </Panel>
 
-          {/* Detections over time */}
-          <ChartCard title={t('reportDetections30d')}>
-            {detections.detections30d.length === 0 ? (
-              <p style={{ color: 'var(--text-faint)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem 0' }}>No detections in the last 30 days.</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={detections.detections30d} margin={{ left: -20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="day" tick={{ fontSize: 10 }} tickFormatter={d => d.slice(5)} />
-                  <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                  <Tooltip formatter={(v) => [v, 'Detections']} />
-                  <Bar dataKey="count" fill="#7c3aed" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </ChartCard>
+        <Panel title={t('reportHarvestByGrade')} note={t('rpHarvestNote')}>
+          {harvests.byGrade.length === 0 ? (
+            <p className="chart-empty">{t('rpNoHarvests')}</p>
+          ) : (
+            <BarList
+              label={t('reportHarvestByGrade')}
+              rows={harvests.byGrade.map((g) => ({ key: g.grade, label: fill(t('rpGrade'), { g: g.grade }), value: g.count, color: colorFor('grade', g.grade) }))}
+            />
+          )}
+          <dl className="facts facts--spaced">
+            <div><dt>{t('reportTotalCocoonKg')}</dt><dd>{harvests.totalKg.toFixed(1)} kg</dd></div>
+            <div><dt>{t('reportTotalSilkG')}</dt><dd>{harvests.totalSilkG.toFixed(0)} g</dd></div>
+            <div><dt>{t('reportAvgCocoonKg')}</dt><dd>{harvests.avgKg.toFixed(2)} kg</dd></div>
+          </dl>
+        </Panel>
 
-          {/* Detection results pie */}
-          <ChartCard title={t('reportDetectionResults')}>
-            {detections.byResult.length === 0 ? (
-              <p style={{ color: 'var(--text-faint)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem 0' }}>No detections yet.</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie data={detections.byResult} dataKey="count" nameKey="result" cx="50%" cy="50%" outerRadius={75}>
-                    {detections.byResult.map((entry, i) => (
-                      <Cell key={entry.result} fill={RESULT_COLORS[i % RESULT_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v, n) => [v, n]} />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </ChartCard>
-        </div>
+        <Panel title={t('reportUsersByRole')}>
+          {users.byRole.length === 0 ? (
+            <p className="chart-empty">{t('rpNoUsers')}</p>
+          ) : (
+            <BarList
+              label={t('reportUsersByRole')}
+              rows={users.byRole.map((r) => ({
+                key: r.role,
+                label: ROLE_LABEL_KEY[r.role as Role] ? t(ROLE_LABEL_KEY[r.role as Role]) : r.role,
+                value: r.count,
+                color: colorFor('role', r.role),
+              }))}
+            />
+          )}
+        </Panel>
 
-        {/* Charts row 3 */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+        <Panel title={t('reportAuditActions')}>
+          {audit.actions30d.length === 0 ? (
+            <p className="chart-empty">{t('rpNoActivity')}</p>
+          ) : (
+            <BarList
+              label={t('reportAuditActions')}
+              rows={audit.actions30d.map((a) => ({
+                key: a.action,
+                label: t(ACTION_LABEL[a.action] ?? 'auOther'),
+                value: a.count,
+                color: colorFor('action', a.action),
+              }))}
+            />
+          )}
+        </Panel>
 
-          {/* Harvest by grade bar */}
-          <ChartCard title={t('reportHarvestByGrade')}>
-            {harvests.byGrade.length === 0 ? (
-              <p style={{ color: 'var(--text-faint)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem 0' }}>No harvest records.</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={harvests.byGrade} margin={{ left: -20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="grade" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip formatter={(v, n) => [n === 'totalKg' ? `${v} kg` : v, n === 'totalKg' ? 'Total weight' : 'Records']} />
-                  <Bar dataKey="count" name="Records" radius={[4, 4, 0, 0]}>
-                    {harvests.byGrade.map(entry => (
-                      <Cell key={entry.grade} fill={GRADE_COLORS[entry.grade] ?? '#94a3b8'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </ChartCard>
-
-          {/* Audit actions pie */}
-          <ChartCard title={t('reportAuditActions')}>
-            {audit.actions30d.length === 0 ? (
-              <p style={{ color: 'var(--text-faint)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem 0' }}>No audit events in the last 30 days.</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie data={audit.actions30d} dataKey="count" nameKey="action" cx="50%" cy="50%" outerRadius={75}>
-                    {audit.actions30d.map(entry => (
-                      <Cell key={entry.action} fill={ACTION_COLORS[entry.action] ?? '#94a3b8'} />
-                    ))}
-                  </Pie>
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v, n) => [v, n]} />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </ChartCard>
-        </div>
-
-        {/* Charts row 4: Users by role + Top Farmers */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
-
-          {/* Users by role pie */}
-          <ChartCard title={t('reportUsersByRole')}>
-            {users.byRole.length === 0 ? (
-              <p style={{ color: 'var(--text-faint)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem 0' }}>No users.</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={users.byRole}
-                    dataKey="count"
-                    nameKey="role"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={75}
-                    label={(props) => `${(props as unknown as { role: string; count: number }).role} (${(props as unknown as { role: string; count: number }).count})`}
-                    labelLine={false}
-                  >
-                    {users.byRole.map(entry => (
-                      <Cell key={entry.role} fill={ROLE_COLORS[entry.role] ?? '#94a3b8'} />
-                    ))}
-                  </Pie>
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v, n) => [v, n]} />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </ChartCard>
-
-          {/* Harvest summary */}
-          <ChartCard title={t('reportHarvestByGrade')}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', paddingTop: '0.5rem' }}>
-              <StatCard label={t('reportTotalCocoonKg')}  value={`${harvests.totalKg.toFixed(1)} kg`} />
-              <StatCard label={t('reportTotalSilkG')}     value={`${harvests.totalSilkG.toFixed(0)} g`} />
-              <StatCard label={t('reportAvgCocoonKg')}    value={`${harvests.avgKg.toFixed(2)} kg`} />
-              <StatCard label={t('reportTotalHarvests')}  value={harvests.total} />
-            </div>
-          </ChartCard>
-        </div>
-
-        {/* Top Farmers table */}
         {topFarmers.length > 0 && (
-          <ChartCard title={t('reportTopFarmers')}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-              <thead>
-                <tr style={{ borderBottom: '1.5px solid var(--border)' }}>
-                  {['#', 'Name', 'Email', 'Farms'].map(h => (
-                    <th key={h} style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontWeight: 700, color: 'var(--text-faint)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {topFarmers.map((f, i) => (
-                  <tr key={f.email} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.015)' }}>
-                    <td style={{ padding: '0.6rem 0.75rem', color: 'var(--text-faint)', fontWeight: 700 }}>{i + 1}</td>
-                    <td style={{ padding: '0.6rem 0.75rem', color: 'var(--text)', fontWeight: 600 }}>{f.name}</td>
-                    <td style={{ padding: '0.6rem 0.75rem', color: 'var(--text-muted)' }}>{f.email}</td>
-                    <td style={{ padding: '0.6rem 0.75rem' }}>
-                      <span style={{ fontWeight: 700, color: 'var(--brand-600)' }}>{f.farmCount}</span>
-                    </td>
+          <Panel title={t('reportTopFarmers')} flush>
+            <div className="table-wrapper">
+              <table className="table-stack">
+                <thead>
+                  <tr>
+                    <th>{t('rpColRank')}</th>
+                    <th>{t('rpColName')}</th>
+                    <th>{t('rpColEmail')}</th>
+                    <th>{t('rpColFarms')}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </ChartCard>
+                </thead>
+                <tbody>
+                  {topFarmers.map((f, i) => (
+                    <tr key={f.email} className="tbody-row">
+                      <td className="cell-lead cell-muted">{i + 1}</td>
+                      <td data-label={t('rpColName')} className="cell-strong">{f.name}</td>
+                      <td data-label={t('rpColEmail')} className="cell-muted">{f.email}</td>
+                      <td data-label={t('rpColFarms')} className="cell-strong">{f.farmCount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
         )}
-      </motion.div>
-    </>
+      </div>
+    </div>
   );
 }

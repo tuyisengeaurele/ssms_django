@@ -82,7 +82,7 @@ class LogoutView(APIView):
     """
     POST /api/auth/logout
     Blacklists the refresh token from the httpOnly cookie.
-    Does not require a valid access token — the cookie is the sole credential.
+    Does not require a valid access token, the cookie is the sole credential.
     """
     permission_classes = [AllowAny]
 
@@ -99,7 +99,7 @@ class LogoutView(APIView):
                 actor = User.objects.get(pk=token.payload['user_id'])
                 token.blacklist()
             except (TokenError, KeyError, User.DoesNotExist):
-                pass  # Already blacklisted or invalid — still clear the cookie
+                pass  # Already blacklisted or invalid, still clear the cookie
 
         if actor:
             log_action(request, 'LOGOUT', 'User', actor.pk, f'Logout: {actor.email}', actor=actor)
@@ -139,7 +139,7 @@ class CookieTokenRefreshView(APIView):
 
 
 class ChangePasswordView(APIView):
-    """PATCH /api/auth/change-password — authenticated users only."""
+    """PATCH /api/auth/change-password, authenticated users only."""
     permission_classes = [IsAuthenticated]
 
     def patch(self, request):

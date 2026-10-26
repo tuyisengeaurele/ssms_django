@@ -1,3 +1,5 @@
+import { Icon } from './Icon';
+
 interface PaginationMeta {
   page: number;
   pageSize: number;
@@ -17,81 +19,52 @@ export default function Pagination({ meta, onPage }: PaginationProps) {
 
   const { page, totalPages, totalItems, pageSize, hasNext, hasPrev } = meta;
   const from = (page - 1) * pageSize + 1;
-  const to   = Math.min(page * pageSize, totalItems);
+  const to = Math.min(page * pageSize, totalItems);
 
-  // Build visible page numbers — show at most 5 around current
+  // Show at most five numbers around the current page.
   const pages: (number | '…')[] = [];
   if (totalPages <= 7) {
     for (let i = 1; i <= totalPages; i++) pages.push(i);
   } else {
     pages.push(1);
     if (page > 3) pages.push('…');
-    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
-      pages.push(i);
-    }
+    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i);
     if (page < totalPages - 2) pages.push('…');
     pages.push(totalPages);
   }
 
-  const btnBase: React.CSSProperties = {
-    minWidth: 32, height: 32,
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    borderRadius: 'var(--radius)', border: '1px solid var(--border)',
-    fontSize: '0.78rem', fontWeight: 500, cursor: 'pointer',
-    background: 'var(--surface)', color: 'var(--text-muted)',
-    transition: 'all 0.15s',
-    padding: '0 0.5rem',
-  };
-
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1.25rem', borderTop: '1px solid var(--border-light)', flexWrap: 'wrap', gap: '0.5rem' }}>
-      <span style={{ fontSize: '0.75rem', color: 'var(--text-faint)' }}>
-        Showing <strong style={{ color: 'var(--text-2)' }}>{from}–{to}</strong> of <strong style={{ color: 'var(--text-2)' }}>{totalItems}</strong>
+    <nav className="pager" aria-label="Pages">
+      <span className="pager-count">
+        Showing <strong>{from} to {to}</strong> of <strong>{totalItems}</strong>
       </span>
 
-      <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
-        <button
-          style={{ ...btnBase, opacity: hasPrev ? 1 : 0.4, cursor: hasPrev ? 'pointer' : 'not-allowed' }}
-          onClick={() => hasPrev && onPage(page - 1)}
-          disabled={!hasPrev}
-          aria-label="Previous page"
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
+      <div className="pager-buttons">
+        <button type="button" className="pager-btn" onClick={() => hasPrev && onPage(page - 1)} disabled={!hasPrev} aria-label="Previous page">
+          <Icon name="back" size={15} />
         </button>
 
         {pages.map((p, i) =>
           p === '…' ? (
-            <span key={`ellipsis-${i}`} style={{ padding: '0 0.25rem', color: 'var(--text-faint)', fontSize: '0.78rem' }}>…</span>
+            <span key={`gap-${i}`} className="pager-gap" aria-hidden="true">…</span>
           ) : (
             <button
               key={p}
-              style={{
-                ...btnBase,
-                background:   p === page ? 'var(--primary)' : 'var(--surface)',
-                color:        p === page ? '#fff' : 'var(--text-muted)',
-                borderColor:  p === page ? 'var(--primary)' : 'var(--border)',
-                fontWeight:   p === page ? 700 : 500,
-              }}
-              onClick={() => onPage(p as number)}
+              type="button"
+              className={`pager-btn${p === page ? ' is-current' : ''}`}
+              aria-label={`Page ${p}`}
+              aria-current={p === page ? 'page' : undefined}
+              onClick={() => onPage(p)}
             >
               {p}
             </button>
-          )
+          ),
         )}
 
-        <button
-          style={{ ...btnBase, opacity: hasNext ? 1 : 0.4, cursor: hasNext ? 'pointer' : 'not-allowed' }}
-          onClick={() => hasNext && onPage(page + 1)}
-          disabled={!hasNext}
-          aria-label="Next page"
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
+        <button type="button" className="pager-btn" onClick={() => hasNext && onPage(page + 1)} disabled={!hasNext} aria-label="Next page">
+          <Icon name="forward" size={15} />
         </button>
       </div>
-    </div>
+    </nav>
   );
 }
