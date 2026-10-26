@@ -1,60 +1,35 @@
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
 from django.db.models import Prefetch
-from .models import Farm
-from .serializers import FarmSerializer, FarmDetailSerializer, FarmCreateSerializer, FarmUpdateSerializer
-from core.utils import api_success, api_error
-from core.pagination import StandardPagination
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+
 from audit_log.utils import log_action
+from batches.models import Batch
+from batches.queries import with_counts
+from core.access import get_farm_or_404, scope_farms
+from core.pagination import StandardPagination
+from core.utils import api_error, api_success
+
+from .models import Farm
+from .serializers import FarmCreateSerializer, FarmDetailSerializer, FarmSerializer, FarmUpdateSerializer
 
 
-def _farm_queryset(user):
-    if user.role == 'FARMER':
-        return Farm.objects.filter(owner=user, is_active=True)
-    if user.role == 'SUPERVISOR':
-        # Only see farms owned by farmers in the same cooperative
-        if user.cooperative_id:
-            return Farm.objects.filter(
-                is_active=True,
-                owner__cooperative_id=user.cooperative_id,
-                owner__role='FARMER',
-            )
-        return Farm.objects.none()
-    # ADMIN sees everything active
-    return Farm.objects.filter(is_active=True)
-
-
-def _get_farm_or_403(pk, user):
-    """Return (farm, error_response). Access is role+cooperative scoped."""
-    try:
-        farm = Farm.objects.select_related('owner').get(pk=pk)
-    except Farm.DoesNotExist:
-        return None, api_error("We couldn't find that farm.", 404)
-    if not farm.is_active:
-        return None, api_error("We couldn't find that farm.", 404)
-    if user.role == 'FARMER' and farm.owner_id != user.id:
-        return None, api_error("We couldn't find that farm.", 404)
-    if user.role == 'SUPERVISOR':
-        if not user.cooperative_id or farm.owner.cooperative_id != user.cooperative_id:
-            return None, api_error("We couldn't find that farm.", 404)
-    return farm, None
+def _with_active_batches():
+    """Prefetch each farm's active batches, with their totals, so listing farms costs a fixed number of queries."""
+    return Prefetch(
+        'batches',
+        queryset=with_counts(Batch.objects.filter(is_active=True)),
+        to_attr='active_batches',
+    )
 
 
 class FarmListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        from batches.models import Batch
         farms = (
-            _farm_queryset(request.user)
+            scope_farms(request.user)
             .select_related('owner')
-            .prefetch_related(
-                Prefetch(
-                    'batches',
-                    queryset=Batch.objects.filter(is_active=True),
-                    to_attr='active_batches',
-                )
-            )
+            .prefetch_related(_with_active_batches())
             .order_by('-created_at')
         )
         paginator = StandardPagination()
@@ -82,30 +57,13 @@ class FarmDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
-        farm, err = _get_farm_or_403(pk, request.user)
-        if err:
-            return err
-        from batches.models import Batch
-        farm_with_related = (
-            Farm.objects
-            .select_related('owner')
-            .prefetch_related(
-                Prefetch(
-                    'batches',
-                    queryset=Batch.objects.filter(is_active=True),
-                    to_attr='active_batches',
-                )
-            )
-            .get(pk=pk)
-        )
-        return api_success(FarmDetailSerializer(farm_with_related).data)
+        farm = get_farm_or_404(request.user, pk, Farm.objects.prefetch_related(_with_active_batches()))
+        return api_success(FarmDetailSerializer(farm).data)
 
     def patch(self, request, pk):
         if request.user.role not in ('FARMER', 'ADMIN'):
             return api_error("You don't have permission to do that.", 403)
-        farm, err = _get_farm_or_403(pk, request.user)
-        if err:
-            return err
+        farm = get_farm_or_404(request.user, pk)
         serializer = FarmUpdateSerializer(farm, data=request.data, partial=True)
         if not serializer.is_valid():
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
@@ -116,9 +74,7 @@ class FarmDetailView(APIView):
     def delete(self, request, pk):
         if request.user.role not in ('FARMER', 'ADMIN'):
             return api_error("You don't have permission to do that.", 403)
-        farm, err = _get_farm_or_403(pk, request.user)
-        if err:
-            return err
+        farm = get_farm_or_404(request.user, pk)
         farm.is_active = False
         farm.save(update_fields=['is_active'])
         log_action(request, 'DELETE', 'Farm', farm.pk, f'Deleted farm: {farm.name}')

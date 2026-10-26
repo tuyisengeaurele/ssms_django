@@ -60,15 +60,16 @@ def scope_by_farm(user, qs, lookup: str = 'farm'):
     return _narrow(qs, user, f'{lookup}__owner', **{f'{lookup}__is_active': True})
 
 
-def get_farm_or_404(user, pk) -> Farm:
-    farm = scope_farms(user).select_related('owner').filter(pk=pk).first()
+def get_farm_or_404(user, pk, qs=None) -> Farm:
+    """The farm, or NotFound. Pass qs to start from a queryset with select_related or prefetch already set."""
+    farm = scope_farms(user, qs).select_related('owner').filter(pk=pk).first()
     if farm is None:
         raise NotFound("We couldn't find that farm.")
     return farm
 
 
-def get_batch_or_404(user, pk) -> Batch:
-    batch = scope_batches(user).select_related('farm__owner').filter(pk=pk).first()
+def get_batch_or_404(user, pk, qs=None) -> Batch:
+    batch = scope_batches(user, qs).select_related('farm__owner').filter(pk=pk).first()
     if batch is None:
         raise NotFound("We couldn't find that batch.")
     return batch

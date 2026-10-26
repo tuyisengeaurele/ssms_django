@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from .models import Batch, BatchStage
 
 
@@ -19,6 +20,13 @@ class BatchListSerializer(serializers.ModelSerializer):
         ]
 
     def get_counts(self, obj):
+        # Querysets built with batches.queries.with_counts carry the totals, which costs no extra query.
+        if hasattr(obj, 'detection_total'):
+            return {
+                'disease_detections': obj.detection_total,
+                'sensor_readings': obj.reading_total,
+                'alert_logs': obj.alert_total,
+            }
         return {
             'disease_detections': obj.disease_detections.count(),
             'sensor_readings': obj.sensor_readings.count(),
