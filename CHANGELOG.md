@@ -33,7 +33,7 @@ This round closes every stop-ship and serious security finding from the audit. E
 - Changing and resetting a password always failed for the same reason, so nobody could do either.
 - The supervisor dashboard dropped every live alert, because it expected a list and the server sends one alert per message.
 - A line break in a contact form subject or email caused an error instead of a refusal.
-- Run a batch list for a farm with many batches and the page cost three queries per batch. It is now a fixed number.
+- A farm page cost three extra database queries for every batch it showed. It now costs a fixed number.
 
 ### Before you run this
 - **Rotate the database password.** The old one is in public commit history (`SECURITY.md`). This is still to do.
