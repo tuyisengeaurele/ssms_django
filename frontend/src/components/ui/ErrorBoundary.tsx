@@ -36,14 +36,14 @@ export class ErrorBoundary extends Component<Props, State> {
             </svg>
           </div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.5rem' }}>
-            Something went wrong
+            This page ran into a problem
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.65, marginBottom: '0.75rem' }}>
-            An unexpected error occurred. Please refresh the page or go back to the dashboard.
+            We're sorry. Please refresh the page, or go back to your dashboard and try again.
           </p>
           {this.state.error && (
             <details style={{ textAlign: 'left', marginBottom: '1.5rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '0.75rem 1rem' }}>
-              <summary style={{ fontSize: '0.78rem', color: 'var(--text-faint)', cursor: 'pointer', fontWeight: 600 }}>Error details</summary>
+              <summary style={{ fontSize: '0.78rem', color: 'var(--text-faint)', cursor: 'pointer', fontWeight: 600 }}>Technical details</summary>
               <pre style={{ marginTop: '0.5rem', fontSize: '0.72rem', color: '#dc2626', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                 {this.state.error.message}
               </pre>

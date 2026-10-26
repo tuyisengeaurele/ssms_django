@@ -34,8 +34,9 @@ describe('ToastProvider', () => {
     await act(async () => {
       fireEvent.click(screen.getByText('go'));
     });
-    expect(await screen.findByText('Saved your batch')).toBeInTheDocument();
+    // The animation library loads on the first toast, which is slow while other tests run.
+    expect(await screen.findByText('Saved your batch', {}, { timeout: 5000 })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
-    await vi.waitFor(() => expect(screen.queryByText('Saved your batch')).not.toBeInTheDocument());
+    await vi.waitFor(() => expect(screen.queryByText('Saved your batch')).not.toBeInTheDocument(), { timeout: 5000 });
   });
 });

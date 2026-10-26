@@ -13,7 +13,7 @@ export function useBatches(farmId: string) {
     batchService
       .getByFarm(farmId)
       .then((r) => setBatches(r.data.data))
-      .catch(() => setError('Failed to load batches.'))
+      .catch(() => setError("We couldn't load your batches. Please try again."))
       .finally(() => setLoading(false));
   };
 

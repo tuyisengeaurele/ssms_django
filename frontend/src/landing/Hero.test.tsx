@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { LanguageProvider } from '../context/LanguageContext';
@@ -28,11 +28,12 @@ describe('Hero', () => {
     expect(screen.getByText(/SSMS watches the temperature and humidity in your rearing room/)).toBeInTheDocument();
   });
 
-  it('links the two actions and adds a short note', () => {
-    renderHero();
+  it('links the two actions and has no note under them', () => {
+    const { container } = renderHero();
     expect(screen.getByRole('link', { name: /Create your account/ })).toHaveAttribute('href', '/register');
     expect(screen.getByRole('link', { name: 'See how it works' })).toHaveAttribute('href', '#how');
-    expect(screen.getByText('Works in any phone browser.')).toBeInTheDocument();
+    expect(screen.queryByText(/Works in any phone browser/)).not.toBeInTheDocument();
+    expect(container.querySelector('.l-hero__note')).toBeNull();
   });
 
   it('has no statistic in the hero', () => {
@@ -43,12 +44,11 @@ describe('Hero', () => {
     expect(screen.queryByText(/diseases the platform identifies/)).not.toBeInTheDocument();
   });
 
-  it('describes the photo and hides the decoration from screen readers', () => {
+  it('describes the photo and has no ghost word over it', () => {
     const { container } = renderHero();
     expect(screen.getByAltText('Silkworm cocoons resting in bamboo trays')).toHaveAttribute('fetchpriority', 'high');
-    const ghost = container.querySelector('.l-hero__ghost');
-    expect(ghost).toHaveAttribute('aria-hidden', 'true');
-    expect(ghost).toHaveTextContent('SILK');
+    expect(container.querySelector('.l-hero__ghost')).toBeNull();
+    expect(container.textContent).not.toMatch(/SILK$|SILKSILK/);
   });
 
   it('has no silkworm cutout and no rotating preview', () => {
@@ -59,13 +59,26 @@ describe('Hero', () => {
     expect(container.textContent).not.toMatch(/\d\d? \/ 0?\d|sample/i);
   });
 
-  it('shows a stack of two paper cards but announces only one', () => {
+  it('rotates three paper cards in one window and announces only one', () => {
     const { container } = renderHero();
-    expect(container.querySelectorAll('.l-paper')).toHaveLength(2);
-    const announced = screen.getAllByRole('img', { name: /^Illustration/ });
-    expect(announced).toHaveLength(1);
-    expect(within(announced[0]).getByText('Gasabo Silk Farm')).toBeInTheDocument();
-    expect(container.querySelector('.l-hero__back')?.closest('[aria-hidden="true"]')).not.toBeNull();
+    expect(container.querySelectorAll('.l-paper')).toHaveLength(3);
+    expect(screen.getAllByRole('img', { name: /^Illustration/ })).toHaveLength(1);
+  });
+
+  it('does not follow the mouse', () => {
+    const { container } = renderHero();
+    const card = container.querySelector('.l-hero__card') as HTMLElement;
+    fireEvent.pointerMove(card, { clientX: 300, clientY: 200, pointerType: 'mouse' });
+    expect(card.style.getPropertyValue('--px')).toBe('');
+    expect(card.style.getPropertyValue('--py')).toBe('');
+  });
+
+  it('keeps the main button still when the mouse moves over it', () => {
+    renderHero();
+    const link = screen.getByRole('link', { name: /Create your account/ });
+    fireEvent.pointerMove(link, { clientX: 5, clientY: 5, pointerType: 'mouse' });
+    fireEvent.mouseMove(link, { clientX: 5, clientY: 5 });
+    expect(link.style.transform).toBe('');
   });
 
   it('shows the French headline after switching language', () => {

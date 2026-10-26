@@ -6,9 +6,20 @@ const api = axios.create({
   withCredentials: true,  // send httpOnly refresh cookie on every request
 });
 
+// Pages anyone can open. A token left over in the browser must not be sent to them.
+const PUBLIC_PATHS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/password-reset',
+  '/auth/resend-verification',
+  '/auth/verify-email',
+  '/auth/token/refresh',
+];
+
 api.interceptors.request.use((config) => {
+  const isPublic = PUBLIC_PATHS.some((path) => config.url?.includes(path));
   const token = localStorage.getItem('ssms_token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token && !isPublic) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
@@ -69,7 +80,7 @@ api.interceptors.response.use(
         return api(originalConfig);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        _doLogout();
+        endSession();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -80,9 +91,15 @@ api.interceptors.response.use(
   }
 );
 
-function _doLogout() {
+/** Clears the saved sign in and sends the person to the login page with a short explanation. */
+export function endSession() {
   localStorage.removeItem('ssms_token');
   localStorage.removeItem('ssms_user');
+  try {
+    sessionStorage.setItem('ssms_notice', 'session_ended');
+  } catch {
+    // The note is a courtesy. Signing out still works without it.
+  }
   window.location.href = '/login';
 }
 

@@ -27,10 +27,10 @@ class SensorReadingCreateSerializer(serializers.ModelSerializer):
 
     def validate_temperature(self, value):
         if not (-10 <= value <= 60):
-            raise serializers.ValidationError('Temperature out of range (-10 to 60°C).')
+            raise serializers.ValidationError('Temperature should be between -10 and 60°C.')
         return value
 
     def validate_humidity(self, value):
         if not (0 <= value <= 100):
-            raise serializers.ValidationError('Humidity out of range (0 to 100%).')
+            raise serializers.ValidationError('Humidity should be between 0 and 100%.')
         return value

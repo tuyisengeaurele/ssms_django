@@ -24,17 +24,17 @@ class SensorReadingCreateView(APIView):
 
     def post(self, request):
         if request.user.role not in ('FARMER', 'ADMIN', 'SUPERVISOR'):
-            return api_error('Forbidden. Insufficient permissions.', 403)
+            return api_error("You don't have permission to do that.", 403)
 
         serializer = SensorReadingCreateSerializer(data=request.data)
         if not serializer.is_valid():
-            return api_error('Validation failed.', 422, serializer.errors)
+            return api_error('Please check what you entered and try again.', 422, serializer.errors)
 
         batch_id = serializer.validated_data['batch_id']
         try:
             Batch.objects.get(pk=batch_id, is_active=True)
         except Batch.DoesNotExist:
-            return api_error('Batch not found.', 404)
+            return api_error("We couldn't find that batch.", 404)
 
         reading = SensorReading.objects.create(
             batch_id=batch_id,
@@ -55,7 +55,7 @@ class SensorChartView(APIView):
 
     def get(self, request):
         if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
-            return api_error('Forbidden.', 403)
+            return api_error("You don't have permission to do that.", 403)
 
         hours = min(int(request.query_params.get('hours', 24)), 168)
         since = timezone.now() - timedelta(hours=hours)
@@ -99,7 +99,7 @@ class SensorReadingByBatchView(APIView):
         try:
             Batch.objects.get(pk=batch_id, is_active=True)
         except Batch.DoesNotExist:
-            return api_error('Batch not found.', 404)
+            return api_error("We couldn't find that batch.", 404)
 
         readings = (
             SensorReading.objects
@@ -172,7 +172,7 @@ class IoTDeviceListView(APIView):
     def post(self, request):
         """Create a new IoT device for a farm (ADMIN or SUPERVISOR)."""
         if request.user.role not in ('ADMIN', 'SUPERVISOR'):
-            return api_error('Admin or Supervisor access required.', 403)
+            return api_error('Only administrators and supervisors can do that.', 403)
 
         name     = (request.data.get('name') or '').strip()
         farm_id  = (request.data.get('farmId') or '').strip()
@@ -180,23 +180,23 @@ class IoTDeviceListView(APIView):
         dev_key  = (request.data.get('deviceKey') or '').strip() or _gen_device_key()
 
         if not name:
-            return api_error('Device name is required.', 400)
+            return api_error('Please give the device a name.', 400)
         if not farm_id:
-            return api_error('Farm ID is required.', 400)
+            return api_error('Please choose a farm.', 400)
 
         # Scope: supervisor can only assign to farms in their cooperative
         try:
             farm = Farm.objects.get(pk=farm_id, is_active=True)
         except Farm.DoesNotExist:
-            return api_error('Farm not found.', 404)
+            return api_error("We couldn't find that farm.", 404)
 
         if request.user.role == 'SUPERVISOR':
             if (not request.user.cooperative_id or
                     farm.owner.cooperative_id != request.user.cooperative_id):
-                return api_error('Farm not in your cooperative.', 403)
+                return api_error("That farm isn't in your cooperative.", 403)
 
         if IoTDevice.objects.filter(device_key=dev_key).exists():
-            return api_error('A device with that key already exists.', 409)
+            return api_error('A device with that key is already registered.', 409)
 
         device = IoTDevice.objects.create(
             name=name,
@@ -221,14 +221,14 @@ class IoTDeviceDetailView(APIView):
         try:
             device = IoTDevice.objects.select_related('farm', 'farm__owner', 'batch').get(pk=pk, is_active=True)
         except IoTDevice.DoesNotExist:
-            return None, api_error('Device not found.', 404)
+            return None, api_error("We couldn't find that device.", 404)
 
         if request.user.role == 'FARMER' and (not device.farm or device.farm.owner_id != request.user.id):
-            return None, api_error('Device not found.', 404)
+            return None, api_error("We couldn't find that device.", 404)
         if request.user.role == 'SUPERVISOR':
             if not request.user.cooperative_id or not device.farm or \
                device.farm.owner.cooperative_id != request.user.cooperative_id:
-                return None, api_error('Device not found.', 404)
+                return None, api_error("We couldn't find that device.", 404)
         return device, None
 
     def get(self, request, pk):
@@ -254,7 +254,7 @@ class IoTDeviceDetailView(APIView):
 
     def delete(self, request, pk):
         if request.user.role not in ('ADMIN', 'SUPERVISOR'):
-            return api_error('Admin or Supervisor access required.', 403)
+            return api_error('Only administrators and supervisors can do that.', 403)
 
         device, err = self._get_device(request, pk)
         if err:

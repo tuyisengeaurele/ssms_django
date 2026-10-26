@@ -1,10 +1,6 @@
-import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { DiseaseCard } from './cards/DiseaseCard';
-import { ReportCard } from './cards/ReportCard';
-import { useMagnetic } from './motion/useMagnetic';
-import { prefersReducedMotion } from './motion/usePrefersReducedMotion';
+import { HeroCards } from './HeroCards';
 import { useScrollProgress } from './motion/useScrollProgress';
 import './hero.css';
 
@@ -31,33 +27,17 @@ function Arrow() {
 
 export function Hero() {
   const { t } = useLanguage();
-  const frame = useRef(0);
-  const primaryRef = useMagnetic<HTMLAnchorElement>(0.28);
-
-  // The background and the ghost word move at two speeds as the page scrolls. The CSS reads --p.
+  // The photo drifts slowly as the page scrolls. The CSS reads --p.
   const cardRef = useScrollProgress<HTMLDivElement>((p) => {
     cardRef.current?.style.setProperty('--p', String(p));
   }, 'leave');
-
-  // Pointer parallax writes two CSS variables. The cards and the photo read them.
-  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (prefersReducedMotion() || event.pointerType === 'touch') return;
-    const card = cardRef.current;
-    if (!card) return;
-    cancelAnimationFrame(frame.current);
-    frame.current = requestAnimationFrame(() => {
-      const box = card.getBoundingClientRect();
-      card.style.setProperty('--px', String(((event.clientX - box.left) / box.width - 0.5) * 2));
-      card.style.setProperty('--py', String(((event.clientY - box.top) / box.height - 0.5) * 2));
-    });
-  };
 
   const words = t('lpHeroTitle').split(' ');
   const accent = accentIndex(words);
 
   return (
     <section className="l-hero" aria-labelledby="hero-title">
-      <div className="l-hero__card" ref={cardRef} onPointerMove={onPointerMove}>
+      <div className="l-hero__card" ref={cardRef}>
         <div className="l-hero__layer l-hero__bg">
           <picture>
             <source type="image/avif" srcSet={bgSet('avif')} sizes="(min-width: 1400px) 1360px, 100vw" />
@@ -73,11 +53,6 @@ export function Hero() {
           </picture>
         </div>
         <div className="l-hero__shade" aria-hidden="true" />
-        <div className="l-hero__layer l-hero__layer--ghost">
-          <div className="l-hero__ghost" aria-hidden="true">
-            {t('lpGhostWord')}
-          </div>
-        </div>
 
         <div className="l-hero__content">
           <div className="l-hero__copy">
@@ -96,7 +71,7 @@ export function Hero() {
             </h1>
             <p className="l-hero__sub">{t('lpHeroSub')}</p>
             <div className="l-hero__actions">
-              <Link ref={primaryRef} to="/register" className="l-hero__cta">
+              <Link to="/register" className="l-hero__cta">
                 <span>{t('lpHeroCta')}</span>
                 <i className="l-hero__cta-arrow">
                   <Arrow />
@@ -106,14 +81,10 @@ export function Hero() {
                 {t('lpHeroSecondary')}
               </a>
             </div>
-            <p className="l-hero__note">{t('lpHeroNote')}</p>
           </div>
 
           <div className="l-hero__stack">
-            <div aria-hidden="true" className="l-hero__back-wrap">
-              <DiseaseCard className="l-hero__back" />
-            </div>
-            <ReportCard className="l-hero__front" />
+            <HeroCards />
           </div>
         </div>
       </div>

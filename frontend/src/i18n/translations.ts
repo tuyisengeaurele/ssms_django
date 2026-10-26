@@ -127,6 +127,7 @@ export const translations: TranslationMap = {
   loginForgot:          { en: 'Forgot password?',                       fr: 'Mot de passe oublié?',                     rw: "Wibagiwe ijambo ry'ibanga?" },
   loginSignIn:          { en: 'Sign in',                                fr: 'Se connecter',                             rw: 'Injira' },
   loginSigningIn:       { en: 'Signing in…',                            fr: 'Connexion en cours…',                      rw: 'Kwinjira…' },
+  loginSessionEnded:    { en: 'Your session ended, so we signed you out. Please sign in again.', fr: 'Votre session a expiré, nous vous avons déconnecté. Veuillez vous reconnecter.', rw: 'Igihe wari winjiriye cyarangiye. Ongera winjire.' },
   loginNoAccount:       { en: "Don't have an account?",                 fr: "Vous n'avez pas de compte?",               rw: 'Nta konti ufite?' },
   loginCreateAccount:   { en: 'Create account',                         fr: 'Créer un compte',                          rw: 'Fungura Konti' },
 
@@ -221,15 +222,15 @@ export const translations: TranslationMap = {
   checkEmailResend:     { en: 'Resend verification email',        fr: 'Renvoyer le lien',                      rw: 'Ongera uhereze imeyili' },
   checkEmailResending:  { en: 'Sending…',                         fr: 'Envoi en cours…',                       rw: 'Kohereza…' },
   checkEmailResentOk:   { en: 'Verification email resent!',       fr: 'Email de vérification renvoyé !',       rw: 'Imeyili yoherejwe!' },
-  checkEmailResendError:{ en: 'Failed to resend. Please try again.', fr: 'Échec de renvoi. Réessayez.',        rw: 'Kohereza byanze. Ongera ugerageze.' },
+  checkEmailResendError:{ en: "We couldn't resend the email. Please try again.", fr: "Nous n'avons pas pu renvoyer l'e-mail. Veuillez réessayer.", rw: 'Ntitwabashije kongera kohereza imeyili. Ongera ugerageze.' },
 
   verifyEmailVerifying: { en: 'Verifying your email…',            fr: 'Vérification en cours…',                rw: 'Emeza imeyili…' },
   verifyEmailWait:      { en: 'Please wait a moment.',            fr: 'Veuillez patienter.',                   rw: 'Tegereza gato.' },
   verifyEmailSuccess:   { en: 'Email verified!',                  fr: 'Email vérifié !',                       rw: 'Imeyili emejwe!' },
   verifyEmailRedirecting: { en: 'You will be redirected to your dashboard shortly.', fr: 'Vous allez être redirigé vers votre tableau de bord.', rw: 'Uzajyanywa ku kibaho cyawe vuba.' },
-  verifyEmailFailed:    { en: 'Verification failed',              fr: 'Échec de vérification',                 rw: 'Kwemeza byanze' },
+  verifyEmailFailed:    { en: "We couldn't verify your email", fr: "Nous n'avons pas pu vérifier votre e-mail", rw: 'Kwemeza imeyili ntibyakunze' },
   verifyEmailExpired:   { en: 'This verification link has expired or is invalid. Please request a new one.', fr: 'Ce lien a expiré ou est invalide.', rw: 'Iri link ryararangiye cyangwa ntirikorana. Saba rishya.' },
-  verifyEmailInvalidLink: { en: 'Invalid verification link.',      fr: 'Lien de vérification invalide.',        rw: 'Igisomo cy\'imeyili ntikikorana.' },
+  verifyEmailInvalidLink: { en: "This verification link isn't valid. Please request a new one.", fr: "Ce lien de vérification n'est pas valide. Demandez-en un nouveau.", rw: 'Iri sano ntirikora. Saba irindi rishya.' },
   verifyEmailResendLink:{ en: 'Request new link',                  fr: 'Demander un nouveau lien',              rw: 'Saba link rishya' },
 
   // ── Audit log nav ─────────────────────────────────────────────────────────────

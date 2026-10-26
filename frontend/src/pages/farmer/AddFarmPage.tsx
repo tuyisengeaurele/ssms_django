@@ -22,7 +22,7 @@ export default function AddFarmPage() {
     setLoading(true);
     try {
       const res = await farmService.create(form);
-      success('Farm created successfully!');
+      success('Farm created.');
       navigate(`/farms/${res.data.data.id}`);
     } catch (err) {
       setError(getErrorMessage(err));

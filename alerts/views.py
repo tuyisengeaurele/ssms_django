@@ -19,7 +19,7 @@ class AlertListView(APIView):
 
     def get(self, request):
         if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
-            return api_error('Forbidden.', 403)
+            return api_error("You don't have permission to do that.", 403)
 
         unread_only = request.query_params.get('unread', 'true').lower() != 'false'
         limit = min(int(request.query_params.get('limit', 100)), 500)
@@ -58,7 +58,7 @@ class AlertMarkAllReadView(APIView):
 
     def post(self, request):
         if request.user.role not in ('SUPERVISOR', 'ADMIN'):
-            return api_error('Forbidden.', 403)
+            return api_error("You don't have permission to do that.", 403)
 
         qs = AlertLog.objects.filter(is_read=False)
         if request.user.role == 'SUPERVISOR':
@@ -82,7 +82,7 @@ class AlertsByBatchView(APIView):
         try:
             Batch.objects.get(pk=batch_id, is_active=True)
         except Batch.DoesNotExist:
-            return api_error('Batch not found.', 404)
+            return api_error("We couldn't find that batch.", 404)
 
         alerts = AlertLog.objects.select_related('batch__farm__owner').filter(batch_id=batch_id).order_by('-created_at')
         return api_success(AlertLogSerializer(alerts, many=True).data)
@@ -95,7 +95,7 @@ class AlertMarkReadView(APIView):
         try:
             alert = AlertLog.objects.select_related('batch__farm__owner').get(pk=pk)
         except AlertLog.DoesNotExist:
-            return api_error('Alert not found.', 404)
+            return api_error("We couldn't find that alert.", 404)
 
         alert.is_read = True
         alert.save(update_fields=['is_read'])

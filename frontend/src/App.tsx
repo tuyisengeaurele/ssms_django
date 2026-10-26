@@ -37,26 +37,8 @@ const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const UnauthorizedPage = lazy(() => import('./pages/UnauthorizedPage'));
 import { ErrorBoundary }  from './components/ui/ErrorBoundary';
-
-function Unauthorized() {
-  return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center', gap: '1rem',
-      background: 'var(--bg)',
-    }}>
-      <div style={{ width: 64, height: 64, background: '#fef2f2', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-      </div>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.02em' }}>Access Denied</h1>
-      <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-        You don't have permission to view this page.
-      </p>
-      <a href="/" className="btn btn-primary btn-sm">← Go home</a>
-    </div>
-  );
-}
 
 export default function App() {
   return (
@@ -73,7 +55,7 @@ export default function App() {
           <Route path="/reset-password"   element={<ResetPasswordPage />} />
           <Route path="/check-email"      element={<CheckEmailPage />} />
           <Route path="/verify-email"     element={<VerifyEmailPage />} />
-          <Route path="/unauthorized"     element={<Unauthorized />} />
+          <Route path="/unauthorized"     element={<UnauthorizedPage />} />
 
           {/* All authenticated pages, inside DashboardLayout (sidebar + topbar) */}
           <Route element={<ProtectedRoute allowedRoles={['FARMER', 'SUPERVISOR', 'ADMIN']} />}>

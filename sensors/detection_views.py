@@ -10,6 +10,8 @@ import csv
 import io
 import cloudinary
 import cloudinary.uploader
+import logging
+
 import httpx
 from django.conf import settings
 from django.http import StreamingHttpResponse
@@ -22,6 +24,8 @@ from .serializers import DiseaseDetectionSerializer
 from core.utils import api_success, api_error
 from core.pagination import StandardPagination
 from audit_log.utils import log_action
+
+logger = logging.getLogger(__name__)
 
 
 def _upload_to_cloudinary(uploaded_file) -> str:
@@ -50,22 +54,22 @@ class DiseaseDetectionCreateView(APIView):
 
     def post(self, request):
         if request.user.role not in ('FARMER', 'ADMIN', 'SUPERVISOR'):
-            return api_error('Forbidden. Insufficient permissions.', 403)
+            return api_error("You don't have permission to do that.", 403)
 
         batch_id = request.data.get('batchId') or request.data.get('batch_id')
         image_file = request.FILES.get('image')
         notes = request.data.get('notes', '')
 
         if not batch_id:
-            return api_error('batchId is required.', 400)
+            return api_error('Please choose a batch.', 400)
         if not image_file:
-            return api_error('image file is required.', 400)
+            return api_error('Please add a photo.', 400)
 
         # Validate batch exists
         try:
             Batch.objects.get(pk=batch_id, is_active=True)
         except Batch.DoesNotExist:
-            return api_error('Batch not found.', 404)
+            return api_error("We couldn't find that batch.", 404)
 
         # Call FastAPI AI service
         ai_url = f'{settings.AI_SERVICE_URL}/predict'
@@ -76,12 +80,14 @@ class DiseaseDetectionCreateView(APIView):
                     files={'file': (image_file.name, image_file.read(), image_file.content_type)},
                 )
             if response.status_code != 200:
-                return api_error(f'AI service error: {response.text}', 502)
+                logger.error('AI service returned %s: %s', response.status_code, response.text[:300])
+                return api_error("The disease check couldn't finish. Please try again.", 502)
             ai_data = response.json()
         except httpx.ConnectError:
-            return api_error('AI service is unavailable. Ensure it is running on port 8001.', 503)
-        except Exception as exc:
-            return api_error(f'Failed to reach AI service: {exc}', 502)
+            return api_error('The disease check is not available right now. Please try again in a moment.', 503)
+        except Exception:
+            logger.exception('Could not reach the AI service')
+            return api_error("The disease check couldn't finish. Please try again.", 502)
 
         # Reset file pointer so we can upload it
         image_file.seek(0)
@@ -89,8 +95,9 @@ class DiseaseDetectionCreateView(APIView):
         # Upload image to Cloudinary (persistent CDN — survives redeploys)
         try:
             image_url = _upload_to_cloudinary(image_file)
-        except Exception as exc:
-            return api_error(f'Image upload failed: {exc}', 502)
+        except Exception:
+            logger.exception('Image upload failed')
+            return api_error("We couldn't save your photo. Please try again.", 502)
 
         # Persist detection record
         detection = DiseaseDetection.objects.create(
@@ -117,7 +124,7 @@ class DiseaseDetectionByBatchView(APIView):
         try:
             Batch.objects.get(pk=batch_id, is_active=True)
         except Batch.DoesNotExist:
-            return api_error('Batch not found.', 404)
+            return api_error("We couldn't find that batch.", 404)
 
         detections = (
             DiseaseDetection.objects
@@ -137,7 +144,7 @@ class DetectionHistoryView(APIView):
 
     def get(self, request):
         if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
-            return api_error('Forbidden.', 403)
+            return api_error("You don't have permission to do that.", 403)
 
         qs = DiseaseDetection.objects.select_related('batch', 'batch__farm').order_by('-detected_at')
 
@@ -232,7 +239,7 @@ class DetectionStatsView(APIView):
 
     def get(self, request):
         if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
-            return api_error('Forbidden.', 403)
+            return api_error("You don't have permission to do that.", 403)
 
         from django.db.models import Count
 
@@ -275,7 +282,7 @@ class RecentDetectionsView(APIView):
 
     def get(self, request):
         if request.user.role not in ('SUPERVISOR', 'ADMIN'):
-            return api_error('Forbidden.', 403)
+            return api_error("You don't have permission to do that.", 403)
 
         limit = min(int(request.query_params.get('limit', 20)), 100)
 

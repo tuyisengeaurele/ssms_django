@@ -17,9 +17,9 @@ def _get_accessible_farm(farm_id, user):
     try:
         farm = Farm.objects.get(pk=farm_id, is_active=True)
     except Farm.DoesNotExist:
-        return None, api_error('Farm not found.', 404)
+        return None, api_error("We couldn't find that farm.", 404)
     if user.role == 'FARMER' and farm.owner_id != user.id:
-        return None, api_error('Farm not found.', 404)
+        return None, api_error("We couldn't find that farm.", 404)
     return farm, None
 
 
@@ -27,9 +27,9 @@ def _get_accessible_batch(batch_id, user):
     try:
         batch = Batch.objects.select_related('farm').get(pk=batch_id, is_active=True)
     except Batch.DoesNotExist:
-        return None, api_error('Batch not found.', 404)
+        return None, api_error("We couldn't find that batch.", 404)
     if user.role == 'FARMER' and batch.farm.owner_id != user.id:
-        return None, api_error('Batch not found.', 404)
+        return None, api_error("We couldn't find that batch.", 404)
     return batch, None
 
 
@@ -38,10 +38,10 @@ class BatchCreateView(APIView):
 
     def post(self, request):
         if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error('Forbidden. Insufficient permissions.', 403)
+            return api_error("You don't have permission to do that.", 403)
         serializer = BatchCreateSerializer(data=request.data)
         if not serializer.is_valid():
-            return api_error('Validation failed.', 422, serializer.errors)
+            return api_error('Please check what you entered and try again.', 422, serializer.errors)
 
         farm_id = serializer.validated_data['farm_id']
         farm, err = _get_accessible_farm(farm_id, request.user)
@@ -86,7 +86,7 @@ class BatchDetailView(APIView):
 
     def delete(self, request, pk):
         if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error('Forbidden. Insufficient permissions.', 403)
+            return api_error("You don't have permission to do that.", 403)
         batch, err = _get_accessible_batch(pk, request.user)
         if err:
             return err
@@ -106,7 +106,7 @@ class BatchActiveSupervisorView(APIView):
 
     def get(self, request):
         if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
-            return api_error('Forbidden.', 403)
+            return api_error("You don't have permission to do that.", 403)
         from django.db.models import Count
         qs = (
             Batch.objects
@@ -138,13 +138,13 @@ class BatchUpdateStageView(APIView):
 
     def patch(self, request, pk):
         if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error('Forbidden. Insufficient permissions.', 403)
+            return api_error("You don't have permission to do that.", 403)
         batch, err = _get_accessible_batch(pk, request.user)
         if err:
             return err
         serializer = BatchUpdateStageSerializer(data=request.data)
         if not serializer.is_valid():
-            return api_error('Validation failed.', 422, serializer.errors)
+            return api_error('Please check what you entered and try again.', 422, serializer.errors)
 
         new_stage = serializer.validated_data['stage']
 
@@ -153,8 +153,8 @@ class BatchUpdateStageView(APIView):
         new_idx     = STAGE_ORDER.index(new_stage)
         if new_idx <= current_idx:
             return api_error(
-                f'Cannot move batch from {batch.stage} to {new_stage}. '
-                f'Stages must progress forward: {" → ".join(STAGE_ORDER)}.',
+                f'A batch can only move forward. It is at {batch.stage.title()} now, '
+                f'so it cannot go back to {new_stage.title()}.',
                 400,
             )
 

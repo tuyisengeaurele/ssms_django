@@ -87,26 +87,26 @@ class HarvestListCreateView(APIView):
         try:
             batch = Batch.objects.select_related('farm__owner').get(pk=batch_id, is_active=True)
         except Batch.DoesNotExist:
-            return api_error('Batch not found.', 404)
+            return api_error("We couldn't find that batch.", 404)
         if not _can_access_batch(batch, request.user):
-            return api_error('Batch not found.', 404)
+            return api_error("We couldn't find that batch.", 404)
         records = HarvestRecord.objects.select_related('batch__farm').filter(batch_id=batch_id)
         return api_success(HarvestRecordSerializer(records, many=True).data)
 
     def post(self, request, batch_id):
         if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error('Only farmers and admins can log harvest records.', 403)
+            return api_error('Only farmers and administrators can record a harvest.', 403)
         try:
             batch = Batch.objects.select_related('farm__owner').get(pk=batch_id, is_active=True)
         except Batch.DoesNotExist:
-            return api_error('Batch not found.', 404)
+            return api_error("We couldn't find that batch.", 404)
         if not _can_access_batch(batch, request.user):
-            return api_error('Batch not found.', 404)
+            return api_error("We couldn't find that batch.", 404)
 
         data = {**request.data, 'batch_id': batch_id}
         serializer = HarvestRecordCreateSerializer(data=data)
         if not serializer.is_valid():
-            return api_error('Validation failed.', 422, serializer.errors)
+            return api_error('Please check what you entered and try again.', 422, serializer.errors)
 
         vd = serializer.validated_data
         record = HarvestRecord.objects.create(
@@ -166,13 +166,13 @@ class HarvestDeleteView(APIView):
 
     def delete(self, request, pk):
         if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error('Forbidden.', 403)
+            return api_error("You don't have permission to do that.", 403)
         try:
             record = HarvestRecord.objects.select_related('batch__farm').get(pk=pk)
         except HarvestRecord.DoesNotExist:
-            return api_error('Record not found.', 404)
+            return api_error("We couldn't find that record.", 404)
         if request.user.role == 'FARMER' and record.batch.farm.owner_id != request.user.id:
-            return api_error('Record not found.', 404)
+            return api_error("We couldn't find that record.", 404)
         log_action(request, 'DELETE', 'HarvestRecord', pk, f'Deleted harvest record {pk}')
         record.delete()
         return api_success(None, 'Harvest record deleted.')

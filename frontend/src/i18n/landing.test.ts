@@ -10,8 +10,8 @@ const FILLER = /seamless|leverag|empower|revolutioni|cutting-edge|game-changer|d
 const REQUIRED = [
   'lpSkip', 'lpNavAbout', 'lpNavProduct', 'lpNavHow', 'lpNavFaq', 'lpNavContact', 'lpNavLogin',
   'lpNavStart', 'lpNavMenu', 'lpNavClose', 'lpLangLabel',
-  'lpHeroEyebrow', 'lpHeroTitle', 'lpHeroSub', 'lpHeroCta', 'lpHeroSecondary', 'lpHeroNote',
-  'lpHeroImageAlt', 'lpGhostWord',
+  'lpHeroEyebrow', 'lpHeroTitle', 'lpHeroSub', 'lpHeroCta', 'lpHeroSecondary',
+  'lpHeroImageAlt',
   'lpCardReport', 'lpCardBatch', 'lpCardStage', 'lpCardTemp', 'lpCardHumidity', 'lpCardSafe',
   'lpCardHarvestIn', 'lpCardInRange', 'lpCardDays', 'lpCardDisease', 'lpCardResult',
   'lpCardConfidence', 'lpCardHealthy',
@@ -42,6 +42,9 @@ const REQUIRED = [
   'lpCtaTitle', 'lpCtaButton',
   'lpFooterName', 'lpFooterTagline', 'lpFooterBlurb', 'lpFooterExplore', 'lpFooterAccount',
   'lpFooterLegal', 'lpFooterCreate', 'lpFooterPrivacy', 'lpFooterTerms', 'lpFooterPhotos',
+  'lpAuthBack', 'lpAuthShowPwd', 'lpAuthHidePwd',
+  'lpNotFoundTitle', 'lpNotFoundBody', 'lpGoBack', 'lpGoHome', 'lpDashboard',
+  'lpDeniedTitle', 'lpDeniedBody',
 ];
 
 describe('landing copy', () => {
@@ -72,6 +75,11 @@ describe('landing copy', () => {
         expect(FILLER.test(landingTranslations[key][locale]), `${key} ${locale}`).toBe(false);
       }
     }
+  });
+
+  it('does not carry the removed hero note or ghost word', () => {
+    expect(LANDING_KEYS).not.toContain('lpHeroNote');
+    expect(LANDING_KEYS).not.toContain('lpGhostWord');
   });
 
   it('keeps the email placeholder in every language', () => {
