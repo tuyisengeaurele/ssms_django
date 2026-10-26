@@ -1,4 +1,5 @@
 import logging
+import math
 
 from django.contrib.auth import authenticate
 from rest_framework.exceptions import ValidationError as DRFValidationError
@@ -9,6 +10,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from audit_log.utils import log_action
+from core import lockout
 from core.throttles import LoginRateThrottle, RegisterRateThrottle
 from core.tokens import revoke_all_refresh_tokens
 from core.utils import api_error, api_success, body_field
@@ -52,14 +54,28 @@ class LoginView(APIView):
     throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
+        email = str(request.data.get('email', '')).strip().lower()
+
+        wait = lockout.is_locked(email) if email else 0
+        if wait:
+            minutes = max(1, math.ceil(wait / 60))
+            unit = 'minute' if minutes == 1 else 'minutes'
+            return api_error(f'Too many attempts. Please try again in {minutes} {unit}.', 429)
+
         serializer = LoginSerializer(data=request.data, context={'request': request})
         if not serializer.is_valid():
             errors = serializer.errors
             non_field = errors.get('non_field_errors', [])
             if non_field:
-                return api_error(str(non_field[0]), 401)
+                message = str(non_field[0])
+                # Right credentials on an account still waiting for its email link are not a guess.
+                if email and message != 'email_not_verified':
+                    lockout.record_failure(email)
+                    log_action(request, 'OTHER', 'User', detail=f'Failed login: {email}')
+                return api_error(message, 401)
             return api_error('Please check what you entered and try again.', 422, errors)
         user = serializer.validated_data['user']
+        lockout.clear(email)
         tokens = get_tokens_for_user(user)
         log_action(request, 'LOGIN', 'User', user.pk, f'Login: {user.email}', actor=user)
         response = api_success(
