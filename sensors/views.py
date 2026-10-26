@@ -8,9 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from alerts.utils import check_sensor_alerts
-from batches.models import Batch
+from core.access import get_batch_or_404, get_farm_or_404, scope_by_batch, scope_by_farm
 from core.utils import api_error, api_success
-from farms.models import Farm
 
 from .models import IoTDevice, SensorReading
 from .serializers import SensorReadingCreateSerializer, SensorReadingSerializer
@@ -31,11 +30,8 @@ class SensorReadingCreateView(APIView):
         if not serializer.is_valid():
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
 
-        batch_id = serializer.validated_data['batch_id']
-        try:
-            Batch.objects.get(pk=batch_id, is_active=True)
-        except Batch.DoesNotExist:
-            return api_error("We couldn't find that batch.", 404)
+        batch = get_batch_or_404(request.user, serializer.validated_data['batch_id'])
+        batch_id = batch.pk
 
         reading = SensorReading.objects.create(
             batch_id=batch_id,
@@ -49,7 +45,7 @@ class SensorReadingCreateView(APIView):
 class SensorChartView(APIView):
     """
     GET /api/sensors/chart?hours=24
-    Returns hourly average temperature and humidity across all active batches.
+    Returns hourly average temperature and humidity across the batches the caller may see.
     Used by the supervisor dashboard charts.
     """
     permission_classes = [IsAuthenticated]
@@ -61,18 +57,7 @@ class SensorChartView(APIView):
         hours = min(int(request.query_params.get('hours', 24)), 168)
         since = timezone.now() - timedelta(hours=hours)
 
-        qs = SensorReading.objects.filter(timestamp__gte=since)
-        if request.user.role == 'FARMER':
-            qs = qs.filter(batch__farm__owner=request.user)
-        elif request.user.role == 'SUPERVISOR':
-            if request.user.cooperative_id:
-                qs = qs.filter(
-                    batch__farm__owner__cooperative_id=request.user.cooperative_id,
-                    batch__farm__owner__role='FARMER',
-                )
-            else:
-                qs = qs.none()
-        # ADMIN: no filter, sees all
+        qs = scope_by_batch(request.user, SensorReading.objects.filter(timestamp__gte=since))
 
         rows = (
             qs
@@ -97,10 +82,7 @@ class SensorReadingByBatchView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, batch_id):
-        try:
-            Batch.objects.get(pk=batch_id, is_active=True)
-        except Batch.DoesNotExist:
-            return api_error("We couldn't find that batch.", 404)
+        get_batch_or_404(request.user, batch_id)
 
         readings = (
             SensorReading.objects
@@ -146,19 +128,7 @@ class IoTDeviceListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def _scoped_qs(self, user):
-        qs = IoTDevice.objects.select_related('farm', 'batch').filter(is_active=True)
-        if user.role == 'FARMER':
-            qs = qs.filter(farm__owner=user)
-        elif user.role == 'SUPERVISOR':
-            if user.cooperative_id:
-                qs = qs.filter(
-                    farm__owner__cooperative_id=user.cooperative_id,
-                    farm__owner__role='FARMER',
-                )
-            else:
-                qs = qs.none()
-        # ADMIN: no filter
-        return qs
+        return scope_by_farm(user, IoTDevice.objects.select_related('farm', 'batch').filter(is_active=True))
 
     def get(self, request):
         qs = self._scoped_qs(request.user)
@@ -175,26 +145,19 @@ class IoTDeviceListView(APIView):
         if request.user.role not in ('ADMIN', 'SUPERVISOR'):
             return api_error('Only administrators and supervisors can do that.', 403)
 
-        name     = (request.data.get('name') or '').strip()
-        farm_id  = (request.data.get('farmId') or '').strip()
-        location = (request.data.get('location') or '').strip()
-        dev_key  = (request.data.get('deviceKey') or '').strip() or _gen_device_key()
+        # The JSON parser turns farmId into farm_id, so read the underscored names (and accept both).
+        data     = request.data
+        name     = (data.get('name') or '').strip()
+        farm_id  = (data.get('farm_id') or data.get('farmId') or '').strip()
+        location = (data.get('location') or '').strip()
+        dev_key  = (data.get('device_key') or data.get('deviceKey') or '').strip() or _gen_device_key()
 
         if not name:
             return api_error('Please give the device a name.', 400)
         if not farm_id:
             return api_error('Please choose a farm.', 400)
 
-        # Scope: supervisor can only assign to farms in their cooperative
-        try:
-            farm = Farm.objects.get(pk=farm_id, is_active=True)
-        except Farm.DoesNotExist:
-            return api_error("We couldn't find that farm.", 404)
-
-        if request.user.role == 'SUPERVISOR':
-            if (not request.user.cooperative_id or
-                    farm.owner.cooperative_id != request.user.cooperative_id):
-                return api_error("That farm isn't in your cooperative.", 403)
+        farm = get_farm_or_404(request.user, farm_id)
 
         if IoTDevice.objects.filter(device_key=dev_key).exists():
             return api_error('A device with that key is already registered.', 409)
@@ -218,18 +181,13 @@ class IoTDeviceDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def _get_device(self, request, pk):
-        """Return device or raise 404/403 dict."""
-        try:
-            device = IoTDevice.objects.select_related('farm', 'farm__owner', 'batch').get(pk=pk, is_active=True)
-        except IoTDevice.DoesNotExist:
+        """Return (device, None), or (None, a 404 response) when it is missing or out of scope."""
+        device = scope_by_farm(
+            request.user,
+            IoTDevice.objects.select_related('farm', 'farm__owner', 'batch').filter(is_active=True),
+        ).filter(pk=pk).first()
+        if device is None:
             return None, api_error("We couldn't find that device.", 404)
-
-        if request.user.role == 'FARMER' and (not device.farm or device.farm.owner_id != request.user.id):
-            return None, api_error("We couldn't find that device.", 404)
-        if request.user.role == 'SUPERVISOR':
-            if not request.user.cooperative_id or not device.farm or \
-               device.farm.owner.cooperative_id != request.user.cooperative_id:
-                return None, api_error("We couldn't find that device.", 404)
         return device, None
 
     def get(self, request, pk):
