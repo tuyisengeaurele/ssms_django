@@ -4,11 +4,13 @@ from decouple import config
 import dj_database_url
 import sentry_sdk
 
+from core.config import parse_list
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = parse_list(config('ALLOWED_HOSTS', default='localhost,127.0.0.1'))
 
 # Railway injects RAILWAY_PUBLIC_DOMAIN — add it automatically so the
 # health checker and public domain both work without manual config.
@@ -42,6 +44,7 @@ PASSWORD_RESET_TIMEOUT = 3600
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'core.middleware.SecurityHeadersMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',   # serve static files in production
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -178,7 +181,7 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,  # blacklist the old refresh token after rotation
 }
 
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173').split(',')
+CORS_ALLOWED_ORIGINS = parse_list(config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173'))
 CORS_ALLOW_CREDENTIALS = True
 
 APPEND_SLASH = False
@@ -223,9 +226,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ── Security headers (production only) ───────────────────────────────────────
 if not DEBUG:
-    # Render / Railway terminate SSL at their load balancer and forward HTTP
-    # internally — trust the X-Forwarded-Proto header instead of redirecting.
+    # The host's load balancer terminates SSL and forwards plain HTTP, so trust its
+    # X-Forwarded-Proto header to tell whether the visitor used HTTPS.
     SECURE_PROXY_SSL_HEADER      = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+    # Send every visitor to HTTPS, except the health probe, which may arrive as plain HTTP.
+    SECURE_SSL_REDIRECT          = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+    SECURE_REDIRECT_EXEMPT       = [r'^api/health$']
+
+    # Cookies only travel over HTTPS.
+    SESSION_COOKIE_SECURE        = True
+    CSRF_COOKIE_SECURE           = True
 
     # HSTS — tell browsers to only use HTTPS for 1 year
     SECURE_HSTS_SECONDS          = 31536000
