@@ -21,8 +21,12 @@ export const adminService = {
   updateCooperative: (userId: string, cooperativeId: string | null) =>
     api.patch<ApiResponse<User>>(`/admin/users/${userId}/cooperative`, { cooperativeId }),
 
+  /** A soft delete: the account is switched off and can be restored. */
   deactivateUser: (userId: string) =>
     api.delete<ApiResponse<null>>(`/admin/users/${userId}`),
+
+  restoreUser: (userId: string) =>
+    api.post<ApiResponse<User>>(`/admin/users/${userId}/restore`),
 };
 
 export interface AuditLogEntry {

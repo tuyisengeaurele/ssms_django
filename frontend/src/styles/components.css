@@ -914,3 +914,5 @@ tr.is-off td:last-child { opacity: 1; }
 
 /* Forms stand alone in one narrow column. */
 .page-narrow { max-width: 680px; margin-inline: auto; }
+
+.review-list { margin: 0; padding-left: 1.1rem; color: var(--ink); font-weight: 600; line-height: 1.8; }
