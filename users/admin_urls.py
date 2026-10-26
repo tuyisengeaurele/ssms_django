@@ -1,7 +1,10 @@
 from django.urls import path
+
 from .admin_views import (
-    AdminUserListCreateView, AdminUserRoleView,
-    AdminUserDeactivateView, AdminUserCooperativeView,
+    AdminUserCooperativeView,
+    AdminUserDeactivateView,
+    AdminUserListCreateView,
+    AdminUserRoleView,
 )
 
 urlpatterns = [

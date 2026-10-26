@@ -1,6 +1,9 @@
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from core.validators import validate_new_password
 
 User = get_user_model()
 
@@ -20,7 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.Serializer):
     name     = serializers.CharField(max_length=100)
     email    = serializers.EmailField()
-    password = serializers.CharField(min_length=8, write_only=True)
+    password = serializers.CharField(write_only=True)
 
     # Public registration always creates a FARMER.
     # ADMIN and SUPERVISOR roles are assigned by an admin after account creation.
@@ -32,15 +35,14 @@ class RegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError('An account with this email already exists. Try signing in instead.')
         return value.lower()
 
-    def validate_password(self, value):
-        import re
-        if not re.search(r'[A-Z]', value):
-            raise serializers.ValidationError('Your password needs at least one uppercase letter.')
-        if not re.search(r'[a-z]', value):
-            raise serializers.ValidationError('Your password needs at least one lowercase letter.')
-        if not re.search(r'\d', value):
-            raise serializers.ValidationError('Your password needs at least one number.')
-        return value
+    def validate(self, attrs):
+        # The password rules need the name and email, to refuse a password that is too close to them.
+        candidate = User(name=attrs.get('name', ''), email=attrs.get('email', ''))
+        try:
+            validate_new_password(attrs['password'], candidate)
+        except DRFValidationError as exc:
+            raise serializers.ValidationError({'password': exc.detail}) from exc
+        return attrs
 
     def create(self, validated_data):
         return User.objects.create_user(

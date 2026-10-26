@@ -1,6 +1,7 @@
-import re
+import logging
 
 from django.contrib.auth import authenticate
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,10 +12,13 @@ from audit_log.utils import log_action
 from core.throttles import LoginRateThrottle, RegisterRateThrottle
 from core.tokens import revoke_all_refresh_tokens
 from core.utils import api_error, api_success, body_field
+from core.validators import validate_new_password
 
 from .cookie_utils import REFRESH_COOKIE, clear_refresh_cookie, set_refresh_cookie
 from .email_verification_views import _send_verification_email
 from .serializers import LoginSerializer, RegisterSerializer, UserSerializer, get_tokens_for_user
+
+logger = logging.getLogger(__name__)
 
 
 class RegisterView(APIView):
@@ -32,7 +36,8 @@ class RegisterView(APIView):
         try:
             _send_verification_email(user)
         except Exception:
-            pass  # email failure must not block account creation
+            # A mail problem must not block sign up. The person can ask for a new link.
+            logger.exception('Could not send the verification email to %s', user.email)
         return api_success(
             {'user': UserSerializer(user).data},
             'Account created. Please check your email to verify your address.',
@@ -165,14 +170,10 @@ class ChangePasswordView(APIView):
         if not user:
             return api_error("Your current password isn't right. Please try again.", 400)
 
-        if len(new_pass) < 8:
-            return api_error('Your new password needs at least 8 characters.', 422)
-        if not re.search(r'[A-Z]', new_pass):
-            return api_error('Your new password needs at least one uppercase letter.', 422)
-        if not re.search(r'[a-z]', new_pass):
-            return api_error('Your new password needs at least one lowercase letter.', 422)
-        if not re.search(r'\d', new_pass):
-            return api_error('Your new password needs at least one number.', 422)
+        try:
+            validate_new_password(new_pass, request.user)
+        except DRFValidationError as exc:
+            return api_error(str(exc.detail[0]), 422, {'new_password': exc.detail})
         if new_pass != confirm:
             return api_error("The two passwords don't match.", 422)
         if new_pass == current:

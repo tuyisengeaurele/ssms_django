@@ -5,10 +5,10 @@ Unit tests for authentication:
   - ProfileView   (GET/PATCH /api/auth/me)
   - ActiveUserJWTAuthentication, inactive user is rejected
 """
-from django.test import override_settings
-from rest_framework.test import APITestCase
-from rest_framework import status
 from django.contrib.auth import get_user_model
+from django.test import override_settings
+from rest_framework import status
+from rest_framework.test import APITestCase
 
 User = get_user_model()
 
