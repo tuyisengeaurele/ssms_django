@@ -1,103 +1,16 @@
 /* Sign in, sign up and account email pages. Same tokens as the landing page. */
 .landing.l-auth {
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   min-height: 100svh;
-  padding: 12px;
-  gap: 12px;
   background: var(--l-paper);
 }
 
-/* Photo panel */
-.landing .l-auth__aside {
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 32px;
-  min-height: 560px;
-  padding: clamp(24px, 3.4vw, 48px);
-  overflow: hidden;
-  border-radius: var(--l-radius-card);
-  background: #123524;
-  color: var(--l-ivory);
-  box-shadow: var(--l-shadow-lift);
-}
-
-.landing .l-auth__brand {
-  position: absolute;
-  top: clamp(24px, 3.4vw, 48px);
-  left: clamp(24px, 3.4vw, 48px);
-  display: inline-flex;
-  align-items: center;
-  align-self: flex-start;
-  gap: 12px;
-  text-decoration: none;
-  font: 700 1.1rem var(--l-font-ui);
-  letter-spacing: 0.04em;
-  color: var(--l-ivory);
-}
-
-.landing .l-auth__brand img {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-}
-
-.landing .l-auth__pitch {
-  display: grid;
-  gap: 14px;
-  max-width: 460px;
-  margin-inline: auto;
-  text-align: center;
-  justify-items: center;
-}
-
-/* Large faded logo behind the text */
-.landing .l-auth__watermark {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.landing .l-auth__watermark img {
-  width: min(120%, 640px);
-  height: auto;
-  opacity: 0.07;
-  transform: translateY(-4%);
-}
-
-.landing .l-auth__eyebrow {
-  font: 600 0.74rem var(--l-font-ui);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #e6b865;
-}
-
-.landing .l-auth__statement {
-  font: 450 clamp(2rem, 3.6vw, 3.3rem) / 1.04 var(--l-font-display);
-  letter-spacing: -0.02em;
-  text-wrap: balance;
-  overflow-wrap: anywhere;
-}
-
-.landing .l-auth__sub {
-  max-width: 40ch;
-  color: rgba(246, 243, 236, 0.82);
-  font-size: 1rem;
-}
-
-/* Form side */
+/* The page is one centred column: a quiet top bar, the card, a quiet footer */
 .landing .l-auth__side {
   display: flex;
   flex-direction: column;
+  min-height: 100svh;
   min-width: 0;
-  padding: clamp(8px, 1.6vw, 20px) clamp(8px, 3vw, 40px);
+  padding: clamp(12px, 2vw, 24px) clamp(16px, 4vw, 40px);
 }
 
 .landing .l-auth__bar {
@@ -136,20 +49,43 @@
 }
 
 .landing .l-auth__main {
-  display: grid;
+  display: flex;
   flex: 1;
-  place-items: center;
-  padding-block: clamp(24px, 5vw, 56px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding-block: clamp(24px, 5vw, 48px);
 }
 
 .landing .l-auth__main:focus {
   outline: none;
 }
 
+.landing .l-auth__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--l-ink);
+  font: 700 1.05rem var(--l-font-ui);
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.landing .l-auth__brand img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
 .landing .l-auth__panel {
   width: 100%;
   max-width: 420px;
-  animation: l-auth-in 0.9s var(--l-ease) both;
+  padding: clamp(24px, 4vw, 36px);
+  border: 1px solid var(--l-hairline);
+  border-radius: 20px;
+  background: var(--l-ivory);
+  animation: l-auth-in 0.6s var(--l-ease) both;
 }
 
 @keyframes l-auth-in {
@@ -164,11 +100,11 @@
 }
 
 .landing .l-auth__head {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .landing .l-auth__head h1 {
-  font-size: clamp(2.1rem, 3.4vw, 2.9rem);
+  font-size: clamp(1.7rem, 3vw, 2.1rem);
   font-weight: 450;
 }
 
@@ -477,41 +413,12 @@
   font-weight: 600;
 }
 
-/* Tablets and phones: the panel becomes a short banner */
-@media (max-width: 900px) {
-  .landing.l-auth {
-    grid-template-columns: minmax(0, 1fr);
-    padding: 8px;
-    gap: 0;
-  }
-
-  .landing .l-auth__aside {
-    align-items: flex-start;
-    min-height: 0;
-    gap: 20px;
-    padding: 20px;
-  }
-
-  .landing .l-auth__brand {
-    position: static;
-  }
-
-  .landing .l-auth__pitch {
-    margin-inline: 0;
-    text-align: left;
-    justify-items: start;
-  }
-
-  .landing .l-auth__sub {
-    display: none;
-  }
-
-  .landing .l-auth__statement {
-    font-size: clamp(1.6rem, 6vw, 2.1rem);
-  }
-
-  .landing .l-auth__side {
-    padding-inline: 8px;
+/* Phones: the card loses its frame and the form uses the whole width */
+@media (max-width: 480px) {
+  .landing .l-auth__panel {
+    padding: 8px 0;
+    border: 0;
+    background: none;
   }
 }
 
