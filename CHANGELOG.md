@@ -11,7 +11,7 @@ A calmer look and safer actions, in the order the owner asked for them. Each cha
 ### Changed
 - **Menu.** The wide sidebar is now a narrow icon rail with a name on hover or focus. The choice to open it is remembered, and screens 1600 pixels and wider start open. On phones there is a bottom tab bar with a More button. The profile card is gone from the menu, and Sign out is the last item in the list.
 - **Plain labels.** Active, Healthy, stages, roles and counts are plain words. There are no dots and no pills anywhere in the product.
-- **Sign in pages.** One centred card with the SSMS mark above it. No marketing panel.
+- **Sign in pages.** Kept the split layout, with the green panel on one side and the form on the other. A centred card was tried and put back.
 - **Forms.** The new farm, batch and photo check forms stand alone, in one narrow column. The side panels are gone.
 - **Tables.** Cells use less padding on laptop screens, so tables fit without a slider.
 - **Users.** The table shows name, role, cooperative, status and actions. Role and cooperative change in one Edit access dialog that shows what will change and asks again before saving. "Turn off" is now Delete. It is a soft delete: the account is hidden and cannot sign in, the person's farms and records stay, and a Deleted tab has a Restore button. There is still no way to delete a user for good.
