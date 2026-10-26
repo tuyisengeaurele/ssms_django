@@ -2,6 +2,10 @@ import pytest
 from django.core.cache import cache
 from rest_framework.test import APIClient
 
+# DRF reads its throttle rates when this module is first imported. Importing it here, before any
+# test overrides the settings, keeps those rates intact however the tests are ordered.
+import core.throttles  # noqa: F401
+
 
 @pytest.fixture(autouse=True)
 def _quiet_settings(request, settings):
