@@ -1,8 +1,9 @@
-from pathlib import Path
 from datetime import timedelta
-from decouple import config
+from pathlib import Path
+
 import dj_database_url
 import sentry_sdk
+from decouple import config
 
 from core.config import parse_list
 
@@ -208,7 +209,8 @@ CLOUDINARY_CLOUD_NAME    = config('CLOUDINARY_CLOUD_NAME',    default='dsmpn69ux
 CLOUDINARY_UPLOAD_PRESET = config('CLOUDINARY_UPLOAD_PRESET', default='ssms_images')
 
 # ── Email (Gmail SMTP) ────────────────────────────────────────────────────────
-EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
+# Real mail by default. Set EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend to print emails instead of sending them.
+EMAIL_BACKEND       = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST          = 'smtp.gmail.com'
 EMAIL_PORT          = 587
 EMAIL_USE_TLS       = True

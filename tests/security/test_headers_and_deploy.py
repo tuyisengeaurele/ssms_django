@@ -38,7 +38,7 @@ SHOW_SETTINGS = (
     "from django.conf import settings as s;"
     "print(json.dumps({k: getattr(s, k, None) for k in ("
     "'CORS_ALLOWED_ORIGINS','ALLOWED_HOSTS','SESSION_COOKIE_SECURE','CSRF_COOKIE_SECURE',"
-    "'SECURE_SSL_REDIRECT','SECURE_REDIRECT_EXEMPT','SECURE_HSTS_SECONDS')}))"
+    "'SECURE_SSL_REDIRECT','SECURE_REDIRECT_EXEMPT','SECURE_HSTS_SECONDS','EMAIL_BACKEND')}))"
 )
 
 
@@ -115,3 +115,11 @@ def test_check_deploy_has_no_warnings():
         cwd=ROOT, env=production_env(), capture_output=True, text=True, timeout=120,
     )
     assert out.returncode == 0, out.stdout + out.stderr
+
+
+def test_the_email_backend_can_be_switched_without_touching_the_code():
+    default = json.loads(run_python(SHOW_SETTINGS, production_env()))['EMAIL_BACKEND']
+    assert default.endswith('smtp.EmailBackend')
+    console = 'django.core.mail.backends.console.EmailBackend'
+    switched = json.loads(run_python(SHOW_SETTINGS, production_env(EMAIL_BACKEND=console)))
+    assert switched['EMAIL_BACKEND'] == console

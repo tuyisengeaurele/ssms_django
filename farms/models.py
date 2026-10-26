@@ -1,5 +1,6 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
+
 from core.ids import new_id as _generate_id  # migrations import this name
 
 

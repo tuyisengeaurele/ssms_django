@@ -2,7 +2,12 @@
 import pytest
 
 from tests.factories import (
-    AlertLogFactory, BatchFactory, DiseaseDetectionFactory, FarmFactory, SensorReadingFactory, UserFactory,
+    AlertLogFactory,
+    BatchFactory,
+    DiseaseDetectionFactory,
+    FarmFactory,
+    SensorReadingFactory,
+    UserFactory,
 )
 
 pytestmark = pytest.mark.django_db
