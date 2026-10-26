@@ -372,6 +372,12 @@ tr.tbody-row:hover td { background: #faf8f3; }
 td .cell-strong { color: var(--ink); font-weight: 600; }
 td .cell-muted { color: var(--text-muted); }
 
+/* On a laptop the card is narrower than the table wants to be, so the cells give up some padding first. */
+@media (max-width: 1280px) {
+  th { padding: 12px 14px; letter-spacing: 0.1em; }
+  td { padding: 12px 14px; }
+}
+
 .table-actions {
   display: flex;
   align-items: center;
@@ -582,7 +588,7 @@ tr.is-off td:last-child { opacity: 1; }
 .filter-input { width: 200px; padding: 0.5rem 0.9rem; border-radius: 999px; font-size: 0.88rem; }
 .filter-buttons { display: flex; gap: 6px; margin-left: auto; }
 .panel-alert { margin: 20px 24px; }
-.cell-detail { max-width: 320px; color: var(--text-2); }
+.cell-detail { max-width: 240px; color: var(--text-2); }
 .cell-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; }
 
 /* Pagination */
