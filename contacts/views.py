@@ -8,13 +8,13 @@ from .models import ContactMessage
 
 
 def _send_mail_async(*args, **kwargs):
-    """Fire-and-forget email — never blocks the HTTP response."""
+    """Fire-and-forget email, never blocks the HTTP response."""
     t = threading.Thread(target=send_mail, args=args, kwargs=kwargs, daemon=True)
     t.start()
 
 
 class ContactCreateView(APIView):
-    """POST /api/contact — public, no auth required."""
+    """POST /api/contact, public, no auth required."""
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -32,25 +32,25 @@ class ContactCreateView(APIView):
             name=name, email=email, subject=subject, message=message
         )
 
-        # Confirmation email to sender — async so SMTP never delays the response
+        # Confirmation email to sender, async so SMTP never delays the response
         _send_mail_async(
-            f'We received your message — {subject}',
+            f'We received your message: {subject}',
             (
                 f'Hi {name},\n\n'
                 f'Thank you for reaching out to SSMS. We have received your inquiry and will get back to you shortly.\n\n'
                 f'Your message:\n"{message}"\n\n'
-                f'Best regards,\nThe SSMS Team\nSilkworm Smart Management System — Rwanda'
+                f'Best regards,\nThe SSMS Team\nSmart Sericulture Management System, Rwanda'
             ),
             settings.DEFAULT_FROM_EMAIL,
             [email],
             fail_silently=True,
         )
 
-        # Notification email to admin — async
+        # Notification email to admin, async
         admin_email = getattr(settings, 'EMAIL_HOST_USER', None)
         if admin_email:
             _send_mail_async(
-                f'[SSMS Contact] {subject} — from {name}',
+                f'[SSMS Contact] {subject} from {name}',
                 (
                     f'New contact form submission:\n\n'
                     f'Name:    {name}\n'
@@ -84,7 +84,7 @@ def _serialize_message(m):
 
 
 class ContactListView(APIView):
-    """GET /api/admin/contacts — admin only."""
+    """GET /api/admin/contacts, admin only."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -94,7 +94,7 @@ class ContactListView(APIView):
         return api_success([_serialize_message(m) for m in messages])
 
     def patch(self, request, pk):
-        """PATCH /api/admin/contacts/:id/read — mark as read."""
+        """PATCH /api/admin/contacts/:id/read, mark as read."""
         if request.user.role != 'ADMIN':
             return api_error('Admin access required.', 403)
         try:

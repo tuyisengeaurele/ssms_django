@@ -1,0 +1,14 @@
+.landing .l-reveal {
+  opacity: 0;
+  transform: translate3d(0, var(--l-reveal-y, 24px), 0);
+  transition:
+    opacity 0.9s var(--l-ease),
+    transform 0.9s var(--l-ease);
+  transition-delay: var(--l-reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.landing .l-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}

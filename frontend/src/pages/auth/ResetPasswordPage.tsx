@@ -71,7 +71,7 @@ export default function ResetPasswordPage() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: 380 }}
         >
-          <img src="/logo.png" alt="SSMS Logo" style={{ width: 90, height: 90, objectFit: 'contain', marginBottom: '1.5rem', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))' }} />
+          <img src="/logo-on-dark.png" alt="SSMS Logo" style={{ width: 90, height: 90, objectFit: 'contain', marginBottom: '1.5rem', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))' }} />
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
             Set New Password
           </h1>

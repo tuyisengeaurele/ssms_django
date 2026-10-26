@@ -1,13 +1,7 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { createContext, lazy, Suspense, useContext, useState, useCallback, ReactNode } from 'react';
+import type { Toast, ToastType } from './ToastList';
 
-type ToastType = 'success' | 'error' | 'warning' | 'info';
-
-interface Toast {
-  id: string;
-  message: string;
-  type: ToastType;
-}
+const ToastList = lazy(() => import('./ToastList'));
 
 interface ToastContextValue {
   toast: (message: string, type?: ToastType) => void;
@@ -18,15 +12,10 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-const ICONS: Record<ToastType, string> = {
-  success: '✓',
-  error:   '✕',
-  warning: '⚠',
-  info:    'ℹ',
-};
-
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  // Once the first toast has appeared the list stays mounted, so exit animations can finish.
+  const [shown, setShown] = useState(false);
 
   const dismiss = useCallback((id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
@@ -34,6 +23,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const toast = useCallback((message: string, type: ToastType = 'info') => {
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2);
+    setShown(true);
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => dismiss(id), 4000);
   }, [dismiss]);
@@ -46,24 +36,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ toast, success, error, warning }}>
       {children}
       <div className="toast-container">
-        <AnimatePresence initial={false}>
-          {toasts.map(t => (
-            <motion.div
-              key={t.id}
-              className={`toast toast-${t.type}`}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <span className="toast-icon" style={{ fontSize: '0.9rem', fontWeight: 700 }}>
-                {ICONS[t.type]}
-              </span>
-              <span className="toast-msg">{t.message}</span>
-              <button className="toast-close" onClick={() => dismiss(t.id)}>✕</button>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        {shown && (
+          <Suspense fallback={null}>
+            <ToastList toasts={toasts} onDismiss={dismiss} />
+          </Suspense>
+        )}
       </div>
     </ToastContext.Provider>
   );

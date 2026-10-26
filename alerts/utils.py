@@ -1,9 +1,9 @@
 """
-Alert rule engine — called after every sensor reading (API or simulator).
+Alert rule engine, called after every sensor reading (API or simulator).
 
 Safe ranges for silkworm farming:
-  Temperature : 22.0 – 28.0 °C
-  Humidity    : 70.0 – 85.0 %
+  Temperature : 22.0 to 28.0 °C
+  Humidity    : 70.0 to 85.0 %
 
 Email throttle: only one email per (batch, alert_type) per 60 minutes so
 farmers are not flooded during extended out-of-range periods.
@@ -53,7 +53,7 @@ def _send_farmer_alert(batch, alert: AlertLog) -> None:
     """
     Send an alert email to the farm owner (farmer) for the given alert.
     Silently skips if the batch has no associated farm / owner / email.
-    Email is dispatched asynchronously — never blocks the caller.
+    Email is dispatched asynchronously, never blocks the caller.
     """
     try:
         farm  = getattr(batch, 'farm', None)
@@ -66,7 +66,7 @@ def _send_farmer_alert(batch, alert: AlertLog) -> None:
         name      = owner.name if owner else 'Farmer'
 
         type_label = alert.type.replace('_', ' ').title()
-        subject    = f'[SSMS Alert] {type_label} Warning — {farm_name}'
+        subject    = f'[SSMS Alert] {type_label} Warning for {farm_name}'
         body       = (
             f'Dear {name},\n\n'
             f'An environmental alert has been triggered for one of your batches on {farm_name}.\n\n'
@@ -76,11 +76,11 @@ def _send_farmer_alert(batch, alert: AlertLog) -> None:
             f'Please check your silkworm rearing conditions as soon as possible to ensure '
             f'the health of your silkworms.\n\n'
             f'Safe ranges:\n'
-            f'  • Temperature : {TEMP_MIN} °C – {TEMP_MAX} °C\n'
-            f'  • Humidity    : {HUM_MIN} % – {HUM_MAX} %\n\n'
+            f'  • Temperature : {TEMP_MIN} °C to {TEMP_MAX} °C\n'
+            f'  • Humidity    : {HUM_MIN} % to {HUM_MAX} %\n\n'
             f'Log in to SSMS to view all alerts and sensor readings:\n'
             f'{settings.FRONTEND_URL}/alerts\n\n'
-            f'Best regards,\nSSMS — Silkworm Smart Management System, Rwanda'
+            f'Best regards,\nThe SSMS team\nSmart Sericulture Management System, Rwanda'
         )
 
         _send_mail_async(

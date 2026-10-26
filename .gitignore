@@ -18,7 +18,7 @@ db.sqlite3-journal
 media/
 staticfiles/
 
-# Environment — never commit secrets
+# Environment files, never commit secrets
 .env
 .env.local
 .env.*.local
@@ -30,9 +30,6 @@ frontend/dist-ssr/
 frontend/.env
 frontend/.env.local
 frontend/*.local
-
-# Claude
-.claude/
 
 # IDE
 .vscode/
@@ -56,7 +53,7 @@ htmlcov/
 coverage.xml
 .pytest_cache/
 
-# ML models — tracked via Git LFS
+# ML models are tracked via Git LFS
 *.h5
 *.pt
 *.pth
@@ -79,6 +76,5 @@ frontend/.vite/
 ai_service/uvicorn
 
 # Local planning notes and database dumps
-docs/superpowers/
 backups/
 *.dump

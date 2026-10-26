@@ -1,40 +1,42 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ui/ProtectedRoute';
-import DashboardLayout from './components/layout/DashboardLayout';
+const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
 
-import LandingPage        from './pages/LandingPage';
-import LoginPage          from './pages/auth/LoginPage';
-import RegisterPage       from './pages/auth/RegisterPage';
-import ForgotPasswordPage  from './pages/auth/ForgotPasswordPage';
-import ResetPasswordPage   from './pages/auth/ResetPasswordPage';
-import CheckEmailPage      from './pages/auth/CheckEmailPage';
-import VerifyEmailPage     from './pages/auth/VerifyEmailPage';
-import FarmerDashboard    from './pages/farmer/FarmerDashboard';
-import SupervisorDashboard from './pages/supervisor/SupervisorDashboard';
-import AdminDashboard     from './pages/admin/AdminDashboard';
-import FarmsPage          from './pages/farmer/FarmsPage';
-import AddFarmPage        from './pages/farmer/AddFarmPage';
-import FarmDetailPage     from './pages/farmer/FarmDetailPage';
-import AddBatchPage       from './pages/farmer/AddBatchPage';
-import BatchDetailPage    from './pages/farmer/BatchDetailPage';
-import AddDetectionPage   from './pages/farmer/AddDetectionPage';
-import AdminUsersPage          from './pages/admin/AdminUsersPage';
-import AdminCooperativesPage   from './pages/admin/AdminCooperativesPage';
-import DetectionReportsPage    from './pages/farmer/DetectionReportsPage';
-import HarvestPage             from './pages/farmer/HarvestPage';
-import HarvestsPage            from './pages/farmer/HarvestsPage';
-import AlertsPage         from './pages/shared/AlertsPage';
-import DevicesPage        from './pages/shared/DevicesPage';
-import BatchesPage        from './pages/farmer/BatchesPage';
-import ProfilePage        from './pages/shared/ProfilePage';
-import AdminContactsPage  from './pages/admin/AdminContactsPage';
-import AdminAuditLogPage  from './pages/admin/AdminAuditLogPage';
-import AdminReportsPage   from './pages/admin/AdminReportsPage';
-import PrivacyPolicyPage  from './pages/PrivacyPolicyPage';
-import TermsOfServicePage from './pages/TermsOfServicePage';
-import NotFoundPage       from './pages/NotFoundPage';
+// Every page loads on demand, so the landing page does not pull in the dashboards.
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
+const CheckEmailPage = lazy(() => import('./pages/auth/CheckEmailPage'));
+const VerifyEmailPage = lazy(() => import('./pages/auth/VerifyEmailPage'));
+const FarmerDashboard = lazy(() => import('./pages/farmer/FarmerDashboard'));
+const SupervisorDashboard = lazy(() => import('./pages/supervisor/SupervisorDashboard'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const FarmsPage = lazy(() => import('./pages/farmer/FarmsPage'));
+const AddFarmPage = lazy(() => import('./pages/farmer/AddFarmPage'));
+const FarmDetailPage = lazy(() => import('./pages/farmer/FarmDetailPage'));
+const AddBatchPage = lazy(() => import('./pages/farmer/AddBatchPage'));
+const BatchDetailPage = lazy(() => import('./pages/farmer/BatchDetailPage'));
+const AddDetectionPage = lazy(() => import('./pages/farmer/AddDetectionPage'));
+const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
+const AdminCooperativesPage = lazy(() => import('./pages/admin/AdminCooperativesPage'));
+const DetectionReportsPage = lazy(() => import('./pages/farmer/DetectionReportsPage'));
+const HarvestPage = lazy(() => import('./pages/farmer/HarvestPage'));
+const HarvestsPage = lazy(() => import('./pages/farmer/HarvestsPage'));
+const AlertsPage = lazy(() => import('./pages/shared/AlertsPage'));
+const DevicesPage = lazy(() => import('./pages/shared/DevicesPage'));
+const BatchesPage = lazy(() => import('./pages/farmer/BatchesPage'));
+const ProfilePage = lazy(() => import('./pages/shared/ProfilePage'));
+const AdminContactsPage = lazy(() => import('./pages/admin/AdminContactsPage'));
+const AdminAuditLogPage = lazy(() => import('./pages/admin/AdminAuditLogPage'));
+const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
+const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 import { ErrorBoundary }  from './components/ui/ErrorBoundary';
 
 function Unauthorized() {
@@ -62,6 +64,7 @@ export default function App() {
     <LanguageProvider>
     <AuthProvider>
       <BrowserRouter>
+        <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F6F3EC' }} />}>
         <Routes>
           {/* Public */}
           <Route path="/login"            element={<LoginPage />} />
@@ -72,7 +75,7 @@ export default function App() {
           <Route path="/verify-email"     element={<VerifyEmailPage />} />
           <Route path="/unauthorized"     element={<Unauthorized />} />
 
-          {/* All authenticated — inside DashboardLayout (sidebar + topbar) */}
+          {/* All authenticated pages, inside DashboardLayout (sidebar + topbar) */}
           <Route element={<ProtectedRoute allowedRoles={['FARMER', 'SUPERVISOR', 'ADMIN']} />}>
             <Route element={<DashboardLayout />}>
 
@@ -115,9 +118,10 @@ export default function App() {
           <Route path="/terms"   element={<TermsOfServicePage />} />
 
           {/* Default */}
-          <Route path="/"  element={<LandingPage />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="*"  element={<NotFoundPage />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
     </LanguageProvider>
