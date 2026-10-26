@@ -111,12 +111,25 @@ describe('Batch details page', () => {
     expect(screen.getByText('Gatsibo')).toBeInTheDocument();
   });
 
-  it('moves the batch to the next stage', async () => {
+  it('asks before moving the batch to the next stage, then moves it', async () => {
     api.updateStage.mockResolvedValue({ data: { data: batch({ stage: 'PUPA' }) } });
     open();
     fireEvent.click(await screen.findByRole('button', { name: 'Move to Pupa' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Move this batch to Pupa?' });
+    expect(dialog).toHaveTextContent('cannot be moved back');
+    expect(api.updateStage).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, move it' }));
     await waitFor(() => expect(api.updateStage).toHaveBeenCalledWith('b1-9sieo7cv', 'PUPA'));
     expect(await screen.findByRole('button', { name: 'Move to Cocoon' })).toBeInTheDocument();
+  });
+
+  it('leaves the stage alone when the question is cancelled', async () => {
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Move to Pupa' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Move this batch to Pupa?' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(api.updateStage).not.toHaveBeenCalled();
   });
 
   it('opens the harvest record when the batch reaches harvest', async () => {
@@ -124,6 +137,8 @@ describe('Batch details page', () => {
     api.updateStage.mockResolvedValue({ data: { data: batch({ stage: 'HARVEST' }) } });
     open();
     fireEvent.click(await screen.findByRole('button', { name: 'Move to Harvest' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Move this batch to Harvest?' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, move it' }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/batches/b1-9sieo7cv/harvest'));
   });
 

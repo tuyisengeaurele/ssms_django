@@ -40,6 +40,7 @@ export default function BatchDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [moving, setMoving] = useState(false);
+  const [pendingStage, setPendingStage] = useState<BatchStage | null>(null);
   const [showArchive, setShowArchive] = useState(false);
   const [archiving, setArchiving] = useState(false);
 
@@ -72,6 +73,7 @@ export default function BatchDetailPage() {
       showError(getErrorMessage(err));
     } finally {
       setMoving(false);
+      setPendingStage(null);
     }
   };
 
@@ -125,6 +127,24 @@ export default function BatchDetailPage() {
   return (
     <div>
       <Modal
+        open={!!pendingStage}
+        onClose={() => setPendingStage(null)}
+        title={pendingStage ? fill(t('bdMoveTitle'), { stage: STAGE_LABELS[pendingStage] }) : ''}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setPendingStage(null)} disabled={moving}>{t('btnCancel')}</button>
+            <button className="btn btn-primary" onClick={() => pendingStage && advance(pendingStage)} disabled={moving}>
+              {moving ? <><span className="spinner" />{t('bdMoving')}</> : t('bdMoveYes')}
+            </button>
+          </>
+        }
+      >
+        <p className="modal-text">
+          {pendingStage ? fill(t('bdMoveBody'), { id: code, from: STAGE_LABELS[batch.stage], to: STAGE_LABELS[pendingStage] }) : ''}
+        </p>
+      </Modal>
+
+      <Modal
         open={showArchive}
         onClose={() => setShowArchive(false)}
         title={t('bdArchiveTitle')}
@@ -170,7 +190,7 @@ export default function BatchDetailPage() {
 
       <div className="stack-24">
         <Panel title={t('bdLifecycle')}>
-          <StageStepper current={batch.stage} canAdvance={canEdit} busy={moving} onAdvance={advance} />
+          <StageStepper current={batch.stage} canAdvance={canEdit} busy={moving} onAdvance={setPendingStage} />
         </Panel>
 
         <div className="split">
