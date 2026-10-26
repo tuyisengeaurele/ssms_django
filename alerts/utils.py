@@ -14,6 +14,7 @@ the sensor-reading API response.
 
 import threading
 from datetime import timedelta
+
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils import timezone

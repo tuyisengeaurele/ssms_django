@@ -7,6 +7,7 @@ from core.utils import api_error, api_success
 
 from .models import AlertLog
 from .serializers import AlertLogSerializer
+from .tickets import TICKET_SECONDS, issue_ticket
 
 
 class AlertListView(APIView):
@@ -82,3 +83,13 @@ class AlertMarkReadView(APIView):
         alert.is_read = True
         alert.save(update_fields=['is_read'])
         return api_success(AlertLogSerializer(alert).data, 'Alert marked as read.')
+
+
+class AlertStreamTicketView(APIView):
+    """POST /api/alerts/stream-ticket, a 30 second single-use ticket for the live alert stream."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role not in ('SUPERVISOR', 'ADMIN'):
+            return api_error("You don't have permission to do that.", 403)
+        return api_success({'ticket': issue_ticket(request.user), 'expiresIn': TICKET_SECONDS})

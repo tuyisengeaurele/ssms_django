@@ -10,6 +10,17 @@ git config core.hooksPath .githooks
 
 The hooks check every commit message and every line you add. They also keep Git LFS working.
 
+## Running the API
+
+Use uvicorn, not `manage.py runserver`. The live alert stream is an async response, and runserver
+cannot stream it.
+
+```bash
+venv/Scripts/python -m uvicorn ssms_django.asgi:application --reload --port 8000
+```
+
+or `make dev-api`. After pulling the cache change, run `python manage.py createcachetable` once.
+
 ## Branches
 
 - Never commit on `master`.

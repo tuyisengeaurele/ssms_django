@@ -6,15 +6,15 @@ Unit tests for alert logic:
   - AlertsByBatchView  (GET /api/alerts/batch/<batch_id>)
   - Role-based scoping: FARMER sees only own, SUPERVISOR sees only cooperative, ADMIN sees all
 """
-from django.utils import timezone
-from rest_framework.test import APITestCase
-from rest_framework import status
-
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.test import APITestCase
+
+from alerts.models import AlertLog, AlertType
+from batches.models import Batch
 from cooperatives.models import Cooperative
 from farms.models import Farm
-from batches.models import Batch
-from alerts.models import AlertLog, AlertType
 
 User = get_user_model()
 
