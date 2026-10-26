@@ -27,7 +27,7 @@ def _friendly_message(exc, status_code, data):
             return f'Too many attempts. Please try again in {seconds} {unit}.'
         return 'Too many attempts. Please wait a moment and try again.'
     if isinstance(exc, AuthenticationFailed) and getattr(exc.detail, 'code', '') == 'user_inactive':
-        return 'This account has been turned off. Please contact your administrator.'
+        return 'This account has been deleted. Please contact the SSMS team.'
     if isinstance(exc, NotAuthenticated):
         return 'Please sign in to continue.'
     if status_code == 401:

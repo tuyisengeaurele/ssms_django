@@ -9,7 +9,7 @@ from core.utils import api_success, api_error
 
 def _require_admin(user):
     if user.role != 'ADMIN':
-        return api_error('Only administrators can do that.', 403)
+        return api_error("You don't have permission to do that.", 403)
     return None
 
 

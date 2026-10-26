@@ -144,7 +144,7 @@ class IoTDeviceListView(APIView):
     def post(self, request):
         """Create a new IoT device for a farm (ADMIN or SUPERVISOR)."""
         if request.user.role not in ('ADMIN', 'SUPERVISOR'):
-            return api_error('Only administrators and supervisors can do that.', 403)
+            return api_error("You don't have permission to do that.", 403)
 
         # The JSON parser turns farmId into farm_id, so read the underscored names (and accept both).
         data     = request.data
@@ -214,7 +214,7 @@ class IoTDeviceDetailView(APIView):
 
     def delete(self, request, pk):
         if request.user.role not in ('ADMIN', 'SUPERVISOR'):
-            return api_error('Only administrators and supervisors can do that.', 403)
+            return api_error("You don't have permission to do that.", 403)
 
         device, err = self._get_device(request, pk)
         if err:

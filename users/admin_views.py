@@ -25,7 +25,7 @@ ROLE_WORDS = {'ADMIN': 'an administrator', 'SUPERVISOR': 'a supervisor', 'FARMER
 
 def _require_admin(user):
     if user.role != 'ADMIN':
-        return api_error('Only administrators can do that.', 403)
+        return api_error("You don't have permission to do that.", 403)
     return None
 
 
@@ -39,7 +39,7 @@ def _send_invitation(user):
     message = '\n'.join([
         f'Hi {user.name},',
         '',
-        f'An administrator has created an SSMS account for you as {role}.',
+        f'An SSMS account has been created for you as {role}.',
         '',
         'Choose your password with this link (it works for 1 hour):',
         link,

@@ -67,7 +67,7 @@ describe('Profile page', () => {
   it('keeps the email fixed and explains why', () => {
     open();
     expect(screen.getByLabelText('Email address')).toHaveAttribute('readonly');
-    expect(screen.getByText('You cannot change your email here. Ask an administrator if it needs to change.')).toBeInTheDocument();
+    expect(screen.getByText('You cannot change your email here. Contact the SSMS team if it needs to change.')).toBeInTheDocument();
   });
 
   it('saves a new name, and only when it changed', async () => {

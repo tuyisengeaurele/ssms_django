@@ -40,7 +40,7 @@ async def _events(user):
     started = last_ping = time.monotonic()
 
     while True:
-        # Someone turned off mid stream stops receiving alerts at the next check.
+        # Someone deleted mid stream stops receiving alerts at the next check.
         user = await type(user).objects.filter(pk=user.pk, is_active=True).afirst()
         if user is None:
             return

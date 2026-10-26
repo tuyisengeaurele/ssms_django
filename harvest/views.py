@@ -70,7 +70,7 @@ class HarvestListCreateView(APIView):
 
     def post(self, request, batch_id):
         if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error('Only farmers and administrators can record a harvest.', 403)
+            return api_error("You don't have permission to record a harvest.", 403)
         get_batch_or_404(request.user, batch_id)
 
         data = {**request.data, 'batch_id': batch_id}

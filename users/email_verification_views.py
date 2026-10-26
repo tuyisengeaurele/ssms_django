@@ -64,7 +64,7 @@ class VerifyEmailView(APIView):
             return api_error("This verification link has expired or isn't valid. Please request a new one.", 400)
 
         if not user.is_active:
-            return api_error('This account has been turned off. Please contact your administrator.', 400)
+            return api_error('This account has been deleted. Please contact the SSMS team.', 400)
 
         if user.is_email_verified:
             # A link that was already used. Say so, and hand out nothing.
@@ -89,7 +89,7 @@ class ResendVerificationView(APIView):
         if not email:
             return api_error('Please enter your email address.', 422)
 
-        # The same answer for an unknown address, a verified one, a turned off account and a
+        # The same answer for an unknown address, a verified one, a deleted account and a
         # real one waiting for its link, so this page cannot be used to find out who has an account.
         user = User.objects.filter(email=email, is_active=True, is_email_verified=False).first()
         if user is not None:
