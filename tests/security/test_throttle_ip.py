@@ -23,7 +23,8 @@ def test_spoofed_xff_does_not_reset_login_throttle(api_client):
     def attempt(i):
         return api_client.post(
             LOGIN,
-            {'email': 'nobody@example.rw', 'password': 'Wrong1234'},
+            # A different email each time, so only the address throttle can be what stops the 11th.
+            {'email': f'nobody{i}@example.rw', 'password': 'Wrong1234'},
             format='json',
             HTTP_X_FORWARDED_FOR=f'198.51.100.{i}',
             REMOTE_ADDR='203.0.113.7',
