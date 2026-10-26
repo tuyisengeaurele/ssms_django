@@ -11,7 +11,7 @@ export const authService = {
     api.post<ApiResponse<AuthResponse>>('/auth/login', data),
 
   verifyEmail: (data: { uid: string; token: string }) =>
-    api.post<ApiResponse<AuthResponse>>('/auth/verify-email', data),
+    api.post<ApiResponse<null>>('/auth/verify-email', data),
 
   resendVerification: (email: string) =>
     api.post<ApiResponse<null>>('/auth/resend-verification', { email }),
