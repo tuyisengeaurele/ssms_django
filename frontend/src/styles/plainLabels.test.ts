@@ -43,6 +43,12 @@ describe('Plain labels', () => {
     expect(css).not.toMatch(/background/);
   });
 
+  it('draws the "you" tag in the users table as plain text', () => {
+    const tag = rule(components, '.cell-tag');
+    expect(tag).not.toBe('');
+    expect(tag).not.toMatch(/border-radius|background|padding:\s*[1-9]|text-transform:\s*uppercase/);
+  });
+
   it('has no dot before a label', () => {
     expect(components).not.toMatch(/\.badge-dot/);
   });
