@@ -73,7 +73,7 @@ class CooperativeDetailView(APIView):
         return api_success(CooperativeSerializer(coop).data, 'Cooperative updated.')
 
     def delete(self, request, pk):
-        """DELETE /api/cooperatives/<id>, deactivate (admin only)."""
+        """DELETE /api/cooperatives/<id>, delete, which switches it off (admin only)."""
         err = _require_admin(request.user)
         if err:
             return err
@@ -82,4 +82,4 @@ class CooperativeDetailView(APIView):
             return err
         coop.is_active = False
         coop.save(update_fields=['is_active'])
-        return api_success(None, 'Cooperative deactivated.')
+        return api_success(None, 'Cooperative deleted.')
