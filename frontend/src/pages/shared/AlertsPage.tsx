@@ -11,6 +11,7 @@ import { STAGE_LABELS } from '../../utils/constants';
 import { ALERT_TYPE_KEY } from '../../utils/alertTypes';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
+import Modal from '../../components/ui/Modal';
 import PageHeader from '../../components/ui/PageHeader';
 import Pagination from '../../components/ui/Pagination';
 import Panel from '../../components/ui/Panel';
@@ -29,6 +30,7 @@ export default function AlertsPage() {
   const [type, setType] = useState<AlertType | ''>('');
   const [page, setPage] = useState(1);
   const [markingAll, setMarkingAll] = useState(false);
+  const [askAll, setAskAll] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -59,6 +61,7 @@ export default function AlertsPage() {
       showError(getErrorMessage(e));
     } finally {
       setMarkingAll(false);
+      setAskAll(false);
     }
   };
 
@@ -74,12 +77,29 @@ export default function AlertsPage() {
 
   return (
     <div>
+      <Modal
+        open={askAll}
+        onClose={() => setAskAll(false)}
+        title={t('alMarkAllTitle')}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setAskAll(false)} disabled={markingAll}>{t('btnCancel')}</button>
+            <button className="btn btn-primary" onClick={handleMarkAll} disabled={markingAll}>
+              {markingAll ? <span className="spinner" aria-hidden="true" /> : null}
+              {t('alMarkAllYes')}
+            </button>
+          </>
+        }
+      >
+        <p className="modal-text">{t('alMarkAllBody')}</p>
+      </Modal>
+
       <PageHeader
         title={t('ptAlerts')}
         subtitle={subtitle}
         actions={
           unread > 0 ? (
-            <button className="btn btn-secondary btn-sm" onClick={handleMarkAll} disabled={markingAll}>
+            <button className="btn btn-secondary btn-sm" onClick={() => setAskAll(true)} disabled={markingAll}>
               <Icon name="check" size={15} />
               {t('alMarkAll')}
             </button>

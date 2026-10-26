@@ -111,10 +111,13 @@ describe('Messages page', () => {
     expect(reply).toHaveAttribute('href', 'mailto:aline@coop.rw?subject=Re%3A%20Visit%20to%20our%20farm');
   });
 
-  it('marks everything read in one go', async () => {
+  it('asks, then marks everything read in one go', async () => {
     open();
     await screen.findByText('Visit to our farm');
     fireEvent.click(screen.getByRole('button', { name: 'Mark all as read' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Mark every message as read?' });
+    expect(api.markRead).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, mark them all' }));
     await waitFor(() => expect(api.markRead).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(screen.getByText('3 messages, 0 unread.')).toBeInTheDocument());
     expect(screen.queryByRole('button', { name: 'Mark all as read' })).not.toBeInTheDocument();
