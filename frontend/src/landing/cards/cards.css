@@ -91,18 +91,8 @@
 }
 
 .landing .l-paper__ok {
-  display: inline-flex;
-  align-items: center;
   color: #1f6b47;
   font-weight: 500;
-}
-
-.landing .l-paper__ok i {
-  width: 0.55em;
-  height: 0.55em;
-  margin-right: 0.5em;
-  border-radius: 50%;
-  background: #2d8a5b;
 }
 
 .landing .l-paper__total {

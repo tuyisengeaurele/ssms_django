@@ -31,6 +31,13 @@ describe('paper cards', () => {
     expect(container.querySelectorAll(INTERACTIVE)).toHaveLength(0);
   });
 
+  it('shows the status as plain green words with no dot before them', () => {
+    const { container } = wrap(<ReportCard />);
+    const status = within(container).getByText('Within range');
+    expect(status.querySelector('i')).toBeNull();
+    expect(status.previousElementSibling).toBeNull();
+  });
+
   it('puts the new logo on every card instead of a drawn icon', () => {
     const { container } = wrap(
       <>
