@@ -42,6 +42,8 @@ export const pageTranslations = {
   navGroupSystem: k('System', 'Système', 'Sisitemu'),
   navGroupMonitoring: k('Monitoring', 'Suivi', 'Gukurikirana'),
   shellMainMenu: k('Main menu', 'Menu principal', 'Menu nyamukuru'),
+  shellQuickMenu: k('Quick menu', 'Menu rapide', 'Menu yihuse'),
+  navMore: k('More', 'Plus', 'Ibindi'),
   shellOpenMenu: k('Open menu', 'Ouvrir le menu', 'Fungura menu'),
   shellNotifications: k('Notifications', 'Notifications', 'Amatangazo'),
   shellNoAlerts: k('Nothing new. You are all caught up.', 'Rien de nouveau. Vous êtes à jour.', 'Nta gishya. Byose wabibonye.'),

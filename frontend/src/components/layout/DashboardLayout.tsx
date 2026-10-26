@@ -7,6 +7,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
+import BottomNav from './BottomNav';
 import { alertService } from '../../services/alert.service';
 
 const pageVariants = {
@@ -15,9 +16,25 @@ const pageVariants = {
   exit:    { opacity: 0, y: -6, transition: { duration: 0.15 } },
 };
 
+const NAV_KEY = 'ssms_nav';
+// Screens this wide have room for the labels, so the menu starts open there.
+const WIDE_SCREEN = 1600;
+
+/** The menu is a narrow icon rail unless the person opened it. What they chose is remembered. */
+function startsAsRail(): boolean {
+  try {
+    const saved = localStorage.getItem(NAV_KEY);
+    if (saved === 'open') return false;
+    if (saved === 'rail') return true;
+  } catch {
+    // Storage can be blocked. The default below still works.
+  }
+  return window.innerWidth < WIDE_SCREEN;
+}
+
 export default function DashboardLayout() {
   const location = useLocation();
-  const [collapsed,  setCollapsed]  = useState(() => window.innerWidth < 1024);
+  const [rail, setRail] = useState(startsAsRail);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
 
@@ -29,34 +46,31 @@ export default function DashboardLayout() {
 
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
-  useEffect(() => {
-    function handleResize() {
-      if (window.innerWidth < 768) setCollapsed(false);
+  const toggleMenu = () => {
+    if (window.innerWidth < 768) {
+      setMobileOpen((o) => !o);
+      return;
     }
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    const next = !rail;
+    setRail(next);
+    try {
+      localStorage.setItem(NAV_KEY, next ? 'rail' : 'open');
+    } catch {
+      // Not remembering the choice is fine.
+    }
+  };
 
   return (
     <div className="app-layout">
       <Sidebar
-        collapsed={collapsed}
+        collapsed={rail}
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
         alertCount={alertCount}
       />
 
-      <main className={`app-main ${collapsed ? 'sidebar-collapsed' : ''}`}>
-        <TopBar
-          onMenuToggle={() => {
-            if (window.innerWidth < 768) {
-              setMobileOpen(o => !o);
-            } else {
-              setCollapsed(c => !c);
-            }
-          }}
-          alertCount={alertCount}
-        />
+      <main className={`app-main ${rail ? 'sidebar-collapsed' : ''}`}>
+        <TopBar onMenuToggle={toggleMenu} alertCount={alertCount} />
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -71,6 +85,8 @@ export default function DashboardLayout() {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      <BottomNav alertCount={alertCount} onMore={() => setMobileOpen(true)} />
     </div>
   );
 }

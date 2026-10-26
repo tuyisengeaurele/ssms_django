@@ -70,10 +70,32 @@ describe('Sidebar for an administrator', () => {
     expect(within(link).getByText('82')).toHaveAttribute('aria-label', '82 unread');
   });
 
-  it('shows who is signed in', () => {
+  it('leaves the profile to the top bar', () => {
+    const { container } = sidebar();
+    expect(screen.queryByText('Auris Tuyisenge')).not.toBeInTheDocument();
+    expect(screen.queryByText('Administrator')).not.toBeInTheDocument();
+    expect(container.querySelector('.sidebar-user, .sidebar-footer')).toBeNull();
+  });
+
+  it('ends the list with Sign Out, in the same list as the pages', () => {
     sidebar();
-    expect(screen.getByText('Auris Tuyisenge')).toBeInTheDocument();
-    expect(screen.getByText('Administrator')).toBeInTheDocument();
+    const nav = screen.getByRole('navigation', { name: 'Main menu' });
+    const links = within(nav).getAllByRole('link');
+    const buttons = within(nav).getAllByRole('button');
+    const signOut = buttons[buttons.length - 1];
+    expect(signOut).toHaveAccessibleName('Sign Out');
+    expect(signOut.closest('[role="group"]')).toBe(links[links.length - 1].closest('[role="group"]'));
+  });
+
+  it('gives every item a tooltip name for the narrow rail', () => {
+    renderAt('/admin', <Sidebar collapsed mobileOpen={false} onMobileClose={() => {}} alertCount={0} />);
+    const nav = screen.getByRole('navigation', { name: 'Main menu' });
+    for (const link of within(nav).getAllByRole('link')) {
+      expect(link).toHaveAttribute('data-tip', link.getAttribute('aria-label'));
+      expect(link.getAttribute('aria-label')).toBeTruthy();
+    }
+    const buttons = within(nav).getAllByRole('button');
+    expect(buttons[buttons.length - 1]).toHaveAttribute('data-tip', 'Sign Out');
   });
 
   it('asks before signing out', () => {
@@ -93,7 +115,6 @@ describe('Sidebar for other roles', () => {
     expect(screen.getByRole('link', { name: 'My Farms' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Users' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Audit log' })).not.toBeInTheDocument();
-    expect(screen.getByText('Farmer')).toBeInTheDocument();
   });
 
   it('gives a supervisor the overview', () => {

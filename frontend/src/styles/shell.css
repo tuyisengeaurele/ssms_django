@@ -144,100 +144,99 @@
   text-align: center;
 }
 
-.sidebar-footer {
-  display: grid;
-  gap: 4px;
-  padding: 12px 14px 16px;
-  border-top: 1px solid rgba(246, 243, 236, 0.08);
-}
-
-.sidebar-user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  min-width: 0;
-}
-
-.sidebar-avatar {
-  display: grid;
-  flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border-radius: 50%;
-  background: rgba(246, 243, 236, 0.12);
-  color: var(--ivory);
-  font: 600 0.76rem var(--font-ui);
-}
-
-.sidebar-user-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  line-height: 1.25;
-}
-
-.sidebar-user-name {
-  overflow: hidden;
-  color: var(--ivory);
-  font-size: 0.86rem;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sidebar-user-role {
-  font-size: 0.74rem;
-  color: rgba(246, 243, 236, 0.5);
-}
-
-.sidebar-logout {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+/* Sign out sits at the end of the list and looks like every other item. */
+.sidebar-signout {
   width: 100%;
-  padding: 10px 12px;
   border: 0;
-  border-radius: 12px;
   background: none;
-  color: rgba(246, 243, 236, 0.6);
-  font: 500 0.9rem var(--font-ui);
-  white-space: nowrap;
-  transition: background-color 0.25s var(--ease-out), color 0.25s var(--ease-out);
+  text-align: left;
+  cursor: pointer;
 }
 
-.sidebar-logout:hover {
-  background: rgba(246, 243, 236, 0.06);
-  color: var(--ivory);
+/* ── The narrow rail: icons only, a name appears beside the icon on hover or focus ── */
+.app-sidebar.collapsed {
+  overflow: visible;
 }
 
-/* Collapsed: icons only */
 .app-sidebar.collapsed .sidebar-logo {
   padding: 0 20px;
 }
 
 .app-sidebar.collapsed .sidebar-logo-text,
 .app-sidebar.collapsed .sidebar-section-label,
-.app-sidebar.collapsed .sidebar-item-label,
-.app-sidebar.collapsed .sidebar-user-text,
-.app-sidebar.collapsed .sidebar-badge {
+.app-sidebar.collapsed .sidebar-item-label {
   display: none;
 }
 
-.app-sidebar.collapsed .sidebar-item,
-.app-sidebar.collapsed .sidebar-logout {
+.app-sidebar.collapsed .sidebar-nav {
+  gap: 6px;
+  overflow: visible;
+}
+
+/* A thin line takes the place of the group headings */
+.app-sidebar.collapsed .sidebar-group + .sidebar-group {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(246, 243, 236, 0.1);
+}
+
+.app-sidebar.collapsed .sidebar-item {
   justify-content: center;
   padding: 11px 0;
 }
 
-.app-sidebar.collapsed .sidebar-user {
-  justify-content: center;
-  padding: 8px 0;
-}
-
 .app-sidebar.collapsed .sidebar-item.active::before {
   left: -14px;
+}
+
+/* The unread count moves onto the corner of its icon */
+.app-sidebar.collapsed .sidebar-badge {
+  position: absolute;
+  top: 3px;
+  right: 8px;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  color: var(--gold-soft);
+  font-size: 0.66rem;
+}
+
+.app-sidebar.collapsed .sidebar-item[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: calc(100% + 14px);
+  top: 50%;
+  z-index: 300;
+  padding: 7px 12px;
+  border: 1px solid rgba(246, 243, 236, 0.14);
+  border-radius: 10px;
+  background: #153326;
+  color: var(--ivory);
+  font: 600 0.8rem var(--font-ui);
+  white-space: nowrap;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-4px, -50%);
+  transition: opacity 0.15s var(--ease-out), transform 0.15s var(--ease-out);
+}
+
+.app-sidebar.collapsed .sidebar-item[data-tip]:hover::after,
+.app-sidebar.collapsed .sidebar-item[data-tip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+/* On a short screen the rail has to scroll, and a scrolling list cannot show tooltips */
+@media (max-height: 640px) {
+  .app-sidebar.collapsed .sidebar-nav {
+    overflow-y: auto;
+  }
+}
+
+/* ── Tab bar for phones ───────────────────────────────────────────────────── */
+.bottom-nav {
+  display: none;
 }
 
 .sidebar-overlay {
@@ -683,11 +682,108 @@ a.topbar-note:hover {
     box-shadow: var(--shadow-xl);
   }
 
+  /* The drawer always shows full labels, even if the rail was chosen on a laptop */
+  .app-sidebar.collapsed {
+    overflow: hidden;
+  }
+
   .app-sidebar.collapsed .sidebar-logo-text,
   .app-sidebar.collapsed .sidebar-section-label,
-  .app-sidebar.collapsed .sidebar-item-label,
-  .app-sidebar.collapsed .sidebar-user-text {
+  .app-sidebar.collapsed .sidebar-item-label {
     display: revert;
+  }
+
+  .app-sidebar.collapsed .sidebar-nav {
+    overflow-y: auto;
+  }
+
+  .app-sidebar.collapsed .sidebar-item {
+    justify-content: flex-start;
+    padding: 10px 12px;
+  }
+
+  .app-sidebar.collapsed .sidebar-item[data-tip]::after {
+    display: none;
+  }
+
+  .app-sidebar.collapsed .sidebar-group + .sidebar-group {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .app-sidebar.collapsed .sidebar-badge {
+    position: static;
+    min-width: 22px;
+    padding: 2px 7px;
+    background: var(--gold-soft);
+    color: var(--ink);
+    font-size: 0.68rem;
+  }
+
+  .topbar-toggle {
+    display: none;
+  }
+
+  .bottom-nav {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 150;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--border-light);
+    background: rgba(246, 243, 236, 0.96);
+    backdrop-filter: saturate(1.4) blur(14px);
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 2px;
+    border: 0;
+    border-radius: 12px;
+    background: none;
+    color: var(--text-muted);
+    font: 600 0.66rem var(--font-ui);
+    cursor: pointer;
+  }
+
+  .bottom-nav-item.active {
+    color: var(--ink);
+  }
+
+  .bottom-nav-icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    height: 24px;
+  }
+
+  .bottom-nav-item.active .bottom-nav-icon {
+    color: var(--gold);
+  }
+
+  .bottom-nav-badge {
+    position: absolute;
+    top: -4px;
+    right: -12px;
+    color: var(--danger, #8a2c20);
+    font: 700 0.62rem var(--font-ui);
+  }
+
+  .bottom-nav-label {
+    overflow: hidden;
+    max-width: 100%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Leave room so the last thing on a page is not hidden behind the bar */
+  .app-content {
+    padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
   }
 
   .app-main,
