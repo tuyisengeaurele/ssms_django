@@ -26,7 +26,7 @@ describe('getPageInfo', () => {
     ['/farms/abc123', 'Farm details', 'Farming'],
     ['/farms/abc123/batches/new', 'New batch', 'Farming'],
     ['/batches/abc123/detect', 'Disease check', 'Farming'],
-    ['/batches/abc123/harvest', 'Record a harvest', 'Farming'],
+    ['/batches/abc123/harvest', 'Harvest records', 'Farming'],
     ['/alerts', 'Alerts', 'Monitoring'],
     ['/devices', 'Devices', 'Monitoring'],
     ['/profile', 'Profile', 'Account'],

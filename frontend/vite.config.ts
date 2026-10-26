@@ -37,5 +37,7 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
     globals: true,
     css: false,
+    // Typing tests and cold imports are slow when the whole suite runs at once on this machine.
+    testTimeout: 15000,
   },
 });

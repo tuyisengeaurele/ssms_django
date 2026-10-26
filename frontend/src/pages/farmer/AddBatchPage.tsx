@@ -1,21 +1,27 @@
 import { useState, FormEvent } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { batchService } from '../../services/batch.service';
 import { useApiError } from '../../hooks/useApiError';
+import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
+import { Icon } from '../../components/ui/Icon';
+import NextSteps from '../../components/ui/NextSteps';
+import PageHeader from '../../components/ui/PageHeader';
+import Panel from '../../components/ui/Panel';
 
 export default function AddBatchPage() {
   const { farmId } = useParams<{ farmId: string }>();
-  const navigate   = useNavigate();
+  const navigate = useNavigate();
   const { getErrorMessage } = useApiError();
-  const { success }         = useToast();
-  const [form,    setForm]    = useState({ expectedHarvestDate: '', notes: '' });
-  const [error,   setError]   = useState('');
+  const { success } = useToast();
+  const { t } = useLanguage();
+
+  const [form, setForm] = useState({ expectedHarvestDate: '', notes: '' });
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm(prev => ({ ...prev, [field]: e.target.value }));
+  const change = (field: 'expectedHarvestDate' | 'notes') => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -24,7 +30,7 @@ export default function AddBatchPage() {
     setLoading(true);
     try {
       await batchService.create({ farmId, expectedHarvestDate: form.expectedHarvestDate, notes: form.notes || undefined });
-      success('Batch created. It starts at the egg stage.');
+      success(t('abCreated'));
       navigate(`/farms/${farmId}`);
     } catch (err) {
       setError(getErrorMessage(err));
@@ -33,91 +39,57 @@ export default function AddBatchPage() {
     }
   };
 
-  const minDate = new Date();
-  minDate.setDate(minDate.getDate() + 7);
-
-  const STAGES = ['EGG', 'LARVA', 'PUPA', 'COCOON', 'HARVEST'];
-  const STAGE_COLORS: Record<string, string> = { EGG: '#d97706', LARVA: '#10b981', PUPA: '#3b82f6', COCOON: '#8b5cf6', HARVEST: '#ec4899' };
+  // A batch needs about a week at the least, so earlier dates are not offered.
+  const earliest = new Date();
+  earliest.setDate(earliest.getDate() + 7);
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Add New Batch</h1>
-          <p className="page-subtitle">Start tracking a new silkworm batch</p>
-        </div>
-        <Link to={`/farms/${farmId}`} className="btn btn-secondary btn-sm">← Back to Farm</Link>
-      </div>
+      <PageHeader
+        title={t('ptBatchNew')}
+        subtitle={t('abSubtitle')}
+        actions={
+          <Link to={`/farms/${farmId}`} className="btn btn-secondary btn-sm">
+            <Icon name="back" size={15} />
+            {t('abBack')}
+          </Link>
+        }
+      />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', maxWidth: 860 }}>
-        {/* Form */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-          <div className="card">
-            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--brand-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem', color: 'var(--brand-600)' }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      <div className="form-page">
+        <Panel title={t('abPanel')} note={t('abStartsAt')}>
+          {error && <div className="alert alert-error" role="alert">{error}</div>}
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label className="form-label" htmlFor="batch-harvest">{t('abHarvest')} <span className="required" aria-hidden="true">*</span></label>
+              <input id="batch-harvest" type="date" className="form-input" value={form.expectedHarvestDate} onChange={change('expectedHarvestDate')} min={earliest.toISOString().split('T')[0]} required aria-describedby="batch-harvest-hint" />
+              <span id="batch-harvest-hint" className="form-hint">{t('abHarvestHint')}</span>
             </div>
-            <h2 style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: '0.25rem' }}>Batch Details</h2>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>New batches start automatically at the <strong>EGG</strong> stage.</p>
 
-            {error && (
-              <motion.div className="alert alert-error" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}>
-                {error}
-              </motion.div>
-            )}
-
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label className="form-label">Expected Harvest Date <span className="required">*</span></label>
-                <input type="date" value={form.expectedHarvestDate} onChange={set('expectedHarvestDate')}
-                  className="form-input" min={minDate.toISOString().split('T')[0]} required />
-                <span className="form-hint">Allow at least 7 days from today</span>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Notes <span style={{ color: 'var(--text-faint)', fontWeight: 400 }}>(optional)</span></label>
-                <textarea value={form.notes} onChange={set('notes')}
-                  className="form-textarea" placeholder="Initial observations, breed notes, conditions…"
-                  rows={3} maxLength={500} />
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button type="submit" className="btn btn-primary" disabled={loading}>
-                  {loading ? <><span className="spinner" />Creating…</> : '+ Create Batch'}
-                </button>
-                <Link to={`/farms/${farmId}`} className="btn btn-secondary">Cancel</Link>
-              </div>
-            </form>
-          </div>
-        </motion.div>
-
-        {/* Stage lifecycle info */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.35 }}>
-          <div className="card">
-            <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '1.25rem', color: 'var(--text)' }}>Silkworm Lifecycle Stages</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {STAGES.map((s, i) => (
-                <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 'var(--radius)', background: STAGE_COLORS[s] + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.72rem', color: STAGE_COLORS[s], flexShrink: 0 }}>
-                    {i + 1}
-                  </div>
-                  <div>
-                    <p style={{ fontSize: '0.82rem', fontWeight: i === 0 ? 700 : 500, color: i === 0 ? 'var(--brand-600)' : 'var(--text)' }}>
-                      {s}{i === 0 && ' ← Starts here'}
-                    </p>
-                  </div>
-                  {i < STAGES.length - 1 && (
-                    <div style={{ marginLeft: 16, width: 1, height: 16, background: 'var(--border)', position: 'absolute', marginTop: 42 }} />
-                  )}
-                </div>
-              ))}
+            <div className="form-group">
+              <label className="form-label" htmlFor="batch-notes">{t('abNotes')} <span className="form-optional">({t('abNotesOptional')})</span></label>
+              <textarea id="batch-notes" className="form-textarea" rows={3} maxLength={500} value={form.notes} onChange={change('notes')} placeholder={t('abNotesPlace')} />
             </div>
-            <div style={{ marginTop: '1.25rem', padding: '0.875rem', background: 'var(--brand-50)', borderRadius: 'var(--radius-md)', border: '1px solid var(--brand-100)' }}>
-              <p style={{ fontSize: '0.78rem', color: 'var(--brand-700)', lineHeight: 1.6 }}>
-                <strong>Tip:</strong> You can advance the batch stage manually from the batch detail page once the silkworms progress.
-              </p>
+
+            <div className="profile-actions">
+              <button type="submit" className="btn btn-primary" disabled={loading}>
+                {loading ? <><span className="spinner" />{t('abCreating')}</> : t('abCreate')}
+              </button>
+              <Link to={`/farms/${farmId}`} className="btn btn-ghost">{t('btnCancel')}</Link>
             </div>
-          </div>
-        </motion.div>
+          </form>
+        </Panel>
+
+        <NextSteps
+          label={t('abStages')}
+          steps={[
+            { title: 'Egg', body: t('abStageEgg') },
+            { title: 'Larva', body: t('abStageLarva') },
+            { title: 'Pupa', body: t('abStagePupa') },
+            { title: 'Cocoon', body: t('abStageCocoon') },
+            { title: 'Harvest', body: t('abStageHarvest') },
+          ]}
+        />
       </div>
     </div>
   );
