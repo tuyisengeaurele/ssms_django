@@ -2,23 +2,23 @@
 GET /api/admin/reports          → JSON summary
 GET /api/admin/reports?export=csv → CSV download
 """
-import csv
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Sum, Avg
+from django.db.models import Avg, Count, Sum
 from django.db.models.functions import TruncDay
 from django.http import StreamingHttpResponse
 from django.utils import timezone
-from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
 from audit_log.models import AuditLog
 from batches.models import Batch
+from core.csvsafe import safe_writer
+from core.utils import api_success
 from farms.models import Farm
 from harvest.models import HarvestRecord
 from sensors.models import DiseaseDetection
-from core.utils import api_success, api_error
 
 User = get_user_model()
 
@@ -169,7 +169,7 @@ class ReportSummaryView(APIView):
             def write(self, value): return value
 
         def rows():
-            writer = csv.writer(Echo())
+            writer = safe_writer(Echo())
             yield writer.writerow(['Section', 'Key', 'Value'])
             yield writer.writerow(['Report', 'Generated At', payload['generated_at']])
             yield writer.writerow(['Users', 'Total', payload['users']['total']])
@@ -196,7 +196,6 @@ class ReportSummaryView(APIView):
             for f in payload['top_farmers']:
                 yield writer.writerow(['', f['name'], f['email'], f['farm_count']])
 
-        import csv as _csv
         response = StreamingHttpResponse(rows(), content_type='text/csv; charset=utf-8')
         date_str = payload['generated_at'][:10]
         response['Content-Disposition'] = f'attachment; filename="ssms_report_{date_str}.csv"'

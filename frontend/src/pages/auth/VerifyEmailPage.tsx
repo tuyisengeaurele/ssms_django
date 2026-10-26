@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authService } from '../../services/auth.service';
-import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { AuthShell } from '../../landing/auth/AuthShell';
 
@@ -13,7 +12,6 @@ export default function VerifyEmailPage() {
   const token = params.get('token') || '';
   const [status, setStatus] = useState<Status>('loading');
   const [message, setMessage] = useState('');
-  const { login } = useAuth();
   const navigate = useNavigate();
   const { t } = useLanguage();
 
@@ -26,14 +24,10 @@ export default function VerifyEmailPage() {
 
     let redirect: ReturnType<typeof setTimeout> | undefined;
     authService.verifyEmail({ uid, token })
-      .then((res) => {
-        const { user, token: jwt } = res.data.data;
-        login(user, jwt);
+      .then(() => {
+        // Confirming an email never signs anyone in. The person signs in next.
         setStatus('success');
-        redirect = setTimeout(() => {
-          const path = user.role === 'ADMIN' ? '/admin' : user.role === 'SUPERVISOR' ? '/supervisor' : '/farmer';
-          navigate(path, { replace: true });
-        }, 2500);
+        redirect = setTimeout(() => navigate('/login?verified=1', { replace: true }), 2000);
       })
       .catch((err) => {
         setStatus('error');
@@ -60,6 +54,11 @@ export default function VerifyEmailPage() {
           <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 12.5l4.5 4.5L19 7.5" />
           </svg>
+        </div>
+        <div className="l-auth__actions">
+          <Link to="/login?verified=1" className="l-auth__submit">
+            {t('loginSignIn')}
+          </Link>
         </div>
       </AuthShell>
     );

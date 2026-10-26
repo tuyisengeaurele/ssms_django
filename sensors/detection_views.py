@@ -6,24 +6,29 @@ Images are uploaded to Cloudinary using an unsigned preset so no API secret
 is required on the server.  The returned secure_url is stored in image_url.
 """
 
-import csv
 import io
-import cloudinary
-import cloudinary.uploader
 import logging
 
+import cloudinary
+import cloudinary.uploader
 import httpx
 from django.conf import settings
 from django.http import StreamingHttpResponse
-from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.exceptions import ValidationError
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
-from batches.models import Batch
+from rest_framework.views import APIView
+
+from audit_log.utils import log_action
+from core.access import get_batch_or_404, scope_by_batch
+from core.csvsafe import safe_writer
+from core.pagination import StandardPagination
+from core.params import date_param, int_param
+from core.utils import api_error, api_success
+
 from .models import DiseaseDetection
 from .serializers import DiseaseDetectionSerializer
-from core.utils import api_success, api_error
-from core.pagination import StandardPagination
-from audit_log.utils import log_action
+from .uploads import validate_image_upload
 
 logger = logging.getLogger(__name__)
 
@@ -65,19 +70,24 @@ class DiseaseDetectionCreateView(APIView):
         if not image_file:
             return api_error('Please add a photo.', 400)
 
-        # Validate batch exists
+        # The batch must exist and be one this person may use. Checked first, so a stranger's
+        # request never gets as far as decoding a photo.
+        batch_id = get_batch_or_404(request.user, batch_id).pk
+
         try:
-            Batch.objects.get(pk=batch_id, is_active=True)
-        except Batch.DoesNotExist:
-            return api_error("We couldn't find that batch.", 404)
+            image_type = validate_image_upload(image_file)
+        except ValidationError as exc:
+            return api_error(str(exc.detail[0]), 422)
 
         # Call FastAPI AI service
         ai_url = f'{settings.AI_SERVICE_URL}/predict'
+        headers = {'X-Internal-Secret': settings.AI_SERVICE_SECRET} if settings.AI_SERVICE_SECRET else {}
         try:
             with httpx.Client(timeout=30.0) as client:
                 response = client.post(
                     ai_url,
-                    files={'file': (image_file.name, image_file.read(), image_file.content_type)},
+                    files={'file': (image_file.name, image_file.read(), image_type)},
+                    headers=headers,
                 )
             if response.status_code != 200:
                 logger.error('AI service returned %s: %s', response.status_code, response.text[:300])
@@ -121,10 +131,7 @@ class DiseaseDetectionByBatchView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, batch_id):
-        try:
-            Batch.objects.get(pk=batch_id, is_active=True)
-        except Batch.DoesNotExist:
-            return api_error("We couldn't find that batch.", 404)
+        get_batch_or_404(request.user, batch_id)
 
         detections = (
             DiseaseDetection.objects
@@ -138,7 +145,7 @@ class DetectionHistoryView(APIView):
     """
     GET /api/detections/history
     Query params: farm_id, date_from (YYYY-MM-DD), date_to (YYYY-MM-DD), limit (default 200)
-    FARMER sees only their own farms. SUPERVISOR/ADMIN see all.
+    Each role sees the detections the access rules allow (see core.access).
     """
     permission_classes = [IsAuthenticated]
 
@@ -148,22 +155,12 @@ class DetectionHistoryView(APIView):
 
         qs = DiseaseDetection.objects.select_related('batch', 'batch__farm').order_by('-detected_at')
 
-        if request.user.role == 'FARMER':
-            qs = qs.filter(batch__farm__owner=request.user)
-        elif request.user.role == 'SUPERVISOR':
-            if request.user.cooperative_id:
-                qs = qs.filter(
-                    batch__farm__owner__cooperative_id=request.user.cooperative_id,
-                    batch__farm__owner__role='FARMER',
-                )
-            else:
-                qs = qs.none()
-        # ADMIN: no filter
+        qs = scope_by_batch(request.user, qs)
 
         farm_id   = request.query_params.get('farm_id')
-        date_from = request.query_params.get('date_from')
-        date_to   = request.query_params.get('date_to')
-        limit     = min(int(request.query_params.get('limit', 200)), 500)
+        date_from = date_param(request, 'date_from')
+        date_to   = date_param(request, 'date_to')
+        limit     = int_param(request, 'limit', 200, 1, 500)
 
         if farm_id:
             qs = qs.filter(batch__farm_id=farm_id)
@@ -208,7 +205,7 @@ class DetectionHistoryView(APIView):
 
             def _stream():
                 buffer = io.StringIO()
-                writer = csv.writer(buffer)
+                writer = safe_writer(buffer)
                 for row in _csv_rows(qs[:limit]):
                     writer.writerow(row)
                     yield buffer.getvalue()
@@ -243,23 +240,11 @@ class DetectionStatsView(APIView):
 
         from django.db.models import Count
 
-        qs = DiseaseDetection.objects.all()
-
-        if request.user.role == 'FARMER':
-            qs = qs.filter(batch__farm__owner=request.user)
-        elif request.user.role == 'SUPERVISOR':
-            if request.user.cooperative_id:
-                qs = qs.filter(
-                    batch__farm__owner__cooperative_id=request.user.cooperative_id,
-                    batch__farm__owner__role='FARMER',
-                )
-            else:
-                qs = qs.none()
-        # ADMIN: no filter
+        qs = scope_by_batch(request.user, DiseaseDetection.objects.all())
 
         farm_id   = request.query_params.get('farm_id')
-        date_from = request.query_params.get('date_from')
-        date_to   = request.query_params.get('date_to')
+        date_from = date_param(request, 'date_from')
+        date_to   = date_param(request, 'date_to')
 
         if farm_id:
             qs = qs.filter(batch__farm_id=farm_id)
@@ -284,22 +269,14 @@ class RecentDetectionsView(APIView):
         if request.user.role not in ('SUPERVISOR', 'ADMIN'):
             return api_error("You don't have permission to do that.", 403)
 
-        limit = min(int(request.query_params.get('limit', 20)), 100)
+        limit = int_param(request, 'limit', 20, 1, 100)
 
         detections = (
             DiseaseDetection.objects
             .select_related('batch', 'batch__farm')
             .order_by('-detected_at')
         )
-        if request.user.role == 'SUPERVISOR':
-            if request.user.cooperative_id:
-                detections = detections.filter(
-                    batch__farm__owner__cooperative_id=request.user.cooperative_id,
-                    batch__farm__owner__role='FARMER',
-                )
-            else:
-                detections = detections.none()
-        # ADMIN: no filter
+        detections = scope_by_batch(request.user, detections)
         detections = detections[:limit]
 
         data = [

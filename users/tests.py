@@ -5,10 +5,10 @@ Unit tests for authentication:
   - ProfileView   (GET/PATCH /api/auth/me)
   - ActiveUserJWTAuthentication, inactive user is rejected
 """
-from django.test import override_settings
-from rest_framework.test import APITestCase
-from rest_framework import status
 from django.contrib.auth import get_user_model
+from django.test import override_settings
+from rest_framework import status
+from rest_framework.test import APITestCase
 
 User = get_user_model()
 
@@ -44,6 +44,10 @@ class RegisterViewTests(APITestCase):
         # The person confirms their email first, so no sign in token is handed out yet.
         self.assertNotIn('token', data['data'])
         self.assertFalse(data['data']['user']['isEmailVerified'])
+        # A verification email goes out to the new address.
+        from django.core import mail
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['alice@test.com'])
 
     def test_register_duplicate_email(self):
         make_user(email='dup@test.com')
@@ -107,6 +111,14 @@ class LoginViewTests(APITestCase):
         # The refresh token travels in an httpOnly cookie, never in the body.
         self.assertNotIn('refreshToken', data['data'])
         self.assertIn('ssms_refresh', res.cookies)
+
+    def test_login_unverified_email_rejected(self):
+        from users.models import User
+        User.objects.create_user(email='new@test.com', password='Pass1234', name='New', is_email_verified=False)
+        res = self.client.post(LOGIN_URL, {'email': 'new@test.com', 'password': 'Pass1234'}, format='json')
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertNotIn('ssms_refresh', res.cookies)
+        self.assertNotIn('token', res.json().get('data') or {})
 
     def test_login_wrong_password(self):
         res = self.client.post(LOGIN_URL, {'email': 'login@test.com', 'password': 'WrongPass1'}, format='json')

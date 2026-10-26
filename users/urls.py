@@ -1,7 +1,8 @@
 from django.urls import path
-from .views import RegisterView, LoginView, ProfileView, ChangePasswordView, LogoutView, CookieTokenRefreshView
-from .password_reset_views import PasswordResetRequestView, PasswordResetConfirmView
-from .email_verification_views import VerifyEmailView, ResendVerificationView
+
+from .email_verification_views import ResendVerificationView, VerifyEmailView
+from .password_reset_views import PasswordResetConfirmView, PasswordResetRequestView
+from .views import ChangePasswordView, CookieTokenRefreshView, LoginView, LogoutView, ProfileView, RegisterView
 
 urlpatterns = [
     path('register',          RegisterView.as_view(),         name='auth_register'),

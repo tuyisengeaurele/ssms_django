@@ -1,20 +1,60 @@
 """Admin-only user management views, /api/admin/users."""
+import logging
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from rest_framework.views import APIView
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from rest_framework.permissions import IsAuthenticated
-from .serializers import UserSerializer, RegisterSerializer
-from core.utils import api_success, api_error
-from cooperatives.models import Cooperative
+from rest_framework.views import APIView
+
 from audit_log.utils import log_action
+from cooperatives.models import Cooperative
+from core.tokens import revoke_all_refresh_tokens
+from core.utils import api_error, api_success
+
+from .serializers import AdminCreateUserSerializer, UserSerializer
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
+
+ROLE_WORDS = {'ADMIN': 'an administrator', 'SUPERVISOR': 'a supervisor', 'FARMER': 'a farmer'}
 
 
 def _require_admin(user):
     if user.role != 'ADMIN':
         return api_error('Only administrators can do that.', 403)
     return None
+
+
+def _send_invitation(user):
+    """Email a link that lets a new person choose their own password."""
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+    role = ROLE_WORDS.get(user.role, 'a user')
+    link = f'{frontend_url}/reset-password?uid={uid}&token={token}'
+    message = '\n'.join([
+        f'Hi {user.name},',
+        '',
+        f'An administrator has created an SSMS account for you as {role}.',
+        '',
+        'Choose your password with this link (it works for 1 hour):',
+        link,
+        '',
+        'If the link has expired, open the sign in page and use "Forgot password".',
+        '',
+        'The SSMS Team',
+    ])
+    send_mail(
+        subject='You have been added to SSMS',
+        message=message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
 
 
 class AdminUserListCreateView(APIView):
@@ -29,16 +69,26 @@ class AdminUserListCreateView(APIView):
         return api_success(UserSerializer(users, many=True).data)
 
     def post(self, request):
-        """POST /api/admin/users, admin creates a user with any role."""
+        """POST /api/admin/users, an admin adds a person with the role they choose."""
         err = _require_admin(request.user)
         if err:
             return err
-        serializer = RegisterSerializer(data=request.data, context={'request': request})
+        serializer = AdminCreateUserSerializer(data=request.data, context={'request': request})
         if not serializer.is_valid():
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
+        had_password = bool(serializer.validated_data['password'])
         user = serializer.save()
         log_action(request, 'CREATE', 'User', user.pk, f'Admin created user {user.email} with role {user.role}')
-        return api_success(UserSerializer(user).data, 'User created.', 201)
+
+        message = 'User created.'
+        if not had_password:
+            try:
+                _send_invitation(user)
+            except Exception:
+                logger.exception('Could not send the invitation email to %s', user.email)
+                message = ('User created. The invitation email could not be sent. '
+                           'Ask them to use "Forgot password" on the sign in page.')
+        return api_success(UserSerializer(user).data, message, 201)
 
 
 class AdminUserRoleView(APIView):
@@ -84,6 +134,7 @@ class AdminUserDeactivateView(APIView):
 
         user.is_active = False
         user.save(update_fields=['is_active'])
+        revoke_all_refresh_tokens(user)
         log_action(request, 'DELETE', 'User', user.pk, f'Deactivated user {user.email}')
         return api_success(None, 'User deactivated.')
 

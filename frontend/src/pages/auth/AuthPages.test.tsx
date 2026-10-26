@@ -220,12 +220,26 @@ describe('Check email page', () => {
 });
 
 describe('Verify email page', () => {
-  it('confirms the email and signs the person in', async () => {
-    api.verifyEmail.mockResolvedValue({ data: { data: { user: { role: 'FARMER' }, token: 'jwt' } } });
+  it('confirms the email but does not sign the person in', async () => {
+    api.verifyEmail.mockResolvedValue({ data: { data: null } });
     renderAt('/verify-email?uid=u1&token=t1', <VerifyEmailPage />, '/verify-email');
     expect(await screen.findByRole('heading', { level: 1, name: 'Email verified!' })).toBeInTheDocument();
     expect(api.verifyEmail).toHaveBeenCalledWith({ uid: 'u1', token: 't1' });
-    expect(login).toHaveBeenCalledWith({ role: 'FARMER' }, 'jwt');
+    expect(login).not.toHaveBeenCalled();
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login?verified=1');
+  });
+
+  it('takes the person to the sign in page a moment later', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      api.verifyEmail.mockResolvedValue({ data: { data: null } });
+      renderAt('/verify-email?uid=u1&token=t1', <VerifyEmailPage />, '/verify-email');
+      await screen.findByRole('heading', { level: 1, name: 'Email verified!' });
+      await vi.advanceTimersByTimeAsync(2500);
+      expect(screen.getByTestId('where')).toHaveTextContent('/login?verified=1');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('explains a bad link and offers a new one', async () => {

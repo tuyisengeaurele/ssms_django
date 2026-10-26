@@ -6,7 +6,12 @@ from django.http import Http404
 from django.test import SimpleTestCase, override_settings
 from rest_framework import status
 from rest_framework.exceptions import (
-    AuthenticationFailed, NotAuthenticated, NotFound, ParseError, PermissionDenied, Throttled,
+    AuthenticationFailed,
+    NotAuthenticated,
+    NotFound,
+    ParseError,
+    PermissionDenied,
+    Throttled,
 )
 from rest_framework.test import APITestCase
 

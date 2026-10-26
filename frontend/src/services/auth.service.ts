@@ -11,7 +11,7 @@ export const authService = {
     api.post<ApiResponse<AuthResponse>>('/auth/login', data),
 
   verifyEmail: (data: { uid: string; token: string }) =>
-    api.post<ApiResponse<AuthResponse>>('/auth/verify-email', data),
+    api.post<ApiResponse<null>>('/auth/verify-email', data),
 
   resendVerification: (email: string) =>
     api.post<ApiResponse<null>>('/auth/resend-verification', { email }),
@@ -28,7 +28,7 @@ export const authService = {
     api.post<ApiResponse<null>>('/auth/password-reset/confirm', data),
 
   changePassword: (data: { currentPassword: string; newPassword: string; confirmPassword: string }) =>
-    api.patch<ApiResponse<null>>('/auth/change-password', data),
+    api.patch<ApiResponse<{ token: string }>>('/auth/change-password', data),
 
   logout: () =>
     api.post<ApiResponse<null>>('/auth/logout', {}),

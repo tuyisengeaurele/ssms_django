@@ -11,3 +11,7 @@ class RegisterRateThrottle(AnonRateThrottle):
 
 class PasswordResetRateThrottle(AnonRateThrottle):
     scope = 'password_reset'
+
+
+class ContactRateThrottle(AnonRateThrottle):
+    scope = 'contact'   # 5 messages an hour per address

@@ -37,7 +37,7 @@ beforeEach(() => {
   auth.user.cooperativeId = null;
   auth.user.cooperativeName = null;
   api.updateProfile.mockResolvedValue({ data: { data: { ...auth.user, name: 'Auris T' } } });
-  api.changePassword.mockResolvedValue({ data: { data: null } });
+  api.changePassword.mockResolvedValue({ data: { data: { token: 'fresh-jwt' } } });
 });
 
 describe('Profile page', () => {
@@ -96,6 +96,8 @@ describe('Profile page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Update password' }));
     await waitFor(() => expect(api.changePassword).toHaveBeenCalledWith({ currentPassword: 'Old12345', newPassword: 'NewPass123', confirmPassword: 'NewPass123' }));
     await waitFor(() => expect(screen.queryByLabelText('Current password')).not.toBeInTheDocument());
+    // The server ended every other session, so this device keeps the fresh one it was given.
+    expect(localStorage.getItem('ssms_token')).toBe('fresh-jwt');
   });
 
   it('lets the person pick a language and shows which one is on', () => {

@@ -1,6 +1,6 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import { ToastProvider } from '../../context/ToastContext';
 import { setReducedMotion } from '../../test/setup';
@@ -8,9 +8,9 @@ import { setReducedMotion } from '../../test/setup';
 const auth = vi.hoisted(() => ({ user: { id: 'u', role: 'ADMIN', cooperativeId: null as string | null, cooperativeName: null as string | null } }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
 
-const api = vi.hoisted(() => ({ farms: vi.fn(), alerts: vi.fn(), chart: vi.fn(), active: vi.fn(), recent: vi.fn() }));
+const api = vi.hoisted(() => ({ farms: vi.fn(), alerts: vi.fn(), chart: vi.fn(), active: vi.fn(), recent: vi.fn(), ticketUrl: vi.fn() }));
 vi.mock('../../services/farm.service', () => ({ farmService: { getAll: api.farms } }));
-vi.mock('../../services/alert.service', () => ({ alertService: { getAll: api.alerts }, buildAlertStreamUrl: () => 'http://x/stream' }));
+vi.mock('../../services/alert.service', () => ({ alertService: { getAll: api.alerts }, getAlertStreamUrl: api.ticketUrl }));
 vi.mock('../../services/sensor.service', () => ({
   sensorService: { getChart: api.chart },
   batchSupervisorService: { getActive: api.active },
@@ -18,6 +18,19 @@ vi.mock('../../services/sensor.service', () => ({
 }));
 
 import SupervisorDashboard from './SupervisorDashboard';
+
+class FakeEventSource {
+  static instances: FakeEventSource[] = [];
+  onmessage: ((e: { data: string }) => void) | null = null;
+  onerror: (() => void) | null = null;
+  closed = false;
+  constructor(public url: string) {
+    FakeEventSource.instances.push(this);
+  }
+  close() {
+    this.closed = true;
+  }
+}
 
 const batch = (i: number, stage: string, n: number) => ({
   id: `b${i}`, farmId: `f${i}`, stage, startDate: '', expectedHarvestDate: '', isActive: true, createdAt: '',
@@ -37,6 +50,10 @@ function open() {
 }
 
 beforeEach(() => {
+  FakeEventSource.instances = [];
+  vi.stubGlobal('EventSource', FakeEventSource);
+  let n = 0;
+  api.ticketUrl.mockImplementation(async () => `http://x/stream?ticket=t${++n}`);
   localStorage.clear();
   vi.clearAllMocks();
   setReducedMotion(true);
@@ -134,5 +151,69 @@ describe('System overview page', () => {
     await waitFor(() => expect(screen.getAllByRole('row').length).toBeGreaterThan(2));
     expect(container.textContent).not.toMatch(/ResNet|Powered by/i);
     expect(container.innerHTML.toLowerCase()).not.toMatch(/gradient|#7c3aed|#2563eb|#d97706|stat-card/);
+  });
+});
+
+describe('Live alerts', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('connects with a short-lived ticket and never puts the sign in token in the address', async () => {
+    localStorage.setItem('ssms_token', 'secret-jwt');
+    open();
+    await waitFor(() => expect(FakeEventSource.instances).toHaveLength(1));
+    const url = FakeEventSource.instances[0].url;
+    expect(url).toContain('ticket=t1');
+    expect(url).not.toContain('secret-jwt');
+    expect(url).not.toContain('token=');
+  });
+
+  it('shows an alert that arrives as a single message', async () => {
+    open();
+    await waitFor(() => expect(FakeEventSource.instances).toHaveLength(1));
+    const alert = { id: 'live1', type: 'TEMPERATURE', message: 'Temperature too high: 31 C', batchId: 'b1', isRead: false, createdAt: new Date().toISOString() };
+    act(() => FakeEventSource.instances[0].onmessage?.({ data: JSON.stringify(alert) }));
+    const list = await screen.findByRole('list', { name: 'Recent alerts' });
+    expect(within(list).getByText('Temperature too high: 31 C')).toBeInTheDocument();
+  });
+
+  it('does not show the same alert twice', async () => {
+    open();
+    await waitFor(() => expect(FakeEventSource.instances).toHaveLength(1));
+    const alert = { id: 'live2', type: 'HUMIDITY', message: 'Humidity too low: 55%', batchId: 'b1', isRead: false, createdAt: new Date().toISOString() };
+    act(() => FakeEventSource.instances[0].onmessage?.({ data: JSON.stringify(alert) }));
+    act(() => FakeEventSource.instances[0].onmessage?.({ data: JSON.stringify(alert) }));
+    const list = await screen.findByRole('list', { name: 'Recent alerts' });
+    expect(within(list).getAllByText('Humidity too low: 55%')).toHaveLength(1);
+  });
+
+  it('closes the stream and asks for a fresh ticket when the connection drops', async () => {
+    open();
+    await waitFor(() => expect(FakeEventSource.instances).toHaveLength(1));
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    act(() => FakeEventSource.instances[0].onerror?.());
+    expect(FakeEventSource.instances[0].closed).toBe(true);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(6000);
+    });
+    expect(api.ticketUrl).toHaveBeenCalledTimes(2);
+    expect(FakeEventSource.instances).toHaveLength(2);
+    expect(FakeEventSource.instances[1].url).toContain('ticket=t2');
+  });
+
+  it('closes the stream when the person leaves the page', async () => {
+    const { unmount } = open();
+    await waitFor(() => expect(FakeEventSource.instances).toHaveLength(1));
+    unmount();
+    expect(FakeEventSource.instances[0].closed).toBe(true);
+  });
+
+  it('keeps working when no ticket can be had', async () => {
+    api.ticketUrl.mockRejectedValue(new Error('offline'));
+    open();
+    expect(await screen.findByText('Total farms')).toBeInTheDocument();
+    expect(FakeEventSource.instances).toHaveLength(0);
   });
 });

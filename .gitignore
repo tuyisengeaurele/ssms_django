@@ -78,3 +78,8 @@ ai_service/uvicorn
 # Local planning notes and database dumps
 backups/
 *.dump
+*.sqlite3
+.ruff_cache/
+
+# Test environment for the AI service
+.venv/

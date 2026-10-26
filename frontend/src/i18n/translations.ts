@@ -229,7 +229,7 @@ export const translations: TranslationMap = {
   verifyEmailVerifying: { en: 'Verifying your email…',            fr: 'Vérification en cours…',                rw: 'Emeza imeyili…' },
   verifyEmailWait:      { en: 'Please wait a moment.',            fr: 'Veuillez patienter.',                   rw: 'Tegereza gato.' },
   verifyEmailSuccess:   { en: 'Email verified!',                  fr: 'Email vérifié !',                       rw: 'Imeyili emejwe!' },
-  verifyEmailRedirecting: { en: 'You will be redirected to your dashboard shortly.', fr: 'Vous allez être redirigé vers votre tableau de bord.', rw: 'Uzajyanywa ku kibaho cyawe vuba.' },
+  verifyEmailRedirecting: { en: 'You can sign in now. We will take you to the sign in page.', fr: 'Vous pouvez vous connecter. Nous vous emmenons à la page de connexion.', rw: 'Ushobora kwinjira ubu. Turakujyana ku rupapuro rwo kwinjira.' },
   verifyEmailFailed:    { en: "We couldn't verify your email", fr: "Nous n'avons pas pu vérifier votre e-mail", rw: 'Kwemeza imeyili ntibyakunze' },
   verifyEmailExpired:   { en: 'This verification link has expired or is invalid. Please request a new one.', fr: 'Ce lien a expiré ou est invalide.', rw: 'Iri link ryararangiye cyangwa ntirikorana. Saba rishya.' },
   verifyEmailInvalidLink: { en: "This verification link isn't valid. Please request a new one.", fr: "Ce lien de vérification n'est pas valide. Demandez-en un nouveau.", rw: 'Iri sano ntirikora. Saba irindi rishya.' },

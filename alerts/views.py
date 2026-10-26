@@ -1,16 +1,20 @@
-from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from batches.models import Batch
+from rest_framework.views import APIView
+
+from core.access import get_batch_or_404, scope_by_batch
+from core.pagination import StandardPagination
+from core.params import int_param
+from core.utils import api_error, api_success
+
 from .models import AlertLog
 from .serializers import AlertLogSerializer
-from core.utils import api_success, api_error
-from core.pagination import StandardPagination
+from .tickets import TICKET_SECONDS, issue_ticket
 
 
 class AlertListView(APIView):
     """
     GET /api/alerts
-    Returns all unread alerts across every batch (SUPERVISOR / ADMIN only).
+    Returns the alerts the caller may see, unread by default.
     Optional query params:
       ?unread=true  , only unread (default)
       ?limit=N      , cap results (default 100)
@@ -22,21 +26,12 @@ class AlertListView(APIView):
             return api_error("You don't have permission to do that.", 403)
 
         unread_only = request.query_params.get('unread', 'true').lower() != 'false'
-        limit = min(int(request.query_params.get('limit', 100)), 500)
+        limit = int_param(request, 'limit', 100, 1, 500)
 
-        qs = AlertLog.objects.select_related('batch__farm__owner').order_by('-created_at')
-
-        if request.user.role == 'FARMER':
-            qs = qs.filter(batch__farm__owner=request.user)
-        elif request.user.role == 'SUPERVISOR':
-            if request.user.cooperative_id:
-                qs = qs.filter(
-                    batch__farm__owner__cooperative_id=request.user.cooperative_id,
-                    batch__farm__owner__role='FARMER',
-                )
-            else:
-                qs = qs.none()
-        # ADMIN: no filter, sees everything
+        qs = scope_by_batch(
+            request.user,
+            AlertLog.objects.select_related('batch__farm__owner').order_by('-created_at'),
+        )
 
         if unread_only:
             qs = qs.filter(is_read=False)
@@ -53,23 +48,14 @@ class AlertListView(APIView):
 
 
 class AlertMarkAllReadView(APIView):
-    """POST /api/alerts/mark-all-read, mark every unread alert as read."""
+    """POST /api/alerts/mark-all-read, mark every unread alert the caller may see as read."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         if request.user.role not in ('SUPERVISOR', 'ADMIN'):
             return api_error("You don't have permission to do that.", 403)
 
-        qs = AlertLog.objects.filter(is_read=False)
-        if request.user.role == 'SUPERVISOR':
-            if request.user.cooperative_id:
-                qs = qs.filter(
-                    batch__farm__owner__cooperative_id=request.user.cooperative_id,
-                    batch__farm__owner__role='FARMER',
-                )
-            else:
-                qs = qs.none()
-        # ADMIN: mark all system-wide
+        qs = scope_by_batch(request.user, AlertLog.objects.filter(is_read=False))
 
         updated = qs.update(is_read=True)
         return api_success({'updated': updated}, f'{updated} alert(s) marked as read.')
@@ -79,12 +65,9 @@ class AlertsByBatchView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, batch_id):
-        try:
-            Batch.objects.get(pk=batch_id, is_active=True)
-        except Batch.DoesNotExist:
-            return api_error("We couldn't find that batch.", 404)
+        batch = get_batch_or_404(request.user, batch_id)
 
-        alerts = AlertLog.objects.select_related('batch__farm__owner').filter(batch_id=batch_id).order_by('-created_at')
+        alerts = AlertLog.objects.select_related('batch__farm__owner').filter(batch=batch).order_by('-created_at')
         return api_success(AlertLogSerializer(alerts, many=True).data)
 
 
@@ -92,11 +75,22 @@ class AlertMarkReadView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):
-        try:
-            alert = AlertLog.objects.select_related('batch__farm__owner').get(pk=pk)
-        except AlertLog.DoesNotExist:
+        alert = scope_by_batch(
+            request.user, AlertLog.objects.select_related('batch__farm__owner'),
+        ).filter(pk=pk).first()
+        if alert is None:
             return api_error("We couldn't find that alert.", 404)
 
         alert.is_read = True
         alert.save(update_fields=['is_read'])
         return api_success(AlertLogSerializer(alert).data, 'Alert marked as read.')
+
+
+class AlertStreamTicketView(APIView):
+    """POST /api/alerts/stream-ticket, a 30 second single-use ticket for the live alert stream."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role not in ('SUPERVISOR', 'ADMIN'):
+            return api_error("You don't have permission to do that.", 403)
+        return api_success({'ticket': issue_ticket(request.user), 'expiresIn': TICKET_SECONDS})

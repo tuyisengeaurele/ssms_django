@@ -1,6 +1,9 @@
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from core.validators import validate_new_password
 
 User = get_user_model()
 
@@ -20,7 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.Serializer):
     name     = serializers.CharField(max_length=100)
     email    = serializers.EmailField()
-    password = serializers.CharField(min_length=8, write_only=True)
+    password = serializers.CharField(write_only=True)
 
     # Public registration always creates a FARMER.
     # ADMIN and SUPERVISOR roles are assigned by an admin after account creation.
@@ -32,15 +35,14 @@ class RegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError('An account with this email already exists. Try signing in instead.')
         return value.lower()
 
-    def validate_password(self, value):
-        import re
-        if not re.search(r'[A-Z]', value):
-            raise serializers.ValidationError('Your password needs at least one uppercase letter.')
-        if not re.search(r'[a-z]', value):
-            raise serializers.ValidationError('Your password needs at least one lowercase letter.')
-        if not re.search(r'\d', value):
-            raise serializers.ValidationError('Your password needs at least one number.')
-        return value
+    def validate(self, attrs):
+        # The password rules need the name and email, to refuse a password that is too close to them.
+        candidate = User(name=attrs.get('name', ''), email=attrs.get('email', ''))
+        try:
+            validate_new_password(attrs['password'], candidate)
+        except DRFValidationError as exc:
+            raise serializers.ValidationError({'password': exc.detail}) from exc
+        return attrs
 
     def create(self, validated_data):
         return User.objects.create_user(
@@ -48,6 +50,56 @@ class RegisterSerializer(serializers.Serializer):
             password=validated_data['password'],
             name=validated_data['name'],
             role='FARMER',   # hard-coded, never trust client-supplied role
+        )
+
+
+class AdminCreateUserSerializer(serializers.Serializer):
+    """An administrator adds a person. The role is honoured, and the address counts as verified.
+
+    With a password the person can sign in at once. Without one they get an email link to choose it.
+    """
+    name = serializers.CharField(max_length=100)
+    email = serializers.EmailField()
+    role = serializers.ChoiceField(choices=['ADMIN', 'SUPERVISOR', 'FARMER'], default='FARMER')
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    cooperative_id = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value.lower()).exists():
+            raise serializers.ValidationError('An account with this email already exists.')
+        return value.lower()
+
+    def validate(self, attrs):
+        from cooperatives.models import Cooperative
+
+        attrs['cooperative'] = None
+        coop_id = attrs.pop('cooperative_id', None)
+        if coop_id:
+            if attrs['role'] == 'ADMIN':
+                raise serializers.ValidationError({'cooperative_id': "Administrators don't belong to a cooperative."})
+            coop = Cooperative.objects.filter(pk=coop_id, is_active=True).first()
+            if coop is None:
+                raise serializers.ValidationError({'cooperative_id': "We couldn't find that cooperative."})
+            attrs['cooperative'] = coop
+
+        password = attrs.get('password') or None
+        if password:
+            candidate = User(name=attrs['name'], email=attrs['email'])
+            try:
+                validate_new_password(password, candidate)
+            except DRFValidationError as exc:
+                raise serializers.ValidationError({'password': exc.detail}) from exc
+        attrs['password'] = password
+        return attrs
+
+    def create(self, validated_data):
+        return User.objects.create_user(
+            email=validated_data['email'],
+            password=validated_data['password'],   # None leaves the password unusable until they choose one
+            name=validated_data['name'],
+            role=validated_data['role'],
+            cooperative=validated_data['cooperative'],
+            is_email_verified=True,
         )
 
 

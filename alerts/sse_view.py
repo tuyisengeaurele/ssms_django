@@ -1,106 +1,71 @@
 """
-Server-Sent Events endpoint — GET /api/alerts/stream?token=<jwt>
+Live alerts: GET /api/alerts/stream?ticket=<ticket>
 
-Streams new AlertLog records to connected supervisors/admins in real time.
-Polls the DB every 5 s; sends a keep-alive comment every 30 s so proxies
-and browsers do not close the connection.
-
-Authentication:
-    EventSource cannot send custom headers, so the JWT is passed as the
-    `token` query-string parameter instead of the Authorization header.
+Server-Sent Events, served by an async view so a connected browser costs a coroutine and not a
+worker. Get a ticket first with POST /api/alerts/stream-ticket. The stream follows the same access
+rules as the rest of the API, checks every few seconds that the person is still active, and ends
+by itself after MAX_STREAM_SECONDS. The page then reconnects with a fresh ticket.
 """
-
+import asyncio
 import json
 import time
 from datetime import timedelta
 
-from django.http import StreamingHttpResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.utils import timezone
-from django.views import View
-from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.tokens import AccessToken
+
+from core.access import scope_by_batch
 
 from .models import AlertLog
+from .tickets import redeem_ticket
 
-POLL_INTERVAL  = 5   # seconds between DB polls
-PING_INTERVAL  = 30  # seconds between keep-alive pings
-
-
-def _user_from_token(token_str: str):
-    """Validate a JWT and return the User, or None if invalid."""
-    if not token_str:
-        return None
-    try:
-        token = AccessToken(token_str)
-        from django.contrib.auth import get_user_model
-        return get_user_model().objects.get(pk=token['user_id'])
-    except (TokenError, Exception):
-        return None
+POLL_SECONDS = 5
+PING_SECONDS = 30
+MAX_STREAM_SECONDS = 600
 
 
-class AlertStreamView(View):
-    """
-    GET /api/alerts/stream?token=<jwt>
-    """
+def _payload(alert) -> dict:
+    return {
+        'id':        alert.id,
+        'type':      alert.type,
+        'message':   alert.message,
+        'batchId':   alert.batch_id,
+        'isRead':    alert.is_read,
+        'createdAt': alert.created_at.isoformat(),
+    }
 
-    def get(self, request):
-        user = _user_from_token(request.GET.get('token', ''))
 
-        if not user or user.role not in ('SUPERVISOR', 'ADMIN'):
-            def _deny():
-                yield 'event: error\ndata: {"detail": "Unauthorized"}\n\n'
-            return StreamingHttpResponse(
-                _deny(), content_type='text/event-stream', status=401
-            )
+async def _events(user):
+    since = timezone.now() - timedelta(hours=24)
+    started = last_ping = time.monotonic()
 
-        response = StreamingHttpResponse(
-            self._stream(user),
-            content_type='text/event-stream',
-        )
-        response['Cache-Control'] = 'no-cache'
-        response['X-Accel-Buffering'] = 'no'   # disable nginx / gunicorn buffering
-        return response
+    while True:
+        # Someone turned off mid stream stops receiving alerts at the next check.
+        user = await type(user).objects.filter(pk=user.pk, is_active=True).afirst()
+        if user is None:
+            return
 
-    def _stream(self, user):
-        # Seed: deliver all unread alerts from the last 24 hours on connect
-        since = timezone.now() - timedelta(hours=24)
-        last_ping = time.time()
+        checked_at = timezone.now()
+        fresh = scope_by_batch(user, AlertLog.objects.filter(created_at__gt=since).order_by('created_at'))
+        async for alert in fresh:
+            yield f'data: {json.dumps(_payload(alert))}\n\n'
+        since = checked_at
 
-        while True:
-            # ── new alerts since last check ───────────────────────────────
-            check_at  = timezone.now()
-            new_alerts = (
-                AlertLog.objects
-                .filter(created_at__gt=since)
-                .order_by('created_at')
-            )
-            # Scope to cooperative for supervisors
-            if user.role == 'SUPERVISOR':
-                if user.cooperative_id:
-                    new_alerts = new_alerts.filter(
-                        batch__farm__owner__cooperative_id=user.cooperative_id,
-                        batch__farm__owner__role='FARMER',
-                    )
-                else:
-                    new_alerts = new_alerts.none()
+        now = time.monotonic()
+        if now - started >= MAX_STREAM_SECONDS:
+            return
+        if now - last_ping >= PING_SECONDS:
+            yield ': ping\n\n'
+            last_ping = now
+        await asyncio.sleep(POLL_SECONDS)
 
-            for alert in new_alerts:
-                payload = {
-                    'id':        alert.id,
-                    'type':      alert.type,
-                    'message':   alert.message,
-                    'batchId':   alert.batch_id,
-                    'isRead':    alert.is_read,
-                    'createdAt': alert.created_at.isoformat(),
-                }
-                yield f'data: {json.dumps(payload)}\n\n'
 
-            # Advance the cursor so we never re-send the same alert
-            since = check_at
+async def alert_stream(request):
+    user = await redeem_ticket(request.GET.get('ticket', ''))
+    if user is None or user.role not in ('SUPERVISOR', 'ADMIN'):
+        return JsonResponse({'success': False, 'message': 'Your session has ended. Please sign in again.'}, status=401)
 
-            # ── keep-alive ping ───────────────────────────────────────────
-            if time.time() - last_ping >= PING_INTERVAL:
-                yield ': ping\n\n'
-                last_ping = time.time()
-
-            time.sleep(POLL_INTERVAL)
+    response = StreamingHttpResponse(_events(user), content_type='text/event-stream')
+    response['Cache-Control'] = 'no-cache'
+    response['X-Accel-Buffering'] = 'no'   # tell proxies not to hold the stream back
+    return response

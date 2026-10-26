@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { farmService } from '../../services/farm.service';
-import { alertService, buildAlertStreamUrl } from '../../services/alert.service';
+import { alertService, getAlertStreamUrl } from '../../services/alert.service';
 import { sensorService, batchSupervisorService, detectionService2, ActiveBatch, ChartPoint, RecentDetection } from '../../services/sensor.service';
 import { Farm, AlertLog } from '../../types';
 import { ALERT_DOT } from '../../utils/alertTypes';
@@ -54,32 +54,59 @@ export default function SupervisorDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  // New alerts arrive over a live connection.
+  // New alerts arrive over a live connection. A ticket works for one connection, so every
+  // reconnect asks for a fresh one: after a drop, and shortly before the server ends a long stream.
   useEffect(() => {
     let source: EventSource | undefined;
-    try {
-      source = new EventSource(buildAlertStreamUrl());
-      source.onmessage = (e) => {
-        if (!e.data || e.data === 'ping') return;
-        try {
-          const data = JSON.parse(e.data);
-          if (!Array.isArray(data) || data.length === 0) return;
-          setAlerts((prev) => {
-            const known = new Set(prev.map((a) => a.id));
-            const fresh = data.filter((a: AlertLog) => !known.has(a.id));
-            if (fresh.length === 0) return prev;
-            success(fresh.length === 1 ? t('svNewAlertOne') : fill(t('svNewAlerts'), { n: fresh.length }));
-            return [...fresh, ...prev].slice(0, 50);
-          });
-          setUpdated(new Date());
-        } catch {
-          // A message we cannot read is ignored.
-        }
-      };
-    } catch {
-      // The live connection is a bonus. The page works without it.
-    }
-    return () => source?.close();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let stopped = false;
+
+    const take = (alert: AlertLog) => {
+      setAlerts((prev) => {
+        if (prev.some((a) => a.id === alert.id)) return prev;
+        success(t('svNewAlertOne'));
+        return [alert, ...prev].slice(0, 50);
+      });
+      setUpdated(new Date());
+    };
+
+    const onMessage = (e: MessageEvent) => {
+      if (!e.data) return;
+      try {
+        const data = JSON.parse(e.data);
+        // One alert per message. Several in a list are accepted too.
+        (Array.isArray(data) ? data : [data]).forEach((a: AlertLog) => a?.id && take(a));
+      } catch {
+        // A message we cannot read is ignored.
+      }
+    };
+
+    const connect = async () => {
+      source?.close();
+      try {
+        const url = await getAlertStreamUrl();
+        if (stopped) return;
+        source = new EventSource(url);
+        source.onmessage = onMessage;
+        source.onerror = () => {
+          source?.close();
+          clearTimeout(timer);
+          timer = setTimeout(connect, 5000);
+        };
+        clearTimeout(timer);
+        timer = setTimeout(connect, 9 * 60 * 1000);
+      } catch {
+        // The live connection is a bonus. The page works without it, so try again later.
+        if (!stopped) timer = setTimeout(connect, 30000);
+      }
+    };
+
+    connect();
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+      source?.close();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -1,14 +1,17 @@
-from pathlib import Path
 from datetime import timedelta
-from decouple import config
+from pathlib import Path
+
 import dj_database_url
 import sentry_sdk
+from decouple import config
+
+from core.config import parse_list
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = parse_list(config('ALLOWED_HOSTS', default='localhost,127.0.0.1'))
 
 # Railway injects RAILWAY_PUBLIC_DOMAIN — add it automatically so the
 # health checker and public domain both work without manual config.
@@ -42,6 +45,7 @@ PASSWORD_RESET_TIMEOUT = 3600
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'core.middleware.SecurityHeadersMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',   # serve static files in production
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -104,12 +108,36 @@ AUTHENTICATION_BACKENDS = [
     'core.auth_backends.BcryptAuthBackend',
 ]
 
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'OPTIONS': {'user_attributes': ('name', 'email')},
+    },
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 8}},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'core.validators.ComplexityValidator'},
+]
+
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
 ]
 
+# How many reverse proxies sit in front of the app. 0 on a laptop. Set to 1 behind a single host
+# proxy such as Render. Throttles and audit logs only believe X-Forwarded-For up to this depth.
+TRUSTED_PROXY_COUNT = config('TRUSTED_PROXY_COUNT', default=0, cast=int)
+
+# Throttle counters must be shared by every worker, so they live in the database.
+# Create the table once with: python manage.py createcachetable
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache',
+    },
+}
+
 REST_FRAMEWORK = {
+    'NUM_PROXIES': TRUSTED_PROXY_COUNT,
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'core.jwt_authentication.ActiveUserJWTAuthentication',
     ),
@@ -136,12 +164,15 @@ REST_FRAMEWORK = {
         'login': '10/minute',
         'register': '20/minute',
         'password_reset': '5/minute',
+        'contact': '5/hour',
     },
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME':  timedelta(days=config('JWT_EXPIRES_DAYS', default=7, cast=int)),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    # Short access tokens, because one cannot be taken back. A refresh token lasts a week and is
+    # replaced every time it is used, so a stolen one stops working as soon as the owner refreshes.
+    'ACCESS_TOKEN_LIFETIME':  timedelta(minutes=config('JWT_ACCESS_MINUTES', default=15, cast=int)),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=config('JWT_REFRESH_DAYS', default=7, cast=int)),
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': config('JWT_SECRET'),
     'AUTH_HEADER_TYPES': ('Bearer',),
@@ -151,7 +182,7 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,  # blacklist the old refresh token after rotation
 }
 
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173').split(',')
+CORS_ALLOWED_ORIGINS = parse_list(config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173'))
 CORS_ALLOW_CREDENTIALS = True
 
 APPEND_SLASH = False
@@ -163,7 +194,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
+}
 
 # Media files are now served via Cloudinary — MEDIA_ROOT is only used
 # locally when DEBUG=True for non-detection uploads (if any).
@@ -175,7 +209,8 @@ CLOUDINARY_CLOUD_NAME    = config('CLOUDINARY_CLOUD_NAME',    default='dsmpn69ux
 CLOUDINARY_UPLOAD_PRESET = config('CLOUDINARY_UPLOAD_PRESET', default='ssms_images')
 
 # ── Email (Gmail SMTP) ────────────────────────────────────────────────────────
-EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
+# Real mail by default. Set EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend to print emails instead of sending them.
+EMAIL_BACKEND       = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST          = 'smtp.gmail.com'
 EMAIL_PORT          = 587
 EMAIL_USE_TLS       = True
@@ -186,14 +221,24 @@ FRONTEND_URL        = config('FRONTEND_URL',        default='http://localhost:51
 
 # AI microservice (FastAPI — deployed separately)
 AI_SERVICE_URL = config('AI_SERVICE_URL', default='http://localhost:8001')
+# Shared with the AI service, which refuses requests that do not carry it.
+AI_SERVICE_SECRET = config('AI_SERVICE_SECRET', default='')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ── Security headers (production only) ───────────────────────────────────────
 if not DEBUG:
-    # Render / Railway terminate SSL at their load balancer and forward HTTP
-    # internally — trust the X-Forwarded-Proto header instead of redirecting.
+    # The host's load balancer terminates SSL and forwards plain HTTP, so trust its
+    # X-Forwarded-Proto header to tell whether the visitor used HTTPS.
     SECURE_PROXY_SSL_HEADER      = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+    # Send every visitor to HTTPS, except the health probe, which may arrive as plain HTTP.
+    SECURE_SSL_REDIRECT          = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+    SECURE_REDIRECT_EXEMPT       = [r'^api/health$']
+
+    # Cookies only travel over HTTPS.
+    SESSION_COOKIE_SECURE        = True
+    CSRF_COOKIE_SECURE           = True
 
     # HSTS — tell browsers to only use HTTPS for 1 year
     SECURE_HSTS_SECONDS          = 31536000

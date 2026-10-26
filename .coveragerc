@@ -1,0 +1,17 @@
+[run]
+source = .
+omit =
+    venv/*
+    .venv/*
+    */.venv/*
+    ai_service/*
+    tests/*
+    */tests.py
+    */tests_*.py
+    */migrations/*
+    conftest.py
+    manage.py
+    scripts/*
+    frontend/*
+[report]
+skip_empty = True
