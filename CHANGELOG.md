@@ -1,5 +1,30 @@
 # Changelog
 
+## UI round 2 (Plan 5)
+
+A calmer look and safer actions, in the order the owner asked for them. Each change started with a failing test.
+
+### Checked
+- Backend: 470 tests pass. Frontend: 581 tests pass, `tsc` is clean and the production build succeeds.
+- Real browser checks at 1280, 1100 and 390 pixels wide: no page needs a horizontal slider on any list page.
+
+### Changed
+- **Menu.** The wide sidebar is now a narrow icon rail with a name on hover or focus. The choice to open it is remembered, and screens 1600 pixels and wider start open. On phones there is a bottom tab bar with a More button. The profile card is gone from the menu, and Sign out is the last item in the list.
+- **Plain labels.** Active, Healthy, stages, roles and counts are plain words. There are no dots and no pills anywhere in the product.
+- **Sign in pages.** Kept the split layout, with the green panel on one side and the form on the other. A centred card was tried and put back.
+- **Forms.** The new farm, batch and photo check forms stand alone, in one narrow column. The side panels are gone.
+- **Tables.** Cells use less padding on laptop screens, so tables fit without a slider.
+- **Users.** The table shows name, role, cooperative, status and actions. Role and cooperative change in one Edit access dialog that shows what will change and asks again before saving. "Turn off" is now Delete. It is a soft delete: the account is hidden and cannot sign in, the person's farms and records stay, and a Deleted tab has a Restore button. There is still no way to delete a user for good.
+- **Confirmations.** The app now asks before moving a batch to the next stage (stages only move forward), before adding or removing a cooperative member, and before marking every alert or message as read. Cooperatives say Delete instead of Turn off.
+- **Wording.** The word administrator appears only on admin screens. Help text for farmers and supervisors points to the SSMS team. This covers the landing page, the no access page, the profile and supervisor notes, the privacy and terms pages, API messages and the invitation email.
+
+### Added
+- `POST /api/admin/users/<id>/restore` (admin only, audited).
+
+### Left for later
+- Restoring a deleted cooperative has no button yet. The backend only switches it off.
+- The French and Kinyarwanda text for the new screens is a draft and needs a native review.
+
 ## Baseline and security (Plan 1)
 
 This round closes every stop-ship and serious security finding from the audit. Each fix started with a failing test.

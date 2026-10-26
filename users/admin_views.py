@@ -25,7 +25,7 @@ ROLE_WORDS = {'ADMIN': 'an administrator', 'SUPERVISOR': 'a supervisor', 'FARMER
 
 def _require_admin(user):
     if user.role != 'ADMIN':
-        return api_error('Only administrators can do that.', 403)
+        return api_error("You don't have permission to do that.", 403)
     return None
 
 
@@ -39,7 +39,7 @@ def _send_invitation(user):
     message = '\n'.join([
         f'Hi {user.name},',
         '',
-        f'An administrator has created an SSMS account for you as {role}.',
+        f'An SSMS account has been created for you as {role}.',
         '',
         'Choose your password with this link (it works for 1 hour):',
         link,
@@ -121,12 +121,13 @@ class AdminUserDeactivateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, user_id):
-        """DELETE /api/admin/users/<id>, deactivate a user (soft delete)."""
+        """DELETE /api/admin/users/<id>, delete a user. This is a soft delete: the row stays, the account is switched
+        off, and an admin can restore it. A hard delete would take the farmer's farms and batches with it."""
         err = _require_admin(request.user)
         if err:
             return err
         if user_id == request.user.id:
-            return api_error("You can't turn off your own account.", 400)
+            return api_error("You can't delete your own account.", 400)
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
@@ -135,8 +136,28 @@ class AdminUserDeactivateView(APIView):
         user.is_active = False
         user.save(update_fields=['is_active'])
         revoke_all_refresh_tokens(user)
-        log_action(request, 'DELETE', 'User', user.pk, f'Deactivated user {user.email}')
-        return api_success(None, 'User deactivated.')
+        log_action(request, 'DELETE', 'User', user.pk, f'Deleted user {user.email}')
+        return api_success(None, 'User deleted.')
+
+
+class AdminUserRestoreView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        """POST /api/admin/users/<id>/restore, bring a deleted user back with the same role and cooperative."""
+        err = _require_admin(request.user)
+        if err:
+            return err
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return api_error("We couldn't find that user.", 404)
+
+        if not user.is_active:
+            user.is_active = True
+            user.save(update_fields=['is_active'])
+            log_action(request, 'UPDATE', 'User', user.pk, f'Restored user {user.email}')
+        return api_success(UserSerializer(user).data, 'User restored.')
 
 
 class AdminUserCooperativeView(APIView):

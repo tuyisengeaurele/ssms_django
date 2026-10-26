@@ -6,7 +6,7 @@ import { LOCALE_LABELS, type Locale } from '../../i18n/translations';
 import { alertService } from '../../services/alert.service';
 import { contactsService } from '../../services/contacts.service';
 import { AlertLog, ContactMessage } from '../../types';
-import { ALERT_DOT, ALERT_TYPE_KEY } from '../../utils/alertTypes';
+import { ALERT_TYPE_KEY } from '../../utils/alertTypes';
 import { usePageTitle } from '../../utils/pageTitle';
 import { timeAgo } from '../../utils/timeAgo';
 import { Icon } from '../ui/Icon';
@@ -74,7 +74,6 @@ function NotificationPanel({ isAdmin, alertCount, onClose }: { isAdmin: boolean;
           ) : (
             alerts.map((a) => (
               <div key={a.id} className={`topbar-note${a.isRead ? ' is-read' : ''}`}>
-                <span className={`note-dot note-dot--${ALERT_DOT[a.type] ?? 'system'}`} aria-hidden="true" />
                 <div>
                   <p className="note-text">{a.message}</p>
                   <p className="note-meta">{t(ALERT_TYPE_KEY[a.type] ?? 'alTypeSystem')} · {timeAgo(a.createdAt, locale)}</p>
@@ -87,7 +86,6 @@ function NotificationPanel({ isAdmin, alertCount, onClose }: { isAdmin: boolean;
         ) : (
           messages.map((m) => (
             <Link key={m.id} to="/admin/contacts" onClick={onClose} className="topbar-note">
-              <span className="note-dot note-dot--humidity" aria-hidden="true" />
               <div>
                 <p className="note-text">{m.subject}</p>
                 <p className="note-meta">{m.name} · {timeAgo(m.createdAt, locale)}</p>

@@ -140,14 +140,14 @@ describe('Cooperatives page', () => {
     await waitFor(() => expect(api.update).toHaveBeenCalledWith('c2', expect.objectContaining({ name: 'Nyamagabe Silk' })));
   });
 
-  it('asks before turning a cooperative off', async () => {
+  it('asks before deleting a cooperative', async () => {
     api.remove.mockResolvedValue({ data: { data: null } });
     open();
     const row = await rowOf('Nyamagabe Silk Cooperative');
-    fireEvent.click(within(row).getByRole('button', { name: /^Turn off/ }));
-    const dialog = await screen.findByRole('dialog', { name: 'Turn off this cooperative?' });
+    fireEvent.click(within(row).getByRole('button', { name: /^Delete/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'Delete this cooperative?' });
     expect(api.remove).not.toHaveBeenCalled();
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, turn off' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, delete' }));
     await waitFor(() => expect(api.remove).toHaveBeenCalledWith('c2'));
     await waitFor(() => expect(screen.queryByText('Nyamagabe Silk Cooperative')).not.toBeInTheDocument());
   });
@@ -175,17 +175,55 @@ describe('Cooperatives page', () => {
     expect(options.join(' ')).not.toContain('Bruce Ishimwe');
     fireEvent.change(select, { target: { value: 'm2' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Add' }));
+    const ask = await screen.findByRole('dialog', { name: 'Add Gad Anaclet to Gatsibo Sericulture 1?' });
+    expect(api.updateCooperative).not.toHaveBeenCalled();
+    fireEvent.click(within(ask).getByRole('button', { name: 'Yes, add' }));
     await waitFor(() => expect(api.updateCooperative).toHaveBeenCalledWith('m2', 'c1'));
   });
 
-  it('removes a member', async () => {
+  it('asks before removing a member, then removes them', async () => {
     api.updateCooperative.mockResolvedValue({ data: { data: {} } });
     open();
     const row = await rowOf('Gatsibo Sericulture 1');
     fireEvent.click(within(row).getByRole('button', { name: /^View/ }));
     const dialog = await screen.findByRole('dialog', { name: 'Gatsibo Sericulture 1' });
     fireEvent.click(await within(dialog).findByRole('button', { name: 'Remove Bruce Ishimwe' }));
+    const ask = await screen.findByRole('dialog', { name: 'Remove Bruce Ishimwe from Gatsibo Sericulture 1?' });
+    expect(ask).toHaveTextContent('Their account and farms stay in the system.');
+    expect(api.updateCooperative).not.toHaveBeenCalled();
+    fireEvent.click(within(ask).getByRole('button', { name: 'Yes, remove' }));
     await waitFor(() => expect(api.updateCooperative).toHaveBeenCalledWith('m1', null));
+  });
+
+  it('keeps the member when the question is cancelled', async () => {
+    open();
+    const row = await rowOf('Gatsibo Sericulture 1');
+    fireEvent.click(within(row).getByRole('button', { name: /^View/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'Gatsibo Sericulture 1' });
+    fireEvent.click(await within(dialog).findByRole('button', { name: 'Remove Bruce Ishimwe' }));
+    const ask = await screen.findByRole('dialog', { name: 'Remove Bruce Ishimwe from Gatsibo Sericulture 1?' });
+    fireEvent.click(within(ask).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: /^Remove Bruce/ })).not.toBeInTheDocument());
+    expect(screen.getByRole('dialog', { name: 'Gatsibo Sericulture 1' })).toBeInTheDocument();
+    expect(api.updateCooperative).not.toHaveBeenCalled();
+  });
+
+  it('closes only the question when Escape is pressed, not the cooperative behind it', async () => {
+    open();
+    const row = await rowOf('Gatsibo Sericulture 1');
+    fireEvent.click(within(row).getByRole('button', { name: /^View/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'Gatsibo Sericulture 1' });
+    fireEvent.click(await within(dialog).findByRole('button', { name: 'Remove Bruce Ishimwe' }));
+    await screen.findByRole('dialog', { name: /^Remove Bruce/ });
+    fireEvent.keyDown(window, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: /^Remove Bruce/ })).not.toBeInTheDocument());
+    expect(screen.getByRole('dialog', { name: 'Gatsibo Sericulture 1' })).toBeInTheDocument();
+  });
+
+  it('does not use the words turn off anywhere', async () => {
+    open();
+    await screen.findByText('Gatsibo Sericulture 1');
+    expect(screen.queryByText(/turn off|turned off/i)).not.toBeInTheDocument();
   });
 
   it('keeps the old purple icon tiles and gradients out', async () => {

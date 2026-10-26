@@ -40,6 +40,7 @@ export default function BatchDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [moving, setMoving] = useState(false);
+  const [pendingStage, setPendingStage] = useState<BatchStage | null>(null);
   const [showArchive, setShowArchive] = useState(false);
   const [archiving, setArchiving] = useState(false);
 
@@ -72,6 +73,7 @@ export default function BatchDetailPage() {
       showError(getErrorMessage(err));
     } finally {
       setMoving(false);
+      setPendingStage(null);
     }
   };
 
@@ -125,6 +127,24 @@ export default function BatchDetailPage() {
   return (
     <div>
       <Modal
+        open={!!pendingStage}
+        onClose={() => setPendingStage(null)}
+        title={pendingStage ? fill(t('bdMoveTitle'), { stage: STAGE_LABELS[pendingStage] }) : ''}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setPendingStage(null)} disabled={moving}>{t('btnCancel')}</button>
+            <button className="btn btn-primary" onClick={() => pendingStage && advance(pendingStage)} disabled={moving}>
+              {moving ? <><span className="spinner" />{t('bdMoving')}</> : t('bdMoveYes')}
+            </button>
+          </>
+        }
+      >
+        <p className="modal-text">
+          {pendingStage ? fill(t('bdMoveBody'), { id: code, from: STAGE_LABELS[batch.stage], to: STAGE_LABELS[pendingStage] }) : ''}
+        </p>
+      </Modal>
+
+      <Modal
         open={showArchive}
         onClose={() => setShowArchive(false)}
         title={t('bdArchiveTitle')}
@@ -170,7 +190,7 @@ export default function BatchDetailPage() {
 
       <div className="stack-24">
         <Panel title={t('bdLifecycle')}>
-          <StageStepper current={batch.stage} canAdvance={canEdit} busy={moving} onAdvance={advance} />
+          <StageStepper current={batch.stage} canAdvance={canEdit} busy={moving} onAdvance={setPendingStage} />
         </Panel>
 
         <div className="split">
@@ -271,7 +291,7 @@ export default function BatchDetailPage() {
                           <td data-label={t('bdColTemp')}>{r.temperature.toFixed(1)} °C</td>
                           <td data-label={t('bdColHum')}>{r.humidity.toFixed(0)} %</td>
                           <td data-label={t('bdColState')}>
-                            <span className={`badge badge-dot ${fine ? 'badge-green' : 'badge-red'}`}>{fine ? t('bdInRange') : t('bdOutRange')}</span>
+                            <span className={`badge ${fine ? 'badge-green' : 'badge-red'}`}>{fine ? t('bdInRange') : t('bdOutRange')}</span>
                           </td>
                         </tr>
                       );
@@ -311,7 +331,7 @@ export default function BatchDetailPage() {
                     <tr key={d.id} className="tbody-row">
                       <td className="cell-lead cell-muted cell-nowrap">{clock.format(new Date(d.detectedAt))}</td>
                       <td data-label={t('bdColResult')}>
-                        <span className="badge badge-stage badge-dot" style={{ '--c': colorFor('result', d.result) } as CSSProperties}>{d.result}</span>
+                        <span className="badge badge-stage" style={{ '--c': colorFor('result', d.result) } as CSSProperties}>{d.result}</span>
                       </td>
                       <td data-label={t('bdColConfidence')} className="cell-nowrap">{Math.round(d.confidence * 100)}%</td>
                       <td data-label={t('bdColNotes')} className="cell-muted">{d.notes ?? '-'}</td>

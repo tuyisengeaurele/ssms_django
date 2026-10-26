@@ -9,7 +9,7 @@ const sections: LegalSection[] = [
       <>
         <p>We collect only what the platform needs to work:</p>
         <ul>
-          <li><strong>Account data:</strong> name, email address and role (farmer, supervisor or admin).</li>
+          <li><strong>Account data:</strong> name, email address and role (farmer or supervisor).</li>
           <li><strong>Farm and batch data:</strong> farm names, locations, batch stages and the sensor readings you enter.</li>
           <li><strong>Disease check images:</strong> photos you upload for analysis are stored on Cloudinary and used only to run the disease check.</li>
           <li><strong>Usage data:</strong> actions such as batch stage changes and logins are recorded in an audit log for security and accountability.</li>

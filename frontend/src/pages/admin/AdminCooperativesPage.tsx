@@ -37,6 +37,8 @@ export default function AdminCooperativesPage() {
   const [candidates, setCandidates] = useState<User[]>([]);
   const [addId, setAddId] = useState('');
   const [memberBusy, setMemberBusy] = useState(false);
+  // The question asked before a person joins or leaves the cooperative that is open.
+  const [memberAsk, setMemberAsk] = useState<{ kind: 'add' | 'remove'; userId: string; name: string } | null>(null);
 
   useEffect(() => {
     cooperativeService.getAll()
@@ -97,7 +99,7 @@ export default function AdminCooperativesPage() {
       await cooperativeService.delete(confirmOff.id);
       setCoops((prev) => prev.filter((c) => c.id !== confirmOff.id));
       setConfirmOff(null);
-      success(t('coTurnedOff'));
+      success(t('coDeleted'));
     } catch (e) {
       showError(getErrorMessage(e));
     } finally {
@@ -140,6 +142,26 @@ export default function AdminCooperativesPage() {
     }
   };
 
+  const askAdd = () => {
+    const person = candidates.find((u) => u.id === addId);
+    if (person) setMemberAsk({ kind: 'add', userId: person.id, name: person.name });
+  };
+
+  const askRemove = (userId: string) => {
+    const person = detail?.members.find((m) => m.id === userId);
+    if (person) setMemberAsk({ kind: 'remove', userId, name: person.name });
+  };
+
+  const confirmMember = async () => {
+    if (!memberAsk || !detail) return;
+    await changeMember(
+      memberAsk.userId,
+      memberAsk.kind === 'add' ? detail.id : null,
+      memberAsk.kind === 'add' ? t('coMemberAdded') : t('coMemberRemoved'),
+    );
+    setMemberAsk(null);
+  };
+
   const query = search.trim().toLowerCase();
   const filtered = coops.filter((c) => !query || c.name.toLowerCase().includes(query) || (c.location ?? '').toLowerCase().includes(query));
   const totalMembers = coops.reduce((sum, c) => sum + c.memberCount, 0);
@@ -152,17 +174,17 @@ export default function AdminCooperativesPage() {
       <Modal
         open={!!confirmOff}
         onClose={() => setConfirmOff(null)}
-        title={t('coTurnOffTitle')}
+        title={t('coDeleteTitle')}
         footer={
           <>
             <button className="btn btn-secondary" onClick={() => setConfirmOff(null)}>{t('btnCancel')}</button>
             <button className="btn btn-danger" onClick={handleTurnOff} disabled={turningOff}>
-              {turningOff ? <><span className="spinner" />{t('coTurnOffBusy')}</> : t('coTurnOffConfirm')}
+              {turningOff ? <><span className="spinner" />{t('coDeleteBusy')}</> : t('coDeleteConfirm')}
             </button>
           </>
         }
       >
-        <p className="modal-text">{confirmOff ? fill(t('coTurnOffBody'), { name: confirmOff.name }) : ''}</p>
+        <p className="modal-text">{confirmOff ? fill(t('coDeleteBody'), { name: confirmOff.name }) : ''}</p>
       </Modal>
 
       <Modal
@@ -198,6 +220,25 @@ export default function AdminCooperativesPage() {
         </div>
       </Modal>
 
+      <Modal
+        open={!!memberAsk}
+        onClose={() => setMemberAsk(null)}
+        title={memberAsk && detail ? fill(t(memberAsk.kind === 'add' ? 'coAddTitle' : 'coRemoveTitle'), { name: memberAsk.name, coop: detail.name }) : ''}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setMemberAsk(null)} disabled={memberBusy}>{t('btnCancel')}</button>
+            <button className={`btn ${memberAsk?.kind === 'remove' ? 'btn-danger' : 'btn-primary'}`} onClick={confirmMember} disabled={memberBusy}>
+              {memberBusy ? <span className="spinner" aria-hidden="true" /> : null}
+              {memberAsk?.kind === 'add' ? t('coAddYes') : t('coRemoveYes')}
+            </button>
+          </>
+        }
+      >
+        <p className="modal-text">
+          {memberAsk && detail ? fill(t(memberAsk.kind === 'add' ? 'coAddBody' : 'coRemoveBody'), { name: memberAsk.name, coop: detail.name }) : ''}
+        </p>
+      </Modal>
+
       <CooperativeDetailModal
         open={detailOpen}
         loading={!detail}
@@ -206,9 +247,9 @@ export default function AdminCooperativesPage() {
         addId={addId}
         onAddIdChange={setAddId}
         busy={memberBusy}
-        onAdd={() => changeMember(addId, detail?.id ?? null, t('coMemberAdded'))}
-        onRemove={(userId) => changeMember(userId, null, t('coMemberRemoved'))}
-        onClose={() => setDetailOpen(false)}
+        onAdd={askAdd}
+        onRemove={askRemove}
+        onClose={() => { if (!memberAsk) setDetailOpen(false); }}
       />
 
       <PageHeader
@@ -286,7 +327,7 @@ export default function AdminCooperativesPage() {
                       <div className="table-actions">
                         <button className="btn btn-ghost btn-xs" aria-label={`${t('coView')} ${c.name}`} onClick={() => openView(c)}>{t('coView')}</button>
                         <button className="btn btn-ghost btn-xs" aria-label={`${t('coEdit')} ${c.name}`} onClick={() => openEdit(c)}>{t('coEdit')}</button>
-                        <button className="btn btn-ghost btn-xs btn-quiet-danger" aria-label={`${t('coTurnOff')} ${c.name}`} onClick={() => setConfirmOff(c)}>{t('coTurnOff')}</button>
+                        <button className="btn btn-ghost btn-xs btn-quiet-danger" aria-label={`${t('coDelete')} ${c.name}`} onClick={() => setConfirmOff(c)}>{t('coDelete')}</button>
                       </div>
                     </td>
                   </tr>

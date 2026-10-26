@@ -14,7 +14,7 @@ class ActiveUserJWTAuthentication(JWTAuthentication):
         user = super().get_user(validated_token)
         if not user.is_active:
             raise AuthenticationFailed(
-                'This account has been deactivated. Contact your administrator.',
+                'This account has been deleted. Contact the SSMS team.',
                 code='user_inactive',
             )
         return user

@@ -136,11 +136,12 @@ describe('Disease check page', () => {
     expect(screen.getByRole('button', { name: 'Check this photo' })).toBeEnabled();
   });
 
-  it('gives tips for a good photo and names the conditions it knows', () => {
-    open();
-    const tips = screen.getByRole('list', { name: 'Tips for a good photo' });
-    expect(within(tips).getAllByRole('listitem')).toHaveLength(4);
-    expect(screen.getByText(/Healthy, Flacherie, Grasserie, Muscardine and Pebrine/)).toBeInTheDocument();
+  it('has no tips panel or list of conditions beside the form', () => {
+    const { container } = open();
+    expect(screen.queryByRole('list', { name: 'Tips for a good photo' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Healthy, Flacherie, Grasserie, Muscardine and Pebrine/)).not.toBeInTheDocument();
+    expect(container.querySelector('.next-steps, .form-page')).toBeNull();
+    expect(container.querySelector('.page-narrow')).not.toBeNull();
   });
 
   it('keeps the model name, the AI wording, the tip box and the old colours out', async () => {

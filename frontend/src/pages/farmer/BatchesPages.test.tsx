@@ -127,12 +127,12 @@ describe('New batch page', () => {
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/farms/f1'));
   });
 
-  it('shows the five stages in order and says every batch starts at the egg', () => {
-    open();
-    const stages = screen.getByRole('list', { name: 'The five stages' });
-    const titles = within(stages).getAllByRole('listitem').map((li) => li.querySelector('strong')?.textContent);
-    expect(titles).toEqual(['Egg', 'Larva', 'Pupa', 'Cocoon', 'Harvest']);
-    expect(screen.getByText('Every new batch starts at the egg stage.')).toBeInTheDocument();
+  it('is one narrow form with no list of stages beside it', () => {
+    const { container } = open();
+    expect(screen.queryByRole('list', { name: 'The five stages' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Every new batch starts at the egg stage.')).not.toBeInTheDocument();
+    expect(container.querySelector('.next-steps, .form-page')).toBeNull();
+    expect(container.querySelector('.page-narrow')).not.toBeNull();
   });
 
   it('keeps the coloured stage squares and the tip box out', () => {

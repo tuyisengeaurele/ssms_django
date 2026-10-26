@@ -26,6 +26,8 @@ export default function AdminContactsPage() {
   const [selected, setSelected] = useState<ContactMessage | null>(null);
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
+  const [askAll, setAskAll] = useState(false);
+  const [markingAll, setMarkingAll] = useState(false);
 
   useEffect(() => {
     contactsService.getAll()
@@ -47,12 +49,15 @@ export default function AdminContactsPage() {
   };
 
   const handleMarkAll = async () => {
+    setMarkingAll(true);
     const unread = messages.filter((m) => !m.isRead);
     const results = await Promise.allSettled(unread.map((m) => contactsService.markRead(m.id)));
     const done = unread.filter((_, i) => results[i].status === 'fulfilled').map((m) => m.id);
     setRead(done);
     if (done.length === unread.length) success(t('msMarkedAll'));
     else showError(t('genericTryAgain'));
+    setMarkingAll(false);
+    setAskAll(false);
   };
 
   const unreadCount = messages.filter((m) => !m.isRead).length;
@@ -106,12 +111,29 @@ export default function AdminContactsPage() {
         )}
       </Modal>
 
+      <Modal
+        open={askAll}
+        onClose={() => setAskAll(false)}
+        title={t('msMarkAllTitle')}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setAskAll(false)} disabled={markingAll}>{t('btnCancel')}</button>
+            <button className="btn btn-primary" onClick={handleMarkAll} disabled={markingAll}>
+              {markingAll ? <span className="spinner" aria-hidden="true" /> : null}
+              {t('msMarkAllYes')}
+            </button>
+          </>
+        }
+      >
+        <p className="modal-text">{t('msMarkAllBody')}</p>
+      </Modal>
+
       <PageHeader
         title={t('ptMessages')}
         subtitle={loading ? undefined : fill(t(messages.length === 1 ? 'msSummaryOne' : 'msSummary'), { total: messages.length, unread: unreadCount })}
         actions={
           unreadCount > 0 ? (
-            <button className="btn btn-secondary btn-sm" onClick={handleMarkAll}>
+            <button className="btn btn-secondary btn-sm" onClick={() => setAskAll(true)}>
               <Icon name="check" size={15} />
               {t('msMarkAll')}
             </button>
@@ -155,7 +177,6 @@ export default function AdminContactsPage() {
             {visible.map((m) => (
               <li key={m.id}>
                 <button type="button" className={`inbox-row${m.isRead ? '' : ' is-unread'}`} onClick={() => openMessage(m)}>
-                  <span className="inbox-dot" aria-hidden="true" />
                   <span className="inbox-who">{m.name}</span>
                   <span className="inbox-text">
                     <span className="inbox-subject">{m.subject}</span>

@@ -259,9 +259,9 @@ export const landingTranslations = {
   lpCoopEyebrow: k('Cooperatives', 'Coopératives', 'Amakoperative'),
   lpCoopTitle: k('One view of every farm.', 'Une vue de chaque ferme.', 'Ishusho imwe ya buri murima.'),
   lpCoopBody: k(
-    'A cooperative supervisor sees the farms in their group, opens any batch and spots trouble early. Admins manage accounts and cooperatives.',
-    "Le superviseur d'une coopérative voit les fermes de son groupe, ouvre n'importe quel lot et repère les problèmes tôt. Les administrateurs gèrent les comptes et les coopératives.",
-    "Umugenzuzi wa koperative abona imirima yo mu itsinda rye, agafungura itsinda iryo ari ryo ryose, akabona ibibazo hakiri kare. Abayobozi bacunga konti n'amakoperative.",
+    'A cooperative supervisor sees the farms in their group, opens any batch and spots trouble early.',
+    "Le superviseur d'une coopérative voit les fermes de son groupe, ouvre n'importe quel lot et repère les problèmes tôt.",
+    "Umugenzuzi wa koperative abona imirima yo mu itsinda rye, agafungura itsinda iryo ari ryo ryose, akabona ibibazo hakiri kare.",
   ),
   lpCoopPoint1: k(
     'Supervisors see the farms in their cooperative.',
@@ -313,9 +313,9 @@ export const landingTranslations = {
     "Ni nde ushobora kubona amakuru y'umurima wanjye?",
   ),
   lpFaq4A: k(
-    'You see your own farms. A supervisor sees the farms in their cooperative. Admins manage the system. Our privacy page has the details.',
-    'Vous voyez vos fermes. Un superviseur voit les fermes de sa coopérative. Les administrateurs gèrent le système. Notre page de confidentialité donne les détails.',
-    "Wowe ubona imirima yawe. Umugenzuzi abona imirima yo muri koperative ye. Abayobozi bacunga sisitemu. Urupapuro rw'ibanga rutanga ibisobanuro.",
+    'You see your own farms. A supervisor sees the farms in their cooperative. Our privacy page has the details.',
+    'Vous voyez vos fermes. Un superviseur voit les fermes de sa coopérative. Notre page de confidentialité donne les détails.',
+    "Wowe ubona imirima yawe. Umugenzuzi abona imirima yo muri koperative ye. Urupapuro rw'ibanga rutanga ibisobanuro.",
   ),
   lpFaq5Q: k('Does it work on a phone?', 'Cela fonctionne-t-il sur téléphone ?', 'Ikora kuri telefone?'),
   lpFaq5A: k(
@@ -329,9 +329,9 @@ export const landingTranslations = {
     'Koperative yose yayikoresha?',
   ),
   lpFaq6A: k(
-    'Yes. Supervisors see every farm in their cooperative. Admins manage accounts and cooperatives.',
-    'Oui. Les superviseurs voient chaque ferme de leur coopérative. Les administrateurs gèrent les comptes et les coopératives.',
-    "Yego. Abagenzuzi babona buri murima wo muri koperative yabo. Abayobozi bacunga konti n'amakoperative.",
+    'Yes. Supervisors see every farm in their cooperative.',
+    'Oui. Les superviseurs voient chaque ferme de leur coopérative.',
+    "Yego. Abagenzuzi babona buri murima wo muri koperative yabo.",
   ),
 
   // Contact
@@ -421,9 +421,9 @@ export const landingTranslations = {
   lpDashboard: k('Open dashboard', 'Ouvrir le tableau de bord', 'Fungura dashboard'),
   lpDeniedTitle: k("You can't open this page.", 'Vous ne pouvez pas ouvrir cette page.', 'Ntushobora gufungura uru rupapuro.'),
   lpDeniedBody: k(
-    'Your account does not have access to it. If you think this is a mistake, contact your cooperative or an administrator.',
-    "Votre compte n'y a pas accès. Si vous pensez qu'il s'agit d'une erreur, contactez votre coopérative ou un administrateur.",
-    "Konti yawe nta burenganzira ifite bwo kuyifungura. Niba utekereza ko ari ikosa, vugana n'amakoperative yawe cyangwa umuyobozi.",
+    'Your account does not have access to it. If you think this is a mistake, contact your cooperative or the SSMS team.',
+    "Votre compte n'y a pas accès. Si vous pensez qu'il s'agit d'une erreur, contactez votre coopérative ou l'équipe SSMS.",
+    "Konti yawe nta burenganzira ifite bwo kuyifungura. Niba utekereza ko ari ikosa, vugana na koperative yawe cyangwa itsinda rya SSMS.",
   ),
 } satisfies Record<string, Entry>;
 

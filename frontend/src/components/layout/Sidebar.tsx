@@ -124,10 +124,6 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
     navigate('/login', { replace: true });
   };
 
-  const initials = user?.name
-    ? user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
-    : 'U';
-
   return (
     <>
       <Modal
@@ -156,7 +152,7 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
         </div>
 
         <nav className="sidebar-nav" aria-label={t('shellMainMenu')}>
-          {groups.map((group) => (
+          {groups.map((group, index) => (
             <div key={group.label} role="group" aria-label={group.label} className="sidebar-group">
               <div className="sidebar-section-label" aria-hidden="true">{group.label}</div>
               {group.items.map((item) => (
@@ -166,7 +162,8 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
                   end={item.to === '/farmer' || item.to === '/admin' || item.to === '/supervisor'}
                   className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
                   onClick={onMobileClose}
-                  title={collapsed ? item.label : undefined}
+                  aria-label={item.label}
+                  data-tip={item.label}
                 >
                   <Icon name={item.icon} className="sidebar-item-icon" />
                   <span className="sidebar-item-label">{item.label}</span>
@@ -177,28 +174,21 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
                   )}
                 </NavLink>
               ))}
+              {index === groups.length - 1 && (
+                <button
+                  type="button"
+                  className="sidebar-item sidebar-signout"
+                  onClick={() => setConfirmOpen(true)}
+                  aria-label={t('navLogout')}
+                  data-tip={t('navLogout')}
+                >
+                  <Icon name="logout" className="sidebar-item-icon" />
+                  <span className="sidebar-item-label">{t('navLogout')}</span>
+                </button>
+              )}
             </div>
           ))}
         </nav>
-
-        <div className="sidebar-footer">
-          <div className="sidebar-user">
-            <span className="sidebar-avatar" aria-hidden="true">{initials}</span>
-            <span className="sidebar-user-text">
-              <span className="sidebar-user-name">{user?.name}</span>
-              <span className="sidebar-user-role">{user ? t(ROLE_LABEL_KEY[user.role]) : ''}</span>
-            </span>
-          </div>
-          <button
-            type="button"
-            className="sidebar-logout"
-            onClick={() => setConfirmOpen(true)}
-            title={collapsed ? t('navLogout') : undefined}
-          >
-            <Icon name="logout" />
-            <span className="sidebar-item-label">{t('navLogout')}</span>
-          </button>
-        </div>
       </aside>
     </>
   );

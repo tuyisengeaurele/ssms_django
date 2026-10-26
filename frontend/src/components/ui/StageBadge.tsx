@@ -6,7 +6,7 @@ export default function StageBadge({ stage }: { stage: BatchStage | string }) {
   const color = STAGE_COLORS[stage as BatchStage] ?? '#566760';
   const label = STAGE_LABELS[stage as BatchStage] ?? stage;
   return (
-    <span className="badge badge-stage badge-dot" style={{ '--c': color } as CSSProperties}>
+    <span className="badge badge-stage" style={{ '--c': color } as CSSProperties}>
       {label}
     </span>
   );

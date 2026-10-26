@@ -20,28 +20,39 @@ import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
 const ROLES: Role[] = ['FARMER', 'SUPERVISOR', 'ADMIN'];
 const EMPTY_FORM: CreateUserPayload = { name: '', email: '', password: '', role: 'FARMER' };
 
-const ROLE_BADGE: Record<Role, string> = {
-  ADMIN: 'badge-ink',
-  SUPERVISOR: 'badge-blue',
-  FARMER: 'badge-green',
-};
+type Tab = 'active' | 'deleted';
+
+const isActive = (u: User) => u.isActive !== false;
 
 export default function AdminUsersPage() {
   const { user: me } = useAuth();
-  const { t, locale } = useLanguage();
+  const { t } = useLanguage();
   const { getErrorMessage } = useApiError();
   const { success, error: showError } = useToast();
 
   const [users, setUsers] = useState<User[]>([]);
   const [coops, setCoops] = useState<Cooperative[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<Tab>('active');
+  const [search, setSearch] = useState('');
+
   const [showCreate, setShowCreate] = useState(false);
-  const [confirmOff, setConfirmOff] = useState<User | null>(null);
   const [form, setForm] = useState<CreateUserPayload>(EMPTY_FORM);
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [turningOff, setTurningOff] = useState(false);
-  const [search, setSearch] = useState('');
+
+  // Edit access: a form first, then a review of what will change before anything is saved.
+  const [editing, setEditing] = useState<User | null>(null);
+  const [draftRole, setDraftRole] = useState<Role>('FARMER');
+  const [draftCoop, setDraftCoop] = useState('');
+  const [stage, setStage] = useState<'form' | 'review'>('form');
+  const [editError, setEditError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const [confirmDelete, setConfirmDelete] = useState<User | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmRestore, setConfirmRestore] = useState<User | null>(null);
+  const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
     Promise.all([adminService.getUsers(), cooperativeService.getAll()])
@@ -56,38 +67,78 @@ export default function AdminUsersPage() {
 
   const replaceUser = (updated: User) => setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
 
-  const handleCooperativeChange = async (userId: string, cooperativeId: string) => {
+  const openEdit = (u: User) => {
+    setEditing(u);
+    setDraftRole(u.role);
+    setDraftCoop(u.cooperativeId ?? '');
+    setStage('form');
+    setEditError('');
+  };
+
+  const closeEdit = () => {
+    setEditing(null);
+    setStage('form');
+    setEditError('');
+  };
+
+  // An administrator belongs to no cooperative, so the cooperative is left alone when the role becomes Administrator.
+  const roleChanged = !!editing && draftRole !== editing.role;
+  const coopChanged = !!editing && draftRole !== 'ADMIN' && draftCoop !== (editing.cooperativeId ?? '');
+  const coopName = (id: string) => (id ? coops.find((c) => c.id === id)?.name ?? '' : t('usNone'));
+
+  const handleSave = async () => {
+    if (!editing) return;
+    setSaving(true);
+    setEditError('');
+    let current = editing;
     try {
-      const res = await adminService.updateCooperative(userId, cooperativeId || null);
-      replaceUser(res.data.data);
-      success(t('usCoopUpdated'));
+      if (roleChanged) {
+        const res = await adminService.updateRole(current.id, draftRole);
+        current = res.data.data;
+        replaceUser(current);
+        setEditing(current);
+      }
+      if (coopChanged) {
+        const res = await adminService.updateCooperative(current.id, draftCoop || null);
+        current = res.data.data;
+        replaceUser(current);
+      }
+      success(fill(t('usAccessSaved'), { name: editing.name }));
+      closeEdit();
     } catch (e) {
-      showError(getErrorMessage(e));
+      setEditError(getErrorMessage(e));
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleRoleChange = async (target: User, newRole: Role) => {
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
     try {
-      const res = await adminService.updateRole(target.id, newRole);
-      replaceUser(res.data.data);
-      success(fill(t('usRoleUpdated'), { name: target.name, role: t(ROLE_LABEL_KEY[newRole]) }));
-    } catch (e) {
-      showError(getErrorMessage(e));
-    }
-  };
-
-  const handleTurnOff = async () => {
-    if (!confirmOff) return;
-    setTurningOff(true);
-    try {
-      await adminService.deactivateUser(confirmOff.id);
-      replaceUser({ ...confirmOff, isActive: false });
-      success(fill(t('usTurnedOff'), { name: confirmOff.name }));
+      await adminService.deactivateUser(confirmDelete.id);
+      replaceUser({ ...confirmDelete, isActive: false });
+      success(fill(t('usDeleted'), { name: confirmDelete.name }));
     } catch (e) {
       showError(getErrorMessage(e));
     } finally {
-      setTurningOff(false);
-      setConfirmOff(null);
+      setDeleting(false);
+      setConfirmDelete(null);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!confirmRestore) return;
+    setRestoring(true);
+    try {
+      const res = await adminService.restoreUser(confirmRestore.id);
+      replaceUser(res.data.data);
+      success(fill(t('usRestored'), { name: confirmRestore.name }));
+    } catch (e) {
+      showError(getErrorMessage(e));
+    } finally {
+      setRestoring(false);
+      setConfirmRestore(null);
     }
   };
 
@@ -117,29 +168,107 @@ export default function AdminUsersPage() {
   };
 
   const query = search.trim().toLowerCase();
-  const filtered = users.filter(
+  const inTab = users.filter((u) => (tab === 'active' ? isActive(u) : !isActive(u)));
+  const filtered = inTab.filter(
     (u) => !query || u.name.toLowerCase().includes(query) || u.email.toLowerCase().includes(query) || u.role.toLowerCase().includes(query),
   );
-  const byRole = (r: Role) => users.filter((u) => u.role === r).length;
-  const joined = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const activeCount = users.filter(isActive).length;
+  const deletedCount = users.length - activeCount;
+  const byRole = (r: Role) => users.filter((u) => isActive(u) && u.role === r).length;
 
   return (
     <div>
       <Modal
-        open={!!confirmOff}
-        onClose={() => setConfirmOff(null)}
-        title={t('usTurnOffTitle')}
+        open={!!editing}
+        onClose={closeEdit}
+        title={editing ? fill(t('usEditFor'), { name: editing.name }) : ''}
+        footer={
+          stage === 'form' ? (
+            <>
+              <button className="btn btn-secondary" onClick={closeEdit}>{t('btnCancel')}</button>
+              <button className="btn btn-primary" disabled={!roleChanged && !coopChanged} onClick={() => setStage('review')}>
+                {t('usReview')}
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="btn btn-secondary" onClick={() => setStage('form')} disabled={saving}>{t('usBack')}</button>
+              <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                {saving ? <span className="spinner" aria-hidden="true" /> : null}
+                {t('usReviewSave')}
+              </button>
+            </>
+          )
+        }
+      >
+        {editError && <div className="alert alert-error" role="alert">{editError}</div>}
+        {editing && stage === 'form' && (
+          <>
+            <div className="form-group">
+              <label className="form-label" htmlFor="edit-role">{t('usColRole')}</label>
+              <select id="edit-role" className="form-select" value={draftRole} onChange={(e) => setDraftRole(e.target.value as Role)}>
+                {ROLES.map((r) => <option key={r} value={r}>{t(ROLE_LABEL_KEY[r])}</option>)}
+              </select>
+            </div>
+            {draftRole !== 'ADMIN' && (
+              <div className="form-group">
+                <label className="form-label" htmlFor="edit-coop">{t('usColCoop')}</label>
+                <select id="edit-coop" className="form-select" value={draftCoop} onChange={(e) => setDraftCoop(e.target.value)}>
+                  <option value="">{t('usNone')}</option>
+                  {coops.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+            )}
+          </>
+        )}
+        {editing && stage === 'review' && (
+          <>
+            <p className="modal-text">{fill(t('usReviewIntro'), { name: editing.name })}</p>
+            <ul className="review-list">
+              {roleChanged && (
+                <li>{fill(t('usChangeRole'), { from: t(ROLE_LABEL_KEY[editing.role]), to: t(ROLE_LABEL_KEY[draftRole]) })}</li>
+              )}
+              {coopChanged && (
+                <li>{fill(t('usChangeCoop'), { from: coopName(editing.cooperativeId ?? ''), to: coopName(draftCoop) })}</li>
+              )}
+            </ul>
+          </>
+        )}
+      </Modal>
+
+      <Modal
+        open={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        title={t('usDeleteTitle')}
         footer={
           <>
-            <button className="btn btn-secondary" onClick={() => setConfirmOff(null)}>{t('btnCancel')}</button>
-            <button className="btn btn-danger" onClick={handleTurnOff} disabled={turningOff}>
-              {turningOff ? <><span className="spinner" />{t('usTurnOffBusy')}</> : t('usTurnOffConfirm')}
+            <button className="btn btn-secondary" onClick={() => setConfirmDelete(null)}>{t('btnCancel')}</button>
+            <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
+              {deleting ? <><span className="spinner" />{t('usDeleteBusy')}</> : t('usDeleteConfirm')}
             </button>
           </>
         }
       >
         <p className="modal-text">
-          {confirmOff ? fill(t('usTurnOffBody'), { name: confirmOff.name, email: confirmOff.email }) : ''}
+          {confirmDelete ? fill(t('usDeleteBody'), { name: confirmDelete.name, email: confirmDelete.email }) : ''}
+        </p>
+      </Modal>
+
+      <Modal
+        open={!!confirmRestore}
+        onClose={() => setConfirmRestore(null)}
+        title={t('usRestoreTitle')}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setConfirmRestore(null)}>{t('btnCancel')}</button>
+            <button className="btn btn-primary" onClick={handleRestore} disabled={restoring}>
+              {restoring ? <><span className="spinner" />{t('usRestoreBusy')}</> : t('usRestoreConfirm')}
+            </button>
+          </>
+        }
+      >
+        <p className="modal-text">
+          {confirmRestore ? fill(t('usRestoreBody'), { name: confirmRestore.name, email: confirmRestore.email }) : ''}
         </p>
       </Modal>
 
@@ -222,13 +351,21 @@ export default function AdminUsersPage() {
           </div>
         }
       >
+        <div className="tabs" role="tablist">
+          {(['active', 'deleted'] as const).map((id) => (
+            <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? 'is-on' : ''} onClick={() => setTab(id)}>
+              {id === 'active' ? t('usTabActive') : t('usTabDeleted')} ({id === 'active' ? activeCount : deletedCount})
+            </button>
+          ))}
+        </div>
+
         {loading ? (
-          <SkeletonTable rows={5} cols={6} />
+          <SkeletonTable rows={5} cols={5} />
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={<Icon name="users" size={22} />}
-            title={t('usNoUsers')}
-            description={query ? fill(t('usNoUsersSearch'), { q: search.trim() }) : t('usNoUsersAtAll')}
+            title={query ? t('usNoUsers') : tab === 'deleted' ? t('usNoDeleted') : t('usNoUsers')}
+            description={query ? fill(t('usNoUsersSearch'), { q: search.trim() }) : tab === 'deleted' ? t('usNoDeletedBody') : t('usNoUsersAtAll')}
           />
         ) : (
           <div className="table-wrapper">
@@ -238,15 +375,14 @@ export default function AdminUsersPage() {
                   <th>{t('usColName')}</th>
                   <th>{t('usColRole')}</th>
                   <th>{t('usColCoop')}</th>
-                  <th>{t('usColJoined')}</th>
                   <th>{t('usColStatus')}</th>
-                  <th><span className="sr-only">{t('usTurnOff')}</span></th>
+                  <th><span className="sr-only">{t('thActions')}</span></th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((u) => {
                   const isMe = u.id === me?.id;
-                  const active = u.isActive !== false;
+                  const active = isActive(u);
                   return (
                     <tr key={u.id} className={`tbody-row${active ? '' : ' is-off'}`}>
                       <td className="cell-lead">
@@ -261,48 +397,30 @@ export default function AdminUsersPage() {
                           </div>
                         </div>
                       </td>
-                      <td data-label={t('usColRole')}>
-                        {isMe || !active ? (
-                          <span className={`badge ${ROLE_BADGE[u.role]}`}>{t(ROLE_LABEL_KEY[u.role])}</span>
-                        ) : (
-                          <select
-                            className="inline-select"
-                            value={u.role}
-                            aria-label={fill(t('usRoleFor'), { name: u.name })}
-                            onChange={(e) => handleRoleChange(u, e.target.value as Role)}
-                          >
-                            {ROLES.map((r) => <option key={r} value={r}>{t(ROLE_LABEL_KEY[r])}</option>)}
-                          </select>
-                        )}
+                      <td data-label={t('usColRole')}>{t(ROLE_LABEL_KEY[u.role])}</td>
+                      <td data-label={t('usColCoop')} className="cell-muted">
+                        {u.role === 'ADMIN' ? t('usNotForAdmins') : u.cooperativeName ?? '-'}
                       </td>
-                      <td data-label={t('usColCoop')}>
-                        {u.role === 'ADMIN' ? (
-                          <span className="cell-muted">{t('usNotForAdmins')}</span>
-                        ) : isMe || !active ? (
-                          <span className="cell-muted">{u.cooperativeName ?? '-'}</span>
-                        ) : (
-                          <select
-                            className="inline-select"
-                            value={u.cooperativeId ?? ''}
-                            aria-label={fill(t('usCoopFor'), { name: u.name })}
-                            onChange={(e) => handleCooperativeChange(u.id, e.target.value)}
-                          >
-                            <option value="">{t('usNone')}</option>
-                            {coops.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                          </select>
-                        )}
-                      </td>
-                      <td data-label={t('usColJoined')} className="cell-muted cell-nowrap">{joined.format(new Date(u.createdAt))}</td>
                       <td data-label={t('usColStatus')}>
-                        <span className={`badge badge-dot ${active ? 'badge-green' : 'badge-gray'}`}>
-                          {active ? t('usActive') : t('usOff')}
+                        <span className={`badge ${active ? 'badge-green' : 'badge-gray'}`}>
+                          {active ? t('usActive') : t('usGone')}
                         </span>
                       </td>
                       <td data-label="">
                         <div className="table-actions">
                           {!isMe && active && (
-                            <button className="btn btn-ghost btn-xs btn-quiet-danger" aria-label={`${t('usTurnOff')} ${u.name}`} onClick={() => setConfirmOff(u)}>
-                              {t('usTurnOff')}
+                            <>
+                              <button className="btn btn-ghost btn-xs" aria-label={fill(t('usEditFor'), { name: u.name })} onClick={() => openEdit(u)}>
+                                {t('usEdit')}
+                              </button>
+                              <button className="btn btn-ghost btn-xs btn-quiet-danger" aria-label={`${t('usDelete')} ${u.name}`} onClick={() => setConfirmDelete(u)}>
+                                {t('usDelete')}
+                              </button>
+                            </>
+                          )}
+                          {!isMe && !active && (
+                            <button className="btn btn-ghost btn-xs" aria-label={`${t('usRestore')} ${u.name}`} onClick={() => setConfirmRestore(u)}>
+                              {t('usRestore')}
                             </button>
                           )}
                         </div>

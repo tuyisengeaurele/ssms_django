@@ -94,7 +94,7 @@ class PasswordResetConfirmView(APIView):
             return api_error(BAD_LINK, 400)
 
         if not user.is_active:
-            return api_error('This account has been turned off. Please contact your administrator.', 400)
+            return api_error('This account has been deleted. Please contact the SSMS team.', 400)
 
         if not default_token_generator.check_token(user, token):
             return api_error(BAD_LINK, 400)

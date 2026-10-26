@@ -89,13 +89,27 @@ describe('Alerts page', () => {
     await waitFor(() => expect(within(item).queryByRole('button', { name: 'Mark as read' })).not.toBeInTheDocument());
   });
 
-  it('marks all read and says so', async () => {
+  it('asks, then marks all read and says so', async () => {
     open();
     await screen.findByText('2 unread');
     fireEvent.click(screen.getByRole('button', { name: 'Mark all as read' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Mark every alert as read?' });
+    expect(api.markAllRead).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, mark them all' }));
     await waitFor(() => expect(api.markAllRead).toHaveBeenCalled());
     expect(await screen.findByText('All alerts are marked as read.', {}, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Mark all as read' })).not.toBeInTheDocument();
+  });
+
+  it('leaves the alerts unread when the question is cancelled', async () => {
+    open();
+    await screen.findByText('2 unread');
+    fireEvent.click(screen.getByRole('button', { name: 'Mark all as read' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Mark every alert as read?' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(api.markAllRead).not.toHaveBeenCalled();
+    expect(screen.getByText('2 unread')).toBeInTheDocument();
   });
 
   it('shows fifteen at a time and pages through the rest', async () => {

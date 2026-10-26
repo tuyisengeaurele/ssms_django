@@ -16,7 +16,7 @@ const sections: LegalSection[] = [
     title: 'Eligibility',
     body: (
       <p>
-        SSMS is for farmers, cooperative supervisors and administrators who work in silk farming. You must be at least 18, or have a legal guardian's consent, to create an account. You confirm that the information you give when you register is accurate and current.
+        SSMS is for farmers and cooperative supervisors who work in silk farming. You must be at least 18, or have a legal guardian's consent, to create an account. You confirm that the information you give when you register is accurate and current.
       </p>
     ),
   },

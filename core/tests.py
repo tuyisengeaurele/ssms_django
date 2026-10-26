@@ -95,11 +95,11 @@ class FriendlyErrorMessages(SimpleTestCase):
         from rest_framework_simplejwt.exceptions import InvalidToken
         self.assertEqual(self.message(InvalidToken()), 'Your session has ended. Please sign in again.')
 
-    def test_turned_off_account_keeps_its_own_message(self):
+    def test_deleted_account_keeps_its_own_message(self):
         exc = AuthenticationFailed('x', code='user_inactive')
         self.assertEqual(
             self.message(exc),
-            'This account has been turned off. Please contact your administrator.',
+            'This account has been deleted. Please contact the SSMS team.',
         )
 
     def test_no_permission(self):
