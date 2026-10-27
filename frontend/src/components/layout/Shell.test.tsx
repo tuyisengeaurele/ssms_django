@@ -123,6 +123,18 @@ describe('Sidebar for other roles', () => {
     expect(screen.getByRole('link', { name: 'System overview' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Cooperatives' })).not.toBeInTheDocument();
   });
+
+  it('gives a supervisor their farmers, and nobody else', () => {
+    auth.value = { user: { name: 'Sup', role: 'SUPERVISOR', email: 's@x.rw' }, logout: vi.fn() };
+    sidebar('/supervisor');
+    expect(screen.getByRole('link', { name: 'My farmers' })).toHaveAttribute('href', '/supervisor/farmers');
+  });
+
+  it('does not show My farmers to a farmer or an admin', () => {
+    auth.value = { user: { name: 'Far', role: 'FARMER', email: 'f@x.rw' }, logout: vi.fn() };
+    sidebar('/farmer');
+    expect(screen.queryByRole('link', { name: 'My farmers' })).not.toBeInTheDocument();
+  });
 });
 
 describe('TopBar', () => {

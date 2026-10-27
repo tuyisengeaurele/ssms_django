@@ -15,6 +15,8 @@ const CheckEmailPage = lazy(() => import('./pages/auth/CheckEmailPage'));
 const VerifyEmailPage = lazy(() => import('./pages/auth/VerifyEmailPage'));
 const FarmerDashboard = lazy(() => import('./pages/farmer/FarmerDashboard'));
 const SupervisorDashboard = lazy(() => import('./pages/supervisor/SupervisorDashboard'));
+const SupervisorFarmersPage = lazy(() => import('./pages/supervisor/SupervisorFarmersPage'));
+const JoinPage = lazy(() => import('./pages/auth/JoinPage'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const FarmsPage = lazy(() => import('./pages/farmer/FarmsPage'));
 const AddFarmPage = lazy(() => import('./pages/farmer/AddFarmPage'));
@@ -56,6 +58,7 @@ export default function App() {
           <Route path="/check-email"      element={<CheckEmailPage />} />
           <Route path="/verify-email"     element={<VerifyEmailPage />} />
           <Route path="/unauthorized"     element={<UnauthorizedPage />} />
+          <Route path="/join/:token"      element={<JoinPage />} />
 
           {/* All authenticated pages, inside DashboardLayout (sidebar + topbar) */}
           <Route element={<ProtectedRoute allowedRoles={['FARMER', 'SUPERVISOR', 'ADMIN']} />}>
@@ -80,6 +83,11 @@ export default function App() {
               {/* Supervisor + Admin */}
               <Route element={<ProtectedRoute allowedRoles={['SUPERVISOR', 'ADMIN']} />}>
                 <Route path="/supervisor" element={<SupervisorDashboard />} />
+              </Route>
+
+              {/* Supervisor only: their own cooperative's farmers and invitation links */}
+              <Route element={<ProtectedRoute allowedRoles={['SUPERVISOR']} />}>
+                <Route path="/supervisor/farmers" element={<SupervisorFarmersPage />} />
               </Route>
 
               {/* Admin only */}

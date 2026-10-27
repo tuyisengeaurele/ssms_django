@@ -51,7 +51,13 @@ function getNavGroups(role: Role | undefined, alertCount: number, t: (k: string)
 
   if (role === 'SUPERVISOR') {
     return [
-      { label: t('navGroupOverview'), items: [{ to: '/supervisor', label: t('ptSupervisor'), icon: 'overview' }] },
+      {
+        label: t('navGroupOverview'),
+        items: [
+          { to: '/supervisor', label: t('ptSupervisor'), icon: 'overview' },
+          { to: '/supervisor/farmers', label: t('ptTeam'), icon: 'users' },
+        ],
+      },
       {
         label: t('navGroupFarming'),
         items: [
