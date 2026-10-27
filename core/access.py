@@ -67,6 +67,16 @@ def scope_rooms(user, qs=None):
     )
 
 
+def scope_readings(user, qs):
+    """Sensor readings: those taken in a room the person may see. A reading from before rooms is seen through its batch."""
+    in_rooms = _narrow(qs, user, 'room__farm__owner', room__is_active=True, room__farm__is_active=True)
+    legacy = _narrow(
+        qs.filter(room__isnull=True), user, 'batch__farm__owner',
+        batch__is_active=True, batch__farm__is_active=True,
+    )
+    return in_rooms | legacy
+
+
 def get_farm_or_404(user, pk, qs=None) -> Farm:
     """The farm, or NotFound. Pass qs to start from a queryset with select_related or prefetch already set."""
     farm = scope_farms(user, qs).select_related('owner').filter(pk=pk).first()

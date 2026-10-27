@@ -96,4 +96,98 @@ describe('attentionFor', () => {
     );
     expect(items.map((i) => i.batchId)).toEqual(['cold', 'quiet', 'late', 'harvest']);
   });
+
+  // ── rooms: batches in one room share one environment, so the room is judged once ──
+
+  const inRoom = (id: string, name = 'Rearing house 1') => ({ id, name });
+
+  it('judges a room once, however many batches are in it', () => {
+    const cold = { temperature: 19, humidity: 78, timestamp: hoursAgo(1) };
+    const items = attentionFor(
+      [
+        batch({ id: 'a', room: inRoom('r1'), latestReading: cold }),
+        batch({ id: 'b', room: inRoom('r1'), latestReading: cold }),
+        batch({ id: 'c', room: inRoom('r1'), latestReading: cold }),
+      ],
+      ranges,
+      NOW,
+    );
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ kind: 'tempLow', roomId: 'r1', roomName: 'Rearing house 1', farmName: 'Habimana Silk Farm' });
+  });
+
+  it('judges two rooms of one farm on their own', () => {
+    const items = attentionFor(
+      [
+        batch({ id: 'a', room: inRoom('r1', 'House 1'), latestReading: { temperature: 19, humidity: 78, timestamp: hoursAgo(1) } }),
+        batch({ id: 'b', room: inRoom('r2', 'House 2'), latestReading: { temperature: 25, humidity: 78, timestamp: hoursAgo(1) } }),
+      ],
+      ranges,
+      NOW,
+    );
+    expect(items.map((i) => [i.roomName, i.kind])).toEqual([['House 1', 'tempLow']]);
+  });
+
+  it('uses the range every batch in the room can live with', () => {
+    // PUPA allows 22 to 28 and LARVA 24 to 27, so 23 is fine for one and too cold for the other.
+    const reading = { temperature: 23, humidity: 78, timestamp: hoursAgo(1) };
+    const items = attentionFor(
+      [batch({ id: 'a', stage: 'PUPA', room: inRoom('r1'), latestReading: reading }), batch({ id: 'b', stage: 'LARVA', room: inRoom('r1'), latestReading: reading })],
+      ranges,
+      NOW,
+    );
+    expect(items).toEqual([expect.objectContaining({ kind: 'tempLow', value: 23, min: 24, max: 27 })]);
+  });
+
+  it('falls back to the youngest stage when the batches in a room share no safe range', () => {
+    const wide = [
+      { stage: 'EGG', tempMin: 22, tempMax: 24, humMin: 70, humMax: 85 },
+      { stage: 'PUPA', tempMin: 26, tempMax: 28, humMin: 70, humMax: 85 },
+    ];
+    const reading = { temperature: 25, humidity: 78, timestamp: hoursAgo(1) };
+    const items = attentionFor(
+      [batch({ id: 'a', stage: 'PUPA', room: inRoom('r1'), latestReading: reading }), batch({ id: 'b', stage: 'EGG', room: inRoom('r1'), latestReading: reading })],
+      wide,
+      NOW,
+    );
+    expect(items).toEqual([expect.objectContaining({ kind: 'tempHigh', min: 22, max: 24 })]);
+  });
+
+  it('does not let a batch at harvest change the range of its room', () => {
+    const reading = { temperature: 23, humidity: 78, timestamp: hoursAgo(1) };
+    const items = attentionFor(
+      [batch({ id: 'a', stage: 'PUPA', room: inRoom('r1'), latestReading: reading }), batch({ id: 'b', stage: 'HARVEST', room: inRoom('r1'), latestReading: reading })],
+      ranges,
+      NOW,
+    );
+    expect(items).toEqual([]);
+  });
+
+  it('says a room has gone quiet once', () => {
+    const old = { temperature: 25, humidity: 78, timestamp: hoursAgo(9) };
+    const items = attentionFor([batch({ id: 'a', room: inRoom('r1'), latestReading: old }), batch({ id: 'b', room: inRoom('r1'), latestReading: old })], ranges, NOW);
+    expect(items).toEqual([expect.objectContaining({ kind: 'silent', hours: 9, roomId: 'r1' })]);
+  });
+
+  it('keeps harvest lines per batch, because each batch has its own date', () => {
+    const items = attentionFor(
+      [batch({ id: 'a', room: inRoom('r1'), expectedHarvestDate: inDays(1) }), batch({ id: 'b', room: inRoom('r1'), expectedHarvestDate: inDays(-1) })],
+      ranges,
+      NOW,
+    );
+    expect(items.map((i) => [i.batchId, i.kind])).toEqual([['b', 'harvestLate'], ['a', 'harvestTomorrow']]);
+  });
+
+  it('links a room problem to a batch that is in the room', () => {
+    const cold = { temperature: 19, humidity: 78, timestamp: hoursAgo(1) };
+    const items = attentionFor([batch({ id: 'a', room: inRoom('r1'), latestReading: cold }), batch({ id: 'b', room: inRoom('r1'), latestReading: cold })], ranges, NOW);
+    expect(['a', 'b']).toContain(items[0].batchId);
+  });
+
+  it('still judges a batch without a room on its own', () => {
+    const cold = { temperature: 19, humidity: 78, timestamp: hoursAgo(1) };
+    const items = attentionFor([batch({ id: 'a', room: null, latestReading: cold }), batch({ id: 'b', room: null, latestReading: cold })], ranges, NOW);
+    expect(items.map((i) => i.batchId)).toEqual(['a', 'b']);
+    expect(items[0].roomName).toBeUndefined();
+  });
 });

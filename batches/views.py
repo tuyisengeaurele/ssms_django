@@ -86,7 +86,7 @@ class BatchDetailView(APIView):
     def get(self, request, pk):
         batch = get_batch_or_404(
             request.user, pk,
-            Batch.objects.select_related('room').prefetch_related('disease_detections', 'sensor_readings', 'alert_logs'),
+            Batch.objects.select_related('room').prefetch_related('disease_detections', 'alert_logs'),
         )
         return api_success(BatchDetailSerializer(batch).data)
 
@@ -145,9 +145,10 @@ class BatchActiveSupervisorView(APIView):
         from django.db.models import Count, OuterRef, Q, Subquery
 
         from sensors.models import SensorReading
+        from sensors.room_readings import belongs_to_batch
 
         # Everything is worked out in the one query, so the list does not cost more as batches are added.
-        newest = SensorReading.objects.filter(batch=OuterRef('pk')).order_by('-timestamp')
+        newest = SensorReading.objects.filter(belongs_to_batch(OuterRef('pk'))).order_by('-timestamp')
         qs = scope_batches(
             request.user,
             Batch.objects.select_related('farm', 'room').annotate(

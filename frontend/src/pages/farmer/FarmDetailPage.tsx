@@ -70,10 +70,12 @@ export default function FarmDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  useEffect(() => {
+  const loadRooms = () => {
     if (!id) return;
     roomService.getByFarm(id).then((r) => setRooms(r.data.data)).catch(() => {});
-  }, [id]);
+  };
+
+  useEffect(loadRooms, [id]);
 
   const canEdit = user?.role === 'FARMER' || user?.role === 'ADMIN';
   const canManage = user?.role === 'ADMIN' || user?.role === 'SUPERVISOR';
@@ -285,6 +287,10 @@ export default function FarmDetailPage() {
           canManage={canManage}
           onClose={() => setOpenDevice(null)}
           onRemoved={(removed) => setDevices((prev) => prev.filter((d) => d.id !== removed))}
+          onMoved={(moved) => {
+            setDevices((prev) => prev.map((d) => (d.id === moved.id ? { ...d, room: moved.room } : d)));
+            loadRooms();
+          }}
         />
       )}
 
@@ -344,6 +350,22 @@ export default function FarmDetailPage() {
                         ))}
                       </span>
                     )}
+                    <span className="room-sensors">
+                      {room.devices.length === 0 ? (
+                        <span className="cell-sub">{t('rmNoSensor')}</span>
+                      ) : (
+                        <>
+                          {room.devices.map((d) => (
+                            <span key={d.id} className="room-sensor"><span>{d.name}</span><DeviceStatusBadge status={d.status} /></span>
+                          ))}
+                          <span className="cell-sub">
+                            {room.latestReading
+                              ? `${t('rmLatest')}: ${room.latestReading.temperature} °C, ${room.latestReading.humidity} %, ${timeAgo(room.latestReading.timestamp, locale)}`
+                              : t('rmNoReading')}
+                          </span>
+                        </>
+                      )}
+                    </span>
                   </div>
                   {canEdit && (
                     <div className="table-actions">

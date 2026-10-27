@@ -395,3 +395,60 @@ def test_the_backfill_can_run_twice_without_making_a_second_room():
     backfill(apps)
     assert RearingRoom.objects.count() == 1
     assert BatchRoomStay.objects.count() == 1
+
+
+# ── sensors and the latest reading ──────────────────────────────────────────
+
+def test_a_room_lists_its_sensors_and_the_latest_thing_they_measured(auth_client, owner, farm):
+    from sensors.models import IoTDevice, SensorReading
+    from tests.factories import IoTDeviceFactory
+
+    room = make_room(farm, 'Room A')
+    other = make_room(farm, 'Room B')
+    sensor = IoTDeviceFactory(farm=farm, room=room, name='Sensor 1', status='online', last_seen=timezone.now())
+    IoTDeviceFactory(farm=farm, room=room, name='Gone', is_active=False)
+    IoTDeviceFactory(farm=farm, room=other, name='Elsewhere')
+    for hours_ago, temperature in ((3, 20.0), (1, 26.5), (2, 22.0)):
+        row = SensorReading.objects.create(room=room, device=sensor, temperature=temperature, humidity=70.0 + hours_ago)
+        SensorReading.objects.filter(pk=row.pk).update(timestamp=timezone.now() - timedelta(hours=hours_ago))
+    rows = {r['id']: r for r in auth_client(owner).get(room_url(farm)).json()['data']}
+    first = rows[room.pk]
+    assert [(d['name'], d['status']) for d in first['devices']] == [('Sensor 1', 'online')]
+    assert (first['latestReading']['temperature'], first['latestReading']['humidity']) == (26.5, 71.0)
+    assert rows[other.pk]['latestReading'] is None
+    assert [d['name'] for d in rows[other.pk]['devices']] == ['Elsewhere']
+    assert IoTDevice.objects.count() == 3
+
+
+def test_a_quiet_sensor_is_listed_as_offline_even_if_nobody_ran_the_job(auth_client, owner, farm):
+    from tests.factories import IoTDeviceFactory
+
+    room = make_room(farm)
+    IoTDeviceFactory(farm=farm, room=room, status='online', last_seen=timezone.now() - timedelta(hours=3))
+    assert auth_client(owner).get(room_url(farm)).json()['data'][0]['devices'][0]['status'] == 'offline'
+
+
+def test_the_room_list_costs_the_same_however_many_rooms_and_sensors_there_are(auth_client, owner, farm):
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    from sensors.models import SensorReading
+    from tests.factories import IoTDeviceFactory
+
+    client = auth_client(owner)
+
+    def queries():
+        with CaptureQueriesContext(connection) as captured:
+            assert client.get(room_url(farm)).status_code == 200
+        return len(captured)
+
+    first = make_room(farm, 'Room 0')
+    IoTDeviceFactory(farm=farm, room=first)
+    SensorReading.objects.create(room=first, temperature=24.0, humidity=70.0)
+    few = queries()
+    for index in range(1, 6):
+        extra = make_room(farm, f'Room {index}')
+        make_batch(farm, extra)
+        IoTDeviceFactory(farm=farm, room=extra)
+        SensorReading.objects.create(room=extra, temperature=24.0, humidity=70.0)
+    assert queries() <= few + 1

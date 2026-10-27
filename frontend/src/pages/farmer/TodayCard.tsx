@@ -18,7 +18,8 @@ export default function TodayCard({ items }: { items: AttentionItem[] }) {
     // One day ago reads better as "yesterday", so it has its own sentence.
     const key = item.kind === 'harvestLate' && item.days === 1 ? 'taHarvestLateOne' : KEY[item.kind];
     return fill(t(key), {
-      farm: item.farmName, value: item.value ?? '', min: item.min ?? '', max: item.max ?? '',
+      // A room problem names the room too, so a farm with several rooms says which one.
+      farm: item.roomName ? `${item.farmName}, ${item.roomName}` : item.farmName, value: item.value ?? '', min: item.min ?? '', max: item.max ?? '',
       hours: item.hours ?? '', days: item.days ?? '',
     });
   };

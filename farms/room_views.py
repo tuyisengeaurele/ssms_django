@@ -1,5 +1,5 @@
 """Rearing rooms: /api/farms/<id>/rooms and /api/rooms/<id>."""
-from django.db.models import Prefetch
+from django.db.models import OuterRef, Prefetch, Subquery
 from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -19,6 +19,24 @@ class RoomWriteSerializer(serializers.Serializer):
     notes = serializers.CharField(max_length=500, required=False, allow_blank=True)
 
 
+def _live_devices():
+    from sensors.models import IoTDevice
+
+    return Prefetch('devices', queryset=IoTDevice.objects.filter(is_active=True).order_by('created_at'), to_attr='live_devices')
+
+
+def _with_latest_reading(rooms):
+    """Add the newest reading of each room, worked out in the same query as the rooms."""
+    from sensors.models import SensorReading
+
+    newest = SensorReading.objects.filter(room=OuterRef('pk')).order_by('-timestamp')
+    return rooms.annotate(
+        latest_temperature=Subquery(newest.values('temperature')[:1]),
+        latest_humidity=Subquery(newest.values('humidity')[:1]),
+        latest_at=Subquery(newest.values('timestamp')[:1]),
+    )
+
+
 def _live_batches():
     return Prefetch('batches', queryset=Batch.objects.filter(is_active=True).order_by('created_at'), to_attr='live_batches')
 
@@ -27,12 +45,24 @@ def _row(room: RearingRoom) -> dict:
     batches = getattr(room, 'live_batches', None)
     if batches is None:
         batches = list(room.batches.filter(is_active=True))
+    from sensors.devices import effective_status
+
+    devices = getattr(room, 'live_devices', None)
+    if devices is None:
+        devices = list(room.devices.filter(is_active=True))
+    at = getattr(room, 'latest_at', None)
     return {
         'id': room.pk,
         'name': room.name,
         'notes': room.notes,
         'batch_count': len(batches),
         'batches': [{'id': b.pk, 'stage': b.stage} for b in batches],
+        'devices': [
+            {'id': d.pk, 'name': d.name, 'status': effective_status(d), 'last_seen': d.last_seen}
+            for d in devices
+        ],
+        # The newest reading of any sensor in the room, or None when nothing has been measured yet.
+        'latest_reading': {'temperature': room.latest_temperature, 'humidity': room.latest_humidity, 'timestamp': at} if at else None,
         'created_at': room.created_at,
     }
 
@@ -54,7 +84,7 @@ class FarmRoomListView(APIView):
 
     def get(self, request, farm_id):
         farm = get_farm_or_404(request.user, farm_id)
-        rooms = RearingRoom.objects.filter(farm=farm, is_active=True).prefetch_related(_live_batches())
+        rooms = _with_latest_reading(RearingRoom.objects.filter(farm=farm, is_active=True)).prefetch_related(_live_batches(), _live_devices())
         return api_success([_row(r) for r in rooms])
 
     def post(self, request, farm_id):

@@ -53,7 +53,7 @@ export default function DevicesPage() {
 
   const visible = devices.filter((d) => {
     if (tab !== 'all' && d.status !== tab) return false;
-    return !query || [d.name, d.farmName ?? '', d.location ?? '', d.deviceKey].some((v) => v.toLowerCase().includes(query));
+    return !query || [d.name, d.farmName ?? '', d.room?.name ?? '', d.location ?? '', d.deviceKey].some((v) => v.toLowerCase().includes(query));
   });
 
   const tabs: Array<{ id: Tab; label: string; n: number }> = [
@@ -125,6 +125,7 @@ export default function DevicesPage() {
                 <tr>
                   <th>{t('dvColDevice')}</th>
                   <th>{t('dvColFarm')}</th>
+                  <th>{t('dvColRoom')}</th>
                   <th>{t('dvColLocation')}</th>
                   <th>{t('dvColStatus')}</th>
                   <th>{t('dvColTemp')}</th>
@@ -143,6 +144,7 @@ export default function DevicesPage() {
                       </div>
                     </td>
                     <td data-label={t('dvColFarm')}>{d.farmName ?? '-'}</td>
+                    <td data-label={t('dvColRoom')}>{d.room?.name ?? <span className="cell-muted">{t('dvNoRoom')}</span>}</td>
                     <td data-label={t('dvColLocation')} className="cell-muted">{d.location || '-'}</td>
                     <td data-label={t('dvColStatus')}><DeviceStatusBadge status={d.status} /></td>
                     <td data-label={t('dvColTemp')} className="cell-strong">{d.latestReading ? `${d.latestReading.temperature} °C` : '-'}</td>
@@ -169,6 +171,7 @@ export default function DevicesPage() {
           canManage={canManage}
           onClose={() => setSelected(null)}
           onRemoved={(id) => setDevices((prev) => prev.filter((d) => d.id !== id))}
+          onMoved={(moved) => setDevices((prev) => prev.map((d) => (d.id === moved.id ? { ...d, room: moved.room } : d)))}
         />
       )}
 

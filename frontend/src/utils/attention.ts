@@ -6,8 +6,12 @@ export type AttentionKind =
   | 'harvestLate' | 'harvestToday' | 'harvestTomorrow' | 'harvestSoon';
 
 export interface AttentionItem {
+  /** For a room problem, one of the batches in the room, so the line has somewhere to go. */
   batchId: string;
   farmName: string;
+  /** Set when the line is about a whole room and not one batch. */
+  roomId?: string;
+  roomName?: string;
   kind: AttentionKind;
   value?: number;
   min?: number;
@@ -35,30 +39,72 @@ const startOfDay = (ms: number) => {
   return d.getTime();
 };
 
+// The stages in the order a batch lives them, so "youngest" can be told apart.
+const STAGE_ORDER = ['EGG', 'LARVA', 'PUPA', 'COCOON', 'HARVEST'];
+
+type Range = typeof USUAL;
+
+/** The range every batch in the room can live with, or the youngest batch's own range when there is none. */
+function rangeForRoom(batches: ActiveBatch[], ranges: StageRange[]): Range {
+  const own = batches.map((b) => ranges.find((r) => r.stage === b.stage) ?? USUAL);
+  const shared = {
+    tempMin: Math.max(...own.map((r) => r.tempMin)), tempMax: Math.min(...own.map((r) => r.tempMax)),
+    humMin: Math.max(...own.map((r) => r.humMin)), humMax: Math.min(...own.map((r) => r.humMax)),
+  };
+  if (shared.tempMin <= shared.tempMax && shared.humMin <= shared.humMax) return shared;
+  const youngest = batches.reduce((a, b) => (STAGE_ORDER.indexOf(b.stage) < STAGE_ORDER.indexOf(a.stage) ? b : a));
+  return ranges.find((r) => r.stage === youngest.stage) ?? USUAL;
+}
+
+/** Batches that share a room, in the order they first appear. A batch with no room stands alone. */
+function groupByRoom(batches: ActiveBatch[]): ActiveBatch[][] {
+  const groups = new Map<string, ActiveBatch[]>();
+  for (const batch of batches) {
+    const key = batch.room ? `room:${batch.room.id}` : `batch:${batch.id}`;
+    groups.set(key, [...(groups.get(key) ?? []), batch]);
+  }
+  return [...groups.values()];
+}
+
 /** What a farmer should look at today, most urgent first. Batches already at harvest are left out. */
 export function attentionFor(batches: ActiveBatch[], ranges: StageRange[], now: number = Date.now()): AttentionItem[] {
   const items: AttentionItem[] = [];
+  const running = batches.filter((b) => b.stage !== 'HARVEST');
 
-  for (const batch of batches) {
-    if (batch.stage === 'HARVEST') continue;
-    const base = { batchId: batch.id, farmName: batch.farm?.name ?? '' };
-    const range = ranges.find((r) => r.stage === batch.stage) ?? USUAL;
+  // Batches in one room share one environment, so the room is judged once and not once per batch.
+  for (const group of groupByRoom(running)) {
+    const first = group[0];
+    const room = first.room;
+    const base = {
+      batchId: first.id,
+      farmName: first.farm?.name ?? '',
+      ...(room ? { roomId: room.id, roomName: room.name } : {}),
+    };
+    const range = rangeForRoom(group, ranges);
 
-    const reading = batch.latestReading;
-    if (reading) {
-      const hours = Math.floor((now - new Date(reading.timestamp).getTime()) / 3600_000);
-      if (hours >= SILENT_AFTER_HOURS) {
-        items.push({ ...base, kind: 'silent', hours });
-      } else {
-        const temp = { value: reading.temperature, min: range.tempMin, max: range.tempMax };
-        if (reading.temperature < range.tempMin) items.push({ ...base, kind: 'tempLow', ...temp });
-        else if (reading.temperature > range.tempMax) items.push({ ...base, kind: 'tempHigh', ...temp });
-        const hum = { value: reading.humidity, min: range.humMin, max: range.humMax };
-        if (reading.humidity < range.humMin) items.push({ ...base, kind: 'humLow', ...hum });
-        else if (reading.humidity > range.humMax) items.push({ ...base, kind: 'humHigh', ...hum });
-      }
+    // Every batch in a room carries the room's newest reading. Take the newest in case they differ.
+    const reading = group
+      .map((b) => b.latestReading)
+      .filter((r): r is NonNullable<typeof r> => !!r)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+    if (!reading) continue;
+
+    const hours = Math.floor((now - new Date(reading.timestamp).getTime()) / 3600_000);
+    if (hours >= SILENT_AFTER_HOURS) {
+      items.push({ ...base, kind: 'silent', hours });
+      continue;
     }
+    const temp = { value: reading.temperature, min: range.tempMin, max: range.tempMax };
+    if (reading.temperature < range.tempMin) items.push({ ...base, kind: 'tempLow', ...temp });
+    else if (reading.temperature > range.tempMax) items.push({ ...base, kind: 'tempHigh', ...temp });
+    const hum = { value: reading.humidity, min: range.humMin, max: range.humMax };
+    if (reading.humidity < range.humMin) items.push({ ...base, kind: 'humLow', ...hum });
+    else if (reading.humidity > range.humMax) items.push({ ...base, kind: 'humHigh', ...hum });
+  }
 
+  // Harvest dates belong to a batch, so these stay one line per batch.
+  for (const batch of running) {
+    const base = { batchId: batch.id, farmName: batch.farm?.name ?? '' };
     const left = Math.round((startOfDay(new Date(batch.expectedHarvestDate).getTime()) - startOfDay(now)) / 86400_000);
     if (left < 0) items.push({ ...base, kind: 'harvestLate', days: -left });
     else if (left === 0) items.push({ ...base, kind: 'harvestToday' });

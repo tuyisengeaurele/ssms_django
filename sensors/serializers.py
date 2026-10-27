@@ -1,7 +1,8 @@
 import math
 
 from rest_framework import serializers
-from .models import SensorReading, DiseaseDetection
+
+from .models import DiseaseDetection, SensorReading
 
 
 class DiseaseDetectionSerializer(serializers.ModelSerializer):
@@ -14,7 +15,7 @@ class DiseaseDetectionSerializer(serializers.ModelSerializer):
 class SensorReadingSerializer(serializers.ModelSerializer):
     class Meta:
         model = SensorReading
-        fields = ['id', 'batch_id', 'temperature', 'humidity', 'timestamp']
+        fields = ['id', 'batch_id', 'room_id', 'temperature', 'humidity', 'timestamp']
         read_only_fields = ['id', 'timestamp']
 
 

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { deviceService } from '../../services/device.service';
-import { IoTDevice } from '../../types';
+import { roomService } from '../../services/room.service';
+import { IoTDevice, Room } from '../../types';
 import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
@@ -19,6 +20,8 @@ interface Props {
   canManage: boolean;
   onClose: () => void;
   onRemoved: (id: string) => void;
+  /** Called with the device as the server now has it, after it was moved to another room. */
+  onMoved?: (device: IoTDevice) => void;
 }
 
 function ReadingTip({ active, payload, label }: { active?: boolean; payload?: Array<{ dataKey: string; value: number }>; label?: string }) {
@@ -35,7 +38,7 @@ function ReadingTip({ active, payload, label }: { active?: boolean; payload?: Ar
 }
 
 /** One device: what it last measured, how it has been doing, and, for managers, a way to remove it. */
-export default function DeviceDetailModal({ device, canManage, onClose, onRemoved }: Props) {
+export default function DeviceDetailModal({ device, canManage, onClose, onRemoved, onMoved }: Props) {
   const { t, locale } = useLanguage();
   const { success, error: showError } = useToast();
   const { getErrorMessage } = useApiError();
@@ -43,6 +46,15 @@ export default function DeviceDetailModal({ device, canManage, onClose, onRemove
   const [loading, setLoading] = useState(true);
   const [asking, setAsking] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [room, setRoom] = useState(device.room);
+  const [farmRooms, setFarmRooms] = useState<Room[]>([]);
+  const [target, setTarget] = useState('');
+  const [moving, setMoving] = useState(false);
+
+  useEffect(() => {
+    if (!canManage || !device.farmId) return;
+    roomService.getByFarm(device.farmId).then((r) => setFarmRooms(r.data.data)).catch(() => setFarmRooms([]));
+  }, [canManage, device.farmId]);
 
   useEffect(() => {
     setLoading(true);
@@ -58,6 +70,24 @@ export default function DeviceDetailModal({ device, canManage, onClose, onRemove
     .slice()
     .reverse()
     .map((r) => ({ time: time.format(new Date(r.timestamp)), temp: r.temperature, hum: r.humidity }));
+
+  const handleMove = async () => {
+    if (!target) return;
+    setMoving(true);
+    try {
+      const res = await deviceService.moveToRoom(device.id, target);
+      setRoom(res.data.data.room);
+      setTarget('');
+      success(t('dvMoved'));
+      onMoved?.(res.data.data);
+    } catch (e) {
+      showError(getErrorMessage(e));
+    } finally {
+      setMoving(false);
+    }
+  };
+
+  const otherRooms = farmRooms.filter((r) => r.id !== room?.id);
 
   const handleRemove = async () => {
     setRemoving(true);
@@ -80,9 +110,25 @@ export default function DeviceDetailModal({ device, canManage, onClose, onRemove
         <dl className="facts">
           <div><dt>{t('dvKey')}</dt><dd className="cell-mono">{device.deviceKey}</dd></div>
           <div><dt>{t('dvColFarm')}</dt><dd>{device.farmName ?? '-'}</dd></div>
+          <div><dt>{t('dvColRoom')}</dt><dd>{room?.name ?? t('dvNoRoom')}</dd></div>
           <div><dt>{t('dvColLocation')}</dt><dd>{device.location || '-'}</dd></div>
           <div><dt>{t('dvColSeen')}</dt><dd>{device.lastSeen ? timeAgo(device.lastSeen, locale) : t('dvNever')}</dd></div>
         </dl>
+
+        {canManage && otherRooms.length > 0 && (
+          <div className="device-move">
+            <label className="form-label" htmlFor="dv-move">{t('dvMoveLabel')}</label>
+            <div className="device-move-row">
+              <select id="dv-move" className="form-select" value={target} onChange={(e) => setTarget(e.target.value)}>
+                <option value="">{t('dvSelectRoom')}</option>
+                {otherRooms.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+              </select>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={handleMove} disabled={!target || moving}>
+                {moving ? <><span className="spinner" />{t('dvMoving')}</> : t('dvMove')}
+              </button>
+            </div>
+          </div>
+        )}
 
         {device.latestReading && (
           <>

@@ -39,13 +39,15 @@ TEMPERATURES = {'owner': 24.0, 'peer': 26.0, 'foreign': 28.0, 'nocoop': 30.0}
 DEAD_TEMPERATURE = 40.0
 
 
-def _records(batch, *, temperature, farm=None):
+def _records(batch, *, temperature, farm=None, room=None):
+    """The records of one batch. A reading is taken in a room when there is one, and otherwise it is the old kind
+    that only knows its batch."""
     return SimpleNamespace(
-        reading=SensorReadingFactory(batch=batch, temperature=temperature),
+        reading=SensorReadingFactory(batch=None if room else batch, room=room, temperature=temperature),
         detection=DiseaseDetectionFactory(batch=batch),
         alert=AlertLogFactory(batch=batch),
         harvest=HarvestRecordFactory(batch=batch),
-        device=IoTDeviceFactory(farm=farm or batch.farm, batch=batch) if farm is not False else None,
+        device=IoTDeviceFactory(farm=farm or batch.farm, room=room) if farm is not False else None,
     )
 
 
@@ -70,21 +72,24 @@ def build_world():
                        ('foreign', 'farmer_foreign'), ('nocoop', 'farmer_no_coop')]:
         farm = FarmFactory(owner=users[actor], name=f'Farm {key}')
         batch = BatchFactory(farm=farm)
-        records = _records(batch, temperature=TEMPERATURES[key])
-        tenants[key] = SimpleNamespace(owner=users[actor], farm=farm, batch=batch, **vars(records))
+        room = RearingRoom.objects.create(farm=farm, name='Room 1')
+        place_batch(batch, room)
+        records = _records(batch, temperature=TEMPERATURES[key], room=room)
+        tenants[key] = SimpleNamespace(owner=users[actor], farm=farm, batch=batch, room=room, **vars(records))
 
     own = tenants['owner']
-    # The owner's farm has two rooms, with the batch in the first.
-    room_1 = RearingRoom.objects.create(farm=own.farm, name='Room 1')
+    # The owner's farm has a second room, empty.
+    room_1 = own.room
     room_2 = RearingRoom.objects.create(farm=own.farm, name='Room 2')
-    place_batch(own.batch, room_1)
     dead_batch = BatchFactory(farm=own.farm, is_active=False)
     # A device belongs to its farm, so the deleted batch gets none of its own.
     dead_batch_records = _records(dead_batch, temperature=DEAD_TEMPERATURE, farm=False)
 
     dead_farm = FarmFactory(owner=users['farmer_owner'], name='Farm gone', is_active=False)
     dead_farm_batch = BatchFactory(farm=dead_farm)
-    dead_farm_records = _records(dead_farm_batch, temperature=DEAD_TEMPERATURE)
+    dead_farm_room = RearingRoom.objects.create(farm=dead_farm, name='Room gone')
+    place_batch(dead_farm_batch, dead_farm_room)
+    dead_farm_records = _records(dead_farm_batch, temperature=DEAD_TEMPERATURE, room=dead_farm_room)
 
     # Put every reading in the same hour, a little in the past, so chart averages are exact.
     hour = timezone.now().replace(minute=15, second=0, microsecond=0) - timedelta(hours=2)

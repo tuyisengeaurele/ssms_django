@@ -9,13 +9,14 @@ const auth = vi.hoisted(() => ({ role: 'FARMER' }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', role: auth.role } }) }));
 
 const api = vi.hoisted(() => ({
-  getById: vi.fn(), update: vi.fn(), remove: vi.fn(), batches: vi.fn(), devices: vi.fn(), deviceById: vi.fn(), deviceCreate: vi.fn(), deviceRemove: vi.fn(), allFarms: vi.fn(),
+  getById: vi.fn(), update: vi.fn(), remove: vi.fn(), batches: vi.fn(), devices: vi.fn(), deviceById: vi.fn(), deviceCreate: vi.fn(), deviceRemove: vi.fn(), deviceMove: vi.fn(), allFarms: vi.fn(), rooms: vi.fn(),
 }));
 vi.mock('../../services/farm.service', () => ({ farmService: { getById: api.getById, update: api.update, delete: api.remove, getAll: api.allFarms } }));
 vi.mock('../../services/batch.service', () => ({ batchService: { getByFarm: api.batches } }));
 vi.mock('../../services/device.service', () => ({
-  deviceService: { getAll: api.devices, getById: api.deviceById, create: api.deviceCreate, remove: api.deviceRemove },
+  deviceService: { getAll: api.devices, getById: api.deviceById, create: api.deviceCreate, remove: api.deviceRemove, moveToRoom: api.deviceMove },
 }));
+vi.mock('../../services/room.service', () => ({ roomService: { getByFarm: api.rooms, create: vi.fn(), update: vi.fn(), remove: vi.fn() } }));
 
 import FarmDetailPage from './FarmDetailPage';
 
@@ -23,8 +24,11 @@ const farm = { id: 'f1', name: "Serge's farm", location: 'Gatsibo', ownerId: 'u1
 const batch = (i: number, stage: string, checks: number) => ({
   id: `b${i}-abcdefg${i}`, farmId: 'f1', stage, startDate: '2026-05-01T00:00:00Z', expectedHarvestDate: '2026-06-01T00:00:00Z', isActive: true, createdAt: '', updatedAt: '', counts: { diseaseDetections: checks },
 });
+const room = (id: string, name: string, over: object = {}) => ({
+  id, name, notes: '', batchCount: 0, batches: [], devices: [], latestReading: null, createdAt: '2026-05-01T00:00:00Z', ...over,
+});
 const device = (id: string, status: string, over: object = {}) => ({
-  id, name: `Sensor ${id}`, deviceKey: `key-${id}`, farmId: 'f1', farmName: "Serge's farm", batchId: null, location: 'Room A', status,
+  id, name: `Sensor ${id}`, deviceKey: `key-${id}`, farmId: 'f1', farmName: "Serge's farm", batchId: null, room: { id: 'r1', name: 'Rearing house 1' }, location: 'Room A', status,
   lastSeen: new Date(Date.now() - 600_000).toISOString(), isActive: true, createdAt: '', latestReading: { temperature: 24.1, humidity: 79.9, timestamp: '' }, recentReadings: [], ...over,
 });
 
@@ -61,6 +65,13 @@ beforeEach(() => {
   api.devices.mockResolvedValue({ data: { data: [device('d1', 'online'), device('d2', 'offline', { latestReading: null, lastSeen: null })] } });
   api.deviceById.mockResolvedValue({ data: { data: device('d1', 'online') } });
   api.allFarms.mockResolvedValue({ data: { data: [farm] } });
+  api.rooms.mockResolvedValue({ data: { data: [
+    room('r1', 'Rearing house 1', {
+      devices: [{ id: 'd1', name: 'Sensor d1', status: 'online', lastSeen: new Date(Date.now() - 300_000).toISOString() }],
+      latestReading: { temperature: 24.1, humidity: 79.9, timestamp: new Date(Date.now() - 300_000).toISOString() },
+    }),
+    room('r2', 'Rearing house 2'),
+  ] } });
   document.title = 'Start';
 });
 
@@ -93,20 +104,60 @@ describe('Farm details page', () => {
 
   it('lists devices with status, readings in plain ink, and when each was last seen', async () => {
     open();
-    const first = (await screen.findByText('Sensor d1')).closest('li') as HTMLElement;
+    const first = (await screen.findByText('Sensor d1', { selector: '.device-list .cell-strong' })).closest('li') as HTMLElement;
     expect(within(first).getByText('Online')).toBeInTheDocument();
     expect(within(first).getByText('24.1 °C')).toBeInTheDocument();
     expect(within(first).getByText('79.9 %')).toBeInTheDocument();
     expect(within(first).getByText(/10 minutes ago/)).toBeInTheDocument();
-    const second = screen.getByText('Sensor d2').closest('li') as HTMLElement;
+    const second = screen.getByText('Sensor d2', { selector: '.device-list .cell-strong' }).closest('li') as HTMLElement;
     expect(within(second).getByText('Offline')).toBeInTheDocument();
     expect(within(second).getByText('No readings yet')).toBeInTheDocument();
     expect(within(second).getByText(/Never/)).toBeInTheDocument();
   });
 
+  describe('rooms panel', () => {
+    const roomItem = async (name: string) => (await screen.findByText(name, { selector: '.room-main .cell-strong' })).closest('li') as HTMLElement;
+
+    it('shows the sensors of a room and what the room measured last', async () => {
+      open();
+      const house = await roomItem('Rearing house 1');
+      expect(within(house).getByText('Sensor d1')).toBeInTheDocument();
+      expect(within(house).getByText('Online')).toBeInTheDocument();
+      expect(within(house).getByText(/24\.1 °C/)).toBeInTheDocument();
+      expect(within(house).getByText(/79\.9 %/)).toBeInTheDocument();
+      expect(within(house).getByText(/5 minutes ago/)).toBeInTheDocument();
+    });
+
+    it('says so when a room has no sensor or no reading yet', async () => {
+      open();
+      const empty = await roomItem('Rearing house 2');
+      expect(within(empty).getByText('No sensor in this room yet.')).toBeInTheDocument();
+      expect(within(empty).queryByText(/°C/)).not.toBeInTheDocument();
+    });
+
+    it('says a room with a sensor but no reading has no reading yet', async () => {
+      api.rooms.mockResolvedValue({ data: { data: [room('r1', 'Rearing house 1', { devices: [{ id: 'd1', name: 'Sensor d1', status: 'offline', lastSeen: null }] })] } });
+      open();
+      expect(within(await roomItem('Rearing house 1')).getByText('No reading yet.')).toBeInTheDocument();
+    });
+
+    it('reloads the rooms after a sensor is moved, so each room shows its own sensors', async () => {
+      auth.role = 'ADMIN';
+      api.deviceMove.mockResolvedValue({ data: { data: device('d1', 'online', { room: { id: 'r2', name: 'Rearing house 2' } }) } });
+      open();
+      fireEvent.click(within((await screen.findByText('Sensor d1', { selector: '.device-list .cell-strong' })).closest('li') as HTMLElement).getByRole('button', { name: /^Details/ }));
+      const dialog = await screen.findByRole('dialog', { name: 'Sensor d1' });
+      const calls = api.rooms.mock.calls.length;
+      fireEvent.change(await within(dialog).findByLabelText('Move to another room'), { target: { value: 'r2' } });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Move device' }));
+      await waitFor(() => expect(api.deviceMove).toHaveBeenCalledWith('d1', 'r2'));
+      await waitFor(() => expect(api.rooms.mock.calls.length).toBeGreaterThan(calls));
+    });
+  });
+
   it('opens a device in the same dialog the Devices page uses', async () => {
     open();
-    fireEvent.click(within((await screen.findByText('Sensor d1')).closest('li') as HTMLElement).getByRole('button', { name: /^Details/ }));
+    fireEvent.click(within((await screen.findByText('Sensor d1', { selector: '.device-list .cell-strong' })).closest('li') as HTMLElement).getByRole('button', { name: /^Details/ }));
     expect(await screen.findByRole('dialog', { name: 'Sensor d1' })).toBeInTheDocument();
   });
 
@@ -155,8 +206,9 @@ describe('Farm details page', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Register a device' });
     expect((within(dialog).getByLabelText(/^Farm/) as HTMLSelectElement).value).toBe('f1');
     fireEvent.change(within(dialog).getByLabelText(/^Device name/), { target: { value: 'New sensor' } });
+    fireEvent.change(await within(dialog).findByLabelText(/^Room/), { target: { value: 'r2' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Register device' }));
-    await waitFor(() => expect(api.deviceCreate).toHaveBeenCalledWith(expect.objectContaining({ name: 'New sensor', farmId: 'f1' })));
+    await waitFor(() => expect(api.deviceCreate).toHaveBeenCalledWith(expect.objectContaining({ name: 'New sensor', farmId: 'f1', roomId: 'r2' })));
     expect(await screen.findByText('New sensor')).toBeInTheDocument();
   });
 
@@ -178,7 +230,7 @@ describe('Farm details page', () => {
 
   it('keeps the old blue and green readings, emoji and icon tiles out', async () => {
     const { container } = open();
-    await screen.findByText('Sensor d1');
+    await screen.findByText('Sensor d1', { selector: '.device-list .cell-strong' });
     expect(container.innerHTML.toLowerCase()).not.toMatch(/#2563eb|#16a34a|#eff6ff|#f0fdf4/);
     expect(container.textContent).not.toMatch(/\u{1F4CD}/u);
   });

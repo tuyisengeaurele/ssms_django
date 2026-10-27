@@ -28,6 +28,13 @@ class IoTDevice(models.Model):
         on_delete=models.SET_NULL, null=True, blank=True,
         db_column='batchId', related_name='devices',
     )
+    # Where the sensor is. It measures the air of this room, which every batch in the room shares.
+    # The old link to one batch above is no longer used.
+    room       = models.ForeignKey(
+        'farms.RearingRoom',
+        on_delete=models.SET_NULL, null=True, blank=True,
+        db_column='roomId', related_name='devices',
+    )
     location   = models.CharField(max_length=200, blank=True, default='')
     status     = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_OFFLINE)
     last_seen  = models.DateTimeField(null=True, blank=True)
@@ -44,11 +51,21 @@ class IoTDevice(models.Model):
 
 class SensorReading(models.Model):
     id = models.CharField(primary_key=True, max_length=36, default=_generate_id, editable=False)
+    # Only readings made before rooms have a batch. A reading belongs to the room it was taken in, and the readings
+    # of a batch are those of the rooms it stayed in. See sensors/room_readings.py.
     batch = models.ForeignKey(
         'batches.Batch',
         on_delete=models.CASCADE,
+        null=True, blank=True,
         db_column='batchId',
         related_name='sensor_readings',
+    )
+    room = models.ForeignKey(
+        'farms.RearingRoom',
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        db_column='roomId',
+        related_name='readings',
     )
     device = models.ForeignKey(
         IoTDevice,
@@ -63,6 +80,7 @@ class SensorReading(models.Model):
         db_table = 'sensor_readings'
         indexes = [
             models.Index(fields=['batch'], name='sensor_batch_idx'),
+            models.Index(fields=['room', 'timestamp'], name='sensor_room_time_idx'),
             models.Index(fields=['timestamp'], name='sensor_timestamp_idx'),
         ]
 

@@ -9,14 +9,19 @@ from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
 from alerts.utils import check_sensor_alerts
-from core.access import get_batch_or_404, get_farm_or_404, scope_by_batch, scope_by_farm
+from audit_log.utils import log_action
+from core.access import get_batch_or_404, get_farm_or_404, scope_by_farm, scope_readings
 from core.params import int_param
 from core.throttles import DeviceKeyThrottle
 from core.utils import api_error, api_success
+from farms.models import RearingRoom
 
-from .devices import batch_for_device, effective_status, record_device_reading
+from .devices import check_room_alerts, effective_status, record_device_reading, room_for_device
 from .models import IoTDevice, SensorReading
+from .room_readings import readings_for_batch
 from .serializers import DeviceReadingSerializer, SensorReadingCreateSerializer, SensorReadingSerializer
+
+CHOOSE_ROOM = "Please choose one of this farm's rooms."
 
 
 def _gen_device_key():
@@ -35,14 +40,19 @@ class SensorReadingCreateView(APIView):
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
 
         batch = get_batch_or_404(request.user, serializer.validated_data['batch_id'])
-        batch_id = batch.pk
 
+        # A reading belongs to the room it is taken in, and every batch in that room shares it. A batch that was never
+        # placed in a room keeps the old way, a reading of its own.
         reading = SensorReading.objects.create(
-            batch_id=batch_id,
+            room_id=batch.room_id,
+            batch=None if batch.room_id else batch,
             temperature=serializer.validated_data['temperature'],
             humidity=serializer.validated_data['humidity'],
         )
-        check_sensor_alerts(batch_id, reading.temperature, reading.humidity)
+        if batch.room_id:
+            check_room_alerts(batch.room_id, reading.temperature, reading.humidity)
+        else:
+            check_sensor_alerts(batch.pk, reading.temperature, reading.humidity)
         return api_success(SensorReadingSerializer(reading).data, 'Sensor reading recorded.', 201)
 
 
@@ -61,7 +71,7 @@ class SensorChartView(APIView):
         hours = int_param(request, 'hours', 24, 1, 168)
         since = timezone.now() - timedelta(hours=hours)
 
-        qs = scope_by_batch(request.user, SensorReading.objects.filter(timestamp__gte=since))
+        qs = scope_readings(request.user, SensorReading.objects.filter(timestamp__gte=since))
 
         rows = (
             qs
@@ -86,13 +96,9 @@ class SensorReadingByBatchView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, batch_id):
-        get_batch_or_404(request.user, batch_id)
+        batch = get_batch_or_404(request.user, batch_id)
 
-        readings = (
-            SensorReading.objects
-            .filter(batch_id=batch_id)
-            .order_by('-timestamp')[:100]
-        )
+        readings = readings_for_batch(batch).order_by('-timestamp')[:100]
         return api_success(SensorReadingSerializer(readings, many=True).data)
 
 
@@ -111,8 +117,8 @@ class SensorBatchSeriesView(APIView):
         since = timezone.now() - timedelta(hours=hours)
 
         rows = (
-            SensorReading.objects
-            .filter(batch_id=batch.pk, timestamp__gte=since)
+            readings_for_batch(batch)
+            .filter(timestamp__gte=since)
             .order_by('timestamp')
             .values_list('timestamp', 'temperature', 'humidity')
         )
@@ -151,6 +157,7 @@ def _serialize_device(device: IoTDevice) -> dict:
         'farmId':    device.farm_id,
         'farmName':  device.farm.name if device.farm else None,
         'batchId':   device.batch_id,
+        'room':      {'id': device.room_id, 'name': device.room.name} if device.room_id and device.room.is_active else None,
         'location':  device.location,
         'status':    effective_status(device),
         'lastSeen':  device.last_seen.isoformat() if device.last_seen else None,
@@ -172,7 +179,7 @@ class IoTDeviceListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def _scoped_qs(self, user):
-        return scope_by_farm(user, IoTDevice.objects.select_related('farm', 'batch').filter(is_active=True))
+        return scope_by_farm(user, IoTDevice.objects.select_related('farm', 'batch', 'room').filter(is_active=True))
 
     def get(self, request):
         qs = self._scoped_qs(request.user)
@@ -206,10 +213,21 @@ class IoTDeviceListView(APIView):
         if IoTDevice.objects.filter(device_key=dev_key).exists():
             return api_error('A device with that key is already registered.', 409)
 
+        rooms = list(RearingRoom.objects.filter(farm=farm, is_active=True))
+        room_id = (data.get('room_id') or data.get('roomId') or '').strip()
+        if room_id:
+            room = next((r for r in rooms if r.pk == room_id), None)
+            if room is None:
+                return api_error(CHOOSE_ROOM, 422, {'room_id': [CHOOSE_ROOM]})
+        else:
+            # A farm with one room has nothing to decide. Otherwise the device waits to be placed.
+            room = rooms[0] if len(rooms) == 1 else None
+
         device = IoTDevice.objects.create(
             name=name,
             device_key=dev_key,
             farm=farm,
+            room=room,
             location=location,
             status=IoTDevice.STATUS_OFFLINE,
             is_active=True,
@@ -220,6 +238,7 @@ class IoTDeviceListView(APIView):
 class IoTDeviceDetailView(APIView):
     """
     GET    /api/devices/:id, device detail with last 20 readings
+    PATCH  /api/devices/:id, move the device to another room of its farm (ADMIN or SUPERVISOR)
     DELETE /api/devices/:id, deactivate device (ADMIN or SUPERVISOR)
     """
     permission_classes = [IsAuthenticated]
@@ -228,7 +247,7 @@ class IoTDeviceDetailView(APIView):
         """Return (device, None), or (None, a 404 response) when it is missing or out of scope."""
         device = scope_by_farm(
             request.user,
-            IoTDevice.objects.select_related('farm', 'farm__owner', 'batch').filter(is_active=True),
+            IoTDevice.objects.select_related('farm', 'farm__owner', 'batch', 'room').filter(is_active=True),
         ).filter(pk=pk).first()
         if device is None:
             return None, api_error("We couldn't find that device.", 404)
@@ -254,6 +273,20 @@ class IoTDeviceDetailView(APIView):
             for r in readings
         ]
         return api_success(data)
+
+    def patch(self, request, pk):
+        if request.user.role not in ('ADMIN', 'SUPERVISOR'):
+            return api_error("You don't have permission to do that.", 403)
+        device, err = self._get_device(request, pk)
+        if err:
+            return err
+        room = RearingRoom.objects.filter(pk=request.data.get('room_id') or '', farm_id=device.farm_id, is_active=True).first()
+        if room is None:
+            return api_error(CHOOSE_ROOM, 422, {'room_id': [CHOOSE_ROOM]})
+        device.room = room
+        device.save(update_fields=['room'])
+        log_action(request, 'UPDATE', 'Device', device.pk, f'Moved device {device.name} to {room.name}')
+        return api_success(_serialize_device(device), 'Device moved.')
 
     def delete(self, request, pk):
         if request.user.role not in ('ADMIN', 'SUPERVISOR'):
@@ -281,18 +314,19 @@ class DeviceIngestView(APIView):
 
     def post(self, request):
         key = request.headers.get('X-Device-Key', '').strip()
-        device = IoTDevice.objects.select_related('farm', 'batch').filter(device_key=key, is_active=True).first() if key else None
-        # One message for a missing, wrong or switched off key, so it says nothing about which keys exist.
-        if device is None:
+        device = IoTDevice.objects.select_related('farm', 'room').filter(device_key=key, is_active=True).first() if key else None
+        # One message for a missing, wrong or switched off key, and for a device whose room was deleted, so it says
+        # nothing about which keys exist.
+        if device is None or (device.room_id and not device.room.is_active):
             return api_error("That device key isn't valid.", 401)
 
         serializer = DeviceReadingSerializer(data=request.data)
         if not serializer.is_valid():
             return api_error('Please check the reading and try again.', 422, serializer.errors)
 
-        batch = batch_for_device(device)
-        if batch is None:
-            return api_error('This device is not linked to a batch yet.', 409)
+        room = room_for_device(device)
+        if room is None:
+            return api_error('This device is not in a room yet.', 409)
 
-        record_device_reading(device, batch, serializer.validated_data['temperature'], serializer.validated_data['humidity'])
+        record_device_reading(device, room, serializer.validated_data['temperature'], serializer.validated_data['humidity'])
         return api_success(None, 'Reading recorded.', 201)

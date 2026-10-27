@@ -1,6 +1,7 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { deviceService } from '../../services/device.service';
-import { Farm, IoTDevice } from '../../types';
+import { roomService } from '../../services/room.service';
+import { Farm, IoTDevice, Room } from '../../types';
 import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
@@ -19,7 +20,25 @@ export default function AddDeviceModal({ farms, defaultFarmId = '', onClose, onC
   const { success, error: showError } = useToast();
   const { getErrorMessage } = useApiError();
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: '', farmId: defaultFarmId, location: '', deviceKey: '' });
+  const [form, setForm] = useState({ name: '', farmId: defaultFarmId, roomId: '', location: '', deviceKey: '' });
+  // The rooms of the chosen farm. `null` while they load or when they could not be loaded.
+  const [rooms, setRooms] = useState<Room[] | null>(null);
+
+  useEffect(() => {
+    setRooms(null);
+    if (!form.farmId) return;
+    let current = true;
+    roomService.getByFarm(form.farmId)
+      .then((r) => {
+        if (!current) return;
+        setRooms(r.data.data);
+        // A farm with one room has nowhere else to put the sensor.
+        setForm((f) => ({ ...f, roomId: r.data.data.length === 1 ? r.data.data[0].id : '' }));
+      })
+      // Without the list the sensor is still registered, and can be moved into a room later.
+      .catch(() => { if (current) setRooms(null); });
+    return () => { current = false; };
+  }, [form.farmId]);
 
   const change = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -31,6 +50,7 @@ export default function AddDeviceModal({ farms, defaultFarmId = '', onClose, onC
       const res = await deviceService.create({
         name: form.name.trim(),
         farmId: form.farmId,
+        roomId: form.roomId || undefined,
         location: form.location.trim(),
         deviceKey: form.deviceKey.trim() || undefined,
       });
@@ -71,6 +91,16 @@ export default function AddDeviceModal({ farms, defaultFarmId = '', onClose, onC
             {farms.map((f) => <option key={f.id} value={f.id}>{f.name} ({f.location})</option>)}
           </select>
         </div>
+        {rooms && rooms.length > 0 && (
+          <div className="form-group">
+            <label className="form-label" htmlFor="dv-room">{t('dvFieldRoom')} <span className="required" aria-hidden="true">*</span></label>
+            <select id="dv-room" className="form-select" value={form.roomId} onChange={change('roomId')} required>
+              <option value="">{t('dvSelectRoom')}</option>
+              {rooms.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </select>
+          </div>
+        )}
+        {rooms && rooms.length === 0 && <p className="form-hint">{t('dvNoRoomsYet')}</p>}
         <div className="form-group">
           <label className="form-label" htmlFor="dv-place">{t('dvFieldPlace')}</label>
           <input id="dv-place" className="form-input" value={form.location} onChange={change('location')} maxLength={200} placeholder={t('dvPlaceholderPlace')} />

@@ -1,5 +1,30 @@
 # Changelog
 
+## Rearing rooms, step 2: sensors and readings (Plan 8)
+
+Sensors now belong to a room, and a reading belongs to the room it was taken in. Every batch in a room shares what the room's sensors measure. Alerts still run once per batch and move to the room in step 3.
+
+### Checked
+- Backend: 801 tests pass. Frontend: 721 tests pass and `tsc` is clean.
+- Your local database: migrated through `sensors/0004`, so 3971 readings and 17 devices were placed in rooms, and the demo data was rebuilt with `seed_demo --reset`.
+- Not yet looked at in the browser by me, because the sign-in step was blocked. Please open the Devices page, a device's details and a farm page once.
+
+### Added
+- **A device lives in a room.** Registering a device on a farm with one room puts it there, a farm with several asks which, and a farm with none still registers it, with a hint to add a room. A manager can move it later from its details ("Move to another room"). `PATCH /api/devices/<id>` with `roomId`, admins and supervisors only, and it is audited.
+- **Readings belong to a room.** A device reading is stored on its device's room. A batch sees the readings of the rooms it stayed in, only for the time it was there, so a move does not copy or lose any history. A reading typed by hand goes to the batch's room.
+- **A device that cannot be placed.** With several rooms and none chosen, a reading is refused with "This device is not in a room yet." A device in a deleted room is refused like an unknown key.
+- **Farm page.** Each room lists its sensors with their status and the last reading the room took, or says there is none yet.
+- **Devices page.** A Room column, searchable, and the room in the details.
+- **Today card.** A room is judged once, however many batches are in it, and the line names the room. When the batches in a room have different safe ranges, the room is judged by the range they share, or by the youngest batch's range when they share none. Harvest lines stay one per batch.
+- `simulate_sensors` sends one reading per room that holds a running batch. New options `--room` and `--batch`.
+
+### Changed
+- The dashboard chart counts a room once, not once per batch.
+- A room with batches in it still cannot be deleted ("Move the batches out of this room first.").
+
+### Before you run this
+- Run `python manage.py migrate`. The data migration moves old readings and devices into the room their batch was in, and it is safe to run twice.
+
 ## Rearing rooms, step 1 (Plan 8)
 
 A farm now has rooms, and every batch sits in one. This is the first of three steps in `docs/superpowers/specs/2026-10-27-rearing-rooms-design.md`. Sensors, readings and alerts still work as before and move to rooms in the next two steps.

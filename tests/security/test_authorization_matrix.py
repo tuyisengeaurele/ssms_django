@@ -167,6 +167,8 @@ ROWS = [
     Row('register a device', 'POST', lambda w: '/api/devices',
         expect({'supervisor_a', 'admin'}, role_denied=FARMERS, allowed_code=201),
         body=lambda w: {'name': 'New sensor', 'farmId': w.farm.pk}),
+    Row('move a device to another room', 'PATCH', lambda w: f'/api/devices/{w.device.pk}',
+        expect({'supervisor_a', 'admin'}, role_denied=FARMERS), body=lambda w: {'roomId': w.room_2.pk}),
     Row('remove a device', 'DELETE', lambda w: f'/api/devices/{w.device.pk}',
         expect({'supervisor_a', 'admin'}, role_denied=FARMERS)),
 
