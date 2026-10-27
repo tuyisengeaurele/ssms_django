@@ -1,6 +1,6 @@
 from django.urls import path
 from .detection_views import (
-    DiseaseDetectionCreateView, DiseaseDetectionByBatchView,
+    DiseaseDetectionCreateView, DiseaseDetectionByBatchView, DiseaseDetectionFeedbackView,
     RecentDetectionsView, DetectionHistoryView, DetectionStatsView,
 )
 
@@ -10,4 +10,5 @@ urlpatterns = [
     path('/history', DetectionHistoryView.as_view(), name='detection_history'),                       # GET  /api/detections/history
     path('/stats', DetectionStatsView.as_view(), name='detection_stats'),                             # GET  /api/detections/stats
     path('/batch/<str:batch_id>', DiseaseDetectionByBatchView.as_view(), name='detection_by_batch'),  # GET  /api/detections/batch/<id>
+    path('/<str:pk>/feedback', DiseaseDetectionFeedbackView.as_view(), name='detection_feedback'),   # POST /api/detections/<id>/feedback
 ]
