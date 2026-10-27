@@ -1,5 +1,28 @@
 # Changelog
 
+## First run and quiet milestones (Plan 9, item B10)
+
+A new farmer lands on a short welcome instead of a page of zeros, and the first batch and first harvest get a plain word of recognition.
+
+### Checked
+- Backend: 1026 tests pass. Frontend: 871 tests pass and `tsc` is clean. No migration.
+- Not yet looked at in the browser by me. Please sign in as a farmer with no farm (a new account) and look at the dashboard, then create a first batch and log a first harvest.
+
+### Added
+- **A welcome for a farmer with no farm and no batch.** The dashboard shows "Let's get your first batch going", three short steps (add your farm, start a batch, follow it day by day) and one button, "Add your farm". The tiles, charts and empty lists are left out until there is something to show. Once there is a farm the normal dashboard returns. If the farms or batches request fails, nobody is welcomed as new, because a failed request says nothing about what they have.
+- **No empty charts before a batch.** A farm with no batch yet no longer shows two charts that say "No sensor readings yet."
+- **A quiet word on the first batch and the first harvest.** The answers to `POST /api/batches` and `POST /api/harvest/batch/<id>` carry `milestone` (`FIRST_BATCH`, `FIRST_HARVEST` or null). The page then shows "Your first batch is created. It starts at the egg stage. Open it any day to see how it is doing." or "Your first harvest is recorded. The totals are on the Harvests page." in place of the usual message. A plain toast, no confetti, no emoji.
+- English, French and Kinyarwanda.
+
+### Rulings to confirm
+- **"First" means the first the farmer has ever had, deleted ones included.** Deleting the first batch and starting another does not repeat the message.
+- **Only the owner gets the word.** An admin starting a batch or logging a harvest for a farmer sees the usual message, and the farmer's own later batch is then not "first" either, because one already exists.
+- **The other empty pages stay as they are.** Farms, Batches, Alerts, Devices, Harvests and the reports already say what is missing and offer the next step. I did not find a page that needed more.
+- **The supervisor dashboard has no welcome yet.** A supervisor with no farmers sees its existing empty states.
+
+### Not done yet
+- The French and Kinyarwanda text is my draft and needs a native speaker.
+
 ## Printable one-page batch report (Plan 9, item B9)
 
 Every batch now has a plain report page that fits one sheet of paper, at `/batches/<id>/report`. A "Batch report" button on the batch page opens it.
