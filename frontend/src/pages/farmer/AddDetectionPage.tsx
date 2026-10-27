@@ -7,11 +7,19 @@ import { useLanguage } from '../../context/LanguageContext';
 import { colorFor } from '../../utils/chartColors';
 import { fill } from '../../utils/fill';
 import BarList from '../../components/ui/BarList';
+import CameraCapture from '../../components/ui/CameraCapture';
+import { compressPhoto } from '../../utils/compressPhoto';
 import { Icon } from '../../components/ui/Icon';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 
 const percent = (value: number) => `${Math.round(value * 100)}%`;
+
+const MB = 1024 * 1024;
+/** The size next to the file name, to one decimal. */
+const fileSize = (bytes: number) => (bytes >= MB ? `${(bytes / MB).toFixed(1)} MB` : `${(bytes / 1024).toFixed(1)} KB`);
+/** The size inside a sentence, as a round number of KB or one decimal of MB. */
+const briefSize = (bytes: number) => (bytes >= MB ? `${(bytes / MB).toFixed(1)} MB` : `${Math.round(bytes / 1024)} KB`);
 
 export default function AddDetectionPage() {
   const { id: batchId } = useParams<{ id: string }>();
@@ -26,19 +34,34 @@ export default function AddDetectionPage() {
   const [error, setError] = useState('');
   const [result, setResult] = useState<DetectionResult | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [camera, setCamera] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  // The size the photo had before it was made smaller, so the person can see what was done.
+  const [originalSize, setOriginalSize] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  // A photo chosen while an earlier one is still being prepared wins, so a slow one cannot replace it.
+  const latest = useRef(0);
 
-  const take = (chosen: File) => {
+  const canUseCamera = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
+
+  const take = async (chosen: File) => {
     if (!chosen.type.startsWith('image/')) {
       setError(t('ckNotPhoto'));
       return;
     }
-    setFile(chosen);
+    const turn = ++latest.current;
     setError('');
     setResult(null);
+    setPreparing(true);
+    // If the photo cannot be made smaller, it is sent as it is and the server decides.
+    const ready = await compressPhoto(chosen).catch(() => chosen);
+    if (turn !== latest.current) return;
+    setFile(ready);
+    setOriginalSize(chosen.size);
+    setPreparing(false);
     const reader = new FileReader();
-    reader.onload = (e) => setPreview(e.target?.result as string);
-    reader.readAsDataURL(chosen);
+    reader.onload = (e) => { if (turn === latest.current) setPreview(e.target?.result as string); };
+    reader.readAsDataURL(ready);
   };
 
   const onPick = (e: ChangeEvent<HTMLInputElement>) => {
@@ -70,6 +93,9 @@ export default function AddDetectionPage() {
   };
 
   const reset = () => {
+    latest.current += 1;
+    setPreparing(false);
+    setOriginalSize(0);
     setFile(null);
     setPreview(null);
     setNotes('');
@@ -139,13 +165,27 @@ export default function AddDetectionPage() {
             {preview ? (
               <div className="check-preview">
                 <img src={preview} alt={t('ckPreviewAlt')} />
-                <p className="check-preview-name">{file?.name} ({((file?.size ?? 0) / 1024).toFixed(1)} KB)</p>
+                <p className="check-preview-name">{file?.name} ({fileSize(file?.size ?? 0)})</p>
+                {file && originalSize > file.size && (
+                  <p className="form-hint">{fill(t('phReadySmaller'), { size: briefSize(file.size), was: briefSize(originalSize) })}</p>
+                )}
                 <button type="button" className="btn btn-ghost btn-sm" onClick={reset}>
                   <Icon name="close" size={15} />
                   {t('ckChange')}
                 </button>
               </div>
+            ) : camera ? (
+              <CameraCapture onCapture={(photo) => { setCamera(false); take(photo); }} onClose={() => setCamera(false)} />
             ) : (
+              <>
+              {canUseCamera && (
+                <div className="photo-choices">
+                  <button type="button" className="btn btn-secondary" onClick={() => setCamera(true)}>
+                    <Icon name="detections" size={16} />
+                    {t('phCameraOpen')}
+                  </button>
+                </div>
+              )}
               <label
                 className={`dropzone${dragging ? ' is-over' : ''}`}
                 onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
@@ -157,15 +197,26 @@ export default function AddDetectionPage() {
                 <strong>{t('ckChoose')}</strong>
                 <span>{t('ckChooseHint')}</span>
               </label>
+              </>
             )}
+
+            <details className="photo-help">
+              <summary>{t('phTipsTitle')}</summary>
+              <ul className="photo-tips">
+                <li>{t('phTip1')}</li>
+                <li>{t('phTip2')}</li>
+                <li>{t('phTip3')}</li>
+              </ul>
+            </details>
 
             <div className="form-group">
               <label className="form-label" htmlFor="check-notes">{t('ckNotes')} <span className="form-optional">({t('ckNotesOptional')})</span></label>
               <textarea id="check-notes" className="form-textarea" rows={2} maxLength={500} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('ckNotesPlace')} />
             </div>
 
-            <button type="button" className="btn btn-primary btn-full" disabled={!file || loading} onClick={run}>
-              {loading ? <><span className="spinner" />{t('ckRunning')}</> : t('ckRun')}
+            <button type="button" className="btn btn-primary btn-full" disabled={!file || loading || preparing} onClick={run}>
+              {loading ? <><span className="spinner" />{t('ckRunning')}</>
+                : preparing ? <><span className="spinner" />{t('phCompressing')}</> : t('ckRun')}
             </button>
           </Panel>
 

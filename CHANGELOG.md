@@ -1,5 +1,25 @@
 # Changelog
 
+## Disease photo: camera, smaller photos and a framing guide (Plan 9, item B5)
+
+Taking a photo for the disease check is easier on a phone, and a large photo no longer gets turned away.
+
+### Checked
+- Frontend: 783 tests pass and `tsc` is clean. No backend change.
+- Not yet looked at in the browser by me. Please open a batch's Disease check on a phone once and take a photo.
+
+### Added
+- **Use the camera.** On a device with a camera, a button opens the camera in the page, using the back camera. A square shows what will be sent, and "Take photo" sends the middle square of the picture. The camera is switched off when the photo is taken, when the person cancels or presses Escape, and when they leave the page. If the camera is blocked or missing, the page says so in plain words and offers the normal file picker.
+- **Smaller photos.** A photo is made into a JPEG of at most 1,280 pixels on the long side before it is sent, with a note such as "It was 5.0 MB, and was made smaller to send faster." The server refuses anything over 5 MB and phone photos often are, so before this the check could fail on a good photo. A small photo is sent as it is. If the browser cannot do it, the original is sent.
+- **Framing advice**, folded away under "How to take a photo the check can read": get close, use daylight without flash, hold still. The disease model squeezes every photo into a square, which is why the camera frames a square.
+
+### Changed
+- The page said photos could be up to 10 MB. The server limit is 5 MB, and the page now says large photos are made smaller for you.
+
+### Known limits
+- Photos chosen from the gallery are made smaller but not cropped. Only camera photos are cut to the square.
+- The French and Kinyarwanda words are drafts for a native speaker.
+
 ## Rwanda places for farms (Plan 9, item L2)
 
 A farm's location is now chosen the way Irembo asks for it: province, district, sector, cell and village as linked lists, with an optional street. "Use my location" fills in what a map can tell.
