@@ -916,6 +916,16 @@ tr.is-off td:last-child { opacity: 1; }
 .page-narrow { max-width: 680px; margin-inline: auto; }
 
 /* What needs attention today: one plain line per item, each a link to its batch */
+/* Choose how much time a chart shows: plain words, the chosen one underlined */
+.lifecycle-notes { margin-bottom: 16px; }
+.lifecycle-day { margin: 0; color: var(--ink); font-weight: 600; }
+.lifecycle-range { margin: 4px 0 0; color: var(--text-muted); font-size: 0.9rem; }
+
+.range-choice { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 12px; }
+.range-choice button { padding: 6px 12px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--text-muted); font: 500 0.9rem var(--font-ui); }
+.range-choice button:hover { color: var(--ink); }
+.range-choice button[aria-pressed='true'] { border-bottom-color: var(--ink); color: var(--ink); font-weight: 600; }
+
 .attention-list { margin: 0; padding: 0; list-style: none; }
 .attention-list li + li { border-top: 1px solid var(--border-light); }
 .attention-list a { display: block; padding: 14px 24px; color: var(--ink); font-weight: 600; line-height: 1.45; transition: background-color 0.2s var(--ease-out); }

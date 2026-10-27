@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import { ToastProvider } from '../../context/ToastContext';
 import { setReducedMotion } from '../../test/setup';
@@ -9,9 +9,11 @@ import StageStepper from './StageStepper';
 const auth = vi.hoisted(() => ({ role: 'FARMER' }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', role: auth.role } }) }));
 
-const api = vi.hoisted(() => ({ getById: vi.fn(), updateStage: vi.fn(), archive: vi.fn(), detections: vi.fn() }));
+const api = vi.hoisted(() => ({ getById: vi.fn(), updateStage: vi.fn(), archive: vi.fn(), detections: vi.fn(), series: vi.fn(), thresholds: vi.fn() }));
 vi.mock('../../services/batch.service', () => ({ batchService: { getById: api.getById, updateStage: api.updateStage, delete: api.archive } }));
 vi.mock('../../services/detection.service', () => ({ detectionService: { getByBatch: api.detections } }));
+vi.mock('../../services/sensor.service', () => ({ sensorService: { getBatchSeries: api.series } }));
+vi.mock('../../services/alert.service', () => ({ alertService: { getThresholds: api.thresholds } }));
 
 import BatchDetailPage from './BatchDetailPage';
 
@@ -61,6 +63,14 @@ beforeEach(() => {
   setReducedMotion(true);
   api.getById.mockResolvedValue({ data: { data: batch() } });
   api.detections.mockResolvedValue({ data: { data: detections } });
+  api.series.mockResolvedValue({ data: { data: [
+    { timestamp: '2026-10-01T09:00:00Z', temperature: 30.2, humidity: 78, count: 4 },
+    { timestamp: '2026-10-01T10:00:00Z', temperature: 24.5, humidity: 78, count: 4 },
+  ] } });
+  api.thresholds.mockResolvedValue({ data: { data: [
+    { stage: 'LARVA', tempMin: 24, tempMax: 27, humMin: 75, humMax: 85 },
+    { stage: 'COCOON', tempMin: 22, tempMax: 28, humMin: 70, humMax: 85 },
+  ] } });
 });
 
 type StepperProps = Parameters<typeof StageStepper>[0];
@@ -213,5 +223,78 @@ describe('Batch details page', () => {
     await screen.findByText('Flacherie');
     expect(container.textContent).not.toMatch(/\bAI\b|AI-powered/);
     expect(container.innerHTML.toLowerCase()).not.toMatch(/gradient|#d97706|#2563eb|#dc2626|#16a34a|#7c3aed/);
+  });
+});
+
+describe('Batch timeline and charts', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('says which day of the cycle it is and when harvest is expected', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-05-27T12:00:00Z'));
+    open();
+    expect(await screen.findByText('Day 12 of 21. Harvest is expected on Jun 6, 2026.')).toBeInTheDocument();
+  });
+
+  it('says so when the expected harvest date has passed', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-06-10T12:00:00Z'));
+    open();
+    expect(await screen.findByText('Day 26. Harvest was expected on Jun 6, 2026.')).toBeInTheDocument();
+  });
+
+  it('has no day count once the batch is at harvest', async () => {
+    api.getById.mockResolvedValue({ data: { data: batch({ stage: 'HARVEST' }) } });
+    open();
+    await screen.findByRole('heading', { level: 1 });
+    expect(screen.queryByText(/^Day \d+/)).not.toBeInTheDocument();
+  });
+
+  it('tells the safe range of the current stage from the server, not from a fixed number', async () => {
+    open();
+    expect(await screen.findByText('In Larva, keep the temperature between 24 and 27 °C and the humidity between 75 and 85 %.')).toBeInTheDocument();
+    expect(screen.getAllByText('Safe range: 24 to 27 °C').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Safe range: 75 to 85 %').length).toBeGreaterThan(0);
+  });
+
+  it('uses the usual range when the stage ranges cannot be fetched', async () => {
+    api.thresholds.mockRejectedValue(new Error('nope'));
+    open();
+    expect(await screen.findByText('In Larva, keep the temperature between 22 and 28 °C and the humidity between 70 and 85 %.')).toBeInTheDocument();
+  });
+
+  it('judges the readings table by the range of the stage', async () => {
+    open();
+    const table = await screen.findByRole('table', { name: 'Latest readings' });
+    // 24.5 is inside the LARVA range of 24 to 27, and 30.2 is not.
+    expect(within(within(table).getByText('24.5 °C').closest('tr') as HTMLElement).getByText('In range')).toBeInTheDocument();
+    expect(within(within(table).getByText('30.2 °C').closest('tr') as HTMLElement).getByText('Out of range')).toBeInTheDocument();
+  });
+
+  it('shows the last day of readings first and offers a week and a month', async () => {
+    open();
+    await waitFor(() => expect(api.series).toHaveBeenCalledWith('b1-9sieo7cv', 24));
+    const choice = await screen.findByRole('group', { name: 'Time shown in the charts' });
+    expect(within(choice).getByRole('button', { name: '24 hours' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(choice).getByRole('button', { name: '7 days' })).toHaveAttribute('aria-pressed', 'false');
+    expect(within(choice).getByRole('button', { name: '30 days' })).toBeInTheDocument();
+  });
+
+  it('loads a week or a month of readings when asked', async () => {
+    open();
+    const choice = await screen.findByRole('group', { name: 'Time shown in the charts' });
+    fireEvent.click(within(choice).getByRole('button', { name: '7 days' }));
+    await waitFor(() => expect(api.series).toHaveBeenCalledWith('b1-9sieo7cv', 168));
+    expect(within(choice).getByRole('button', { name: '7 days' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(within(choice).getByRole('button', { name: '30 days' }));
+    await waitFor(() => expect(api.series).toHaveBeenCalledWith('b1-9sieo7cv', 720));
+  });
+
+  it('says so when the chosen time has no readings', async () => {
+    api.series.mockResolvedValue({ data: { data: [] } });
+    open();
+    expect(await screen.findByText('No readings in this time.')).toBeInTheDocument();
   });
 });

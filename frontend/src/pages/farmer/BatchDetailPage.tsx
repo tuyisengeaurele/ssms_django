@@ -3,6 +3,8 @@ import type { CSSProperties } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { batchService } from '../../services/batch.service';
 import { detectionService } from '../../services/detection.service';
+import { alertService } from '../../services/alert.service';
+import { sensorService, type SeriesPoint, type StageRange } from '../../services/sensor.service';
 import { Batch, BatchStage, DiseaseDetection } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -22,10 +24,20 @@ import RangeChart from '../../components/ui/RangeChart';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import StageStepper from './StageStepper';
 
-// The same limits the sensors use when they raise an alert.
-const TEMP_RANGE: [number, number] = [22, 28];
-const HUM_RANGE: [number, number] = [70, 85];
-const inRange = (value: number, [low, high]: [number, number]) => value >= low && value <= high;
+// Used when the server cannot give the range of a stage, the same range it falls back to.
+const USUAL_RANGE = { tempMin: 22, tempMax: 28, humMin: 70, humMax: 85 };
+const inRange = (value: number, low: number, high: number) => value >= low && value <= high;
+const startOfDay = (ms: number) => {
+  const d = new Date(ms);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+};
+
+const WINDOWS = [
+  { hours: 24, label: 'bd24h' },
+  { hours: 168, label: 'bd7d' },
+  { hours: 720, label: 'bd30d' },
+] as const;
 
 export default function BatchDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -43,6 +55,9 @@ export default function BatchDetailPage() {
   const [pendingStage, setPendingStage] = useState<BatchStage | null>(null);
   const [showArchive, setShowArchive] = useState(false);
   const [archiving, setArchiving] = useState(false);
+  const [ranges, setRanges] = useState<StageRange[]>([]);
+  const [hours, setHours] = useState<number>(24);
+  const [points, setPoints] = useState<SeriesPoint[]>([]);
 
   const code = (id ?? '').slice(-8).toUpperCase();
   useDocumentTitle(fill(t('bdTitle'), { id: code }));
@@ -58,6 +73,19 @@ export default function BatchDetailPage() {
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    // Without the ranges the page still works, using the usual ones.
+    alertService.getThresholds().then((r) => setRanges(r.data.data)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!id) return;
+    sensorService.getBatchSeries(id, hours)
+      .then((r) => setPoints(r.data.data))
+      .catch((err) => showError(getErrorMessage(err)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, hours]);
 
   const canEdit = user?.role === 'FARMER' || user?.role === 'ADMIN';
 
@@ -117,12 +145,25 @@ export default function BatchDetailPage() {
   const alerts = batch.alertLogs ?? [];
   const unread = alerts.filter((a) => !a.isRead).length;
   const counts = batch.counts ?? { diseaseDetections: detections.length, sensorReadings: readings.length, alertLogs: alerts.length };
-  // The API sends the newest reading first, charts read oldest first.
-  const series = [...readings].reverse().map((r) => ({
-    hour: clock.format(new Date(r.timestamp)),
-    temp: Number(r.temperature.toFixed(1)),
-    hum: Number(r.humidity.toFixed(1)),
+  // The series comes oldest first, which is the way a chart reads.
+  const series = points.map((p) => ({
+    hour: clock.format(new Date(p.timestamp)),
+    temp: p.temperature,
+    hum: p.humidity,
   }));
+  const range = ranges.find((r) => r.stage === batch.stage) ?? USUAL_RANGE;
+  const tempSafe: [number, number] = [range.tempMin, range.tempMax];
+  const humSafe: [number, number] = [range.humMin, range.humMax];
+
+  const now = Date.now();
+  const startMs = new Date(batch.startDate).getTime();
+  const expectedMs = new Date(batch.expectedHarvestDate).getTime();
+  const dayNumber = Math.floor((now - startMs) / 86_400_000) + 1;
+  const totalDays = Math.round((expectedMs - startMs) / 86_400_000);
+  const late = startOfDay(expectedMs) < startOfDay(now);
+  const dayLine = batch.stage === 'HARVEST'
+    ? ''
+    : fill(t(late ? 'bdDayLate' : 'bdDay'), { n: dayNumber, total: totalDays, date: date.format(new Date(expectedMs)) });
 
   return (
     <div>
@@ -190,6 +231,17 @@ export default function BatchDetailPage() {
 
       <div className="stack-24">
         <Panel title={t('bdLifecycle')}>
+          {batch.stage !== 'HARVEST' && (
+            <div className="lifecycle-notes">
+              <p className="lifecycle-day">{dayLine}</p>
+              <p className="lifecycle-range">
+                {fill(t('bdStageRange'), {
+                  stage: STAGE_LABELS[batch.stage],
+                  tmin: range.tempMin, tmax: range.tempMax, hmin: range.humMin, hmax: range.humMax,
+                })}
+              </p>
+            </div>
+          )}
           <StageStepper current={batch.stage} canAdvance={canEdit} busy={moving} onAdvance={setPendingStage} />
         </Panel>
 
@@ -260,16 +312,26 @@ export default function BatchDetailPage() {
           </Panel>
         </div>
 
-        {series.length > 0 && (
+        {(counts.sensorReadings > 0 || series.length > 0) && (
           <>
-            <div className="split">
-              <Panel title={t('bdTempChart')} note={t('bdSafeTemp')}>
-                <RangeChart label={t('bdTempChart')} data={series} dataKey="temp" unit="°C" color={colorFor('stage', 'COCOON')} safe={TEMP_RANGE} />
-              </Panel>
-              <Panel title={t('bdHumChart')} note={t('bdSafeHum')}>
-                <RangeChart label={t('bdHumChart')} data={series} dataKey="hum" unit="%" color={colorFor('stage', 'PUPA')} safe={HUM_RANGE} />
-              </Panel>
+            <div className="range-choice" role="group" aria-label={t('bdTimeLabel')}>
+              {WINDOWS.map((w) => (
+                <button key={w.hours} type="button" aria-pressed={hours === w.hours} onClick={() => setHours(w.hours)}>{t(w.label)}</button>
+              ))}
             </div>
+
+            {series.length === 0 ? (
+              <p className="chart-empty">{t('bdNoSeries')}</p>
+            ) : (
+              <div className="split">
+                <Panel title={t('bdTempChart')} note={fill(t('bdSafeTemp'), { min: range.tempMin, max: range.tempMax })}>
+                  <RangeChart label={t('bdTempChart')} data={series} dataKey="temp" unit="°C" color={colorFor('stage', 'COCOON')} safe={tempSafe} />
+                </Panel>
+                <Panel title={t('bdHumChart')} note={fill(t('bdSafeHum'), { min: range.humMin, max: range.humMax })}>
+                  <RangeChart label={t('bdHumChart')} data={series} dataKey="hum" unit="%" color={colorFor('stage', 'PUPA')} safe={humSafe} />
+                </Panel>
+              </div>
+            )}
 
             <Panel title={t('bdRecentReadings')} flush>
               <div className="table-wrapper">
@@ -284,7 +346,7 @@ export default function BatchDetailPage() {
                   </thead>
                   <tbody>
                     {readings.slice(0, 10).map((r) => {
-                      const fine = inRange(r.temperature, TEMP_RANGE) && inRange(r.humidity, HUM_RANGE);
+                      const fine = inRange(r.temperature, range.tempMin, range.tempMax) && inRange(r.humidity, range.humMin, range.humMax);
                       return (
                         <tr key={r.id} className="tbody-row">
                           <td className="cell-lead cell-muted cell-nowrap">{clock.format(new Date(r.timestamp))}</td>

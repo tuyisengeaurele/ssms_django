@@ -42,10 +42,22 @@ export interface StageRange {
   humMax: number;
 }
 
+/** One bucket of readings, averaged. */
+export interface SeriesPoint {
+  timestamp: string;
+  temperature: number;
+  humidity: number;
+  count: number;
+}
+
 export const sensorService = {
   /** GET /api/sensors/chart?hours=N — hourly avg temp & humidity */
   getChart: (hours = 24) =>
     api.get<ApiResponse<ChartPoint[]>>(`/sensors/chart?hours=${hours}`),
+
+  /** GET /api/sensors/batch/<id>/series?hours=N, one batch over time. Averaged, oldest first. */
+  getBatchSeries: (batchId: string, hours = 24) =>
+    api.get<ApiResponse<SeriesPoint[]>>(`/sensors/batch/${batchId}/series`, { params: { hours } }),
 };
 
 export const detectionService2 = {
