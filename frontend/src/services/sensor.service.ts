@@ -26,6 +26,8 @@ export interface ActiveBatch {
   isActive: boolean;
   createdAt: string;
   farm: { id: string; name: string; location: string };
+  /** The room the batch is in now. Batches in one room share its readings. */
+  room?: { id: string; name: string } | null;
   detectionCount: number;
   /** Temperature and humidity problems that are still open. */
   openAlerts?: number;

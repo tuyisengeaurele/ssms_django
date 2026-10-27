@@ -42,6 +42,11 @@ describe('Today card', () => {
     expect(screen.getByRole('link', { name: text })).toHaveAttribute('href', '/batches/b1');
   });
 
+  it('names the room when the line is about a room', () => {
+    show([item({ roomId: 'r1', roomName: 'Rearing house 2', kind: 'tempLow', value: 20.5, min: 22, max: 28 })]);
+    expect(screen.getByRole('link', { name: 'Habimana Silk Farm, Rearing house 2: temperature is 20.5 °C, below the safe 22 to 28 °C.' })).toBeInTheDocument();
+  });
+
   it('lists every item as a link to its batch', () => {
     show([item({ batchId: 'b1', kind: 'tempLow', value: 20, min: 22, max: 28 }), item({ batchId: 'b2', farmName: 'Other Farm', kind: 'harvestToday' })]);
     const list = screen.getByRole('list', { name: 'Needs attention today' });
