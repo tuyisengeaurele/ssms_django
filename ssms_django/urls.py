@@ -13,6 +13,7 @@ urlpatterns = [
     path('api/sensors', include('sensors.urls')),      # /api/sensors, /api/sensors/batch/<id>
     path('api/alerts', include('alerts.urls')),        # /api/alerts/batch/<id>, /api/alerts/<id>/read
     path('api/detections', include('sensors.detection_urls')),  # /api/detections, /api/detections/batch/<id>
+    path('api/locations', include('locations.urls')),                    # the places of Rwanda and the sector of a point
     path('api/rooms', include('farms.room_urls')),                       # /api/rooms/<id>
     path('api/team', include('cooperatives.team_urls')),                 # a supervisor's farmers and invitation links
     path('api/invitations', include('cooperatives.invitation_urls')),    # the page behind an invitation link
