@@ -1,0 +1,25 @@
+{% autoescape off %}{{ email.heading }}
+{% if email.greeting %}
+{{ email.greeting }}
+{% endif %}{% for line in email.intro %}
+{{ line }}
+{% endfor %}{% if email.facts %}
+{% for label, value in email.facts %}{{ label }}: {{ value }}
+{% endfor %}{% endif %}{% if email.button %}
+{{ email.button.0 }}:
+{{ email.button.1 }}
+{% endif %}{% for line in email.closing %}
+{{ line }}
+{% endfor %}
+The SSMS team
+
+--
+{{ org_name }} (SSMS)
+{{ org_address }}
+{{ support_email }}
+{{ site_url }}
+
+{{ email.reason }}
+Privacy: {{ privacy_url }}
+Terms: {{ terms_url }}
+{% endautoescape %}

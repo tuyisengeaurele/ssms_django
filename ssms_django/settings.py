@@ -61,7 +61,7 @@ ROOT_URLCONF = 'ssms_django.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -226,6 +226,9 @@ EMAIL_HOST_USER     = config('EMAIL_HOST_USER',     default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL  = config('DEFAULT_FROM_EMAIL',  default='SSMS <smartsericulturerw@gmail.com>')
 FRONTEND_URL        = config('FRONTEND_URL',        default='http://localhost:5173')
+# Shown in the footer of every email and on every formal document. Change them here, not in the templates.
+SUPPORT_EMAIL       = config('SUPPORT_EMAIL',       default='smartsericulturerw@gmail.com')
+ORG_ADDRESS         = config('ORG_ADDRESS',         default='University of Rwanda, College of Science and Technology (UR-CST), P.O. Box 3900, Kigali, Rwanda')
 
 # AI microservice (FastAPI — deployed separately)
 AI_SERVICE_URL = config('AI_SERVICE_URL', default='http://localhost:8001')
