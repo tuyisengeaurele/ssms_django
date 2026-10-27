@@ -83,6 +83,7 @@ ROWS = [
     reading_row('detections of a batch', lambda w: f'/api/detections/batch/{w.batch.pk}'),
     reading_row('alerts of a batch', lambda w: f'/api/alerts/batch/{w.batch.pk}'),
     reading_row('harvest of a batch', lambda w: f'/api/harvest/batch/{w.batch.pk}'),
+    reading_row('deaths log of a batch', lambda w: f'/api/batches/{w.batch.pk}/mortality'),
     reading_row('device detail', lambda w: f'/api/devices/{w.device.pk}'),
 
     # ── the same, for deleted things: invisible to everybody, admin included ──────────────────
@@ -91,6 +92,7 @@ ROWS = [
     gone_row('deleted batch detections', lambda w: f'/api/detections/batch/{w.dead_batch.pk}'),
     gone_row('deleted batch alerts', lambda w: f'/api/alerts/batch/{w.dead_batch.pk}'),
     gone_row('deleted batch harvest', lambda w: f'/api/harvest/batch/{w.dead_batch.pk}'),
+    gone_row('deleted batch deaths log', lambda w: f'/api/batches/{w.dead_batch.pk}/mortality'),
     gone_row('deleted farm detail', lambda w: f'/api/farms/{w.dead_farm.pk}'),
     gone_row('deleted farm batches', lambda w: f'/api/batches/farm/{w.dead_farm.pk}'),
     gone_row('batch inside a deleted farm', lambda w: f'/api/batches/{w.dead_farm_batch.pk}'),
@@ -106,6 +108,12 @@ ROWS = [
         body=lambda w: {'farmId': w.farm.pk, 'expectedHarvestDate': (timezone.now() + timedelta(days=30)).isoformat()}),
     Row('move a batch to the next stage', 'PATCH', lambda w: f'/api/batches/{w.batch.pk}/stage',
         expect({'farmer_owner', 'admin'}, role_denied=FARMER_WRITE_DENIED), body=lambda w: {'stage': 'LARVA'}),
+    Row('edit the details of a batch', 'PATCH', lambda w: f'/api/batches/{w.batch.pk}',
+        expect({'farmer_owner', 'admin'}, role_denied=FARMER_WRITE_DENIED), body=lambda w: {'breed': 'Local'}),
+    Row('record deaths in a batch', 'POST', lambda w: f'/api/batches/{w.batch.pk}/mortality',
+        expect({'farmer_owner', 'admin'}, role_denied=FARMER_WRITE_DENIED, allowed_code=201), body=lambda w: {'count': 3}),
+    Row('record deaths in a deleted batch', 'POST', lambda w: f'/api/batches/{w.dead_batch.pk}/mortality',
+        expect(NOBODY, role_denied=FARMER_WRITE_DENIED), body=lambda w: {'count': 3}),
     Row('delete a batch', 'DELETE', lambda w: f'/api/batches/{w.batch.pk}',
         expect({'farmer_owner', 'admin'}, role_denied=FARMER_WRITE_DENIED)),
     Row('edit a farm', 'PATCH', lambda w: f'/api/farms/{w.farm.pk}',

@@ -14,6 +14,7 @@ from .serializers import (
     BatchDetailSerializer,
     BatchListSerializer,
     BatchSupervisorSerializer,
+    BatchUpdateSerializer,
     BatchUpdateStageSerializer,
 )
 
@@ -34,6 +35,9 @@ class BatchCreateView(APIView):
             farm=farm,
             expected_harvest_date=serializer.validated_data['expected_harvest_date'],
             notes=serializer.validated_data.get('notes'),
+            breed=serializer.validated_data.get('breed', ''),
+            quantity=serializer.validated_data.get('quantity'),
+            quantity_unit=serializer.validated_data.get('quantity_unit', 'BOXES'),
         )
         batch.refresh_from_db()
         log_action(request, 'CREATE', 'Batch', batch.pk, f'Created batch on farm {farm.name}')
@@ -58,6 +62,20 @@ class BatchDetailView(APIView):
             Batch.objects.prefetch_related('disease_detections', 'sensor_readings', 'alert_logs'),
         )
         return api_success(BatchDetailSerializer(batch).data)
+
+    def patch(self, request, pk):
+        """PATCH /api/batches/<id>, correct the breed, quantity, unit or notes. The stage has its own route."""
+        if request.user.role not in ('FARMER', 'ADMIN'):
+            return api_error("You don't have permission to do that.", 403)
+        batch = get_batch_or_404(request.user, pk)
+        serializer = BatchUpdateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return api_error('Please check what you entered and try again.', 422, serializer.errors)
+        for field, value in serializer.validated_data.items():
+            setattr(batch, field, value)
+        batch.save(update_fields=list(serializer.validated_data) or None)
+        log_action(request, 'UPDATE', 'Batch', batch.pk, f'Changed details of batch {batch.pk}')
+        return api_success(BatchListSerializer(batch).data, 'Batch updated.')
 
     def delete(self, request, pk):
         if request.user.role not in ('FARMER', 'ADMIN'):
