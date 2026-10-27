@@ -17,6 +17,10 @@ export const detectionService = {
     });
   },
 
+  /** POST /api/detections/<id>/feedback: was the result right, and if not, what was it? */
+  sendFeedback: (id: string, answer: { isCorrect: boolean; actualResult?: string }) =>
+    api.post<ApiResponse<DiseaseDetection>>(`/detections/${id}/feedback`, answer),
+
   /** GET /api/detections/batch/<batchId> */
   getByBatch: (batchId: string) =>
     api.get<ApiResponse<DiseaseDetection[]>>(`/detections/batch/${batchId}`),

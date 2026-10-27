@@ -8,7 +8,10 @@ from .models import DiseaseDetection, SensorReading
 class DiseaseDetectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = DiseaseDetection
-        fields = ['id', 'batch_id', 'image_url', 'result', 'confidence', 'detected_at', 'notes']
+        fields = [
+            'id', 'batch_id', 'image_url', 'result', 'confidence', 'detected_at', 'notes',
+            'is_correct', 'actual_result', 'feedback_at',
+        ]
         read_only_fields = fields
 
 

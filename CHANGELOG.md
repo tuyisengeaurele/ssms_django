@@ -1,5 +1,24 @@
 # Changelog
 
+## Disease result: what it may mean, and was it right? (Plan 9, item B6)
+
+A disease result now comes with plain guidance and a way to say whether the check got it right.
+
+### Checked
+- Backend: 974 tests pass. Frontend: 813 tests pass and `tsc` is clean. Your local database is migrated through `sensors/0005`.
+- Not yet looked at in the browser by me. Please run a disease check once and read the card.
+
+### Added
+- **A card under a disease result**, for Grasserie, Flacherie, Muscardine and Pebrine: a sentence or two on what it is, then what to do now. The steps are the same for every disease (take sick worms out, dispose of them away from the room, wash hands and tools, check the other trays, keep the room clean and aired, ask your supervisor or a sericulture officer before using any disinfectant or medicine), plus a line or two for the disease itself. A healthy result gets no card.
+- **"Was this result correct?"** Yes saves at once. No asks what it really was (or "I am not sure") and sends it. The answer can be changed later. `POST /api/detections/<id>/feedback` for the people who may see the check, saved on the check with the time, written to the audit log, and shown in the check lists. The answers are only kept so we can see how the check does on real photos.
+
+### The card is general guidance and needs an expert
+- It names no product, dose or number, and a test fails if it ever does. Treatment and disinfection go to the supervisor or an officer.
+- **I could not open several of the sources in full** (the Central Silk Board pages and the pebrine review blocked or errored). Some lines rest on search summaries of them. `docs/disease-guidance.md` lists each line and where it comes from. **A sericulture officer should read the English before the card is relied on**, and the French and Kinyarwanda need a native speaker.
+
+### Before you run this
+- Run `python manage.py migrate`.
+
 ## Disease photo: camera, smaller photos and a framing guide (Plan 9, item B5)
 
 Taking a photo for the disease check is easier on a phone, and a large photo no longer gets turned away.

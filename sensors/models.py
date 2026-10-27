@@ -101,6 +101,10 @@ class DiseaseDetection(models.Model):
     confidence = models.FloatField()
     detected_at = models.DateTimeField(db_column='detectedAt', auto_now_add=True)
     notes = models.TextField(null=True, blank=True)
+    # What the farmer said about the result. Empty until they answer. The answers show how the check does on real photos.
+    is_correct = models.BooleanField(db_column='isCorrect', null=True, blank=True)
+    actual_result = models.CharField(db_column='actualResult', max_length=20, null=True, blank=True)
+    feedback_at = models.DateTimeField(db_column='feedbackAt', null=True, blank=True)
 
     class Meta:
         db_table = 'disease_detections'

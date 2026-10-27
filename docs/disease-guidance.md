@@ -1,0 +1,45 @@
+# Disease guidance on the result page
+
+The card under a disease result ("What this may mean" and "What you can do now") is general guidance for a farmer.
+The words live in `frontend/src/i18n/pages.ts` (keys starting `di`) and the layout in
+`frontend/src/pages/farmer/DiseaseInfoCard.tsx`.
+
+## Status: needs review by a sericulture officer
+
+Written on 27 October 2026 from public sources. Several of the sources could not be opened in full that day (see
+below), so some lines rest on what search results said about them. **A sericulture officer should read the card in
+English before it is relied on, and the French and Kinyarwanda need a native speaker.**
+
+## Rules the wording follows
+
+- No product name, dose, strength or number. Anything that depends on those goes to the supervisor or a sericulture
+  officer. The test `DiseaseInfoCard.test.tsx` fails if a number or a named product appears.
+- Say what is widely agreed and nothing more. Where the sources disagree or go quiet, say less.
+- Always say it is general advice, not a diagnosis, and that the check can be wrong.
+
+## Where each line comes from
+
+| Line | What it says | Source and how sure we are |
+|------|--------------|----------------------------|
+| Grasserie: a virus disease, spread on leaves and equipment, worse in hot dry rooms and with poor leaves | cause and spread | Central Silk Board (India), district SILKS extension page on silkworm disease management. Seen through a search summary on 27 Oct 2026, the page itself returned an error when opened. |
+| Grasserie: feed clean good leaves, clean and disinfect the room and equipment as the officer advises | prevention | Same page: disinfect the rearing house and appliances, remove and dispose of diseased larvae, avoid overcrowding. The page gives disinfectants and strengths. We left them out on purpose. |
+| Flacherie: a disease of the gut, worse with poor or old leaves, hunger, crowding and a dirty bed | cause and spread | Same Central Silk Board page, through a search summary. The summary named one bacterium as the cause. Flacherie is known to have more than one cause, so the card does not name a germ. |
+| Flacherie: fresh good leaves on time, room, clean dry bed | prevention | Same page. |
+| Muscardine: a fungus disease, spreads fast, more likely in cool damp rooms with poor airflow | cause and spread | Search summaries of an Indian extension article and a Central Silk Board page: *Beauveria bassiana* (white muscardine), contagious, winter and rainy seasons, cold and damp with poor ventilation. Not read in full. |
+| Muscardine: let air move, even on cold days, keep the bed dry | prevention | Same summaries, which stress airflow even in cold weather. |
+| Pebrine: a tiny parasite, passed by mother moths to their eggs | cause and spread | Several research papers and course notes found by search, all agreeing that *Nosema bombycis* passes through the egg. Includes the review at <https://pmc.ncbi.nlm.nih.gov/articles/PMC9985772>, which blocked our fetch, so it was not read in full. |
+| Pebrine: tell the egg supplier, egg producers check mother moths and discard infected eggs, do not keep eggs from this batch | control | Same papers: examining mother moths under a microscope is the standard method, and layings from infected mothers are discarded. "Do not keep eggs from this batch" follows from egg transmission. |
+| Steps for every disease: remove sick worms, dispose of them away from the room, wash hands and tools, check other trays, keep the room clean and aired, ask an officer before any disinfectant or medicine | general hygiene | Central Silk Board page (remove and dispose of diseased larvae, disinfect, keep temperature and humidity right). "Wash hands and tools" and "check other trays" are ordinary hygiene, not taken from one source. |
+
+## Not covered
+
+- Doses, products and how to disinfect. The Central Silk Board page names some. They differ by country and rearing
+  setup, so they should come from the person advising the farm.
+- Whether the card should say more for a result with low confidence.
+- FAO's *Silkworm rearing* bulletins (Agricultural Services Bulletin 15/2 and 73/2) are the obvious further reading.
+  We found the catalogue records, but not a copy to read.
+
+## Changing it
+
+Edit the `di*` keys in `pages.ts`. Keep a line out of the card unless a source in this table supports it, and add the
+source here when you add a line.

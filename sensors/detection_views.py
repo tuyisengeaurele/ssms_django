@@ -14,6 +14,7 @@ import cloudinary.uploader
 import httpx
 from django.conf import settings
 from django.http import StreamingHttpResponse
+from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -126,6 +127,44 @@ class DiseaseDetectionCreateView(APIView):
         return api_success(payload, 'Disease detection completed.', 201)
 
 
+# What the farmer can say the photo really showed. "Something else" is for a worm that is none of the four diseases.
+ACTUAL_RESULTS = ['Healthy', 'Flacherie', 'Grasserie', 'Muscardine', 'Pebrine', 'Something else']
+
+
+class DiseaseDetectionFeedbackView(APIView):
+    """POST /api/detections/<id>/feedback, {isCorrect, actualResult?}: was the result right, and if not, what was it?
+
+    The latest answer replaces the one before. The people who may see a check may answer for it."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        if request.user.role not in ('FARMER', 'ADMIN', 'SUPERVISOR'):
+            return api_error("You don't have permission to do that.", 403)
+        detection = scope_by_batch(
+            request.user, DiseaseDetection.objects.all(),
+        ).filter(pk=pk).first()
+        if detection is None:
+            return api_error("We couldn't find that check.", 404)
+
+        is_correct = request.data.get('is_correct')
+        if not isinstance(is_correct, bool):
+            message = 'Please say whether the result was correct.'
+            return api_error(message, 422, {'is_correct': [message]})
+        actual = request.data.get('actual_result')
+        if actual is not None and actual not in ACTUAL_RESULTS:
+            message = 'Please choose one of the listed results.'
+            return api_error(message, 422, {'actual_result': [message]})
+
+        detection.is_correct = is_correct
+        # What it really was only means something when the result was wrong.
+        detection.actual_result = None if is_correct else actual
+        detection.feedback_at = timezone.now()
+        detection.save(update_fields=['is_correct', 'actual_result', 'feedback_at'])
+        said = 'correct' if is_correct else f'wrong, really {detection.actual_result or "not stated"}'
+        log_action(request, 'UPDATE', 'DiseaseDetection', detection.pk, f'Said the result {detection.result} was {said}')
+        return api_success(DiseaseDetectionSerializer(detection).data, 'Thank you. Your answer was saved.')
+
+
 class DiseaseDetectionByBatchView(APIView):
     """GET /api/detections/batch/<batch_id>"""
     permission_classes = [IsAuthenticated]
@@ -180,6 +219,8 @@ class DetectionHistoryView(APIView):
                     'farm_name': d.batch.farm.name if d.batch and d.batch.farm else ',',
                     'farm_id': d.batch.farm_id if d.batch else None,
                     'notes': d.notes,
+                    'is_correct': d.is_correct,
+                    'actual_result': d.actual_result,
                 }
                 for d in qs_slice
             ]
