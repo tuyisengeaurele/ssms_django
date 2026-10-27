@@ -23,7 +23,7 @@ import StatTile from '../../components/ui/StatTile';
 export default function FarmerDashboard() {
   const { user } = useAuth();
   const { t, locale } = useLanguage();
-  const { error: showError } = useToast();
+  const { success, error: showError } = useToast();
   const { getErrorMessage } = useApiError();
 
   const [farms, setFarms] = useState<Farm[]>([]);
@@ -57,6 +57,16 @@ export default function FarmerDashboard() {
     try {
       await alertService.markRead(id);
       setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, isRead: true } : a)));
+      success(t('alMarkedRead'), { label: t('alUndo'), onClick: () => markUnread(id) });
+    } catch (err) {
+      showError(getErrorMessage(err));
+    }
+  };
+
+  const markUnread = async (id: string) => {
+    try {
+      await alertService.markUnread(id);
+      setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, isRead: false } : a)));
     } catch (err) {
       showError(getErrorMessage(err));
     }

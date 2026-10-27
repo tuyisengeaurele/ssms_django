@@ -11,7 +11,7 @@ const makeAlert = (i: number, over: object = {}) => ({
   batch: { id: `batch-${i}-abcdef`, stage: 'LARVA' }, ...over,
 });
 
-const api = vi.hoisted(() => ({ getAll: vi.fn(), markRead: vi.fn(), markAllRead: vi.fn() }));
+const api = vi.hoisted(() => ({ getAll: vi.fn(), markRead: vi.fn(), markUnread: vi.fn(), markAllRead: vi.fn() }));
 vi.mock('../../services/alert.service', () => ({ alertService: api }));
 
 import AlertsPage from './AlertsPage';
@@ -40,6 +40,7 @@ beforeEach(() => {
     data: { data: [makeAlert(1), makeAlert(2, { type: 'HUMIDITY', message: 'Humidity too high: 90%' }), makeAlert(3, { isRead: true, type: 'DISEASE', message: 'Flacherie suspected' })] },
   });
   api.markRead.mockResolvedValue({ data: { data: {} } });
+  api.markUnread.mockResolvedValue({ data: { data: {} } });
   api.markAllRead.mockResolvedValue({ data: { data: { updated: 2 } } });
 });
 
@@ -87,6 +88,18 @@ describe('Alerts page', () => {
     fireEvent.click(within(item).getByRole('button', { name: 'Mark as read' }));
     await waitFor(() => expect(api.markRead).toHaveBeenCalledWith('a2'));
     await waitFor(() => expect(within(item).queryByRole('button', { name: 'Mark as read' })).not.toBeInTheDocument());
+  });
+
+  it('offers Undo after marking one alert read, and brings the button back', async () => {
+    open();
+    const item = (await screen.findByText('Humidity too high: 90%')).closest('li') as HTMLElement;
+    fireEvent.click(within(item).getByRole('button', { name: 'Mark as read' }));
+    expect(await screen.findByText('Marked as read.', {}, { timeout: 5000 })).toBeInTheDocument();
+    await waitFor(() => expect(within(item).queryByRole('button', { name: 'Mark as read' })).not.toBeInTheDocument());
+    fireEvent.click(await screen.findByRole('button', { name: 'Undo' }, { timeout: 5000 }));
+    await waitFor(() => expect(api.markUnread).toHaveBeenCalledWith('a2'));
+    expect(await within(item).findByRole('button', { name: 'Mark as read' })).toBeInTheDocument();
+    expect(screen.getByText('2 unread')).toBeInTheDocument();
   });
 
   it('asks, then marks all read and says so', async () => {

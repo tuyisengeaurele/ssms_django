@@ -1,10 +1,13 @@
 """Cooperative management views, /api/cooperatives."""
 
-from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+
+from audit_log.utils import log_action
+from core.utils import api_error, api_success
+
 from .models import Cooperative
-from .serializers import CooperativeSerializer, CooperativeDetailSerializer, CooperativeWriteSerializer
-from core.utils import api_success, api_error
+from .serializers import CooperativeDetailSerializer, CooperativeSerializer, CooperativeWriteSerializer
 
 
 def _require_admin(user):
@@ -17,9 +20,10 @@ class CooperativeListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """GET /api/cooperatives, admin sees all, others see only their own."""
+        """GET /api/cooperatives, admin sees all, others see only their own.
+        An admin can add ?deleted=1 to see the deleted ones, so they can be restored."""
         if request.user.role == 'ADMIN':
-            coops = Cooperative.objects.filter(is_active=True)
+            coops = Cooperative.objects.filter(is_active=request.query_params.get('deleted') != '1')
         elif request.user.cooperative_id:
             coops = Cooperative.objects.filter(id=request.user.cooperative_id, is_active=True)
         else:
@@ -82,4 +86,24 @@ class CooperativeDetailView(APIView):
             return err
         coop.is_active = False
         coop.save(update_fields=['is_active'])
+        log_action(request, 'DELETE', 'Cooperative', coop.pk, f'Deleted cooperative {coop.name}')
         return api_success(None, 'Cooperative deleted.')
+
+
+class CooperativeRestoreView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        """POST /api/cooperatives/<id>/restore, bring a deleted cooperative back (admin only)."""
+        err = _require_admin(request.user)
+        if err:
+            return err
+        try:
+            coop = Cooperative.objects.get(pk=pk)
+        except Cooperative.DoesNotExist:
+            return api_error("We couldn't find that cooperative.", 404)
+        if not coop.is_active:
+            coop.is_active = True
+            coop.save(update_fields=['is_active'])
+            log_action(request, 'UPDATE', 'Cooperative', coop.pk, f'Restored cooperative {coop.name}')
+        return api_success(CooperativeSerializer(coop).data, 'Cooperative restored.')

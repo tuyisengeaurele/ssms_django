@@ -15,11 +15,11 @@ const coops = vi.hoisted(() => [
 
 const api = vi.hoisted(() => ({
   getAll: vi.fn(), getById: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn(),
-  getUsers: vi.fn(), updateCooperative: vi.fn(),
+  getUsers: vi.fn(), updateCooperative: vi.fn(), getDeleted: vi.fn(), restore: vi.fn(),
 }));
 
 vi.mock('../../services/cooperative.service', () => ({
-  cooperativeService: { getAll: api.getAll, getById: api.getById, create: api.create, update: api.update, delete: api.remove },
+  cooperativeService: { getAll: api.getAll, getDeleted: api.getDeleted, getById: api.getById, create: api.create, update: api.update, delete: api.remove, restore: api.restore },
 }));
 vi.mock('../../services/admin.service', () => ({ adminService: { getUsers: api.getUsers, updateCooperative: api.updateCooperative } }));
 
@@ -48,6 +48,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   setReducedMotion(true);
   api.getAll.mockResolvedValue({ data: { data: coops.map(coop) } });
+  api.getDeleted.mockResolvedValue({ data: { data: [coop({ id: 'c3', name: 'Old Silk Group', location: 'Huye', memberCount: 0, farmCount: 0, isActive: false })] } });
   api.getById.mockResolvedValue({ data: { data: detail } });
   api.getUsers.mockResolvedValue({
     data: {
@@ -150,6 +151,53 @@ describe('Cooperatives page', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, delete' }));
     await waitFor(() => expect(api.remove).toHaveBeenCalledWith('c2'));
     await waitFor(() => expect(screen.queryByText('Nyamagabe Silk Cooperative')).not.toBeInTheDocument());
+  });
+
+  it('keeps deleted cooperatives under their own tab, with only a Restore button', async () => {
+    open();
+    await screen.findByText('Gatsibo Sericulture 1');
+    expect(screen.queryByText('Old Silk Group')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: /Deleted/ }));
+    const row = await rowOf('Old Silk Group');
+    expect(within(row).getByRole('button', { name: 'Restore Old Silk Group' })).toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: /^View|^Edit|^Delete/ })).not.toBeInTheDocument();
+    expect(screen.queryByText('Gatsibo Sericulture 1')).not.toBeInTheDocument();
+  });
+
+  it('moves a deleted cooperative to the Deleted tab', async () => {
+    api.remove.mockResolvedValue({ data: { data: null } });
+    open();
+    const row = await rowOf('Nyamagabe Silk Cooperative');
+    fireEvent.click(within(row).getByRole('button', { name: /^Delete/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'Delete this cooperative?' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, delete' }));
+    await waitFor(() => expect(screen.queryByText('Nyamagabe Silk Cooperative')).not.toBeInTheDocument());
+    fireEvent.click(screen.getByRole('tab', { name: /Deleted/ }));
+    expect(await screen.findByText('Nyamagabe Silk Cooperative')).toBeInTheDocument();
+  });
+
+  it('asks before restoring, then moves the cooperative back to the Active tab', async () => {
+    api.restore.mockResolvedValue({ data: { data: coop({ id: 'c3', name: 'Old Silk Group', location: 'Huye', memberCount: 0, farmCount: 0 }) } });
+    open();
+    await screen.findByText('Gatsibo Sericulture 1');
+    fireEvent.click(screen.getByRole('tab', { name: /Deleted/ }));
+    const row = await rowOf('Old Silk Group');
+    fireEvent.click(within(row).getByRole('button', { name: 'Restore Old Silk Group' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Restore this cooperative?' });
+    expect(api.restore).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, restore' }));
+    await waitFor(() => expect(api.restore).toHaveBeenCalledWith('c3'));
+    await waitFor(() => expect(screen.queryByText('Old Silk Group')).not.toBeInTheDocument());
+    fireEvent.click(screen.getByRole('tab', { name: /Active/ }));
+    expect(await screen.findByText('Old Silk Group')).toBeInTheDocument();
+  });
+
+  it('says so when no cooperative has been deleted', async () => {
+    api.getDeleted.mockResolvedValue({ data: { data: [] } });
+    open();
+    await screen.findByText('Gatsibo Sericulture 1');
+    fireEvent.click(screen.getByRole('tab', { name: /Deleted/ }));
+    expect(await screen.findByText('No cooperatives have been deleted')).toBeInTheDocument();
   });
 
   it('shows members and farms in the detail view', async () => {

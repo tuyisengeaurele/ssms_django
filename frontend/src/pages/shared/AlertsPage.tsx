@@ -46,6 +46,16 @@ export default function AlertsPage() {
     try {
       await alertService.markRead(id);
       setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, isRead: true } : a)));
+      success(t('alMarkedRead'), { label: t('alUndo'), onClick: () => handleMarkUnread(id) });
+    } catch (e) {
+      showError(getErrorMessage(e));
+    }
+  };
+
+  const handleMarkUnread = async (id: string) => {
+    try {
+      await alertService.markUnread(id);
+      setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, isRead: false } : a)));
     } catch (e) {
       showError(getErrorMessage(e));
     }

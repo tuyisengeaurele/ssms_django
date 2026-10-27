@@ -5,6 +5,7 @@ from .views import (
     AlertListView,
     AlertMarkAllReadView,
     AlertMarkReadView,
+    AlertMarkUnreadView,
     AlertsByBatchView,
     AlertStreamTicketView,
 )
@@ -16,4 +17,5 @@ urlpatterns = [
     path('/mark-all-read', AlertMarkAllReadView.as_view(), name='alert_mark_all_read'),      # POST /api/alerts/mark-all-read
     path('/batch/<str:batch_id>', AlertsByBatchView.as_view(), name='alerts_by_batch'),      # GET  /api/alerts/batch/<id>
     path('/<str:pk>/read', AlertMarkReadView.as_view(), name='alert_mark_read'),             # PATCH /api/alerts/<id>/read
+    path('/<str:pk>/unread', AlertMarkUnreadView.as_view(), name='alert_mark_unread'),       # PATCH /api/alerts/<id>/unread
 ]

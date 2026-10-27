@@ -142,6 +142,7 @@ ROWS = [
         expect(NOBODY), fmt='multipart',
         body=lambda w: {'batchId': w.dead_batch.pk, 'image': SimpleUploadedFile('w.png', PNG, content_type='image/png')}),
     Row('mark one alert read', 'PATCH', lambda w: f'/api/alerts/{w.alert.pk}/read', expect(OWNER_SIDE)),
+    Row('mark one alert unread', 'PATCH', lambda w: f'/api/alerts/{w.alert.pk}/unread', expect(OWNER_SIDE)),
     Row('mark an alert of a deleted batch read', 'PATCH',
         lambda w: f'/api/alerts/{w.dead_batch_records.alert.pk}/read', expect(NOBODY)),
 
@@ -155,6 +156,8 @@ ROWS = [
     # ── administration ────────────────────────────────────────────────────────────────────────
     Row('user list', 'GET', lambda w: '/api/admin/users', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
     Row('restore a user', 'POST', lambda w: f"/api/admin/users/{w.users['farmer_no_coop'].pk}/restore",
+        expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
+    Row('restore a cooperative', 'POST', lambda w: f'/api/cooperatives/{w.coop_a.pk}/restore',
         expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
     Row('audit log', 'GET', lambda w: '/api/admin/audit-log', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
     Row('system report', 'GET', lambda w: '/api/admin/reports', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
