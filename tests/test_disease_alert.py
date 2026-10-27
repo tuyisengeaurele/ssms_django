@@ -139,12 +139,13 @@ def test_no_email_when_the_owner_made_the_check_because_the_result_is_on_their_s
 def test_the_owner_is_emailed_when_someone_else_made_the_check(auth_client, coop, owner, batch, ai, email):
     supervisor = UserFactory(role='SUPERVISOR', cooperative=coop)
     check(auth_client, supervisor, batch, ai, 'Pebrine', 0.9)
-    kwargs = email.call_args.kwargs
-    assert kwargs['recipient_list'] == ['serge@example.rw']
-    assert 'Serge Farm' in kwargs['subject']
-    assert 'Pebrine suspected' in kwargs['message']
-    assert '90%' in kwargs['message']
-    assert f'#{batch.pk[-8:].upper()}' in kwargs['message']
+    subject, to, content = email.call_args.args
+    assert to == ['serge@example.rw']
+    assert 'Serge Farm' in subject
+    body = content.plain()
+    assert 'Pebrine suspected' in body
+    assert '90%' in body
+    assert f'#{batch.pk[-8:].upper()}' in body
 
 
 def test_a_run_of_positive_checks_by_someone_else_sends_one_email_an_hour(auth_client, coop, owner, batch, ai, email):

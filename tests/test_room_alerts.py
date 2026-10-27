@@ -280,9 +280,9 @@ def test_the_email_goes_to_the_farm_owner_and_names_the_room_its_batches_and_the
     first, second = put(farm, room), put(farm, room)
     StageThreshold.objects.filter(stage='PUPA').update(temp_min=23.0, temp_max=27.0)
     check_room_alerts(room.pk, 20.5, 78.0)
-    kwargs = _no_email.call_args.kwargs
-    assert kwargs['recipient_list'] == ['serge@example.rw']
-    body = kwargs['message']
+    _, to, content = _no_email.call_args.args
+    assert to == ['serge@example.rw']
+    body = content.plain()
     assert 'Rearing house 1' in body
     assert f'#{first.pk[-8:].upper()}' in body and f'#{second.pk[-8:].upper()}' in body
     assert '23.0' in body and '27.0' in body

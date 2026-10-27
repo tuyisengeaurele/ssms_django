@@ -2,9 +2,9 @@ from unittest import mock
 
 import pytest
 from django.core import mail
-from django.core.mail import send_mail
 
 from contacts.models import ContactMessage
+from core.mail import send_email
 from tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -23,7 +23,7 @@ GOOD = {
 def mail_now(settings):
     """Send the mail inside the request, so a test can look in the outbox straight away."""
     settings.EMAIL_HOST_USER = 'admin@example.rw'
-    with mock.patch('contacts.views._send_mail_async', side_effect=lambda *a, **k: send_mail(*a, **k)):
+    with mock.patch('contacts.views._send_mail_async', side_effect=lambda *a, **k: send_email(*a, **k)):
         yield
 
 

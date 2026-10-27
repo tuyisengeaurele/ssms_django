@@ -10,6 +10,8 @@ from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
 
+from core.mail import Email
+
 from . import utils
 from .models import AlertLog
 
@@ -50,23 +52,18 @@ def _email_owner(batch, owner, checked_by, alert: AlertLog) -> None:
         if not owner.email:
             return
         farm = batch.farm
-        body = (
-            f'Dear {owner.name or "Farmer"},\n\n'
-            f'A disease check on batch {utils.short_id(batch.pk)} at {farm.name} found something.\n\n'
-            f'Details    : {alert.message}\n'
-            f'Checked by : {checked_by.name or checked_by.email}\n\n'
-            'The check is a quick second opinion and can be wrong. Please look at the batch, and ask your supervisor or '
-            'a sericulture officer before using any disinfectant or medicine.\n\n'
-            f'Open the batch in SSMS:\n'
-            f'{settings.FRONTEND_URL}/batches/{batch.pk}\n\n'
-            'Best regards,\nThe SSMS team\nSmart Sericulture Management System, Rwanda'
+        content = Email(
+            heading=f'Disease suspected on {farm.name}',
+            greeting=f'Dear {owner.name or "Farmer"},',
+            intro=(f'A disease check on batch {utils.short_id(batch.pk)} at {farm.name} found something.',),
+            facts=(('Details', alert.message), ('Checked by', checked_by.name or checked_by.email)),
+            button=('Open the batch', f'{settings.FRONTEND_URL}/batches/{batch.pk}'),
+            closing=(
+                'The check is a quick second opinion and can be wrong. Please look at the batch, and ask your supervisor or '
+                'a sericulture officer before using any disinfectant or medicine.',
+            ),
+            reason=f'You received this because you own {farm.name} on SSMS.',
         )
-        utils._send_mail_async(
-            subject=f'[SSMS Alert] Disease suspected on {farm.name}',
-            message=body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[owner.email],
-            fail_silently=True,
-        )
+        utils._send_mail_async(f'[SSMS Alert] Disease suspected on {farm.name}', [owner.email], content)
     except Exception:
         logger.exception('Could not send the disease alert email')

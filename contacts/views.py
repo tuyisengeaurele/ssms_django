@@ -1,10 +1,9 @@
-import threading
-
 from django.conf import settings
-from django.core.mail import send_mail
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 
+from core.mail import Email
+from core.mail import send_email_async as _send_mail_async
 from core.throttles import ContactRateThrottle
 from core.utils import api_error, api_success
 
@@ -16,37 +15,22 @@ RECEIVED = 'Your message has been received. We will get back to you soon.'
 # The reply to the sender is fixed text. Nothing the sender typed goes into it, so the form cannot
 # be used to send a stranger an email with words of the attacker's choosing.
 REPLY_SUBJECT = 'We received your message'
-REPLY_BODY = '\n'.join([
-    'Thank you for contacting SSMS.',
-    '',
-    'We have received your message and will get back to you shortly.',
-    '',
-    'If you did not send a message to us, you can ignore this email.',
-    '',
-    'The SSMS Team',
-    'Smart Sericulture Management System, Rwanda',
-])
-
-
-def _send_mail_async(*args, **kwargs):
-    """Fire-and-forget email, never blocks the HTTP response."""
-    t = threading.Thread(target=send_mail, args=args, kwargs=kwargs, daemon=True)
-    t.start()
+REPLY = Email(
+    heading='We received your message',
+    intro=('Thank you for contacting SSMS. We have received your message and will get back to you shortly.',),
+    closing=('If you did not send a message to us, you can ignore this email.',),
+    reason='You received this because this address was used on the SSMS contact form.',
+)
 
 
 def _team_note(data, message_id):
-    return '\n'.join([
-        'New contact form submission:',
-        '',
-        f"Name:    {data['name']}",
-        f"Email:   {data['email']}",
-        f"Subject: {data['subject']}",
-        '',
-        'Message:',
-        data['message'],
-        '',
-        f'ID: #{message_id}',
-    ])
+    return Email(
+        heading='New contact message',
+        intro=('Someone wrote to the SSMS contact form.',),
+        facts=(('Name', data['name']), ('Email', data['email']), ('Subject', data['subject']), ('Message', f'#{message_id}')),
+        closing=(data['message'],),
+        reason='You received this because this is the SSMS contact address.',
+    )
 
 
 class ContactCreateView(APIView):
@@ -68,19 +52,16 @@ class ContactCreateView(APIView):
 
         msg = ContactMessage.objects.create(**data)
 
-        _send_mail_async(
-            REPLY_SUBJECT, REPLY_BODY, settings.DEFAULT_FROM_EMAIL, [data['email']], fail_silently=True,
-        )
+        _send_mail_async(REPLY_SUBJECT, [data['email']], REPLY)
 
         # The team sees everything that was written.
         admin_email = getattr(settings, 'EMAIL_HOST_USER', None)
         if admin_email:
             _send_mail_async(
                 f"[SSMS Contact] {data['subject']} from {data['name']}",
-                _team_note(data, msg.id),
-                settings.DEFAULT_FROM_EMAIL,
                 [admin_email],
-                fail_silently=True,
+                _team_note(data, msg.id),
+                reply_to=[data['email']],
             )
 
         return api_success({'id': msg.id}, RECEIVED, 201)
