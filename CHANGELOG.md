@@ -1,5 +1,26 @@
 # Changelog
 
+## Invitations, the team list and self-applying filters (Plan 7)
+
+Added on 27 October at the owner's request. Each change started with a failing test.
+
+### Checked
+- Backend: 692 tests pass. Frontend: 684 tests pass and `tsc` is clean.
+- In the real app, as the demo supervisor: the My farmers page lists the cooperative's farmers, a link can be made, and the link page opens for a signed-out visitor.
+
+### Added
+- **Invitation links.** A supervisor makes a link for a farmer, with or without an email address. A link works once and lasts 7 days, and only a hash of it is stored, so it is shown once and cannot be read back. With an address, the link is emailed and only that address can use it, and using it also proves the address. An admin can make links for any cooperative. `POST /api/team/invitations`, `GET /api/team/invitations`, `DELETE /api/team/invitations/<id>` (revoke), and the public `GET /api/invitations/<token>` and `POST /api/invitations/<token>/accept`.
+- **Joining.** A farmer registers through the link, or accepts it when already registered (with a question first if that means leaving another cooperative). A link that is unknown, expired, revoked or used always gets the same answer, so it says nothing about which links exist. Making the account and using the link are one step.
+- **My farmers.** A supervisor sees the farmers of their cooperative, with their farm counts, and can remove one after a confirmation. The farmer keeps their account and farms. `GET /api/team/farmers`, `DELETE /api/team/farmers/<id>`.
+- **The page behind a link** (`/join/<token>`), in three languages. Signing in from it brings the person back to it.
+- **Filters apply themselves.** On Detection reports and the Audit log, menus and dates apply at once, typing applies a moment after it stops, and only Reset stays, shown when a filter is set.
+
+### Changed
+- The Audit log's Clear button is now Reset, like the other filters.
+
+### Before you run this
+- Run `python manage.py migrate` for the new invitations table.
+
 ## Alerts, devices, demo data and the farmer pages (Plan 6)
 
 Work from 27 October, in the order agreed. Each change started with a failing test.
