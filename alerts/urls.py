@@ -8,9 +8,13 @@ from .views import (
     AlertMarkUnreadView,
     AlertsByBatchView,
     AlertStreamTicketView,
+    StageThresholdDetailView,
+    StageThresholdListView,
 )
 
 urlpatterns = [
+    path('/thresholds', StageThresholdListView.as_view(), name='stage_threshold_list'),                  # GET /api/alerts/thresholds
+    path('/thresholds/<str:stage>', StageThresholdDetailView.as_view(), name='stage_threshold_detail'),  # PUT /api/alerts/thresholds/<stage>
     path('', AlertListView.as_view(), name='alert_list'),                                    # GET  /api/alerts
     path('/stream-ticket', AlertStreamTicketView.as_view(), name='alert_stream_ticket'),     # POST /api/alerts/stream-ticket
     path('/stream', alert_stream, name='alert_stream'),                                      # GET  /api/alerts/stream?ticket=<ticket>

@@ -1,13 +1,14 @@
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
+from audit_log.utils import log_action
 from core.access import get_batch_or_404, scope_by_batch
 from core.pagination import StandardPagination
 from core.params import int_param
 from core.utils import api_error, api_success
 
-from .models import AlertLog
-from .serializers import AlertLogSerializer
+from .models import AlertLog, StageThreshold
+from .serializers import AlertLogSerializer, StageThresholdSerializer
 from .tickets import TICKET_SECONDS, issue_ticket
 
 
@@ -100,3 +101,37 @@ class AlertStreamTicketView(APIView):
         if request.user.role not in ('SUPERVISOR', 'ADMIN'):
             return api_error("You don't have permission to do that.", 403)
         return api_success({'ticket': issue_ticket(request.user), 'expiresIn': TICKET_SECONDS})
+
+
+STAGE_ORDER = ['EGG', 'LARVA', 'PUPA', 'COCOON', 'HARVEST']
+
+
+class StageThresholdListView(APIView):
+    """GET /api/alerts/thresholds, the safe range of every stage. Anyone signed in may read it."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        rows = {t.stage: t for t in StageThreshold.objects.all()}
+        ordered = [rows[stage] for stage in STAGE_ORDER if stage in rows]
+        return api_success(StageThresholdSerializer(ordered, many=True).data)
+
+
+class StageThresholdDetailView(APIView):
+    """PUT /api/alerts/thresholds/<stage>, change the safe range of one stage. Admin only."""
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, stage):
+        if request.user.role != 'ADMIN':
+            return api_error("You don't have permission to do that.", 403)
+        row = StageThreshold.objects.filter(stage=stage).first()
+        if row is None:
+            return api_error("We couldn't find that stage.", 404)
+        serializer = StageThresholdSerializer(row, data=request.data)
+        if not serializer.is_valid():
+            return api_error('Please check what you entered and try again.', 422, serializer.errors)
+        serializer.save()
+        log_action(
+            request, 'UPDATE', 'Threshold', stage,
+            f'Safe range for {stage}: {row.temp_min} to {row.temp_max} C, {row.hum_min} to {row.hum_max} %',
+        )
+        return api_success(StageThresholdSerializer(row).data, 'Safe range updated.')
