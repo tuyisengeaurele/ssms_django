@@ -11,6 +11,10 @@ export const cooperativeService = {
   getAll: () =>
     api.get<ApiResponse<Cooperative[]>>('/cooperatives'),
 
+  /** The deleted cooperatives, for the Deleted tab. Admin only. */
+  getDeleted: () =>
+    api.get<ApiResponse<Cooperative[]>>('/cooperatives', { params: { deleted: 1 } }),
+
   getById: (id: string) =>
     api.get<ApiResponse<CooperativeDetail>>(`/cooperatives/${id}`),
 
@@ -22,4 +26,7 @@ export const cooperativeService = {
 
   delete: (id: string) =>
     api.delete<ApiResponse<null>>(`/cooperatives/${id}`),
+
+  restore: (id: string) =>
+    api.post<ApiResponse<Cooperative>>(`/cooperatives/${id}/restore`),
 };
