@@ -99,6 +99,8 @@ class HarvestListCreateView(APIView):
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
 
         vd = serializer.validated_data
+        # The first harvest the farmer has ever recorded, deleted ones included.
+        first = request.user.pk == batch.farm.owner_id and not HarvestRecord.objects.filter(batch__farm__owner_id=batch.farm.owner_id).exists()
         record = HarvestRecord.objects.create(
             batch_id=batch_id,
             cocoon_weight_kg=vd['cocoon_weight_kg'],
@@ -109,7 +111,8 @@ class HarvestListCreateView(APIView):
         # Re-fetch with select_related so farm_name / farm_id resolve without extra queries
         record = HarvestRecord.objects.select_related('batch__farm').get(pk=record.pk)
         log_action(request, 'CREATE', 'HarvestRecord', record.pk, f'Logged harvest {record.cocoon_weight_kg} kg for batch {batch_id}')
-        return api_success(HarvestRecordSerializer(record).data, 'Harvest record saved.', 201)
+        data = {**HarvestRecordSerializer(record).data, 'milestone': 'FIRST_HARVEST' if first else None}
+        return api_success(data, 'Harvest record saved.', 201)
 
 
 class HarvestStatsView(APIView):

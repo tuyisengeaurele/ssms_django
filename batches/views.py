@@ -57,6 +57,8 @@ class BatchCreateView(APIView):
         if error:
             return error
 
+        # The first batch the farmer has ever started, deleted ones included, so the page can say a quiet well done once.
+        first = request.user.pk == farm.owner_id and not Batch.objects.filter(farm__owner_id=farm.owner_id).exists()
         batch = Batch.objects.create(
             farm=farm,
             expected_harvest_date=serializer.validated_data['expected_harvest_date'],
@@ -68,7 +70,8 @@ class BatchCreateView(APIView):
         place_batch(batch, room, when=batch.start_date)
         batch.refresh_from_db()
         log_action(request, 'CREATE', 'Batch', batch.pk, f'Created batch on farm {farm.name}')
-        return api_success(BatchListSerializer(batch).data, 'Batch created.', 201)
+        data = {**BatchListSerializer(batch).data, 'milestone': 'FIRST_BATCH' if first else None}
+        return api_success(data, 'Batch created.', 201)
 
 
 class BatchByFarmView(APIView):
