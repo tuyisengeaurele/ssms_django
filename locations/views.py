@@ -18,14 +18,15 @@ class PlaceListView(APIView):
 
 
 class LocateView(APIView):
-    """GET /api/locations/locate?lat=&lng=, the province, district and sector a point is in.
+    """POST /api/locations/locate with {lat, lng}, the province, district and sector a point is in.
 
-    The point is only looked up and never stored, so someone who allows their location shares it for this one answer."""
+    The point is only looked up and never stored. It travels in the body and not in the address, so it does not end
+    up in the access logs of a proxy."""
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def post(self, request):
         try:
-            found = registry.locate(request.query_params.get('lat'), request.query_params.get('lng'))
+            found = registry.locate(request.data.get('lat'), request.data.get('lng'))
         except ValueError:
             return api_error('Please send a valid latitude and longitude.', 422)
         if found is None:

@@ -48,11 +48,11 @@ def test_a_parent_that_is_not_a_code_is_not_found_either(client):
 
 def test_the_lists_need_a_signed_in_person(api_client):
     assert api_client.get('/api/locations').status_code == 401
-    assert api_client.get('/api/locations/locate?lat=-1.95&lng=30.09').status_code == 401
+    assert api_client.post('/api/locations/locate', {'lat': -1.95, 'lng': 30.09}, format='json').status_code == 401
 
 
 def test_a_point_in_kigali_gives_province_district_and_sector(client):
-    response = client.get('/api/locations/locate?lat=-1.9536&lng=30.0925')
+    response = client.post('/api/locations/locate', {'lat': -1.9536, 'lng': 30.0925}, format='json')
     assert response.status_code == 200
     data = response.json()['data']
     assert data['province']['name'] == 'Kigali City'
@@ -61,13 +61,21 @@ def test_a_point_in_kigali_gives_province_district_and_sector(client):
 
 
 def test_a_point_outside_rwanda_says_so_in_plain_words(client):
-    response = client.get('/api/locations/locate?lat=0.3476&lng=32.5825')
+    response = client.post('/api/locations/locate', {'lat': 0.3476, 'lng': 32.5825}, format='json')
     assert response.status_code == 404
     assert response.json()['message'] == "That spot is not inside a Rwanda sector."
 
 
-@pytest.mark.parametrize('query', ['', '?lat=-1.9', '?lng=30.0', '?lat=x&lng=30', '?lat=nan&lng=30', '?lat=-1.9&lng=inf', '?lat=95&lng=30'])
-def test_a_missing_or_impossible_point_is_refused_in_plain_words(client, query):
-    response = client.get('/api/locations/locate' + query)
+@pytest.mark.parametrize('body', [
+    {}, {'lat': -1.9}, {'lng': 30.0}, {'lat': 'x', 'lng': 30}, {'lat': 'nan', 'lng': 30}, {'lat': -1.9, 'lng': 'inf'},
+    {'lat': 95, 'lng': 30}, {'lat': None, 'lng': 30}, {'lat': [1], 'lng': 30},
+])
+def test_a_missing_or_impossible_point_is_refused_in_plain_words(client, body):
+    response = client.post('/api/locations/locate', body, format='json')
     assert response.status_code == 422
     assert response.json()['message'] == 'Please send a valid latitude and longitude.'
+
+
+def test_the_point_is_not_taken_from_the_address(client):
+    assert client.get('/api/locations/locate?lat=-1.9536&lng=30.0925').status_code == 405
+    assert client.post('/api/locations/locate?lat=-1.9536&lng=30.0925', {}, format='json').status_code == 422
