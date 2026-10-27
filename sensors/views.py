@@ -96,6 +96,46 @@ class SensorReadingByBatchView(APIView):
         return api_success(SensorReadingSerializer(readings, many=True).data)
 
 
+class SensorBatchSeriesView(APIView):
+    """
+    GET /api/sensors/batch/<id>/series?hours=N, the readings of one batch over the last N hours (1 to 720).
+    Readings are averaged into hourly buckets, or six hour buckets for more than a week, so a month still
+    draws as a short line. Oldest first.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, batch_id):
+        batch = get_batch_or_404(request.user, batch_id)
+        hours = int_param(request, 'hours', 24, 1, 720)
+        bucket_hours = 1 if hours <= 168 else 6
+        since = timezone.now() - timedelta(hours=hours)
+
+        rows = (
+            SensorReading.objects
+            .filter(batch_id=batch.pk, timestamp__gte=since)
+            .order_by('timestamp')
+            .values_list('timestamp', 'temperature', 'humidity')
+        )
+        buckets = {}
+        for stamp, temperature, humidity in rows:
+            start = stamp.replace(minute=0, second=0, microsecond=0)
+            start = start.replace(hour=start.hour // bucket_hours * bucket_hours)
+            total = buckets.setdefault(start, [0.0, 0.0, 0])
+            total[0] += temperature
+            total[1] += humidity
+            total[2] += 1
+
+        return api_success([
+            {
+                'timestamp': start.isoformat(),
+                'temperature': round(temp_sum / count, 1),
+                'humidity': round(hum_sum / count, 1),
+                'count': count,
+            }
+            for start, (temp_sum, hum_sum, count) in sorted(buckets.items())
+        ])
+
+
 def _serialize_device(device: IoTDevice) -> dict:
     """Shared serializer for IoTDevice, includes latest reading."""
     latest = (
