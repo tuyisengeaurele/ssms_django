@@ -77,6 +77,16 @@ def scope_readings(user, qs):
     return in_rooms | legacy
 
 
+def scope_alerts(user, qs):
+    """Alerts: those of a room the person may see, and those about a batch they may see.
+    An alert made before rooms, or about one batch, is seen through its batch."""
+    of_rooms = _narrow(
+        qs.filter(batch__isnull=True), user, 'room__farm__owner',
+        room__is_active=True, room__farm__is_active=True,
+    )
+    return of_rooms | scope_by_batch(user, qs)
+
+
 def get_farm_or_404(user, pk, qs=None) -> Farm:
     """The farm, or NotFound. Pass qs to start from a queryset with select_related or prefetch already set."""
     farm = scope_farms(user, qs).select_related('owner').filter(pk=pk).first()

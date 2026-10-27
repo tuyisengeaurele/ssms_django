@@ -142,8 +142,9 @@ class BatchActiveSupervisorView(APIView):
     def get(self, request):
         if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
             return api_error("You don't have permission to do that.", 403)
-        from django.db.models import Count, OuterRef, Q, Subquery
+        from django.db.models import Count, OuterRef, Subquery
 
+        from alerts.room_alerts import open_problem_count
         from sensors.models import SensorReading
         from sensors.room_readings import belongs_to_batch
 
@@ -153,11 +154,7 @@ class BatchActiveSupervisorView(APIView):
             request.user,
             Batch.objects.select_related('farm', 'room').annotate(
                 detection_count=Count('disease_detections', distinct=True),
-                open_alerts=Count(
-                    'alert_logs',
-                    filter=Q(alert_logs__type__in=['TEMPERATURE', 'HUMIDITY'], alert_logs__resolved_at__isnull=True),
-                    distinct=True,
-                ),
+                open_alerts=open_problem_count(),
                 latest_temperature=Subquery(newest.values('temperature')[:1]),
                 latest_humidity=Subquery(newest.values('humidity')[:1]),
                 latest_reading_at=Subquery(newest.values('timestamp')[:1]),
@@ -202,5 +199,9 @@ class BatchUpdateStageView(APIView):
                 message=f'Batch stage updated to {new_stage}.',
             )
         batch.refresh_from_db()
+        if new_stage == 'HARVEST' and batch.room_id:
+            # A room judges only the batches still being reared, so this may have emptied it.
+            from alerts.utils import settle_room_alerts
+            settle_room_alerts(batch.room_id)
         log_action(request, 'UPDATE', 'Batch', batch.pk, f'Stage advanced to {new_stage}')
         return api_success(BatchListSerializer(batch).data, 'Stage updated.')

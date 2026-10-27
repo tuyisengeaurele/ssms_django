@@ -162,6 +162,10 @@ ROWS = [
     Row('mark one alert unread', 'PATCH', lambda w: f'/api/alerts/{w.alert.pk}/unread', expect(OWNER_SIDE)),
     Row('mark an alert of a deleted batch read', 'PATCH',
         lambda w: f'/api/alerts/{w.dead_batch_records.alert.pk}/read', expect(NOBODY)),
+    Row('mark one room alert read', 'PATCH', lambda w: f'/api/alerts/{w.room_alert.pk}/read', expect(OWNER_SIDE)),
+    Row('mark one room alert unread', 'PATCH', lambda w: f'/api/alerts/{w.room_alert.pk}/unread', expect(OWNER_SIDE)),
+    Row('mark an alert of a room in a deleted farm read', 'PATCH',
+        lambda w: f'/api/alerts/{w.dead_farm_records.room_alert.pk}/read', expect(NOBODY)),
 
     # ── devices: staff only, and only on farms they may see ───────────────────────────────────
     Row('register a device', 'POST', lambda w: '/api/devices',
@@ -250,7 +254,7 @@ LISTS = [
     # name, url, attribute of a tenant that holds the record, roles refused
     ('farms', '/api/farms', 'farm', ()),
     ('active batches', '/api/batches/active', 'batch', ()),
-    ('alerts', '/api/alerts?unread=false&limit=500', 'alert', ()),
+    ('alerts', '/api/alerts?unread=false&limit=500', ('alert', 'room_alert'), ()),
     ('devices', '/api/devices', 'device', ()),
     ('harvest records', '/api/harvest', 'harvest', ()),
     ('detection history', '/api/detections/history', 'detection', ()),
@@ -269,7 +273,8 @@ def test_lists_hold_exactly_what_the_caller_may_see(world, client_for, name, url
             want_status, want_ids = 403, None
         else:
             want_status = 200
-            want_ids = {getattr(world.tenants[key], attr).pk for key in SCOPE[actor]}
+            attrs = attr if isinstance(attr, tuple) else (attr,)
+            want_ids = {getattr(world.tenants[key], a).pk for key in SCOPE[actor] for a in attrs}
         if response.status_code != want_status:
             wrong.append(f'{actor}: expected {want_status}, got {response.status_code}')
             continue
@@ -317,7 +322,7 @@ def test_mark_all_read_only_touches_alerts_in_scope(world, client_for):
             read = {a.pk for a in AlertLog.objects.filter(is_read=True)}
         finally:
             transaction.savepoint_rollback(savepoint)
-        want = {world.tenants[k].alert.pk for k in SCOPE[actor]}
+        want = {a.pk for k in SCOPE[actor] for a in (world.tenants[k].alert, world.tenants[k].room_alert)}
         if response.status_code != 200:
             wrong.append(f'{actor}: expected 200, got {response.status_code}')
         elif read != want:

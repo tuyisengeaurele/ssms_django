@@ -2,14 +2,25 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from audit_log.utils import log_action
-from core.access import get_batch_or_404, scope_by_batch
+from django.db.models import Prefetch
+
+from batches.models import Batch
+from core.access import get_batch_or_404, scope_alerts
 from core.pagination import StandardPagination
 from core.params import int_param
 from core.utils import api_error, api_success
 
 from .models import AlertLog, StageThreshold
+from .room_alerts import alerts_for_batch
 from .serializers import AlertLogSerializer, StageThresholdSerializer
 from .tickets import TICKET_SECONDS, issue_ticket
+
+
+def with_rooms(qs):
+    """What the serializer needs to name an alert's room and batches without a query for each alert."""
+    return qs.select_related('batch__farm__owner', 'room__farm__owner').prefetch_related(
+        Prefetch('room__batches', queryset=Batch.objects.filter(is_active=True).order_by('created_at'), to_attr='live_batches'),
+    )
 
 
 class AlertListView(APIView):
@@ -29,10 +40,7 @@ class AlertListView(APIView):
         unread_only = request.query_params.get('unread', 'true').lower() != 'false'
         limit = int_param(request, 'limit', 100, 1, 500)
 
-        qs = scope_by_batch(
-            request.user,
-            AlertLog.objects.select_related('batch__farm__owner').order_by('-created_at'),
-        )
+        qs = with_rooms(scope_alerts(request.user, AlertLog.objects.order_by('-created_at')))
 
         if unread_only:
             qs = qs.filter(is_read=False)
@@ -56,7 +64,7 @@ class AlertMarkAllReadView(APIView):
         if request.user.role not in ('SUPERVISOR', 'ADMIN'):
             return api_error("You don't have permission to do that.", 403)
 
-        qs = scope_by_batch(request.user, AlertLog.objects.filter(is_read=False))
+        qs = scope_alerts(request.user, AlertLog.objects.filter(is_read=False))
 
         updated = qs.update(is_read=True)
         return api_success({'updated': updated}, f'{updated} alert(s) marked as read.')
@@ -68,7 +76,7 @@ class AlertsByBatchView(APIView):
     def get(self, request, batch_id):
         batch = get_batch_or_404(request.user, batch_id)
 
-        alerts = AlertLog.objects.select_related('batch__farm__owner').filter(batch=batch).order_by('-created_at')
+        alerts = with_rooms(alerts_for_batch(batch)).order_by('-created_at')
         return api_success(AlertLogSerializer(alerts, many=True).data)
 
 
@@ -78,9 +86,7 @@ class AlertMarkReadView(APIView):
     read = True
 
     def patch(self, request, pk):
-        alert = scope_by_batch(
-            request.user, AlertLog.objects.select_related('batch__farm__owner'),
-        ).filter(pk=pk).first()
+        alert = with_rooms(scope_alerts(request.user, AlertLog.objects.all())).filter(pk=pk).first()
         if alert is None:
             return api_error("We couldn't find that alert.", 404)
 

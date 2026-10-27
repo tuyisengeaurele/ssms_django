@@ -1,4 +1,4 @@
-"""A device that goes quiet is shown offline, and the batches in its room get one alert until it is heard from again."""
+"""A device that goes quiet is shown offline, and its room gets one alert until it is heard from again."""
 from datetime import timedelta
 
 import pytest
@@ -75,19 +75,27 @@ def test_the_job_marks_quiet_devices_offline_and_leaves_the_rest():
     assert (quiet.status, fine.status) == ('offline', 'online')
 
 
-def test_the_job_opens_one_system_alert_on_the_batch_and_not_a_second_on_the_next_run():
+def test_the_job_opens_one_system_alert_on_the_room_and_not_a_second_on_the_next_run():
     device = make_device(120, name='Shed 1')
     mark_offline_devices()
     mark_offline_devices()
-    alert = AlertLog.objects.get(batch=device.held[0], type='SYSTEM')
+    alert = AlertLog.objects.get(room=device.room, type='SYSTEM')
+    assert (alert.batch_id, alert.resolved_at) == (None, None)
     assert alert.message.startswith('Device Shed 1 has not sent data for 30 minutes')
-    assert alert.resolved_at is None
 
 
-def test_every_running_batch_in_the_room_is_told():
-    device = make_device(120, batches=2, name='Shed 1')
+def test_a_room_with_several_batches_gets_one_alert_not_one_each():
+    device = make_device(120, batches=3, name='Shed 1')
     mark_offline_devices()
-    assert [AlertLog.objects.filter(batch=b, type='SYSTEM').count() for b in device.held] == [1, 1]
+    assert AlertLog.objects.filter(type='SYSTEM').count() == 1
+    assert AlertLog.objects.get().room_id == device.room_id
+
+
+def test_two_quiet_devices_in_one_room_get_an_alert_each_so_each_ends_on_its_own():
+    first = make_device(120, name='Shed 1')
+    IoTDeviceFactory(farm=first.farm, room=first.room, name='Shed 2', status='online', last_seen=seen(120))
+    mark_offline_devices()
+    assert AlertLog.objects.filter(room=first.room, type='SYSTEM').count() == 2
 
 
 def test_a_room_with_no_batch_goes_offline_without_an_alert():
@@ -118,8 +126,16 @@ def test_hearing_from_the_device_again_brings_it_online_and_resolves_the_alert()
     assert ingest('ssms-back-online-01').status_code == 201
     device.refresh_from_db()
     assert device.status == 'online'
-    for batch in device.held:
-        assert AlertLog.objects.get(batch=batch, type='SYSTEM').resolved_at is not None
+    assert AlertLog.objects.get(room=device.room, type='SYSTEM').resolved_at is not None
+
+
+def test_hearing_from_one_device_does_not_end_the_outage_of_another_in_the_room():
+    first = make_device(120, name='Shed A', device_key='ssms-first-0000001')
+    IoTDeviceFactory(farm=first.farm, room=first.room, name='Shed B', device_key='ssms-second-000001', status='online', last_seen=seen(120))
+    mark_offline_devices()
+    ingest('ssms-first-0000001')
+    still_open = AlertLog.objects.filter(room=first.room, type='SYSTEM', resolved_at__isnull=True)
+    assert [a.message.startswith('Device Shed B') for a in still_open] == [True]
 
 
 def test_a_second_outage_opens_a_new_alert():
@@ -128,7 +144,7 @@ def test_a_second_outage_opens_a_new_alert():
     ingest('ssms-outage-two-001')
     IoTDevice.objects.filter(pk=device.pk).update(last_seen=seen(120))
     mark_offline_devices()
-    assert AlertLog.objects.filter(batch=device.held[0], type='SYSTEM').count() == 2
+    assert AlertLog.objects.filter(room=device.room, type='SYSTEM').count() == 2
 
 
 def test_the_command_runs_the_job_and_says_what_it_did(capsys):

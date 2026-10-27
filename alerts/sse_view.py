@@ -14,7 +14,7 @@ from datetime import timedelta
 from django.http import JsonResponse, StreamingHttpResponse
 from django.utils import timezone
 
-from core.access import scope_by_batch
+from core.access import scope_alerts
 
 from .models import AlertLog
 from .tickets import redeem_ticket
@@ -30,6 +30,7 @@ def _payload(alert) -> dict:
         'type':      alert.type,
         'message':   alert.message,
         'batchId':   alert.batch_id,
+        'roomId':    alert.room_id,
         'isRead':    alert.is_read,
         'createdAt': alert.created_at.isoformat(),
     }
@@ -46,7 +47,7 @@ async def _events(user):
             return
 
         checked_at = timezone.now()
-        fresh = scope_by_batch(user, AlertLog.objects.filter(created_at__gt=since).order_by('created_at'))
+        fresh = scope_alerts(user, AlertLog.objects.filter(created_at__gt=since).order_by('created_at'))
         async for alert in fresh:
             yield f'data: {json.dumps(_payload(alert))}\n\n'
         since = checked_at

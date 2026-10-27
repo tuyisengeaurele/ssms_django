@@ -11,17 +11,34 @@ class BatchBriefSerializer(serializers.Serializer):
 class AlertLogSerializer(serializers.ModelSerializer):
     farmer_name = serializers.SerializerMethodField()
     batch = serializers.SerializerMethodField()
+    room = serializers.SerializerMethodField()
+    batches = serializers.SerializerMethodField()
 
     class Meta:
         model = AlertLog
-        fields = ['id', 'batch_id', 'type', 'message', 'is_read', 'created_at', 'resolved_at', 'farmer_name', 'batch']
+        fields = [
+            'id', 'batch_id', 'room_id', 'type', 'message', 'is_read', 'created_at', 'resolved_at',
+            'farmer_name', 'batch', 'room', 'batches',
+        ]
         read_only_fields = fields
 
     def get_farmer_name(self, obj):
         try:
-            return obj.batch.farm.owner.name
+            return (obj.batch or obj.room).farm.owner.name
         except Exception:
             return None
+
+    def get_room(self, obj):
+        return {'id': obj.room.id, 'name': obj.room.name} if obj.room_id else None
+
+    def get_batches(self, obj):
+        """The batches in the room now, so a room alert says who it affects. Views prefetch them as `live_batches`."""
+        if not obj.room_id:
+            return []
+        live = getattr(obj.room, 'live_batches', None)
+        if live is None:
+            live = obj.room.batches.filter(is_active=True)
+        return [{'id': b.id, 'stage': b.stage} for b in live]
 
     def get_batch(self, obj):
         try:
