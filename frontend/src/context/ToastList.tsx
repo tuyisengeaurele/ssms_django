@@ -2,10 +2,17 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
+/** A button on the toast, for example Undo. */
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
 export interface Toast {
   id: string;
   message: string;
   type: ToastType;
+  action?: ToastAction;
 }
 
 const ICONS: Record<ToastType, string> = {
@@ -32,6 +39,17 @@ export default function ToastList({ toasts, onDismiss }: { toasts: Toast[]; onDi
             {ICONS[t.type]}
           </span>
           <span className="toast-msg">{t.message}</span>
+          {t.action ? (
+            <button
+              className="toast-action"
+              onClick={() => {
+                t.action?.onClick();
+                onDismiss(t.id);
+              }}
+            >
+              {t.action.label}
+            </button>
+          ) : null}
           <button className="toast-close" aria-label="Close" onClick={() => onDismiss(t.id)}>✕</button>
         </motion.div>
       ))}

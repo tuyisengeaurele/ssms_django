@@ -8,9 +8,9 @@ import { setReducedMotion } from '../../test/setup';
 const auth = vi.hoisted(() => ({ user: { id: 'u', name: 'Serge Karenzi', role: 'FARMER' } as { id: string; name?: string; role: string } }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
 
-const api = vi.hoisted(() => ({ farms: vi.fn(), active: vi.fn(), chart: vi.fn(), alerts: vi.fn(), markRead: vi.fn() }));
+const api = vi.hoisted(() => ({ farms: vi.fn(), active: vi.fn(), chart: vi.fn(), alerts: vi.fn(), markRead: vi.fn(), thresholds: vi.fn() }));
 vi.mock('../../services/farm.service', () => ({ farmService: { getAll: api.farms } }));
-vi.mock('../../services/alert.service', () => ({ alertService: { getAll: api.alerts, markRead: api.markRead } }));
+vi.mock('../../services/alert.service', () => ({ alertService: { getAll: api.alerts, markRead: api.markRead, getThresholds: api.thresholds } }));
 vi.mock('../../services/sensor.service', () => ({
   sensorService: { getChart: api.chart },
   batchSupervisorService: { getActive: api.active },
@@ -19,7 +19,7 @@ vi.mock('../../services/sensor.service', () => ({
 import FarmerDashboard from './FarmerDashboard';
 
 const batch = (i: number, stage: string, farmId = `f${i}`) => ({
-  id: `b${i}`, farmId, stage, startDate: '2026-05-01T00:00:00Z', expectedHarvestDate: '2026-06-01T00:00:00Z', isActive: true, createdAt: '',
+  id: `b${i}`, farmId, stage, startDate: '2026-05-01T00:00:00Z', expectedHarvestDate: new Date(Date.now() + 60 * 86_400_000).toISOString(), isActive: true, createdAt: '',
   farm: { id: farmId, name: `Farm ${i}`, location: 'Gatsibo' },
 });
 
@@ -46,6 +46,7 @@ beforeEach(() => {
   auth.user = { id: 'u', name: 'Serge Karenzi', role: 'FARMER' };
   api.farms.mockResolvedValue({ data: { data: [{ id: 'f1', isActive: true }, { id: 'f2', isActive: true }] } });
   api.active.mockResolvedValue({ data: { data: [batch(1, 'LARVA'), batch(2, 'EGG')] } });
+  api.thresholds.mockResolvedValue({ data: { data: [{ stage: 'LARVA', tempMin: 22, tempMax: 28, humMin: 70, humMax: 85 }] } });
   api.chart.mockResolvedValue({ data: { data: [{ hour: '08:00', avgTemp: 24, avgHumidity: 78 }, { hour: '09:00', avgTemp: 25, avgHumidity: 80 }] } });
   api.alerts.mockResolvedValue({
     data: { data: [{ id: 'a1', type: 'TEMPERATURE', message: 'Temperature too low: 21 C', isRead: false, createdAt: new Date(Date.now() - 600_000).toISOString(), batchId: 'b1' }] },
@@ -53,6 +54,33 @@ beforeEach(() => {
 });
 
 describe('Farmer dashboard', () => {
+  it('says what needs attention today, from the latest reading and the harvest date', async () => {
+    api.active.mockResolvedValue({
+      data: { data: [{ ...batch(1, 'LARVA'), latestReading: { temperature: 20.5, humidity: 78, timestamp: new Date().toISOString() } }, batch(2, 'EGG')] },
+    });
+    open();
+    const link = await screen.findByRole('link', { name: 'Farm 1: temperature is 20.5 °C, below the safe 22 to 28 °C.' });
+    expect(link).toHaveAttribute('href', '/batches/b1');
+  });
+
+  it('says everything is in order when the batches are fine', async () => {
+    open();
+    expect(await screen.findByText('Everything is in order today.')).toBeInTheDocument();
+  });
+
+  it('shows no card when there are no batches at all', async () => {
+    api.active.mockResolvedValue({ data: { data: [] } });
+    open();
+    await screen.findByText('No active batches');
+    expect(screen.queryByRole('heading', { name: 'Needs attention today' })).not.toBeInTheDocument();
+  });
+
+  it('still loads when the safe ranges cannot be fetched', async () => {
+    api.thresholds.mockRejectedValue(new Error('nope'));
+    open();
+    expect(await screen.findByText('Everything is in order today.')).toBeInTheDocument();
+  });
+
   it('greets the farmer by first name', async () => {
     open();
     expect(screen.getByRole('heading', { level: 1, name: 'Welcome back, Serge' })).toBeInTheDocument();

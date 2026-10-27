@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
-from .models import Batch, BatchStage
+from .models import Batch, BatchStage, MortalityRecord, QuantityUnit
+
+MAX_QUANTITY = 10_000_000
 
 
 class BatchFarmSerializer(serializers.Serializer):
@@ -16,7 +18,7 @@ class BatchListSerializer(serializers.ModelSerializer):
         model = Batch
         fields = [
             'id', 'farm_id', 'stage', 'start_date', 'expected_harvest_date',
-            'notes', 'is_active', 'created_at', 'updated_at', 'counts',
+            'notes', 'breed', 'quantity', 'quantity_unit', 'is_active', 'created_at', 'updated_at', 'counts',
         ]
 
     def get_counts(self, obj):
@@ -39,14 +41,19 @@ class BatchDetailSerializer(serializers.ModelSerializer):
     disease_detections = serializers.SerializerMethodField()
     sensor_readings = serializers.SerializerMethodField()
     alert_logs = serializers.SerializerMethodField()
+    mortality_total = serializers.SerializerMethodField()
 
     class Meta:
         model = Batch
         fields = [
             'id', 'farm_id', 'stage', 'start_date', 'expected_harvest_date',
-            'notes', 'is_active', 'created_at', 'updated_at',
-            'farm', 'disease_detections', 'sensor_readings', 'alert_logs',
+            'notes', 'breed', 'quantity', 'quantity_unit', 'is_active', 'created_at', 'updated_at',
+            'farm', 'disease_detections', 'sensor_readings', 'alert_logs', 'mortality_total',
         ]
+
+    def get_mortality_total(self, obj):
+        from django.db.models import Sum
+        return obj.mortality_records.filter(is_active=True).aggregate(total=Sum('count'))['total'] or 0
 
     def get_disease_detections(self, obj):
         from sensors.serializers import DiseaseDetectionSerializer
@@ -68,10 +75,34 @@ class BatchCreateSerializer(serializers.ModelSerializer):
     farm_id = serializers.CharField()
     expected_harvest_date = serializers.DateTimeField()
     notes = serializers.CharField(max_length=500, required=False, allow_blank=True, allow_null=True)
+    breed = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    quantity = serializers.IntegerField(min_value=1, max_value=MAX_QUANTITY, required=False, allow_null=True)
+    quantity_unit = serializers.ChoiceField(choices=QuantityUnit.choices, required=False)
 
     class Meta:
         model = Batch
-        fields = ['farm_id', 'expected_harvest_date', 'notes']
+        fields = ['farm_id', 'expected_harvest_date', 'notes', 'breed', 'quantity', 'quantity_unit']
+
+
+class BatchUpdateSerializer(serializers.Serializer):
+    """What a farmer can correct after a batch is made. The stage and the farm are not here on purpose."""
+    notes = serializers.CharField(max_length=500, required=False, allow_blank=True, allow_null=True)
+    breed = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    quantity = serializers.IntegerField(min_value=1, max_value=MAX_QUANTITY, required=False, allow_null=True)
+    quantity_unit = serializers.ChoiceField(choices=QuantityUnit.choices, required=False)
+
+
+class MortalityRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MortalityRecord
+        fields = ['id', 'count', 'note', 'recorded_on', 'created_at']
+        read_only_fields = fields
+
+
+class MortalityCreateSerializer(serializers.Serializer):
+    count = serializers.IntegerField(min_value=1, max_value=MAX_QUANTITY)
+    note = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    recorded_on = serializers.DateField(required=False)
 
 
 class BatchUpdateStageSerializer(serializers.Serializer):
@@ -82,14 +113,27 @@ class BatchSupervisorSerializer(serializers.ModelSerializer):
     """Lightweight serializer for the supervisor dashboard active-batches table."""
     farm = BatchFarmSerializer(read_only=True)
     detection_count = serializers.SerializerMethodField()
+    open_alerts = serializers.SerializerMethodField()
+    latest_reading = serializers.SerializerMethodField()
 
     class Meta:
         model = Batch
         fields = [
             'id', 'farm_id', 'stage', 'start_date',
             'expected_harvest_date', 'is_active', 'created_at',
-            'farm', 'detection_count',
+            'farm', 'detection_count', 'open_alerts', 'latest_reading',
         ]
+
+    def get_open_alerts(self, obj):
+        # Temperature and humidity problems that are still open. Annotated by the view.
+        return getattr(obj, 'open_alerts', 0)
+
+    def get_latest_reading(self, obj):
+        # Annotated by the view, so this costs no query. None when the batch has no readings yet.
+        at = getattr(obj, 'latest_reading_at', None)
+        if at is None:
+            return None
+        return {'temperature': obj.latest_temperature, 'humidity': obj.latest_humidity, 'timestamp': at}
 
     def get_detection_count(self, obj):
         # Uses annotated value from view queryset (no extra query)

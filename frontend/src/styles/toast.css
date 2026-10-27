@@ -43,6 +43,19 @@
 
 .toast-close:hover { color: var(--ivory); }
 
+.toast-action {
+  padding: 2px 4px;
+  border: 0;
+  background: none;
+  color: var(--gold-soft);
+  font: 700 0.84rem var(--font-ui);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  flex-shrink: 0;
+}
+
+.toast-action:hover { color: var(--ivory); }
+
 
 @media (max-width: 640px) {
   .toast-container { right: 12px; bottom: 12px; left: 12px; }

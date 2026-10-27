@@ -19,17 +19,21 @@ import RangeChart from '../../components/ui/RangeChart';
 import { SkeletonStatCard } from '../../components/ui/SkeletonLoader';
 import StageBadge from '../../components/ui/StageBadge';
 import StatTile from '../../components/ui/StatTile';
+import { attentionFor } from '../../utils/attention';
+import type { StageRange } from '../../services/sensor.service';
+import TodayCard from './TodayCard';
 
 export default function FarmerDashboard() {
   const { user } = useAuth();
   const { t, locale } = useLanguage();
-  const { error: showError } = useToast();
+  const { success, error: showError } = useToast();
   const { getErrorMessage } = useApiError();
 
   const [farms, setFarms] = useState<Farm[]>([]);
   const [batches, setBatches] = useState<ActiveBatch[]>([]);
   const [chart, setChart] = useState<ChartPoint[]>([]);
   const [alerts, setAlerts] = useState<AlertLog[]>([]);
+  const [ranges, setRanges] = useState<StageRange[]>([]);
   const [loading, setLoading] = useState(true);
 
   const firstName = user?.name?.split(' ')[0];
@@ -43,7 +47,10 @@ export default function FarmerDashboard() {
       batchSupervisorService.getActive(),
       sensorService.getChart(24),
       alertService.getAll(true),
-    ]).then(([farmsResult, batchResult, chartResult, alertResult]) => {
+      alertService.getThresholds(),
+    ]).then(([farmsResult, batchResult, chartResult, alertResult, rangeResult]) => {
+      // Without the ranges the card still works, using the usual ones.
+      if (rangeResult.status === 'fulfilled') setRanges(rangeResult.value.data.data);
       if (farmsResult.status === 'fulfilled') setFarms(farmsResult.value.data.data);
       if (batchResult.status === 'fulfilled') setBatches(batchResult.value.data.data);
       if (chartResult.status === 'fulfilled') setChart(chartResult.value.data.data);
@@ -57,6 +64,16 @@ export default function FarmerDashboard() {
     try {
       await alertService.markRead(id);
       setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, isRead: true } : a)));
+      success(t('alMarkedRead'), { label: t('alUndo'), onClick: () => markUnread(id) });
+    } catch (err) {
+      showError(getErrorMessage(err));
+    }
+  };
+
+  const markUnread = async (id: string) => {
+    try {
+      await alertService.markUnread(id);
+      setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, isRead: false } : a)));
     } catch (err) {
       showError(getErrorMessage(err));
     }
@@ -102,6 +119,8 @@ export default function FarmerDashboard() {
       />
 
       <div className="stack-24">
+        {batches.length > 0 && <TodayCard items={attentionFor(batches, ranges)} />}
+
         <div className="grid-3">
           <StatTile
             icon="farms"

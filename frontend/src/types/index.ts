@@ -48,6 +48,18 @@ export interface Farm {
   batches?: Batch[];
 }
 
+export type QuantityUnit = 'BOXES' | 'WORMS';
+
+/** Worms that died on one day. */
+export interface MortalityEntry {
+  id: string;
+  count: number;
+  note: string;
+  /** The day, as 2026-05-20. */
+  recordedOn: string;
+  createdAt: string;
+}
+
 export interface Batch {
   id: string;
   farmId: string;
@@ -55,6 +67,11 @@ export interface Batch {
   startDate: string;
   expectedHarvestDate: string;
   notes?: string;
+  /** What kind of silkworm, as the farmer calls it. Empty when not given. */
+  breed?: string;
+  /** What the batch started with, counted in `quantityUnit`. */
+  quantity?: number | null;
+  quantityUnit?: QuantityUnit;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

@@ -127,6 +127,40 @@ describe('New batch page', () => {
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/farms/f1'));
   });
 
+  it('asks for breed, quantity and its unit, none of them required', () => {
+    open();
+    expect(screen.getByLabelText(/^Breed/)).not.toBeRequired();
+    const quantity = screen.getByLabelText(/^Quantity/) as HTMLInputElement;
+    expect(quantity).not.toBeRequired();
+    expect(quantity.min).toBe('1');
+    const unit = screen.getByLabelText('Unit') as HTMLSelectElement;
+    expect(within(unit).getAllByRole('option').map((o) => o.textContent)).toEqual(['Egg boxes', 'Worms']);
+    expect(unit.value).toBe('BOXES');
+  });
+
+  it('sends breed, quantity and unit when they are filled in', async () => {
+    api.create.mockResolvedValue({ data: { data: { id: 'b9' } } });
+    open();
+    fireEvent.change(screen.getByLabelText(/^Expected harvest date/), { target: { value: '2030-01-15' } });
+    fireEvent.change(screen.getByLabelText(/^Breed/), { target: { value: 'Bivoltine hybrid' } });
+    fireEvent.change(screen.getByLabelText(/^Quantity/), { target: { value: '3' } });
+    fireEvent.change(screen.getByLabelText('Unit'), { target: { value: 'WORMS' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create batch' }));
+    await waitFor(() => expect(api.create).toHaveBeenCalledWith({
+      farmId: 'f1', expectedHarvestDate: '2030-01-15', breed: 'Bivoltine hybrid', quantity: 3, quantityUnit: 'WORMS',
+    }));
+  });
+
+  it('leaves the unit out when there is no quantity', async () => {
+    api.create.mockResolvedValue({ data: { data: { id: 'b9' } } });
+    open();
+    fireEvent.change(screen.getByLabelText(/^Expected harvest date/), { target: { value: '2030-01-15' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create batch' }));
+    await waitFor(() => expect(api.create).toHaveBeenCalled());
+    expect(api.create.mock.calls[0][0].quantityUnit).toBeUndefined();
+    expect(api.create.mock.calls[0][0].quantity).toBeUndefined();
+  });
+
   it('is one narrow form with no list of stages beside it', () => {
     const { container } = open();
     expect(screen.queryByRole('list', { name: 'The five stages' })).not.toBeInTheDocument();

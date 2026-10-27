@@ -1,30 +1,48 @@
 """
-Alert rule engine, called after every sensor reading (API or simulator).
+Alert rule engine, called after every sensor reading (API, device or simulator).
 
-Safe ranges for silkworm farming:
-  Temperature : 22.0 to 28.0 °C
-  Humidity    : 70.0 to 85.0 %
+Each stage of a batch has a safe range (the StageThreshold table, which an admin can edit). Out of range makes
+one open alert per problem and kind, so a problem that lasts does not fill the list. The first reading back in
+range resolves the open alert, and a later problem opens a new one.
 
-Email throttle: only one email per (batch, alert_type) per 60 minutes so
-farmers are not flooded during extended out-of-range periods.
+Email throttle: only one email per (batch, alert_type) per 60 minutes, so a batch that keeps flipping in and out
+of range does not flood the farmer.
 
-Emails are sent in a background daemon thread so SMTP latency never blocks
-the sensor-reading API response.
+Emails are sent in a background daemon thread so SMTP latency never blocks the sensor-reading API response.
 """
 
 import threading
+from dataclasses import dataclass
 from datetime import timedelta
 
 from django.conf import settings
 from django.core.mail import send_mail
+from django.db import transaction
 from django.utils import timezone
 
-from .models import AlertLog
+from .models import AlertLog, StageThreshold
 
-TEMP_MIN = 22.0
-TEMP_MAX = 28.0
-HUM_MIN  = 70.0
-HUM_MAX  = 85.0
+
+@dataclass(frozen=True)
+class SafeRange:
+    temp_min: float = 22.0
+    temp_max: float = 28.0
+    hum_min: float = 70.0
+    hum_max: float = 85.0
+
+
+# What a stage uses when it has no row of its own.
+DEFAULT_RANGE = SafeRange()
+TEMP_MIN, TEMP_MAX = DEFAULT_RANGE.temp_min, DEFAULT_RANGE.temp_max
+HUM_MIN, HUM_MAX = DEFAULT_RANGE.hum_min, DEFAULT_RANGE.hum_max
+
+
+def safe_range_for(stage: str | None) -> SafeRange:
+    row = StageThreshold.objects.filter(stage=stage).first() if stage else None
+    if row is None:
+        return DEFAULT_RANGE
+    return SafeRange(row.temp_min, row.temp_max, row.hum_min, row.hum_max)
+
 
 EMAIL_THROTTLE_MINUTES = 60   # one alert email per batch+type per hour
 
@@ -50,7 +68,7 @@ def _should_send_email(batch_id: str, alert_type: str) -> bool:
     ).exists()
 
 
-def _send_farmer_alert(batch, alert: AlertLog) -> None:
+def _send_farmer_alert(batch, alert: AlertLog, safe: SafeRange = DEFAULT_RANGE) -> None:
     """
     Send an alert email to the farm owner (farmer) for the given alert.
     Silently skips if the batch has no associated farm / owner / email.
@@ -95,73 +113,59 @@ def _send_farmer_alert(batch, alert: AlertLog) -> None:
         pass   # never let email failure break the main flow
 
 
+def temperature_problem(value: float, safe: SafeRange) -> str | None:
+    if value < safe.temp_min:
+        return f'Temperature too low: {value} °C (safe min is {safe.temp_min} °C). Check heating.'
+    if value > safe.temp_max:
+        return f'Temperature too high: {value} °C (safe max is {safe.temp_max} °C). Improve ventilation.'
+    return None
+
+
+def humidity_problem(value: float, safe: SafeRange) -> str | None:
+    if value < safe.hum_min:
+        return f'Humidity too low: {value}% (safe min is {safe.hum_min}%). Add moisture.'
+    if value > safe.hum_max:
+        return f'Humidity too high: {value}% (safe max is {safe.hum_max}%). Improve air circulation.'
+    return None
+
+
 def check_sensor_alerts(batch_id: str, temperature: float, humidity: float) -> list:
     """
-    Inspect a single sensor reading. If either value is out of safe range,
-    create and persist AlertLog records. Returns the list of created alerts.
+    Judge one reading against the safe range of the batch's stage. Returns the alerts this reading opened.
+    A problem that already has an open alert opens nothing new, and a reading back in range resolves it.
     """
-    to_create = []
+    from batches.models import Batch
 
-    if temperature < TEMP_MIN:
-        to_create.append(AlertLog(
-            batch_id=batch_id,
-            type='TEMPERATURE',
-            message=(
-                f'Temperature too low: {temperature} °C '
-                f'(safe min is {TEMP_MIN} °C). Check heating.'
-            ),
-        ))
-    elif temperature > TEMP_MAX:
-        to_create.append(AlertLog(
-            batch_id=batch_id,
-            type='TEMPERATURE',
-            message=(
-                f'Temperature too high: {temperature} °C '
-                f'(safe max is {TEMP_MAX} °C). Improve ventilation.'
-            ),
-        ))
+    with transaction.atomic():
+        # The row lock makes two readings that arrive together agree on which alerts are open.
+        batch = Batch.objects.select_for_update().select_related('farm__owner').filter(pk=batch_id).first()
+        if batch is None:
+            return []
 
-    if humidity < HUM_MIN:
-        to_create.append(AlertLog(
-            batch_id=batch_id,
-            type='HUMIDITY',
-            message=(
-                f'Humidity too low: {humidity}% '
-                f'(safe min is {HUM_MIN}%). Add moisture.'
-            ),
-        ))
-    elif humidity > HUM_MAX:
-        to_create.append(AlertLog(
-            batch_id=batch_id,
-            type='HUMIDITY',
-            message=(
-                f'Humidity too high: {humidity}% '
-                f'(safe max is {HUM_MAX}%). Improve air circulation.'
-            ),
-        ))
+        safe = safe_range_for(batch.stage)
+        now = timezone.now()
+        to_create = []
+        for type_, message in (
+            ('TEMPERATURE', temperature_problem(temperature, safe)),
+            ('HUMIDITY', humidity_problem(humidity, safe)),
+        ):
+            open_alerts = AlertLog.objects.filter(batch_id=batch_id, type=type_, resolved_at__isnull=True)
+            if message is None:
+                open_alerts.update(resolved_at=now)
+            elif not open_alerts.exists():
+                to_create.append(AlertLog(batch_id=batch_id, type=type_, message=message))
 
-    if not to_create:
-        return []
+        if not to_create:
+            return []
 
-    # Determine which types need an email BEFORE inserting (so the throttle
-    # check looks at pre-existing records, not the ones we're about to add).
-    send_for_types = {
-        a.type for a in to_create if _should_send_email(batch_id, a.type)
-    }
+        # Decide which types need an email BEFORE inserting, so the throttle looks at earlier records only.
+        send_for_types = {a.type for a in to_create if _should_send_email(batch_id, a.type)}
+        # One at a time on purpose: older databases have a native enum on alert_logs.type, and Django's bulk
+        # insert cannot write into one. There are only ever a couple of alerts here.
+        for alert in to_create:
+            alert.save()
 
-    AlertLog.objects.bulk_create(to_create)
-
-    # Refresh from DB so created_at is populated, then email asynchronously
-    if send_for_types:
-        from batches.models import Batch
-        try:
-            batch = Batch.objects.select_related('farm__owner').get(pk=batch_id)
-        except Batch.DoesNotExist:
-            batch = None
-
-        if batch:
-            for alert in to_create:
-                if alert.type in send_for_types:
-                    _send_farmer_alert(batch, alert)
-
+    for alert in to_create:
+        if alert.type in send_for_types:
+            _send_farmer_alert(batch, alert, safe)
     return to_create

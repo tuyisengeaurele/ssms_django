@@ -23,6 +23,10 @@ export default function AdminCooperativesPage() {
   const { success, error: showError } = useToast();
 
   const [coops, setCoops] = useState<Cooperative[]>([]);
+  const [deletedCoops, setDeletedCoops] = useState<Cooperative[]>([]);
+  const [tab, setTab] = useState<'active' | 'deleted'>('active');
+  const [confirmRestore, setConfirmRestore] = useState<Cooperative | null>(null);
+  const [restoring, setRestoring] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [editCoop, setEditCoop] = useState<Cooperative | null>(null);
@@ -41,8 +45,11 @@ export default function AdminCooperativesPage() {
   const [memberAsk, setMemberAsk] = useState<{ kind: 'add' | 'remove'; userId: string; name: string } | null>(null);
 
   useEffect(() => {
-    cooperativeService.getAll()
-      .then((r) => setCoops(r.data.data))
+    Promise.all([cooperativeService.getAll(), cooperativeService.getDeleted()])
+      .then(([active, deleted]) => {
+        setCoops(active.data.data);
+        setDeletedCoops(deleted.data.data);
+      })
       .catch((e) => showError(getErrorMessage(e)))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -98,12 +105,29 @@ export default function AdminCooperativesPage() {
     try {
       await cooperativeService.delete(confirmOff.id);
       setCoops((prev) => prev.filter((c) => c.id !== confirmOff.id));
+      setDeletedCoops((prev) => [{ ...confirmOff, isActive: false }, ...prev]);
       setConfirmOff(null);
       success(t('coDeleted'));
     } catch (e) {
       showError(getErrorMessage(e));
     } finally {
       setTurningOff(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!confirmRestore) return;
+    setRestoring(true);
+    try {
+      const res = await cooperativeService.restore(confirmRestore.id);
+      setDeletedCoops((prev) => prev.filter((c) => c.id !== confirmRestore.id));
+      setCoops((prev) => [res.data.data, ...prev]);
+      success(t('coRestored'));
+    } catch (e) {
+      showError(getErrorMessage(e));
+    } finally {
+      setRestoring(false);
+      setConfirmRestore(null);
     }
   };
 
@@ -163,7 +187,8 @@ export default function AdminCooperativesPage() {
   };
 
   const query = search.trim().toLowerCase();
-  const filtered = coops.filter((c) => !query || c.name.toLowerCase().includes(query) || (c.location ?? '').toLowerCase().includes(query));
+  const shownCoops = tab === 'active' ? coops : deletedCoops;
+  const filtered = shownCoops.filter((c) => !query || c.name.toLowerCase().includes(query) || (c.location ?? '').toLowerCase().includes(query));
   const totalMembers = coops.reduce((sum, c) => sum + c.memberCount, 0);
   const totalFarms = coops.reduce((sum, c) => sum + c.farmCount, 0);
   const created = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
@@ -185,6 +210,22 @@ export default function AdminCooperativesPage() {
         }
       >
         <p className="modal-text">{confirmOff ? fill(t('coDeleteBody'), { name: confirmOff.name }) : ''}</p>
+      </Modal>
+
+      <Modal
+        open={!!confirmRestore}
+        onClose={() => setConfirmRestore(null)}
+        title={t('coRestoreTitle')}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setConfirmRestore(null)}>{t('btnCancel')}</button>
+            <button className="btn btn-primary" onClick={handleRestore} disabled={restoring}>
+              {restoring ? <><span className="spinner" />{t('coRestoreBusy')}</> : t('coRestoreConfirm')}
+            </button>
+          </>
+        }
+      >
+        <p className="modal-text">{confirmRestore ? fill(t('coRestoreBody'), { name: confirmRestore.name }) : ''}</p>
       </Modal>
 
       <Modal
@@ -285,14 +326,22 @@ export default function AdminCooperativesPage() {
           </div>
         }
       >
+        <div className="tabs" role="tablist">
+          {(['active', 'deleted'] as const).map((id) => (
+            <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? 'is-on' : ''} onClick={() => setTab(id)}>
+              {id === 'active' ? t('coTabActive') : t('coTabDeleted')} ({id === 'active' ? coops.length : deletedCoops.length})
+            </button>
+          ))}
+        </div>
+
         {loading ? (
           <SkeletonTable rows={4} cols={5} />
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={<Icon name="cooperatives" size={22} />}
-            title={query ? t('coNoMatch') : t('coNone')}
-            description={query ? fill(t('coNoMatchBody'), { q: search.trim() }) : t('coNoneBody')}
-            action={!query ? { label: t('coCreateFirst'), onClick: openCreate } : undefined}
+            title={query ? t('coNoMatch') : tab === 'deleted' ? t('coNoDeleted') : t('coNone')}
+            description={query ? fill(t('coNoMatchBody'), { q: search.trim() }) : tab === 'deleted' ? t('coNoDeletedBody') : t('coNoneBody')}
+            action={!query && tab === 'active' ? { label: t('coCreateFirst'), onClick: openCreate } : undefined}
           />
         ) : (
           <div className="table-wrapper">
@@ -325,9 +374,15 @@ export default function AdminCooperativesPage() {
                     <td data-label={t('coColCreated')} className="cell-muted cell-nowrap">{created.format(new Date(c.createdAt))}</td>
                     <td data-label="">
                       <div className="table-actions">
-                        <button className="btn btn-ghost btn-xs" aria-label={`${t('coView')} ${c.name}`} onClick={() => openView(c)}>{t('coView')}</button>
-                        <button className="btn btn-ghost btn-xs" aria-label={`${t('coEdit')} ${c.name}`} onClick={() => openEdit(c)}>{t('coEdit')}</button>
-                        <button className="btn btn-ghost btn-xs btn-quiet-danger" aria-label={`${t('coDelete')} ${c.name}`} onClick={() => setConfirmOff(c)}>{t('coDelete')}</button>
+                        {tab === 'active' ? (
+                          <>
+                            <button className="btn btn-ghost btn-xs" aria-label={`${t('coView')} ${c.name}`} onClick={() => openView(c)}>{t('coView')}</button>
+                            <button className="btn btn-ghost btn-xs" aria-label={`${t('coEdit')} ${c.name}`} onClick={() => openEdit(c)}>{t('coEdit')}</button>
+                            <button className="btn btn-ghost btn-xs btn-quiet-danger" aria-label={`${t('coDelete')} ${c.name}`} onClick={() => setConfirmOff(c)}>{t('coDelete')}</button>
+                          </>
+                        ) : (
+                          <button className="btn btn-ghost btn-xs" aria-label={`${t('coRestore')} ${c.name}`} onClick={() => setConfirmRestore(c)}>{t('coRestore')}</button>
+                        )}
                       </div>
                     </td>
                   </tr>

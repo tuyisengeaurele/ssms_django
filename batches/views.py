@@ -14,6 +14,7 @@ from .serializers import (
     BatchDetailSerializer,
     BatchListSerializer,
     BatchSupervisorSerializer,
+    BatchUpdateSerializer,
     BatchUpdateStageSerializer,
 )
 
@@ -34,6 +35,9 @@ class BatchCreateView(APIView):
             farm=farm,
             expected_harvest_date=serializer.validated_data['expected_harvest_date'],
             notes=serializer.validated_data.get('notes'),
+            breed=serializer.validated_data.get('breed', ''),
+            quantity=serializer.validated_data.get('quantity'),
+            quantity_unit=serializer.validated_data.get('quantity_unit', 'BOXES'),
         )
         batch.refresh_from_db()
         log_action(request, 'CREATE', 'Batch', batch.pk, f'Created batch on farm {farm.name}')
@@ -59,6 +63,20 @@ class BatchDetailView(APIView):
         )
         return api_success(BatchDetailSerializer(batch).data)
 
+    def patch(self, request, pk):
+        """PATCH /api/batches/<id>, correct the breed, quantity, unit or notes. The stage has its own route."""
+        if request.user.role not in ('FARMER', 'ADMIN'):
+            return api_error("You don't have permission to do that.", 403)
+        batch = get_batch_or_404(request.user, pk)
+        serializer = BatchUpdateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return api_error('Please check what you entered and try again.', 422, serializer.errors)
+        for field, value in serializer.validated_data.items():
+            setattr(batch, field, value)
+        batch.save(update_fields=list(serializer.validated_data) or None)
+        log_action(request, 'UPDATE', 'Batch', batch.pk, f'Changed details of batch {batch.pk}')
+        return api_success(BatchListSerializer(batch).data, 'Batch updated.')
+
     def delete(self, request, pk):
         if request.user.role not in ('FARMER', 'ADMIN'):
             return api_error("You don't have permission to do that.", 403)
@@ -79,10 +97,25 @@ class BatchActiveSupervisorView(APIView):
     def get(self, request):
         if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
             return api_error("You don't have permission to do that.", 403)
-        from django.db.models import Count
+        from django.db.models import Count, OuterRef, Q, Subquery
+
+        from sensors.models import SensorReading
+
+        # Everything is worked out in the one query, so the list does not cost more as batches are added.
+        newest = SensorReading.objects.filter(batch=OuterRef('pk')).order_by('-timestamp')
         qs = scope_batches(
             request.user,
-            Batch.objects.select_related('farm').annotate(detection_count=Count('disease_detections')),
+            Batch.objects.select_related('farm').annotate(
+                detection_count=Count('disease_detections', distinct=True),
+                open_alerts=Count(
+                    'alert_logs',
+                    filter=Q(alert_logs__type__in=['TEMPERATURE', 'HUMIDITY'], alert_logs__resolved_at__isnull=True),
+                    distinct=True,
+                ),
+                latest_temperature=Subquery(newest.values('temperature')[:1]),
+                latest_humidity=Subquery(newest.values('humidity')[:1]),
+                latest_reading_at=Subquery(newest.values('timestamp')[:1]),
+            ),
         ).order_by('-created_at')
         return api_success(BatchSupervisorSerializer(qs, many=True).data)
 
