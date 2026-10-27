@@ -31,6 +31,8 @@ class Batch(models.Model):
     breed = models.CharField(max_length=100, blank=True, default='')
     quantity = models.PositiveIntegerField(null=True, blank=True)
     quantity_unit = models.CharField(max_length=10, db_column='quantityUnit', choices=QuantityUnit.choices, default=QuantityUnit.BOXES)
+    # The room it is in now. Empty for a batch that was never placed, or that was deleted.
+    room = models.ForeignKey('farms.RearingRoom', null=True, blank=True, on_delete=models.SET_NULL, db_column='roomId', related_name='batches')
     is_active = models.BooleanField(db_column='isActive', default=True)
     created_at = models.DateTimeField(db_column='createdAt', auto_now_add=True)
     updated_at = models.DateTimeField(db_column='updatedAt', auto_now=True)
@@ -63,3 +65,22 @@ class MortalityRecord(models.Model):
 
     def __str__(self):
         return f'{self.count} on {self.recorded_on}'
+
+
+class BatchRoomStay(models.Model):
+    """Where a batch has been. The open stay (no end) is the room it is in now. The readings of a batch are the
+    readings of each room it stayed in, between the start and the end of that stay."""
+
+    id = models.CharField(primary_key=True, max_length=36, default=_generate_id, editable=False)
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, db_column='batchId', related_name='room_stays')
+    room = models.ForeignKey('farms.RearingRoom', on_delete=models.CASCADE, db_column='roomId', related_name='stays')
+    started_at = models.DateTimeField(db_column='startedAt')
+    ended_at = models.DateTimeField(db_column='endedAt', null=True, blank=True)
+
+    class Meta:
+        db_table = 'batch_room_stays'
+        ordering = ['started_at']
+        indexes = [models.Index(fields=['batch', 'ended_at'], name='stay_batch_open_idx')]
+
+    def __str__(self):
+        return f'{self.batch_id} in {self.room_id}'

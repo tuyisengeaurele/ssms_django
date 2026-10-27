@@ -12,7 +12,7 @@ from django.db.models import Q
 from rest_framework.exceptions import NotFound
 
 from batches.models import Batch
-from farms.models import Farm
+from farms.models import Farm, RearingRoom
 
 
 def _owner_q(user, owner_path: str) -> Q | None:
@@ -60,12 +60,26 @@ def scope_by_farm(user, qs, lookup: str = 'farm'):
     return _narrow(qs, user, f'{lookup}__owner', **{f'{lookup}__is_active': True})
 
 
+def scope_rooms(user, qs=None):
+    return _narrow(
+        RearingRoom.objects.all() if qs is None else qs, user, 'farm__owner',
+        is_active=True, farm__is_active=True,
+    )
+
+
 def get_farm_or_404(user, pk, qs=None) -> Farm:
     """The farm, or NotFound. Pass qs to start from a queryset with select_related or prefetch already set."""
     farm = scope_farms(user, qs).select_related('owner').filter(pk=pk).first()
     if farm is None:
         raise NotFound("We couldn't find that farm.")
     return farm
+
+
+def get_room_or_404(user, pk, qs=None) -> RearingRoom:
+    room = scope_rooms(user, qs).select_related('farm__owner').filter(pk=pk).first()
+    if room is None:
+        raise NotFound("We couldn't find that room.")
+    return room
 
 
 def get_batch_or_404(user, pk, qs=None) -> Batch:

@@ -6,8 +6,10 @@ from alerts.models import AlertLog, AlertType
 from audit_log.utils import log_action
 from core.access import get_batch_or_404, get_farm_or_404, scope_batches
 from core.utils import api_error, api_success
+from farms.models import RearingRoom
 
 from .models import Batch
+from .placement import leave_room, place_batch
 from .queries import with_counts
 from .serializers import (
     BatchCreateSerializer,
@@ -17,6 +19,27 @@ from .serializers import (
     BatchUpdateSerializer,
     BatchUpdateStageSerializer,
 )
+
+CHOOSE_ROOM = 'Please choose a room.'
+NOT_THIS_FARMS_ROOM = "Please choose one of this farm's rooms."
+
+
+def _room_for_new_batch(farm, room_id):
+    """The room a new batch goes in. (room, error response).
+
+    A farm with no rooms gets "Room 1" made for it, a farm with one room uses it, and a farm with several needs a choice.
+    """
+    rooms = list(RearingRoom.objects.filter(farm=farm, is_active=True))
+    if room_id:
+        chosen = next((r for r in rooms if r.pk == room_id), None)
+        if chosen is None:
+            return None, api_error(NOT_THIS_FARMS_ROOM, 422, {'room_id': [NOT_THIS_FARMS_ROOM]})
+        return chosen, None
+    if not rooms:
+        return RearingRoom.objects.create(farm=farm, name='Room 1'), None
+    if len(rooms) == 1:
+        return rooms[0], None
+    return None, api_error(CHOOSE_ROOM, 422, {'room_id': [CHOOSE_ROOM]})
 
 
 class BatchCreateView(APIView):
@@ -30,6 +53,9 @@ class BatchCreateView(APIView):
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
 
         farm = get_farm_or_404(request.user, serializer.validated_data['farm_id'])
+        room, error = _room_for_new_batch(farm, serializer.validated_data.get('room_id'))
+        if error:
+            return error
 
         batch = Batch.objects.create(
             farm=farm,
@@ -39,6 +65,7 @@ class BatchCreateView(APIView):
             quantity=serializer.validated_data.get('quantity'),
             quantity_unit=serializer.validated_data.get('quantity_unit', 'BOXES'),
         )
+        place_batch(batch, room, when=batch.start_date)
         batch.refresh_from_db()
         log_action(request, 'CREATE', 'Batch', batch.pk, f'Created batch on farm {farm.name}')
         return api_success(BatchListSerializer(batch).data, 'Batch created.', 201)
@@ -59,7 +86,7 @@ class BatchDetailView(APIView):
     def get(self, request, pk):
         batch = get_batch_or_404(
             request.user, pk,
-            Batch.objects.prefetch_related('disease_detections', 'sensor_readings', 'alert_logs'),
+            Batch.objects.select_related('room').prefetch_related('disease_detections', 'sensor_readings', 'alert_logs'),
         )
         return api_success(BatchDetailSerializer(batch).data)
 
@@ -83,8 +110,26 @@ class BatchDetailView(APIView):
         batch = get_batch_or_404(request.user, pk)
         batch.is_active = False
         batch.save(update_fields=['is_active'])
+        leave_room(batch)
         log_action(request, 'DELETE', 'Batch', batch.pk, f'Deleted batch {batch.pk}')
         return api_success(None, 'Batch deleted.')
+
+
+class BatchRoomView(APIView):
+    """POST /api/batches/<id>/room, move a batch to another room of its farm. Where it has been is kept."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        if request.user.role not in ('FARMER', 'ADMIN'):
+            return api_error("You don't have permission to do that.", 403)
+        batch = get_batch_or_404(request.user, pk, Batch.objects.select_related('room'))
+        room = RearingRoom.objects.filter(pk=request.data.get('room_id') or '', farm=batch.farm, is_active=True).first()
+        if room is None:
+            return api_error(NOT_THIS_FARMS_ROOM, 422, {'room_id': [NOT_THIS_FARMS_ROOM]})
+        if batch.room_id != room.pk:
+            place_batch(batch, room)
+            log_action(request, 'UPDATE', 'Batch', batch.pk, f'Moved batch {batch.pk} to {room.name}')
+        return api_success(BatchListSerializer(batch).data, 'Batch moved.')
 
 
 class BatchActiveSupervisorView(APIView):
@@ -105,7 +150,7 @@ class BatchActiveSupervisorView(APIView):
         newest = SensorReading.objects.filter(batch=OuterRef('pk')).order_by('-timestamp')
         qs = scope_batches(
             request.user,
-            Batch.objects.select_related('farm').annotate(
+            Batch.objects.select_related('farm', 'room').annotate(
                 detection_count=Count('disease_detections', distinct=True),
                 open_alerts=Count(
                     'alert_logs',
