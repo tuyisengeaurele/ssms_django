@@ -942,6 +942,20 @@ tr.is-off td:last-child { opacity: 1; }
 .room-batches { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 2px; font-size: 0.9rem; }
 .room-sensors { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 6px; font-size: 0.9rem; }
 .room-sensor { display: inline-flex; align-items: center; gap: 8px; }
+.camera { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.camera-frame { position: relative; width: min(100%, 420px); aspect-ratio: 1 / 1; background: #111; border-radius: var(--radius, 10px); overflow: hidden; }
+/* The video fills the square and is cut to it, so what is seen inside the square is what is sent. */
+.camera-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* The frame edge is the edge of the photo that is sent, drawn in white with a dark line so it shows on any picture. */
+.camera-guide { position: absolute; inset: 0; border: 3px solid #fff; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55); pointer-events: none; }
+.camera-starting { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0; color: #fff; background: rgba(0, 0, 0, 0.55); }
+.camera-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.camera-problem { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.photo-help { margin: 12px 0; font-size: 0.9rem; }
+.photo-help summary { cursor: pointer; color: var(--text-muted); }
+.photo-tips { margin: 12px 0 0; padding-left: 20px; color: var(--text-muted); font-size: 0.9rem; }
+.photo-tips li + li { margin-top: 4px; }
+.photo-choices { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .place-picker { border: 0; margin: 0 0 8px; padding: 0; min-width: 0; }
 .place-picker legend { padding: 0; margin-bottom: 8px; }
 .place-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
