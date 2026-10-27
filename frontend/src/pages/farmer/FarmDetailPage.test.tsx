@@ -16,6 +16,16 @@ vi.mock('../../services/batch.service', () => ({ batchService: { getByFarm: api.
 vi.mock('../../services/device.service', () => ({
   deviceService: { getAll: api.devices, getById: api.deviceById, create: api.deviceCreate, remove: api.deviceRemove, moveToRoom: api.deviceMove },
 }));
+const TREE: Record<string, { code: string; name: string }[]> = {
+  '': [{ code: '5', name: 'Eastern Province' }, { code: '1', name: 'Kigali City' }],
+  '5': [{ code: '503', name: 'Gatsibo' }],
+  '503': [{ code: '050301', name: 'Kageyo' }],
+  '050301': [{ code: '5030101', name: 'Akabare' }],
+  '5030101': [{ code: '503010101', name: 'Kabeza' }],
+};
+vi.mock('../../services/location.service', () => ({
+  locationService: { getPlaces: (parent?: string) => Promise.resolve({ data: { data: TREE[parent ?? ''] ?? [] } }), locate: vi.fn() },
+}));
 vi.mock('../../services/room.service', () => ({ roomService: { getByFarm: api.rooms, create: vi.fn(), update: vi.fn(), remove: vi.fn() } }));
 
 import FarmDetailPage from './FarmDetailPage';
@@ -161,17 +171,60 @@ describe('Farm details page', () => {
     expect(await screen.findByRole('dialog', { name: 'Sensor d1' })).toBeInTheDocument();
   });
 
-  it('lets a farmer edit the farm', async () => {
+  it('lets a farmer rename a farm from before places without asking for a place', async () => {
     api.update.mockResolvedValue({ data: { data: { ...farm, name: 'Serge Farm' } } });
     open();
     await screen.findByText('Mugisha Serge');
     fireEvent.click(screen.getByRole('button', { name: 'Edit farm' }));
     const dialog = await screen.findByRole('dialog', { name: 'Edit farm' });
     expect((within(dialog).getByLabelText(/^Farm name/) as HTMLInputElement).value).toBe("Serge's farm");
+    expect(within(dialog).getByText('Gatsibo')).toBeInTheDocument();
+    expect(within(dialog).getByLabelText(/^Province/)).not.toBeRequired();
     fireEvent.change(within(dialog).getByLabelText(/^Farm name/), { target: { value: 'Serge Farm' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
-    await waitFor(() => expect(api.update).toHaveBeenCalledWith('f1', { name: 'Serge Farm', location: 'Gatsibo' }));
+    await waitFor(() => expect(api.update).toHaveBeenCalledWith('f1', { name: 'Serge Farm' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Serge Farm' })).toBeInTheDocument();
+  });
+
+  describe('a farm that has a place', () => {
+    const placed = {
+      ...farm, location: 'KG 9 Ave, Kabeza, Akabare, Kageyo, Gatsibo, Eastern Province', street: 'KG 9 Ave',
+      province: { code: '5', name: 'Eastern Province' }, district: { code: '503', name: 'Gatsibo' }, sector: { code: '050301', name: 'Kageyo' },
+      cell: { code: '5030101', name: 'Akabare' }, village: { code: '503010101', name: 'Kabeza' },
+    };
+
+    it('shows the place as one line under the name', async () => {
+      api.getById.mockResolvedValue({ data: { data: placed } });
+      open();
+      expect(await screen.findByText('KG 9 Ave, Kabeza, Akabare, Kageyo, Gatsibo, Eastern Province')).toBeInTheDocument();
+    });
+
+    it('opens the editor with the place chosen and the street filled in', async () => {
+      api.getById.mockResolvedValue({ data: { data: placed } });
+      open();
+      await screen.findByText('Mugisha Serge');
+      fireEvent.click(screen.getByRole('button', { name: 'Edit farm' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Edit farm' });
+      await waitFor(() => expect(within(dialog).getByLabelText(/^Village/)).toHaveValue('503010101'));
+      expect(within(dialog).getByLabelText(/^Province/)).toHaveValue('5');
+      expect((within(dialog).getByLabelText(/^Street or landmark/) as HTMLInputElement).value).toBe('KG 9 Ave');
+      expect(within(dialog).queryByText(/Address on record/)).not.toBeInTheDocument();
+    });
+
+    it('saves the name with all five codes and the street', async () => {
+      api.getById.mockResolvedValue({ data: { data: placed } });
+      api.update.mockResolvedValue({ data: { data: { ...placed, name: 'Serge Farm' } } });
+      open();
+      await screen.findByText('Mugisha Serge');
+      fireEvent.click(screen.getByRole('button', { name: 'Edit farm' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Edit farm' });
+      await waitFor(() => expect(within(dialog).getByLabelText(/^Village/)).toHaveValue('503010101'));
+      fireEvent.change(within(dialog).getByLabelText(/^Farm name/), { target: { value: 'Serge Farm' } });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
+      await waitFor(() => expect(api.update).toHaveBeenCalledWith('f1', {
+        name: 'Serge Farm', provinceCode: '5', districtCode: '503', sectorCode: '050301', cellCode: '5030101', villageCode: '503010101', street: 'KG 9 Ave',
+      }));
+    });
   });
 
   it('asks before deleting, then goes back to the list', async () => {

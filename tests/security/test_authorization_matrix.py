@@ -167,6 +167,12 @@ ROWS = [
     Row('mark an alert of a room in a deleted farm read', 'PATCH',
         lambda w: f'/api/alerts/{w.dead_farm_records.room_alert.pk}/read', expect(NOBODY)),
 
+    # ── places: any signed in person, the lists are public facts and nothing about them is stored ──
+    Row('list the provinces', 'GET', lambda w: '/api/locations', expect(set(SCOPE))),
+    Row('list the districts of a province', 'GET', lambda w: '/api/locations?parent=1', expect(set(SCOPE))),
+    Row('find the sector of a point', 'POST', lambda w: '/api/locations/locate', expect(set(SCOPE)),
+        body=lambda w: {'lat': -1.9536, 'lng': 30.0925}),
+
     # ── devices: staff only, and only on farms they may see ───────────────────────────────────
     Row('register a device', 'POST', lambda w: '/api/devices',
         expect({'supervisor_a', 'admin'}, role_denied=FARMERS, allowed_code=201),

@@ -942,6 +942,15 @@ tr.is-off td:last-child { opacity: 1; }
 .room-batches { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 2px; font-size: 0.9rem; }
 .room-sensors { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 6px; font-size: 0.9rem; }
 .room-sensor { display: inline-flex; align-items: center; gap: 8px; }
+.place-picker { border: 0; margin: 0 0 8px; padding: 0; min-width: 0; }
+.place-picker legend { padding: 0; margin-bottom: 8px; }
+.place-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.place-locate { margin-bottom: 8px; }
+.place-locate .form-hint { margin-top: 6px; }
+.place-notice { min-height: 1.4em; margin-bottom: 8px; font-size: 0.9rem; color: var(--text-muted); }
+.place-notice.is-problem { color: var(--text); }
+.place-legacy { margin-bottom: 12px; }
+@media (max-width: 560px) { .place-grid { grid-template-columns: minmax(0, 1fr); } }
 .device-move { margin: 16px 0 4px; }
 .device-move-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .device-move-row .form-select { flex: 1 1 180px; min-width: 0; }

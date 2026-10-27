@@ -10,6 +10,7 @@ from alerts.models import AlertLog
 from batches.models import Batch, BatchRoomStay
 from cooperatives.models import Cooperative
 from farms.models import Farm, RearingRoom
+from locations import registry
 from harvest.models import HarvestRecord
 from sensors.management.commands.seed_demo import make_password
 from sensors.models import DiseaseDetection, IoTDevice, SensorReading
@@ -192,3 +193,12 @@ def test_demo_readings_belong_to_rooms_and_demo_devices_sit_in_them():
     for device in IoTDevice.objects.filter(device_key__startswith='ssms-demo-'):
         assert device.room is not None
         assert device.room.farm_id == device.farm_id
+
+
+def test_every_demo_farm_stands_in_a_real_village_of_its_district():
+    call_command('seed_demo', '--days', '3', '--seed', '7', '--password', PASSWORD)
+    farms = Farm.objects.filter(owner__in=demo_users())
+    assert {f.district_code and registry.chain(f.village_code)['district']['name'] for f in farms} == {'Gatsibo', 'Kayonza', 'Nyagatare'}
+    for farm in farms:
+        assert registry.chain(farm.village_code) is not None
+        assert farm.location.endswith('Eastern Province')

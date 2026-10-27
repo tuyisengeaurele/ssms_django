@@ -17,6 +17,14 @@ from batches.models import Batch
 User = get_user_model()
 
 FARMS_URL   = '/api/farms'
+
+
+def place_codes():
+    """The five codes of one real village, as the farm form sends them."""
+    from locations import registry
+    village = next(p['code'] for p in registry.walk() if p['level'] == 'village')
+    chain = registry.chain(village)
+    return {f'{level}Code': chain[level]['code'] for level in ('province', 'district', 'sector', 'cell', 'village')}
 BATCHES_URL = '/api/batches'
 
 
@@ -148,7 +156,7 @@ class FarmCreatePermissionTests(APITestCase):
 
     def test_farmer_can_create_farm(self):
         self.client.force_authenticate(user=self.farmer)
-        res = self.client.post(FARMS_URL, {'name': 'My New Farm', 'location': 'Musanze'}, format='json')
+        res = self.client.post(FARMS_URL, {'name': 'My New Farm', **place_codes()}, format='json')
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         # The created farm is owned by the requesting farmer
         farm_id = res.json()['data']['id']
@@ -157,12 +165,12 @@ class FarmCreatePermissionTests(APITestCase):
 
     def test_supervisor_cannot_create_farm(self):
         self.client.force_authenticate(user=self.supervisor)
-        res = self.client.post(FARMS_URL, {'name': 'Sup Farm', 'location': 'Rwamagana'}, format='json')
+        res = self.client.post(FARMS_URL, {'name': 'Sup Farm', **place_codes()}, format='json')
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_create_farm_requires_name(self):
         self.client.force_authenticate(user=self.farmer)
-        res = self.client.post(FARMS_URL, {'location': 'Nowhere'}, format='json')
+        res = self.client.post(FARMS_URL, place_codes(), format='json')
         self.assertIn(res.status_code, [status.HTTP_422_UNPROCESSABLE_ENTITY, status.HTTP_400_BAD_REQUEST])
 
     def test_unauthenticated_cannot_create_farm(self):

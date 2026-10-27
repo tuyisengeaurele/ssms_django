@@ -7,9 +7,11 @@ import { useToast } from '../../context/ToastContext';
 import { Icon } from '../../components/ui/Icon';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
+import LocationPicker, { EMPTY_PLACE, PlaceValue } from '../../components/ui/LocationPicker';
 
 export default function AddFarmPage() {
-  const [form, setForm] = useState({ name: '', location: '' });
+  const [name, setName] = useState('');
+  const [place, setPlace] = useState<PlaceValue>(EMPTY_PLACE);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -17,15 +19,12 @@ export default function AddFarmPage() {
   const { success } = useToast();
   const { t } = useLanguage();
 
-  const change = (field: 'name' | 'location') => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const res = await farmService.create(form);
+      const res = await farmService.create({ name, ...place });
       success(t('afCreated'));
       navigate(`/farms/${res.data.data.id}`);
     } catch (err) {
@@ -53,15 +52,11 @@ export default function AddFarmPage() {
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label className="form-label" htmlFor="farm-name">{t('afName')} <span className="required" aria-hidden="true">*</span></label>
-              <input id="farm-name" className="form-input" value={form.name} onChange={change('name')} placeholder={t('afNamePlace')} required maxLength={150} aria-describedby="farm-name-hint" />
+              <input id="farm-name" className="form-input" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('afNamePlace')} required maxLength={150} aria-describedby="farm-name-hint" />
               <span id="farm-name-hint" className="form-hint">{t('afNameHint')}</span>
             </div>
 
-            <div className="form-group">
-              <label className="form-label" htmlFor="farm-location">{t('afLocation')} <span className="required" aria-hidden="true">*</span></label>
-              <input id="farm-location" className="form-input" value={form.location} onChange={change('location')} placeholder={t('afLocationPlace')} required maxLength={250} aria-describedby="farm-location-hint" />
-              <span id="farm-location-hint" className="form-hint">{t('afLocationHint')}</span>
-            </div>
+            <LocationPicker value={place} onChange={setPlace} idPrefix="farm-place" />
 
             <div className="profile-actions">
               <button type="submit" className="btn btn-primary" disabled={loading}>

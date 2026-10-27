@@ -4,6 +4,7 @@ import { farmService } from '../../services/farm.service';
 import { batchService } from '../../services/batch.service';
 import { deviceService } from '../../services/device.service';
 import { roomService } from '../../services/room.service';
+import LocationPicker, { EMPTY_PLACE, PlaceValue } from '../../components/ui/LocationPicker';
 import { STAGE_LABELS } from '../../utils/constants';
 import { Farm, Batch, IoTDevice, Room } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -48,7 +49,8 @@ export default function FarmDetailPage() {
   const [error, setError] = useState('');
 
   const [showEdit, setShowEdit] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', location: '' });
+  const [editName, setEditName] = useState('');
+  const [editPlace, setEditPlace] = useState<PlaceValue>(EMPTY_PLACE);
   const [saving, setSaving] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -82,7 +84,11 @@ export default function FarmDetailPage() {
 
   const openEdit = () => {
     if (!farm) return;
-    setEditForm({ name: farm.name, location: farm.location });
+    setEditName(farm.name);
+    setEditPlace({
+      provinceCode: farm.province?.code ?? '', districtCode: farm.district?.code ?? '', sectorCode: farm.sector?.code ?? '',
+      cellCode: farm.cell?.code ?? '', villageCode: farm.village?.code ?? '', street: farm.street ?? '',
+    });
     setShowEdit(true);
   };
 
@@ -91,7 +97,9 @@ export default function FarmDetailPage() {
     if (!id) return;
     setSaving(true);
     try {
-      const res = await farmService.update(id, editForm);
+      // A farm from before places that is only renamed keeps its old text. Any place sent must be the whole place.
+      const untouched = !farm?.village && !editPlace.provinceCode;
+      const res = await farmService.update(id, untouched ? { name: editName } : { name: editName, ...editPlace });
       setFarm(res.data.data);
       setShowEdit(false);
       success(t('fdUpdated'));
@@ -206,12 +214,9 @@ export default function FarmDetailPage() {
         <form id="farm-edit-form" onSubmit={handleSave}>
           <div className="form-group">
             <label className="form-label" htmlFor="edit-farm-name">{t('afName')} <span className="required" aria-hidden="true">*</span></label>
-            <input id="edit-farm-name" className="form-input" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} required maxLength={150} />
+            <input id="edit-farm-name" className="form-input" value={editName} onChange={(e) => setEditName(e.target.value)} required maxLength={150} />
           </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="edit-farm-location">{t('afLocation')} <span className="required" aria-hidden="true">*</span></label>
-            <input id="edit-farm-location" className="form-input" value={editForm.location} onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))} required maxLength={250} />
-          </div>
+          <LocationPicker value={editPlace} onChange={setEditPlace} legacyText={farm?.village ? undefined : farm?.location} idPrefix="edit-farm-place" />
         </form>
       </Modal>
 

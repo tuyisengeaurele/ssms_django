@@ -8,7 +8,15 @@ from core.ids import new_id as _generate_id  # migrations import this name
 class Farm(models.Model):
     id = models.CharField(primary_key=True, max_length=36, default=_generate_id, editable=False)
     name = models.CharField(max_length=150)
+    # The one line shown in lists and searched, made from the place below. Farms from before places keep their own text.
     location = models.CharField(max_length=250)
+    # Where the farm is, as codes from the official list in the locations app. Empty on farms from before places.
+    province_code = models.CharField(db_column='provinceCode', max_length=9, blank=True, default='')
+    district_code = models.CharField(db_column='districtCode', max_length=9, blank=True, default='')
+    sector_code = models.CharField(db_column='sectorCode', max_length=9, blank=True, default='')
+    cell_code = models.CharField(db_column='cellCode', max_length=9, blank=True, default='')
+    village_code = models.CharField(db_column='villageCode', max_length=9, blank=True, default='')
+    street = models.CharField(max_length=200, blank=True, default='')
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

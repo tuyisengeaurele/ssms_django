@@ -1,5 +1,34 @@
 # Changelog
 
+## Rwanda places for farms (Plan 9, item L2)
+
+A farm's location is now chosen the way Irembo asks for it: province, district, sector, cell and village as linked lists, with an optional street. "Use my location" fills in what a map can tell.
+
+### Checked
+- Backend: 942 tests pass. Frontend: 745 tests pass and `tsc` is clean.
+- Your local database is migrated through `farms/0003`. Your existing farms keep their old text and have no place chosen yet.
+- Not yet looked at in the browser by me, because the sign-in step was blocked. Please open New farm and Edit farm once.
+
+### Added
+- **The places of Rwanda**, in `locations/`: 5 provinces, 30 districts, 416 sectors, 2,148 cells and 14,842 villages, with their government codes. Where it comes from, what was checked and what is not perfect is in `locations/README.md`.
+- **Linked lists on the farm form.** Choosing a province loads its districts, and so on down. Changing a place empties the ones below it. The street is optional. All five choices are needed, and the server refuses a set that does not belong together.
+- **Use my location.** The browser's position is turned into a province, district and sector by the World Bank's sector boundaries. The person then chooses the cell and village by hand, because no boundaries exist for those. The point travels in a request body and is never stored. Outside Rwanda, or when the person says no, the form says so in plain words and nothing changes.
+- **The farm line.** A farm's text location is now made from its choices, smallest place first, for example "KG 9 Ave, Kabeza, Akabare, Kageyo, Gatsibo, Eastern Province". Lists and search keep using it.
+- `GET /api/locations?parent=<code>` and `POST /api/locations/locate`, for any signed-in person, both rows in the authorization matrix.
+- The demo farms now stand in a real village of their district.
+
+### Changed
+- Creating a farm no longer takes free text for the location. The API refuses it. Renaming a farm needs no place.
+- A farm from before places keeps its old text, shown as "Address on record" in the editor. Choosing a place replaces it, and then all five choices are needed.
+
+### Known limits
+- Village names come as the register has them, a few with obvious typos (for example "Umudugudu WaV"). They are not corrected by guessing.
+- The list has 14,842 villages against the 14,837 usually quoted. No copy we found matches every official figure.
+- The boundaries date from 2012. The Kinyarwanda and French words on the form are drafts for a native speaker to read.
+
+### Before you run this
+- Run `python manage.py migrate`.
+
 ## Rearing rooms, step 3: alerts by room (Plan 8)
 
 Temperature, humidity and sensor-outage alerts now belong to a room. A problem in a room with three batches is one alert and one email, not three. This finishes the design in `docs/superpowers/specs/2026-10-27-rearing-rooms-design.md`.

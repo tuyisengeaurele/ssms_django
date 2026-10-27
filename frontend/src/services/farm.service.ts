@@ -1,8 +1,10 @@
 import api from './api';
 import { ApiResponse, Farm } from '../types';
+import type { PlaceValue } from '../components/ui/LocationPicker';
 
 export const farmService = {
-  create: (data: { name: string; location: string }) =>
+  /** A farm's place is five codes, province down to village, and an optional street. */
+  create: (data: { name: string } & PlaceValue) =>
     api.post<ApiResponse<Farm>>('/farms', data),
 
   getAll: (page?: number) => {
@@ -12,7 +14,8 @@ export const farmService = {
 
   getById: (id: string) => api.get<ApiResponse<Farm>>(`/farms/${id}`),
 
-  update: (id: string, data: { name?: string; location?: string }) =>
+  /** Send the name, the street, or all five codes together with the street to move the farm. */
+  update: (id: string, data: { name?: string; street?: string } | ({ name?: string } & PlaceValue)) =>
     api.patch<ApiResponse<Farm>>(`/farms/${id}`, data),
 
   delete: (id: string) => api.delete<ApiResponse<null>>(`/farms/${id}`),
