@@ -111,3 +111,10 @@ def test_a_missing_threshold_row_falls_back_to_the_default_range():
     StageThreshold.objects.filter(stage='COCOON').delete()
     batch = BatchFactory(stage='COCOON')
     assert [a.type for a in check_sensor_alerts(batch.pk, 20.0, 78.0)] == ['TEMPERATURE']
+
+
+def test_alerts_are_never_bulk_inserted_because_the_real_alert_table_has_a_native_enum_column():
+    """Older databases made alert_logs.type a Postgres enum. Django's bulk insert cannot write into one."""
+    batch = BatchFactory()
+    with mock.patch.object(AlertLog.objects, 'bulk_create', side_effect=AssertionError('bulk insert of alerts')):
+        assert [a.type for a in check_sensor_alerts(batch.pk, 20.5, 90.0)] == ['TEMPERATURE', 'HUMIDITY']

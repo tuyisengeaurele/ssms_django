@@ -160,7 +160,10 @@ def check_sensor_alerts(batch_id: str, temperature: float, humidity: float) -> l
 
         # Decide which types need an email BEFORE inserting, so the throttle looks at earlier records only.
         send_for_types = {a.type for a in to_create if _should_send_email(batch_id, a.type)}
-        AlertLog.objects.bulk_create(to_create)
+        # One at a time on purpose: older databases have a native enum on alert_logs.type, and Django's bulk
+        # insert cannot write into one. There are only ever a couple of alerts here.
+        for alert in to_create:
+            alert.save()
 
     for alert in to_create:
         if alert.type in send_for_types:

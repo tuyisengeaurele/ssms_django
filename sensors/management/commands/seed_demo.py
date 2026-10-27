@@ -199,14 +199,19 @@ class Command(BaseCommand):
         IoTDevice.objects.filter(pk=device.pk).update(last_seen=last)
 
     @staticmethod
-    def _save_with_dates(model, objects, *fields):
+    def _save_with_dates(model, objects, *fields, one_by_one=False):
         """Create the rows with the dates they should have.
 
         The models stamp the real time on every new row, and Django copies that stamp onto the objects, so the
-        wanted dates are remembered, put back, and written in a second step.
+        wanted dates are remembered, put back, and written in a second step. Alerts are saved one at a time,
+        because older databases have a native enum on alert_logs.type that Django's bulk insert cannot write into.
         """
         wanted = [[getattr(obj, field) for field in fields] for obj in objects]
-        model.objects.bulk_create(objects, batch_size=1000)
+        if one_by_one:
+            for obj in objects:
+                obj.save()
+        else:
+            model.objects.bulk_create(objects, batch_size=1000)
         for obj, values in zip(objects, wanted):
             for field, value in zip(fields, values):
                 setattr(obj, field, value)
@@ -216,7 +221,7 @@ class Command(BaseCommand):
         self._save_with_dates(SensorReading, readings, 'timestamp')
 
     def _save_alerts(self, alerts):
-        self._save_with_dates(AlertLog, alerts, 'created_at', 'resolved_at')
+        self._save_with_dates(AlertLog, alerts, 'created_at', 'resolved_at', one_by_one=True)
 
     def _stage_history(self, batch, now):
         moves = []

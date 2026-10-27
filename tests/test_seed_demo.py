@@ -153,3 +153,11 @@ def test_the_devices_of_running_batches_are_online_and_the_finished_ones_are_not
     assert all(d.status == 'online' for d in running)
     done = IoTDevice.objects.filter(batch__farm__owner__in=demo_users(), batch__stage='HARVEST')
     assert all(d.status == 'offline' for d in done)
+
+
+def test_the_seed_never_bulk_inserts_alerts_because_the_real_alert_table_has_a_native_enum_column():
+    from unittest import mock
+
+    with mock.patch.object(AlertLog.objects, 'bulk_create', side_effect=AssertionError('bulk insert of alerts')):
+        call_command('seed_demo', '--days', '10', '--seed', '7', '--password', PASSWORD)
+    assert AlertLog.objects.filter(batch__farm__owner__in=demo_users()).exists()
