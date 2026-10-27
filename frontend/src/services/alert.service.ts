@@ -16,6 +16,10 @@ export const alertService = {
   markRead: (id: string) =>
     api.patch<ApiResponse<AlertLog>>(`/alerts/${id}/read`, {}),
 
+  /** PATCH /api/alerts/<id>/unread, the undo of markRead */
+  markUnread: (id: string) =>
+    api.patch<ApiResponse<AlertLog>>(`/alerts/${id}/unread`, {}),
+
   /** POST /api/alerts/mark-all-read */
   markAllRead: () =>
     api.post<ApiResponse<{ updated: number }>>('/alerts/mark-all-read', {}),

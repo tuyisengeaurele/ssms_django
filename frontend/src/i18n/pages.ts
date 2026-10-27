@@ -304,6 +304,8 @@ export const pageTranslations = {
   alTypeStage: k("Stage change", "Changement de stade", "Impinduka y'icyiciro"),
   alTypeSystem: k("System", "Système", "Sisitemu"),
   alMarkRead: k("Mark as read", "Marquer comme lue", "Soma"),
+  alMarkedRead: k("Marked as read.", "Marquée comme lue.", "Byasomwe."),
+  alUndo: k("Undo", "Annuler", "Subiza inyuma"),
   alMarkAll: k("Mark all as read", "Tout marquer comme lu", "Bisome byose"),
   alMarkAllTitle: k("Mark every alert as read?", "Marquer toutes les alertes comme lues ?", "Gusoma ibiburaniswa byose?"),
   alMarkAllBody: k("Every unread alert is marked as read. You cannot mark them unread again.", "Toutes les alertes non lues seront marquées comme lues. Vous ne pourrez pas les remettre en non lues.", "Ibiburaniswa byose bitarasomwa bizahita bisomwa. Ntushobora kongera kubigira ibitarasomwa."),
