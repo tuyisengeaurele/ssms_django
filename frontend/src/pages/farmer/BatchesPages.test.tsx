@@ -5,9 +5,10 @@ import { LanguageProvider } from '../../context/LanguageContext';
 import { ToastProvider } from '../../context/ToastContext';
 import { setReducedMotion } from '../../test/setup';
 
-const api = vi.hoisted(() => ({ active: vi.fn(), create: vi.fn() }));
+const api = vi.hoisted(() => ({ active: vi.fn(), create: vi.fn(), rooms: vi.fn() }));
 vi.mock('../../services/sensor.service', () => ({ batchSupervisorService: { getActive: api.active } }));
 vi.mock('../../services/batch.service', () => ({ batchService: { create: api.create } }));
+vi.mock('../../services/room.service', () => ({ roomService: { getByFarm: api.rooms } }));
 
 import AddBatchPage from './AddBatchPage';
 import BatchesPage from './BatchesPage';
@@ -45,6 +46,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   setReducedMotion(true);
   api.active.mockResolvedValue({ data: { data: [batch(1, 'LARVA', "Serge's farm"), batch(2, 'EGG', "Gad's farm"), batch(3, 'LARVA', "Bruce's Farm")] } });
+  api.rooms.mockResolvedValue({ data: { data: [] } });
 });
 
 describe('Batches page', () => {
@@ -125,6 +127,40 @@ describe('New batch page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create batch' }));
     await waitFor(() => expect(api.create).toHaveBeenCalledWith({ farmId: 'f1', expectedHarvestDate: '2030-01-15', notes: 'Healthy eggs' }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/farms/f1'));
+  });
+
+  const room = (id: string, name: string) => ({ id, name, notes: '', batchCount: 0, batches: [], createdAt: '' });
+
+  it('says a first room will be made when the farm has none', async () => {
+    open();
+    expect(await screen.findByText('A room named Room 1 will be made for this batch.')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Room/)).not.toBeInTheDocument();
+    expect(api.rooms).toHaveBeenCalledWith('f1');
+  });
+
+  it('puts the batch in the only room the farm has, and shows which', async () => {
+    api.rooms.mockResolvedValue({ data: { data: [room('r1', 'Rearing house 1')] } });
+    api.create.mockResolvedValue({ data: { data: { id: 'b9' } } });
+    open();
+    const choice = (await screen.findByLabelText('Room')) as HTMLSelectElement;
+    expect(choice.value).toBe('r1');
+    fireEvent.change(screen.getByLabelText(/^Expected harvest date/), { target: { value: '2030-01-15' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create batch' }));
+    await waitFor(() => expect(api.create).toHaveBeenCalledWith(expect.objectContaining({ farmId: 'f1', roomId: 'r1' })));
+  });
+
+  it('asks which room when the farm has several, and will not guess', async () => {
+    api.rooms.mockResolvedValue({ data: { data: [room('r1', 'Rearing house 1'), room('r2', 'Cocoon room')] } });
+    api.create.mockResolvedValue({ data: { data: { id: 'b9' } } });
+    open();
+    const choice = (await screen.findByLabelText('Room')) as HTMLSelectElement;
+    expect(choice.value).toBe('');
+    expect(choice).toBeRequired();
+    expect(within(choice).getAllByRole('option').map((o) => o.textContent)).toEqual(['Choose a room', 'Rearing house 1', 'Cocoon room']);
+    fireEvent.change(screen.getByLabelText(/^Expected harvest date/), { target: { value: '2030-01-15' } });
+    fireEvent.change(choice, { target: { value: 'r2' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create batch' }));
+    await waitFor(() => expect(api.create).toHaveBeenCalledWith(expect.objectContaining({ roomId: 'r2' })));
   });
 
   it('asks for breed, quantity and its unit, none of them required', () => {

@@ -4,8 +4,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { batchService } from '../../services/batch.service';
 import { detectionService } from '../../services/detection.service';
 import { alertService } from '../../services/alert.service';
+import { roomService } from '../../services/room.service';
 import { sensorService, type SeriesPoint, type StageRange } from '../../services/sensor.service';
-import { Batch, BatchStage, DiseaseDetection, MortalityEntry, QuantityUnit } from '../../types';
+import { Batch, BatchStage, DiseaseDetection, MortalityEntry, QuantityUnit, Room } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
@@ -71,6 +72,13 @@ export default function BatchDetailPage() {
   const [entryToDelete, setEntryToDelete] = useState<MortalityEntry | null>(null);
   const [deletingEntry, setDeletingEntry] = useState(false);
 
+  // Move to another room
+  const [farmRooms, setFarmRooms] = useState<Room[]>([]);
+  const [showMove, setShowMove] = useState(false);
+  const [moveTo, setMoveTo] = useState('');
+  const [moveError, setMoveError] = useState('');
+  const [movingRoom, setMovingRoom] = useState(false);
+
   // Edit details
   const [showEdit, setShowEdit] = useState(false);
   const [editForm, setEditForm] = useState({ breed: '', quantity: '', unit: 'BOXES', notes: '' });
@@ -91,6 +99,12 @@ export default function BatchDetailPage() {
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  const farmId = batch?.farmId;
+  useEffect(() => {
+    if (!farmId) return;
+    roomService.getByFarm(farmId).then((r) => setFarmRooms(r.data.data)).catch(() => {});
+  }, [farmId]);
 
   useEffect(() => {
     if (!id) return;
@@ -171,6 +185,30 @@ export default function BatchDetailPage() {
     } finally {
       setDeletingEntry(false);
       setEntryToDelete(null);
+    }
+  };
+
+  const openMove = () => {
+    setMoveTo('');
+    setMoveError('');
+    setShowMove(true);
+  };
+
+  const saveMove = async () => {
+    if (!id || !moveTo) return;
+    setMoveError('');
+    setMovingRoom(true);
+    try {
+      const res = await batchService.moveToRoom(id, moveTo);
+      const moved = res.data.data;
+      const stays = (await batchService.getById(id)).data.data.roomStays;
+      setBatch((prev) => (prev ? { ...prev, room: moved.room, roomStays: stays ?? prev.roomStays } : prev));
+      setShowMove(false);
+      success(t('bdRoomMoved'));
+    } catch (err) {
+      setMoveError(getErrorMessage(err));
+    } finally {
+      setMovingRoom(false);
     }
   };
 
@@ -350,6 +388,31 @@ export default function BatchDetailPage() {
       </Modal>
 
       <Modal
+        open={showMove}
+        onClose={() => setShowMove(false)}
+        title={t('bdMoveRoom')}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setShowMove(false)}>{t('btnCancel')}</button>
+            <button className="btn btn-primary" onClick={saveMove} disabled={!moveTo || movingRoom}>
+              {movingRoom ? <span className="spinner" aria-hidden="true" /> : null}
+              {t('bdMoveRoomYes')}
+            </button>
+          </>
+        }
+      >
+        {moveError && <div className="alert alert-error" role="alert">{moveError}</div>}
+        <p className="modal-text">{t('bdMoveRoomBody')}</p>
+        <div className="form-group">
+          <label className="form-label" htmlFor="move-room">{t('bdMoveRoomPick')}</label>
+          <select id="move-room" className="form-select" value={moveTo} onChange={(e) => setMoveTo(e.target.value)}>
+            <option value="">{t('abRoomChoose')}</option>
+            {farmRooms.filter((r) => r.id !== batch.room?.id).map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
+        </div>
+      </Modal>
+
+      <Modal
         open={showEdit}
         onClose={() => setShowEdit(false)}
         title={t('bdEditTitle')}
@@ -451,7 +514,14 @@ export default function BatchDetailPage() {
         <div className="split">
           <Panel
             title={t('bdDetails')}
-            actions={canEdit ? <button className="btn btn-ghost btn-sm" onClick={openEdit}>{t('bdEditDetails')}</button> : undefined}
+            actions={canEdit ? (
+              <>
+                {farmRooms.some((r) => r.id !== batch.room?.id) && (
+                  <button className="btn btn-ghost btn-sm" onClick={openMove}>{t('bdMoveRoom')}</button>
+                )}
+                <button className="btn btn-ghost btn-sm" onClick={openEdit}>{t('bdEditDetails')}</button>
+              </>
+            ) : undefined}
           >
             <dl className="facts facts--pairs">
               <div>
@@ -476,6 +546,12 @@ export default function BatchDetailPage() {
                 <dt>{t('bdExpected')}</dt>
                 <dd>{date.format(new Date(batch.expectedHarvestDate))}</dd>
               </div>
+              {batch.room && (
+                <div>
+                  <dt>{t('bdRoom')}</dt>
+                  <dd>{batch.room.name}</dd>
+                </div>
+              )}
               {batch.breed && (
                 <div>
                   <dt>{t('bdBreed')}</dt>
@@ -495,6 +571,17 @@ export default function BatchDetailPage() {
                 </div>
               )}
             </dl>
+            {(batch.roomStays?.length ?? 0) > 1 && (
+              <ul className="room-history" aria-label={t('bdRoomHistory')}>
+                {batch.roomStays!.map((stay) => (
+                  <li key={`${stay.roomId}-${stay.startedAt}`}>
+                    {stay.endedAt
+                      ? fill(t('bdRoomStay'), { room: stay.roomName, from: date.format(new Date(stay.startedAt)), to: date.format(new Date(stay.endedAt)) })
+                      : fill(t('bdRoomStayNow'), { room: stay.roomName, from: date.format(new Date(stay.startedAt)) })}
+                  </li>
+                ))}
+              </ul>
+            )}
           </Panel>
 
           <Panel title={t('bdActivity')}>

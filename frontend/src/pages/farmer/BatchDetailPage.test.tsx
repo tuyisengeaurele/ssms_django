@@ -12,12 +12,13 @@ vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me'
 
 const api = vi.hoisted(() => ({
   getById: vi.fn(), updateStage: vi.fn(), archive: vi.fn(), detections: vi.fn(), series: vi.fn(), thresholds: vi.fn(),
-  update: vi.fn(), mortality: vi.fn(), addDeaths: vi.fn(), deleteDeaths: vi.fn(),
+  update: vi.fn(), mortality: vi.fn(), addDeaths: vi.fn(), deleteDeaths: vi.fn(), moveRoom: vi.fn(), rooms: vi.fn(),
 }));
+vi.mock('../../services/room.service', () => ({ roomService: { getByFarm: api.rooms } }));
 vi.mock('../../services/batch.service', () => ({
   batchService: {
     getById: api.getById, updateStage: api.updateStage, delete: api.archive, update: api.update,
-    getMortality: api.mortality, addMortality: api.addDeaths, deleteMortality: api.deleteDeaths,
+    getMortality: api.mortality, addMortality: api.addDeaths, deleteMortality: api.deleteDeaths, moveToRoom: api.moveRoom,
   },
 }));
 vi.mock('../../services/detection.service', () => ({ detectionService: { getByBatch: api.detections } }));
@@ -73,6 +74,10 @@ beforeEach(() => {
   api.getById.mockResolvedValue({ data: { data: batch() } });
   api.detections.mockResolvedValue({ data: { data: detections } });
   api.mortality.mockResolvedValue({ data: { data: [] } });
+  api.rooms.mockResolvedValue({ data: { data: [
+    { id: 'r1', name: 'Rearing house 1', notes: '', batchCount: 1, batches: [], createdAt: '' },
+    { id: 'r2', name: 'Cocoon room', notes: '', batchCount: 0, batches: [], createdAt: '' },
+  ] } });
   api.series.mockResolvedValue({ data: { data: [
     { timestamp: '2026-10-01T09:00:00Z', temperature: 30.2, humidity: 78, count: 4 },
     { timestamp: '2026-10-01T10:00:00Z', temperature: 24.5, humidity: 78, count: 4 },
@@ -430,5 +435,95 @@ describe('Breed, quantity and deaths', () => {
     await waitFor(() => expect(api.update).toHaveBeenCalledWith('b1-9sieo7cv', { breed: 'Local', quantity: 2, quantityUnit: 'BOXES', notes: 'Moved to shed 2' }));
     expect(await screen.findByText('Moved to shed 2', {}, { timeout: 5000 })).toBeInTheDocument();
     expect(await screen.findByText('2 egg boxes')).toBeInTheDocument();
+  });
+});
+
+describe('The room of a batch', () => {
+  const inRoom = (over: object = {}) => batch({
+    room: { id: 'r1', name: 'Rearing house 1' },
+    roomStays: [{ roomId: 'r1', roomName: 'Rearing house 1', startedAt: '2026-05-16T00:00:00Z', endedAt: null }],
+    ...over,
+  });
+
+  it('shows which room the batch is in', async () => {
+    api.getById.mockResolvedValue({ data: { data: inRoom() } });
+    open();
+    const facts = (await screen.findByText('Room')).closest('dl') as HTMLElement;
+    expect(within(facts).getByText('Rearing house 1')).toBeInTheDocument();
+  });
+
+  it('shows no room line for a batch that was never placed', async () => {
+    api.getById.mockResolvedValue({ data: { data: batch({ room: null }) } });
+    open();
+    await screen.findByRole('heading', { level: 1 });
+    expect(screen.queryByText('Room')).not.toBeInTheDocument();
+  });
+
+  it('moves the batch to another room of its farm and keeps going', async () => {
+    api.getById.mockResolvedValue({ data: { data: inRoom() } });
+    api.moveRoom.mockResolvedValue({ data: { data: inRoom({ room: { id: 'r2', name: 'Cocoon room' } }) } });
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Move to another room' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Move to another room' });
+    const choice = within(dialog).getByLabelText('New room') as HTMLSelectElement;
+    expect(within(choice).getAllByRole('option').map((o) => o.textContent)).toEqual(['Choose a room', 'Cocoon room']);
+    expect(within(dialog).getByRole('button', { name: 'Move' })).toBeDisabled();
+    fireEvent.change(choice, { target: { value: 'r2' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Move' }));
+    await waitFor(() => expect(api.moveRoom).toHaveBeenCalledWith('b1-9sieo7cv', 'r2'));
+    expect(await screen.findByText('Cocoon room', {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(await screen.findByText('Batch moved.', {}, { timeout: 5000 })).toBeInTheDocument();
+  });
+
+  it('shows the answer in the dialog when the move is refused', async () => {
+    api.getById.mockResolvedValue({ data: { data: inRoom() } });
+    api.moveRoom.mockRejectedValue(new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, { status: 422, data: { message: "Please choose one of this farm's rooms." } } as never));
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Move to another room' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Move to another room' });
+    fireEvent.change(within(dialog).getByLabelText('New room'), { target: { value: 'r2' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Move' }));
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent("Please choose one of this farm's rooms.");
+  });
+
+  it('offers no move when the farm has no other room', async () => {
+    api.rooms.mockResolvedValue({ data: { data: [{ id: 'r1', name: 'Rearing house 1', notes: '', batchCount: 1, batches: [], createdAt: '' }] } });
+    api.getById.mockResolvedValue({ data: { data: inRoom() } });
+    open();
+    await screen.findByText('Rearing house 1');
+    expect(screen.queryByRole('button', { name: 'Move to another room' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the move away from a supervisor', async () => {
+    auth.role = 'SUPERVISOR';
+    api.getById.mockResolvedValue({ data: { data: inRoom() } });
+    open();
+    await screen.findByText('Rearing house 1');
+    expect(screen.queryByRole('button', { name: 'Move to another room' })).not.toBeInTheDocument();
+  });
+
+  it('lists where the batch has been once it has moved', async () => {
+    api.getById.mockResolvedValue({
+      data: {
+        data: inRoom({
+          room: { id: 'r2', name: 'Cocoon room' },
+          roomStays: [
+            { roomId: 'r2', roomName: 'Cocoon room', startedAt: '2026-05-20T00:00:00Z', endedAt: null },
+            { roomId: 'r1', roomName: 'Rearing house 1', startedAt: '2026-05-16T00:00:00Z', endedAt: '2026-05-20T00:00:00Z' },
+          ],
+        }),
+      },
+    });
+    open();
+    const history = await screen.findByRole('list', { name: 'Where it has been' });
+    const rows = within(history).getAllByRole('listitem').map((li) => li.textContent);
+    expect(rows).toEqual(['Cocoon room: from May 20, 2026, now', 'Rearing house 1: from May 16, 2026 to May 20, 2026']);
+  });
+
+  it('does not list a history for a batch that has only been in one room', async () => {
+    api.getById.mockResolvedValue({ data: { data: inRoom() } });
+    open();
+    await screen.findByText('Rearing house 1');
+    expect(screen.queryByRole('list', { name: 'Where it has been' })).not.toBeInTheDocument();
   });
 });

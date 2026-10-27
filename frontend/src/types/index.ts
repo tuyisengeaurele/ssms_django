@@ -50,6 +50,24 @@ export interface Farm {
 
 export type QuantityUnit = 'BOXES' | 'WORMS';
 
+/** A room (or rearing house) on a farm. Every batch in it shares its air. */
+export interface Room {
+  id: string;
+  name: string;
+  notes: string;
+  batchCount: number;
+  batches: { id: string; stage: BatchStage }[];
+  createdAt: string;
+}
+
+/** One stretch of a batch's life in a room. The open one (no end) is where it is now. */
+export interface RoomStay {
+  roomId: string;
+  roomName: string;
+  startedAt: string;
+  endedAt: string | null;
+}
+
 /** Worms that died on one day. */
 export interface MortalityEntry {
   id: string;
@@ -72,6 +90,10 @@ export interface Batch {
   /** What the batch started with, counted in `quantityUnit`. */
   quantity?: number | null;
   quantityUnit?: QuantityUnit;
+  /** The room it is in now, or null when it was never placed. */
+  room?: { id: string; name: string } | null;
+  /** Where it has been, newest first. */
+  roomStays?: RoomStay[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

@@ -1,6 +1,8 @@
-import { useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { batchService } from '../../services/batch.service';
+import { roomService } from '../../services/room.service';
+import type { Room } from '../../types';
 import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
@@ -16,8 +18,21 @@ export default function AddBatchPage() {
   const { t } = useLanguage();
 
   const [form, setForm] = useState({ expectedHarvestDate: '', notes: '', breed: '', quantity: '', unit: 'BOXES' });
+  const [rooms, setRooms] = useState<Room[] | null>(null);
+  const [roomId, setRoomId] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!farmId) return;
+    roomService.getByFarm(farmId)
+      .then((r) => {
+        setRooms(r.data.data);
+        // With one room there is nothing to decide. With several the farmer chooses.
+        if (r.data.data.length === 1) setRoomId(r.data.data[0].id);
+      })
+      .catch(() => setRooms([]));
+  }, [farmId]);
 
   const change = (field: 'expectedHarvestDate' | 'notes' | 'breed' | 'quantity' | 'unit') => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -31,6 +46,7 @@ export default function AddBatchPage() {
       const quantity = form.quantity === '' ? undefined : Number(form.quantity);
       await batchService.create({
         farmId,
+        roomId: roomId || undefined,
         expectedHarvestDate: form.expectedHarvestDate,
         notes: form.notes || undefined,
         breed: form.breed.trim() || undefined,
@@ -72,6 +88,17 @@ export default function AddBatchPage() {
               <input id="batch-harvest" type="date" className="form-input" value={form.expectedHarvestDate} onChange={change('expectedHarvestDate')} min={earliest.toISOString().split('T')[0]} required aria-describedby="batch-harvest-hint" />
               <span id="batch-harvest-hint" className="form-hint">{t('abHarvestHint')}</span>
             </div>
+
+            {rooms && rooms.length === 0 && <p className="form-hint form-hint--gap">{t('abRoomMake')}</p>}
+            {rooms && rooms.length > 0 && (
+              <div className="form-group">
+                <label className="form-label" htmlFor="batch-room">{t('abRoom')}</label>
+                <select id="batch-room" className="form-select" value={roomId} onChange={(e) => setRoomId(e.target.value)} required>
+                  {rooms.length > 1 && <option value="">{t('abRoomChoose')}</option>}
+                  {rooms.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                </select>
+              </div>
+            )}
 
             <div className="form-group">
               <label className="form-label" htmlFor="batch-breed">{t('abBreed')} <span className="form-optional">({t('abNotesOptional')})</span></label>
