@@ -46,6 +46,7 @@ def _records(batch, *, temperature, farm=None, room=None):
         reading=SensorReadingFactory(batch=None if room else batch, room=room, temperature=temperature),
         detection=DiseaseDetectionFactory(batch=batch),
         alert=AlertLogFactory(batch=batch),
+        room_alert=AlertLogFactory(batch=None, room=room) if room else None,
         harvest=HarvestRecordFactory(batch=batch),
         device=IoTDeviceFactory(farm=farm or batch.farm, room=room) if farm is not False else None,
     )
@@ -99,7 +100,7 @@ def build_world():
         users=users, coop_a=coop_a, coop_b=coop_b, tenants=tenants,
         # The owner's records, because most rows are about them.
         farm=own.farm, batch=own.batch, reading=own.reading, detection=own.detection,
-        alert=own.alert, harvest=own.harvest, device=own.device,
+        alert=own.alert, room_alert=own.room_alert, harvest=own.harvest, device=own.device,
         room_1=room_1, room_2=room_2,
         dead_batch=dead_batch, dead_batch_records=dead_batch_records,
         dead_farm=dead_farm, dead_farm_batch=dead_farm_batch, dead_farm_records=dead_farm_records,

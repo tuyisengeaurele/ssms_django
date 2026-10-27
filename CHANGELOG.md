@@ -1,5 +1,30 @@
 # Changelog
 
+## Rearing rooms, step 3: alerts by room (Plan 8)
+
+Temperature, humidity and sensor-outage alerts now belong to a room. A problem in a room with three batches is one alert and one email, not three. This finishes the design in `docs/superpowers/specs/2026-10-27-rearing-rooms-design.md`.
+
+### Checked
+- Backend: 860 tests pass. Frontend: 725 tests pass and `tsc` is clean.
+- Your local database is migrated through `alerts/0005`. The one open air problem it had was given its room.
+- Not yet looked at in the browser by me. Please open Alerts and a batch page once.
+
+### Added
+- **One alert per room and problem.** A bad reading opens one temperature or humidity alert for the room. More bad readings add nothing. The first good reading resolves it.
+- **One range per room.** The room is judged by the range its running batches share. When they share none, the youngest batch's range is used. Batches at harvest and deleted batches do not count.
+- **Alerts end when the room empties.** Moving the last running batch out, deleting it, or moving it to harvest resolves the room's open air and sensor alerts. A room with nothing running is not judged.
+- **Alerts name the room and its batches.** Each alert in the list shows the room and a link to every batch in it. The live stream carries `roomId`. The email names the room and its batches, and quotes the range that was really used (it used to print a fixed range).
+- **Sensor outages belong to the room.** One alert per quiet device, so hearing from one device ends only its own outage.
+- **A batch has the alerts of the rooms it stayed in**, for the time it was there. The alert count and the open-problem count on the batch lists follow the same rule.
+
+### Changed
+- `check_sensor_alerts` is gone. A batch that was never placed in a room raises no air alerts (none exist after the migration).
+- A quiet sensor in a room with nothing running raises no outage alert. The design said it should. It would only be noise, because nobody is rearing there, and it is one line to change.
+- The demo's humid spell is stronger, so it is still open at any hour of the day.
+
+### Before you run this
+- Run `python manage.py migrate`. The data migration gives each open air or sensor alert the room of its batch, and it is safe to run twice.
+
 ## Rearing rooms, step 2: sensors and readings (Plan 8)
 
 Sensors now belong to a room, and a reading belongs to the room it was taken in. Every batch in a room shares what the room's sensors measure. Alerts still run once per batch and move to the room in step 3.

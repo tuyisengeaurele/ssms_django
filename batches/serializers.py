@@ -39,11 +39,12 @@ class BatchListSerializer(serializers.ModelSerializer):
                 'sensor_readings': obj.reading_total,
                 'alert_logs': obj.alert_total,
             }
+        from alerts.room_alerts import alerts_for_batch
         from sensors.room_readings import readings_for_batch
         return {
             'disease_detections': obj.disease_detections.count(),
             'sensor_readings': readings_for_batch(obj).count(),
-            'alert_logs': obj.alert_logs.count(),
+            'alert_logs': alerts_for_batch(obj).count(),
         }
 
 
@@ -91,8 +92,9 @@ class BatchDetailSerializer(serializers.ModelSerializer):
         return SensorReadingSerializer(qs, many=True).data
 
     def get_alert_logs(self, obj):
+        from alerts.room_alerts import alerts_for_batch
         from alerts.serializers import AlertLogSerializer
-        qs = obj.alert_logs.filter(is_read=False).order_by('-created_at')
+        qs = alerts_for_batch(obj).filter(is_read=False).select_related('room').order_by('-created_at')
         return AlertLogSerializer(qs, many=True).data
 
 

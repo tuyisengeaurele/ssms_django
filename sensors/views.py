@@ -8,7 +8,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
-from alerts.utils import check_sensor_alerts
+from alerts.utils import check_room_alerts
 from audit_log.utils import log_action
 from core.access import get_batch_or_404, get_farm_or_404, scope_by_farm, scope_readings
 from core.params import int_param
@@ -16,7 +16,7 @@ from core.throttles import DeviceKeyThrottle
 from core.utils import api_error, api_success
 from farms.models import RearingRoom
 
-from .devices import check_room_alerts, effective_status, record_device_reading, room_for_device
+from .devices import effective_status, record_device_reading, room_for_device
 from .models import IoTDevice, SensorReading
 from .room_readings import readings_for_batch
 from .serializers import DeviceReadingSerializer, SensorReadingCreateSerializer, SensorReadingSerializer
@@ -49,10 +49,9 @@ class SensorReadingCreateView(APIView):
             temperature=serializer.validated_data['temperature'],
             humidity=serializer.validated_data['humidity'],
         )
+        # A batch with no room has no environment to judge, so only a placed batch raises alerts.
         if batch.room_id:
             check_room_alerts(batch.room_id, reading.temperature, reading.humidity)
-        else:
-            check_sensor_alerts(batch.pk, reading.temperature, reading.humidity)
         return api_success(SensorReadingSerializer(reading).data, 'Sensor reading recorded.', 201)
 
 

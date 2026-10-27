@@ -28,11 +28,11 @@ def with_counts(qs):
     Separate subqueries are used on purpose. Joining all three tables at once multiplies the rows
     (653 readings times 109 alerts), which is slow and gives wrong totals without distinct.
     """
-    from alerts.models import AlertLog
+    from alerts.room_alerts import alert_count
     from sensors.models import DiseaseDetection
 
     return qs.select_related('room').annotate(
         detection_total=_count_of(DiseaseDetection),
         reading_total=_reading_count(),
-        alert_total=_count_of(AlertLog),
+        alert_total=alert_count(),
     )

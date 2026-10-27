@@ -7,8 +7,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from alerts.models import AlertLog
-from alerts.utils import check_sensor_alerts
-from batches.models import Batch
+from alerts.utils import check_room_alerts, running_batches
 from farms.models import RearingRoom
 
 from .models import IoTDevice, SensorReading
@@ -31,15 +30,6 @@ def _offline_prefix(device: IoTDevice) -> str:
     return f'Device {device.name} has not sent data'
 
 
-def check_room_alerts(room_id: str, temperature: float, humidity: float) -> list:
-    """Judge a room's reading for each active batch in it. For now each batch keeps its own alert, and the next step
-    moves alerts to the room itself."""
-    opened = []
-    for batch_id in Batch.objects.filter(room_id=room_id, is_active=True).values_list('pk', flat=True):
-        opened += check_sensor_alerts(batch_id, temperature, humidity)
-    return opened
-
-
 def room_for_device(device: IoTDevice):
     """The room a device's readings go to, or None when it has none.
 
@@ -52,10 +42,6 @@ def room_for_device(device: IoTDevice):
     return rooms[0] if len(rooms) == 1 else None
 
 
-def _batches_in(room_id):
-    return Batch.objects.filter(room_id=room_id, is_active=True)
-
-
 def record_device_reading(device: IoTDevice, room: RearingRoom, temperature: float, humidity: float) -> SensorReading:
     now = timezone.now()
     with transaction.atomic():
@@ -63,17 +49,19 @@ def record_device_reading(device: IoTDevice, room: RearingRoom, temperature: flo
         device.status = IoTDevice.STATUS_ONLINE
         device.last_seen = now
         device.save(update_fields=['status', 'last_seen'])
-        # Hearing from the device again ends its outage for every batch in the room.
+        # Hearing from the device again ends its outage.
         AlertLog.objects.filter(
-            batch__in=_batches_in(room.pk), type='SYSTEM', resolved_at__isnull=True,
-            message__startswith=_offline_prefix(device),
+            room=room, type='SYSTEM', resolved_at__isnull=True, message__startswith=_offline_prefix(device),
         ).update(resolved_at=now)
     check_room_alerts(room.pk, temperature, humidity)
     return reading
 
 
 def mark_offline_devices(now=None) -> list[IoTDevice]:
-    """Switch quiet devices to offline and open one system alert per outage on their batch."""
+    """Switch quiet devices to offline and open one system alert per outage on their room.
+
+    A room with nothing running in it gets no alert: there are no worms to protect, and a sensor in an empty room is
+    often switched off on purpose."""
     now = now or timezone.now()
     minutes = settings.DEVICE_OFFLINE_MINUTES
     quiet = (
@@ -88,16 +76,15 @@ def mark_offline_devices(now=None) -> list[IoTDevice]:
         device.save(update_fields=['status'])
         changed.append(device)
 
-        if device.room_id is None:
+        if device.room_id is None or not running_batches(device.room_id).exists():
             continue
-        for batch in _batches_in(device.room_id):
-            already_open = AlertLog.objects.filter(
-                batch=batch, type='SYSTEM', resolved_at__isnull=True, message__startswith=_offline_prefix(device),
-            ).exists()
-            if not already_open:
-                AlertLog.objects.create(
-                    batch=batch,
-                    type='SYSTEM',
-                    message=f'{_offline_prefix(device)} for {minutes} minutes. Check its power and connection.',
-                )
+        already_open = AlertLog.objects.filter(
+            room_id=device.room_id, type='SYSTEM', resolved_at__isnull=True, message__startswith=_offline_prefix(device),
+        ).exists()
+        if not already_open:
+            AlertLog.objects.create(
+                room_id=device.room_id,
+                type='SYSTEM',
+                message=f'{_offline_prefix(device)} for {minutes} minutes. Check its power and connection.',
+            )
     return changed

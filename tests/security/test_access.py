@@ -5,12 +5,14 @@ from alerts.models import AlertLog
 from core.access import (
     get_batch_or_404,
     get_farm_or_404,
+    scope_alerts,
     scope_batches,
     scope_by_batch,
     scope_by_farm,
     scope_farms,
     scope_readings,
 )
+from farms.models import RearingRoom
 from harvest.models import HarvestRecord
 from sensors.models import DiseaseDetection, IoTDevice, SensorReading
 from tests.factories import BatchFactory, FarmFactory, UserFactory
@@ -45,6 +47,21 @@ def test_scope_batches_matches_the_rules(world, actor):
 @pytest.mark.parametrize('actor', PEOPLE)
 def test_scope_by_batch_matches_the_rules(world, actor, model, attr):
     assert ids(scope_by_batch(world.users[actor], model.objects.all())) == expected(world, actor, attr)
+
+
+@pytest.mark.parametrize('actor', PEOPLE)
+def test_scope_alerts_matches_the_rules_for_alerts_of_a_batch_and_of_a_room(world, actor):
+    assert ids(scope_alerts(world.users[actor], AlertLog.objects.all())) == expected(world, actor, 'alert') | expected(world, actor, 'room_alert')
+
+
+@pytest.mark.parametrize('actor', ['admin', 'farmer_owner', 'supervisor_a'])
+def test_a_deleted_farm_or_room_hides_its_alerts(world, actor):
+    user = world.users[actor]
+    seen = ids(scope_alerts(user, AlertLog.objects.all()))
+    assert world.dead_farm_records.alert.pk not in seen
+    assert world.dead_farm_records.room_alert.pk not in seen
+    RearingRoom.objects.filter(pk=world.room_1.pk).update(is_active=False)
+    assert world.tenants['owner'].room_alert.pk not in ids(scope_alerts(user, AlertLog.objects.all()))
 
 
 @pytest.mark.parametrize('actor', PEOPLE)

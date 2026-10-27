@@ -96,18 +96,18 @@ def test_a_person_logged_in_without_a_key_is_still_refused(auth_client):
 
 # ── what the reading does to the batches in the room ────────────────────────
 
-def test_a_bad_reading_opens_one_alert_for_the_batch_and_more_bad_readings_open_no_more(device, batch):
+def test_a_bad_reading_opens_one_alert_for_the_room_and_more_bad_readings_open_no_more(device, room):
     send(device.device_key, {'temperature': 20.0, 'humidity': 78.0})
     send(device.device_key, {'temperature': 19.5, 'humidity': 78.0})
-    assert AlertLog.objects.filter(batch=batch, type='TEMPERATURE').count() == 1
+    assert AlertLog.objects.filter(room=room, type='TEMPERATURE').count() == 1
 
 
-def test_a_bad_reading_alerts_every_running_batch_in_the_room(device, farm, room, batch):
-    second = BatchFactory(farm=farm)
-    place_batch(second, room)
+def test_a_bad_reading_opens_one_alert_however_many_batches_are_in_the_room(device, farm, room, batch):
+    place_batch(BatchFactory(farm=farm), room)
+    place_batch(BatchFactory(farm=farm), room)
     send(device.device_key, {'temperature': 20.0, 'humidity': 78.0})
-    assert AlertLog.objects.filter(batch=batch, type='TEMPERATURE').count() == 1
-    assert AlertLog.objects.filter(batch=second, type='TEMPERATURE').count() == 1
+    assert AlertLog.objects.filter(type='TEMPERATURE').count() == 1
+    assert AlertLog.objects.get(type='TEMPERATURE').batch_id is None
 
 
 def test_a_room_with_no_batch_still_stores_the_reading_and_alerts_nobody(farm):

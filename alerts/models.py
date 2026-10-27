@@ -14,11 +14,23 @@ class AlertType(models.TextChoices):
 
 class AlertLog(models.Model):
     id = models.CharField(primary_key=True, max_length=36, default=_generate_id, editable=False)
+    # Alerts about one batch (stage change, disease) have a batch. A problem with the air of a room, or a sensor that
+    # went quiet, belongs to the room, because every batch in the room shares it.
     batch = models.ForeignKey(
         'batches.Batch',
         on_delete=models.CASCADE,
         db_column='batchId',
         related_name='alert_logs',
+        null=True,
+        blank=True,
+    )
+    room = models.ForeignKey(
+        'farms.RearingRoom',
+        on_delete=models.CASCADE,
+        db_column='roomId',
+        related_name='alert_logs',
+        null=True,
+        blank=True,
     )
     type = models.CharField(max_length=20, choices=AlertType.choices)
     message = models.TextField()
@@ -32,6 +44,7 @@ class AlertLog(models.Model):
         indexes = [
             models.Index(fields=['batch'], name='alert_batch_idx'),
             models.Index(fields=['is_read'], name='alert_is_read_idx'),
+            models.Index(fields=['room', 'type'], name='alert_room_type_idx'),
         ]
 
     def __str__(self):

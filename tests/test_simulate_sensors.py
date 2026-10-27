@@ -80,24 +80,24 @@ def test_the_rounds_option_repeats_the_round():
     assert SensorReading.objects.filter(room=room).count() == 3
 
 
-def test_a_cold_scenario_opens_one_alert_per_batch_however_many_rounds_run():
-    batch, room = in_new_room()
+def test_a_cold_scenario_opens_one_alert_per_room_however_many_rounds_run():
+    _, room = in_new_room()
     run('--scenario', 'cold', '--rounds', '4', '--interval', '0')
-    assert AlertLog.objects.filter(batch=batch, type='TEMPERATURE').count() == 1
+    assert AlertLog.objects.filter(room=room, type='TEMPERATURE').count() == 1
 
 
 def test_going_back_to_normal_resolves_the_alert():
-    batch, _ = in_new_room()
+    _, room = in_new_room()
     run('--scenario', 'cold')
     run('--scenario', 'normal')
-    assert AlertLog.objects.get(batch=batch, type='TEMPERATURE').resolved_at is not None
+    assert AlertLog.objects.get(room=room, type='TEMPERATURE').resolved_at is not None
 
 
 @pytest.mark.parametrize('scenario, kind', [('cold', 'TEMPERATURE'), ('hot', 'TEMPERATURE'), ('humid', 'HUMIDITY'), ('dry', 'HUMIDITY')])
 def test_each_scenario_stages_its_own_problem(scenario, kind):
-    batch, _ = in_new_room()
+    _, room = in_new_room()
     run('--scenario', scenario)
-    assert list(AlertLog.objects.filter(batch=batch).values_list('type', flat=True)) == [kind]
+    assert list(AlertLog.objects.filter(room=room).values_list('type', flat=True)) == [kind]
 
 
 def test_a_single_room_or_the_room_of_a_batch_can_be_chosen():
@@ -109,9 +109,9 @@ def test_a_single_room_or_the_room_of_a_batch_can_be_chosen():
 
 
 def test_normal_readings_stay_inside_the_safe_range_so_a_quiet_demo_stays_quiet():
-    batch, _ = in_new_room()
+    in_new_room()
     run('--rounds', '60', '--interval', '0')
-    assert AlertLog.objects.filter(batch=batch).count() == 0
+    assert AlertLog.objects.count() == 0
 
 
 def test_an_unknown_scenario_is_refused():

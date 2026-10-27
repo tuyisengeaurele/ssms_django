@@ -74,12 +74,13 @@ def test_every_batch_in_the_room_shares_a_typed_reading(auth_client, owner, farm
         assert [r['temperature'] for r in rows] == [24.5]
 
 
-def test_a_bad_typed_reading_alerts_each_batch_in_the_room(auth_client, owner, farm):
+def test_a_bad_typed_reading_opens_one_alert_for_the_room(auth_client, owner, farm):
     room = make_room(farm)
-    first, second = put(farm, room), put(farm, room)
+    put(farm, room)
+    first = put(farm, room)
     auth_client(owner).post('/api/sensors', {'batchId': first.pk, 'temperature': 19.0, 'humidity': 77.0}, format='json')
-    assert AlertLog.objects.filter(batch=first, type='TEMPERATURE').count() == 1
-    assert AlertLog.objects.filter(batch=second, type='TEMPERATURE').count() == 1
+    assert AlertLog.objects.filter(room=room, type='TEMPERATURE').count() == 1
+    assert AlertLog.objects.count() == 1
 
 
 def test_a_batch_that_was_never_placed_still_takes_a_typed_reading_of_its_own(auth_client, owner, farm):
