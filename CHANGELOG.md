@@ -1,5 +1,28 @@
 # Changelog
 
+## Harvest rules: right stage, hidden when deleted, a page at a time (Plan 9, item B8)
+
+Harvest records now follow three rules, and the Harvests page no longer loads every record at once.
+
+### Checked
+- Backend: 1015 tests pass. Frontend: 824 tests pass and `tsc` is clean.
+- Not yet looked at in the browser by me. Please open Harvests, a batch's harvest page at an early stage, and delete one record.
+
+### Added
+- **Only at the right stage.** `POST /api/harvest/batch/<id>` is refused with "A harvest can be recorded once the batch has reached the cocoon stage." for a batch at Egg, Larva or Pupa. Cocoon and Harvest are accepted, so a harvest can be logged over several days. Admins follow the same rule. The batch harvest page hides "Log harvest" before then and says when it will be possible.
+- **Deleting hides, it does not remove.** A deleted record keeps its row (`harvest_records.isActive`) and disappears from the lists, the CSV, the totals and the admin report. A second delete says "not found". The audit log still records the delete.
+- **A page at a time.** `GET /api/harvest?page=N` returns 20 records with the usual `pagination` block (`page_size` up to 100). `?search=` narrows by farm name, grade or note on the server. Without `page` the list stays one flat list, as before.
+- **Totals no longer depend on the page.** `GET /api/harvest/stats` also returns `byFarm` (top eight farms by cocoon weight), and the Harvests page takes its tiles and both charts from it, so they cover every record. The search waits for a pause in typing before it asks the server.
+
+### Rulings to confirm
+- Cocoon and Harvest both count as "the right stage". A harvest is often picked over more than one day.
+- The check on the stage comes before the check on the numbers, so a batch that is too young gets the stage message.
+- The list of one batch's records (`/api/harvest/batch/<id>`) is not paginated. One batch has a handful of records.
+
+### Before you run this
+- Run `python manage.py migrate` (adds `harvest/0002`).
+- The authorization matrix world now starts its batches at the cocoon stage, and its stage row moves a batch to Harvest.
+
 ## Disease alert when a check is positive (Plan 9, item B7)
 
 A disease check that names a disease now raises an alert on the batch, so the farmer's supervisor sees it without being told.

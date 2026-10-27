@@ -109,7 +109,7 @@ ROWS = [
         expect({'farmer_owner', 'admin'}, role_denied=FARMER_WRITE_DENIED, allowed_code=201),
         body=lambda w: {'farmId': w.farm.pk, 'roomId': w.room_1.pk, 'expectedHarvestDate': (timezone.now() + timedelta(days=30)).isoformat()}),
     Row('move a batch to the next stage', 'PATCH', lambda w: f'/api/batches/{w.batch.pk}/stage',
-        expect({'farmer_owner', 'admin'}, role_denied=FARMER_WRITE_DENIED), body=lambda w: {'stage': 'LARVA'}),
+        expect({'farmer_owner', 'admin'}, role_denied=FARMER_WRITE_DENIED), body=lambda w: {'stage': 'HARVEST'}),
     Row('add a room to a farm', 'POST', lambda w: f'/api/farms/{w.farm.pk}/rooms',
         expect({'farmer_owner', 'admin'}, role_denied=FARMER_WRITE_DENIED, allowed_code=201), body=lambda w: {'name': 'Second room'}),
     Row('add a room to a deleted farm', 'POST', lambda w: f'/api/farms/{w.dead_farm.pk}/rooms',

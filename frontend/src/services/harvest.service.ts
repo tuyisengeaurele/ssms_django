@@ -1,9 +1,16 @@
 import api from './api';
-import { ApiResponse, HarvestRecord, HarvestStats } from '../types';
+import { ApiResponse, HarvestRecord, HarvestStats, PageMeta } from '../types';
 
 export const harvestService = {
   getAll: () =>
     api.get<ApiResponse<HarvestRecord[]>>('/harvest'),
+
+  /** One page of records, newest first. The answer carries a `pagination` block beside `data`. */
+  getPage: (page: number, search = '') => {
+    const query = new URLSearchParams({ page: String(page) });
+    if (search) query.set('search', search);
+    return api.get<ApiResponse<HarvestRecord[]> & { pagination: PageMeta }>(`/harvest?${query}`);
+  },
 
   getByBatch: (batchId: string) =>
     api.get<ApiResponse<HarvestRecord[]>>(`/harvest/batch/${batchId}`),

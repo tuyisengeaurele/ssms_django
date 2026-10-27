@@ -873,6 +873,7 @@ export const pageTranslations = {
   // Harvest records page
   hpSubtitle: k("Batch #{id} on {farm}", "Lot #{id} à {farm}", "Itsinda #{id} kuri {farm}"),
   hpBack: k("Back to the batch", "Retour au lot", "Subira ku itsinda"),
+  hpTooEarly: k("You can log a harvest once the batch has reached the cocoon stage.", "Vous pourrez enregistrer une récolte quand le lot aura atteint l'étape du cocon.", "Uzandika isarura igihe itsinda rizaba rigeze ku cyiciro cy'imideri."),
   hpLog: k("Log harvest", "Enregistrer une récolte", "Andika isarura"),
   hpLogTitle: k("Log a harvest", "Enregistrer une récolte", "Andika isarura"),
   hpSave: k("Save record", "Enregistrer", "Bika"),

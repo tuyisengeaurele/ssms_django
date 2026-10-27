@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { harvestService } from '../../services/harvest.service';
-import { HarvestRecord, QualityGrade } from '../../types';
+import { HarvestRecord, HarvestStats, PageMeta, QualityGrade } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { useApiError } from '../../hooks/useApiError';
@@ -12,6 +12,7 @@ import BarList from '../../components/ui/BarList';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
 import PageHeader from '../../components/ui/PageHeader';
+import Pagination from '../../components/ui/Pagination';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import StatTile from '../../components/ui/StatTile';
@@ -27,22 +28,56 @@ export default function HarvestsPage() {
   const { getErrorMessage } = useApiError();
   const { t, locale } = useLanguage();
 
-  const [records, setRecords] = useState<HarvestRecord[]>([]);
+  const [stats, setStats] = useState<HarvestStats | null>(null);
+  const [rows, setRows] = useState<HarvestRecord[]>([]);
+  const [meta, setMeta] = useState<PageMeta | null>(null);
+  const [page, setPage] = useState(1);
+  // What is typed, and what was last asked for. The server is asked once typing pauses.
+  const [search, setSearch] = useState('');
+  const [term, setTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
-  const [search, setSearch] = useState('');
   const [exporting, setExporting] = useState(false);
 
-  const load = useCallback(() => {
-    setLoading(true);
-    setFailed(false);
-    harvestService.getAll()
-      .then((r) => setRecords(r.data.data))
-      .catch(() => setFailed(true))
-      .finally(() => setLoading(false));
+  const loadStats = useCallback(() => {
+    harvestService.getStats()
+      .then((r) => setStats(r.data.data))
+      .catch(() => setFailed(true));
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  const loadPage = useCallback(() => {
+    harvestService.getPage(page, term)
+      .then((r) => {
+        setRows(r.data.data);
+        setMeta(r.data.pagination);
+        setFailed(false);
+      })
+      .catch(() => setFailed(true))
+      .finally(() => setLoading(false));
+  }, [page, term]);
+
+  useEffect(() => { loadStats(); }, [loadStats]);
+  useEffect(() => { loadPage(); }, [loadPage]);
+
+  useEffect(() => {
+    const next = search.trim();
+    if (next === term) return undefined;
+    const timer = setTimeout(() => { setTerm(next); setPage(1); }, 300);
+    return () => clearTimeout(timer);
+  }, [search, term]);
+
+  const retry = () => {
+    setLoading(true);
+    setFailed(false);
+    loadStats();
+    loadPage();
+  };
+
+  const clearSearch = () => {
+    setSearch('');
+    setTerm('');
+    setPage(1);
+  };
 
   const exportCsv = async () => {
     setExporting(true);
@@ -64,32 +99,17 @@ export default function HarvestsPage() {
   const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
   const batchName = (id: string) => fill(t('bdTitle'), { id: id.slice(-8).toUpperCase() });
 
-  const totalKg = records.reduce((sum, r) => sum + num(r.cocoonWeightKg), 0);
-  const totalSilk = records.reduce((sum, r) => sum + num(r.silkYieldG), 0);
-  const average = records.length > 0 ? totalKg / records.length : 0;
-
-  const kgByFarm = records.reduce<Record<string, number>>((acc, r) => {
-    const name = r.farmName ?? batchName(r.batchId);
-    acc[name] = (acc[name] ?? 0) + num(r.cocoonWeightKg);
-    return acc;
-  }, {});
-  const farms = Object.entries(kgByFarm).sort((a, b) => b[1] - a[1]).slice(0, 8);
-
-  const query = search.trim().toLowerCase();
-  const visible = records.filter((r) =>
-    !query
-    || (r.farmName ?? '').toLowerCase().includes(query)
-    || r.qualityGrade.toLowerCase().includes(query)
-    || (r.notes ?? '').toLowerCase().includes(query),
-  );
+  const total = stats?.recordCount ?? 0;
+  const farms = stats?.byFarm ?? [];
+  const grades = stats?.byGrade ?? [];
 
   return (
     <div>
       <PageHeader
         title={t('ptHarvests')}
-        subtitle={loading || failed ? undefined : fill(t(records.length === 1 ? 'hvSubtitleOne' : 'hvSubtitleMany'), { n: records.length })}
+        subtitle={loading || failed ? undefined : fill(t(total === 1 ? 'hvSubtitleOne' : 'hvSubtitleMany'), { n: total })}
         actions={
-          <button className="btn btn-secondary btn-sm" onClick={exportCsv} disabled={exporting || records.length === 0}>
+          <button className="btn btn-secondary btn-sm" onClick={exportCsv} disabled={exporting || total === 0}>
             <Icon name="download" size={15} />
             {exporting ? t('drExporting') : t('drExport')}
           </button>
@@ -99,42 +119,42 @@ export default function HarvestsPage() {
       {failed ? (
         <div className="alert alert-error" role="alert">
           <span style={{ flex: 1 }}>{t('hvLoadError')}</span>
-          <button type="button" className="btn btn-secondary btn-xs" onClick={load}>{t('btnRetry')}</button>
+          <button type="button" className="btn btn-secondary btn-xs" onClick={retry}>{t('btnRetry')}</button>
         </div>
       ) : loading ? (
         <SkeletonTable rows={5} cols={6} />
-      ) : records.length === 0 ? (
+      ) : total === 0 ? (
         <Panel title={t('hvAll')} flush>
           <EmptyState icon={<Icon name="harvests" size={22} />} title={t('hvNone')} description={t('hvNoneBody')} />
         </Panel>
       ) : (
         <div className="stack-24">
           <div className="grid-4">
-            <StatTile label={t('hpTileRecords')} value={records.length} />
-            <StatTile label={t('hpTileCocoon')} value={`${trim(totalKg)} kg`} />
-            <StatTile label={t('hpTileSilk')} value={`${trim(totalSilk, 1)} g`} />
-            <StatTile label={t('hvAvg')} value={`${trim(average)} kg`} />
+            <StatTile label={t('hpTileRecords')} value={total} />
+            <StatTile label={t('hpTileCocoon')} value={`${trim(num(stats?.totalWeightKg))} kg`} />
+            <StatTile label={t('hpTileSilk')} value={`${trim(num(stats?.totalSilkG), 1)} g`} />
+            <StatTile label={t('hvAvg')} value={`${trim(num(stats?.avgWeightKg))} kg`} />
           </div>
 
           <div className="split">
             <Panel title={t('hvByFarm')} note={t('hvByFarmNote')}>
               <BarList
                 label={t('hvByFarm')}
-                rows={farms.map(([name, kg]) => ({ key: name, label: name, value: kg, color: colorFor('grade', 'A') }))}
+                rows={farms.map((f) => ({ key: f.farm, label: f.farm, value: f.totalKg, color: colorFor('grade', 'A') }))}
                 format={(v) => `${trim(v)} kg`}
               />
             </Panel>
             <Panel title={t('hpGrades')} note={t('hpGradesNote')}>
               <BarList
                 label={t('hpGrades')}
-                rows={GRADES.map((g) => ({ key: g, label: fill(t('hpGradeName'), { g }), value: records.filter((r) => r.qualityGrade === g).length, color: colorFor('grade', g) }))}
+                rows={GRADES.map((g) => ({ key: g, label: fill(t('hpGradeName'), { g }), value: grades.find((x) => x.grade === g)?.count ?? 0, color: colorFor('grade', g) }))}
               />
             </Panel>
           </div>
 
           <Panel
             title={t('hvAll')}
-            note={fill(t(visible.length === 1 ? 'hpCountOne' : 'hpCount'), { n: visible.length })}
+            note={fill(t(meta?.totalItems === 1 ? 'hpCountOne' : 'hpCount'), { n: meta?.totalItems ?? rows.length })}
             flush
             actions={
               <div className="search-box">
@@ -143,12 +163,12 @@ export default function HarvestsPage() {
               </div>
             }
           >
-            {visible.length === 0 ? (
+            {rows.length === 0 ? (
               <EmptyState
                 icon={<Icon name="search" size={22} />}
                 title={t('hvNoMatch')}
                 description={t('hvNoMatchBody')}
-                action={{ label: t('hvClear'), onClick: () => setSearch('') }}
+                action={{ label: t('hvClear'), onClick: clearSearch }}
               />
             ) : (
               <div className="table-wrapper">
@@ -165,7 +185,7 @@ export default function HarvestsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {visible.map((r) => {
+                    {rows.map((r) => {
                       const farm = r.farmName ?? batchName(r.batchId);
                       return (
                         <tr key={r.id} className="tbody-row">
@@ -193,6 +213,11 @@ export default function HarvestsPage() {
               </div>
             )}
           </Panel>
+          {meta && (
+            <div className="panel pager-panel">
+              <Pagination meta={meta} onPage={setPage} />
+            </div>
+          )}
         </div>
       )}
     </div>

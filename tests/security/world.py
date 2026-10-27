@@ -72,7 +72,8 @@ def build_world():
     for key, actor in [('owner', 'farmer_owner'), ('peer', 'farmer_peer'),
                        ('foreign', 'farmer_foreign'), ('nocoop', 'farmer_no_coop')]:
         farm = FarmFactory(owner=users[actor], name=f'Farm {key}')
-        batch = BatchFactory(farm=farm)
+        # At the cocoon stage, because a harvest can only be recorded from there.
+        batch = BatchFactory(farm=farm, stage='COCOON')
         room = RearingRoom.objects.create(farm=farm, name='Room 1')
         place_batch(batch, room)
         records = _records(batch, temperature=TEMPERATURES[key], room=room)

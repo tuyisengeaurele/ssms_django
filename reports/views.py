@@ -69,14 +69,14 @@ class ReportSummaryView(APIView):
         )
 
         # ── Harvests ─────────────────────────────────────────────────────────────
-        total_harvests = HarvestRecord.objects.count()
-        agg = HarvestRecord.objects.aggregate(
+        total_harvests = HarvestRecord.objects.live().count()
+        agg = HarvestRecord.objects.live().aggregate(
             total_kg=Sum('cocoon_weight_kg'),
             total_silk_g=Sum('silk_yield_g'),
             avg_kg=Avg('cocoon_weight_kg'),
         )
         harvests_by_grade = list(
-            HarvestRecord.objects
+            HarvestRecord.objects.live()
             .values('quality_grade')
             .annotate(count=Count('id'), total_kg=Sum('cocoon_weight_kg'))
             .order_by('quality_grade')

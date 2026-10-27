@@ -179,6 +179,18 @@ export interface HarvestStats {
   avgWeightKg: number;
   recordCount: number;
   byGrade: Array<{ grade: QualityGrade; count: number; totalKg: number }>;
+  /** The farms with the most cocoons, top eight. */
+  byFarm: Array<{ farm: string; count: number; totalKg: number }>;
+}
+
+/** What a paginated list answer says about itself. */
+export interface PageMeta {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }
 
 export type DeviceStatus = 'online' | 'offline' | 'error';

@@ -167,4 +167,33 @@ describe('Harvest page', () => {
     expect(container.querySelector('.recharts-pie, .stat-card, .stat-card-glow')).toBeNull();
     expect(container.innerHTML.toLowerCase()).not.toMatch(/gradient|#16a34a|#d97706|#dc2626|#2563eb|#7c3aed/);
   });
+
+  describe('before the cocoons are made', () => {
+    const atStage = (stage: string) => api.batch.mockResolvedValue({ data: { data: { id: 'b1-9sieo7cv', farmId: 'f1', stage, farm: { id: 'f1', name: "Serge's farm" } } } });
+
+    it.each(['EGG', 'LARVA', 'PUPA'])('offers no way to log a harvest at the %s stage, and says when it will be possible', async (stage) => {
+      atStage(stage);
+      api.list.mockResolvedValue({ data: { data: [] } });
+      open();
+      expect(await screen.findByText('You can log a harvest once the batch has reached the cocoon stage.')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Log harvest' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Log the first harvest' })).not.toBeInTheDocument();
+    });
+
+    it.each(['COCOON', 'HARVEST'])('offers it at the %s stage', async (stage) => {
+      atStage(stage);
+      open();
+      await screen.findByText('First picking');
+      expect(screen.getByRole('button', { name: 'Log harvest' })).toBeInTheDocument();
+      expect(screen.queryByText(/once the batch has reached the cocoon stage/)).not.toBeInTheDocument();
+    });
+
+    it('does not tell a supervisor about a button they never had', async () => {
+      auth.role = 'SUPERVISOR';
+      atStage('LARVA');
+      open();
+      await screen.findByText('First picking');
+      expect(screen.queryByText(/once the batch has reached the cocoon stage/)).not.toBeInTheDocument();
+    });
+  });
 });
