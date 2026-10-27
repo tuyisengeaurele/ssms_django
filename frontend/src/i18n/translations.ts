@@ -129,6 +129,7 @@ export const translations: TranslationMap = {
   loginForgot:          { en: 'Forgot password?',                       fr: 'Mot de passe oublié?',                     rw: "Wibagiwe ijambo ry'ibanga?" },
   loginSignIn:          { en: 'Sign in',                                fr: 'Se connecter',                             rw: 'Injira' },
   loginSigningIn:       { en: 'Signing in…',                            fr: 'Connexion en cours…',                      rw: 'Kwinjira…' },
+  loginAccountReady:    { en: 'Your account is ready. Sign in to continue.', fr: 'Votre compte est prêt. Connectez-vous pour continuer.', rw: 'Konti yawe yiteguye. Injira ukomeze.' },
   loginSessionEnded:    { en: 'Your session ended, so we signed you out. Please sign in again.', fr: 'Votre session a expiré, nous vous avons déconnecté. Veuillez vous reconnecter.', rw: 'Igihe wari winjiriye cyarangiye. Ongera winjire.' },
   loginNoAccount:       { en: "Don't have an account?",                 fr: "Vous n'avez pas de compte?",               rw: 'Nta konti ufite?' },
   loginCreateAccount:   { en: 'Create account',                         fr: 'Créer un compte',                          rw: 'Fungura Konti' },

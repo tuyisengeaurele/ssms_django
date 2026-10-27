@@ -177,6 +177,27 @@
   color: var(--l-muted);
 }
 
+/* The question before leaving one cooperative for another, shown inline because this page has no pop-ups */
+.landing .l-auth__ask {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--l-hairline);
+  border-radius: 14px;
+  background: var(--l-ivory);
+}
+
+.landing .l-auth__ask p {
+  margin: 0;
+  color: var(--l-ink);
+  font-weight: 600;
+}
+
+.landing .l-auth__actions {
+  display: grid;
+  gap: 10px;
+}
+
 .landing .l-auth__foot {
   display: flex;
   justify-content: center;

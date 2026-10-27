@@ -169,6 +169,7 @@ REST_FRAMEWORK = {
         'password_reset': '5/minute',
         'contact': '5/hour',
         'device': '30/minute',   # readings per device key
+        'invitation': '20/minute',
     },
 }
 

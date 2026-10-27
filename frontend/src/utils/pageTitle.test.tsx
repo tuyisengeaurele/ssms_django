@@ -7,7 +7,7 @@ import { translations } from '../i18n/translations';
 import { formatDocumentTitle, getPageInfo, useDocumentTitle, usePageTitle } from './pageTitle';
 
 const APP_PATHS = [
-  '/farmer', '/supervisor', '/farms', '/farms/new', '/farms/abc123', '/farms/abc123/batches/new',
+  '/farmer', '/supervisor', '/supervisor/farmers', '/farms', '/farms/new', '/farms/abc123', '/farms/abc123/batches/new',
   '/batches', '/batches/abc123', '/batches/abc123/detect', '/batches/abc123/harvest',
   '/harvests', '/detections/reports', '/alerts', '/devices', '/profile',
   '/admin', '/admin/users', '/admin/cooperatives', '/admin/contacts', '/admin/audit-log', '/admin/reports',
@@ -21,6 +21,7 @@ describe('getPageInfo', () => {
     ['/admin/contacts', 'Messages', 'Administration'],
     ['/admin/audit-log', 'Audit log', 'Administration'],
     ['/admin/reports', 'System report', 'Administration'],
+    ['/supervisor/farmers', 'My farmers', 'Farming'],
     ['/farms', 'Farms', 'Farming'],
     ['/farms/new', 'New farm', 'Farming'],
     ['/farms/abc123', 'Farm details', 'Farming'],

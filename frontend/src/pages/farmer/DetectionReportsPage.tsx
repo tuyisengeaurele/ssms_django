@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { detectionReportService, DetectionHistoryItem, DetectionStat } from '../../services/admin.service';
@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { useApiError } from '../../hooks/useApiError';
+import { useAutoFilters } from '../../hooks/useAutoFilters';
 import { colorFor } from '../../utils/chartColors';
 import { fill } from '../../utils/fill';
 import BarList from '../../components/ui/BarList';
@@ -41,8 +42,7 @@ export default function DetectionReportsPage() {
   const { error: showError } = useToast();
 
   const [farms, setFarms] = useState<Farm[]>([]);
-  const [draft, setDraft] = useState<Filters>(defaults);
-  const [applied, setApplied] = useState<Filters>(draft);
+  const { draft, applied, set, reset, changed } = useAutoFilters<Filters>(defaults());
   const [history, setHistory] = useState<DetectionHistoryItem[]>([]);
   const [stats, setStats] = useState<DetectionStat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,17 +69,6 @@ export default function DetectionReportsPage() {
   }, []);
 
   useEffect(() => { load(applied); }, [applied, load]);
-
-  const apply = (e: FormEvent) => {
-    e.preventDefault();
-    setApplied(draft);
-  };
-
-  const reset = () => {
-    const fresh = defaults();
-    setDraft(fresh);
-    setApplied(fresh);
-  };
 
   const exportCsv = async () => {
     setExporting(true);
@@ -122,11 +111,11 @@ export default function DetectionReportsPage() {
 
       <div className="stack-24">
         <Panel title={t('drShow')} flush>
-          <form className="filters" onSubmit={apply}>
+          <form className="filters" onSubmit={(e) => e.preventDefault()}>
             {!isFarmer && (
               <label className="filter-field">
                 <span>{t('drFarm')}</span>
-                <select className="inline-select" value={draft.farmId} onChange={(e) => setDraft((d) => ({ ...d, farmId: e.target.value }))}>
+                <select className="inline-select" value={draft.farmId} onChange={(e) => set({ farmId: e.target.value }, true)}>
                   <option value="">{t('drAllFarms')}</option>
                   {farms.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
                 </select>
@@ -134,16 +123,17 @@ export default function DetectionReportsPage() {
             )}
             <label className="filter-field">
               <span>{t('drFrom')}</span>
-              <input type="date" className="form-input filter-input" value={draft.dateFrom} max={draft.dateTo || undefined} onChange={(e) => setDraft((d) => ({ ...d, dateFrom: e.target.value }))} />
+              <input type="date" className="form-input filter-input" value={draft.dateFrom} max={draft.dateTo || undefined} onChange={(e) => set({ dateFrom: e.target.value }, true)} />
             </label>
             <label className="filter-field">
               <span>{t('drTo')}</span>
-              <input type="date" className="form-input filter-input" value={draft.dateTo} min={draft.dateFrom || undefined} onChange={(e) => setDraft((d) => ({ ...d, dateTo: e.target.value }))} />
+              <input type="date" className="form-input filter-input" value={draft.dateTo} min={draft.dateFrom || undefined} onChange={(e) => set({ dateTo: e.target.value }, true)} />
             </label>
-            <div className="filter-buttons">
-              <button type="submit" className="btn btn-secondary btn-sm">{t('drApply')}</button>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={reset}>{t('drReset')}</button>
-            </div>
+            {changed && (
+              <div className="filter-buttons">
+                <button type="button" className="btn btn-ghost btn-sm" onClick={reset}>{t('drReset')}</button>
+              </div>
+            )}
           </form>
         </Panel>
 

@@ -90,25 +90,37 @@ describe('Detection reports page', () => {
     expect(within(row).getByText('Flacherie')).toBeInTheDocument();
   });
 
-  it('lets an admin pick a farm and only fetches again when they apply', async () => {
+  it('filters as soon as an admin picks a farm, with no Apply button', async () => {
     open();
     await screen.findByText("Serge's farm", { selector: 'a' });
+    expect(screen.queryByRole('button', { name: 'Apply' })).not.toBeInTheDocument();
     api.history.mockClear();
     fireEvent.change(screen.getByLabelText('Farm'), { target: { value: 'f2' } });
-    expect(api.history).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
     await waitFor(() => expect(api.history).toHaveBeenCalledWith(expect.objectContaining({ farmId: 'f2' })));
     expect(api.stats).toHaveBeenLastCalledWith(expect.objectContaining({ farmId: 'f2' }));
   });
 
-  it('puts the dates back with Reset', async () => {
+  it('filters as soon as a date is chosen', async () => {
     open();
     await screen.findByText("Serge's farm", { selector: 'a' });
+    api.history.mockClear();
+    fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-01-01' } });
+    await waitFor(() => expect(api.history).toHaveBeenCalledWith(expect.objectContaining({ dateFrom: '2026-01-01' })));
+  });
+
+  it('shows Reset only once something has changed, and puts everything back with it', async () => {
+    open();
+    await screen.findByText("Serge's farm", { selector: 'a' });
+    expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
     const from = screen.getByLabelText('From') as HTMLInputElement;
     const first = from.value;
     fireEvent.change(from, { target: { value: '2026-01-01' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+    fireEvent.change(screen.getByLabelText('Farm'), { target: { value: 'f2' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Reset' }));
     expect(from.value).toBe(first);
+    expect((screen.getByLabelText('Farm') as HTMLSelectElement).value).toBe('');
+    await waitFor(() => expect(api.history).toHaveBeenLastCalledWith(expect.objectContaining({ farmId: undefined })));
+    expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
   });
 
   it('does not offer a farm filter to a farmer', async () => {

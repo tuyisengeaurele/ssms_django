@@ -164,6 +164,16 @@ ROWS = [
 
     # ── administration ────────────────────────────────────────────────────────────────────────
     Row('user list', 'GET', lambda w: '/api/admin/users', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
+    # ── a supervisor's team: each supervisor works on their own cooperative, an admin names one ──
+    Row('make an invitation link', 'POST', lambda w: '/api/team/invitations',
+        expect({'supervisor_a', 'supervisor_b', 'admin'}, role_denied=[*FARMERS, 'supervisor_no_coop'], allowed_code=201),
+        body=lambda w: {'cooperativeId': w.coop_a.pk}),
+    Row('list invitation links', 'GET', lambda w: f'/api/team/invitations?cooperativeId={w.coop_a.pk}',
+        expect({'supervisor_a', 'supervisor_b', 'admin'}, role_denied=[*FARMERS, 'supervisor_no_coop'])),
+    Row('list the farmers of a cooperative', 'GET', lambda w: f'/api/team/farmers?cooperativeId={w.coop_a.pk}',
+        expect({'supervisor_a', 'supervisor_b', 'admin'}, role_denied=[*FARMERS, 'supervisor_no_coop'])),
+    Row('remove a farmer of cooperative B', 'DELETE', lambda w: f"/api/team/farmers/{w.users['farmer_foreign'].pk}?cooperativeId={w.coop_b.pk}",
+        expect({'supervisor_b', 'admin'}, role_denied=[*FARMERS, 'supervisor_no_coop'])),
     Row('restore a user', 'POST', lambda w: f"/api/admin/users/{w.users['farmer_no_coop'].pk}/restore",
         expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
     Row('restore a cooperative', 'POST', lambda w: f'/api/cooperatives/{w.coop_a.pk}/restore',

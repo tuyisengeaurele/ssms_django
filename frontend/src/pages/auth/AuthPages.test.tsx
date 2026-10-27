@@ -119,6 +119,31 @@ describe('Login page', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
+  it('tells a farmer who just joined through an invitation that the account is ready', () => {
+    sessionStorage.setItem('ssms_notice', 'account_ready');
+    open();
+    expect(screen.getByRole('status')).toHaveTextContent('Your account is ready. Sign in to continue.');
+    expect(sessionStorage.getItem('ssms_notice')).toBeNull();
+  });
+
+  it('comes back to the invitation link after signing in', async () => {
+    api.login.mockResolvedValue({ data: { data: { user: { role: 'FARMER' }, token: 'abc' } } });
+    renderAt('/login?next=/join/tok123', <LoginPage />, '/login');
+    fill('Email address', 'a@b.rw');
+    fill('Password', 'Secret123');
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/join/tok123'));
+  });
+
+  it.each(['https://evil.example/', '//evil.example', '/admin', '/join/../admin', 'join/tok'])('ignores a next address that is not an invitation link: %s', async (next) => {
+    api.login.mockResolvedValue({ data: { data: { user: { role: 'FARMER' }, token: 'abc' } } });
+    renderAt(`/login?next=${encodeURIComponent(next)}`, <LoginPage />, '/login');
+    fill('Email address', 'a@b.rw');
+    fill('Password', 'Secret123');
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/farmer'));
+  });
+
   it('shows the password on request', () => {
     open();
     fireEvent.click(screen.getByRole('button', { name: 'Show password' }));

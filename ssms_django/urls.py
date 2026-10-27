@@ -13,6 +13,8 @@ urlpatterns = [
     path('api/sensors', include('sensors.urls')),      # /api/sensors, /api/sensors/batch/<id>
     path('api/alerts', include('alerts.urls')),        # /api/alerts/batch/<id>, /api/alerts/<id>/read
     path('api/detections', include('sensors.detection_urls')),  # /api/detections, /api/detections/batch/<id>
+    path('api/team', include('cooperatives.team_urls')),                 # a supervisor's farmers and invitation links
+    path('api/invitations', include('cooperatives.invitation_urls')),    # the page behind an invitation link
     path('api/cooperatives', include('cooperatives.urls')),      # /api/cooperatives, /api/cooperatives/<id>
     path('api/admin', include('users.admin_urls')),              # /api/admin/users, /api/admin/users/<id>/role
     path('api/harvest', include('harvest.urls')),               # /api/harvest/batch/<id>, /api/harvest/stats
