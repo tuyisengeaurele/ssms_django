@@ -481,6 +481,10 @@ export default function BatchDetailPage() {
                 {t('bdHarvestRecords')}
               </Link>
             )}
+            <Link to={`/batches/${id}/report`} className="btn btn-secondary btn-sm">
+              <Icon name="download" size={15} />
+              {t('ptBatchReport')}
+            </Link>
             {canEdit && (
               <button onClick={() => setShowArchive(true)} className="btn btn-ghost btn-sm btn-quiet-danger">
                 <Icon name="remove" size={15} />
