@@ -3,7 +3,9 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { farmService } from '../../services/farm.service';
 import { batchService } from '../../services/batch.service';
 import { deviceService } from '../../services/device.service';
-import { Farm, Batch, IoTDevice } from '../../types';
+import { roomService } from '../../services/room.service';
+import { STAGE_LABELS } from '../../utils/constants';
+import { Farm, Batch, IoTDevice, Room } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
@@ -33,7 +35,16 @@ export default function FarmDetailPage() {
   const [farm, setFarm] = useState<Farm | null>(null);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [devices, setDevices] = useState<IoTDevice[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Rooms: one dialog for adding and editing, and a question before deleting.
+  const [roomDialog, setRoomDialog] = useState<{ room: Room | null } | null>(null);
+  const [roomForm, setRoomForm] = useState({ name: '', notes: '' });
+  const [roomError, setRoomError] = useState('');
+  const [savingRoom, setSavingRoom] = useState(false);
+  const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
+  const [deletingRoom, setDeletingRoom] = useState(false);
   const [error, setError] = useState('');
 
   const [showEdit, setShowEdit] = useState(false);
@@ -59,6 +70,11 @@ export default function FarmDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  useEffect(() => {
+    if (!id) return;
+    roomService.getByFarm(id).then((r) => setRooms(r.data.data)).catch(() => {});
+  }, [id]);
+
   const canEdit = user?.role === 'FARMER' || user?.role === 'ADMIN';
   const canManage = user?.role === 'ADMIN' || user?.role === 'SUPERVISOR';
 
@@ -81,6 +97,55 @@ export default function FarmDetailPage() {
       showError(getErrorMessage(err));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const openRoomDialog = (room: Room | null) => {
+    setRoomForm({ name: room?.name ?? '', notes: room?.notes ?? '' });
+    setRoomError('');
+    setRoomDialog({ room });
+  };
+
+  const saveRoom = async () => {
+    if (!id || !roomDialog) return;
+    const name = roomForm.name.trim();
+    if (!name) {
+      setRoomError(t('rmNameNeed'));
+      return;
+    }
+    setRoomError('');
+    setSavingRoom(true);
+    try {
+      const data = { name, notes: roomForm.notes.trim() || undefined };
+      if (roomDialog.room) {
+        const res = await roomService.update(roomDialog.room.id, data);
+        setRooms((prev) => prev.map((r) => (r.id === res.data.data.id ? res.data.data : r)));
+        success(t('rmUpdated'));
+      } else {
+        const res = await roomService.create(id, data);
+        setRooms((prev) => [...prev, res.data.data]);
+        success(t('rmAdded'));
+      }
+      setRoomDialog(null);
+    } catch (err) {
+      setRoomError(getErrorMessage(err));
+    } finally {
+      setSavingRoom(false);
+    }
+  };
+
+  const deleteRoom = async () => {
+    if (!roomToDelete) return;
+    setDeletingRoom(true);
+    try {
+      await roomService.remove(roomToDelete.id);
+      setRooms((prev) => prev.filter((r) => r.id !== roomToDelete.id));
+      success(t('rmDeleted'));
+    } catch (err) {
+      showError(getErrorMessage(err));
+    } finally {
+      setDeletingRoom(false);
+      setRoomToDelete(null);
     }
   };
 
@@ -164,6 +229,47 @@ export default function FarmDetailPage() {
         <p className="modal-text">{fill(t('fdDeleteBody'), { name: farm.name })}</p>
       </Modal>
 
+      <Modal
+        open={!!roomDialog}
+        onClose={() => setRoomDialog(null)}
+        title={roomDialog?.room ? t('rmEditTitle') : t('rmAddTitle')}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setRoomDialog(null)}>{t('btnCancel')}</button>
+            <button className="btn btn-primary" onClick={saveRoom} disabled={savingRoom}>
+              {savingRoom ? <span className="spinner" aria-hidden="true" /> : null}
+              {t('btnSave')}
+            </button>
+          </>
+        }
+      >
+        {roomError && <div className="alert alert-error" role="alert">{roomError}</div>}
+        <div className="form-group">
+          <label className="form-label" htmlFor="room-name">{t('rmName')}</label>
+          <input id="room-name" className="form-input" maxLength={100} value={roomForm.name} placeholder={t('rmNamePlace')}
+            onChange={(e) => setRoomForm((f) => ({ ...f, name: e.target.value }))} />
+        </div>
+        <div className="form-group">
+          <label className="form-label" htmlFor="room-notes">{t('rmNotes')} <span className="form-optional">({t('abNotesOptional')})</span></label>
+          <textarea id="room-notes" className="form-textarea" rows={2} maxLength={500} value={roomForm.notes}
+            onChange={(e) => setRoomForm((f) => ({ ...f, notes: e.target.value }))} />
+        </div>
+      </Modal>
+
+      <Modal
+        open={!!roomToDelete}
+        onClose={() => setRoomToDelete(null)}
+        title={t('rmDeleteTitle')}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setRoomToDelete(null)}>{t('btnCancel')}</button>
+            <button className="btn btn-danger" onClick={deleteRoom} disabled={deletingRoom}>{t('rmDeleteYes')}</button>
+          </>
+        }
+      >
+        <p className="modal-text">{roomToDelete ? fill(t('rmDeleteBody'), { name: roomToDelete.name }) : ''}</p>
+      </Modal>
+
       {showAddDevice && (
         <AddDeviceModal
           farms={[farm]}
@@ -208,6 +314,49 @@ export default function FarmDetailPage() {
       </dl>
 
       <div className="stack-24">
+        <Panel
+          title={`${t('rmTitle')} (${rooms.length})`}
+          flush
+          actions={canEdit ? (
+            <button className="btn btn-secondary btn-sm" onClick={() => openRoomDialog(null)}>
+              <Icon name="add" size={15} />
+              {t('rmAdd')}
+            </button>
+          ) : undefined}
+        >
+          {rooms.length === 0 ? (
+            <EmptyState icon={<Icon name="batches" size={22} />} title={t('rmNone')} description={t('rmNoneBody')} />
+          ) : (
+            <ul className="room-list">
+              {rooms.map((room) => (
+                <li key={room.id}>
+                  <div className="room-main">
+                    <span className="cell-strong">{room.name}</span>
+                    {room.notes && <span className="cell-sub">{room.notes}</span>}
+                    {room.batches.length === 0 ? (
+                      <span className="cell-sub">{t('rmEmpty')}</span>
+                    ) : (
+                      <span className="room-batches">
+                        {room.batches.map((b) => (
+                          <Link key={b.id} to={`/batches/${b.id}`} className="link">
+                            {`#${b.id.slice(-8).toUpperCase()} (${STAGE_LABELS[b.stage]})`}
+                          </Link>
+                        ))}
+                      </span>
+                    )}
+                  </div>
+                  {canEdit && (
+                    <div className="table-actions">
+                      <button className="btn btn-ghost btn-xs" aria-label={fill(t('rmEditFor'), { name: room.name })} onClick={() => openRoomDialog(room)}>{t('coEdit')}</button>
+                      <button className="btn btn-ghost btn-xs btn-quiet-danger" aria-label={fill(t('rmDeleteFor'), { name: room.name })} onClick={() => setRoomToDelete(room)}>{t('bdDeathDelete')}</button>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+
         <Panel
           title={`${t('fdDevicesTitle')} (${devices.length})`}
           note={devices.length > 0 ? fill(t('fdDevicesNote'), { on: online, off: devices.length - online }) : undefined}

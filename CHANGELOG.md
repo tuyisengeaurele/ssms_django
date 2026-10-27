@@ -1,5 +1,22 @@
 # Changelog
 
+## Rearing rooms, step 1 (Plan 8)
+
+A farm now has rooms, and every batch sits in one. This is the first of three steps in `docs/superpowers/specs/2026-10-27-rearing-rooms-design.md`. Sensors, readings and alerts still work as before and move to rooms in the next two steps.
+
+### Checked
+- Backend: 741 tests pass. Frontend: 695 tests pass and `tsc` is clean.
+- Your local database: all 18 running batches were placed in "Room 1" of their farm, and the one deleted batch has an ended stay and no room.
+
+### Added
+- **Rooms.** A farmer adds, renames and deletes the rooms of a farm. A name can be used once per farm, whatever the capitals. Deleting asks first and hides the room. A room that still has batches in it cannot be deleted. Supervisors can read rooms but not change them. `GET` and `POST /api/farms/<id>/rooms`, `PATCH` and `DELETE /api/rooms/<id>`.
+- **A new batch always gets a room.** A farm with no rooms gets "Room 1" made for it, a farm with one room uses it, and a farm with several asks which. The new batch form shows this.
+- **Moving a batch.** "Move to another room" on the batch page, to another room of the same farm. The old stay ends and a new one starts, so where a batch has been is kept and shown on the page. `POST /api/batches/<id>/room`. A deleted batch leaves its room.
+- **`seed_demo`** gives each demo farm two rooms, with the running batch in the first and the finished one in the second.
+
+### Before you run this
+- Run `python manage.py migrate`. The data migration puts every existing batch in "Room 1" of its farm, with a stay that starts on its start date, and it is safe to run twice.
+
 ## Invitations, the team list and self-applying filters (Plan 7)
 
 Added on 27 October at the owner's request. Each change started with a failing test.

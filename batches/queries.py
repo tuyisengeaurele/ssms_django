@@ -19,7 +19,7 @@ def with_counts(qs):
     from alerts.models import AlertLog
     from sensors.models import DiseaseDetection, SensorReading
 
-    return qs.annotate(
+    return qs.select_related('room').annotate(
         detection_total=_count_of(DiseaseDetection),
         reading_total=_count_of(SensorReading),
         alert_total=_count_of(AlertLog),

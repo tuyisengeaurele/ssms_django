@@ -11,14 +11,24 @@ class BatchFarmSerializer(serializers.Serializer):
     location = serializers.CharField()
 
 
+def room_brief(obj):
+    """The room a batch is in, or None. Querysets select it with the batch, so this costs no query."""
+    room = obj.room
+    return {'id': room.pk, 'name': room.name} if room is not None else None
+
+
 class BatchListSerializer(serializers.ModelSerializer):
     counts = serializers.SerializerMethodField()
+    room = serializers.SerializerMethodField()
+
+    def get_room(self, obj):
+        return room_brief(obj)
 
     class Meta:
         model = Batch
         fields = [
             'id', 'farm_id', 'stage', 'start_date', 'expected_harvest_date',
-            'notes', 'breed', 'quantity', 'quantity_unit', 'is_active', 'created_at', 'updated_at', 'counts',
+            'notes', 'breed', 'quantity', 'quantity_unit', 'room', 'is_active', 'created_at', 'updated_at', 'counts',
         ]
 
     def get_counts(self, obj):
@@ -42,13 +52,26 @@ class BatchDetailSerializer(serializers.ModelSerializer):
     sensor_readings = serializers.SerializerMethodField()
     alert_logs = serializers.SerializerMethodField()
     mortality_total = serializers.SerializerMethodField()
+    room = serializers.SerializerMethodField()
+    room_stays = serializers.SerializerMethodField()
 
     class Meta:
         model = Batch
         fields = [
             'id', 'farm_id', 'stage', 'start_date', 'expected_harvest_date',
-            'notes', 'breed', 'quantity', 'quantity_unit', 'is_active', 'created_at', 'updated_at',
+            'notes', 'breed', 'quantity', 'quantity_unit', 'room', 'room_stays', 'is_active', 'created_at', 'updated_at',
             'farm', 'disease_detections', 'sensor_readings', 'alert_logs', 'mortality_total',
+        ]
+
+    def get_room(self, obj):
+        return room_brief(obj)
+
+    def get_room_stays(self, obj):
+        # Where the batch has been, newest first. The open stay has no end.
+        stays = obj.room_stays.select_related('room').order_by('-started_at')
+        return [
+            {'room_id': s.room_id, 'room_name': s.room.name, 'started_at': s.started_at, 'ended_at': s.ended_at}
+            for s in stays
         ]
 
     def get_mortality_total(self, obj):
@@ -78,10 +101,11 @@ class BatchCreateSerializer(serializers.ModelSerializer):
     breed = serializers.CharField(max_length=100, required=False, allow_blank=True)
     quantity = serializers.IntegerField(min_value=1, max_value=MAX_QUANTITY, required=False, allow_null=True)
     quantity_unit = serializers.ChoiceField(choices=QuantityUnit.choices, required=False)
+    room_id = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = Batch
-        fields = ['farm_id', 'expected_harvest_date', 'notes', 'breed', 'quantity', 'quantity_unit']
+        fields = ['farm_id', 'expected_harvest_date', 'notes', 'breed', 'quantity', 'quantity_unit', 'room_id']
 
 
 class BatchUpdateSerializer(serializers.Serializer):
@@ -115,13 +139,17 @@ class BatchSupervisorSerializer(serializers.ModelSerializer):
     detection_count = serializers.SerializerMethodField()
     open_alerts = serializers.SerializerMethodField()
     latest_reading = serializers.SerializerMethodField()
+    room = serializers.SerializerMethodField()
+
+    def get_room(self, obj):
+        return room_brief(obj)
 
     class Meta:
         model = Batch
         fields = [
             'id', 'farm_id', 'stage', 'start_date',
             'expected_harvest_date', 'is_active', 'created_at',
-            'farm', 'detection_count', 'open_alerts', 'latest_reading',
+            'farm', 'room', 'detection_count', 'open_alerts', 'latest_reading',
         ]
 
     def get_open_alerts(self, obj):

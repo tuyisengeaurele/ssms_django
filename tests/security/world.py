@@ -4,6 +4,8 @@ from types import SimpleNamespace
 
 from django.utils import timezone
 
+from batches.placement import place_batch
+from farms.models import RearingRoom
 from sensors.models import SensorReading
 from tests.factories import (
     AlertLogFactory,
@@ -72,6 +74,10 @@ def build_world():
         tenants[key] = SimpleNamespace(owner=users[actor], farm=farm, batch=batch, **vars(records))
 
     own = tenants['owner']
+    # The owner's farm has two rooms, with the batch in the first.
+    room_1 = RearingRoom.objects.create(farm=own.farm, name='Room 1')
+    room_2 = RearingRoom.objects.create(farm=own.farm, name='Room 2')
+    place_batch(own.batch, room_1)
     dead_batch = BatchFactory(farm=own.farm, is_active=False)
     # A device belongs to its farm, so the deleted batch gets none of its own.
     dead_batch_records = _records(dead_batch, temperature=DEAD_TEMPERATURE, farm=False)
@@ -89,6 +95,7 @@ def build_world():
         # The owner's records, because most rows are about them.
         farm=own.farm, batch=own.batch, reading=own.reading, detection=own.detection,
         alert=own.alert, harvest=own.harvest, device=own.device,
+        room_1=room_1, room_2=room_2,
         dead_batch=dead_batch, dead_batch_records=dead_batch_records,
         dead_farm=dead_farm, dead_farm_batch=dead_farm_batch, dead_farm_records=dead_farm_records,
     )

@@ -2,6 +2,8 @@ import api from './api';
 import { ApiResponse, Batch, BatchStage, MortalityEntry, QuantityUnit } from '../types';
 
 export interface BatchDetails {
+  /** The room a new batch goes in. The server picks it when the farm has one room or none. */
+  roomId?: string;
   breed?: string;
   quantity?: number | null;
   quantityUnit?: QuantityUnit;
@@ -16,6 +18,10 @@ export const batchService = {
     api.get<ApiResponse<Batch[]>>(`/batches/farm/${farmId}`),
 
   getById: (id: string) => api.get<ApiResponse<Batch>>(`/batches/${id}`),
+
+  /** POST /api/batches/<id>/room, move to another room of the same farm. Where it has been is kept. */
+  moveToRoom: (id: string, roomId: string) =>
+    api.post<ApiResponse<Batch>>(`/batches/${id}/room`, { roomId }),
 
   /** PATCH /api/batches/<id>, correct the breed, quantity, unit or notes. */
   update: (id: string, data: BatchDetails) =>

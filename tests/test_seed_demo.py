@@ -7,9 +7,9 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from alerts.models import AlertLog
-from batches.models import Batch
+from batches.models import Batch, BatchRoomStay
 from cooperatives.models import Cooperative
-from farms.models import Farm
+from farms.models import Farm, RearingRoom
 from harvest.models import HarvestRecord
 from sensors.management.commands.seed_demo import make_password
 from sensors.models import DiseaseDetection, IoTDevice, SensorReading
@@ -163,3 +163,22 @@ def test_the_seed_never_bulk_inserts_alerts_because_the_real_alert_table_has_a_n
     with mock.patch.object(AlertLog.objects, 'bulk_create', side_effect=AssertionError('bulk insert of alerts')):
         call_command('seed_demo', '--days', '10', '--seed', '7', '--password', PASSWORD)
     assert AlertLog.objects.filter(batch__farm__owner__in=demo_users()).exists()
+
+
+def test_each_demo_farm_has_two_rooms_with_the_running_batch_in_the_first_and_the_finished_one_in_the_second():
+    seed()
+    for farm in Farm.objects.filter(owner__in=demo_users()):
+        rooms = list(RearingRoom.objects.filter(farm=farm).order_by('created_at'))
+        assert [r.name for r in rooms] == ['Rearing house 1', 'Rearing house 2']
+        running = Batch.objects.get(farm=farm, is_active=True, stage__in=['LARVA', 'PUPA', 'COCOON'])
+        finished = Batch.objects.get(farm=farm, stage='HARVEST')
+        assert (running.room_id, finished.room_id) == (rooms[0].pk, rooms[1].pk)
+
+
+def test_every_demo_batch_has_one_open_stay_that_began_when_the_batch_did():
+    seed()
+    for batch in Batch.objects.filter(farm__owner__in=demo_users()):
+        stay = BatchRoomStay.objects.get(batch=batch)
+        assert stay.room_id == batch.room_id
+        assert stay.ended_at is None
+        assert stay.started_at == batch.start_date

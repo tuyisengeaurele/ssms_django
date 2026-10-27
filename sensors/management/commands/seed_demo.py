@@ -26,9 +26,10 @@ from django.utils import timezone
 from alerts.models import AlertLog
 from alerts.utils import humidity_problem, safe_range_for, temperature_problem
 from batches.models import Batch
+from batches.placement import place_batch
 from cooperatives.models import Cooperative
 from core.validators import validate_new_password
-from farms.models import Farm
+from farms.models import Farm, RearingRoom
 from harvest.models import HarvestRecord
 from sensors.models import DiseaseDetection, IoTDevice, SensorReading
 from users.models import User
@@ -130,8 +131,11 @@ class Command(BaseCommand):
                 role='FARMER', cooperative=coop, is_email_verified=True,
             )
             farm = Farm.objects.create(name=farm_name, location=place, owner=farmer)
-            running = self._batch(farm, now, age_days=age, harvested_days_ago=None)
-            finished = self._batch(farm, now, age_days=CYCLE_DAYS + HARVESTED_DAYS_AGO[number - 1], harvested_days_ago=HARVESTED_DAYS_AGO[number - 1])
+            # The running batch is in the first room and the finished one in the second, as on a real farm with two rooms.
+            first_room = RearingRoom.objects.create(farm=farm, name='Rearing house 1')
+            second_room = RearingRoom.objects.create(farm=farm, name='Rearing house 2')
+            running = self._batch(farm, first_room, now, age_days=age, harvested_days_ago=None)
+            finished = self._batch(farm, second_room, now, age_days=CYCLE_DAYS + HARVESTED_DAYS_AGO[number - 1], harvested_days_ago=HARVESTED_DAYS_AGO[number - 1])
             self._device(f'{DEVICE_PREFIX}{number}a', farm, running, f'{farm.name[:14]} A')
             self._device(f'{DEVICE_PREFIX}{number}b', farm, finished, f'{farm.name[:14]} B')
 
@@ -144,7 +148,7 @@ class Command(BaseCommand):
             self._checks(running, now, rng, sick=(number == 2))
             self._checks(finished, now, rng, sick=False, count=1)
 
-    def _batch(self, farm, now, age_days, harvested_days_ago):
+    def _batch(self, farm, room, now, age_days, harvested_days_ago):
         start = now - timedelta(days=age_days)
         stage = 'HARVEST' if harvested_days_ago is not None else stage_at(age_days)
         batch = Batch.objects.create(
@@ -153,6 +157,7 @@ class Command(BaseCommand):
         # The dates are fixed by hand, because the model stamps them with the real time when a row is created.
         Batch.objects.filter(pk=batch.pk).update(start_date=start, created_at=start)
         batch.start_date = start
+        place_batch(batch, room, when=start)
         return batch
 
     def _device(self, key, farm, batch, name):
