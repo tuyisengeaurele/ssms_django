@@ -15,11 +15,11 @@ export default function AddBatchPage() {
   const { success } = useToast();
   const { t } = useLanguage();
 
-  const [form, setForm] = useState({ expectedHarvestDate: '', notes: '' });
+  const [form, setForm] = useState({ expectedHarvestDate: '', notes: '', breed: '', quantity: '', unit: 'BOXES' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const change = (field: 'expectedHarvestDate' | 'notes') => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+  const change = (field: 'expectedHarvestDate' | 'notes' | 'breed' | 'quantity' | 'unit') => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const handleSubmit = async (e: FormEvent) => {
@@ -28,7 +28,16 @@ export default function AddBatchPage() {
     setError('');
     setLoading(true);
     try {
-      await batchService.create({ farmId, expectedHarvestDate: form.expectedHarvestDate, notes: form.notes || undefined });
+      const quantity = form.quantity === '' ? undefined : Number(form.quantity);
+      await batchService.create({
+        farmId,
+        expectedHarvestDate: form.expectedHarvestDate,
+        notes: form.notes || undefined,
+        breed: form.breed.trim() || undefined,
+        quantity,
+        // The unit only means something next to a quantity.
+        quantityUnit: quantity === undefined ? undefined : (form.unit as 'BOXES' | 'WORMS'),
+      });
       success(t('abCreated'));
       navigate(`/farms/${farmId}`);
     } catch (err) {
@@ -63,6 +72,26 @@ export default function AddBatchPage() {
               <input id="batch-harvest" type="date" className="form-input" value={form.expectedHarvestDate} onChange={change('expectedHarvestDate')} min={earliest.toISOString().split('T')[0]} required aria-describedby="batch-harvest-hint" />
               <span id="batch-harvest-hint" className="form-hint">{t('abHarvestHint')}</span>
             </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="batch-breed">{t('abBreed')} <span className="form-optional">({t('abNotesOptional')})</span></label>
+              <input id="batch-breed" className="form-input" maxLength={100} value={form.breed} onChange={change('breed')} placeholder={t('abBreedPlace')} />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label" htmlFor="batch-quantity">{t('abQuantity')} <span className="form-optional">({t('abNotesOptional')})</span></label>
+                <input id="batch-quantity" type="number" inputMode="numeric" min={1} step={1} className="form-input" value={form.quantity} onChange={change('quantity')} aria-describedby="batch-quantity-hint" />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="batch-unit">{t('abUnit')}</label>
+                <select id="batch-unit" className="form-select" value={form.unit} onChange={change('unit')}>
+                  <option value="BOXES">{t('abUnitBoxes')}</option>
+                  <option value="WORMS">{t('abUnitWorms')}</option>
+                </select>
+              </div>
+            </div>
+            <span id="batch-quantity-hint" className="form-hint form-hint--gap">{t('abQuantityHint')}</span>
 
             <div className="form-group">
               <label className="form-label" htmlFor="batch-notes">{t('abNotes')} <span className="form-optional">({t('abNotesOptional')})</span></label>

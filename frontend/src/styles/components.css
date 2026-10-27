@@ -917,6 +917,20 @@ tr.is-off td:last-child { opacity: 1; }
 
 /* What needs attention today: one plain line per item, each a link to its batch */
 /* Choose how much time a chart shows: plain words, the chosen one underlined */
+/* The log of deaths: a day, a number and a note on each line */
+/* Two fields side by side in a form: a wide one and a narrow one */
+.form-row { display: grid; grid-template-columns: minmax(0, 1fr) 180px; gap: 16px; }
+.form-hint--gap { display: block; margin: -8px 0 18px; }
+@media (max-width: 480px) { .form-row { grid-template-columns: minmax(0, 1fr); gap: 0; } }
+
+.deaths-summary { margin: 0 0 12px; color: var(--ink); font-weight: 600; }
+.deaths-list { margin: 0; padding: 0; list-style: none; }
+.deaths-list li { display: flex; align-items: baseline; gap: 16px; padding: 10px 0; border-top: 1px solid var(--border-light); }
+.deaths-day { flex: 0 0 120px; color: var(--text-muted); font-size: 0.9rem; }
+.deaths-count { flex: 0 0 48px; color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.deaths-note { flex: 1; min-width: 0; color: var(--text-2); }
+@media (max-width: 640px) { .deaths-list li { flex-wrap: wrap; gap: 4px 12px; } .deaths-note { flex-basis: 100%; } }
+
 .lifecycle-notes { margin-bottom: 16px; }
 .lifecycle-day { margin: 0; color: var(--ink); font-weight: 600; }
 .lifecycle-range { margin: 4px 0 0; color: var(--text-muted); font-size: 0.9rem; }

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { AxiosError } from 'axios';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
@@ -9,8 +10,16 @@ import StageStepper from './StageStepper';
 const auth = vi.hoisted(() => ({ role: 'FARMER' }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', role: auth.role } }) }));
 
-const api = vi.hoisted(() => ({ getById: vi.fn(), updateStage: vi.fn(), archive: vi.fn(), detections: vi.fn(), series: vi.fn(), thresholds: vi.fn() }));
-vi.mock('../../services/batch.service', () => ({ batchService: { getById: api.getById, updateStage: api.updateStage, delete: api.archive } }));
+const api = vi.hoisted(() => ({
+  getById: vi.fn(), updateStage: vi.fn(), archive: vi.fn(), detections: vi.fn(), series: vi.fn(), thresholds: vi.fn(),
+  update: vi.fn(), mortality: vi.fn(), addDeaths: vi.fn(), deleteDeaths: vi.fn(),
+}));
+vi.mock('../../services/batch.service', () => ({
+  batchService: {
+    getById: api.getById, updateStage: api.updateStage, delete: api.archive, update: api.update,
+    getMortality: api.mortality, addMortality: api.addDeaths, deleteMortality: api.deleteDeaths,
+  },
+}));
 vi.mock('../../services/detection.service', () => ({ detectionService: { getByBatch: api.detections } }));
 vi.mock('../../services/sensor.service', () => ({ sensorService: { getBatchSeries: api.series } }));
 vi.mock('../../services/alert.service', () => ({ alertService: { getThresholds: api.thresholds } }));
@@ -63,6 +72,7 @@ beforeEach(() => {
   setReducedMotion(true);
   api.getById.mockResolvedValue({ data: { data: batch() } });
   api.detections.mockResolvedValue({ data: { data: detections } });
+  api.mortality.mockResolvedValue({ data: { data: [] } });
   api.series.mockResolvedValue({ data: { data: [
     { timestamp: '2026-10-01T09:00:00Z', temperature: 30.2, humidity: 78, count: 4 },
     { timestamp: '2026-10-01T10:00:00Z', temperature: 24.5, humidity: 78, count: 4 },
@@ -296,5 +306,129 @@ describe('Batch timeline and charts', () => {
     api.series.mockResolvedValue({ data: { data: [] } });
     open();
     expect(await screen.findByText('No readings in this time.')).toBeInTheDocument();
+  });
+});
+
+const deaths = [
+  { id: 'm2', count: 30, note: 'Hot afternoon', recordedOn: '2026-05-20', createdAt: '2026-05-20T10:00:00Z' },
+  { id: 'm1', count: 5, note: '', recordedOn: '2026-05-18', createdAt: '2026-05-18T10:00:00Z' },
+];
+
+describe('Breed, quantity and deaths', () => {
+  it('shows the breed and the quantity in the details when they are set', async () => {
+    api.getById.mockResolvedValue({ data: { data: batch({ breed: 'Bivoltine hybrid', quantity: 3, quantityUnit: 'BOXES' }) } });
+    open();
+    const facts = (await screen.findByText('Breed')).closest('dl') as HTMLElement;
+    expect(within(facts).getByText('Bivoltine hybrid')).toBeInTheDocument();
+    expect(within(facts).getByText('3 egg boxes')).toBeInTheDocument();
+  });
+
+  it('leaves out breed and quantity when they were never given', async () => {
+    open();
+    await screen.findByRole('heading', { level: 1 });
+    expect(screen.queryByText('Breed')).not.toBeInTheDocument();
+    expect(screen.queryByText('Quantity')).not.toBeInTheDocument();
+  });
+
+  it('lists the deaths with their day, number and note, and the total', async () => {
+    api.mortality.mockResolvedValue({ data: { data: deaths } });
+    api.getById.mockResolvedValue({ data: { data: batch({ mortalityTotal: 35 }) } });
+    open();
+    const panel = (await screen.findByRole('heading', { name: 'Deaths recorded' })).closest('section') as HTMLElement;
+    expect(await within(panel).findByText('Hot afternoon')).toBeInTheDocument();
+    expect(within(panel).getByText('May 20, 2026')).toBeInTheDocument();
+    expect(within(panel).getByText('Total: 35')).toBeInTheDocument();
+  });
+
+  it('puts the total next to the quantity when it is counted in worms', async () => {
+    api.mortality.mockResolvedValue({ data: { data: deaths } });
+    api.getById.mockResolvedValue({ data: { data: batch({ mortalityTotal: 35, quantity: 20000, quantityUnit: 'WORMS' }) } });
+    open();
+    expect(await screen.findByText('Total: 35 of 20,000 worms (0.2 %)')).toBeInTheDocument();
+  });
+
+  it('says so when nothing has been recorded', async () => {
+    open();
+    expect(await screen.findByText('No deaths recorded yet.')).toBeInTheDocument();
+  });
+
+  it('records deaths from a dialog and adds them to the list', async () => {
+    api.addDeaths.mockResolvedValue({ data: { data: { id: 'm9', count: 12, note: 'Cold night', recordedOn: '2026-05-21', createdAt: '' } } });
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Record deaths' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Record deaths' });
+    fireEvent.change(within(dialog).getByLabelText('How many died'), { target: { value: '12' } });
+    fireEvent.change(within(dialog).getByLabelText(/^Note/), { target: { value: 'Cold night' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(api.addDeaths).toHaveBeenCalledWith('b1-9sieo7cv', expect.objectContaining({ count: 12, note: 'Cold night' })));
+    expect(await screen.findByText('Cold night', {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(await screen.findByText('Deaths recorded.', {}, { timeout: 5000 })).toBeInTheDocument();
+  });
+
+  it('offers today as the day and nothing later, nor before the batch started', async () => {
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Record deaths' }));
+    const day = within(await screen.findByRole('dialog', { name: 'Record deaths' })).getByLabelText('Day') as HTMLInputElement;
+    const today = new Date();
+    const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    expect(day.value).toBe(iso);
+    expect(day.max).toBe(iso);
+    expect(day.min).toBe('2026-05-16');
+  });
+
+  it('asks for the number before it sends anything', async () => {
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Record deaths' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Record deaths' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Please enter how many worms died.');
+    expect(api.addDeaths).not.toHaveBeenCalled();
+  });
+
+  it('shows the server answer inside the dialog when saving fails', async () => {
+    api.addDeaths.mockRejectedValue(new AxiosError('Request failed', 'ERR_BAD_REQUEST', undefined, undefined, { status: 422, data: { message: 'Please choose a day that is not in the future.' } } as never));
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Record deaths' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Record deaths' });
+    fireEvent.change(within(dialog).getByLabelText('How many died'), { target: { value: '3' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Please choose a day that is not in the future.');
+  });
+
+  it('asks before deleting an entry, then removes it', async () => {
+    api.mortality.mockResolvedValue({ data: { data: deaths } });
+    api.deleteDeaths.mockResolvedValue({ data: { data: null } });
+    open();
+    const entry = (await screen.findByText('Hot afternoon')).closest('li') as HTMLElement;
+    fireEvent.click(within(entry).getByRole('button', { name: 'Delete' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Delete this entry?' });
+    expect(api.deleteDeaths).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, delete' }));
+    await waitFor(() => expect(api.deleteDeaths).toHaveBeenCalledWith('b1-9sieo7cv', 'm2'));
+    await waitFor(() => expect(screen.queryByText('Hot afternoon')).not.toBeInTheDocument());
+  });
+
+  it('lets a supervisor read the log but not change it', async () => {
+    auth.role = 'SUPERVISOR';
+    api.mortality.mockResolvedValue({ data: { data: deaths } });
+    open();
+    expect(await screen.findByText('Hot afternoon')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Record deaths' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit details' })).not.toBeInTheDocument();
+  });
+
+  it('edits breed, quantity and notes in a dialog', async () => {
+    api.update.mockResolvedValue({ data: { data: batch({ breed: 'Local', quantity: 2, quantityUnit: 'BOXES', notes: 'Moved to shed 2' }) } });
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit details' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit batch details' });
+    fireEvent.change(within(dialog).getByLabelText(/^Breed/), { target: { value: 'Local' } });
+    fireEvent.change(within(dialog).getByLabelText(/^Quantity/), { target: { value: '2' } });
+    fireEvent.change(within(dialog).getByLabelText(/^Notes/), { target: { value: 'Moved to shed 2' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(api.update).toHaveBeenCalledWith('b1-9sieo7cv', { breed: 'Local', quantity: 2, quantityUnit: 'BOXES', notes: 'Moved to shed 2' }));
+    expect(await screen.findByText('Moved to shed 2', {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(await screen.findByText('2 egg boxes')).toBeInTheDocument();
   });
 });

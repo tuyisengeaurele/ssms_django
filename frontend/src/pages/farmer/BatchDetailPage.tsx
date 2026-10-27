@@ -5,7 +5,7 @@ import { batchService } from '../../services/batch.service';
 import { detectionService } from '../../services/detection.service';
 import { alertService } from '../../services/alert.service';
 import { sensorService, type SeriesPoint, type StageRange } from '../../services/sensor.service';
-import { Batch, BatchStage, DiseaseDetection } from '../../types';
+import { Batch, BatchStage, DiseaseDetection, MortalityEntry, QuantityUnit } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
@@ -33,6 +33,9 @@ const startOfDay = (ms: number) => {
   return d.getTime();
 };
 
+const localDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const byNewestDay = (a: MortalityEntry, b: MortalityEntry) => (a.recordedOn < b.recordedOn ? 1 : a.recordedOn > b.recordedOn ? -1 : 0);
+
 const WINDOWS = [
   { hours: 24, label: 'bd24h' },
   { hours: 168, label: 'bd7d' },
@@ -59,6 +62,21 @@ export default function BatchDetailPage() {
   const [hours, setHours] = useState<number>(24);
   const [points, setPoints] = useState<SeriesPoint[]>([]);
 
+  // Deaths log
+  const [entries, setEntries] = useState<MortalityEntry[]>([]);
+  const [showDeaths, setShowDeaths] = useState(false);
+  const [deathsForm, setDeathsForm] = useState({ count: '', day: '', note: '' });
+  const [deathsError, setDeathsError] = useState('');
+  const [savingDeaths, setSavingDeaths] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<MortalityEntry | null>(null);
+  const [deletingEntry, setDeletingEntry] = useState(false);
+
+  // Edit details
+  const [showEdit, setShowEdit] = useState(false);
+  const [editForm, setEditForm] = useState({ breed: '', quantity: '', unit: 'BOXES', notes: '' });
+  const [editError, setEditError] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+
   const code = (id ?? '').slice(-8).toUpperCase();
   useDocumentTitle(fill(t('bdTitle'), { id: code }));
 
@@ -72,6 +90,11 @@ export default function BatchDetailPage() {
       .catch((err) => setError(getErrorMessage(err)))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    batchService.getMortality(id).then((r) => setEntries(r.data.data)).catch(() => {});
   }, [id]);
 
   useEffect(() => {
@@ -102,6 +125,91 @@ export default function BatchDetailPage() {
     } finally {
       setMoving(false);
       setPendingStage(null);
+    }
+  };
+
+  const openDeaths = () => {
+    setDeathsForm({ count: '', day: localDay(new Date()), note: '' });
+    setDeathsError('');
+    setShowDeaths(true);
+  };
+
+  const saveDeaths = async () => {
+    if (!id) return;
+    const count = Number(deathsForm.count);
+    if (deathsForm.count.trim() === '' || !Number.isInteger(count) || count < 1) {
+      setDeathsError(t('bdDeathsNeed'));
+      return;
+    }
+    setDeathsError('');
+    setSavingDeaths(true);
+    try {
+      const res = await batchService.addMortality(id, {
+        count,
+        recordedOn: deathsForm.day || undefined,
+        note: deathsForm.note.trim() || undefined,
+      });
+      setEntries((prev) => [res.data.data, ...prev].sort(byNewestDay));
+      setShowDeaths(false);
+      success(t('bdDeathsSaved'));
+    } catch (err) {
+      setDeathsError(getErrorMessage(err));
+    } finally {
+      setSavingDeaths(false);
+    }
+  };
+
+  const removeEntry = async () => {
+    if (!id || !entryToDelete) return;
+    setDeletingEntry(true);
+    try {
+      await batchService.deleteMortality(id, entryToDelete.id);
+      setEntries((prev) => prev.filter((e) => e.id !== entryToDelete.id));
+      success(t('bdDeathDeleted'));
+    } catch (err) {
+      showError(getErrorMessage(err));
+    } finally {
+      setDeletingEntry(false);
+      setEntryToDelete(null);
+    }
+  };
+
+  const openEdit = () => {
+    if (!batch) return;
+    setEditForm({
+      breed: batch.breed ?? '',
+      quantity: batch.quantity ? String(batch.quantity) : '',
+      unit: batch.quantityUnit ?? 'BOXES',
+      notes: batch.notes ?? '',
+    });
+    setEditError('');
+    setShowEdit(true);
+  };
+
+  const saveEdit = async () => {
+    if (!id) return;
+    const quantity = editForm.quantity.trim() === '' ? null : Number(editForm.quantity);
+    if (quantity !== null && (!Number.isInteger(quantity) || quantity < 1)) {
+      setEditError(t('bdQuantityNeed'));
+      return;
+    }
+    setEditError('');
+    setSavingEdit(true);
+    try {
+      const res = await batchService.update(id, {
+        breed: editForm.breed.trim(),
+        quantity,
+        quantityUnit: editForm.unit as QuantityUnit,
+        notes: editForm.notes,
+      });
+      const saved = res.data.data;
+      setBatch((prev) => (prev ? { ...prev, breed: saved.breed, quantity: saved.quantity, quantityUnit: saved.quantityUnit, notes: saved.notes } : prev));
+      setShowEdit(false);
+      success(t('bdDetailsSaved'));
+    } catch (err) {
+      setEditError(getErrorMessage(err));
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -161,6 +269,16 @@ export default function BatchDetailPage() {
   const dayNumber = Math.floor((now - startMs) / 86_400_000) + 1;
   const totalDays = Math.round((expectedMs - startMs) / 86_400_000);
   const late = startOfDay(expectedMs) < startOfDay(now);
+  const deathsTotal = entries.reduce((sum, e) => sum + e.count, 0);
+  const number = new Intl.NumberFormat(locale);
+  const quantityText = batch.quantity
+    ? batch.quantityUnit === 'WORMS'
+      ? fill(t('bdQtyWorms'), { n: number.format(batch.quantity) })
+      : fill(t(batch.quantity === 1 ? 'bdQtyBoxesOne' : 'bdQtyBoxes'), { n: number.format(batch.quantity) })
+    : '';
+  const totalText = batch.quantity && batch.quantityUnit === 'WORMS'
+    ? fill(t('bdDeathsTotalOf'), { n: number.format(deathsTotal), q: number.format(batch.quantity), pct: ((deathsTotal / batch.quantity) * 100).toFixed(1) })
+    : fill(t('bdDeathsTotal'), { n: number.format(deathsTotal) });
   const dayLine = batch.stage === 'HARVEST'
     ? ''
     : fill(t(late ? 'bdDayLate' : 'bdDay'), { n: dayNumber, total: totalDays, date: date.format(new Date(expectedMs)) });
@@ -183,6 +301,91 @@ export default function BatchDetailPage() {
         <p className="modal-text">
           {pendingStage ? fill(t('bdMoveBody'), { id: code, from: STAGE_LABELS[batch.stage], to: STAGE_LABELS[pendingStage] }) : ''}
         </p>
+      </Modal>
+
+      <Modal
+        open={showDeaths}
+        onClose={() => setShowDeaths(false)}
+        title={t('bdDeathsRecord')}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setShowDeaths(false)}>{t('btnCancel')}</button>
+            <button className="btn btn-primary" onClick={saveDeaths} disabled={savingDeaths}>
+              {savingDeaths ? <span className="spinner" aria-hidden="true" /> : null}
+              {t('btnSave')}
+            </button>
+          </>
+        }
+      >
+        {deathsError && <div className="alert alert-error" role="alert">{deathsError}</div>}
+        <div className="form-group">
+          <label className="form-label" htmlFor="deaths-count">{t('bdDeathsHowMany')}</label>
+          <input id="deaths-count" type="number" inputMode="numeric" min={1} step={1} className="form-input" value={deathsForm.count}
+            onChange={(e) => setDeathsForm((f) => ({ ...f, count: e.target.value }))} />
+        </div>
+        <div className="form-group">
+          <label className="form-label" htmlFor="deaths-day">{t('bdDeathsDay')}</label>
+          <input id="deaths-day" type="date" className="form-input" value={deathsForm.day} max={localDay(new Date())} min={localDay(new Date(batch.startDate))}
+            onChange={(e) => setDeathsForm((f) => ({ ...f, day: e.target.value }))} />
+        </div>
+        <div className="form-group">
+          <label className="form-label" htmlFor="deaths-note">{t('bdDeathsNote')} <span className="form-optional">({t('abNotesOptional')})</span></label>
+          <textarea id="deaths-note" className="form-textarea" rows={2} maxLength={500} value={deathsForm.note}
+            onChange={(e) => setDeathsForm((f) => ({ ...f, note: e.target.value }))} />
+        </div>
+      </Modal>
+
+      <Modal
+        open={!!entryToDelete}
+        onClose={() => setEntryToDelete(null)}
+        title={t('bdDeathDeleteTitle')}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setEntryToDelete(null)}>{t('btnCancel')}</button>
+            <button className="btn btn-danger" onClick={removeEntry} disabled={deletingEntry}>{t('bdDeathDeleteYes')}</button>
+          </>
+        }
+      >
+        <p className="modal-text">{entryToDelete ? fill(t('bdDeathDeleteBody'), { n: entryToDelete.count }) : ''}</p>
+      </Modal>
+
+      <Modal
+        open={showEdit}
+        onClose={() => setShowEdit(false)}
+        title={t('bdEditTitle')}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setShowEdit(false)}>{t('btnCancel')}</button>
+            <button className="btn btn-primary" onClick={saveEdit} disabled={savingEdit}>
+              {savingEdit ? <span className="spinner" aria-hidden="true" /> : null}
+              {t('btnSave')}
+            </button>
+          </>
+        }
+      >
+        {editError && <div className="alert alert-error" role="alert">{editError}</div>}
+        <div className="form-group">
+          <label className="form-label" htmlFor="edit-breed">{t('abBreed')} <span className="form-optional">({t('abNotesOptional')})</span></label>
+          <input id="edit-breed" className="form-input" maxLength={100} value={editForm.breed} onChange={(e) => setEditForm((f) => ({ ...f, breed: e.target.value }))} />
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label" htmlFor="edit-quantity">{t('abQuantity')} <span className="form-optional">({t('abNotesOptional')})</span></label>
+            <input id="edit-quantity" type="number" inputMode="numeric" min={1} step={1} className="form-input" value={editForm.quantity}
+              onChange={(e) => setEditForm((f) => ({ ...f, quantity: e.target.value }))} />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="edit-unit">{t('abUnit')}</label>
+            <select id="edit-unit" className="form-select" value={editForm.unit} onChange={(e) => setEditForm((f) => ({ ...f, unit: e.target.value }))}>
+              <option value="BOXES">{t('abUnitBoxes')}</option>
+              <option value="WORMS">{t('abUnitWorms')}</option>
+            </select>
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="form-label" htmlFor="edit-notes">{t('abNotes')} <span className="form-optional">({t('abNotesOptional')})</span></label>
+          <textarea id="edit-notes" className="form-textarea" rows={3} maxLength={500} value={editForm.notes} onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))} />
+        </div>
       </Modal>
 
       <Modal
@@ -246,7 +449,10 @@ export default function BatchDetailPage() {
         </Panel>
 
         <div className="split">
-          <Panel title={t('bdDetails')}>
+          <Panel
+            title={t('bdDetails')}
+            actions={canEdit ? <button className="btn btn-ghost btn-sm" onClick={openEdit}>{t('bdEditDetails')}</button> : undefined}
+          >
             <dl className="facts facts--pairs">
               <div>
                 <dt>{t('bdStage')}</dt>
@@ -270,6 +476,18 @@ export default function BatchDetailPage() {
                 <dt>{t('bdExpected')}</dt>
                 <dd>{date.format(new Date(batch.expectedHarvestDate))}</dd>
               </div>
+              {batch.breed && (
+                <div>
+                  <dt>{t('bdBreed')}</dt>
+                  <dd>{batch.breed}</dd>
+                </div>
+              )}
+              {quantityText && (
+                <div>
+                  <dt>{t('bdQuantity')}</dt>
+                  <dd>{quantityText}</dd>
+                </div>
+              )}
               {batch.notes && (
                 <div>
                   <dt>{t('bdNotes')}</dt>
@@ -311,6 +529,36 @@ export default function BatchDetailPage() {
             )}
           </Panel>
         </div>
+
+        <Panel
+          title={t('bdDeathsTitle')}
+          actions={canEdit ? (
+            <button className="btn btn-secondary btn-sm" onClick={openDeaths}>
+              <Icon name="add" size={15} />
+              {t('bdDeathsRecord')}
+            </button>
+          ) : undefined}
+        >
+          {entries.length === 0 ? (
+            <p className="chart-empty">{t('bdDeathsNone')}</p>
+          ) : (
+            <>
+              <p className="deaths-summary">{totalText}</p>
+              <ul className="deaths-list">
+                {entries.map((entry) => (
+                  <li key={entry.id}>
+                    <span className="deaths-day">{date.format(new Date(`${entry.recordedOn}T00:00:00`))}</span>
+                    <span className="deaths-count">{number.format(entry.count)}</span>
+                    <span className="deaths-note">{entry.note}</span>
+                    {canEdit && (
+                      <button className="btn btn-ghost btn-xs btn-quiet-danger" onClick={() => setEntryToDelete(entry)}>{t('bdDeathDelete')}</button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </Panel>
 
         {(counts.sensorReadings > 0 || series.length > 0) && (
           <>
