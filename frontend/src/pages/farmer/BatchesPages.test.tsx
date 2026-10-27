@@ -129,6 +129,23 @@ describe('New batch page', () => {
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/farms/f1'));
   });
 
+  it('says a quiet word on the first batch the farmer has started', async () => {
+    api.create.mockResolvedValue({ data: { data: { id: 'b9', milestone: 'FIRST_BATCH' } } });
+    open();
+    fireEvent.change(screen.getByLabelText(/^Expected harvest date/), { target: { value: '2030-01-15' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create batch' }));
+    expect(await screen.findByText('Your first batch is created. It starts at the egg stage. Open it any day to see how it is doing.')).toBeInTheDocument();
+    expect(screen.queryByText('Batch created. It starts at the egg stage.')).not.toBeInTheDocument();
+  });
+
+  it('keeps the usual message for every batch after the first', async () => {
+    api.create.mockResolvedValue({ data: { data: { id: 'b9', milestone: null } } });
+    open();
+    fireEvent.change(screen.getByLabelText(/^Expected harvest date/), { target: { value: '2030-01-15' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create batch' }));
+    expect(await screen.findByText('Batch created. It starts at the egg stage.')).toBeInTheDocument();
+  });
+
   const room = (id: string, name: string) => ({ id, name, notes: '', batchCount: 0, batches: [], createdAt: '' });
 
   it('says a first room will be made when the farm has none', async () => {

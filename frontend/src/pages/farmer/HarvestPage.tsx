@@ -75,7 +75,7 @@ export default function HarvestPage() {
       setRecords((prev) => [res.data.data, ...prev]);
       setShowAdd(false);
       setForm(EMPTY_FORM);
-      success(t('hpSaved'));
+      success(t(res.data.data.milestone === 'FIRST_HARVEST' ? 'msFirstHarvest' : 'hpSaved'));
     } catch (err) {
       showError(getErrorMessage(err));
     } finally {

@@ -44,7 +44,7 @@ export default function AddBatchPage() {
     setLoading(true);
     try {
       const quantity = form.quantity === '' ? undefined : Number(form.quantity);
-      await batchService.create({
+      const res = await batchService.create({
         farmId,
         roomId: roomId || undefined,
         expectedHarvestDate: form.expectedHarvestDate,
@@ -54,7 +54,7 @@ export default function AddBatchPage() {
         // The unit only means something next to a quantity.
         quantityUnit: quantity === undefined ? undefined : (form.unit as 'BOXES' | 'WORMS'),
       });
-      success(t('abCreated'));
+      success(t(res.data.data?.milestone === 'FIRST_BATCH' ? 'msFirstBatch' : 'abCreated'));
       navigate(`/farms/${farmId}`);
     } catch (err) {
       setError(getErrorMessage(err));

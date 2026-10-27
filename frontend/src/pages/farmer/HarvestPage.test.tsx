@@ -118,6 +118,28 @@ describe('Harvest page', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  const logOne = async () => {
+    open();
+    await screen.findByText('First picking');
+    fireEvent.click(screen.getByRole('button', { name: 'Log harvest' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Log a harvest' });
+    fireEvent.change(within(dialog).getByLabelText(/^Cocoon weight/), { target: { value: '6' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save record' }));
+  };
+
+  it('says a quiet word on the first harvest the farmer has recorded', async () => {
+    api.create.mockResolvedValue({ data: { data: { ...record('r9', '6.00', null, 'B', '2026-10-05'), milestone: 'FIRST_HARVEST' } } });
+    await logOne();
+    expect(await screen.findByText('Your first harvest is recorded. The totals are on the Harvests page.')).toBeInTheDocument();
+    expect(screen.queryByText('Harvest record saved.')).not.toBeInTheDocument();
+  });
+
+  it('keeps the usual message for every harvest after the first', async () => {
+    api.create.mockResolvedValue({ data: { data: { ...record('r9', '6.00', null, 'B', '2026-10-05'), milestone: null } } });
+    await logOne();
+    expect(await screen.findByText('Harvest record saved.')).toBeInTheDocument();
+  });
+
   it('asks before deleting a record', async () => {
     api.remove.mockResolvedValue({ data: { data: null } });
     open();
