@@ -11,13 +11,15 @@ from batches.models import Batch
 from cooperatives.models import Cooperative
 from farms.models import Farm
 from harvest.models import HarvestRecord
+from sensors.management.commands.seed_demo import make_password
 from sensors.models import DiseaseDetection, IoTDevice, SensorReading
 from tests.factories import FarmFactory, UserFactory
 from users.models import User
 
 pytestmark = pytest.mark.django_db
 
-PASSWORD = 'Silk-Demo-2026'
+# Made up for each run, so no password is written in the repository.
+PASSWORD = make_password()
 
 
 def seed(*args, **kwargs):
