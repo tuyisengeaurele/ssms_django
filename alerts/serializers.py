@@ -14,7 +14,7 @@ class AlertLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AlertLog
-        fields = ['id', 'batch_id', 'type', 'message', 'is_read', 'created_at', 'farmer_name', 'batch']
+        fields = ['id', 'batch_id', 'type', 'message', 'is_read', 'created_at', 'resolved_at', 'farmer_name', 'batch']
         read_only_fields = fields
 
     def get_farmer_name(self, obj):
