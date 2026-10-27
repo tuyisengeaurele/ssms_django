@@ -5,7 +5,7 @@
 Work from 27 October, in the order agreed. Each change started with a failing test.
 
 ### Checked
-- Backend: 642 tests pass. Frontend: 643 tests pass, `tsc` is clean and the production build succeeds.
+- Backend: 644 tests pass. Frontend: 643 tests pass, `tsc` is clean and the production build succeeds.
 - In the real app: the farm and batch detail pages fit at 1100 and 390 pixels wide, the cooperatives tabs and the Undo toast work, and the new batch sections show.
 
 ### Added
@@ -23,6 +23,9 @@ Work from 27 October, in the order agreed. Each change started with a failing te
 
 ### Changed
 - The active batches list also carries each batch's latest reading and its open problems, in the same single query.
+
+### Bugs found on the way and fixed
+- Databases made by the old Node backend have a native Postgres enum on `alert_logs.type`, and Django's bulk insert cannot write into one. Opening an alert would have failed there, so alerts are now saved one at a time. Two tests guard it, because a fresh test database does not have the enum.
 
 ### Before you run this
 - Run `python manage.py migrate`. There are new migrations for alerts and batches. They only add things, and old temperature and humidity alerts are marked resolved so they cannot hide a new problem.
