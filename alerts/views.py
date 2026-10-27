@@ -73,6 +73,8 @@ class AlertsByBatchView(APIView):
 
 class AlertMarkReadView(APIView):
     permission_classes = [IsAuthenticated]
+    # Marking unread is the undo of marking read, so both views share one rule for who may touch an alert.
+    read = True
 
     def patch(self, request, pk):
         alert = scope_by_batch(
@@ -81,9 +83,13 @@ class AlertMarkReadView(APIView):
         if alert is None:
             return api_error("We couldn't find that alert.", 404)
 
-        alert.is_read = True
+        alert.is_read = self.read
         alert.save(update_fields=['is_read'])
-        return api_success(AlertLogSerializer(alert).data, 'Alert marked as read.')
+        return api_success(AlertLogSerializer(alert).data, 'Alert marked as read.' if self.read else 'Alert marked as unread.')
+
+
+class AlertMarkUnreadView(AlertMarkReadView):
+    read = False
 
 
 class AlertStreamTicketView(APIView):

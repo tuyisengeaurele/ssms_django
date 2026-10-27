@@ -142,6 +142,7 @@ ROWS = [
         expect(NOBODY), fmt='multipart',
         body=lambda w: {'batchId': w.dead_batch.pk, 'image': SimpleUploadedFile('w.png', PNG, content_type='image/png')}),
     Row('mark one alert read', 'PATCH', lambda w: f'/api/alerts/{w.alert.pk}/read', expect(OWNER_SIDE)),
+    Row('mark one alert unread', 'PATCH', lambda w: f'/api/alerts/{w.alert.pk}/unread', expect(OWNER_SIDE)),
     Row('mark an alert of a deleted batch read', 'PATCH',
         lambda w: f'/api/alerts/{w.dead_batch_records.alert.pk}/read', expect(NOBODY)),
 
