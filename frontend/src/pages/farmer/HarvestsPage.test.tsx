@@ -5,8 +5,8 @@ import { LanguageProvider } from '../../context/LanguageContext';
 import { ToastProvider } from '../../context/ToastContext';
 import { setReducedMotion } from '../../test/setup';
 
-const api = vi.hoisted(() => ({ list: vi.fn(), exportCsv: vi.fn() }));
-vi.mock('../../services/harvest.service', () => ({ harvestService: { getAll: api.list, exportCsv: api.exportCsv } }));
+const api = vi.hoisted(() => ({ page: vi.fn(), stats: vi.fn(), exportCsv: vi.fn() }));
+vi.mock('../../services/harvest.service', () => ({ harvestService: { getPage: api.page, getStats: api.stats, exportCsv: api.exportCsv } }));
 
 import HarvestsPage from './HarvestsPage';
 
@@ -20,6 +20,19 @@ const records = [
   record('r3', 'b2-ijklmnop', "Gad's farm", '4.50', '200.00', 'A'),
   record('r4', 'b3-qqqqqqqq', null, '1.00', null, 'C', 'Odd tray'),
 ];
+
+// The totals come from the stats endpoint, so they cover every record and not only the page on screen.
+const stats = {
+  totalWeightKg: 26, totalSilkG: 1000, avgWeightKg: 6.5, recordCount: 4,
+  byGrade: [{ grade: 'A', count: 2, totalKg: 17 }, { grade: 'B', count: 1, totalKg: 8 }, { grade: 'C', count: 1, totalKg: 1 }],
+  byFarm: [
+    { farm: "Serge's farm", count: 2, totalKg: 20.5 },
+    { farm: "Gad's farm", count: 1, totalKg: 4.5 },
+    { farm: 'Hill farm', count: 1, totalKg: 1 },
+  ],
+};
+const meta = (over: Record<string, unknown> = {}) => ({ page: 1, pageSize: 20, totalItems: 4, totalPages: 1, hasNext: false, hasPrev: false, ...over });
+const answer = (rows: unknown[], over: Record<string, unknown> = {}) => ({ data: { data: rows, pagination: meta({ totalItems: rows.length, ...over }) } });
 
 const open = () => render(
   <MemoryRouter>
@@ -41,7 +54,12 @@ beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
   setReducedMotion(true);
-  api.list.mockResolvedValue({ data: { data: records } });
+  api.stats.mockResolvedValue({ data: { data: stats } });
+  api.page.mockImplementation((_page: number, search = '') => {
+    const q = search.toLowerCase();
+    const rows = records.filter((r) => !q || (r.farmName ?? '').toLowerCase().includes(q) || r.qualityGrade.toLowerCase().includes(q) || (r.notes ?? '').toLowerCase().includes(q));
+    return Promise.resolve(answer(rows));
+  });
 });
 
 describe('Harvests page', () => {
@@ -60,11 +78,11 @@ describe('Harvests page', () => {
     expect(tile('Average per record')).toHaveTextContent('6.5 kg');
   });
 
-  it('ranks the farms by cocoon weight and names a batch that has no farm', async () => {
+  it('ranks the farms by cocoon weight, from the totals of every record', async () => {
     open();
     const list = await screen.findByRole('list', { name: 'Cocoons by farm' });
     const rows = within(list).getAllByRole('listitem').map((li) => li.textContent);
-    expect(rows).toEqual(["Serge's farm20.5 kg", "Gad's farm4.5 kg", 'Batch #QQQQQQQQ1 kg']);
+    expect(rows).toEqual(["Serge's farm20.5 kg", "Gad's farm4.5 kg", 'Hill farm1 kg']);
   });
 
   it('counts the records for every grade', async () => {
@@ -83,24 +101,62 @@ describe('Harvests page', () => {
     expect(within(row).getByRole('link', { name: /^Open batch/ })).toHaveAttribute('href', '/batches/b1-abcdefgh/harvest');
   });
 
-  it('searches by farm, grade or note, and can be cleared', async () => {
+  it('searches by farm, grade or note on the server, and can be cleared', async () => {
     open();
     await screen.findByText('First picking');
     const box = screen.getByRole('searchbox', { name: 'Search by farm, grade or note' });
     fireEvent.change(box, { target: { value: 'odd' } });
+    await waitFor(() => expect(api.page).toHaveBeenLastCalledWith(1, 'odd'));
+    expect(await screen.findByText('Odd tray')).toBeInTheDocument();
     expect(screen.queryByText('First picking')).not.toBeInTheDocument();
-    expect(screen.getByText('Odd tray')).toBeInTheDocument();
     fireEvent.change(box, { target: { value: 'zzz' } });
-    expect(screen.getByText('No records match')).toBeInTheDocument();
+    expect(await screen.findByText('No records match')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Clear search' }));
     expect(await screen.findByText('First picking')).toBeInTheDocument();
+  });
+
+  it('asks for one search a pause after typing, not one per key', async () => {
+    open();
+    await screen.findByText('First picking');
+    api.page.mockClear();
+    const box = screen.getByRole('searchbox', { name: 'Search by farm, grade or note' });
+    for (const text of ['o', 'od', 'odd']) fireEvent.change(box, { target: { value: text } });
+    await waitFor(() => expect(api.page).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(api.page.mock.calls).toEqual([[1, 'odd']]);
   });
 
   it('says "1 record" when the search leaves one', async () => {
     open();
     await screen.findByText('First picking');
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search by farm, grade or note' }), { target: { value: 'odd' } });
-    expect(screen.getByText('1 record')).toBeInTheDocument();
+    expect(await screen.findByText('1 record')).toBeInTheDocument();
+  });
+
+  it('shows one page and moves between pages', async () => {
+    api.page.mockImplementation((page: number) => Promise.resolve(answer(
+      [page === 1 ? records[0] : records[2]],
+      { page, pageSize: 1, totalItems: 3, totalPages: 3, hasNext: page < 3, hasPrev: page > 1 },
+    )));
+    open();
+    await screen.findByText('First picking');
+    expect(screen.getByText('3 records')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+    await waitFor(() => expect(api.page).toHaveBeenLastCalledWith(2, ''));
+    expect(await screen.findByText("Gad's farm", { selector: 'td' })).toBeInTheDocument();
+    expect(screen.queryByText('First picking')).not.toBeInTheDocument();
+  });
+
+  it('goes back to the first page when the search changes', async () => {
+    api.page.mockImplementation((page: number) => Promise.resolve(answer(
+      [records[0]], { page, pageSize: 1, totalItems: 3, totalPages: 3, hasNext: page < 3, hasPrev: page > 1 },
+    )));
+    open();
+    await screen.findByText('First picking');
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+    await waitFor(() => expect(api.page).toHaveBeenLastCalledWith(2, ''));
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search by farm, grade or note' }), { target: { value: 'serge' } });
+    await waitFor(() => expect(api.page).toHaveBeenLastCalledWith(1, 'serge'));
   });
 
   it('keeps the search placeholder short enough to read', async () => {
@@ -122,14 +178,15 @@ describe('Harvests page', () => {
   });
 
   it('explains when nothing has been harvested yet, and offers no export', async () => {
-    api.list.mockResolvedValue({ data: { data: [] } });
+    api.stats.mockResolvedValue({ data: { data: { ...stats, recordCount: 0, byGrade: [], byFarm: [] } } });
+    api.page.mockResolvedValue(answer([]));
     open();
     expect(await screen.findByText('No harvest records yet')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Export CSV' })).toBeDisabled();
   });
 
   it('offers a retry when the records cannot load', async () => {
-    api.list.mockRejectedValueOnce(new Error('x'));
+    api.page.mockRejectedValueOnce(new Error('x'));
     open();
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent("We couldn't load the harvest records");
