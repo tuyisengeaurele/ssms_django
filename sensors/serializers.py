@@ -1,3 +1,5 @@
+import math
+
 from rest_framework import serializers
 from .models import SensorReading, DiseaseDetection
 
@@ -34,3 +36,17 @@ class SensorReadingCreateSerializer(serializers.ModelSerializer):
         if not (0 <= value <= 100):
             raise serializers.ValidationError('Humidity should be between 0 and 100%.')
         return value
+
+
+class DeviceReadingSerializer(serializers.Serializer):
+    """What a device sends. The limits are those of common sensors, so a faulty value is refused, not stored."""
+    temperature = serializers.FloatField(min_value=-40, max_value=85)
+    humidity = serializers.FloatField(min_value=0, max_value=100)
+
+    def _finite(self, value):
+        if not math.isfinite(value):
+            raise serializers.ValidationError('Please send a real number.')
+        return value
+
+    validate_temperature = _finite
+    validate_humidity = _finite

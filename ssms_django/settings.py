@@ -125,6 +125,9 @@ PASSWORD_HASHERS = [
 
 # How many reverse proxies sit in front of the app. 0 on a laptop. Set to 1 behind a single host
 # proxy such as Render. Throttles and audit logs only believe X-Forwarded-For up to this depth.
+# A device that sends nothing for this long is shown offline.
+DEVICE_OFFLINE_MINUTES = config('DEVICE_OFFLINE_MINUTES', default=30, cast=int)
+
 TRUSTED_PROXY_COUNT = config('TRUSTED_PROXY_COUNT', default=0, cast=int)
 
 # Throttle counters must be shared by every worker, so they live in the database.
@@ -165,6 +168,7 @@ REST_FRAMEWORK = {
         'register': '20/minute',
         'password_reset': '5/minute',
         'contact': '5/hour',
+        'device': '30/minute',   # readings per device key
     },
 }
 

@@ -4,16 +4,19 @@ from datetime import timedelta
 from django.db.models import Avg
 from django.db.models.functions import TruncHour
 from django.utils import timezone
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
 from alerts.utils import check_sensor_alerts
 from core.access import get_batch_or_404, get_farm_or_404, scope_by_batch, scope_by_farm
 from core.params import int_param
+from core.throttles import DeviceKeyThrottle
 from core.utils import api_error, api_success
 
+from .devices import batch_for_device, effective_status, record_device_reading
 from .models import IoTDevice, SensorReading
-from .serializers import SensorReadingCreateSerializer, SensorReadingSerializer
+from .serializers import DeviceReadingSerializer, SensorReadingCreateSerializer, SensorReadingSerializer
 
 
 def _gen_device_key():
@@ -109,7 +112,7 @@ def _serialize_device(device: IoTDevice) -> dict:
         'farmName':  device.farm.name if device.farm else None,
         'batchId':   device.batch_id,
         'location':  device.location,
-        'status':    device.status,
+        'status':    effective_status(device),
         'lastSeen':  device.last_seen.isoformat() if device.last_seen else None,
         'isActive':  device.is_active,
         'createdAt': device.created_at.isoformat(),
@@ -224,3 +227,32 @@ class IoTDeviceDetailView(APIView):
         device.status    = IoTDevice.STATUS_OFFLINE
         device.save(update_fields=['is_active', 'status'])
         return api_success({'id': device.id}, 'Device removed.')
+
+
+class DeviceIngestView(APIView):
+    """
+    POST /api/devices/ingest, a device sends one reading. The device key goes in the X-Device-Key header.
+    No user account is involved, so the usual sign in does not apply.
+    """
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    # Per key, and per address too, because a key an admin chose by hand could be guessed.
+    throttle_classes = [DeviceKeyThrottle, AnonRateThrottle]
+
+    def post(self, request):
+        key = request.headers.get('X-Device-Key', '').strip()
+        device = IoTDevice.objects.select_related('farm', 'batch').filter(device_key=key, is_active=True).first() if key else None
+        # One message for a missing, wrong or switched off key, so it says nothing about which keys exist.
+        if device is None:
+            return api_error("That device key isn't valid.", 401)
+
+        serializer = DeviceReadingSerializer(data=request.data)
+        if not serializer.is_valid():
+            return api_error('Please check the reading and try again.', 422, serializer.errors)
+
+        batch = batch_for_device(device)
+        if batch is None:
+            return api_error('This device is not linked to a batch yet.', 409)
+
+        record_device_reading(device, batch, serializer.validated_data['temperature'], serializer.validated_data['humidity'])
+        return api_success(None, 'Reading recorded.', 201)
