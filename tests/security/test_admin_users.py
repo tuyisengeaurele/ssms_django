@@ -70,7 +70,7 @@ def test_a_given_password_sends_no_invitation(admin_client):
 
 
 def test_a_failed_invitation_still_creates_the_user(admin_client):
-    with mock.patch('users.admin_views.send_mail', side_effect=OSError('smtp down')):
+    with mock.patch('users.admin_views.send_email', side_effect=OSError('smtp down')):
         response = create(admin_client, role='FARMER')
     assert response.status_code == 201
     assert User.objects.filter(email='aline@example.rw').exists()

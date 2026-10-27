@@ -4,9 +4,10 @@ import secrets
 from datetime import timedelta
 
 from django.conf import settings
-from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
+
+from core.mail import Email, send_email
 
 from .models import CooperativeInvitation
 
@@ -68,22 +69,17 @@ def accept(invitation: CooperativeInvitation, user) -> None:
 
 def send_invitation_email(invitation: CooperativeInvitation, token: str) -> None:
     inviter = invitation.invited_by.name if invitation.invited_by else 'A supervisor'
-    message = '\n'.join([
-        'Hello,',
-        '',
-        f'{inviter} has invited you to join {invitation.cooperative.name} on SSMS, the Smart Sericulture Management System.',
-        '',
-        f'Open this link to join (it works once and lasts {VALID_DAYS} days):',
-        link_for(token),
-        '',
-        'If you were not expecting this, you can ignore this email.',
-        '',
-        'The SSMS Team',
-    ])
-    send_mail(
-        subject=f'You are invited to join {invitation.cooperative.name} on SSMS',
-        message=message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[invitation.email],
+    coop = invitation.cooperative.name
+    send_email(
+        f'You are invited to join {coop} on SSMS',
+        [invitation.email],
+        Email(
+            heading=f'Join {coop} on SSMS',
+            greeting='Hello,',
+            intro=(f'{inviter} has invited you to join {coop} on SSMS, the Smart Sericulture Management System.',),
+            button=('Join the cooperative', link_for(token)),
+            closing=(f'The link works once and lasts {VALID_DAYS} days. If you were not expecting this, you can ignore this email.',),
+            reason=f'You received this because {inviter} invited this address to join {coop}.',
+        ),
         fail_silently=False,
     )
