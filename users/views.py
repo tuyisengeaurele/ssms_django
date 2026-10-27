@@ -35,6 +35,9 @@ class RegisterView(APIView):
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
         user = serializer.save()
         log_action(request, 'CREATE', 'User', user.pk, f'Registered: {user.email}')
+        if user.is_email_verified:
+            # Joined by a link sent to this very address, so there is nothing left to verify.
+            return api_success({'user': UserSerializer(user).data}, 'Account created. You can sign in now.', 201)
         try:
             _send_verification_email(user)
         except Exception:

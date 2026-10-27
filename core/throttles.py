@@ -19,6 +19,10 @@ class ContactRateThrottle(AnonRateThrottle):
     scope = 'contact'   # 5 messages an hour per address
 
 
+class InvitationRateThrottle(AnonRateThrottle):
+    scope = 'invitation'   # a stranger asking about invitation links, 20 a minute per address
+
+
 class DeviceKeyThrottle(SimpleRateThrottle):
     """30 readings a minute for each device key. A device that sends no key is counted by its address."""
     scope = 'device'
