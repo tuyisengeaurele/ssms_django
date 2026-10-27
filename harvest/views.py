@@ -1,6 +1,6 @@
 import io
 
-from django.db.models import Avg, Count, Sum
+from django.db.models import Avg, Count, Q, Sum
 from django.http import StreamingHttpResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -8,22 +8,28 @@ from rest_framework.views import APIView
 from audit_log.utils import log_action
 from core.access import get_batch_or_404, scope_by_batch
 from core.csvsafe import safe_writer
+from core.pagination import StandardPagination
 from core.utils import api_error, api_success
 
 from .models import HarvestRecord
 from .serializers import HarvestRecordCreateSerializer, HarvestRecordSerializer
 
+# A harvest is recorded once the cocoons are made. Before that there is nothing to weigh.
+HARVEST_STAGES = ('COCOON', 'HARVEST')
+TOO_EARLY = 'A harvest can be recorded once the batch has reached the cocoon stage.'
+
 
 class HarvestAllView(APIView):
     """
-    GET /api/harvest               , paginated JSON list (role-scoped)
+    GET /api/harvest               , JSON list (role-scoped), newest first
+    GET /api/harvest?page=N       , the same a page at a time (?page_size=N, ?search=text)
     GET /api/harvest?export=csv   , streaming CSV download
     """
     permission_classes = [IsAuthenticated]
 
     def _scoped_qs(self, user):
         return scope_by_batch(
-            user, HarvestRecord.objects.select_related('batch__farm').order_by('-harvested_at'),
+            user, HarvestRecord.objects.live().select_related('batch__farm').order_by('-harvested_at'),
         )
 
     def get(self, request):
@@ -57,6 +63,18 @@ class HarvestAllView(APIView):
             response['Content-Disposition'] = 'attachment; filename="harvest_records.csv"'
             return response
 
+        search = request.query_params.get('search', '').strip()
+        if search:
+            qs = qs.filter(
+                Q(batch__farm__name__icontains=search) | Q(quality_grade__icontains=search) | Q(notes__icontains=search),
+            )
+
+        if 'page' in request.query_params:
+            paginator = StandardPagination()
+            page = paginator.paginate_queryset(qs, request)
+            if page is not None:
+                return paginator.get_paginated_response(HarvestRecordSerializer(page, many=True).data)
+
         return api_success(HarvestRecordSerializer(qs, many=True).data)
 
 
@@ -65,13 +83,15 @@ class HarvestListCreateView(APIView):
 
     def get(self, request, batch_id):
         get_batch_or_404(request.user, batch_id)
-        records = HarvestRecord.objects.select_related('batch__farm').filter(batch_id=batch_id)
+        records = HarvestRecord.objects.live().select_related('batch__farm').filter(batch_id=batch_id)
         return api_success(HarvestRecordSerializer(records, many=True).data)
 
     def post(self, request, batch_id):
         if request.user.role not in ('FARMER', 'ADMIN'):
             return api_error("You don't have permission to record a harvest.", 403)
-        get_batch_or_404(request.user, batch_id)
+        batch = get_batch_or_404(request.user, batch_id)
+        if batch.stage not in HARVEST_STAGES:
+            return api_error(TOO_EARLY, 422, {'batch_id': [TOO_EARLY]})
 
         data = {**request.data, 'batch_id': batch_id}
         serializer = HarvestRecordCreateSerializer(data=data)
@@ -96,7 +116,7 @@ class HarvestStatsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        qs = scope_by_batch(request.user, HarvestRecord.objects.all())
+        qs = scope_by_batch(request.user, HarvestRecord.objects.live())
 
         agg = qs.aggregate(
             total_weight=Sum('cocoon_weight_kg'),
@@ -109,6 +129,11 @@ class HarvestStatsView(APIView):
             .annotate(count=Count('id'), total_kg=Sum('cocoon_weight_kg'))
             .order_by('quality_grade')
         )
+        by_farm = list(
+            qs.values('batch__farm__name')
+            .annotate(count=Count('id'), total_kg=Sum('cocoon_weight_kg'))
+            .order_by('-total_kg', 'batch__farm__name')[:8]
+        )
         return api_success({
             'total_weight_kg': float(agg['total_weight'] or 0),
             'total_silk_g':    float(agg['total_silk']   or 0),
@@ -117,6 +142,10 @@ class HarvestStatsView(APIView):
             'by_grade': [
                 {'grade': r['quality_grade'], 'count': r['count'], 'total_kg': float(r['total_kg'] or 0)}
                 for r in by_grade
+            ],
+            'by_farm': [
+                {'farm': r['batch__farm__name'], 'count': r['count'], 'total_kg': float(r['total_kg'] or 0)}
+                for r in by_farm
             ],
         })
 
@@ -128,10 +157,11 @@ class HarvestDeleteView(APIView):
         if request.user.role not in ('FARMER', 'ADMIN'):
             return api_error("You don't have permission to do that.", 403)
         record = scope_by_batch(
-            request.user, HarvestRecord.objects.select_related('batch__farm'),
+            request.user, HarvestRecord.objects.live().select_related('batch__farm'),
         ).filter(pk=pk).first()
         if record is None:
             return api_error("We couldn't find that record.", 404)
+        record.is_active = False
+        record.save(update_fields=['is_active'])
         log_action(request, 'DELETE', 'HarvestRecord', pk, f'Deleted harvest record {pk}')
-        record.delete()
         return api_success(None, 'Harvest record deleted.')

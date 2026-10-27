@@ -9,6 +9,12 @@ class QualityGrade(models.TextChoices):
     C = 'C', 'Grade C — Below standard'
 
 
+class HarvestQuerySet(models.QuerySet):
+    def live(self):
+        """The records that have not been deleted. A deleted record is hidden everywhere and its row is kept."""
+        return self.filter(is_active=True)
+
+
 class HarvestRecord(models.Model):
     id = models.CharField(primary_key=True, max_length=36, default=_generate_id, editable=False)
     batch = models.ForeignKey(
@@ -33,9 +39,12 @@ class HarvestRecord(models.Model):
         db_column='qualityGrade',
     )
     notes = models.TextField(null=True, blank=True)
+    is_active = models.BooleanField(db_column='isActive', default=True)
     harvested_at = models.DateTimeField(db_column='harvestedAt', auto_now_add=True)
     created_at   = models.DateTimeField(db_column='createdAt',   auto_now_add=True)
     updated_at   = models.DateTimeField(db_column='updatedAt',   auto_now=True)
+
+    objects = HarvestQuerySet.as_manager()
 
     class Meta:
         db_table = 'harvest_records'
