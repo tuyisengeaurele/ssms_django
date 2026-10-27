@@ -20,6 +20,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
+from alerts.disease import raise_disease_alert
 from audit_log.utils import log_action
 from core.access import get_batch_or_404, scope_by_batch
 from core.csvsafe import safe_writer
@@ -73,7 +74,8 @@ class DiseaseDetectionCreateView(APIView):
 
         # The batch must exist and be one this person may use. Checked first, so a stranger's
         # request never gets as far as decoding a photo.
-        batch_id = get_batch_or_404(request.user, batch_id).pk
+        batch = get_batch_or_404(request.user, batch_id)
+        batch_id = batch.pk
 
         try:
             image_type = validate_image_upload(image_file)
@@ -121,6 +123,12 @@ class DiseaseDetectionCreateView(APIView):
 
         payload = DiseaseDetectionSerializer(detection).data
         payload['allScores'] = ai_data.get('allScores', {})
+        # The check is already saved. A problem with the alert must not lose the answer the person is waiting for.
+        try:
+            payload['alert_raised'] = raise_disease_alert(batch, detection.result, detection.confidence, request.user) is not None
+        except Exception:
+            logger.exception('Could not raise the disease alert for detection %s', detection.pk)
+            payload['alert_raised'] = False
 
         log_action(request, 'CREATE', 'DiseaseDetection', detection.pk,
                    f'Detection: {detection.result} ({detection.confidence:.0%}) on batch {batch_id}')
