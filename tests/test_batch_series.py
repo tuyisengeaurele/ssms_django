@@ -2,6 +2,8 @@
 from datetime import timedelta
 
 import pytest
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from sensors.models import SensorReading
@@ -92,8 +94,18 @@ def test_signing_in_is_required(api_client, batch):
     assert series(api_client, batch).status_code == 401
 
 
-def test_the_number_of_queries_does_not_grow_with_the_readings(auth_client, owner, batch, django_assert_max_num_queries):
-    for hours_ago in range(1, 60):
+def test_the_number_of_queries_does_not_grow_with_the_readings(auth_client, owner, batch):
+    client = auth_client(owner)
+
+    def queries_for_one_request():
+        with CaptureQueriesContext(connection) as captured:
+            assert series(client, batch, 168).status_code == 200
+        return len(captured)
+
+    for hours_ago in range(1, 4):
         add(batch, 25.0, 78.0, hours_ago)
-    with django_assert_max_num_queries(6):
-        assert series(auth_client(owner), batch, 168).status_code == 200
+    few = queries_for_one_request()
+    for hours_ago in range(4, 120):
+        add(batch, 25.0, 78.0, hours_ago)
+    # A request has some fixed cost (sign in, access rules, rate limit). More readings must not add to it.
+    assert queries_for_one_request() <= few + 1
