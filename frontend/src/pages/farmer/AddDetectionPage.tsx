@@ -137,6 +137,7 @@ export default function AddDetectionPage() {
                 <Icon name={healthy ? 'success' : 'warning'} size={18} />
                 <span>{healthy ? t('ckHealthy') : t('ckSick')}</span>
               </div>
+              {result.alertRaised && <p className="form-hint">{t('ckAlertAdded')}</p>}
               <p className="form-hint">{t('ckCaution')}</p>
               <DetectionFeedback key={result.id} detectionId={result.id} initial={result} />
             </Panel>

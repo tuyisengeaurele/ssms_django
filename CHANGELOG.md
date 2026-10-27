@@ -1,5 +1,23 @@
 # Changelog
 
+## Disease alert when a check is positive (Plan 9, item B7)
+
+A disease check that names a disease now raises an alert on the batch, so the farmer's supervisor sees it without being told.
+
+### Checked
+- Backend: 994 tests pass. Frontend: 815 tests pass and `tsc` is clean.
+- Not yet looked at in the browser by me. Please run a disease check on a photo and look at Alerts.
+
+### Added
+- **The alert.** A check that names Flacherie, Grasserie, Muscardine or Pebrine with at least 50% confidence adds a Disease alert to the batch: "Flacherie suspected in this batch (83% confidence). Check the batch and ask your supervisor to take a look." The farmer, the supervisor of their cooperative and admins see it in Alerts, and supervisors and admins get it on the live stream like other alerts. Every positive check is its own alert, because each has its own photo.
+- **The limit is a setting**, `DISEASE_ALERT_MIN_CONFIDENCE`, 0.5 by default. Below it the result and the card still show, and nobody is alarmed. A healthy result, or a class the page does not know, never raises one.
+- **An email to the farm owner, only when someone else made the check** (a supervisor or admin). The owner who made it is looking at the result. It names the batch and who checked it, says the check can be wrong, and sends them to their supervisor or an officer before any disinfectant or medicine. At most one email an hour per batch.
+- The result page says "An alert was added to this batch, so your supervisor can see it too" when one was raised. The answer from `POST /api/detections` carries `alertRaised`.
+
+### Rulings to confirm
+- The 50% limit is my choice. Raise it to alarm less, lower it to alarm more.
+- If saving the alert fails, the check itself still succeeds and the failure is logged.
+
 ## Disease result: what it may mean, and was it right? (Plan 9, item B6)
 
 A disease result now comes with plain guidance and a way to say whether the check got it right.

@@ -140,6 +140,16 @@ describe('Disease check page', () => {
       expect(screen.getByRole('list', { name: 'What you can do now' })).toBeInTheDocument();
     });
 
+    it('says an alert was added when the check raised one', async () => {
+      await checked({ alertRaised: true });
+      expect(screen.getByText('An alert was added to this batch, so your supervisor can see it too.')).toBeInTheDocument();
+    });
+
+    it('says nothing about an alert when none was raised', async () => {
+      await checked({ result: 'Healthy', confidence: 0.97, alertRaised: false });
+      expect(screen.queryByText(/An alert was added/)).not.toBeInTheDocument();
+    });
+
     it('gives no disease card for a healthy worm', async () => {
       await checked({ result: 'Healthy', confidence: 0.97 });
       expect(screen.queryByRole('heading', { name: 'What this may mean' })).not.toBeInTheDocument();

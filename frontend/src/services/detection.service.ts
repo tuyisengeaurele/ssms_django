@@ -3,6 +3,8 @@ import { ApiResponse, DiseaseDetection } from '../types';
 
 export interface DetectionResult extends DiseaseDetection {
   allScores?: Record<string, number>;
+  /** True when this check named a disease and so raised an alert on the batch. */
+  alertRaised?: boolean;
 }
 
 export const detectionService = {
