@@ -124,6 +124,11 @@ export interface DiseaseDetection {
   confidence: number;
   detectedAt: string;
   notes?: string;
+  /** What the farmer said about the result: right, wrong or not answered yet. */
+  isCorrect?: boolean | null;
+  /** When the result was wrong, what it really was, if they said. */
+  actualResult?: string | null;
+  feedbackAt?: string | null;
 }
 
 export interface SensorReading {

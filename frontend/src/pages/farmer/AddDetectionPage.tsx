@@ -9,6 +9,8 @@ import { fill } from '../../utils/fill';
 import BarList from '../../components/ui/BarList';
 import CameraCapture from '../../components/ui/CameraCapture';
 import { compressPhoto } from '../../utils/compressPhoto';
+import DetectionFeedback from './DetectionFeedback';
+import DiseaseInfoCard from './DiseaseInfoCard';
 import { Icon } from '../../components/ui/Icon';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
@@ -136,7 +138,10 @@ export default function AddDetectionPage() {
                 <span>{healthy ? t('ckHealthy') : t('ckSick')}</span>
               </div>
               <p className="form-hint">{t('ckCaution')}</p>
+              <DetectionFeedback key={result.id} detectionId={result.id} initial={result} />
             </Panel>
+
+            <DiseaseInfoCard result={result.result} />
 
             {scores.length > 0 && (
               <Panel title={t('ckScores')}>

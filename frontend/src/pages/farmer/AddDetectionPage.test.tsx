@@ -5,8 +5,8 @@ import { LanguageProvider } from '../../context/LanguageContext';
 import { ToastProvider } from '../../context/ToastContext';
 import { setReducedMotion } from '../../test/setup';
 
-const api = vi.hoisted(() => ({ create: vi.fn(), compress: vi.fn() }));
-vi.mock('../../services/detection.service', () => ({ detectionService: { create: api.create } }));
+const api = vi.hoisted(() => ({ create: vi.fn(), compress: vi.fn(), sendFeedback: vi.fn() }));
+vi.mock('../../services/detection.service', () => ({ detectionService: { create: api.create, sendFeedback: api.sendFeedback } }));
 vi.mock('../../utils/compressPhoto', () => ({ compressPhoto: api.compress, MAX_SIDE: 1280 }));
 // The camera has its own tests. Here it is a pair of buttons that hand over a photo or close.
 vi.mock('../../components/ui/CameraCapture', () => ({
@@ -122,6 +122,48 @@ describe('Disease check page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Check this photo' }));
     expect(await screen.findByText(/No sign of disease/)).toBeInTheDocument();
     expect(screen.queryByText(/may be present/)).not.toBeInTheDocument();
+  });
+
+  describe('after the result', () => {
+    const checked = async (over: object = {}) => {
+      api.create.mockResolvedValue(outcome(over));
+      open();
+      await chooseReady(photo());
+      fireEvent.click(screen.getByRole('button', { name: 'Check this photo' }));
+      await screen.findByRole('heading', { level: 2, name: over && 'result' in over ? String((over as { result: string }).result) : 'Flacherie' });
+    };
+
+    it('explains a disease and what to do, from the result that came back', async () => {
+      await checked();
+      expect(screen.getByRole('heading', { name: 'What this may mean' })).toBeInTheDocument();
+      expect(screen.getByText(/Flacherie is a disease of the worm's gut/)).toBeInTheDocument();
+      expect(screen.getByRole('list', { name: 'What you can do now' })).toBeInTheDocument();
+    });
+
+    it('gives no disease card for a healthy worm', async () => {
+      await checked({ result: 'Healthy', confidence: 0.97 });
+      expect(screen.queryByRole('heading', { name: 'What this may mean' })).not.toBeInTheDocument();
+    });
+
+    it('asks whether the result was right, for a healthy worm too', async () => {
+      await checked({ result: 'Healthy', confidence: 0.97 });
+      expect(screen.getByRole('group', { name: 'Was this result correct?' })).toBeInTheDocument();
+    });
+
+    it('sends the answer for the check that was just made', async () => {
+      api.sendFeedback.mockResolvedValue({ data: { data: {} } });
+      await checked();
+      fireEvent.click(within(screen.getByRole('group', { name: 'Was this result correct?' })).getByRole('button', { name: 'Yes' }));
+      await waitFor(() => expect(api.sendFeedback).toHaveBeenCalledWith('d1', { isCorrect: true }));
+      expect(await screen.findByText('Thank you. Your answer was saved.')).toBeInTheDocument();
+    });
+
+    it('starts the next check with no card and a fresh question', async () => {
+      await checked();
+      fireEvent.click(screen.getByRole('button', { name: 'Check another photo' }));
+      expect(screen.queryByRole('heading', { name: 'What this may mean' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('group', { name: 'Was this result correct?' })).not.toBeInTheDocument();
+    });
   });
 
   it('lists every score as a bar list, highest first', async () => {
