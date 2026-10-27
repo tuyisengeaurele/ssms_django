@@ -66,6 +66,45 @@ describe('Alerts page', () => {
     expect(within(item).getByText('2 hours ago')).toBeInTheDocument();
   });
 
+  describe('an alert about a room', () => {
+    const roomAlert = (over: object = {}) => makeAlert(7, {
+      batchId: null, batch: null, roomId: 'r1', room: { id: 'r1', name: 'Rearing house 1' },
+      batches: [{ id: 'b1-abcdefgh', stage: 'LARVA' }, { id: 'b2-12345678', stage: 'PUPA' }], message: 'Temperature too low: 20 C', ...over,
+    });
+
+    it('names the room and links each batch in it', async () => {
+      api.getAll.mockResolvedValue({ data: { data: [roomAlert()] } });
+      open();
+      const item = (await screen.findByText('Temperature too low: 20 C')).closest('li') as HTMLElement;
+      expect(within(item).getByText('Rearing house 1')).toBeInTheDocument();
+      expect(within(item).getByRole('link', { name: '#ABCDEFGH (Larva)' })).toHaveAttribute('href', '/batches/b1-abcdefgh');
+      expect(within(item).getByRole('link', { name: '#12345678 (Pupa)' })).toHaveAttribute('href', '/batches/b2-12345678');
+    });
+
+    it('shows no single-batch link, because the alert is not about one batch', async () => {
+      api.getAll.mockResolvedValue({ data: { data: [roomAlert()] } });
+      open();
+      const item = (await screen.findByText('Temperature too low: 20 C')).closest('li') as HTMLElement;
+      expect(within(item).queryByRole('link', { name: /^Batch/ })).not.toBeInTheDocument();
+    });
+
+    it('still reads well when the room has no batch left', async () => {
+      api.getAll.mockResolvedValue({ data: { data: [roomAlert({ batches: [] })] } });
+      open();
+      const item = (await screen.findByText('Temperature too low: 20 C')).closest('li') as HTMLElement;
+      expect(within(item).getByText('Rearing house 1')).toBeInTheDocument();
+      expect(within(item).queryByRole('link')).not.toBeInTheDocument();
+    });
+
+    it('can be marked read like any other', async () => {
+      api.getAll.mockResolvedValue({ data: { data: [roomAlert()] } });
+      open();
+      const item = (await screen.findByText('Temperature too low: 20 C')).closest('li') as HTMLElement;
+      fireEvent.click(within(item).getByRole('button', { name: 'Mark as read' }));
+      await waitFor(() => expect(api.markRead).toHaveBeenCalledWith('a7'));
+    });
+  });
+
   it('asks the server for unread alerts only when that tab is chosen', async () => {
     open();
     await screen.findByText('Humidity too high: 90%');

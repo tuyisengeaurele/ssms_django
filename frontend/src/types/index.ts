@@ -128,7 +128,9 @@ export interface SensorReading {
 
 export interface AlertLog {
   id: string;
-  batchId: string;
+  /** Set for alerts about one batch. A problem in a room belongs to the room and has none. */
+  batchId: string | null;
+  roomId?: string | null;
   type: AlertType;
   message: string;
   isRead: boolean;
@@ -136,7 +138,10 @@ export interface AlertLog {
   // enriched fields (optional, returned by some endpoints)
   farmName?: string;
   farmerName?: string;
-  batch?: { id: string; stage: string };
+  batch?: { id: string; stage: string } | null;
+  room?: { id: string; name: string } | null;
+  /** For a room alert: the batches in the room now. */
+  batches?: { id: string; stage: string }[];
 }
 
 export type QualityGrade = 'A' | 'B' | 'C';
