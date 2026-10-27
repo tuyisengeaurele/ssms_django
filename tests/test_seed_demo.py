@@ -13,6 +13,7 @@ from farms.models import Farm, RearingRoom
 from harvest.models import HarvestRecord
 from sensors.management.commands.seed_demo import make_password
 from sensors.models import DiseaseDetection, IoTDevice, SensorReading
+from sensors.room_readings import readings_for_batch
 from tests.factories import FarmFactory, UserFactory
 from users.models import User
 
@@ -59,7 +60,7 @@ def test_the_running_batches_are_in_different_stages_that_follow_from_their_age(
 def test_readings_are_hourly_for_the_asked_days_and_end_now():
     seed()
     running = Batch.objects.filter(farm__owner__in=demo_users()).exclude(stage='HARVEST').first()
-    readings = SensorReading.objects.filter(batch=running).order_by('timestamp')
+    readings = readings_for_batch(running).order_by('timestamp')
     assert 70 <= readings.count() <= 74
     assert timezone.now() - readings.last().timestamp < timedelta(hours=2)
     assert timezone.now() - readings.first().timestamp > timedelta(days=2, hours=20)
@@ -70,7 +71,7 @@ def test_a_finished_batch_has_no_readings_after_its_harvest():
     seed()
     harvested = Batch.objects.filter(farm__owner__in=demo_users(), stage='HARVEST').first()
     record = HarvestRecord.objects.get(batch=harvested)
-    assert not SensorReading.objects.filter(batch=harvested, timestamp__gt=record.harvested_at).exists()
+    assert not readings_for_batch(harvested).filter(timestamp__gt=record.harvested_at).exists()
 
 
 def test_the_story_has_a_resolved_cold_night_and_a_humid_spell_still_open():
@@ -130,9 +131,9 @@ def test_reset_replaces_the_demo_data_and_leaves_everything_else_alone():
     real_user = UserFactory(email='real.farmer@example.rw')
     real_farm = FarmFactory(owner=real_user, name='A real farm')
     seed()
-    first = SensorReading.objects.filter(batch__farm__owner__in=demo_users()).count()
+    first = SensorReading.objects.filter(room__farm__owner__in=demo_users()).count()
     seed('--reset')
-    assert SensorReading.objects.filter(batch__farm__owner__in=demo_users()).count() == first
+    assert SensorReading.objects.filter(room__farm__owner__in=demo_users()).count() == first
     assert User.objects.filter(pk=real_user.pk).exists()
     assert Farm.objects.filter(pk=real_farm.pk).exists()
 
@@ -151,9 +152,9 @@ def test_the_same_seed_gives_the_same_numbers():
 
 def test_the_devices_of_running_batches_are_online_and_the_finished_ones_are_not():
     seed()
-    running = IoTDevice.objects.filter(batch__farm__owner__in=demo_users()).exclude(batch__stage='HARVEST')
+    running = IoTDevice.objects.filter(room__farm__owner__in=demo_users()).exclude(room__batches__stage='HARVEST')
     assert all(d.status == 'online' for d in running)
-    done = IoTDevice.objects.filter(batch__farm__owner__in=demo_users(), batch__stage='HARVEST')
+    done = IoTDevice.objects.filter(room__farm__owner__in=demo_users(), room__batches__stage='HARVEST')
     assert all(d.status == 'offline' for d in done)
 
 
@@ -182,3 +183,12 @@ def test_every_demo_batch_has_one_open_stay_that_began_when_the_batch_did():
         assert stay.room_id == batch.room_id
         assert stay.ended_at is None
         assert stay.started_at == batch.start_date
+
+
+def test_demo_readings_belong_to_rooms_and_demo_devices_sit_in_them():
+    seed()
+    assert not SensorReading.objects.filter(room__isnull=True, device__device_key__startswith='ssms-demo-').exists()
+    assert not SensorReading.objects.filter(batch__isnull=False, device__device_key__startswith='ssms-demo-').exists()
+    for device in IoTDevice.objects.filter(device_key__startswith='ssms-demo-'):
+        assert device.room is not None
+        assert device.room.farm_id == device.farm_id

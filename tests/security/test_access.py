@@ -9,6 +9,7 @@ from core.access import (
     scope_by_batch,
     scope_by_farm,
     scope_farms,
+    scope_readings,
 )
 from harvest.models import HarvestRecord
 from sensors.models import DiseaseDetection, IoTDevice, SensorReading
@@ -39,11 +40,16 @@ def test_scope_batches_matches_the_rules(world, actor):
 
 
 @pytest.mark.parametrize('model, attr', [
-    (SensorReading, 'reading'), (DiseaseDetection, 'detection'), (AlertLog, 'alert'), (HarvestRecord, 'harvest'),
+    (DiseaseDetection, 'detection'), (AlertLog, 'alert'), (HarvestRecord, 'harvest'),
 ])
 @pytest.mark.parametrize('actor', PEOPLE)
 def test_scope_by_batch_matches_the_rules(world, actor, model, attr):
     assert ids(scope_by_batch(world.users[actor], model.objects.all())) == expected(world, actor, attr)
+
+
+@pytest.mark.parametrize('actor', PEOPLE)
+def test_scope_readings_matches_the_rules(world, actor):
+    assert ids(scope_readings(world.users[actor], SensorReading.objects.all())) == expected(world, actor, 'reading')
 
 
 @pytest.mark.parametrize('actor', PEOPLE)
@@ -57,7 +63,8 @@ def test_a_deleted_farm_and_its_batches_are_hidden_from_everyone_including_admin
     assert world.dead_farm_batch.pk not in ids(scope_batches(admin))
     assert world.dead_batch.pk not in ids(scope_batches(admin))
     assert world.dead_farm_records.alert.pk not in ids(scope_by_batch(admin, AlertLog.objects.all()))
-    assert world.dead_batch_records.reading.pk not in ids(scope_by_batch(admin, SensorReading.objects.all()))
+    assert world.dead_batch_records.reading.pk not in ids(scope_readings(admin, SensorReading.objects.all()))
+    assert world.dead_farm_records.reading.pk not in ids(scope_readings(admin, SensorReading.objects.all()))
     assert world.dead_farm_records.device.pk not in ids(scope_by_farm(admin, IoTDevice.objects.all()))
 
 

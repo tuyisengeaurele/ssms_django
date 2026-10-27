@@ -9,6 +9,7 @@ from django.utils import timezone
 from alerts.models import AlertLog
 from alerts.utils import check_sensor_alerts
 from batches.models import Batch
+from farms.models import RearingRoom
 
 from .models import IoTDevice, SensorReading
 
@@ -39,26 +40,35 @@ def check_room_alerts(room_id: str, temperature: float, humidity: float) -> list
     return opened
 
 
-def batch_for_device(device: IoTDevice):
-    """The batch a reading belongs to: the device's own batch, or the only active batch on its farm."""
-    if device.batch_id:
-        return device.batch if device.batch.is_active else None
-    batches = list(Batch.objects.filter(farm_id=device.farm_id, is_active=True)[:2])
-    return batches[0] if len(batches) == 1 else None
+def room_for_device(device: IoTDevice):
+    """The room a device's readings go to, or None when it has none.
+
+    A device in a room uses that room. A device that was never placed uses the only room of its farm. A deleted room
+    gives None too, and the caller tells it apart by checking `device.room` first.
+    """
+    if device.room_id:
+        return device.room if device.room.is_active else None
+    rooms = list(RearingRoom.objects.filter(farm_id=device.farm_id, is_active=True)[:2])
+    return rooms[0] if len(rooms) == 1 else None
 
 
-def record_device_reading(device: IoTDevice, batch: Batch, temperature: float, humidity: float) -> SensorReading:
+def _batches_in(room_id):
+    return Batch.objects.filter(room_id=room_id, is_active=True)
+
+
+def record_device_reading(device: IoTDevice, room: RearingRoom, temperature: float, humidity: float) -> SensorReading:
     now = timezone.now()
     with transaction.atomic():
-        reading = SensorReading.objects.create(batch=batch, device=device, temperature=temperature, humidity=humidity)
+        reading = SensorReading.objects.create(room=room, device=device, temperature=temperature, humidity=humidity)
         device.status = IoTDevice.STATUS_ONLINE
         device.last_seen = now
         device.save(update_fields=['status', 'last_seen'])
-        # Hearing from the device again ends its outage.
+        # Hearing from the device again ends its outage for every batch in the room.
         AlertLog.objects.filter(
-            batch=batch, type='SYSTEM', resolved_at__isnull=True, message__startswith=_offline_prefix(device),
+            batch__in=_batches_in(room.pk), type='SYSTEM', resolved_at__isnull=True,
+            message__startswith=_offline_prefix(device),
         ).update(resolved_at=now)
-    check_sensor_alerts(batch.pk, temperature, humidity)
+    check_room_alerts(room.pk, temperature, humidity)
     return reading
 
 
@@ -70,7 +80,7 @@ def mark_offline_devices(now=None) -> list[IoTDevice]:
         IoTDevice.objects
         .filter(is_active=True, status=IoTDevice.STATUS_ONLINE)
         .filter(Q(last_seen__lt=now - offline_after()) | Q(last_seen__isnull=True))
-        .select_related('batch')
+        .select_related('room')
     )
     changed = []
     for device in quiet:
@@ -78,16 +88,16 @@ def mark_offline_devices(now=None) -> list[IoTDevice]:
         device.save(update_fields=['status'])
         changed.append(device)
 
-        batch = device.batch
-        if batch is None or not batch.is_active:
+        if device.room_id is None:
             continue
-        already_open = AlertLog.objects.filter(
-            batch=batch, type='SYSTEM', resolved_at__isnull=True, message__startswith=_offline_prefix(device),
-        ).exists()
-        if not already_open:
-            AlertLog.objects.create(
-                batch=batch,
-                type='SYSTEM',
-                message=f'{_offline_prefix(device)} for {minutes} minutes. Check its power and connection.',
-            )
+        for batch in _batches_in(device.room_id):
+            already_open = AlertLog.objects.filter(
+                batch=batch, type='SYSTEM', resolved_at__isnull=True, message__startswith=_offline_prefix(device),
+            ).exists()
+            if not already_open:
+                AlertLog.objects.create(
+                    batch=batch,
+                    type='SYSTEM',
+                    message=f'{_offline_prefix(device)} for {minutes} minutes. Check its power and connection.',
+                )
     return changed

@@ -136,12 +136,12 @@ class Command(BaseCommand):
             second_room = RearingRoom.objects.create(farm=farm, name='Rearing house 2')
             running = self._batch(farm, first_room, now, age_days=age, harvested_days_ago=None)
             finished = self._batch(farm, second_room, now, age_days=CYCLE_DAYS + HARVESTED_DAYS_AGO[number - 1], harvested_days_ago=HARVESTED_DAYS_AGO[number - 1])
-            self._device(f'{DEVICE_PREFIX}{number}a', farm, running, f'{farm.name[:14]} A')
-            self._device(f'{DEVICE_PREFIX}{number}b', farm, finished, f'{farm.name[:14]} B')
+            self._device(f'{DEVICE_PREFIX}{number}a', farm, first_room, f'{farm.name[:14]} A', running=True)
+            self._device(f'{DEVICE_PREFIX}{number}b', farm, second_room, f'{farm.name[:14]} B', running=False)
 
-            self._readings_and_alerts(running, f'{DEVICE_PREFIX}{number}a', days, now, rng, end=now)
+            self._readings_and_alerts(running, first_room, f'{DEVICE_PREFIX}{number}a', days, now, rng, end=now)
             end = now - timedelta(days=HARVESTED_DAYS_AGO[number - 1])
-            self._readings_and_alerts(finished, f'{DEVICE_PREFIX}{number}b', days, now, rng, end=end)
+            self._readings_and_alerts(finished, second_room, f'{DEVICE_PREFIX}{number}b', days, now, rng, end=end)
             self._stage_history(running, now)
             self._stage_history(finished, now)
             self._harvest(finished, now, rng, HARVESTED_DAYS_AGO[number - 1])
@@ -160,14 +160,13 @@ class Command(BaseCommand):
         place_batch(batch, room, when=start)
         return batch
 
-    def _device(self, key, farm, batch, name):
-        batch_running = batch.stage != 'HARVEST'
+    def _device(self, key, farm, room, name, running):
         IoTDevice.objects.create(
-            name=f'DHT22 {name}', device_key=key, farm=farm, batch=batch, location=farm.location,
-            status='online' if batch_running else 'offline', is_active=True,
+            name=f'DHT22 {name}', device_key=key, farm=farm, room=room, location=f'{farm.location} / {room.name}',
+            status='online' if running else 'offline', is_active=True,
         )
 
-    def _readings_and_alerts(self, batch, device_key, days, now, rng, end):
+    def _readings_and_alerts(self, batch, room, device_key, days, now, rng, end):
         device = IoTDevice.objects.get(device_key=device_key)
         window_start = max(batch.start_date, now - timedelta(days=days))
         excursions = EXCURSIONS.get(device_key, [])
@@ -185,7 +184,7 @@ class Command(BaseCommand):
                     temperature += d_temp
                     humidity += d_hum
             temperature, humidity = round(temperature, 1), round(min(humidity, 100.0), 1)
-            readings.append(SensorReading(batch=batch, device=device, temperature=temperature, humidity=humidity, timestamp=moment))
+            readings.append(SensorReading(room=room, device=device, temperature=temperature, humidity=humidity, timestamp=moment))
 
             stage = stage_at((moment - batch.start_date).total_seconds() / 86400)
             safe = ranges.setdefault(stage, safe_range_for(stage))
