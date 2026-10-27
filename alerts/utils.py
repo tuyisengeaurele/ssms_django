@@ -113,7 +113,7 @@ def _send_farmer_alert(batch, alert: AlertLog, safe: SafeRange = DEFAULT_RANGE) 
         pass   # never let email failure break the main flow
 
 
-def _temperature_problem(value: float, safe: SafeRange) -> str | None:
+def temperature_problem(value: float, safe: SafeRange) -> str | None:
     if value < safe.temp_min:
         return f'Temperature too low: {value} °C (safe min is {safe.temp_min} °C). Check heating.'
     if value > safe.temp_max:
@@ -121,7 +121,7 @@ def _temperature_problem(value: float, safe: SafeRange) -> str | None:
     return None
 
 
-def _humidity_problem(value: float, safe: SafeRange) -> str | None:
+def humidity_problem(value: float, safe: SafeRange) -> str | None:
     if value < safe.hum_min:
         return f'Humidity too low: {value}% (safe min is {safe.hum_min}%). Add moisture.'
     if value > safe.hum_max:
@@ -146,8 +146,8 @@ def check_sensor_alerts(batch_id: str, temperature: float, humidity: float) -> l
         now = timezone.now()
         to_create = []
         for type_, message in (
-            ('TEMPERATURE', _temperature_problem(temperature, safe)),
-            ('HUMIDITY', _humidity_problem(humidity, safe)),
+            ('TEMPERATURE', temperature_problem(temperature, safe)),
+            ('HUMIDITY', humidity_problem(humidity, safe)),
         ):
             open_alerts = AlertLog.objects.filter(batch_id=batch_id, type=type_, resolved_at__isnull=True)
             if message is None:
