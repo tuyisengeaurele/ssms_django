@@ -45,7 +45,7 @@ class StageThresholdSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if data['temp_min'] >= data['temp_max']:
-            raise serializers.ValidationError({'temp_max': 'The highest temperature must be above the lowest.'})
+            raise serializers.ValidationError({'temp_max': 'Please set the highest temperature above the lowest.'})
         if data['hum_min'] >= data['hum_max']:
-            raise serializers.ValidationError({'hum_max': 'The highest humidity must be above the lowest.'})
+            raise serializers.ValidationError({'hum_max': 'Please set the highest humidity above the lowest.'})
         return data
