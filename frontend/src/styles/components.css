@@ -629,10 +629,32 @@ tr.is-off td:last-child { opacity: 1; }
 .chart-tip-value { color: var(--ink); font-weight: 600; font-size: 0.92rem; }
 
 @media print {
-  .no-print, .app-sidebar, .app-topbar { display: none !important; }
+  .no-print, .app-sidebar, .app-topbar, .bottom-nav, .toast { display: none !important; }
   .app-main { margin-left: 0 !important; }
   body { background: #fff !important; }
   .panel, .stat-tile { box-shadow: none !important; break-inside: avoid; }
+}
+
+/* Batch report: a plain page that fits one sheet of paper */
+.report { max-width: 780px; }
+.report-section { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--border-light); break-inside: avoid; }
+.report-section h2 { margin: 0 0 8px; color: var(--ink); font: 450 1.2rem var(--font-display); }
+.report-line { margin: 0 0 4px; color: var(--text); line-height: 1.5; }
+.report-list { margin: 0; padding-left: 18px; color: var(--text); line-height: 1.6; }
+.report-table { width: 100%; margin: 6px 0 4px; border-collapse: collapse; font-size: 0.9rem; }
+.report-table th, .report-table td { padding: 5px 10px 5px 0; border-bottom: 1px solid var(--border-light); text-align: left; vertical-align: top; }
+.report-table th { color: var(--text-muted); font-weight: 600; }
+.report-more, .report-foot { margin: 6px 0 0; color: var(--text-muted); font-size: 0.85rem; }
+.report-foot { margin-top: 26px; }
+.report-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+@page { size: A4; margin: 14mm; }
+@media print {
+  .report { max-width: none; font-size: 10.5pt; color: #000; }
+  .report-section { margin-top: 12px; padding-top: 8px; }
+  .report-section h2 { font-size: 13pt; }
+  .report-table { font-size: 9.5pt; }
+  .report-foot { margin-top: 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) { .barlist-bar { transition: none; } }

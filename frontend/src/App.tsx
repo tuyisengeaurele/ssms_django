@@ -28,6 +28,7 @@ const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
 const AdminCooperativesPage = lazy(() => import('./pages/admin/AdminCooperativesPage'));
 const DetectionReportsPage = lazy(() => import('./pages/farmer/DetectionReportsPage'));
 const HarvestPage = lazy(() => import('./pages/farmer/HarvestPage'));
+const BatchReportPage = lazy(() => import('./pages/farmer/BatchReportPage'));
 const HarvestsPage = lazy(() => import('./pages/farmer/HarvestsPage'));
 const AlertsPage = lazy(() => import('./pages/shared/AlertsPage'));
 const DevicesPage = lazy(() => import('./pages/shared/DevicesPage'));
@@ -74,6 +75,7 @@ export default function App() {
               <Route path="/batches/:id"               element={<BatchDetailPage />} />
               <Route path="/batches/:id/detect"        element={<AddDetectionPage />} />
               <Route path="/batches/:id/harvest"       element={<HarvestPage />} />
+              <Route path="/batches/:id/report"        element={<BatchReportPage />} />
               <Route path="/harvests"                  element={<HarvestsPage />} />
               <Route path="/detections/reports"        element={<DetectionReportsPage />} />
               <Route path="/alerts"                    element={<AlertsPage />} />

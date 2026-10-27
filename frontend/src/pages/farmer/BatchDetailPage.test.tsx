@@ -128,6 +128,13 @@ describe('Batch details page', () => {
     await waitFor(() => expect(document.title).toBe('Batch #9SIEO7CV | SSMS'));
   });
 
+  it.each(['FARMER', 'SUPERVISOR', 'ADMIN'])('links to the printable report for a %s', async (role) => {
+    auth.role = role;
+    open();
+    const link = await screen.findByRole('link', { name: 'Batch report' });
+    expect(link).toHaveAttribute('href', '/batches/b1-9sieo7cv/report');
+  });
+
   it('shows the dates, the place and the notes', async () => {
     open();
     await screen.findByText('Healthy eggs from the cooperative.');
