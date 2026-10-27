@@ -915,4 +915,13 @@ tr.is-off td:last-child { opacity: 1; }
 /* Forms stand alone in one narrow column. */
 .page-narrow { max-width: 680px; margin-inline: auto; }
 
+/* What needs attention today: one plain line per item, each a link to its batch */
+.attention-list { margin: 0; padding: 0; list-style: none; }
+.attention-list li + li { border-top: 1px solid var(--border-light); }
+.attention-list a { display: block; padding: 14px 24px; color: var(--ink); font-weight: 600; line-height: 1.45; transition: background-color 0.2s var(--ease-out); }
+.attention-list a:hover { background: #faf8f3; }
+.attention-clear { padding: 20px 24px; }
+.attention-clear-title { margin: 0; color: var(--ink); font-weight: 600; }
+.attention-clear-body { margin: 4px 0 0; color: var(--text-muted); font-size: 0.9rem; }
+
 .review-list { margin: 0; padding-left: 1.1rem; color: var(--ink); font-weight: 600; line-height: 1.8; }

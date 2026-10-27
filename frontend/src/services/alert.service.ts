@@ -1,5 +1,6 @@
 import api from './api';
 import { ApiResponse, AlertLog } from '../types';
+import type { StageRange } from './sensor.service';
 
 export const alertService = {
   /** GET /api/alerts — unread=true: only unread | unread=false: all | omit: backend default (unread) */
@@ -19,6 +20,10 @@ export const alertService = {
   /** PATCH /api/alerts/<id>/unread, the undo of markRead */
   markUnread: (id: string) =>
     api.patch<ApiResponse<AlertLog>>(`/alerts/${id}/unread`, {}),
+
+  /** GET /api/alerts/thresholds, the safe range of every stage */
+  getThresholds: () =>
+    api.get<ApiResponse<StageRange[]>>('/alerts/thresholds'),
 
   /** POST /api/alerts/mark-all-read */
   markAllRead: () =>

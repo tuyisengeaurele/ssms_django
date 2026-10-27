@@ -27,6 +27,19 @@ export interface ActiveBatch {
   createdAt: string;
   farm: { id: string; name: string; location: string };
   detectionCount: number;
+  /** Temperature and humidity problems that are still open. */
+  openAlerts?: number;
+  /** The newest reading, or null when the batch has no sensor data yet. */
+  latestReading?: { temperature: number; humidity: number; timestamp: string } | null;
+}
+
+/** The safe range of one stage. An admin can change it. */
+export interface StageRange {
+  stage: string;
+  tempMin: number;
+  tempMax: number;
+  humMin: number;
+  humMax: number;
 }
 
 export const sensorService = {
