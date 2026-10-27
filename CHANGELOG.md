@@ -1,5 +1,26 @@
 # Changelog
 
+## Printable one-page batch report (Plan 9, item B9)
+
+Every batch now has a plain report page that fits one sheet of paper, at `/batches/<id>/report`. A "Batch report" button on the batch page opens it.
+
+### Checked
+- Frontend: 860 tests pass and `tsc` is clean. No backend change and no migration.
+- Not yet looked at in the browser or in a print preview by me. Please open a batch, press "Batch report", then "Print or save as PDF", and look at the preview (A4, one sheet).
+
+### Added
+- **What the report holds.** The batch (stage, farm, place, dates, day of the cycle, breed, what it started with, notes, every room it has been in), the last 30 days of conditions (lowest, average and highest temperature and humidity, and the share of hours inside the usual range for the current stage), deaths (total, and the share when counted in worms, newest eight rows), disease checks (how many found a disease, newest five), alerts not yet seen, and the harvest (records, kilograms, silk, count per grade). It ends with "Prepared on <date> for <your name>."
+- **Print or save as PDF** uses the browser's own print dialog. The menus, the bottom bar and the buttons are hidden when printing, the page is A4 with 14 mm margins, and the tab title ("Batch report 9SIEO7CV") becomes the suggested file name.
+- Anyone who may open the batch may open its report: the owner, their supervisor and admins. English, French and Kinyarwanda.
+
+### Rulings to confirm
+- **If any part fails to load, the page shows an error instead of a report.** A printed "No deaths recorded" must never mean "we could not ask". Only the usual ranges are allowed to fall back to defaults.
+- **The conditions are judged against the range of the batch's current stage**, as the batch page does. A batch that changed stage during the 30 days is not judged stage by stage.
+- Long logs keep to their newest rows (eight deaths, five checks) with "and N more", so the report stays on one sheet.
+
+### Not done yet
+- The logo, letterhead, page numbers and footer come with the documents work (item K). This is the plain version, and K will put the same letterhead on it. The French and Kinyarwanda text needs a native speaker.
+
 ## Harvest rules: right stage, hidden when deleted, a page at a time (Plan 9, item B8)
 
 Harvest records now follow three rules, and the Harvests page no longer loads every record at once.
