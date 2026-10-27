@@ -9,13 +9,14 @@ from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
 from alerts.utils import check_sensor_alerts
-from core.access import get_batch_or_404, get_farm_or_404, scope_by_batch, scope_by_farm
+from core.access import get_batch_or_404, get_farm_or_404, scope_by_farm, scope_readings
 from core.params import int_param
 from core.throttles import DeviceKeyThrottle
 from core.utils import api_error, api_success
 
-from .devices import batch_for_device, effective_status, record_device_reading
+from .devices import batch_for_device, check_room_alerts, effective_status, record_device_reading
 from .models import IoTDevice, SensorReading
+from .room_readings import readings_for_batch
 from .serializers import DeviceReadingSerializer, SensorReadingCreateSerializer, SensorReadingSerializer
 
 
@@ -35,14 +36,19 @@ class SensorReadingCreateView(APIView):
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
 
         batch = get_batch_or_404(request.user, serializer.validated_data['batch_id'])
-        batch_id = batch.pk
 
+        # A reading belongs to the room it is taken in, and every batch in that room shares it. A batch that was never
+        # placed in a room keeps the old way, a reading of its own.
         reading = SensorReading.objects.create(
-            batch_id=batch_id,
+            room_id=batch.room_id,
+            batch=None if batch.room_id else batch,
             temperature=serializer.validated_data['temperature'],
             humidity=serializer.validated_data['humidity'],
         )
-        check_sensor_alerts(batch_id, reading.temperature, reading.humidity)
+        if batch.room_id:
+            check_room_alerts(batch.room_id, reading.temperature, reading.humidity)
+        else:
+            check_sensor_alerts(batch.pk, reading.temperature, reading.humidity)
         return api_success(SensorReadingSerializer(reading).data, 'Sensor reading recorded.', 201)
 
 
@@ -61,7 +67,7 @@ class SensorChartView(APIView):
         hours = int_param(request, 'hours', 24, 1, 168)
         since = timezone.now() - timedelta(hours=hours)
 
-        qs = scope_by_batch(request.user, SensorReading.objects.filter(timestamp__gte=since))
+        qs = scope_readings(request.user, SensorReading.objects.filter(timestamp__gte=since))
 
         rows = (
             qs
@@ -86,13 +92,9 @@ class SensorReadingByBatchView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, batch_id):
-        get_batch_or_404(request.user, batch_id)
+        batch = get_batch_or_404(request.user, batch_id)
 
-        readings = (
-            SensorReading.objects
-            .filter(batch_id=batch_id)
-            .order_by('-timestamp')[:100]
-        )
+        readings = readings_for_batch(batch).order_by('-timestamp')[:100]
         return api_success(SensorReadingSerializer(readings, many=True).data)
 
 
@@ -111,8 +113,8 @@ class SensorBatchSeriesView(APIView):
         since = timezone.now() - timedelta(hours=hours)
 
         rows = (
-            SensorReading.objects
-            .filter(batch_id=batch.pk, timestamp__gte=since)
+            readings_for_batch(batch)
+            .filter(timestamp__gte=since)
             .order_by('timestamp')
             .values_list('timestamp', 'temperature', 'humidity')
         )

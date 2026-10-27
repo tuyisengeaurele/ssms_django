@@ -30,6 +30,15 @@ def _offline_prefix(device: IoTDevice) -> str:
     return f'Device {device.name} has not sent data'
 
 
+def check_room_alerts(room_id: str, temperature: float, humidity: float) -> list:
+    """Judge a room's reading for each active batch in it. For now each batch keeps its own alert, and the next step
+    moves alerts to the room itself."""
+    opened = []
+    for batch_id in Batch.objects.filter(room_id=room_id, is_active=True).values_list('pk', flat=True):
+        opened += check_sensor_alerts(batch_id, temperature, humidity)
+    return opened
+
+
 def batch_for_device(device: IoTDevice):
     """The batch a reading belongs to: the device's own batch, or the only active batch on its farm."""
     if device.batch_id:
