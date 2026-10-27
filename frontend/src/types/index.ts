@@ -111,6 +111,8 @@ export interface Batch {
   updatedAt: string;
   farm?: Pick<Farm, 'id' | 'name' | 'location'>;
   counts?: { diseaseDetections: number; sensorReadings: number; alertLogs: number };
+  /** Only in the answer to creating a batch: set when it is the first the farmer has ever started. */
+  milestone?: 'FIRST_BATCH' | null;
   diseaseDetections?: DiseaseDetection[];
   sensorReadings?: SensorReading[];
   alertLogs?: AlertLog[];
@@ -168,6 +170,8 @@ export interface HarvestRecord {
   notes?: string | null;
   harvestedAt: string;
   createdAt: string;
+  /** Only in the answer to logging a harvest: set when it is the first the farmer has ever recorded. */
+  milestone?: 'FIRST_HARVEST' | null;
   // enriched fields (returned by /harvest global list)
   farmName?: string | null;
   farmId?: string | null;

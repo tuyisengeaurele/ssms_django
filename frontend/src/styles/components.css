@@ -1019,3 +1019,8 @@ tr.is-off td:last-child { opacity: 1; }
 .attention-clear-body { margin: 4px 0 0; color: var(--text-muted); font-size: 0.9rem; }
 
 .review-list { margin: 0; padding-left: 1.1rem; color: var(--ink); font-weight: 600; line-height: 1.8; }
+
+/* First run: a calm welcome in place of a page of zeros */
+.first-run-intro { margin: 0 0 14px; color: var(--text-2); }
+.first-run-steps { margin: 0 0 20px; padding-left: 22px; color: var(--text); line-height: 1.6; }
+.first-run-steps li + li { margin-top: 8px; }

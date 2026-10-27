@@ -53,6 +53,71 @@ beforeEach(() => {
   });
 });
 
+describe('Farmer dashboard, first run', () => {
+  const firstRun = () => {
+    api.farms.mockResolvedValue({ data: { data: [] } });
+    api.active.mockResolvedValue({ data: { data: [] } });
+    api.chart.mockResolvedValue({ data: { data: [] } });
+    api.alerts.mockResolvedValue({ data: { data: [] } });
+  };
+
+  it('welcomes a farmer with no farm and offers the first step, instead of a page of zeros', async () => {
+    firstRun();
+    open();
+    expect(await screen.findByRole('heading', { level: 2, name: "Let's get your first batch going" })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Add your farm' })).toHaveAttribute('href', '/farms/new');
+    expect(screen.queryByText('Active batches')).not.toBeInTheDocument();
+    expect(screen.queryByText('Unread alerts')).not.toBeInTheDocument();
+    expect(screen.queryByText('No sensor readings yet.')).not.toBeInTheDocument();
+    expect(screen.queryByText('No active batches')).not.toBeInTheDocument();
+  });
+
+  it('lists the steps in order, with the farm first', async () => {
+    firstRun();
+    open();
+    const steps = await screen.findByRole('list', { name: 'First steps' });
+    expect(within(steps).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+      expect.stringMatching(/^Add your farm/),
+      expect.stringMatching(/^Start a batch/),
+      expect.stringMatching(/^Follow it day by day/),
+    ]);
+  });
+
+  it('keeps the greeting and drops the header buttons that have nothing to open yet', async () => {
+    firstRun();
+    open();
+    await screen.findByRole('heading', { level: 2, name: "Let's get your first batch going" });
+    expect(screen.getByRole('heading', { level: 1, name: 'Welcome back, Serge' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Disease reports' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'My farms' })).not.toBeInTheDocument();
+  });
+
+  it.each(['farms', 'active'])('does not welcome an existing farmer as new when the %s request fails', async (which) => {
+    firstRun();
+    api[which as 'farms'].mockRejectedValue(new Error('x'));
+    open();
+    expect(await screen.findByText('Active batches')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 2, name: "Let's get your first batch going" })).not.toBeInTheDocument();
+  });
+
+  it('shows the normal page as soon as there is a farm', async () => {
+    firstRun();
+    api.farms.mockResolvedValue({ data: { data: [{ id: 'f1', isActive: true }] } });
+    open();
+    expect(await screen.findByText('Active batches')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 2, name: "Let's get your first batch going" })).not.toBeInTheDocument();
+  });
+
+  it('leaves out the empty reading charts while the farm has no batch', async () => {
+    api.farms.mockResolvedValue({ data: { data: [{ id: 'f1', isActive: true }] } });
+    api.active.mockResolvedValue({ data: { data: [] } });
+    api.chart.mockResolvedValue({ data: { data: [] } });
+    open();
+    expect(await screen.findByText('No active batches')).toBeInTheDocument();
+    expect(screen.queryByText('No sensor readings yet.')).not.toBeInTheDocument();
+  });
+});
+
 describe('Farmer dashboard', () => {
   it('says what needs attention today, from the latest reading and the harvest date', async () => {
     api.active.mockResolvedValue({

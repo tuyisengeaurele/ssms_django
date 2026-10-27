@@ -35,6 +35,8 @@ export default function FarmerDashboard() {
   const [alerts, setAlerts] = useState<AlertLog[]>([]);
   const [ranges, setRanges] = useState<StageRange[]>([]);
   const [loading, setLoading] = useState(true);
+  // A new farmer is one whose farms and batches both loaded and are empty. A failed request says nothing about that.
+  const [listsLoaded, setListsLoaded] = useState(false);
 
   const firstName = user?.name?.split(' ')[0];
   const title = firstName ? fill(t('fhWelcomeName'), { name: firstName }) : t('fhWelcome');
@@ -51,6 +53,7 @@ export default function FarmerDashboard() {
     ]).then(([farmsResult, batchResult, chartResult, alertResult, rangeResult]) => {
       // Without the ranges the card still works, using the usual ones.
       if (rangeResult.status === 'fulfilled') setRanges(rangeResult.value.data.data);
+      setListsLoaded(farmsResult.status === 'fulfilled' && batchResult.status === 'fulfilled');
       if (farmsResult.status === 'fulfilled') setFarms(farmsResult.value.data.data);
       if (batchResult.status === 'fulfilled') setBatches(batchResult.value.data.data);
       if (chartResult.status === 'fulfilled') setChart(chartResult.value.data.data);
@@ -86,6 +89,21 @@ export default function FarmerDashboard() {
         <div className="grid-3">
           {[0, 1, 2].map((i) => <SkeletonStatCard key={i} />)}
         </div>
+      </div>
+    );
+  }
+
+  if (listsLoaded && farms.length === 0 && batches.length === 0) {
+    return (
+      <div>
+        <PageHeader title={title} />
+        <Panel title={t('fhFirstTitle')}>
+          <p className="first-run-intro">{t('fhFirstIntro')}</p>
+          <ol className="first-run-steps" aria-label={t('fhFirstSteps')}>
+            {['fhFirstStep1', 'fhFirstStep2', 'fhFirstStep3'].map((key) => <li key={key}>{t(key)}</li>)}
+          </ol>
+          <Link to="/farms/new" className="btn btn-primary">{t('fhFirstAction')}</Link>
+        </Panel>
       </div>
     );
   }
@@ -142,7 +160,7 @@ export default function FarmerDashboard() {
           />
         </div>
 
-        <div className="split">
+        {batches.length > 0 && <div className="split">
           {charts.map((c) => (
             <Panel key={c.key} title={c.label} note={c.range}>
               {chart.length === 0 ? (
@@ -152,7 +170,7 @@ export default function FarmerDashboard() {
               )}
             </Panel>
           ))}
-        </div>
+        </div>}
 
         <div className="split">
           <Panel
