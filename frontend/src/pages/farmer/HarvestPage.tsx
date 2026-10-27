@@ -20,6 +20,8 @@ import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import StatTile from '../../components/ui/StatTile';
 
 const GRADES: QualityGrade[] = ['A', 'B', 'C'];
+// A harvest is logged once the cocoons are made. The server holds the same rule.
+const HARVEST_STAGES = ['COCOON', 'HARVEST'];
 const EMPTY_FORM = { cocoonWeightKg: '', silkYieldG: '', qualityGrade: 'A' as QualityGrade, notes: '' };
 
 // Django sends decimal fields as strings, and a plain number reads better than "12.50".
@@ -44,6 +46,8 @@ export default function HarvestPage() {
   const [deleting, setDeleting] = useState(false);
 
   const canEdit = user?.role === 'FARMER' || user?.role === 'ADMIN';
+  const ripe = batch !== null && HARVEST_STAGES.includes(batch.stage);
+  const canLog = canEdit && ripe;
   const code = (batchId ?? '').slice(-8).toUpperCase();
 
   useEffect(() => {
@@ -198,7 +202,7 @@ export default function HarvestPage() {
         subtitle={batch?.farm?.name ? fill(t('hpSubtitle'), { id: code, farm: batch.farm.name }) : fill(t('bdTitle'), { id: code })}
         actions={
           <>
-            {canEdit && (
+            {canLog && (
               <button className="btn btn-primary btn-sm" onClick={openAdd}>
                 <Icon name="add" size={15} />
                 {t('hpLog')}
@@ -210,6 +214,7 @@ export default function HarvestPage() {
       />
 
       <div className="stack-24">
+        {canEdit && !ripe && <p className="alert alert-info">{t('hpTooEarly')}</p>}
         <div className="grid-3">
           <StatTile label={t('hpTileRecords')} value={records.length} />
           <StatTile label={t('hpTileCocoon')} value={`${trim(totalKg)} kg`} />
@@ -240,7 +245,7 @@ export default function HarvestPage() {
               icon={<Icon name="harvests" size={22} />}
               title={t('hpNone')}
               description={t('hpNoneBody')}
-              action={canEdit ? { label: t('hpNoneAction'), onClick: openAdd } : undefined}
+              action={canLog ? { label: t('hpNoneAction'), onClick: openAdd } : undefined}
             />
           ) : (
             <div className="table-wrapper">
