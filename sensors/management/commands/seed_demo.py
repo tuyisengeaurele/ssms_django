@@ -31,6 +31,7 @@ from cooperatives.models import Cooperative
 from core.validators import validate_new_password
 from farms.models import Farm, RearingRoom
 from harvest.models import HarvestRecord
+from locations import registry
 from sensors.models import DiseaseDetection, IoTDevice, SensorReading
 from users.models import User
 
@@ -44,10 +45,10 @@ STAGE_STARTS = [('EGG', 0), ('LARVA', 4), ('PUPA', 17), ('COCOON', 22), ('HARVES
 CYCLE_DAYS = 28
 
 FARMERS = [
-    # name, farm, place, age in days of the running batch
-    ('Jean Bosco Habimana', 'Habimana Silk Farm', 'Gatsibo District, Eastern Province', 12),
-    ('Marie Claire Mukamana', 'Mukamana Cocoon Farm', 'Kayonza District, Eastern Province', 20),
-    ('Eric Niyonzima', 'Niyonzima Mulberry Farm', 'Nyagatare District, Eastern Province', 25),
+    # name, farm, district, age in days of the running batch
+    ('Jean Bosco Habimana', 'Habimana Silk Farm', 'Gatsibo', 12),
+    ('Marie Claire Mukamana', 'Mukamana Cocoon Farm', 'Kayonza', 20),
+    ('Eric Niyonzima', 'Niyonzima Mulberry Farm', 'Nyagatare', 25),
 ]
 # Days ago that each finished batch was harvested.
 HARVESTED_DAYS_AGO = [2, 3, 4]
@@ -130,7 +131,7 @@ class Command(BaseCommand):
                 email=f'farmer{number}@{DEMO_DOMAIN}', password=password, name=name,
                 role='FARMER', cooperative=coop, is_email_verified=True,
             )
-            farm = Farm.objects.create(name=farm_name, location=place, owner=farmer)
+            farm = Farm.objects.create(name=farm_name, owner=farmer, **self._place(place))
             # The running batch is in the first room and the finished one in the second, as on a real farm with two rooms.
             first_room = RearingRoom.objects.create(farm=farm, name='Rearing house 1')
             second_room = RearingRoom.objects.create(farm=farm, name='Rearing house 2')
@@ -159,6 +160,15 @@ class Command(BaseCommand):
         batch.start_date = start
         place_batch(batch, room, when=start)
         return batch
+
+    @staticmethod
+    def _place(district):
+        """The place fields of a farm that stands in the first village of the district, so the demo farms have a real address."""
+        code = next(p['code'] for p in registry.walk() if p['level'] == 'district' and p['name'] == district)
+        village = min((p['code'] for p in registry.walk() if p['level'] == 'village' and p['code'].startswith(code)))
+        chain = registry.chain(village)
+        fields = {f'{level}_code': chain[level]['code'] for level in registry.LEVELS}
+        return {**fields, 'location': registry.describe(chain)}
 
     def _device(self, key, farm, room, name, running):
         IoTDevice.objects.create(
