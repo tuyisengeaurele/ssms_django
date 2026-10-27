@@ -57,6 +57,10 @@ export interface Room {
   notes: string;
   batchCount: number;
   batches: { id: string; stage: BatchStage }[];
+  /** The sensors in this room. Their readings are the room's readings. */
+  devices: { id: string; name: string; status: DeviceStatus; lastSeen: string | null }[];
+  /** The newest reading of any sensor in the room, or null when nothing has been measured yet. */
+  latestReading: { temperature: number; humidity: number; timestamp: string } | null;
   createdAt: string;
 }
 
@@ -168,6 +172,8 @@ export interface IoTDevice {
   farmId: string | null;
   farmName: string | null;
   batchId: string | null;
+  /** The room the sensor measures, or null while it has not been placed. */
+  room: { id: string; name: string } | null;
   location: string;
   status: DeviceStatus;
   lastSeen: string | null;
