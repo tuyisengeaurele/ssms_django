@@ -86,15 +86,17 @@ describe('Audit log page', () => {
     expect(document.body.textContent).not.toMatch(new RegExp('[' + String.fromCharCode(0x2013) + String.fromCharCode(0x2014) + ']'));
   });
 
-  it('loads the list once and only filters when asked', async () => {
+  it('filters while typing, once the typing pauses, with no Filter button', async () => {
     open();
     await screen.findByText('Bruce Ishimwe');
+    expect(screen.queryByRole('button', { name: 'Filter' })).not.toBeInTheDocument();
     expect(api.getList).toHaveBeenCalledTimes(1);
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search by email or detail' }), { target: { value: 'bruce' } });
     fireEvent.change(screen.getByLabelText('Resource'), { target: { value: 'Farm' } });
+    // Nothing is sent for every key press.
     expect(api.getList).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByRole('button', { name: 'Filter' }));
-    await waitFor(() => expect(api.getList).toHaveBeenLastCalledWith({ page: 1, action: '', resource: 'Farm', search: 'bruce' }));
+    await waitFor(() => expect(api.getList).toHaveBeenLastCalledWith({ page: 1, action: '', resource: 'Farm', search: 'bruce' }), { timeout: 3000 });
+    expect(api.getList).toHaveBeenCalledTimes(2);
   });
 
   it('filters by action straight away', async () => {
@@ -104,15 +106,15 @@ describe('Audit log page', () => {
     await waitFor(() => expect(api.getList).toHaveBeenLastCalledWith({ page: 1, action: 'LOGIN', resource: '', search: '' }));
   });
 
-  it('clears every filter', async () => {
+  it('shows Reset only while a filter is set, and clears every filter with it', async () => {
     open();
     await screen.findByText('Bruce Ishimwe');
+    expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Resource'), { target: { value: 'Farm' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Filter' }));
-    await waitFor(() => expect(api.getList).toHaveBeenCalledTimes(2));
-    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Reset' }));
     await waitFor(() => expect(api.getList).toHaveBeenLastCalledWith({ page: 1, action: '', resource: '', search: '' }));
     expect((screen.getByLabelText('Resource') as HTMLInputElement).value).toBe('');
+    expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
   });
 
   it('moves between pages', async () => {
@@ -143,7 +145,7 @@ describe('Audit log page', () => {
     api.getList.mockResolvedValue({ data: { data: [], pagination: { ...meta(1), totalItems: 0 } } });
     open();
     expect(await screen.findByText('No events found')).toBeInTheDocument();
-    expect(screen.getByText('Try a different search, or clear the filters.')).toBeInTheDocument();
+    expect(screen.getByText('Try a different search, or reset the filters.')).toBeInTheDocument();
   });
 
   it('shows a calm message when the log cannot be loaded', async () => {

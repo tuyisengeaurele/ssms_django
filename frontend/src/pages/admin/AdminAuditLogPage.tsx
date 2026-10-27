@@ -1,7 +1,8 @@
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { auditLogService, AuditLogEntry } from '../../services/admin.service';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
+import { useAutoFilters } from '../../hooks/useAutoFilters';
 import { fill } from '../../utils/fill';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
@@ -51,8 +52,7 @@ export default function AdminAuditLogPage() {
   const [exporting, setExporting] = useState(false);
   const [meta, setMeta] = useState({ page: 1, pageSize: 25, totalItems: 0, totalPages: 1, hasNext: false, hasPrev: false });
 
-  const [draft, setDraft] = useState<Filters>(NO_FILTERS);
-  const [applied, setApplied] = useState<Filters>(NO_FILTERS);
+  const { draft, applied, set, reset, changed } = useAutoFilters<Filters>(NO_FILTERS);
 
   const load = useCallback(
     async (page: number, filters: Filters) => {
@@ -74,16 +74,6 @@ export default function AdminAuditLogPage() {
   useEffect(() => {
     load(1, applied);
   }, [load, applied]);
-
-  const apply = (next: Filters) => {
-    setDraft(next);
-    setApplied(next);
-  };
-
-  const onFilter = (e: FormEvent) => {
-    e.preventDefault();
-    setApplied(draft);
-  };
 
   const handleExport = async () => {
     setExporting(true);
@@ -113,7 +103,7 @@ export default function AdminAuditLogPage() {
       />
 
       <Panel title={t('auRecent')} flush>
-        <form className="filters" onSubmit={onFilter}>
+        <form className="filters" onSubmit={(e) => e.preventDefault()}>
           <div className="search-box">
             <Icon name="search" size={16} className="icon" />
             <input
@@ -121,7 +111,7 @@ export default function AdminAuditLogPage() {
               aria-label={t('auSearch')}
               placeholder={t('auSearch')}
               value={draft.search}
-              onChange={(e) => setDraft((d) => ({ ...d, search: e.target.value }))}
+              onChange={(e) => set({ search: e.target.value })}
             />
           </div>
 
@@ -130,7 +120,7 @@ export default function AdminAuditLogPage() {
             <select
               className="inline-select"
               value={draft.action}
-              onChange={(e) => apply({ ...draft, action: e.target.value })}
+              onChange={(e) => set({ action: e.target.value }, true)}
             >
               <option value="">{t('auAllActions')}</option>
               {ACTIONS.map((a) => <option key={a} value={a}>{t(ACTION_LABEL[a])}</option>)}
@@ -143,14 +133,15 @@ export default function AdminAuditLogPage() {
               className="form-input filter-input"
               placeholder={t('auResourcePlaceholder')}
               value={draft.resource}
-              onChange={(e) => setDraft((d) => ({ ...d, resource: e.target.value }))}
+              onChange={(e) => set({ resource: e.target.value })}
             />
           </label>
 
-          <div className="filter-buttons">
-            <button type="submit" className="btn btn-secondary btn-sm">{t('auFilter')}</button>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => apply(NO_FILTERS)}>{t('auClear')}</button>
-          </div>
+          {changed && (
+            <div className="filter-buttons">
+              <button type="button" className="btn btn-ghost btn-sm" onClick={reset}>{t('auClear')}</button>
+            </div>
+          )}
         </form>
 
         {failed ? (
