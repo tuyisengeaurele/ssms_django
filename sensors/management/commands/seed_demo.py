@@ -55,7 +55,7 @@ HARVESTED_DAYS_AGO = [2, 3, 4]
 # Something to see on the dashboards: (hours ago it starts, hours ago it ends, temperature change, humidity change)
 EXCURSIONS = {
     'ssms-demo-1a': [(120, 114, -5.5, 0.0)],   # a cold night, long over
-    'ssms-demo-2a': [(4, 0, 0.0, 11.0)],       # a humid spell that is still going on
+    'ssms-demo-2a': [(4, 0, 0.0, 14.0)],       # a humid spell that is still going on, strong enough to stay above 85 % at any hour
 }
 
 
@@ -192,7 +192,7 @@ class Command(BaseCommand):
                 if message is None and kind in open_alerts:
                     open_alerts.pop(kind).resolved_at = moment
                 elif message is not None and kind not in open_alerts:
-                    alert = AlertLog(batch=batch, type=kind, message=message, created_at=moment, is_read=moment < now - timedelta(days=2))
+                    alert = AlertLog(room=room, type=kind, message=message, created_at=moment, is_read=moment < now - timedelta(days=2))
                     open_alerts[kind] = alert
                     alerts.append(alert)
             moment += timedelta(hours=1)

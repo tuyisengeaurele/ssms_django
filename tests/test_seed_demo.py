@@ -76,16 +76,16 @@ def test_a_finished_batch_has_no_readings_after_its_harvest():
 
 def test_the_story_has_a_resolved_cold_night_and_a_humid_spell_still_open():
     call_command('seed_demo', '--days', '10', '--seed', '7', '--password', PASSWORD)
-    env_alerts = AlertLog.objects.filter(batch__farm__owner__in=demo_users(), type__in=['TEMPERATURE', 'HUMIDITY'])
+    env_alerts = AlertLog.objects.filter(room__farm__owner__in=demo_users(), type__in=['TEMPERATURE', 'HUMIDITY'])
     assert env_alerts.filter(resolved_at__isnull=False).exists()
     assert env_alerts.filter(resolved_at__isnull=True).exists()
 
 
 def test_alerts_follow_the_same_rules_as_the_live_system():
     call_command('seed_demo', '--days', '10', '--seed', '7', '--password', PASSWORD)
-    for batch in Batch.objects.filter(farm__owner__in=demo_users()):
+    for room in RearingRoom.objects.filter(farm__owner__in=demo_users()):
         for kind in ('TEMPERATURE', 'HUMIDITY'):
-            alerts = AlertLog.objects.filter(batch=batch, type=kind)
+            alerts = AlertLog.objects.filter(room=room, type=kind)
             assert alerts.filter(resolved_at__isnull=True).count() <= 1
             for alert in alerts.filter(resolved_at__isnull=False):
                 assert alert.resolved_at >= alert.created_at
