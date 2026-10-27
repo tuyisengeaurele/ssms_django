@@ -79,10 +79,25 @@ class BatchActiveSupervisorView(APIView):
     def get(self, request):
         if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
             return api_error("You don't have permission to do that.", 403)
-        from django.db.models import Count
+        from django.db.models import Count, OuterRef, Q, Subquery
+
+        from sensors.models import SensorReading
+
+        # Everything is worked out in the one query, so the list does not cost more as batches are added.
+        newest = SensorReading.objects.filter(batch=OuterRef('pk')).order_by('-timestamp')
         qs = scope_batches(
             request.user,
-            Batch.objects.select_related('farm').annotate(detection_count=Count('disease_detections')),
+            Batch.objects.select_related('farm').annotate(
+                detection_count=Count('disease_detections', distinct=True),
+                open_alerts=Count(
+                    'alert_logs',
+                    filter=Q(alert_logs__type__in=['TEMPERATURE', 'HUMIDITY'], alert_logs__resolved_at__isnull=True),
+                    distinct=True,
+                ),
+                latest_temperature=Subquery(newest.values('temperature')[:1]),
+                latest_humidity=Subquery(newest.values('humidity')[:1]),
+                latest_reading_at=Subquery(newest.values('timestamp')[:1]),
+            ),
         ).order_by('-created_at')
         return api_success(BatchSupervisorSerializer(qs, many=True).data)
 

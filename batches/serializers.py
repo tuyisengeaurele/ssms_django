@@ -82,14 +82,27 @@ class BatchSupervisorSerializer(serializers.ModelSerializer):
     """Lightweight serializer for the supervisor dashboard active-batches table."""
     farm = BatchFarmSerializer(read_only=True)
     detection_count = serializers.SerializerMethodField()
+    open_alerts = serializers.SerializerMethodField()
+    latest_reading = serializers.SerializerMethodField()
 
     class Meta:
         model = Batch
         fields = [
             'id', 'farm_id', 'stage', 'start_date',
             'expected_harvest_date', 'is_active', 'created_at',
-            'farm', 'detection_count',
+            'farm', 'detection_count', 'open_alerts', 'latest_reading',
         ]
+
+    def get_open_alerts(self, obj):
+        # Temperature and humidity problems that are still open. Annotated by the view.
+        return getattr(obj, 'open_alerts', 0)
+
+    def get_latest_reading(self, obj):
+        # Annotated by the view, so this costs no query. None when the batch has no readings yet.
+        at = getattr(obj, 'latest_reading_at', None)
+        if at is None:
+            return None
+        return {'temperature': obj.latest_temperature, 'humidity': obj.latest_humidity, 'timestamp': at}
 
     def get_detection_count(self, obj):
         # Uses annotated value from view queryset (no extra query)
