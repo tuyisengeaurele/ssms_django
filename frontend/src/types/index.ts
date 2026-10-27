@@ -38,7 +38,15 @@ export interface User {
 export interface Farm {
   id: string;
   name: string;
+  /** The place as one line, smallest part first. Farms from before places keep their own text. */
   location: string;
+  street?: string;
+  /** The official place at each level. All null on a farm from before places could be chosen. */
+  province?: { code: string; name: string } | null;
+  district?: { code: string; name: string } | null;
+  sector?: { code: string; name: string } | null;
+  cell?: { code: string; name: string } | null;
+  village?: { code: string; name: string } | null;
   ownerId: string;
   isActive: boolean;
   createdAt: string;
