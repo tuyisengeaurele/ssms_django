@@ -136,7 +136,7 @@ describe('Use my location', () => {
     expect(screen.queryByRole('button', { name: 'Use my location' })).not.toBeInTheDocument();
   });
 
-  it('fills province, district and sector and leaves cell and village to the person', async () => {
+  it('fills province, district and sector and leaves cell and village to the person when that is all it knows', async () => {
     geolocation((ok) => ok({ coords: { latitude: -1.9536, longitude: 30.0925 } } as GeolocationPosition));
     api.locate.mockResolvedValue({ data: { data: found } });
     render(<Harness />);
@@ -146,6 +146,59 @@ describe('Use my location', () => {
     expect(latest).toMatchObject({ provinceCode: '1', districtCode: '102', sectorCode: '010213', cellCode: '', villageCode: '' });
     expect(screen.getByRole('status')).toHaveTextContent('We found your province, district and sector. Please choose your cell and village.');
     expect(field(/^Cell/)).toBeEnabled();
+  });
+
+  const deep = {
+    ...found,
+    cell: { code: '1021303', name: 'Rukiri I' },
+    village: { code: '102130307', name: 'Urumuri' },
+  };
+
+  it('fills the cell and the village too when the server knows them', async () => {
+    geolocation((ok) => ok({ coords: { latitude: -1.9536, longitude: 30.0925 } } as GeolocationPosition));
+    api.locate.mockResolvedValue({ data: { data: deep } });
+    render(<Harness />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
+    await waitFor(() => expect(field(/^Village/)).toHaveValue('102130307'));
+    expect(field(/^Cell/)).toHaveValue('1021303');
+    expect(latest).toMatchObject({ provinceCode: '1', districtCode: '102', sectorCode: '010213', cellCode: '1021303', villageCode: '102130307' });
+    expect(screen.getByRole('status')).toHaveTextContent('We filled in your place down to the village. Please check it and add the street if you like.');
+  });
+
+  it('fills the cell and asks for the village when the server knows only the cell', async () => {
+    geolocation((ok) => ok({ coords: { latitude: -1.9536, longitude: 30.0925 } } as GeolocationPosition));
+    api.locate.mockResolvedValue({ data: { data: { ...found, cell: deep.cell } } });
+    render(<Harness />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
+    await waitFor(() => expect(field(/^Cell/)).toHaveValue('1021303'));
+    expect(latest.cellCode).toBe('1021303');
+    expect(latest.villageCode).toBe('');
+    expect(screen.getByRole('status')).toHaveTextContent('We found your place down to the cell. Please choose your village.');
+  });
+
+  it('empties a cell and village chosen earlier when the new place has none', async () => {
+    geolocation((ok) => ok({ coords: { latitude: -1.9536, longitude: 30.0925 } } as GeolocationPosition));
+    api.locate.mockResolvedValue({ data: { data: found } });
+    render(<Harness start={{ provinceCode: '1', districtCode: '102', sectorCode: '010211', cellCode: '1021101', villageCode: '102110101', street: '' }} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
+    await waitFor(() => expect(latest.sectorCode).toBe('010213'));
+    expect(latest.cellCode).toBe('');
+    expect(latest.villageCode).toBe('');
+  });
+
+  it('says what it fills in, and that the person should check it', async () => {
+    geolocation((ok) => ok({ coords: { latitude: -1.9536, longitude: 30.0925 } } as GeolocationPosition));
+    render(<Harness />);
+    expect(await screen.findByText('Fills in the province, district, sector, cell and village where it can. Please check them. Your position is not saved.')).toBeInTheDocument();
+  });
+
+  it('keeps the street when the village is filled in', async () => {
+    geolocation((ok) => ok({ coords: { latitude: -1.9536, longitude: 30.0925 } } as GeolocationPosition));
+    api.locate.mockResolvedValue({ data: { data: deep } });
+    render(<Harness start={{ ...EMPTY_PLACE, street: 'Near the church' }} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
+    await waitFor(() => expect(latest.villageCode).toBe('102130307'));
+    expect(latest.street).toBe('Near the church');
   });
 
   it('replaces a place chosen earlier, but keeps the street', async () => {

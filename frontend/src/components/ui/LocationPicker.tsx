@@ -88,9 +88,9 @@ export default function LocationPicker({ value, onChange, legacyText, idPrefix =
       (position) => {
         locationService.locate(position.coords.latitude, position.coords.longitude)
           .then((r) => {
-            const { province: p, district: d, sector: s } = r.data.data;
-            onChange({ ...value, provinceCode: p.code, districtCode: d.code, sectorCode: s.code, cellCode: '', villageCode: '' });
-            setNotice({ kind: 'ok', text: t('lcFound') });
+            const { province: p, district: d, sector: s, cell: c, village: v } = r.data.data;
+            onChange({ ...value, provinceCode: p.code, districtCode: d.code, sectorCode: s.code, cellCode: c?.code ?? '', villageCode: v?.code ?? '' });
+            setNotice({ kind: 'ok', text: t(v ? 'lcFoundVillage' : c ? 'lcFoundCell' : 'lcFound') });
           })
           .catch((e) => {
             const outside = e instanceof AxiosError && e.response?.status === 404;
