@@ -6,11 +6,16 @@ export interface Place {
   name: string;
 }
 
-/** The part of an address a point on the map can fill in. Cells and villages have no outlines, so they are not here. */
+/**
+ * The part of an address a point on the map can fill in. The cell comes when the village outlines hold the point,
+ * and the village only when the data is sure which village it is.
+ */
 export interface LocatedPlace {
   province: Place;
   district: Place;
   sector: Place;
+  cell?: Place;
+  village?: Place;
 }
 
 export const locationService = {
@@ -18,7 +23,7 @@ export const locationService = {
   getPlaces: (parent?: string) =>
     api.get<ApiResponse<Place[]>>('/locations', { params: parent ? { parent } : {} }),
 
-  /** The province, district and sector a point is in. A 404 means it is not inside a Rwanda sector. */
+  /** The place a point is in, down to the village where the data allows. A 404 means it is not inside a Rwanda sector. */
   locate: (lat: number, lng: number) =>
     // Sent in the body, so the point never appears in an address that a proxy might log.
     api.post<ApiResponse<LocatedPlace>>('/locations/locate', { lat, lng }),
