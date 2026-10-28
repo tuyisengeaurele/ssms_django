@@ -26,6 +26,13 @@ from tests.security.world import ACTORS, FARMERS, SCOPE, SUPERVISORS
 pytestmark = pytest.mark.django_db
 
 
+@pytest.fixture(autouse=True)
+def _health_check_stays_off_the_network():
+    """The system health row asks the disease check service how it is. Here it is told "fine" and no call goes out."""
+    with mock.patch('core.health.httpx.get', return_value=mock.Mock(status_code=200)):
+        yield
+
+
 def _png():
     buffer = io.BytesIO()
     Image.new('RGB', (4, 4), (20, 120, 60)).save(buffer, 'PNG')
@@ -235,6 +242,7 @@ ROWS = [
     Row('audit log', 'GET', lambda w: '/api/admin/audit-log', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
     Row('system report', 'GET', lambda w: '/api/admin/reports', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
     Row('contact messages', 'GET', lambda w: '/api/admin/contacts', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
+    Row('system health', 'GET', lambda w: '/api/admin/health', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
     Row('create a cooperative', 'POST', lambda w: '/api/cooperatives',
         expect({'admin'}, role_denied=STAFF_ONLY_DENIED, allowed_code=201), body=lambda w: {'name': 'Brand new'}),
 ]
