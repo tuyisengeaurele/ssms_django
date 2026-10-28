@@ -53,7 +53,7 @@ describe('Sidebar for an administrator', () => {
       'Dashboard', 'System overview',
       'Users', 'Cooperatives', 'Messages',
       'Farms', 'Harvests', 'Detection reports', 'Devices',
-      'Alerts', 'Audit log', 'System report',
+      'Alerts', 'Cooperative report', 'Audit log', 'System report',
     ]);
   });
 
@@ -128,6 +128,16 @@ describe('Sidebar for other roles', () => {
     auth.value = { user: { name: 'Sup', role: 'SUPERVISOR', email: 's@x.rw' }, logout: vi.fn() };
     sidebar('/supervisor');
     expect(screen.getByRole('link', { name: 'My farmers' })).toHaveAttribute('href', '/supervisor/farmers');
+  });
+
+  it('gives a supervisor and an admin the cooperative report, and a farmer not', () => {
+    auth.value = { user: { name: 'Sup', role: 'SUPERVISOR', email: 's@x.rw' }, logout: vi.fn() };
+    const view = sidebar('/supervisor');
+    expect(screen.getByRole('link', { name: 'Cooperative report' })).toHaveAttribute('href', '/reports/cooperative');
+    view.unmount();
+    auth.value = { user: { name: 'Far', role: 'FARMER', email: 'f@x.rw' }, logout: vi.fn() };
+    sidebar('/farmer');
+    expect(screen.queryByRole('link', { name: 'Cooperative report' })).not.toBeInTheDocument();
   });
 
   it('does not show My farmers to a farmer or an admin', () => {

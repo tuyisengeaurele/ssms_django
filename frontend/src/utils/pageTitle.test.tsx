@@ -9,7 +9,7 @@ import { formatDocumentTitle, getPageInfo, useDocumentTitle, usePageTitle } from
 const APP_PATHS = [
   '/farmer', '/supervisor', '/supervisor/farmers', '/farms', '/farms/new', '/farms/abc123', '/farms/abc123/batches/new',
   '/batches', '/batches/abc123', '/batches/abc123/detect', '/batches/abc123/harvest',
-  '/harvests', '/detections/reports', '/alerts', '/devices', '/profile',
+  '/harvests', '/detections/reports', '/alerts', '/devices', '/profile', '/reports/cooperative',
   '/admin', '/admin/users', '/admin/cooperatives', '/admin/contacts', '/admin/audit-log', '/admin/reports',
 ];
 
@@ -29,6 +29,7 @@ describe('getPageInfo', () => {
     ['/batches/abc123/detect', 'Disease check', 'Farming'],
     ['/batches/abc123/harvest', 'Harvest records', 'Farming'],
     ['/alerts', 'Alerts', 'Monitoring'],
+    ['/reports/cooperative', 'Cooperative report', 'Monitoring'],
     ['/devices', 'Devices', 'Monitoring'],
     ['/profile', 'Profile', 'Account'],
   ])('%s is titled %s under %s', (path, title, section) => {

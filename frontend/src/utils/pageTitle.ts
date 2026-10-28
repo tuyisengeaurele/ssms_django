@@ -24,6 +24,7 @@ const ROUTES: Array<[RegExp, PageInfo]> = [
   [/^\/farmer$/, { titleKey: 'ptFarmer', sectionKey: FARMING }],
   [/^\/supervisor$/, { titleKey: 'ptSupervisor', sectionKey: FARMING }],
   [/^\/supervisor\/farmers$/, { titleKey: 'ptTeam', sectionKey: FARMING }],
+  [/^\/reports\/cooperative$/, { titleKey: 'ptCoopReport', sectionKey: MONITORING }],
   [/^\/farms$/, { titleKey: 'ptFarms', sectionKey: FARMING }],
   [/^\/farms\/new$/, { titleKey: 'ptFarmNew', sectionKey: FARMING }],
   [/^\/farms\/[^/]+\/batches\/new$/, { titleKey: 'ptBatchNew', sectionKey: FARMING }],
