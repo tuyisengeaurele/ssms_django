@@ -16,6 +16,7 @@ ADMIN_ONLY = {
     Path('users/admin_views.py'),
     Path('users/serializers.py'),
     Path('core/csvsafe.py'),
+    Path('reports/pdf.py'),
 }
 SKIPPED_DIRS = {'venv', '.venv', 'site-packages', 'tests', 'migrations', 'node_modules', 'frontend', 'staticfiles', '.git', 'scripts', 'docs'}
 

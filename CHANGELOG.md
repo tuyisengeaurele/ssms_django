@@ -1,5 +1,32 @@
 # Changelog
 
+## PDF documents with the SSMS letterhead (Plan 9, item K2)
+
+The system report and the audit log can now be downloaded as PDF documents that look like they came from one organisation: logo, name, title, a footer with the address and contact details, who made the document and when, and "Page x of y" on every page.
+
+### Checked
+- Backend: all tests pass (59 new). Frontend: 887 tests pass and `tsc` is clean. No migration.
+- I looked at the rendered pages of a sample report and audit log, made from sample numbers, and the layout is clean. I have not downloaded one from the running app in a browser.
+- `npm test` prints one "unhandled error" from `SupervisorFarmersPage.test.tsx` ("sends the address when one is typed", Invalid time value). It happens on `master` too and is not from this work. All its tests pass.
+
+### Added
+- **One letterhead, `core/pdf.py`.** A document is a title and a list of pieces (paragraph, heading, facts, table). Tables repeat their header on every page. Text from people (names, details) is drawn as written, never read as markup.
+- **System report PDF** at `GET /api/admin/reports?export=pdf`: users, farms and batches, batches by stage, harvests by grade, disease checks, activity in the last 30 days, farmers with the most farms.
+- **Audit log PDF** at `GET /api/admin/audit-log?export=pdf`. It keeps the filters on screen and names them at the top. It holds the latest 500 entries and says how many were left out, with a pointer to the CSV export. `PDF_AUDIT_ROW_LIMIT` changes the 500.
+- **Buttons.** The report page has "Download PDF". The audit log page has "Export PDF" beside "Export CSV". Both disable while a file is made, and say kindly if it fails.
+- The name on each document is the signed in person who asked for it.
+- New packages: `reportlab` (and `charset-normalizer`, which it needs) for the app, `pypdf` for the tests.
+
+### Changed
+- "Print / PDF" on the report page is now "Download PDF". It no longer opens the browser print dialog, because the letterhead version is the one to file. The CSV button is unchanged.
+- PDF downloads go through the shared API client, so an expired sign-in is refreshed like any other request.
+
+### Known limits
+- The page font is Helvetica. It draws French accents and the usual punctuation. A letter outside that set (for example some rare Kinyarwanda or Polish letters) shows as "?" instead of stopping the document.
+- Documents are in English. The audit log PDF has no IP address column (the CSV does).
+- The batch report and a farm summary still need the letterhead (item K3).
+- Run `pip install -r requirements.txt` for the new packages.
+
 ## Professional emails (Plan 9, item K1)
 
 Every email SSMS sends now has one look: the logo, a clear heading, a button where there is something to do, and a footer that says who we are and why the person got the email.
