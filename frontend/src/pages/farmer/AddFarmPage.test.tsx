@@ -7,8 +7,9 @@ import { AxiosError } from 'axios';
 
 const create = vi.hoisted(() => vi.fn());
 const getPlaces = vi.hoisted(() => vi.fn());
+const locate = vi.hoisted(() => vi.fn());
 vi.mock('../../services/farm.service', () => ({ farmService: { create } }));
-vi.mock('../../services/location.service', () => ({ locationService: { getPlaces, locate: vi.fn() } }));
+vi.mock('../../services/location.service', () => ({ locationService: { getPlaces, locate } }));
 
 const TREE: Record<string, { code: string; name: string }[]> = {
   '': [{ code: '5', name: 'Eastern Province' }],
@@ -95,6 +96,28 @@ describe('New farm page', () => {
       name: 'Karame Silk Farm', provinceCode: '5', districtCode: '503', sectorCode: '050301', cellCode: '5030101', villageCode: '503010101', street: 'KG 9 Ave',
     }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/farms/f9'));
+  });
+
+  it('saves the exact position that Use my location found, with the farm', async () => {
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition: (ok: PositionCallback) => ok({ coords: { latitude: -1.6012345, longitude: 30.40123 } } as GeolocationPosition) },
+    });
+    locate.mockResolvedValue({ data: { data: {
+      province: { code: '5', name: 'Eastern Province' }, district: { code: '503', name: 'Gatsibo' }, sector: { code: '050301', name: 'Kageyo' },
+      cell: { code: '5030101', name: 'Akabare' }, village: { code: '503010101', name: 'Kabeza' },
+    } } });
+    create.mockResolvedValue({ data: { data: { id: 'f9' } } });
+    open();
+    fireEvent.change(screen.getByLabelText(/^Farm name/), { target: { value: 'Karame Silk Farm' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
+    await waitFor(() => expect(screen.getByLabelText(/^Village/)).toHaveValue('503010101'));
+    fireEvent.click(screen.getByRole('button', { name: 'Create farm' }));
+    await waitFor(() => expect(create).toHaveBeenCalledWith({
+      name: 'Karame Silk Farm', provinceCode: '5', districtCode: '503', sectorCode: '050301', cellCode: '5030101', villageCode: '503010101', street: '',
+      latitude: -1.60123, longitude: 30.40123,
+    }));
+    Reflect.deleteProperty(navigator, 'geolocation');
   });
 
   it('shows what went wrong in plain words', async () => {

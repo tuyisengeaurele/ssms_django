@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { AxiosError } from 'axios';
 import { Place, locationService } from '../../services/location.service';
 import { useLanguage } from '../../context/LanguageContext';
+import { fill } from '../../utils/fill';
 import { Icon } from './Icon';
 
 export interface PlaceValue {
@@ -11,6 +12,12 @@ export interface PlaceValue {
   cellCode: string;
   villageCode: string;
   street: string;
+  /**
+   * The exact spot the farm stands on, saved from "Use my location". Left out until there is one. A number or null once
+   * there is: null means "remove it", which is how an edit tells the server to forget it.
+   */
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export const EMPTY_PLACE: PlaceValue = { provinceCode: '', districtCode: '', sectorCode: '', cellCode: '', villageCode: '', street: '' };
@@ -22,6 +29,8 @@ const LEVELS = [
   { key: 'cellCode', label: 'lcCell', pick: 'lcPickCell' },
   { key: 'villageCode', label: 'lcVillage', pick: 'lcPickVillage' },
 ] as const;
+
+const round5 = (n: number) => Math.round(n * 1e5) / 1e5;
 
 /** True when all five choices are made, which is what the server asks for. */
 export const placeIsComplete = (v: PlaceValue) => LEVELS.every((l) => v[l.key] !== '');
@@ -75,8 +84,12 @@ export default function LocationPicker({ value, onChange, legacyText, idPrefix =
   // A farm from before places can keep its old text. Choosing any part means choosing all five.
   const relaxed = !!legacyText && !hasPlace;
 
+  const hasPosition = value.latitude != null && value.longitude != null;
+  // A position held on this form is cleared, and said to be cleared, when the place it belonged to changes.
+  const withoutPosition = value.latitude !== undefined ? { latitude: null, longitude: null } : {};
+
   const choose = (index: number, code: string) => {
-    const next = { ...value, [LEVELS[index].key]: code };
+    const next = { ...value, ...withoutPosition, [LEVELS[index].key]: code };
     // A new choice makes the ones below it meaningless, so they are emptied.
     for (const lower of LEVELS.slice(index + 1)) next[lower.key] = '';
     onChange(next);
@@ -89,7 +102,9 @@ export default function LocationPicker({ value, onChange, legacyText, idPrefix =
         locationService.locate(position.coords.latitude, position.coords.longitude)
           .then((r) => {
             const { province: p, district: d, sector: s, cell: c, village: v } = r.data.data;
-            onChange({ ...value, provinceCode: p.code, districtCode: d.code, sectorCode: s.code, cellCode: c?.code ?? '', villageCode: v?.code ?? '' });
+            // The spot is kept to about a metre. The places come from the same point, so they always agree with it.
+            const spot = { latitude: round5(position.coords.latitude), longitude: round5(position.coords.longitude) };
+            onChange({ ...value, provinceCode: p.code, districtCode: d.code, sectorCode: s.code, cellCode: c?.code ?? '', villageCode: v?.code ?? '', ...spot });
             setNotice({ kind: 'ok', text: t(v ? 'lcFoundVillage' : c ? 'lcFoundCell' : 'lcFound') });
           })
           .catch((e) => {
@@ -119,6 +134,14 @@ export default function LocationPicker({ value, onChange, legacyText, idPrefix =
           </button>
           <p className="form-hint" id={`${idPrefix}-locate-hint`}>{t('lcUseHint')}</p>
         </div>
+      )}
+      {hasPosition && (
+        <p className="form-hint place-pinned">
+          {fill(t('lcPinned'), { lat: value.latitude!.toFixed(5), lng: value.longitude!.toFixed(5) })}{' '}
+          <button type="button" className="btn btn-ghost btn-xs" onClick={() => onChange({ ...value, latitude: null, longitude: null })}>
+            {t('lcPinRemove')}
+          </button>
+        </p>
       )}
       <div role="status" className={`place-notice${notice?.kind === 'problem' ? ' is-problem' : ''}`}>
         {notice && notice.kind !== 'working' ? notice.text : ''}

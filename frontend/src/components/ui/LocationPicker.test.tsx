@@ -189,7 +189,7 @@ describe('Use my location', () => {
   it('says what it fills in, and that the person should check it', async () => {
     geolocation((ok) => ok({ coords: { latitude: -1.9536, longitude: 30.0925 } } as GeolocationPosition));
     render(<Harness />);
-    expect(await screen.findByText('Fills in the province, district, sector, cell and village where it can. Please check them. Your position is not saved.')).toBeInTheDocument();
+    expect(await screen.findByText('Fills in the province, district, sector, cell and village where it can, and saves your exact position with the farm so your cooperative can see it on a map. Please check the place.')).toBeInTheDocument();
   });
 
   it('keeps the street when the village is filled in', async () => {
@@ -199,6 +199,86 @@ describe('Use my location', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
     await waitFor(() => expect(latest.villageCode).toBe('102130307'));
     expect(latest.street).toBe('Near the church');
+  });
+
+  describe('the exact position', () => {
+    const fixes = (latitude: number, longitude: number) => geolocation((ok) => ok({ coords: { latitude, longitude } } as GeolocationPosition));
+    const pinned = { provinceCode: '1', districtCode: '102', sectorCode: '010213', cellCode: '1021303', villageCode: '102130307', street: 'Near the church', latitude: -1.9536, longitude: 30.0925 };
+
+    it('keeps the spot the phone reported, rounded to about a metre', async () => {
+      fixes(-1.953612345, 30.092587654);
+      api.locate.mockResolvedValue({ data: { data: deep } });
+      render(<Harness />);
+      fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
+      await waitFor(() => expect(latest.villageCode).toBe('102130307'));
+      expect(latest.latitude).toBe(-1.95361);
+      expect(latest.longitude).toBe(30.09259);
+    });
+
+    it('keeps the spot even when the server can only say the sector', async () => {
+      fixes(-1.9536, 30.0925);
+      api.locate.mockResolvedValue({ data: { data: found } });
+      render(<Harness />);
+      fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
+      await waitFor(() => expect(latest.sectorCode).toBe('010213'));
+      expect(latest).toMatchObject({ latitude: -1.9536, longitude: 30.0925 });
+    });
+
+    it('says that the position is saved with the farm and who sees it, with the numbers', () => {
+      render(<Harness start={pinned} />);
+      expect(screen.getByText('The exact position of the farm is saved with it, so your cooperative can see it on the map: -1.95360, 30.09250')).toBeInTheDocument();
+    });
+
+    it('says nothing about a position when there is none', () => {
+      render(<Harness />);
+      expect(screen.queryByText(/The exact position of the farm/)).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Remove the position' })).not.toBeInTheDocument();
+    });
+
+    it('removes the position and keeps the place', async () => {
+      render(<Harness start={pinned} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Remove the position' }));
+      expect(latest).toMatchObject({ latitude: null, longitude: null, villageCode: '102130307', street: 'Near the church' });
+      expect(screen.queryByText(/The exact position of the farm/)).not.toBeInTheDocument();
+    });
+
+    it('lets go of the position when the person chooses another place, because it no longer matches', async () => {
+      render(<Harness start={pinned} />);
+      await within(field(/^Province/)).findByRole('option', { name: 'Eastern Province' });
+      fireEvent.change(field(/^Province/), { target: { value: '5' } });
+      expect(latest.provinceCode).toBe('5');
+      expect(latest.latitude).toBeNull();
+      expect(latest.longitude).toBeNull();
+    });
+
+    it('keeps the position when only the street changes', async () => {
+      render(<Harness start={pinned} />);
+      fireEvent.change(screen.getByLabelText(/^Street or landmark/), { target: { value: 'By the school' } });
+      expect(latest).toMatchObject({ street: 'By the school', latitude: -1.9536, longitude: 30.0925 });
+    });
+
+    it('adds no position to a form that never had one when a place is chosen', async () => {
+      render(<Harness />);
+      await within(field(/^Province/)).findByRole('option', { name: 'Eastern Province' });
+      fireEvent.change(field(/^Province/), { target: { value: '5' } });
+      expect(latest.latitude).toBeUndefined();
+    });
+
+    it('saves no position when the spot is not in Rwanda', async () => {
+      fixes(0.3476, 32.5825);
+      api.locate.mockRejectedValue(new AxiosError('x', '404', undefined, undefined, { status: 404, data: { message: 'That spot is not inside a Rwanda sector.' } } as never));
+      render(<Harness />);
+      fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
+      expect(await screen.findByRole('status')).toHaveTextContent('That spot is not inside a Rwanda sector.');
+      expect(latest.latitude).toBeUndefined();
+    });
+
+    it('reads in French', async () => {
+      localStorage.setItem('ssms_locale', 'fr');
+      render(<Harness start={pinned} />);
+      expect(screen.getByText('La position exacte de la ferme est enregistrée avec elle, pour que votre coopérative la voie sur la carte : -1.95360, 30.09250')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Retirer la position' })).toBeInTheDocument();
+    });
   });
 
   it('replaces a place chosen earlier, but keeps the street', async () => {
