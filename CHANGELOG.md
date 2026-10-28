@@ -1,5 +1,33 @@
 # Changelog
 
+## Acknowledge alerts and comment on them (Plan 9, item D2)
+
+A supervisor can say "I'm on it" on an alert and give advice, and the farmer can answer, all on the Alerts page. The farm's owner is told by email when someone else comments.
+
+### Checked
+- Backend: 1274 tests pass (62 new). Frontend: 957 tests pass (29 new) and `tsc` is clean. One migration, `alerts/0006`.
+- **I applied `alerts/0006` to your local database `ssms_db` myself**, and checked that the alert list still answers with the new fields. Nothing else is pending.
+- I have not looked at the Alerts page in a browser, and I have not sent a real email.
+- I fixed `DevicesPage.test.tsx`, which failed in full runs. It compared "5 minutes ago" with a time made when the file loaded. The clock is frozen for that file now.
+- `npm test` still prints the one unhandled error from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+
+### Added
+- **Acknowledge.** Supervisors and admins get an "Acknowledge" button on each alert. It records who and when, and everyone who sees the alert reads "Acknowledged by Claire Mukamana, 2 hours ago". A second supervisor can "Take over", and the person who acknowledged can "Remove acknowledgement". Farmers see the line but have no button. Acknowledging does not mark the alert read, and marking read does not acknowledge, because read is the same for everyone and this says who is dealing with it.
+- **Comments.** Each alert has "Comments (n)" that opens a thread, oldest first. Everyone who can see the alert can read it. The owner, supervisors and admins can write. A comment is plain text up to 1,000 characters, shown with its line breaks and never as markup. It cannot be edited. Its author can delete it, after a confirm, and an admin can delete any. Deleting hides it and keeps the row.
+- **Email to the owner.** A comment from a supervisor or admin sends the owner a branded email with the alert, the comment and a button to the Alerts page. The owner's own comments send nothing. The email names the writer but never their role. If the email fails the comment is still saved.
+- **API.** `POST` and `DELETE /api/alerts/<id>/acknowledge`, `GET` and `POST /api/alerts/<id>/comments`, `DELETE /api/alerts/<id>/comments/<comment id>`, with rows in the authorization matrix. The alert list now carries `acknowledgedBy`, `acknowledgedAt` and `commentCount`, counted in the same query, so the list costs the same however many comments there are.
+- Acknowledging, commenting and deleting are written to the audit log. The audit entry names the alert and never repeats the words of the comment, which may be advice for one farmer.
+
+### Decided
+- A farmer cannot acknowledge, even their own alert. Out of scope for a supervisor of another cooperative: the alert and its thread give a 404.
+- A comment never shows a role, so a farmer is not told that an administrator wrote it.
+- The Alerts page loads a thread only when it is opened.
+
+### Known limits
+- No edits, no attachments, no live updates over the alert stream, and no separate advice inbox. A new comment shows when the page is opened or the thread is reopened.
+- The owner is emailed for every comment, with no hourly limit. A supervisor who posts ten comments sends ten emails.
+- The French and Kinyarwanda words of the new buttons and messages are my drafts for a native speaker.
+
 ## Farm risk ranking for supervisors (Plan 9, item D1)
 
 The supervisor dashboard now opens with the farms that need a look first, and says why in words.
