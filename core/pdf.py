@@ -1,0 +1,183 @@
+"""Formal documents: one letterhead for every PDF SSMS makes.
+
+Every page carries the logo, the name, the document title, a footer with the address, contact email and website,
+who made the document and when, and "Page x of y". A document is built from a title and a list of content pieces
+(`para`, `heading`, `facts_table`, `data_table`), so each report only decides what it says.
+
+The page font is Helvetica, which draws Latin text with accents (French) and the usual punctuation. A letter outside
+that set is replaced with "?" instead of stopping the document.
+"""
+from datetime import datetime, timezone
+from io import BytesIO
+from pathlib import Path
+from xml.sax.saxutils import escape
+
+from django.conf import settings
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_RIGHT
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
+from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate, Paragraph, Spacer, Table, TableStyle
+
+LOGO = Path(__file__).parent / 'assets' / 'logo.png'
+ORG_NAME = 'Smart Sericulture Management System'
+
+INK = colors.HexColor('#0B1F17')
+GREEN = colors.HexColor('#2D6A4F')
+GOLD = colors.HexColor('#C8923A')
+MUTED = colors.HexColor('#566760')
+LINE = colors.HexColor('#DDD7C9')
+PAPER = colors.HexColor('#F6F3EC')
+
+MARGIN_X = 20 * mm
+TOP = 34 * mm
+BOTTOM = 26 * mm
+WIDTH = A4[0] - 2 * MARGIN_X
+
+BODY = ParagraphStyle('body', fontName='Helvetica', fontSize=10, leading=14, textColor=INK, spaceAfter=6)
+SMALL = ParagraphStyle('small', parent=BODY, fontSize=9, leading=12, textColor=MUTED)
+TITLE = ParagraphStyle('title', fontName='Times-Bold', fontSize=22, leading=26, textColor=INK, spaceAfter=4)
+SUBTITLE = ParagraphStyle('subtitle', parent=BODY, fontSize=11, textColor=MUTED, spaceAfter=14)
+HEADING = ParagraphStyle('heading', fontName='Times-Bold', fontSize=14, leading=18, textColor=GREEN, spaceBefore=14, spaceAfter=6, keepWithNext=1)
+CELL = ParagraphStyle('cell', parent=BODY, fontSize=9, leading=11, spaceAfter=0, wordWrap='CJK')
+CELL_HEAD = ParagraphStyle('cellhead', parent=CELL, fontName='Helvetica-Bold')
+CELL_RIGHT = ParagraphStyle('cellright', parent=CELL, alignment=TA_RIGHT)
+CELL_HEAD_RIGHT = ParagraphStyle('cellheadright', parent=CELL_HEAD, alignment=TA_RIGHT)
+
+
+def _text(value) -> str:
+    """Safe to put in a Paragraph: markup shown as written, and only letters the page font can draw."""
+    plain = str(value).encode('cp1252', errors='replace').decode('cp1252')
+    return escape(plain)
+
+
+def para(text, style=BODY) -> Paragraph:
+    return Paragraph(_text(text).replace('\n', '<br/>'), style)
+
+
+def small(text) -> Paragraph:
+    return para(text, SMALL)
+
+
+def heading(text) -> Paragraph:
+    return Paragraph(_text(text), HEADING)
+
+
+def spacer(height_mm=4) -> Spacer:
+    return Spacer(1, height_mm * mm)
+
+
+def facts_table(pairs) -> Table:
+    """Label and value, one pair a line."""
+    rows = [[Paragraph(_text(label), CELL), Paragraph(_text(value), CELL_HEAD)] for label, value in pairs]
+    table = Table(rows, colWidths=[WIDTH * 0.45, WIDTH * 0.55], hAlign='LEFT')
+    table.setStyle(TableStyle([
+        ('LINEBELOW', (0, 0), (-1, -1), 0.4, LINE),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    return table
+
+
+def data_table(header, rows, col_widths=None, right=(), empty='Nothing to show.'):
+    """A table with a header that repeats on every page. `right` lists the columns whose numbers line up on the right."""
+    if not rows:
+        return para(empty, SMALL)
+    right = set(right)
+    head = [Paragraph(_text(h), CELL_HEAD_RIGHT if i in right else CELL_HEAD) for i, h in enumerate(header)]
+    body = [[Paragraph(_text(c), CELL_RIGHT if i in right else CELL) for i, c in enumerate(row)] for row in rows]
+    widths = [WIDTH * w for w in col_widths] if col_widths else None
+    table = Table([head, *body], colWidths=widths, repeatRows=1, hAlign='LEFT')
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), PAPER),
+        ('LINEBELOW', (0, 0), (-1, 0), 0.8, GOLD),
+        ('LINEBELOW', (0, 1), (-1, -1), 0.3, LINE),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    return table
+
+
+def _letterhead_canvas(title: str, generated_by: str, made_at: datetime):
+    """A canvas that draws the letterhead on every page. It waits until the end to know the page count."""
+    made = made_at.strftime('%d %B %Y, %H:%M UTC').lstrip('0')
+    address = _plain(settings.ORG_ADDRESS)
+    contact = f'{_plain(settings.SUPPORT_EMAIL)}   {_plain(settings.FRONTEND_URL)}'
+    by = f'Generated by {_plain(generated_by)} on {made}'
+
+    class LetterheadCanvas(canvas.Canvas):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._saved = []
+
+        def showPage(self):
+            self._saved.append(dict(self.__dict__))
+            self._startPage()
+
+        def save(self):
+            total = len(self._saved)
+            for state in self._saved:
+                self.__dict__.update(state)
+                self._draw(total)
+                super().showPage()
+            super().save()
+
+        def _draw(self, total):
+            width, height = A4
+            self.saveState()
+            # Header
+            self.drawImage(str(LOGO), MARGIN_X, height - 26 * mm, 15 * mm, 15 * mm, mask='auto')
+            self.setFillColor(INK)
+            self.setFont('Times-Bold', 13)
+            self.drawString(MARGIN_X + 19 * mm, height - 17 * mm, ORG_NAME)
+            self.setFillColor(MUTED)
+            self.setFont('Helvetica', 9)
+            self.drawString(MARGIN_X + 19 * mm, height - 22 * mm, _plain(title))
+            self.setStrokeColor(GOLD)
+            self.setLineWidth(1.2)
+            self.line(MARGIN_X, height - 29 * mm, width - MARGIN_X, height - 29 * mm)
+            # Footer
+            self.setStrokeColor(LINE)
+            self.setLineWidth(0.5)
+            self.line(MARGIN_X, 21 * mm, width - MARGIN_X, 21 * mm)
+            self.setFillColor(MUTED)
+            self.setFont('Helvetica', 8)
+            self.drawString(MARGIN_X, 17 * mm, address)
+            self.drawString(MARGIN_X, 13 * mm, contact)
+            self.drawString(MARGIN_X, 9 * mm, by)
+            self.drawRightString(width - MARGIN_X, 9 * mm, f'Page {self._pageNumber} of {total}')
+            self.restoreState()
+
+    return LetterheadCanvas
+
+
+def _plain(value) -> str:
+    """For text drawn straight on the canvas, which does not read markup."""
+    return str(value).encode('cp1252', errors='replace').decode('cp1252')
+
+
+def build_pdf(title: str, story: list, generated_by: str, subtitle: str = '') -> bytes:
+    """The finished document as bytes. `title` is also the first heading on page one."""
+    buffer = BytesIO()
+    document = BaseDocTemplate(
+        buffer, pagesize=A4, leftMargin=MARGIN_X, rightMargin=MARGIN_X, topMargin=TOP, bottomMargin=BOTTOM,
+        title=_plain(title), author=ORG_NAME, creator=ORG_NAME,
+    )
+    frame = Frame(MARGIN_X, BOTTOM, WIDTH, A4[1] - TOP - BOTTOM, leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
+    document.addPageTemplates([PageTemplate(id='letter', frames=[frame])])
+    opening = [Paragraph(_text(title), TITLE)]
+    if subtitle:
+        opening.append(Paragraph(_text(subtitle), SUBTITLE))
+    else:
+        opening.append(Spacer(1, 6 * mm))
+    document.build(
+        opening + list(story),
+        canvasmaker=_letterhead_canvas(title, generated_by, datetime.now(timezone.utc)),
+    )
+    return buffer.getvalue()

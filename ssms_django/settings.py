@@ -229,6 +229,8 @@ FRONTEND_URL        = config('FRONTEND_URL',        default='http://localhost:51
 # Shown in the footer of every email and on every formal document. Change them here, not in the templates.
 SUPPORT_EMAIL       = config('SUPPORT_EMAIL',       default='smartsericulturerw@gmail.com')
 ORG_ADDRESS         = config('ORG_ADDRESS',         default='University of Rwanda, College of Science and Technology (UR-CST), P.O. Box 3900, Kigali, Rwanda')
+# The audit log PDF stops here and says so. The CSV export has every row.
+PDF_AUDIT_ROW_LIMIT = config('PDF_AUDIT_ROW_LIMIT', default=500, cast=int)
 
 # AI microservice (FastAPI — deployed separately)
 AI_SERVICE_URL = config('AI_SERVICE_URL', default='http://localhost:8001')
