@@ -1,5 +1,30 @@
 # Changelog
 
+## The farm summary as a PDF (Plan 9, item K3, part 2)
+
+A farm can be summed up on a few pages of letterhead, in the language of the screen. This finishes item K: emails, system documents, and now the farmer's own documents all share one look.
+
+### Checked
+- Backend: 1167 tests pass (31 new). Frontend: 908 tests pass (15 new) and `tsc` is clean. No migration.
+- I looked at the rendered page of a French summary made from sample data and the layout is clean. I have not downloaded one from the running app in a browser.
+- The one "unhandled error" that `npm test` prints (`SupervisorFarmersPage`) is still the old one from `master`.
+
+### Added
+- **`GET /api/farms/<id>/summary?lang=en|fr|rw`** returns the PDF. Anyone who may see the farm may ask: its owner, a supervisor of the cooperative, an admin. The name on the document is the person who asked.
+- **What it holds:** the place, the owner and the date the farm was registered; the rooms with the number of batches in each now; every active batch with its stage, dates, room and size; the harvest summed across the farm's batches with the grade counts; and how many alerts have not been seen (batch alerts and room alerts together). Deleted rooms, batches and harvest records are left out.
+- **A "Summary (PDF)" button** in the farm page header, shown to everyone who can open the page.
+- The sentences are added to `frontend/src/i18n/pages.ts` and copied by `python scripts/build_doc_text.py`, like the batch report.
+
+### Changed
+- Number, date and language helpers for the PDFs moved from `batches/report.py` into `core/doc_format.py`, so both documents share them.
+- **Toasts show no symbol any more.** An error toast had two crosses, one for the error and one to close it. Now every toast is its message and a close cross, and the kind is told by its colour: green for success, red for an error, amber for a warning and slate blue for a note. The success tick is gone too.
+
+### Known limits
+- A toast is no longer announced by its symbol, and it is not announced to a screen reader at all yet. That is the same as before, and worth its own small change.
+- Stage names stay English in every language, as on the screen.
+- The French and Kinyarwanda words for "Owner", "Registered", "Room", "Batches now" and the table headings are my drafts for a native speaker.
+- The farm summary lists every active batch. A farm with a very long history runs over several numbered pages.
+
 ## The batch report as a PDF (Plan 9, item K3, part 1)
 
 A batch report can now be downloaded as a PDF on the SSMS letterhead, in the language of the screen: English, French or Kinyarwanda.

@@ -15,14 +15,10 @@ export interface Toast {
   action?: ToastAction;
 }
 
-const ICONS: Record<ToastType, string> = {
-  success: '✓',
-  error:   '✕',
-  warning: '⚠',
-  info:    'ℹ',
-};
-
-/** Loaded on the first toast, so pages that never show one skip the animation library. */
+/**
+ * Loaded on the first toast, so pages that never show one skip the animation library.
+ * The kind of toast is told by its colour alone. A symbol next to the cross that closes it only confused the two.
+ */
 export default function ToastList({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id: string) => void }) {
   return (
     <AnimatePresence initial={false}>
@@ -35,9 +31,6 @@ export default function ToastList({ toasts, onDismiss }: { toasts: Toast[]; onDi
           exit={{ opacity: 0, y: 10, scale: 0.95 }}
           transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
         >
-          <span className="toast-icon" style={{ fontSize: '0.9rem', fontWeight: 700 }}>
-            {ICONS[t.type]}
-          </span>
           <span className="toast-msg">{t.message}</span>
           {t.action ? (
             <button
