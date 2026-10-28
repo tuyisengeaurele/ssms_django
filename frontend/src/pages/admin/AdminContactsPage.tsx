@@ -12,7 +12,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 
-type Filter = 'all' | 'unread' | 'read';
+type Filter = 'all' | 'unread' | 'read' | 'unanswered' | 'answered';
 
 const previewOf = (text: string) => text.replace(/\s+/g, ' ').trim();
 
@@ -23,7 +23,8 @@ export default function AdminContactsPage() {
 
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<ContactMessage | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [marking, setMarking] = useState(false);
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const [askAll, setAskAll] = useState(false);
@@ -40,8 +41,25 @@ export default function AdminContactsPage() {
   const setRead = (ids: string[]) =>
     setMessages((prev) => prev.map((m) => (ids.includes(m.id) ? { ...m, isRead: true } : m)));
 
+  // The open message is read from the list, so a change made while it is open shows at once.
+  const selected = messages.find((m) => m.id === selectedId) ?? null;
+
+  const handleAnswered = async (m: ContactMessage, undo: boolean) => {
+    setMarking(true);
+    try {
+      const res = await (undo ? contactsService.unmarkReplied(m.id) : contactsService.markReplied(m.id));
+      const { isRead, repliedAt, repliedBy } = res.data.data;
+      setMessages((prev) => prev.map((x) => (x.id === m.id ? { ...x, isRead: isRead ?? x.isRead, repliedAt: repliedAt ?? null, repliedBy: repliedBy ?? null } : x)));
+      success(t(undo ? 'msUnmarkedAnswered' : 'msMarkedAnswered'));
+    } catch {
+      showError(t('msAnswerError'));
+    } finally {
+      setMarking(false);
+    }
+  };
+
   const openMessage = (m: ContactMessage) => {
-    setSelected(m);
+    setSelectedId(m.id);
     if (m.isRead) return;
     contactsService.markRead(m.id)
       .then(() => setRead([m.id]))
@@ -62,12 +80,15 @@ export default function AdminContactsPage() {
 
   const unreadCount = messages.filter((m) => !m.isRead).length;
   const readCount = messages.length - unreadCount;
+  const answeredCount = messages.filter((m) => !!m.repliedAt).length;
   const when = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
   const query = search.trim().toLowerCase();
 
   const visible = messages.filter((m) => {
     if (filter === 'unread' && m.isRead) return false;
     if (filter === 'read' && !m.isRead) return false;
+    if (filter === 'unanswered' && m.repliedAt) return false;
+    if (filter === 'answered' && !m.repliedAt) return false;
     return !query || [m.name, m.email, m.subject, m.message].some((v) => v.toLowerCase().includes(query));
   });
 
@@ -75,13 +96,15 @@ export default function AdminContactsPage() {
     { id: 'all', label: t('msTabAll'), count: messages.length },
     { id: 'unread', label: t('msTabUnread'), count: unreadCount },
     { id: 'read', label: t('msTabRead'), count: readCount },
+    { id: 'unanswered', label: t('msTabUnanswered'), count: messages.length - answeredCount },
+    { id: 'answered', label: t('msTabAnswered'), count: answeredCount },
   ];
 
   return (
     <div>
       <Modal
         open={!!selected}
-        onClose={() => setSelected(null)}
+        onClose={() => setSelectedId(null)}
         title={selected?.subject ?? ''}
         maxWidth={560}
         footer={
@@ -94,7 +117,15 @@ export default function AdminContactsPage() {
                 <Icon name="messages" size={15} />
                 {t('msReply')}
               </a>
-              <button className="btn btn-primary" onClick={() => setSelected(null)}>{t('msClose')}</button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => handleAnswered(selected, !!selected.repliedAt)}
+                disabled={marking}
+              >
+                <Icon name="check" size={15} />
+                {t(selected.repliedAt ? 'msUnmarkAnswered' : 'msMarkAnswered')}
+              </button>
+              <button className="btn btn-primary" onClick={() => setSelectedId(null)}>{t('msClose')}</button>
             </>
           ) : undefined
         }
@@ -106,6 +137,11 @@ export default function AdminContactsPage() {
               <div><dt>{t('msEmail')}</dt><dd className="cell-trim">{selected.email}</dd></div>
             </dl>
             <p className="message-date">{when.format(new Date(selected.createdAt))}</p>
+            {selected.repliedAt && selected.repliedBy ? (
+              <p className="message-answered">{fill(t('msAnsweredBy'), { name: selected.repliedBy.name, when: when.format(new Date(selected.repliedAt)) })}</p>
+            ) : (
+              <p className="form-hint">{t('msAnswerHint')}</p>
+            )}
             <p className="message-body">{selected.message}</p>
           </div>
         )}
@@ -183,7 +219,12 @@ export default function AdminContactsPage() {
                     <span className="inbox-preview">{previewOf(m.message)}</span>
                   </span>
                   <span className="inbox-when">{when.format(new Date(m.createdAt))}</span>
-                  {!m.isRead && <span className="badge badge-ink">{t('msNew')}</span>}
+                  {(!m.isRead || m.repliedAt) && (
+                    <span className="inbox-badges">
+                      {!m.isRead && <span className="badge badge-ink">{t('msNew')}</span>}
+                      {m.repliedAt && <span className="badge badge-quiet">{t('msAnswered')}</span>}
+                    </span>
+                  )}
                 </button>
               </li>
             ))}

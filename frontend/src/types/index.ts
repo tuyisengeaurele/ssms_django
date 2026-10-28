@@ -282,6 +282,9 @@ export interface ContactMessage {
   message: string;
   isRead: boolean;
   createdAt: string;
+  /** The admin who sent an answer, and when. Marked by hand, because the reply goes out from their own mail app. */
+  repliedAt?: string | null;
+  repliedBy?: { id: string; name: string } | null;
 }
 
 export interface ApiResponse<T> {

@@ -1,7 +1,9 @@
 from django.conf import settings
+from django.utils import timezone
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 
+from audit_log.utils import log_action
 from core.mail import Email
 from core.mail import send_email_async as _send_mail_async
 from core.throttles import ContactRateThrottle
@@ -76,6 +78,8 @@ def _serialize_message(m):
         'message':   m.message,
         'isRead':    m.is_read,
         'createdAt': m.created_at.isoformat(),
+        'repliedAt': m.replied_at.isoformat() if m.replied_at else None,
+        'repliedBy': {'id': m.replied_by_id, 'name': m.replied_by.name or m.replied_by.email} if m.replied_by_id else None,
     }
 
 
@@ -86,7 +90,7 @@ class ContactListView(APIView):
     def get(self, request):
         if request.user.role != 'ADMIN':
             return api_error("You don't have permission to do that.", 403)
-        messages = ContactMessage.objects.all().order_by('-created_at')
+        messages = ContactMessage.objects.select_related('replied_by').order_by('-created_at')
         return api_success([_serialize_message(m) for m in messages])
 
     def patch(self, request, pk):
@@ -102,6 +106,47 @@ class ContactListView(APIView):
         return api_success({'id': msg.id, 'isRead': True})
 
 
+class ContactRepliedView(APIView):
+    """POST /api/admin/contacts/<id>/replied says the message has been answered, and by whom. DELETE takes that back.
+
+    The reply itself is sent from the admin's own mail app, so this is a mark made by hand. Answering also marks the
+    message read. Marking it again keeps the first answer, so the record says who really answered first.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def _message(self, request, pk):
+        if request.user.role != 'ADMIN':
+            return None, api_error("You don't have permission to do that.", 403)
+        msg = ContactMessage.objects.select_related('replied_by').filter(pk=pk).first()
+        if msg is None:
+            return None, api_error("We couldn't find that message.", 404)
+        return msg, None
+
+    def post(self, request, pk):
+        msg, problem = self._message(request, pk)
+        if problem:
+            return problem
+        if msg.replied_at is None:
+            msg.replied_by = request.user
+            msg.replied_at = timezone.now()
+            msg.is_read = True
+            msg.save(update_fields=['replied_by', 'replied_at', 'is_read'])
+            # The words of the message stay out of the audit log. They were written to us, not to the log.
+            log_action(request, 'UPDATE', 'ContactMessage', msg.pk, f'Marked contact message {msg.pk} as answered')
+        return api_success(_serialize_message(msg), 'Marked as answered.')
+
+    def delete(self, request, pk):
+        msg, problem = self._message(request, pk)
+        if problem:
+            return problem
+        if msg.replied_at is not None:
+            msg.replied_by = None
+            msg.replied_at = None
+            msg.save(update_fields=['replied_by', 'replied_at'])
+            log_action(request, 'UPDATE', 'ContactMessage', msg.pk, f'Removed the answered mark of contact message {msg.pk}')
+        return api_success(_serialize_message(msg), 'Answered mark removed.')
+
+
 class ContactUnreadView(APIView):
     """
     GET /api/admin/contacts/unread
@@ -112,7 +157,7 @@ class ContactUnreadView(APIView):
     def get(self, request):
         if request.user.role != 'ADMIN':
             return api_error("You don't have permission to do that.", 403)
-        unread = ContactMessage.objects.filter(is_read=False).order_by('-created_at')
+        unread = ContactMessage.objects.filter(is_read=False).select_related('replied_by').order_by('-created_at')
         data = {
             'count':    unread.count(),
             'messages': [_serialize_message(m) for m in unread[:5]],

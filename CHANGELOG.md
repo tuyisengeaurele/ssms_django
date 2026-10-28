@@ -1,5 +1,30 @@
 # Changelog
 
+## Which contact messages have been answered (Plan 9, item D4)
+
+On the admin Messages page, an admin can mark a message as answered, and the page shows who answered it and when. Nothing is lost when two admins share the inbox.
+
+### Checked
+- Backend: 1404 tests pass (18 new). Frontend: 1037 tests pass (11 new) and `tsc` is clean. One migration, `contacts/0002`.
+- **I applied `contacts/0002` to your local database `ssms_db` myself**, and checked that the Messages list still answers. Nothing else is pending.
+- I have not looked at the Messages page in a browser.
+- `npm test` still prints the one unhandled error from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+
+### Added
+- **"Mark as answered"** in the open message, next to "Reply by email". It records the admin and the time, and the message then says "Answered by Aline Uwase, 8 Oct 2026". "Remove the answered mark" takes it back. The Messages page reminds the admin to mark it after sending the reply, because the reply goes out from the admin's own mail app and SSMS cannot see it.
+- **Tabs "Unanswered" and "Answered"** with their counts, and an "Answered" badge, in words, on each answered row beside "New".
+- **API.** `POST` and `DELETE /api/admin/contacts/<id>/replied`, admin only. The list now carries `repliedAt` and `repliedBy`, loaded in the same query, so it costs the same however many messages were answered.
+- Marking and unmarking are written to the audit log. The words of the message are not copied into it.
+
+### Decided
+- Marking a message answered also marks it read. Removing the mark leaves it read.
+- Marking it again keeps the first answer, so the record says who answered first. It writes nothing new to the audit log.
+- The mark is made by hand. SSMS does not send the reply itself, so it cannot know it was sent.
+
+### Known limits
+- The bell in the top bar still counts unread messages, not unanswered ones.
+- The French and Kinyarwanda words of the new buttons and messages are my drafts for a native speaker.
+
 ## The cooperative report (Plan 9, item D3, part 3 of 3)
 
 Supervisors and admins can see what happened on the farms of a cooperative between two dates, and download it as a PDF or a CSV. This finishes D3.

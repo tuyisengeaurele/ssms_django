@@ -10,7 +10,7 @@ const inbox = vi.hoisted(() => [
   { id: 'm3', name: 'Chantal M', email: 'chantal@x.rw', subject: 'Photos not loading', message: 'The disease photos do not upload.', isRead: false, createdAt: '2026-10-06T08:00:00Z' },
 ]);
 
-const api = vi.hoisted(() => ({ getAll: vi.fn(), markRead: vi.fn() }));
+const api = vi.hoisted(() => ({ getAll: vi.fn(), markRead: vi.fn(), markReplied: vi.fn(), unmarkReplied: vi.fn() }));
 vi.mock('../../services/contacts.service', () => ({ contactsService: api }));
 
 import AdminContactsPage from './AdminContactsPage';
@@ -31,7 +31,11 @@ beforeEach(() => {
   setReducedMotion(true);
   api.getAll.mockResolvedValue({ data: { data: inbox } });
   api.markRead.mockResolvedValue({ data: { data: {} } });
+  api.markReplied.mockImplementation((id: string) => Promise.resolve({ data: { data: { ...inbox.find((m) => m.id === id), isRead: true, repliedAt: '2026-10-08T11:00:00Z', repliedBy: { id: 'me', name: 'Aline Uwase' } } } }));
+  api.unmarkReplied.mockImplementation((id: string) => Promise.resolve({ data: { data: { ...inbox.find((m) => m.id === id), repliedAt: null, repliedBy: null } } }));
 });
+
+const answeredByEric = { id: 'm4', name: 'Chantal M', email: 'chantal@x.rw', subject: 'Training request', message: 'Can you train our group?', isRead: true, createdAt: '2026-10-04T10:00:00Z', repliedAt: '2026-10-08T10:00:00Z', repliedBy: { id: 'u1', name: 'Eric Niyonzima' } };
 
 const rowFor = async (subject: string) => (await screen.findByText(subject)).closest('button') as HTMLElement;
 
@@ -134,5 +138,118 @@ describe('Messages page', () => {
     const { container } = open();
     await screen.findByText('Visit to our farm');
     expect(container.querySelector('.stat-card, .stat-card-glow, [style*="#2563eb"]')).toBeNull();
+  });
+
+  describe('answering', () => {
+    it('has an Unanswered and an Answered tab with their counts', async () => {
+      api.getAll.mockResolvedValue({ data: { data: [...inbox, answeredByEric] } });
+      open();
+      await screen.findByText('Visit to our farm');
+      expect(screen.getByRole('tab', { name: 'Unanswered (3)' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Answered (1)' })).toBeInTheDocument();
+    });
+
+    it('filters by whether a message was answered', async () => {
+      api.getAll.mockResolvedValue({ data: { data: [...inbox, answeredByEric] } });
+      open();
+      await screen.findByText('Visit to our farm');
+      fireEvent.click(screen.getByRole('tab', { name: 'Answered (1)' }));
+      expect(screen.getByText('Training request')).toBeInTheDocument();
+      expect(screen.queryByText('Visit to our farm')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('tab', { name: 'Unanswered (3)' }));
+      expect(screen.queryByText('Training request')).not.toBeInTheDocument();
+      expect(screen.getByText('Visit to our farm')).toBeInTheDocument();
+    });
+
+    it('shows an Answered badge, in words, on the messages that were answered', async () => {
+      api.getAll.mockResolvedValue({ data: { data: [...inbox, answeredByEric] } });
+      open();
+      expect(within(await rowFor('Training request')).getByText('Answered')).toBeInTheDocument();
+      expect(within(await rowFor('Visit to our farm')).queryByText('Answered')).not.toBeInTheDocument();
+    });
+
+    it('says who answered and when, in the message', async () => {
+      api.getAll.mockResolvedValue({ data: { data: [answeredByEric] } });
+      open();
+      fireEvent.click(await rowFor('Training request'));
+      const dialog = await screen.findByRole('dialog', { name: 'Training request' });
+      expect(within(dialog).getByText(/Answered by Eric Niyonzima, /)).toBeInTheDocument();
+      expect(within(dialog).getByRole('button', { name: 'Remove the answered mark' })).toBeInTheDocument();
+      expect(within(dialog).queryByRole('button', { name: 'Mark as answered' })).not.toBeInTheDocument();
+    });
+
+    it('reminds the admin to mark the message after sending the reply', async () => {
+      open();
+      fireEvent.click(await rowFor('Visit to our farm'));
+      const dialog = await screen.findByRole('dialog', { name: 'Visit to our farm' });
+      expect(within(dialog).getByText('After you have sent your answer, mark the message as answered.')).toBeInTheDocument();
+    });
+
+    it('marks a message answered, shows who, and counts it', async () => {
+      open();
+      fireEvent.click(await rowFor('Visit to our farm'));
+      const dialog = await screen.findByRole('dialog', { name: 'Visit to our farm' });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Mark as answered' }));
+      await waitFor(() => expect(api.markReplied).toHaveBeenCalledWith('m1'));
+      expect(await within(dialog).findByText(/Answered by Aline Uwase, /)).toBeInTheDocument();
+      expect(within(dialog).getByRole('button', { name: 'Remove the answered mark' })).toBeInTheDocument();
+      expect(await screen.findByText('Marked as answered.', {}, { timeout: 5000 })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Answered (1)' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Unanswered (2)' })).toBeInTheDocument();
+    });
+
+    it('also counts an answered message as read', async () => {
+      open();
+      fireEvent.click(await rowFor('Visit to our farm'));
+      const dialog = await screen.findByRole('dialog', { name: 'Visit to our farm' });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Mark as answered' }));
+      await within(dialog).findByText(/Answered by Aline Uwase, /);
+      expect(screen.getByText('3 messages, 1 unread.')).toBeInTheDocument();
+    });
+
+    it('takes the mark back', async () => {
+      api.getAll.mockResolvedValue({ data: { data: [answeredByEric] } });
+      open();
+      fireEvent.click(await rowFor('Training request'));
+      const dialog = await screen.findByRole('dialog', { name: 'Training request' });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Remove the answered mark' }));
+      await waitFor(() => expect(api.unmarkReplied).toHaveBeenCalledWith('m4'));
+      await waitFor(() => expect(within(dialog).queryByText(/Answered by/)).not.toBeInTheDocument());
+      expect(within(dialog).getByRole('button', { name: 'Mark as answered' })).toBeInTheDocument();
+      expect(await screen.findByText('Answered mark removed.', {}, { timeout: 5000 })).toBeInTheDocument();
+    });
+
+    it('holds the button while it saves', async () => {
+      let finish: (v: unknown) => void = () => {};
+      api.markReplied.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+      open();
+      fireEvent.click(await rowFor('Visit to our farm'));
+      const dialog = await screen.findByRole('dialog', { name: 'Visit to our farm' });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Mark as answered' }));
+      await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Mark as answered' })).toBeDisabled());
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Mark as answered' }));
+      expect(api.markReplied).toHaveBeenCalledTimes(1);
+      finish({ data: { data: { ...inbox[0], isRead: true, repliedAt: '2026-10-08T11:00:00Z', repliedBy: { id: 'me', name: 'Aline Uwase' } } } });
+    });
+
+    it('says kindly, and changes nothing, when it cannot be saved', async () => {
+      api.markReplied.mockRejectedValueOnce(new Error('x'));
+      open();
+      fireEvent.click(await rowFor('Visit to our farm'));
+      const dialog = await screen.findByRole('dialog', { name: 'Visit to our farm' });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Mark as answered' }));
+      await waitFor(() => expect(api.markReplied).toHaveBeenCalled());
+      expect(within(dialog).queryByText(/Answered by/)).not.toBeInTheDocument();
+      expect(within(dialog).getByRole('button', { name: 'Mark as answered' })).toBeEnabled();
+    });
+
+    it('reads in French', async () => {
+      localStorage.setItem('ssms_locale', 'fr');
+      api.getAll.mockResolvedValue({ data: { data: [answeredByEric] } });
+      open();
+      fireEvent.click(await rowFor('Training request'));
+      const dialog = await screen.findByRole('dialog', { name: 'Training request' });
+      expect(within(dialog).getByText(/Répondu par Eric Niyonzima, /)).toBeInTheDocument();
+    });
   });
 });
