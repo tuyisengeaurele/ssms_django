@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/admin/contacts', include((contacts_admin_urlpatterns, 'contacts_admin'))),  # GET/PATCH admin
     path('api/admin/audit-log', include('audit_log.urls')),  # GET /api/admin/audit-log (admin only)
     path('api/admin/reports',   include('reports.urls')),    # GET /api/admin/reports   (admin only)
+    path('api/reports/cooperative', include('reports.coop_urls')),   # GET /api/reports/cooperative (supervisor, admin)
 ]
 
 if settings.DEBUG:
