@@ -90,6 +90,11 @@ class StageThreshold(models.Model):
     hum_min = models.FloatField(db_column='humMin', default=70.0)
     hum_max = models.FloatField(db_column='humMax', default=85.0)
     updated_at = models.DateTimeField(db_column='updatedAt', auto_now=True)
+    # The admin who last changed the range. Empty for a range nobody has changed. Only admins are told.
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        db_column='updatedById', related_name='changed_thresholds',
+    )
 
     class Meta:
         db_table = 'stage_thresholds'
