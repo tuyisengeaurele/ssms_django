@@ -1,5 +1,28 @@
 # Changelog
 
+## "Use my location" fills the cell and village too (Plan 9, item B11 follow-up)
+
+"Use my location" now fills province, district, sector, cell and village where the data is sure, from a point alone. The street stays a field you type.
+
+### Checked
+- Backend: 1148 tests pass (12 new). Frontend: 898 tests pass (5 new) and `tsc` is clean. No migration.
+- I tried six real places (Kigali Convention Centre, Kicukiro, Musanze, Huye, Gatsibo, Nyagatare) and each gave a sensible cell and village. The Convention Centre came out as Kimihurura sector, Kamukina cell, Nyenyeri village. I have not tried it from the running form with a real phone.
+- One full frontend run in this session showed two failures I did not capture. Two reruns passed all 898. That run was twice as slow as usual, so I think they were timeouts on a busy machine.
+
+### Added
+- **Village outlines**, from the same World Bank dataset as the sectors (`rwa_villages.zip`, CC BY 4.0, 2012). 14,802 outlines in 30 files, one for each district, 7 MB in all, simplified to about 30 metres. A lookup reads only the file of the district the point is in.
+- **`POST /api/locations/locate`** now also returns `cell` and, when sure, `village`.
+- The form fills the cell and village and says so: "We filled in your place down to the village. Please check it and add the street if you like." When only the cell is known it asks for the village. When neither is known it behaves as before.
+
+### Decided
+- **Villages are matched by name, never by code.** The 2012 file and the current register number villages differently, so the same code can name a different village in each. Each outline is matched to the register by its district, sector, cell and village names together. Of 14,815 outlines, 14,663 give a village and its cell, 139 give the cell only (14 of them because two outlines share the same names), and 13 match nothing and are left out. 179 register villages (1.2 %) have no outline, so a point there gives the cell or sector and the person picks the village.
+- **No street.** No street data exists. Reading it from OpenStreetMap would send each farm's position to a third party, so I did not.
+
+### Known limits
+- The outlines date from 2012 and are simplified, so a point near a border can land in the village next door. The form tells the person to check.
+- The French and Kinyarwanda words of the three new messages are my drafts for a native speaker.
+- The README said cells and villages had no boundary data. That was wrong and is corrected.
+
 ## The batch report as a PDF (Plan 9, item K3, part 1)
 
 A batch report can now be downloaded as a PDF on the SSMS letterhead, in the language of the screen: English, French or Kinyarwanda.
