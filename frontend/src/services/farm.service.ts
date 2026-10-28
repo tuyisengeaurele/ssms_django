@@ -1,4 +1,5 @@
 import api from './api';
+import { downloadFile } from './download';
 import { ApiResponse, Farm } from '../types';
 import type { PlaceValue } from '../components/ui/LocationPicker';
 
@@ -19,4 +20,8 @@ export const farmService = {
     api.patch<ApiResponse<Farm>>(`/farms/${id}`, data),
 
   delete: (id: string) => api.delete<ApiResponse<null>>(`/farms/${id}`),
+
+  /** The farm summary as a PDF on the SSMS letterhead, in the language of the screen. */
+  downloadSummary: (id: string, lang: string) =>
+    downloadFile(`/farms/${id}/summary`, { lang }, 'farm_summary.pdf'),
 };

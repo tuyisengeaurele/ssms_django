@@ -621,6 +621,8 @@ export const pageTranslations = {
   // Farm details page
   fdNewBatch: k("New batch", "Nouveau lot", "Itsinda rishya"),
   fdEdit: k("Edit farm", "Modifier la ferme", "Hindura ihinga"),
+  fdSummaryPdf: k("Summary (PDF)", "Résumé (PDF)", "Incamake (PDF)"),
+  fdSummaryError: k("We couldn't create the summary. Please try again.", "Nous n'avons pas pu créer le résumé. Veuillez réessayer.", "Ntitwabashije gukora incamake. Ongera ugerageze."),
   fdDelete: k("Delete farm", "Supprimer la ferme", "Siba ihinga"),
   fdOwner: k("Owner", "Propriétaire", "Nyirubwite"),
   fdBatches: k("Batches", "Lots", "Amatsinda"),
