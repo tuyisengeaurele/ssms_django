@@ -8,6 +8,7 @@ import { sensorService, type SeriesPoint, type StageRange } from '../../services
 import { Batch, DiseaseDetection, HarvestRecord, MortalityEntry, QualityGrade } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useToast } from '../../context/ToastContext';
 import { STAGE_LABELS } from '../../utils/constants';
 import { summariseConditions } from '../../utils/batchReport';
 import { fill } from '../../utils/fill';
@@ -20,6 +21,8 @@ import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 const USUAL_RANGE = { tempMin: 22, tempMax: 28, humMin: 70, humMax: 85 };
 const GRADES: QualityGrade[] = ['A', 'B', 'C'];
 const THIRTY_DAYS = 720;
+// The server averages a month into six hour buckets.
+const BUCKET_HOURS = 6;
 // A report is one page. Longer logs show their newest rows and say how many are left out.
 const MAX_DEATH_ROWS = 8;
 const MAX_CHECK_ROWS = 5;
@@ -32,6 +35,8 @@ export default function BatchReportPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { t, locale } = useLanguage();
+  const { error: showError } = useToast();
+  const [downloading, setDownloading] = useState(false);
 
   const [batch, setBatch] = useState<Batch | null>(null);
   const [deaths, setDeaths] = useState<MortalityEntry[]>([]);
@@ -68,6 +73,18 @@ export default function BatchReportPage() {
     alertService.getThresholds().then((r) => setRanges(r.data.data)).catch(() => {});
   }, [id]);
 
+  const downloadPdf = async () => {
+    if (!id) return;
+    setDownloading(true);
+    try {
+      await batchService.downloadReport(id, locale);
+    } catch {
+      showError(t('brPdfError'));
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const back = (
     <Link to={`/batches/${id}`} className="btn btn-ghost btn-sm">
       <Icon name="back" size={15} />
@@ -99,7 +116,7 @@ export default function BatchReportPage() {
   const dayOnly = (ymd: string) => date.format(new Date(`${ymd}T00:00:00`));
 
   const range = ranges.find((r) => r.stage === batch.stage) ?? USUAL_RANGE;
-  const conditions = summariseConditions(points, range);
+  const conditions = summariseConditions(points, range, BUCKET_HOURS);
 
   const stays = [...(batch.roomStays ?? [])].sort((a, b) => a.startedAt.localeCompare(b.startedAt));
   const quantityText = batch.quantity
@@ -136,8 +153,12 @@ export default function BatchReportPage() {
         subtitle={fill(t('hpSubtitle'), { id: code, farm: batch.farm?.name ?? '-' })}
         actions={
           <div className="no-print report-actions">
-            <button type="button" className="btn btn-primary btn-sm" onClick={() => window.print()}>
+            <button type="button" className="btn btn-primary btn-sm" onClick={downloadPdf} disabled={downloading}>
               <Icon name="download" size={15} />
+              {downloading ? t('reportExporting') : t('brDownloadPdf')}
+            </button>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => window.print()}>
+              <Icon name="print" size={15} />
               {t('brPrint')}
             </button>
             {back}

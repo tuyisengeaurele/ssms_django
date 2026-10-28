@@ -1,15 +1,16 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
+import { ToastProvider } from '../../context/ToastContext';
 import { setReducedMotion } from '../../test/setup';
 
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', role: 'FARMER', name: 'Serge Mugisha' } }) }));
 
 const api = vi.hoisted(() => ({
-  batch: vi.fn(), mortality: vi.fn(), detections: vi.fn(), harvest: vi.fn(), series: vi.fn(), thresholds: vi.fn(),
+  batch: vi.fn(), mortality: vi.fn(), detections: vi.fn(), harvest: vi.fn(), series: vi.fn(), thresholds: vi.fn(), download: vi.fn(),
 }));
-vi.mock('../../services/batch.service', () => ({ batchService: { getById: api.batch, getMortality: api.mortality } }));
+vi.mock('../../services/batch.service', () => ({ batchService: { getById: api.batch, getMortality: api.mortality, downloadReport: api.download } }));
 vi.mock('../../services/detection.service', () => ({ detectionService: { getByBatch: api.detections } }));
 vi.mock('../../services/harvest.service', () => ({ harvestService: { getByBatch: api.harvest } }));
 vi.mock('../../services/sensor.service', () => ({ sensorService: { getBatchSeries: api.series } }));
@@ -45,9 +46,11 @@ function open() {
   return render(
     <MemoryRouter initialEntries={['/batches/b1-9sieo7cv/report']}>
       <LanguageProvider>
-        <Routes>
-          <Route path="/batches/:id/report" element={<BatchReportPage />} />
-        </Routes>
+        <ToastProvider>
+          <Routes>
+            <Route path="/batches/:id/report" element={<BatchReportPage />} />
+          </Routes>
+        </ToastProvider>
       </LanguageProvider>
     </MemoryRouter>,
   );
@@ -69,6 +72,7 @@ beforeEach(() => {
   api.harvest.mockResolvedValue({ data: { data: [] } });
   api.series.mockResolvedValue({ data: { data: series } });
   api.thresholds.mockResolvedValue({ data: { data: ranges } });
+  api.download.mockResolvedValue(undefined);
 });
 
 describe('Batch report', () => {
@@ -131,7 +135,7 @@ describe('Batch report', () => {
       const s = within(section('Conditions in the last 30 days'));
       expect(await s.findByText(/Temperature: lowest 20 °C, average 25 °C, highest 30 °C/)).toBeInTheDocument();
       expect(s.getByText(/Humidity: lowest 70 %, average 76.3 %, highest 80 %/)).toBeInTheDocument();
-      expect(s.getByText(/50 % of the 4 hours were inside the usual range for the Larva stage \(22 to 28 °C, 70 to 85 %\)/)).toBeInTheDocument();
+      expect(s.getByText(/50 % of the 24 hours were inside the usual range for the Larva stage \(22 to 28 °C, 70 to 85 %\)/)).toBeInTheDocument();
     });
 
     it('says so when there are no readings', async () => {
@@ -223,6 +227,48 @@ describe('Batch report', () => {
       open();
       await screen.findByText("Batch #9SIEO7CV on Serge's farm");
       expect(within(section('Harvest')).getByText('No harvest recorded.')).toBeInTheDocument();
+    });
+  });
+
+  describe('downloading the PDF', () => {
+    it('asks the server for the PDF in the language of the screen', async () => {
+      open();
+      await screen.findByText("Batch #9SIEO7CV on Serge's farm");
+      fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }));
+      await waitFor(() => expect(api.download).toHaveBeenCalledWith('b1-9sieo7cv', 'en'));
+    });
+
+    it('asks in French when the screen is French', async () => {
+      localStorage.setItem('ssms_locale', 'fr');
+      open();
+      await screen.findByText("Lot #9SIEO7CV à Serge's farm");
+      fireEvent.click(screen.getByRole('button', { name: 'Télécharger le PDF' }));
+      await waitFor(() => expect(api.download).toHaveBeenCalledWith('b1-9sieo7cv', 'fr'));
+    });
+
+    it('is not itself printed', async () => {
+      open();
+      await screen.findByText("Batch #9SIEO7CV on Serge's farm");
+      expect(screen.getByRole('button', { name: 'Download PDF' }).closest('.no-print')).not.toBeNull();
+    });
+
+    it('holds the button while the file is being made', async () => {
+      let finish: () => void = () => {};
+      api.download.mockReturnValue(new Promise<void>((resolve) => { finish = resolve; }));
+      open();
+      await screen.findByText("Batch #9SIEO7CV on Serge's farm");
+      fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }));
+      expect(await screen.findByRole('button', { name: 'Preparing' })).toBeDisabled();
+      finish();
+      expect(await screen.findByRole('button', { name: 'Download PDF' })).toBeEnabled();
+    });
+
+    it('tells the person kindly when the PDF cannot be made', async () => {
+      api.download.mockRejectedValue(new Error('x'));
+      open();
+      await screen.findByText("Batch #9SIEO7CV on Serge's farm");
+      fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }));
+      expect(await screen.findByText("We couldn't create the PDF. Please try again.", {}, { timeout: 5000 })).toBeInTheDocument();
     });
   });
 

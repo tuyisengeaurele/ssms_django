@@ -879,6 +879,8 @@ export const pageTranslations = {
   hpBack: k("Back to the batch", "Retour au lot", "Subira ku itsinda"),
   hpTooEarly: k("You can log a harvest once the batch has reached the cocoon stage.", "Vous pourrez enregistrer une récolte quand le lot aura atteint l'étape du cocon.", "Uzandika isarura igihe itsinda rizaba rigeze ku cyiciro cy'imideri."),
   brDocTitle: k("Batch report {id}", "Rapport du lot {id}", "Raporo y'itsinda {id}"),
+  brDownloadPdf: k("Download PDF", "Télécharger le PDF", "Kuramo PDF"),
+  brPdfError: k("We couldn't create the PDF. Please try again.", "Nous n'avons pas pu créer le PDF. Veuillez réessayer.", "Ntitwabashije gukora PDF. Ongera ugerageze."),
   brPrint: k("Print or save as PDF", "Imprimer ou enregistrer en PDF", "Priyinta cyangwa uyibike nka PDF"),
   brLoadError: k("We couldn't load this report. Please try again.", "Nous n'avons pas pu charger ce rapport. Veuillez réessayer.", "Ntitwabashije gufungura iri raporo. Ongera ugerageze."),
   brPrepared: k("Prepared on {date} for {name}.", "Préparé le {date} pour {name}.", "Ryateguwe ku wa {date} kuri {name}."),
