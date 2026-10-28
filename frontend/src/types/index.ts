@@ -55,6 +55,9 @@ export interface Farm {
   /** The place as one line, smallest part first. Farms from before places keep their own text. */
   location: string;
   street?: string;
+  /** The exact spot the farm stands on, when its owner saved it. Supervisors and admins see it on the map. */
+  latitude?: number | null;
+  longitude?: number | null;
   /** The official place at each level. All null on a farm from before places could be chosen. */
   province?: { code: string; name: string } | null;
   district?: { code: string; name: string } | null;

@@ -101,6 +101,8 @@ export default function FarmDetailPage() {
     setEditPlace({
       provinceCode: farm.province?.code ?? '', districtCode: farm.district?.code ?? '', sectorCode: farm.sector?.code ?? '',
       cellCode: farm.cell?.code ?? '', villageCode: farm.village?.code ?? '', street: farm.street ?? '',
+      // Sent back when the farm is saved, so saving the form never loses the position by accident.
+      ...(farm.latitude != null && farm.longitude != null ? { latitude: farm.latitude, longitude: farm.longitude } : {}),
     });
     setShowEdit(true);
   };

@@ -271,6 +271,46 @@ describe('Farm details page', () => {
     });
   });
 
+  describe('a farm with an exact position', () => {
+    const pinned = {
+      ...farm, location: 'KG 9 Ave, Kabeza, Akabare, Kageyo, Gatsibo, Eastern Province', street: 'KG 9 Ave',
+      province: { code: '5', name: 'Eastern Province' }, district: { code: '503', name: 'Gatsibo' }, sector: { code: '050301', name: 'Kageyo' },
+      cell: { code: '5030101', name: 'Akabare' }, village: { code: '503010101', name: 'Kabeza' },
+      latitude: -1.6012, longitude: 30.4012,
+    };
+    const whole = { name: 'Serge Farm', provinceCode: '5', districtCode: '503', sectorCode: '050301', cellCode: '5030101', villageCode: '503010101', street: 'KG 9 Ave' };
+
+    const openEditor = async () => {
+      api.getById.mockResolvedValue({ data: { data: pinned } });
+      api.update.mockResolvedValue({ data: { data: { ...pinned, name: 'Serge Farm' } } });
+      open();
+      await screen.findByText('Mugisha Serge');
+      fireEvent.click(screen.getByRole('button', { name: 'Edit farm' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Edit farm' });
+      await waitFor(() => expect(within(dialog).getByLabelText(/^Village/)).toHaveValue('503010101'));
+      fireEvent.change(within(dialog).getByLabelText(/^Farm name/), { target: { value: 'Serge Farm' } });
+      return dialog;
+    };
+
+    it('shows the saved position in the editor', async () => {
+      const dialog = await openEditor();
+      expect(within(dialog).getByText('The exact position of the farm is saved with it, so your cooperative can see it on the map: -1.60120, 30.40120')).toBeInTheDocument();
+    });
+
+    it('sends the position back when the farm is saved, so it is not lost', async () => {
+      const dialog = await openEditor();
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
+      await waitFor(() => expect(api.update).toHaveBeenCalledWith('f1', { ...whole, latitude: -1.6012, longitude: 30.4012 }));
+    });
+
+    it('sends nulls when the person removes the position', async () => {
+      const dialog = await openEditor();
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Remove the position' }));
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
+      await waitFor(() => expect(api.update).toHaveBeenCalledWith('f1', { ...whole, latitude: null, longitude: null }));
+    });
+  });
+
   it('asks before deleting, then goes back to the list', async () => {
     api.remove.mockResolvedValue({ data: { data: null } });
     open();

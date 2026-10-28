@@ -1,5 +1,31 @@
 # Changelog
 
+## A farm keeps its exact position (Plan 9, item D3, part 1 of 3)
+
+"Use my location" now saves the exact spot the farm stands on, so the farm map (the next part) can show it. The farmer can remove it any time.
+
+### Checked
+- Backend: 1306 tests pass (32 new). Frontend: 971 tests pass (14 new) and `tsc` is clean. One migration, `farms/0004`.
+- **I applied `farms/0004` to your local database `ssms_db` myself.** Nothing else is pending.
+- I have not tried it with a real phone, and I have not looked at the form in a browser.
+- `npm test` still prints the one unhandled error from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+
+### Added
+- **The position is saved with the farm.** "Use my location" fills the place as before and now also keeps the spot, rounded to about a metre (5 decimals). The form says so, in plain words with the numbers: "The exact position of the farm is saved with it, so your cooperative can see it on the map." A "Remove the position" button forgets it.
+- **The server checks it.** Both numbers or neither. Inside Rwanda. Inside the sector chosen for the farm, so a pin can never sit in the wrong place. Each refusal has a kind message.
+- **It follows the place.** Choosing another place on the form lets go of the position, because it no longer matches. Moving a farm to another sector through the API without a new position clears the old one. Renaming a farm, or changing only the street, keeps it. An edit sends the saved position back, so saving the form never loses it by accident.
+- **Who sees it.** The farm's owner, supervisors of the cooperative and admins, the same people who see the farm. A supervisor cannot change it. A farmer of another cooperative gets a 404.
+- **The audit log never holds the coordinates.**
+- **The privacy page tells the truth**: it now says the exact position is saved if you use "Use my location", who can see it, and that it can be removed. The old hint on the button said "Your position is not saved". That is no longer true and is replaced.
+
+### Decided
+- No map picker. The position comes only from the phone, through "Use my location", as you chose. A farmer without a phone position still picks the place from the lists and has no pin.
+- Existing farms have no position. The map will place them at their village instead and say that it is approximate.
+
+### Known limits
+- The French and Kinyarwanda words of the new hint and the position line are my drafts for a native speaker.
+- A phone's position can be off by tens of metres, more indoors. The farmer sees the numbers and can remove them. There is no way to move the pin by hand.
+
 ## Acknowledge alerts and comment on them (Plan 9, item D2)
 
 A supervisor can say "I'm on it" on an alert and give advice, and the farmer can answer, all on the Alerts page. The farm's owner is told by email when someone else comments.

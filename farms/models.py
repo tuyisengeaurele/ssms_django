@@ -17,6 +17,10 @@ class Farm(models.Model):
     cell_code = models.CharField(db_column='cellCode', max_length=9, blank=True, default='')
     village_code = models.CharField(db_column='villageCode', max_length=9, blank=True, default='')
     street = models.CharField(max_length=200, blank=True, default='')
+    # The exact spot the farm stands on, saved from "Use my location" and rounded to about a metre. Empty until the farmer
+    # saves it, and emptied when the farm moves to another sector. It is what the map shows.
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
