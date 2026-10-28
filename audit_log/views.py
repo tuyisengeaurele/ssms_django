@@ -1,4 +1,6 @@
-from django.http import StreamingHttpResponse
+from django.conf import settings
+from django.http import HttpResponse, StreamingHttpResponse
+from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
@@ -6,6 +8,7 @@ from core.csvsafe import safe_writer
 from core.pagination import StandardPagination
 
 from .models import AuditLog
+from .pdf import audit_pdf
 from .serializers import AuditLogSerializer
 
 
@@ -37,11 +40,20 @@ class AuditLogListView(APIView):
 
         if request.query_params.get('export') == 'csv':
             return self._csv_response(qs)
+        if request.query_params.get('export') == 'pdf':
+            return self._pdf_response(qs, request.user, (action or '').upper(), resource or '', search)
 
         paginator = StandardPagination()
         page      = paginator.paginate_queryset(qs, request)
         serializer = AuditLogSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+    def _pdf_response(self, qs, user, action, resource, search):
+        entries = list(qs.order_by('-created_at', '-id')[:settings.PDF_AUDIT_ROW_LIMIT])
+        pdf = audit_pdf(entries, qs.count(), action, resource, search, user.name or user.email)
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="audit_log_{timezone.now():%Y-%m-%d}.pdf"'
+        return response
 
     def _csv_response(self, qs):
         class Echo:

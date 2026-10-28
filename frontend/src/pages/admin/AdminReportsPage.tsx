@@ -29,7 +29,7 @@ export default function AdminReportsPage() {
   const [data, setData] = useState<ReportSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const [exporting, setExporting] = useState<'csv' | 'pdf' | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -42,14 +42,14 @@ export default function AdminReportsPage() {
 
   useEffect(load, []);
 
-  const handleCsv = async () => {
-    setExporting(true);
+  const download = (kind: 'csv' | 'pdf') => async () => {
+    setExporting(kind);
     try {
-      await reportService.exportCsv();
+      await (kind === 'pdf' ? reportService.exportPdf() : reportService.exportCsv());
     } catch {
-      showError(t('rpCsvError'));
+      showError(t(kind === 'pdf' ? 'rpPdfError' : 'rpCsvError'));
     } finally {
-      setExporting(false);
+      setExporting(null);
     }
   };
 
@@ -85,13 +85,13 @@ export default function AdminReportsPage() {
         subtitle={`${t('reportGenerated')} ${generated}`}
         actions={
           <div className="page-actions no-print">
-            <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
-              <Icon name="print" size={15} />
-              {t('reportExportPdf')}
-            </button>
-            <button className="btn btn-primary btn-sm" onClick={handleCsv} disabled={exporting}>
+            <button className="btn btn-secondary btn-sm" onClick={download('pdf')} disabled={exporting !== null}>
               <Icon name="download" size={15} />
-              {exporting ? t('reportExporting') : t('reportExportCsv')}
+              {exporting === 'pdf' ? t('reportExporting') : t('reportExportPdf')}
+            </button>
+            <button className="btn btn-primary btn-sm" onClick={download('csv')} disabled={exporting !== null}>
+              <Icon name="download" size={15} />
+              {exporting === 'csv' ? t('reportExporting') : t('reportExportCsv')}
             </button>
           </div>
         }

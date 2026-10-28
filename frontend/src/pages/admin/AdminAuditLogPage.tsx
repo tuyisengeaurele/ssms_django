@@ -49,7 +49,7 @@ export default function AdminAuditLogPage() {
   const [entries, setEntries] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const [exporting, setExporting] = useState<'csv' | 'pdf' | null>(null);
   const [meta, setMeta] = useState({ page: 1, pageSize: 25, totalItems: 0, totalPages: 1, hasNext: false, hasPrev: false });
 
   const { draft, applied, set, reset, changed } = useAutoFilters<Filters>(NO_FILTERS);
@@ -75,15 +75,15 @@ export default function AdminAuditLogPage() {
     load(1, applied);
   }, [load, applied]);
 
-  const handleExport = async () => {
-    setExporting(true);
+  const download = (kind: 'csv' | 'pdf') => async () => {
+    setExporting(kind);
     try {
-      await auditLogService.exportCsv(applied);
-      success(t('auExported'));
+      await (kind === 'pdf' ? auditLogService.exportPdf(applied) : auditLogService.exportCsv(applied));
+      success(t(kind === 'pdf' ? 'auExportedPdf' : 'auExported'));
     } catch {
       showError(t('auExportError'));
     } finally {
-      setExporting(false);
+      setExporting(null);
     }
   };
 
@@ -95,10 +95,16 @@ export default function AdminAuditLogPage() {
         title={t('ptAudit')}
         subtitle={loading && entries.length === 0 ? undefined : fill(t(meta.totalItems === 1 ? 'auSummaryOne' : 'auSummary'), { n: meta.totalItems.toLocaleString(locale) })}
         actions={
-          <button className="btn btn-primary btn-sm" onClick={handleExport} disabled={exporting}>
-            <Icon name="download" size={15} />
-            {exporting ? t('auExporting') : t('auExport')}
-          </button>
+          <div className="page-actions">
+            <button className="btn btn-secondary btn-sm" onClick={download('pdf')} disabled={exporting !== null}>
+              <Icon name="download" size={15} />
+              {exporting === 'pdf' ? t('auExporting') : t('auExportPdf')}
+            </button>
+            <button className="btn btn-primary btn-sm" onClick={download('csv')} disabled={exporting !== null}>
+              <Icon name="download" size={15} />
+              {exporting === 'csv' ? t('auExporting') : t('auExport')}
+            </button>
+          </div>
         }
       />
 

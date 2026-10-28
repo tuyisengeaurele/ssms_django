@@ -243,7 +243,7 @@ export const translations: TranslationMap = {
   // ── System report ─────────────────────────────────────────────────────────────
   reportTitle:           { en: 'System Report',              fr: 'Rapport système',                  rw: 'Raporo y\'Uburyo' },
   reportGenerated:       { en: 'Generated at:',              fr: 'Généré le :',                      rw: 'Yakozwe ku :' },
-  reportExportPdf:       { en: 'Print / PDF',                fr: 'Imprimer / PDF',                   rw: 'Fata / PDF' },
+  reportExportPdf:       { en: 'Download PDF',               fr: 'Télécharger le PDF',               rw: 'Kuramo PDF' },
   reportExportCsv:       { en: 'Export CSV',                 fr: 'Exporter CSV',                     rw: 'Kohereza CSV' },
   reportExporting:       { en: 'Preparing',                 fr: 'Export en cours…',                 rw: 'Kohereza…' },
   reportTotalUsers:      { en: 'Total users',                fr: 'Utilisateurs',                     rw: 'Abakoresha Bose' },

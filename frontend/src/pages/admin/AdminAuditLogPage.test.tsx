@@ -11,7 +11,7 @@ const entries = vi.hoisted(() => [
 ]);
 
 const meta = (page: number, totalPages = 1) => ({ page, pageSize: 25, totalItems: 3, totalPages, hasNext: page < totalPages, hasPrev: page > 1 });
-const api = vi.hoisted(() => ({ getList: vi.fn(), exportCsv: vi.fn() }));
+const api = vi.hoisted(() => ({ getList: vi.fn(), exportCsv: vi.fn(), exportPdf: vi.fn() }));
 vi.mock('../../services/admin.service', () => ({ auditLogService: api }));
 
 import AdminAuditLogPage from './AdminAuditLogPage';
@@ -37,6 +37,7 @@ beforeEach(() => {
   setReducedMotion(true);
   api.getList.mockResolvedValue({ data: { data: entries, pagination: meta(1) } });
   api.exportCsv.mockResolvedValue(undefined);
+  api.exportPdf.mockResolvedValue(undefined);
 });
 
 describe('Audit log page', () => {
@@ -131,6 +132,34 @@ describe('Audit log page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
     await waitFor(() => expect(api.exportCsv).toHaveBeenCalledWith({ action: '', resource: '', search: '' }));
     expect(await screen.findByText('Your CSV file is ready.', {}, { timeout: 5000 })).toBeInTheDocument();
+  });
+
+  it('downloads the PDF with the current filters and says so', async () => {
+    open();
+    await screen.findByText('Bruce Ishimwe');
+    fireEvent.click(screen.getByRole('button', { name: 'Export PDF' }));
+    await waitFor(() => expect(api.exportPdf).toHaveBeenCalledWith({ action: '', resource: '', search: '' }));
+    expect(await screen.findByText('Your PDF file is ready.', {}, { timeout: 5000 })).toBeInTheDocument();
+  });
+
+  it('tells the person kindly when the PDF fails', async () => {
+    api.exportPdf.mockRejectedValue(new Error('x'));
+    open();
+    await screen.findByText('Bruce Ishimwe');
+    fireEvent.click(screen.getByRole('button', { name: 'Export PDF' }));
+    expect(await screen.findByText("We couldn't create the file. Please try again.", {}, { timeout: 5000 })).toBeInTheDocument();
+  });
+
+  it('holds both buttons while a file is being made', async () => {
+    let finish: () => void = () => {};
+    api.exportPdf.mockReturnValue(new Promise<void>((resolve) => { finish = resolve; }));
+    open();
+    await screen.findByText('Bruce Ishimwe');
+    fireEvent.click(screen.getByRole('button', { name: 'Export PDF' }));
+    expect(await screen.findByRole('button', { name: 'Preparing' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Export CSV' })).toBeDisabled();
+    finish();
+    expect(await screen.findByRole('button', { name: 'Export PDF' })).toBeEnabled();
   });
 
   it('tells the person kindly when the export fails', async () => {
