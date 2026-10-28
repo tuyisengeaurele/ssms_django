@@ -27,6 +27,12 @@ KEYS = [
     'brPrepared',
     # The farm summary
     'ptFarmSummary', 'fsFarm', 'fsOwner', 'fsRegistered', 'fsRoomCol', 'fsRoomBatchesCol', 'fsRoomsNone', 'fsBatches', 'fsBatchCol', 'fsBatchesNone',
+    # The cooperative report
+    'crTitle', 'crPeriod', 'crAll', 'crSummary', 'crFarms', 'crFarmers', 'crBatchesNow', 'crBatchesStarted',
+    'crHarvest', 'crHarvestNone', 'crChecks', 'crChecksNone', 'crColCount', 'crAlerts', 'crAlertsSum', 'crAlertsSumOne', 'crAlertsNone',
+    'crColType', 'crRisk', 'crRiskNote', 'crColFarm', 'crColLevel', 'crColWhy', 'crEachFarm', 'crColBatches', 'crColKg', 'crColAlerts',
+    'alTypeTemperature', 'alTypeHumidity', 'alTypeDisease', 'alTypeStage', 'alTypeSystem',
+    'fkNoFarms', 'fkHigh', 'fkMedium', 'fkOk', 'fkDisease', 'fkDiseaseOne', 'fkAir', 'fkAirOne', 'fkDevices', 'fkDevicesOne',
 ]
 
 LINE = re.compile(r'^\s*(\w+):\s*k\((.*)\),\s*$')
