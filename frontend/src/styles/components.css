@@ -1054,3 +1054,19 @@ tr.is-off td:last-child { opacity: 1; }
 .thread-form { display: grid; gap: 8px; }
 .thread-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .thread-count { color: var(--text-muted); font-size: 0.8rem; }
+
+/* ── Farm map (supervisor dashboard) ──────────────────────────────────────── */
+.farm-map-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 20px; }
+.farm-map-bar .form-hint { margin: 0; }
+.farm-map-canvas { height: 420px; width: 100%; background: var(--surface-2); }
+.farm-map-card { display: grid; gap: 6px; padding: 14px 20px; border-top: 1px solid var(--border-light); }
+.farm-map-unplaced { padding: 14px 20px; border-top: 1px solid var(--border-light); }
+.farm-map-unplaced-list { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 6px 0 0; padding: 0; list-style: none; }
+.farm-pin-holder { background: none; border: 0; }
+.farm-pin { display: grid; place-items: center; width: 30px; height: 30px; box-sizing: border-box; border: 3px solid #fff; color: #fff; font-weight: 800; font-size: 0.95rem; box-shadow: 0 1px 4px rgba(11, 31, 23, 0.45); }
+.farm-pin--high { background: #b3261e; border-radius: 6px; transform: rotate(45deg); }
+.farm-pin--high::first-line { display: inline-block; }
+.farm-pin--medium { background: #b86e00; border-radius: 50%; }
+.farm-pin--ok { background: #2d6a4f; border-radius: 50%; width: 22px; height: 22px; }
+.farm-pin--approx { border-style: dashed; }
+.leaflet-marker-icon:focus-visible .farm-pin, .leaflet-marker-icon.is-selected .farm-pin { outline: 3px solid var(--ink); outline-offset: 2px; }
