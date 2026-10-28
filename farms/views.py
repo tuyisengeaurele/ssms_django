@@ -13,6 +13,7 @@ from core.pagination import StandardPagination
 from core.utils import api_error, api_success
 
 from .models import Farm
+from .risk import farm_risk
 from .serializers import FarmCreateSerializer, FarmDetailSerializer, FarmSerializer, FarmUpdateSerializer
 from .summary import farm_summary_pdf
 
@@ -55,6 +56,20 @@ class FarmListCreateView(APIView):
         farm.refresh_from_db()
         log_action(request, 'CREATE', 'Farm', farm.pk, f'Created farm: {farm.name}')
         return api_success(FarmSerializer(farm).data, 'Farm created.', 201)
+
+
+class FarmRiskView(APIView):
+    """GET /api/farms/risk, the farms a supervisor or an admin may see, the ones that need a look first at the top.
+
+    Each row says why: disease alerts in the last 14 days, open temperature or humidity problems, and sensors that are
+    offline. See farms/risk.py for the rule.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in ('SUPERVISOR', 'ADMIN'):
+            return api_error("You don't have permission to do that.", 403)
+        return api_success(farm_risk(scope_farms(request.user)))
 
 
 class FarmSummaryView(APIView):
