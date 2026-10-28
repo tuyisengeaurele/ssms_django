@@ -1,12 +1,14 @@
-"""The places of Rwanda, from province down to village, and the sector a point on the map falls in.
+"""The places of Rwanda, from province down to village, and the place a point on the map falls in.
 
-The data lives in two files next to this one, built by scripts/build_locations.py. See locations/README.md for where it
-comes from. Nothing here touches the database: the files are read once and kept in memory.
+The data lives in `data/`, built by scripts/build_locations.py: the places, the outline of every sector, and the
+outlines of the villages, one file for each district. See locations/README.md for where it comes from. Nothing here
+touches the database: a file is read the first time it is needed and kept in memory.
 
 A place is a dict with `code`, `name`, `level` and `parent` (the code of the place above it, None for a province).
 """
 import json
 import math
+from collections.abc import Mapping
 from functools import cache
 from pathlib import Path
 
@@ -48,6 +50,50 @@ def _outlines() -> dict:
         ys = [y for ring in rings for _, y in ring]
         out[code] = (min(xs), min(ys), max(xs), max(ys), rings)
     return out
+
+
+class _VillageOutlines(Mapping):
+    """The village outlines of each sector: (west, south, east, north, village code or '', cell code, rings) rows.
+
+    A district's file is read the first time one of its sectors is asked for, so finding one point reads one small
+    file and not the whole country.
+    """
+
+    def __init__(self):
+        self._districts: dict[str, dict] = {}
+
+    def _district(self, code: str) -> dict:
+        if code not in self._districts:
+            path = DATA / 'villages' / f'{code}.json'
+            raw = json.loads(path.read_text(encoding='utf-8')) if path.exists() else {}
+            rows = {}
+            for sector, entries in raw.items():
+                rows[sector] = []
+                for village, cell, rings in entries:
+                    xs = [x for ring in rings for x, _ in ring]
+                    ys = [y for ring in rings for _, y in ring]
+                    rows[sector].append((min(xs), min(ys), max(xs), max(ys), village, cell, rings))
+            self._districts[code] = rows
+        return self._districts[code]
+
+    def __getitem__(self, sector: str):
+        place = _index()['places'].get(sector)
+        if place is None or place['level'] != 'sector':
+            raise KeyError(sector)
+        return self._district(place['parent'])[sector]
+
+    def __iter__(self):
+        for place in _index()['places'].values():
+            if place['level'] == 'district':
+                yield from self._district(place['code'])
+
+    def __len__(self):
+        return sum(1 for _ in self)
+
+
+@cache
+def _village_outlines() -> Mapping:
+    return _VillageOutlines()
 
 
 def walk():
@@ -127,8 +173,21 @@ def _number(value, low, high) -> float:
     return number
 
 
+def _village_at(sector: str, lng: float, lat: float):
+    """The (village code or '', cell code) of the outline that holds the point, or None."""
+    for west, south, east, north, village, cell, rings in _village_outlines().get(sector, ()):
+        if west <= lng <= east and south <= lat <= north and _inside(lng, lat, rings):
+            return village, cell
+    return None
+
+
 def locate(lat, lng) -> dict | None:
-    """The province, district and sector that contain the point, or None when it is not inside a Rwanda sector."""
+    """The place that contains the point, or None when it is not inside a Rwanda sector.
+
+    It always gives province, district and sector. It adds the cell, and the village when the data is sure which one it
+    is, where the village outlines hold the point. The outlines date from 2012, so a village near a border may be the
+    one next to it: the caller shows the answer and lets the person correct it.
+    """
     lat, lng = _number(lat, -90, 90), _number(lng, -180, 180)
     west, south, east, north = BOX
     if not (west <= lng <= east and south <= lat <= north):
@@ -136,5 +195,13 @@ def locate(lat, lng) -> dict | None:
     for code, (x1, y1, x2, y2, rings) in _outlines().items():
         if x1 <= lng <= x2 and y1 <= lat <= y2 and _inside(lng, lat, rings):
             found = chain(code)
-            return {level: found[level] for level in ('province', 'district', 'sector')}
+            result = {level: found[level] for level in ('province', 'district', 'sector')}
+            deeper = _village_at(code, lng, lat)
+            if deeper:
+                village, cell = deeper
+                below = chain(village or cell)
+                result['cell'] = below['cell']
+                if village:
+                    result['village'] = below['village']
+            return result
     return None

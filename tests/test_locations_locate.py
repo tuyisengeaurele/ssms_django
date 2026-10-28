@@ -21,9 +21,9 @@ def test_a_known_place_is_found_in_its_district(name, lat, lng, district):
     assert found['district']['name'] == district, name
 
 
-def test_a_point_gives_the_whole_chain_down_to_the_sector():
+def test_a_point_gives_the_whole_chain_down_to_the_sector_at_least():
     found = registry.locate(-1.9536, 30.0925)
-    assert set(found) == {'province', 'district', 'sector'}
+    assert set(found) >= {'province', 'district', 'sector'}
     assert found['province']['name'] == 'Kigali City'
     in_district = {c['code'] for c in registry.children(found['district']['code'])}
     assert found['sector']['code'] in in_district
