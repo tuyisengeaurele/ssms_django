@@ -29,7 +29,7 @@
 .toast-success { background: #123524; }
 .toast-error   { background: #6e2419; }
 .toast-warning { background: #5f410d; }
-.toast-icon    { flex-shrink: 0; }
+.toast-info    { background: #17324d; }
 .toast-msg     { flex: 1; }
 
 .toast-close {
