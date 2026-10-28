@@ -69,8 +69,27 @@ class StageThresholdSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StageThreshold
-        fields = ['stage', 'temp_min', 'temp_max', 'hum_min', 'hum_max']
-        read_only_fields = ['stage']
+        fields = ['stage', 'temp_min', 'temp_max', 'hum_min', 'hum_max', 'updated_at', 'updated_by']
+        read_only_fields = ['stage', 'updated_at', 'updated_by']
+
+    updated_by = serializers.SerializerMethodField()
+    updated_at = serializers.SerializerMethodField()
+
+    def get_updated_by(self, obj):
+        user = obj.updated_by
+        return {'id': user.pk, 'name': user.name or user.email} if user else None
+
+    def get_updated_at(self, obj):
+        # A range nobody has changed still has a save time from when it was made, so it is only reported once someone changed it.
+        return obj.updated_at.isoformat() if obj.updated_by_id else None
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Farmers and supervisors do not know about admins, so only an admin is told who changed a range.
+        if not self.context.get('admin'):
+            data.pop('updated_by', None)
+            data.pop('updated_at', None)
+        return data
 
     def validate(self, data):
         if data['temp_min'] >= data['temp_max']:

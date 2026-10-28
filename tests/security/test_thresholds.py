@@ -22,7 +22,11 @@ def test_everyone_signed_in_can_read_the_ranges_in_stage_order(auth_client, role
     assert response.status_code == 200
     rows = response.json()['data']
     assert [r['stage'] for r in rows] == ['EGG', 'LARVA', 'PUPA', 'COCOON', 'HARVEST']
-    assert rows[0] == {'stage': 'EGG', 'tempMin': 22.0, 'tempMax': 28.0, 'humMin': 70.0, 'humMax': 85.0}
+    expected = {'stage': 'EGG', 'tempMin': 22.0, 'tempMax': 28.0, 'humMin': 70.0, 'humMax': 85.0}
+    if role == 'ADMIN':
+        # An admin is also told who last changed a range. Nobody has yet.
+        expected |= {'updatedAt': None, 'updatedBy': None}
+    assert rows[0] == expected
 
 
 def test_signing_in_is_required_to_read(api_client):
