@@ -1,5 +1,34 @@
 # Changelog
 
+## A map of farms for supervisors (Plan 9, item D3, part 2 of 3)
+
+The "Farms that need a look first" panel on the supervisor dashboard has a Map tab: a real map with a pin for each farm, coloured by risk.
+
+### Checked
+- Backend: 1331 tests pass (25 new). Frontend: 999 tests pass (28 new) and `tsc` is clean. No migration.
+- The production build works. The map is its own chunk (154 KB, 45 KB compressed), fetched only when someone opens the Map tab, so the landing page is unchanged at 136 KB of its 250 KB budget.
+- The map is tested with the real Leaflet inside the test browser, but **I have not looked at it in a real browser**, so I have not seen the OpenStreetMap pictures load or the pins on them. Please open the Map tab once.
+- `npm test` still prints the one unhandled error from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+
+### Added
+- **A real map**, using Leaflet and pictures from OpenStreetMap, with its credit line. It opens zoomed to the farms. "Show all of Rwanda" and "Zoom to the farms" switch the view.
+- **A pin for each farm, in its risk colour, and a different shape too**: a diamond with "!" for High, a circle for Medium, a small circle for OK. A pin drawn with a dashed edge means the position is approximate. Colour is never the only difference.
+- **A card for the chosen farm**: its name as a link, owner, level in words, the reasons, and, for an approximate pin, "Placed at the middle of its village. The farmer has not saved an exact position."
+- **Keyboard use.** Every pin can be tabbed to and chosen with Enter or Space. Leaflet's own Enter key only opens popups, so the choosing is done here.
+- **Where each farm goes.** The risk endpoint now gives each farm a `position`: the exact spot its owner saved, else the middle of its village outline, else the middle of its sector, else none. The middle is always a point inside the shape, even for a bent village or one with a hole. It was checked against all 14,802 village outlines. A farm with no place chosen is listed under "Not on the map".
+- **Settings.** `VITE_MAP_TILES_URL` and `VITE_MAP_ATTRIBUTION` choose the map picture provider. Both are empty by default, which means OpenStreetMap. Switching to a paid provider with satellite pictures is a setting and not a rewrite.
+- **The privacy page** has a new section, "The map". It says the browser asks OpenStreetMap for pictures, so OpenStreetMap can see the viewer's IP address and the area being looked at, and is sent no farm name or position, because the pins are drawn in the browser.
+
+### Decided
+- The map is a tab of the existing panel and uses the same ranking data, so it costs no extra request.
+- The list stays the first tab, and it is the version for screen readers and for people who cannot use a map.
+
+### Known limits
+- OpenStreetMap's free server is meant for light use. That is fine for a cooperative-sized project. For a larger launch, use a provider with a key.
+- No satellite view yet, and a farmer cannot set the pin by tapping the map.
+- Pins at the same spot sit on top of each other, with no grouping.
+- The French and Kinyarwanda words of the map are my drafts for a native speaker.
+
 ## A farm keeps its exact position (Plan 9, item D3, part 1 of 3)
 
 "Use my location" now saves the exact spot the farm stands on, so the farm map (the next part) can show it. The farmer can remove it any time.
