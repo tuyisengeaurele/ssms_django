@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PAGES = ROOT / 'frontend' / 'src' / 'i18n' / 'pages.ts'
 OUT = ROOT / 'core' / 'doc_text.py'
 
-# The sentences the batch report uses. Add a key here, then run this script.
+# The sentences the PDF documents use. Add a key here, then run this script.
 KEYS = [
     'ptBatchReport', 'hpSubtitle', 'brBatch',
     'bdStage', 'bdFarm', 'bdPlace', 'bdStarted', 'bdExpected', 'bdBreed', 'bdNotes',
@@ -25,6 +25,8 @@ KEYS = [
     'brAlerts', 'brAlertsNone', 'brAlertsWaiting', 'brAlertsWaitingOne',
     'brHarvest', 'brHarvestNone', 'brHarvestSum', 'brHarvestSumOne', 'hpGradeName',
     'brPrepared',
+    # The farm summary
+    'ptFarmSummary', 'fsFarm', 'fsOwner', 'fsRegistered', 'fsRoomCol', 'fsRoomBatchesCol', 'fsRoomsNone', 'fsBatches', 'fsBatchCol', 'fsBatchesNone',
 ]
 
 LINE = re.compile(r'^\s*(\w+):\s*k\((.*)\),\s*$')

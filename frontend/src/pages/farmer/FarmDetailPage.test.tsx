@@ -9,9 +9,9 @@ const auth = vi.hoisted(() => ({ role: 'FARMER' }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', role: auth.role } }) }));
 
 const api = vi.hoisted(() => ({
-  getById: vi.fn(), update: vi.fn(), remove: vi.fn(), batches: vi.fn(), devices: vi.fn(), deviceById: vi.fn(), deviceCreate: vi.fn(), deviceRemove: vi.fn(), deviceMove: vi.fn(), allFarms: vi.fn(), rooms: vi.fn(),
+  getById: vi.fn(), update: vi.fn(), remove: vi.fn(), batches: vi.fn(), devices: vi.fn(), deviceById: vi.fn(), deviceCreate: vi.fn(), deviceRemove: vi.fn(), deviceMove: vi.fn(), allFarms: vi.fn(), rooms: vi.fn(), download: vi.fn(),
 }));
-vi.mock('../../services/farm.service', () => ({ farmService: { getById: api.getById, update: api.update, delete: api.remove, getAll: api.allFarms } }));
+vi.mock('../../services/farm.service', () => ({ farmService: { getById: api.getById, update: api.update, delete: api.remove, getAll: api.allFarms, downloadSummary: api.download } }));
 vi.mock('../../services/batch.service', () => ({ batchService: { getByFarm: api.batches } }));
 vi.mock('../../services/device.service', () => ({
   deviceService: { getAll: api.devices, getById: api.deviceById, create: api.deviceCreate, remove: api.deviceRemove, moveToRoom: api.deviceMove },
@@ -82,10 +82,54 @@ beforeEach(() => {
     }),
     room('r2', 'Rearing house 2'),
   ] } });
+  api.download.mockResolvedValue(undefined);
   document.title = 'Start';
 });
 
 describe('Farm details page', () => {
+  describe('the summary PDF', () => {
+    it('asks the server for the summary in the language of the screen', async () => {
+      open();
+      await screen.findByRole('heading', { level: 1, name: "Serge's farm" });
+      fireEvent.click(screen.getByRole('button', { name: 'Summary (PDF)' }));
+      await waitFor(() => expect(api.download).toHaveBeenCalledWith('f1', 'en'));
+    });
+
+    it('asks in Kinyarwanda when the screen is Kinyarwanda', async () => {
+      localStorage.setItem('ssms_locale', 'rw');
+      open();
+      await screen.findByRole('heading', { level: 1, name: "Serge's farm" });
+      fireEvent.click(screen.getByRole('button', { name: 'Incamake (PDF)' }));
+      await waitFor(() => expect(api.download).toHaveBeenCalledWith('f1', 'rw'));
+    });
+
+    it.each(['SUPERVISOR', 'ADMIN'])('is there for a %s too, who cannot edit the farm', async (role) => {
+      auth.role = role;
+      open();
+      await screen.findByRole('heading', { level: 1, name: "Serge's farm" });
+      expect(screen.getByRole('button', { name: 'Summary (PDF)' })).toBeInTheDocument();
+    });
+
+    it('holds the button while the file is being made', async () => {
+      let finish: () => void = () => {};
+      api.download.mockReturnValue(new Promise<void>((resolve) => { finish = resolve; }));
+      open();
+      await screen.findByRole('heading', { level: 1, name: "Serge's farm" });
+      fireEvent.click(screen.getByRole('button', { name: 'Summary (PDF)' }));
+      expect(await screen.findByRole('button', { name: 'Preparing' })).toBeDisabled();
+      finish();
+      expect(await screen.findByRole('button', { name: 'Summary (PDF)' })).toBeEnabled();
+    });
+
+    it('tells the person kindly when the summary cannot be made', async () => {
+      api.download.mockRejectedValue(new Error('x'));
+      open();
+      await screen.findByRole('heading', { level: 1, name: "Serge's farm" });
+      fireEvent.click(screen.getByRole('button', { name: 'Summary (PDF)' }));
+      expect(await screen.findByText("We couldn't create the summary. Please try again.", {}, { timeout: 5000 })).toBeInTheDocument();
+    });
+  });
+
   it('names the farm, says where it is and sets the tab title', async () => {
     open();
     expect(await screen.findByRole('heading', { level: 1, name: "Serge's farm" })).toBeInTheDocument();

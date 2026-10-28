@@ -7,13 +7,14 @@ from rest_framework.views import APIView
 from alerts.models import AlertLog, AlertType
 from audit_log.utils import log_action
 from core.access import get_batch_or_404, get_farm_or_404, scope_batches
+from core.doc_format import clean_lang
 from core.utils import api_error, api_success
 from farms.models import RearingRoom
 
 from .models import Batch
 from .placement import leave_room, place_batch
 from .queries import with_counts
-from .report import batch_report_pdf, clean_lang
+from .report import batch_report_pdf
 from .serializers import (
     BatchCreateSerializer,
     BatchDetailSerializer,

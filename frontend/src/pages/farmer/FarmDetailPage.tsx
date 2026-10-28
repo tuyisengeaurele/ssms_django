@@ -33,6 +33,7 @@ export default function FarmDetailPage() {
   const { success, error: showError } = useToast();
   const navigate = useNavigate();
 
+  const [downloading, setDownloading] = useState(false);
   const [farm, setFarm] = useState<Farm | null>(null);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [devices, setDevices] = useState<IoTDevice[]>([]);
@@ -81,6 +82,18 @@ export default function FarmDetailPage() {
 
   const canEdit = user?.role === 'FARMER' || user?.role === 'ADMIN';
   const canManage = user?.role === 'ADMIN' || user?.role === 'SUPERVISOR';
+
+  const downloadSummary = async () => {
+    if (!id) return;
+    setDownloading(true);
+    try {
+      await farmService.downloadSummary(id, locale);
+    } catch {
+      showError(t('fdSummaryError'));
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const openEdit = () => {
     if (!farm) return;
@@ -310,6 +323,10 @@ export default function FarmDetailPage() {
                 {t('fdNewBatch')}
               </Link>
             )}
+            <button onClick={downloadSummary} disabled={downloading} className="btn btn-secondary btn-sm">
+              <Icon name="download" size={15} />
+              {downloading ? t('reportExporting') : t('fdSummaryPdf')}
+            </button>
             {canEdit && <button onClick={openEdit} className="btn btn-secondary btn-sm"><Icon name="edit" size={15} />{t('fdEdit')}</button>}
             {canEdit && <button onClick={() => setShowDelete(true)} className="btn btn-ghost btn-sm btn-quiet-danger"><Icon name="remove" size={15} />{t('fdDelete')}</button>}
             <Link to="/farms" className="btn btn-ghost btn-sm"><Icon name="back" size={15} />{t('afBack')}</Link>

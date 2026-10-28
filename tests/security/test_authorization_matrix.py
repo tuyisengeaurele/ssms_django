@@ -78,6 +78,7 @@ ROWS = [
     reading_row('batch detail', lambda w: f'/api/batches/{w.batch.pk}'),
     reading_row('batches of a farm', lambda w: f'/api/batches/farm/{w.farm.pk}'),
     reading_row('farm detail', lambda w: f'/api/farms/{w.farm.pk}'),
+    reading_row('farm summary PDF', lambda w: f'/api/farms/{w.farm.pk}/summary'),
     reading_row('readings of a batch', lambda w: f'/api/sensors/batch/{w.batch.pk}'),
     reading_row('batch report PDF', lambda w: f'/api/batches/{w.batch.pk}/report'),
     reading_row('readings of a batch over time', lambda w: f'/api/sensors/batch/{w.batch.pk}/series'),

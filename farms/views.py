@@ -1,4 +1,6 @@
 from django.db.models import Prefetch
+from django.http import HttpResponse
+from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
@@ -6,11 +8,13 @@ from audit_log.utils import log_action
 from batches.models import Batch
 from batches.queries import with_counts
 from core.access import get_farm_or_404, scope_farms
+from core.doc_format import clean_lang
 from core.pagination import StandardPagination
 from core.utils import api_error, api_success
 
 from .models import Farm
 from .serializers import FarmCreateSerializer, FarmDetailSerializer, FarmSerializer, FarmUpdateSerializer
+from .summary import farm_summary_pdf
 
 
 def _with_active_batches():
@@ -51,6 +55,21 @@ class FarmListCreateView(APIView):
         farm.refresh_from_db()
         log_action(request, 'CREATE', 'Farm', farm.pk, f'Created farm: {farm.name}')
         return api_success(FarmSerializer(farm).data, 'Farm created.', 201)
+
+
+class FarmSummaryView(APIView):
+    """GET /api/farms/<id>/summary?lang=en|fr|rw, the farm summary as a PDF on the SSMS letterhead.
+
+    Anyone who may see the farm may ask for it. The name on the document is the person who asked.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        farm = get_farm_or_404(request.user, pk)
+        pdf = farm_summary_pdf(farm, request.user.name or request.user.email, clean_lang(request.query_params.get('lang')))
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="farm_summary_{farm.pk[-8:].upper()}_{timezone.now():%Y-%m-%d}.pdf"'
+        return response
 
 
 class FarmDetailView(APIView):
