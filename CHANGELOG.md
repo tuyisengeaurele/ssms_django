@@ -5,7 +5,7 @@
 The system report and the audit log can now be downloaded as PDF documents that look like they came from one organisation: logo, name, title, a footer with the address and contact details, who made the document and when, and "Page x of y" on every page.
 
 ### Checked
-- Backend: all tests pass (59 new). Frontend: 887 tests pass and `tsc` is clean. No migration.
+- Backend: 1090 tests pass (40 new). Frontend: 887 tests pass (16 new) and `tsc` is clean. No migration.
 - I looked at the rendered pages of a sample report and audit log, made from sample numbers, and the layout is clean. I have not downloaded one from the running app in a browser.
 - `npm test` prints one "unhandled error" from `SupervisorFarmersPage.test.tsx` ("sends the address when one is typed", Invalid time value). It happens on `master` too and is not from this work. All its tests pass.
 
