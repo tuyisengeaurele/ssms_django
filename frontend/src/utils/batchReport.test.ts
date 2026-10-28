@@ -32,6 +32,12 @@ describe('summariseConditions', () => {
     expect(s.inRangePct).toBe(50);
   });
 
+  it('counts a bucket as the hours it covers', () => {
+    const points = [point(24, 80), point(24, 80), point(24, 80), point(24, 80)];
+    expect(summariseConditions(points, range, 6)!.hours).toBe(24);
+    expect(summariseConditions(points, range)!.hours).toBe(4);
+  });
+
   it('counts the edges of the range as inside', () => {
     expect(summariseConditions([point(22, 70), point(28, 85)], range)!.inRangePct).toBe(100);
   });

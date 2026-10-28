@@ -14,7 +14,7 @@ export interface Conditions {
   humMin: number;
   humAvg: number;
   humMax: number;
-  /** How many hourly points the figures rest on. */
+  /** How many hours the figures cover. */
   hours: number;
   /** The share of those hours with both temperature and humidity inside the range, 0 to 100. */
   inRangePct: number;
@@ -22,8 +22,11 @@ export interface Conditions {
 
 const oneDecimal = (n: number) => Math.round(n * 10) / 10;
 
-/** The lowest, average and highest of an hourly series, for the printed report. Null when there is nothing to sum up. */
-export function summariseConditions(points: SeriesPoint[], range: SafeRange): Conditions | null {
+/**
+ * The lowest, average and highest of a series, for the printed report. Null when there is nothing to sum up.
+ * A point stands for `bucketHours` hours, because a month comes in six hour buckets.
+ */
+export function summariseConditions(points: SeriesPoint[], range: SafeRange, bucketHours = 1): Conditions | null {
   if (points.length === 0) return null;
 
   // An hour that holds more readings counts for more, and a bucket that reports none still counts once.
@@ -44,7 +47,7 @@ export function summariseConditions(points: SeriesPoint[], range: SafeRange): Co
     humMin: Math.min(...hums),
     humAvg: oneDecimal(average((p) => p.humidity)),
     humMax: Math.max(...hums),
-    hours: points.length,
+    hours: points.length * bucketHours,
     inRangePct: Math.round((inside / points.length) * 100),
   };
 }
