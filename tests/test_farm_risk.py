@@ -305,3 +305,62 @@ def test_the_number_of_queries_does_not_grow_with_the_number_of_farms(auth_clien
         device(extra)
     assert cost(client) == few
     assert IoTDevice.objects.count() == 11
+
+
+# ── where each farm goes on the map ─────────────────────────────────────────
+
+def codes_of(village):
+    from locations import registry
+    chain = registry.chain(village)
+    return {f'{level}_code': chain[level]['code'] for level in ('province', 'district', 'sector', 'cell', 'village')}
+
+
+def a_village(with_outline=True):
+    from locations import registry
+    have = {village for rows in registry._village_outlines().values() for *_, village, _cell, _rings in rows if village}
+    return next(p['code'] for p in registry.walk() if p['level'] == 'village' and ((p['code'] in have) == with_outline))
+
+
+def test_a_farm_with_an_exact_position_is_placed_there(auth_client, supervisor, owner):
+    FarmFactory(owner=owner, name='Pinned', latitude=-1.60123, longitude=30.40123)
+    row = ranking(auth_client(supervisor))[0]
+    assert row['position'] == {'lat': -1.60123, 'lng': 30.40123, 'precision': 'exact'}
+
+
+def test_a_farm_without_a_position_is_placed_at_the_middle_of_its_village(auth_client, supervisor, owner):
+    from locations import registry
+    village = a_village(with_outline=True)
+    FarmFactory(owner=owner, name='In a village', **codes_of(village))
+    row = ranking(auth_client(supervisor))[0]
+    centre = registry.village_centre(village)
+    assert row['position'] == {'lat': centre['lat'], 'lng': centre['lng'], 'precision': 'village'}
+
+
+def test_a_village_without_an_outline_falls_back_to_the_middle_of_its_sector(auth_client, supervisor, owner):
+    from locations import registry
+    village = a_village(with_outline=False)
+    codes = codes_of(village)
+    FarmFactory(owner=owner, name='Sector only', **codes)
+    row = ranking(auth_client(supervisor))[0]
+    centre = registry.sector_centre(codes['sector_code'])
+    assert row['position'] == {'lat': centre['lat'], 'lng': centre['lng'], 'precision': 'sector'}
+
+
+def test_an_exact_position_beats_the_village(auth_client, supervisor, owner):
+    FarmFactory(owner=owner, name='Both', latitude=-1.60123, longitude=30.40123, **codes_of(a_village()))
+    assert ranking(auth_client(supervisor))[0]['position']['precision'] == 'exact'
+
+
+def test_a_farm_from_before_places_has_no_position(auth_client, supervisor, owner):
+    FarmFactory(owner=owner, name='Old', location='Near the old market')
+    assert ranking(auth_client(supervisor))[0]['position'] is None
+
+
+def test_half_a_position_is_not_used(auth_client, supervisor, owner):
+    FarmFactory(owner=owner, name='Half', latitude=-1.6, longitude=None)
+    assert ranking(auth_client(supervisor))[0]['position'] is None
+
+
+def test_the_position_is_given_to_supervisors_and_admins_only(auth_client, owner):
+    FarmFactory(owner=owner, name='Pinned', latitude=-1.60123, longitude=30.40123)
+    assert auth_client(owner).get(URL).status_code == 403
