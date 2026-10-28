@@ -5,7 +5,7 @@
 A farm can be summed up on a few pages of letterhead, in the language of the screen. This finishes item K: emails, system documents, and now the farmer's own documents all share one look.
 
 ### Checked
-- Backend: 1167 tests pass (31 new). Frontend: 899 tests pass (6 new) and `tsc` is clean. No migration.
+- Backend: 1167 tests pass (31 new). Frontend: 908 tests pass (15 new) and `tsc` is clean. No migration.
 - I looked at the rendered page of a French summary made from sample data and the layout is clean. I have not downloaded one from the running app in a browser.
 - The one "unhandled error" that `npm test` prints (`SupervisorFarmersPage`) is still the old one from `master`.
 
@@ -17,8 +17,10 @@ A farm can be summed up on a few pages of letterhead, in the language of the scr
 
 ### Changed
 - Number, date and language helpers for the PDFs moved from `batches/report.py` into `core/doc_format.py`, so both documents share them.
+- **Toasts show no symbol any more.** An error toast had two crosses, one for the error and one to close it. Now every toast is its message and a close cross, and the kind is told by its colour: green for success, red for an error, amber for a warning and slate blue for a note. The success tick is gone too.
 
 ### Known limits
+- A toast is no longer announced by its symbol, and it is not announced to a screen reader at all yet. That is the same as before, and worth its own small change.
 - Stage names stay English in every language, as on the screen.
 - The French and Kinyarwanda words for "Owner", "Registered", "Room", "Batches now" and the table headings are my drafts for a native speaker.
 - The farm summary lists every active batch. A farm with a very long history runs over several numbered pages.
