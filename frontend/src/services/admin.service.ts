@@ -1,4 +1,5 @@
 import api from './api';
+import { downloadFile } from './download';
 import { ApiResponse, User, Role } from '../types';
 
 export interface CreateUserPayload {
@@ -66,6 +67,15 @@ export const auditLogService = {
     return api.get<{ success: boolean; data: AuditLogEntry[]; pagination: { page: number; pageSize: number; totalItems: number; totalPages: number; hasNext: boolean; hasPrev: boolean } }>(`/admin/audit-log?${q.toString()}`);
   },
 
+  /** The audit log as a PDF on the SSMS letterhead, with the same filters as the screen. */
+  exportPdf: (params: { action?: string; resource?: string; search?: string }): Promise<void> => {
+    const query: Record<string, string> = { export: 'pdf' };
+    if (params.action)   query.action   = params.action;
+    if (params.resource) query.resource = params.resource;
+    if (params.search)   query.search   = params.search;
+    return downloadFile('/admin/audit-log', query, 'audit_log.pdf');
+  },
+
   exportCsv: async (params: { action?: string; resource?: string; search?: string }): Promise<void> => {
     const q = new URLSearchParams({ export: 'csv' });
     if (params.action)   q.set('action',   params.action);
@@ -89,6 +99,9 @@ export const auditLogService = {
 export const reportService = {
   getSummary: () =>
     api.get<ApiResponse<ReportSummary>>('/admin/reports'),
+
+  /** The system report as a PDF on the SSMS letterhead. */
+  exportPdf: (): Promise<void> => downloadFile('/admin/reports', { export: 'pdf' }, 'ssms_report.pdf'),
 
   exportCsv: async (): Promise<void> => {
     const base  = (import.meta.env.VITE_API_BASE_URL as string) ?? '/api';

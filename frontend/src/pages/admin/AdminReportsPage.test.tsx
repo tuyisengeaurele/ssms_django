@@ -23,7 +23,7 @@ const summary = vi.hoisted(() => ({
   topFarmers: [{ name: 'Mugisha Serge', email: 'serge@gmail.com', farmCount: 2 }, { name: 'Bruce Ishimwe', email: 'bruce@gmail.com', farmCount: 1 }],
 }));
 
-const api = vi.hoisted(() => ({ getSummary: vi.fn(), exportCsv: vi.fn() }));
+const api = vi.hoisted(() => ({ getSummary: vi.fn(), exportCsv: vi.fn(), exportPdf: vi.fn() }));
 vi.mock('../../services/admin.service', () => ({ reportService: api }));
 
 import AdminReportsPage from './AdminReportsPage';
@@ -48,6 +48,7 @@ beforeEach(() => {
   setReducedMotion(true);
   api.getSummary.mockResolvedValue({ data: { data: summary } });
   api.exportCsv.mockResolvedValue(undefined);
+  api.exportPdf.mockResolvedValue(undefined);
 });
 
 const tile = (label: string) => screen.getByText(label).closest('.stat-tile') as HTMLElement;
@@ -139,14 +140,42 @@ describe('System report page', () => {
     expect(screen.getByText('No activity in the last 30 days.')).toBeInTheDocument();
   });
 
-  it('prints and exports', async () => {
+  it('downloads the letterhead PDF and the CSV', async () => {
+    open();
+    await screen.findByText('Total users');
+    fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }));
+    await waitFor(() => expect(api.exportPdf).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
+    await waitFor(() => expect(api.exportCsv).toHaveBeenCalled());
+  });
+
+  it('no longer offers the browser print dialog as the PDF', async () => {
     const print = vi.spyOn(window, 'print').mockImplementation(() => {});
     open();
     await screen.findByText('Total users');
-    fireEvent.click(screen.getByRole('button', { name: 'Print / PDF' }));
-    expect(print).toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
-    await waitFor(() => expect(api.exportCsv).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }));
+    await waitFor(() => expect(api.exportPdf).toHaveBeenCalled());
+    expect(print).not.toHaveBeenCalled();
+  });
+
+  it('holds both buttons while a file is being made', async () => {
+    let finish: () => void = () => {};
+    api.exportPdf.mockReturnValue(new Promise<void>((resolve) => { finish = resolve; }));
+    open();
+    await screen.findByText('Total users');
+    fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }));
+    expect(await screen.findByRole('button', { name: 'Preparing' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Export CSV' })).toBeDisabled();
+    finish();
+    expect(await screen.findByRole('button', { name: 'Download PDF' })).toBeEnabled();
+  });
+
+  it('tells the person kindly when the PDF cannot be made', async () => {
+    api.exportPdf.mockRejectedValue(new Error('x'));
+    open();
+    await screen.findByText('Total users');
+    fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }));
+    expect(await screen.findByText("We couldn't create the PDF file. Please try again.", {}, { timeout: 5000 })).toBeInTheDocument();
   });
 
   it('tells the person kindly when the CSV cannot be made', async () => {

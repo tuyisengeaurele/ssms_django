@@ -239,6 +239,8 @@ export const pageTranslations = {
   auSummary: k("{n} recorded events.", "{n} événements enregistrés.", "Ibikorwa {n} byanditswe."),
   auExport: k("Export CSV", "Exporter en CSV", "Sohora CSV"),
   auExporting: k("Preparing", "Préparation", "Birategurwa"),
+  auExportPdf: k("Export PDF", "Exporter en PDF", "Sohora PDF"),
+  auExportedPdf: k("Your PDF file is ready.", "Votre fichier PDF est prêt.", "Dosiye yawe ya PDF irateguye."),
   auExported: k("Your CSV file is ready.", "Votre fichier CSV est prêt.", "Dosiye yawe ya CSV irateguye."),
   auExportError: k("We couldn't create the file. Please try again.", "Nous n'avons pas pu créer le fichier. Veuillez réessayer.", "Ntitwabashije gukora dosiye. Ongera ugerageze."),
   auLoadError: k("We couldn't load the audit log. Please try again.", "Nous n'avons pas pu charger le journal d'audit. Veuillez réessayer.", "Ntitwabashije kubona ibitabo by'ibikorwa. Ongera ugerageze."),
@@ -289,6 +291,7 @@ export const pageTranslations = {
   rpColEmail: k("Email", "E-mail", "Imeyili"),
   rpColFarms: k("Farms", "Fermes", "Amahindu"),
   rpLoadError: k("We couldn't load the report data. Please try again.", "Nous n'avons pas pu charger les données du rapport. Veuillez réessayer.", "Ntitwabashije kubona amakuru y'raporo. Ongera ugerageze."),
+  rpPdfError: k("We couldn't create the PDF file. Please try again.", "Nous n'avons pas pu créer le fichier PDF. Veuillez réessayer.", "Ntitwabashije gukora dosiye ya PDF. Ongera ugerageze."),
   rpCsvError: k("We couldn't create the CSV file. Please try again.", "Nous n'avons pas pu créer le fichier CSV. Veuillez réessayer.", "Ntitwabashije gukora dosiye ya CSV. Ongera ugerageze."),
   // Alerts page
   alUnreadMany: k("{n} unread", "{n} non lues", "{n} bitasomwe"),
