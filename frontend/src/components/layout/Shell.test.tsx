@@ -53,7 +53,7 @@ describe('Sidebar for an administrator', () => {
       'Dashboard', 'System overview',
       'Users', 'Cooperatives', 'Messages',
       'Farms', 'Harvests', 'Detection reports', 'Devices',
-      'Alerts', 'Cooperative report', 'Audit log', 'System report', 'Safe ranges',
+      'Alerts', 'Cooperative report', 'Audit log', 'System report', 'Safe ranges', 'System health',
     ]);
   });
 

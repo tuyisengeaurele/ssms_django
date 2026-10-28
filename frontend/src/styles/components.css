@@ -1078,3 +1078,15 @@ tr.is-off td:last-child { opacity: 1; }
 .range-pair { display: inline-flex; align-items: center; gap: 8px; color: var(--text-muted); }
 .form-input--number { width: 84px; }
 .form-hint.is-problem { margin: 0 0 6px; color: var(--danger); }
+
+/* ── System health (admin) ────────────────────────────────────────────────── */
+.health-list { margin: 0; padding: 0; list-style: none; }
+.health-list > li { padding: 14px 24px; }
+.health-list > li + li { border-top: 1px solid var(--border-light); }
+.health-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.health-title { margin: 0; font: 600 1rem var(--font-ui); }
+.health-message { margin: 4px 0 0; color: var(--text-muted); }
+.health-when { color: inherit; font-size: 0.875rem; }
+.health-numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin: 0; }
+.health-numbers dt { color: var(--text-muted); font-size: 0.875rem; }
+.health-numbers dd { margin: 4px 0 0; font: 600 1.75rem var(--font-display, var(--font-ui)); }
