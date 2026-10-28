@@ -105,6 +105,7 @@ function getNavGroups(role: Role | undefined, alertCount: number, t: (k: string)
           coopReport,
           { to: '/admin/audit-log', label: t('ptAudit'), icon: 'audit' },
           { to: '/admin/reports', label: t('ptSystemReport'), icon: 'systemReport' },
+          { to: '/admin/thresholds', label: t('ptThresholds'), icon: 'settings' },
         ],
       },
     ];

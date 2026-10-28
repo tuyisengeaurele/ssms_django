@@ -1073,3 +1073,8 @@ tr.is-off td:last-child { opacity: 1; }
 .farm-pin--ok { background: #2d6a4f; border-radius: 50%; width: 22px; height: 22px; }
 .farm-pin--approx { border-style: dashed; }
 .leaflet-marker-icon:focus-visible .farm-pin, .leaflet-marker-icon.is-selected .farm-pin { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+/* ── Safe ranges (admin) ──────────────────────────────────────────────────── */
+.range-pair { display: inline-flex; align-items: center; gap: 8px; color: var(--text-muted); }
+.form-input--number { width: 84px; }
+.form-hint.is-problem { margin: 0 0 6px; color: var(--danger); }

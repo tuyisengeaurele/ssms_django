@@ -41,6 +41,10 @@ export const alertService = {
   deleteComment: (id: string, commentId: string) =>
     api.delete<ApiResponse<null>>(`/alerts/${id}/comments/${commentId}`),
 
+  /** PUT /api/alerts/thresholds/<stage>, change the safe range of one stage. Admin only. */
+  updateThreshold: (stage: string, range: { tempMin: number; tempMax: number; humMin: number; humMax: number }) =>
+    api.put<ApiResponse<StageRange>>(`/alerts/thresholds/${stage}`, range),
+
   /** GET /api/alerts/thresholds, the safe range of every stage */
   getThresholds: () =>
     api.get<ApiResponse<StageRange[]>>('/alerts/thresholds'),
