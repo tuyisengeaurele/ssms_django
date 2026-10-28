@@ -26,6 +26,7 @@ export const ROLE_LABEL_KEY: Record<Role, string> = {
 
 function getNavGroups(role: Role | undefined, alertCount: number, t: (k: string) => string): NavGroup[] {
   const alerts: NavItem = { to: '/alerts', label: t('ptAlerts'), icon: 'alerts', badge: alertCount };
+  const coopReport: NavItem = { to: '/reports/cooperative', label: t('ptCoopReport'), icon: 'activity' };
 
   if (role === 'FARMER') {
     return [
@@ -67,7 +68,7 @@ function getNavGroups(role: Role | undefined, alertCount: number, t: (k: string)
           { to: '/devices', label: t('ptDevices'), icon: 'devices' },
         ],
       },
-      { label: t('navGroupMonitoring'), items: [alerts] },
+      { label: t('navGroupMonitoring'), items: [alerts, coopReport] },
     ];
   }
 
@@ -101,6 +102,7 @@ function getNavGroups(role: Role | undefined, alertCount: number, t: (k: string)
         label: t('navGroupSystem'),
         items: [
           alerts,
+          coopReport,
           { to: '/admin/audit-log', label: t('ptAudit'), icon: 'audit' },
           { to: '/admin/reports', label: t('ptSystemReport'), icon: 'systemReport' },
         ],

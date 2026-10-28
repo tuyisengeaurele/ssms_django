@@ -35,6 +35,23 @@ export interface User {
   updatedAt: string;
 }
 
+/** The cooperative report for a range of dates. See reports/coop.py. */
+export interface CoopReport {
+  generatedAt: string;
+  /** Null when the report covers every cooperative. */
+  cooperative: { id: string; name: string } | null;
+  period: { from: string; to: string };
+  totals: { farms: number; farmers: number; batchesRunning: number; batchesStarted: number };
+  harvest: { records: number; totalKg: number; silkG: number; byGrade: { grade: string; count: number; totalKg: number }[] };
+  checks: { total: number; found: number; byResult: { result: string; count: number }[] };
+  alerts: { total: number; acknowledged: number; resolved: number; byType: { type: string; count: number }[] };
+  /** Ranked by risk today. The level is not for the period. */
+  farms: {
+    id: string; name: string; ownerName: string; location: string; level: 'HIGH' | 'MEDIUM' | 'OK'; score: number;
+    diseaseAlerts: number; openAirAlerts: number; offlineDevices: number; activeBatches: number; harvestKg: number; alerts: number;
+  }[];
+}
+
 /** One farm in the supervisor's ranking, with the counts behind its level. See farms/risk.py for the rule. */
 export interface FarmRisk {
   id: string;

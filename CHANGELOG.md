@@ -1,5 +1,40 @@
 # Changelog
 
+## The cooperative report (Plan 9, item D3, part 3 of 3)
+
+Supervisors and admins can see what happened on the farms of a cooperative between two dates, and download it as a PDF or a CSV. This finishes D3.
+
+### Checked
+- Backend: 1386 tests pass (55 new). Frontend: 1026 tests pass (27 new) and `tsc` is clean. No migration.
+- I looked at a rendered French report made from sample data, and the layout is clean. I have not opened the page in a browser or downloaded a file from the running app.
+- `npm test` still prints the one unhandled error from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+
+### Added
+- **A "Cooperative report" page** in the menu of supervisors and admins. It opens on the last 30 days. Changing a date reloads by itself, and "Reset" appears only after a change. An admin can also choose one cooperative or all of them. A supervisor always gets their own cooperative.
+- **What it shows, for the dates chosen:**
+  - farms, farmers with a farm, batches running now and batches started in the period;
+  - harvest: records, kg of cocoons, silk, and the grade counts;
+  - disease checks by result;
+  - alerts by type, with how many were acknowledged and resolved;
+  - every farm ranked by risk, with the level in words and the reasons;
+  - a table per farm: batches running, cocoons in kg and alerts.
+- **Download PDF** on the SSMS letterhead, in English, French or Kinyarwanda, with the words taken from the screens' translations. **Export CSV** has the same numbers as plain rows, safe against spreadsheet formulas.
+- **`GET /api/reports/cooperative`** with `from`, `to`, `cooperative` (admins), `export=csv|pdf` and `lang`. Each day is counted from its first second to its last. Dates are checked with kind messages: not a date, an end before the start, and more than one year.
+- **A download is written to the audit log**, with who, the cooperative and the dates. Looking at the numbers on screen is not.
+- The cost does not grow with the number of farms: the same number of queries for 3 farms or 80, and a test checks it.
+
+### Decided
+- The risk levels in the report are how each farm stands **today**, not for the period, because the rule looks at the last 14 days and at sensors now. The report says so in one sentence, on the screen and in the PDF.
+- The farms' **exact positions are left out** of the report and its downloads. They are for the map, not for a document that gets passed around.
+- A supervisor without a cooperative gets a kind message, not an empty report. A farmer is refused.
+- The period counts days in the server's time zone (UTC).
+
+### Known limits
+- The PDF lists every farm of the cooperative. A cooperative with hundreds of farms makes a long document, with numbered pages.
+- Nothing is cached. Each preview and each download works the report out again.
+- The CSV is in English, like the other CSV exports.
+- The French and Kinyarwanda words of the report and the page are my drafts for a native speaker.
+
 ## A map of farms for supervisors (Plan 9, item D3, part 2 of 3)
 
 The "Farms that need a look first" panel on the supervisor dashboard has a Map tab: a real map with a pin for each farm, coloured by risk.

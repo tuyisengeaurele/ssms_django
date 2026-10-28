@@ -73,6 +73,13 @@ def gone_row(name, url):
 
 FARMER_WRITE_DENIED = SUPERVISORS  # supervisors are refused on role before scope is even looked at
 
+def cooperative_report_expectation():
+    """Supervisors and admins get it, farmers are refused, and a supervisor with no cooperative is told so (422)."""
+    table = expect({'supervisor_a', 'supervisor_b', 'admin'}, role_denied=FARMERS)
+    table['supervisor_no_coop'] = 422
+    return table
+
+
 ROWS = [
     # ── reading something that hangs off a batch or farm ──────────────────────────────────────
     reading_row('batch detail', lambda w: f'/api/batches/{w.batch.pk}'),
@@ -164,6 +171,8 @@ ROWS = [
         expect(OWNER_SIDE), body=lambda w: {'isCorrect': True}),
     Row('say so for a check on a deleted batch', 'POST', lambda w: f'/api/detections/{w.dead_batch_records.detection.pk}/feedback',
         expect(NOBODY), body=lambda w: {'isCorrect': True}),
+    Row('cooperative report', 'GET', lambda w: '/api/reports/cooperative?from=2026-03-01&to=2026-03-31', cooperative_report_expectation()),
+    Row('cooperative report as a PDF', 'GET', lambda w: '/api/reports/cooperative?from=2026-03-01&to=2026-03-31&export=pdf', cooperative_report_expectation()),
     Row('acknowledge an alert', 'POST', lambda w: f'/api/alerts/{w.alert.pk}/acknowledge',
         expect({'supervisor_a', 'admin'}, role_denied=FARMERS)),
     Row('take back an acknowledgement', 'DELETE', lambda w: f'/api/alerts/{w.alert.pk}/acknowledge',
