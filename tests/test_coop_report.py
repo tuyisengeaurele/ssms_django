@@ -1,6 +1,7 @@
 """The cooperative report: one cooperative (or every one, for an admin) over a range of dates, as numbers, CSV or PDF."""
 import io
-from datetime import date, datetime, timedelta, timezone as dt_timezone
+from datetime import date, datetime, timedelta
+from datetime import timezone as dt_timezone
 from decimal import Decimal
 
 import pytest
