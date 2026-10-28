@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { alertService } from '../../services/alert.service';
 import { AlertLog, AlertType } from '../../types';
 import { useApiError } from '../../hooks/useApiError';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
@@ -16,11 +17,13 @@ import PageHeader from '../../components/ui/PageHeader';
 import Pagination from '../../components/ui/Pagination';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
+import AlertThread from './AlertThread';
 
 const PAGE_SIZE = 15;
 
 export default function AlertsPage() {
   const { getErrorMessage } = useApiError();
+  const { user } = useAuth();
   const { success, error: showError } = useToast();
   const { t, locale } = useLanguage();
 
@@ -31,6 +34,9 @@ export default function AlertsPage() {
   const [page, setPage] = useState(1);
   const [markingAll, setMarkingAll] = useState(false);
   const [askAll, setAskAll] = useState(false);
+  // The alerts whose comments are open.
+  const [openThreads, setOpenThreads] = useState<Record<string, boolean>>({});
+  const canAcknowledge = user?.role === 'SUPERVISOR' || user?.role === 'ADMIN';
 
   useEffect(() => {
     setLoading(true);
@@ -51,6 +57,20 @@ export default function AlertsPage() {
       showError(getErrorMessage(e));
     }
   };
+
+  const handleAcknowledge = async (id: string, undo = false) => {
+    try {
+      const res = await (undo ? alertService.unacknowledge(id) : alertService.acknowledge(id));
+      const { acknowledgedBy, acknowledgedAt } = res.data.data;
+      setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, acknowledgedBy: acknowledgedBy ?? null, acknowledgedAt: acknowledgedAt ?? null } : a)));
+      success(t(undo ? 'acRemoved' : 'acAcknowledged'));
+    } catch {
+      showError(t('acAckError'));
+    }
+  };
+
+  const changeCount = (id: string, delta: number) =>
+    setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, commentCount: Math.max(0, (a.commentCount ?? 0) + delta) } : a)));
 
   const handleMarkUnread = async (id: string) => {
     try {
@@ -155,6 +175,7 @@ export default function AlertsPage() {
           <ul className="alert-feed">
             {pageItems.map((a) => (
               <li key={a.id} className={a.isRead ? 'is-read' : ''}>
+                <div className="alert-feed-row">
                 <div className="alert-feed-main">
                   <p className="alert-feed-message">{a.message}</p>
                   <p className="alert-feed-meta">
@@ -174,10 +195,33 @@ export default function AlertsPage() {
                     ))}
                     <span>{timeAgo(a.createdAt, locale)}</span>
                   </p>
+                  {a.acknowledgedBy && a.acknowledgedAt && (
+                    <p className="alert-feed-ack">{fill(t('acBy'), { name: a.acknowledgedBy.name, when: timeAgo(a.acknowledgedAt, locale) })}</p>
+                  )}
                 </div>
-                {!a.isRead && (
-                  <button className="btn btn-ghost btn-xs" onClick={() => handleMarkRead(a.id)}>{t('alMarkRead')}</button>
-                )}
+                <div className="alert-feed-actions">
+                  {canAcknowledge && (
+                    a.acknowledgedBy?.id === user?.id ? (
+                      <button className="btn btn-ghost btn-xs" onClick={() => handleAcknowledge(a.id, true)}>{t('acUndo')}</button>
+                    ) : (
+                      <button className="btn btn-ghost btn-xs" onClick={() => handleAcknowledge(a.id)}>
+                        {t(a.acknowledgedBy ? 'acTakeOver' : 'acAcknowledge')}
+                      </button>
+                    )
+                  )}
+                  <button
+                    className="btn btn-ghost btn-xs"
+                    aria-expanded={!!openThreads[a.id]}
+                    onClick={() => setOpenThreads((prev) => ({ ...prev, [a.id]: !prev[a.id] }))}
+                  >
+                    {openThreads[a.id] ? t('acHide') : fill(t('acComments'), { n: a.commentCount ?? 0 })}
+                  </button>
+                  {!a.isRead && (
+                    <button className="btn btn-ghost btn-xs" onClick={() => handleMarkRead(a.id)}>{t('alMarkRead')}</button>
+                  )}
+                </div>
+                </div>
+                {openThreads[a.id] && <AlertThread alertId={a.id} onCountChange={(delta) => changeCount(a.id, delta)} />}
               </li>
             ))}
           </ul>

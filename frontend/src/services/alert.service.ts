@@ -1,5 +1,5 @@
 import api from './api';
-import { ApiResponse, AlertLog } from '../types';
+import { ApiResponse, AlertComment, AlertLog } from '../types';
 import type { StageRange } from './sensor.service';
 
 export const alertService = {
@@ -20,6 +20,26 @@ export const alertService = {
   /** PATCH /api/alerts/<id>/unread, the undo of markRead */
   markUnread: (id: string) =>
     api.patch<ApiResponse<AlertLog>>(`/alerts/${id}/unread`, {}),
+
+  /** POST /api/alerts/<id>/acknowledge, "I'm on it". Supervisors and admins. */
+  acknowledge: (id: string) =>
+    api.post<ApiResponse<AlertLog>>(`/alerts/${id}/acknowledge`, {}),
+
+  /** DELETE /api/alerts/<id>/acknowledge, the undo of acknowledge */
+  unacknowledge: (id: string) =>
+    api.delete<ApiResponse<AlertLog>>(`/alerts/${id}/acknowledge`),
+
+  /** GET /api/alerts/<id>/comments, oldest first */
+  getComments: (id: string) =>
+    api.get<ApiResponse<AlertComment[]>>(`/alerts/${id}/comments`),
+
+  /** POST /api/alerts/<id>/comments. A comment from someone other than the owner is emailed to the owner. */
+  addComment: (id: string, body: string) =>
+    api.post<ApiResponse<AlertComment>>(`/alerts/${id}/comments`, { body }),
+
+  /** DELETE /api/alerts/<id>/comments/<commentId>. The author may, and so may an admin. */
+  deleteComment: (id: string, commentId: string) =>
+    api.delete<ApiResponse<null>>(`/alerts/${id}/comments/${commentId}`),
 
   /** GET /api/alerts/thresholds, the safe range of every stage */
   getThresholds: () =>

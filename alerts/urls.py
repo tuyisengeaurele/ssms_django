@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .comment_views import AlertAcknowledgeView, AlertCommentDetailView, AlertCommentsView
 from .sse_view import alert_stream
 from .views import (
     AlertListView,
@@ -20,6 +21,9 @@ urlpatterns = [
     path('/stream', alert_stream, name='alert_stream'),                                      # GET  /api/alerts/stream?ticket=<ticket>
     path('/mark-all-read', AlertMarkAllReadView.as_view(), name='alert_mark_all_read'),      # POST /api/alerts/mark-all-read
     path('/batch/<str:batch_id>', AlertsByBatchView.as_view(), name='alerts_by_batch'),      # GET  /api/alerts/batch/<id>
+    path('/<str:pk>/acknowledge', AlertAcknowledgeView.as_view(), name='alert_acknowledge'),   # POST / DELETE /api/alerts/<id>/acknowledge
+    path('/<str:pk>/comments', AlertCommentsView.as_view(), name='alert_comments'),             # GET / POST /api/alerts/<id>/comments
+    path('/<str:pk>/comments/<str:comment_id>', AlertCommentDetailView.as_view(), name='alert_comment_detail'),  # DELETE
     path('/<str:pk>/read', AlertMarkReadView.as_view(), name='alert_mark_read'),             # PATCH /api/alerts/<id>/read
     path('/<str:pk>/unread', AlertMarkUnreadView.as_view(), name='alert_mark_unread'),       # PATCH /api/alerts/<id>/unread
 ]

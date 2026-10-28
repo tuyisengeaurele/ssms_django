@@ -13,14 +13,26 @@ class AlertLogSerializer(serializers.ModelSerializer):
     batch = serializers.SerializerMethodField()
     room = serializers.SerializerMethodField()
     batches = serializers.SerializerMethodField()
+    acknowledged_by = serializers.SerializerMethodField()
+    comment_count = serializers.SerializerMethodField()
 
     class Meta:
         model = AlertLog
         fields = [
             'id', 'batch_id', 'room_id', 'type', 'message', 'is_read', 'created_at', 'resolved_at',
+            'acknowledged_by', 'acknowledged_at', 'comment_count',
             'farmer_name', 'batch', 'room', 'batches',
         ]
         read_only_fields = fields
+
+    def get_acknowledged_by(self, obj):
+        user = obj.acknowledged_by
+        return {'id': user.pk, 'name': user.name or user.email} if user else None
+
+    def get_comment_count(self, obj):
+        """Lists annotate it. A single alert that was not annotated is counted here."""
+        counted = getattr(obj, 'comment_count', None)
+        return counted if counted is not None else obj.comments.filter(is_active=True).count()
 
     def get_farmer_name(self, obj):
         try:

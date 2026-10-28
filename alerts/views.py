@@ -13,14 +13,16 @@ from core.utils import api_error, api_success
 from .models import AlertLog, StageThreshold
 from .room_alerts import alerts_for_batch
 from .serializers import AlertLogSerializer, StageThresholdSerializer
+from .summary import with_comment_summary
 from .tickets import TICKET_SECONDS, issue_ticket
 
 
 def with_rooms(qs):
     """What the serializer needs to name an alert's room and batches without a query for each alert."""
-    return qs.select_related('batch__farm__owner', 'room__farm__owner').prefetch_related(
+    qs = qs.select_related('batch__farm__owner', 'room__farm__owner').prefetch_related(
         Prefetch('room__batches', queryset=Batch.objects.filter(is_active=True).order_by('created_at'), to_attr='live_batches'),
     )
+    return with_comment_summary(qs)
 
 
 class AlertListView(APIView):

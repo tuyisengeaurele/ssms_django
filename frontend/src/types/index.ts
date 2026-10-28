@@ -171,6 +171,19 @@ export interface AlertLog {
   room?: { id: string; name: string } | null;
   /** For a room alert: the batches in the room now. */
   batches?: { id: string; stage: string }[];
+  /** The supervisor or admin who said they are dealing with it. Not the same as read. */
+  acknowledgedBy?: { id: string; name: string } | null;
+  acknowledgedAt?: string | null;
+  commentCount?: number;
+}
+
+/** One thing said about an alert. No role is given, so a farmer is not told what kind of account wrote it. */
+export interface AlertComment {
+  id: string;
+  body: string;
+  createdAt: string;
+  author: { id: string; name: string } | null;
+  canDelete: boolean;
 }
 
 export type QualityGrade = 'A' | 'B' | 'C';

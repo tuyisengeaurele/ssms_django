@@ -5,13 +5,19 @@ import { LanguageProvider } from '../../context/LanguageContext';
 import { ToastProvider } from '../../context/ToastContext';
 import { setReducedMotion } from '../../test/setup';
 
+const auth = vi.hoisted(() => ({ role: 'FARMER', id: 'me' }));
+vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: auth.id, role: auth.role } }) }));
+
 const makeAlert = (i: number, over: object = {}) => ({
   id: `a${i}`, batchId: `b${i}`, type: 'TEMPERATURE', message: `Temperature too low: ${20 + i} C`, isRead: false,
   createdAt: new Date(Date.now() - i * 3600_000).toISOString(), farmerName: 'Claudine', farmName: "Claudine's Farm",
-  batch: { id: `batch-${i}-abcdef`, stage: 'LARVA' }, ...over,
+  batch: { id: `batch-${i}-abcdef`, stage: 'LARVA' }, acknowledgedBy: null, acknowledgedAt: null, commentCount: 0, ...over,
 });
 
-const api = vi.hoisted(() => ({ getAll: vi.fn(), markRead: vi.fn(), markUnread: vi.fn(), markAllRead: vi.fn() }));
+const api = vi.hoisted(() => ({
+  getAll: vi.fn(), markRead: vi.fn(), markUnread: vi.fn(), markAllRead: vi.fn(),
+  acknowledge: vi.fn(), unacknowledge: vi.fn(), getComments: vi.fn(), addComment: vi.fn(), deleteComment: vi.fn(),
+}));
 vi.mock('../../services/alert.service', () => ({ alertService: api }));
 
 import AlertsPage from './AlertsPage';
@@ -36,12 +42,18 @@ beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
   setReducedMotion(true);
+  auth.role = 'FARMER';
+  auth.id = 'me';
   api.getAll.mockResolvedValue({
     data: { data: [makeAlert(1), makeAlert(2, { type: 'HUMIDITY', message: 'Humidity too high: 90%' }), makeAlert(3, { isRead: true, type: 'DISEASE', message: 'Flacherie suspected' })] },
   });
   api.markRead.mockResolvedValue({ data: { data: {} } });
   api.markUnread.mockResolvedValue({ data: { data: {} } });
   api.markAllRead.mockResolvedValue({ data: { data: { updated: 2 } } });
+  api.acknowledge.mockImplementation((id: string) => Promise.resolve({ data: { data: makeAlert(Number(id.slice(1)), { id, acknowledgedBy: { id: 'me', name: 'Claire Mukamana' }, acknowledgedAt: new Date().toISOString() }) } }));
+  api.unacknowledge.mockImplementation((id: string) => Promise.resolve({ data: { data: makeAlert(Number(id.slice(1)), { id }) } }));
+  api.getComments.mockResolvedValue({ data: { data: [] } });
+  api.addComment.mockImplementation((_id: string, body: string) => Promise.resolve({ data: { data: { id: 'c9', body, createdAt: new Date().toISOString(), author: { id: 'me', name: 'Claire Mukamana' }, canDelete: true } } }));
 });
 
 describe('Alerts page', () => {
@@ -186,5 +198,120 @@ describe('Alerts page', () => {
     const { container } = open();
     await screen.findByText('Humidity too high: 90%');
     expect(container.innerHTML.toLowerCase()).not.toMatch(/#7c3aed|#2563eb|#d97706|#f3e8ff|#dbeafe/);
+  });
+
+  describe('acknowledging', () => {
+    const li = async (text: string) => (await screen.findByText(text)).closest('li') as HTMLElement;
+
+    it('offers no Acknowledge button to a farmer', async () => {
+      open();
+      await li('Temperature too low: 21 C');
+      expect(screen.queryByRole('button', { name: 'Acknowledge' })).not.toBeInTheDocument();
+    });
+
+    it.each(['SUPERVISOR', 'ADMIN'])('shows Acknowledge to a %s', async (role) => {
+      auth.role = role;
+      open();
+      const row = await li('Temperature too low: 21 C');
+      expect(within(row).getByRole('button', { name: 'Acknowledge' })).toBeInTheDocument();
+    });
+
+    it('acknowledges, shows who and when, and offers to take it back', async () => {
+      auth.role = 'SUPERVISOR';
+      open();
+      const row = await li('Temperature too low: 21 C');
+      fireEvent.click(within(row).getByRole('button', { name: 'Acknowledge' }));
+      await waitFor(() => expect(api.acknowledge).toHaveBeenCalledWith('a1'));
+      expect(await within(row).findByText(/Acknowledged by Claire Mukamana/)).toBeInTheDocument();
+      expect(within(row).getByRole('button', { name: 'Remove acknowledgement' })).toBeInTheDocument();
+      expect(await screen.findByText('Alert acknowledged.', {}, { timeout: 5000 })).toBeInTheDocument();
+    });
+
+    it('does not mark the alert read when it is acknowledged', async () => {
+      auth.role = 'SUPERVISOR';
+      open();
+      const row = await li('Temperature too low: 21 C');
+      fireEvent.click(within(row).getByRole('button', { name: 'Acknowledge' }));
+      await within(row).findByText(/Acknowledged by/);
+      expect(api.markRead).not.toHaveBeenCalled();
+      expect(within(row).getByRole('button', { name: 'Mark as read' })).toBeInTheDocument();
+    });
+
+    it('takes the acknowledgement back', async () => {
+      auth.role = 'SUPERVISOR';
+      api.getAll.mockResolvedValue({ data: { data: [makeAlert(1, { acknowledgedBy: { id: 'me', name: 'Claire Mukamana' }, acknowledgedAt: new Date().toISOString() })] } });
+      open();
+      const row = await li('Temperature too low: 21 C');
+      fireEvent.click(within(row).getByRole('button', { name: 'Remove acknowledgement' }));
+      await waitFor(() => expect(api.unacknowledge).toHaveBeenCalledWith('a1'));
+      await waitFor(() => expect(within(row).queryByText(/Acknowledged by/)).not.toBeInTheDocument());
+      expect(within(row).getByRole('button', { name: 'Acknowledge' })).toBeInTheDocument();
+    });
+
+    it('offers to take over what someone else acknowledged', async () => {
+      auth.role = 'SUPERVISOR';
+      api.getAll.mockResolvedValue({ data: { data: [makeAlert(1, { acknowledgedBy: { id: 'other', name: 'Eric Niyonzima' }, acknowledgedAt: new Date().toISOString() })] } });
+      open();
+      const row = await li('Temperature too low: 21 C');
+      expect(within(row).getByText(/Acknowledged by Eric Niyonzima/)).toBeInTheDocument();
+      fireEvent.click(within(row).getByRole('button', { name: 'Take over' }));
+      await waitFor(() => expect(api.acknowledge).toHaveBeenCalledWith('a1'));
+      expect(await within(row).findByText(/Acknowledged by Claire Mukamana/)).toBeInTheDocument();
+    });
+
+    it('lets the farmer see who is looking at their alert, without a button to change it', async () => {
+      api.getAll.mockResolvedValue({ data: { data: [makeAlert(1, { acknowledgedBy: { id: 'u9', name: 'Claire Mukamana' }, acknowledgedAt: new Date().toISOString() })] } });
+      open();
+      const row = await li('Temperature too low: 21 C');
+      expect(within(row).getByText(/Acknowledged by Claire Mukamana/)).toBeInTheDocument();
+      expect(within(row).queryByRole('button', { name: /Acknowledge|Take over|Remove acknowledgement/ })).not.toBeInTheDocument();
+    });
+
+    it('changes nothing on the page when it cannot be acknowledged', async () => {
+      auth.role = 'SUPERVISOR';
+      api.acknowledge.mockRejectedValueOnce(new Error('x'));
+      open();
+      const row = await li('Temperature too low: 21 C');
+      fireEvent.click(within(row).getByRole('button', { name: 'Acknowledge' }));
+      await waitFor(() => expect(api.acknowledge).toHaveBeenCalled());
+      expect(within(row).queryByText(/Acknowledged by/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('comments', () => {
+    const li = async (text: string) => (await screen.findByText(text)).closest('li') as HTMLElement;
+
+    it('shows how many comments an alert has, to everyone', async () => {
+      api.getAll.mockResolvedValue({ data: { data: [makeAlert(1, { commentCount: 2 }), makeAlert(2)] } });
+      open();
+      const row = await li('Temperature too low: 21 C');
+      expect(within(row).getByRole('button', { name: 'Comments (2)' })).toHaveAttribute('aria-expanded', 'false');
+      expect(within(await li('Temperature too low: 22 C')).getByRole('button', { name: 'Comments (0)' })).toBeInTheDocument();
+    });
+
+    it('opens the thread on request and closes it again', async () => {
+      api.getComments.mockResolvedValue({ data: { data: [{ id: 'c1', body: 'Open the windows.', createdAt: new Date().toISOString(), author: { id: 'u1', name: 'Claire Mukamana' }, canDelete: false }] } });
+      api.getAll.mockResolvedValue({ data: { data: [makeAlert(1, { commentCount: 1 })] } });
+      open();
+      const row = await li('Temperature too low: 21 C');
+      expect(api.getComments).not.toHaveBeenCalled();
+      fireEvent.click(within(row).getByRole('button', { name: 'Comments (1)' }));
+      expect(await within(row).findByText('Open the windows.')).toBeInTheDocument();
+      expect(api.getComments).toHaveBeenCalledWith('a1');
+      fireEvent.click(within(row).getByRole('button', { name: 'Hide comments' }));
+      expect(within(row).queryByText('Open the windows.')).not.toBeInTheDocument();
+    });
+
+    it('updates the count on the button when a comment is added', async () => {
+      api.getAll.mockResolvedValue({ data: { data: [makeAlert(1, { commentCount: 1 })] } });
+      open();
+      const row = await li('Temperature too low: 21 C');
+      fireEvent.click(within(row).getByRole('button', { name: 'Comments (1)' }));
+      fireEvent.change(await within(row).findByLabelText('Write a comment'), { target: { value: 'Thank you.' } });
+      fireEvent.click(within(row).getByRole('button', { name: 'Add comment' }));
+      await waitFor(() => expect(within(row).getByText('Thank you.')).toBeInTheDocument());
+      fireEvent.click(within(row).getByRole('button', { name: 'Hide comments' }));
+      expect(within(row).getByRole('button', { name: 'Comments (2)' })).toBeInTheDocument();
+    });
   });
 });
