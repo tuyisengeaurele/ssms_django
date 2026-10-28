@@ -265,6 +265,7 @@ def test_matrix(world, client_for, row):
 LISTS = [
     # name, url, attribute of a tenant that holds the record, roles refused
     ('farms', '/api/farms', 'farm', ()),
+    ('farm risk ranking', '/api/farms/risk', 'farm', FARMERS),
     ('active batches', '/api/batches/active', 'batch', ()),
     ('alerts', '/api/alerts?unread=false&limit=500', ('alert', 'room_alert'), ()),
     ('devices', '/api/devices', 'device', ()),

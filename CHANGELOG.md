@@ -1,5 +1,36 @@
 # Changelog
 
+## Farm risk ranking for supervisors (Plan 9, item D1)
+
+The supervisor dashboard now opens with the farms that need a look first, and says why in words.
+
+### Checked
+- Backend: 1212 tests pass (33 new). Frontend: 927 tests pass (15 new) and `tsc` is clean, plus one old test that fails only when the machine is slow (see below). No migration.
+- I ranked your real local farms as an admin: Mukamana Cocoon Farm comes first (a disease alert, an open air problem and two quiet sensors). Most of the others are Medium, because the demo sensors have stopped reporting. That is the data, not a fault.
+- I have not looked at the panel in a browser.
+- `DevicesPage.test.tsx` ("shows status in words...") failed once in a full run while the backend suite ran beside it, and passes alone. It compares the text "5 minutes ago" with a time made when the file loads, so a slow machine can tip it into "6 minutes ago". It is an old test and I left it.
+
+### Added
+- **`GET /api/farms/risk`**, for supervisors (their cooperative's farms) and admins (every farm). Farmers get a 403. Each row has the farm, its owner, a level, and the counts behind it.
+- **The rule is plain, so a supervisor can say it back to a farmer:**
+  - **High:** a disease alert in the last 14 days, or a temperature or humidity problem that is still open.
+  - **Medium:** a sensor that is offline or in error.
+  - **OK:** none of those.
+
+  Within a level the farm with more trouble comes first (a disease counts for 5, an air problem for 3, a sensor for 2), and farms with equal trouble are in name order. These are counts of real events, not a prediction.
+- **A panel on the supervisor dashboard**, "Farms that need a look first". It lists up to five farms that are High or Medium, each with its level in words, its owner, a link to the farm and the reasons ("2 disease alerts in the last 14 days", "1 sensor offline"). "Show all N farms" adds the quiet ones. It says so calmly when no farm needs a look. If the ranking cannot load, the rest of the dashboard still works.
+- The cost does not grow with the number of farms: five queries however many farms there are. A test checks it.
+
+### Decided
+- Sensors switched off on purpose are ignored. A sensor that says "online" but has been quiet too long counts as offline, the same rule the device pages use.
+- An air alert that was read still counts as open until a good reading closes it. A disease alert counts for 14 days even when read.
+- Late harvests, deaths and the share of readings out of range are not part of the rule. They can be added if you want them.
+
+### Known limits
+- A farm with no sensors at all is OK, because nothing is known about it.
+- The French and Kinyarwanda words of the panel are my drafts for a native speaker.
+- The panel shows only the top five before "Show all". It is not paged, which is fine for a cooperative but would want paging for a very large one.
+
 ## "Use my location" fills the cell and village too (Plan 9, item B11 follow-up)
 
 "Use my location" now fills province, district, sector, cell and village where the data is sure, from a point alone. The street stays a field you type.

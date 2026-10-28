@@ -1,6 +1,6 @@
 import api from './api';
 import { downloadFile } from './download';
-import { ApiResponse, Farm } from '../types';
+import { ApiResponse, Farm, FarmRisk } from '../types';
 import type { PlaceValue } from '../components/ui/LocationPicker';
 
 export const farmService = {
@@ -14,6 +14,9 @@ export const farmService = {
   },
 
   getById: (id: string) => api.get<ApiResponse<Farm>>(`/farms/${id}`),
+
+  /** Every farm the caller may see, the ones that need a look first. Supervisors and admins only. */
+  getRisk: () => api.get<ApiResponse<FarmRisk[]>>('/farms/risk'),
 
   /** Send the name, the street, or all five codes together with the street to move the farm. */
   update: (id: string, data: { name?: string; street?: string } | ({ name?: string } & PlaceValue)) =>

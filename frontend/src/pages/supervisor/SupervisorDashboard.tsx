@@ -18,6 +18,7 @@ import RangeChart from '../../components/ui/RangeChart';
 import { SkeletonStatCard } from '../../components/ui/SkeletonLoader';
 import StageBadge from '../../components/ui/StageBadge';
 import StatTile from '../../components/ui/StatTile';
+import FarmRiskPanel from './FarmRiskPanel';
 
 export default function SupervisorDashboard() {
   const { user } = useAuth();
@@ -164,6 +165,10 @@ export default function SupervisorDashboard() {
         <StatTile icon="batches" label={t('svStatBatches')} value={batches.length} hint={t('svHintRunning')} />
         <StatTile icon="alerts" label={t('svStatAlerts')} value={unread} hint={unread > 0 ? t('svHintAlertsOn') : t('svHintAlertsOff')} />
         <StatTile icon="detections" label={t('svStatChecks')} value={checks} hint={t('svHintChecks')} />
+      </div>
+
+      <div style={{ marginBottom: 24 }}>
+        <FarmRiskPanel />
       </div>
 
       <div className="grid-2" style={{ marginBottom: 24 }}>
