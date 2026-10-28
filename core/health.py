@@ -8,6 +8,7 @@ Two kinds of check sit side by side:
 "Not set up" is not a problem. A local machine is meant to print its emails and keep its errors to itself.
 """
 import time
+from datetime import timezone as dt_timezone
 
 import httpx
 from django.conf import settings
@@ -70,13 +71,20 @@ def check_image_storage() -> dict:
     return {'key': 'imageStorage', 'status': OK if ready else NOT_SET_UP, 'values': {}}
 
 
+def _aware(moment):
+    """A time with its time zone. A column made by hand can hold times with none, and those were written as UTC."""
+    if moment is not None and timezone.is_naive(moment):
+        return moment.replace(tzinfo=dt_timezone.utc)
+    return moment
+
+
 def check_sensors(now) -> dict:
     """How many sensors are online, and whether anything at all has reported lately."""
     devices = list(IoTDevice.objects.filter(is_active=True).only('status', 'last_seen'))
     if not devices:
         return {'key': 'sensors', 'status': NOT_SET_UP, 'values': {}}
     online = sum(1 for d in devices if effective_status(d, now) == IoTDevice.STATUS_ONLINE)
-    latest = SensorReading.objects.aggregate(latest=Max('timestamp'))['latest']
+    latest = _aware(SensorReading.objects.aggregate(latest=Max('timestamp'))['latest'])
     silent = int((now - latest).total_seconds() // 60) if latest else None
     quiet = latest is None or now - latest > offline_after()
     return {

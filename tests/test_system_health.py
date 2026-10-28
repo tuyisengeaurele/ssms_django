@@ -277,3 +277,29 @@ def test_the_page_costs_a_fixed_number_of_queries(auth_client, admin):
         an_online_device()
         AlertLogFactory(batch=BatchFactory(), type='DISEASE', message='x')
     assert cost(client) == few
+
+
+# ── a database that was made by hand ────────────────────────────────────────
+
+def test_a_reading_time_that_comes_back_without_a_time_zone_is_still_understood(auth_client, admin):
+    """Some columns of an older database hold times with no time zone. They are read as UTC, as they were written."""
+    from datetime import datetime
+
+    an_online_device()
+    naive = datetime.utcnow() - timedelta(minutes=2)
+    with mock.patch('core.health.SensorReading.objects') as readings:
+        readings.aggregate.return_value = {'latest': naive}
+        found = check(health(auth_client(admin)), 'sensors')
+    assert found['status'] == 'ok'
+    assert found['values']['silentMinutes'] in (1, 2, 3)
+    assert found['values']['lastReadingAt'].endswith('+00:00')
+
+
+def test_a_naive_reading_time_that_is_old_is_still_a_problem(auth_client, admin):
+    from datetime import datetime
+
+    an_online_device()
+    with mock.patch('core.health.SensorReading.objects') as readings:
+        readings.aggregate.return_value = {'latest': datetime.utcnow() - timedelta(hours=9)}
+        assert check(health(auth_client(admin)), 'sensors')['status'] == 'problem'
+
