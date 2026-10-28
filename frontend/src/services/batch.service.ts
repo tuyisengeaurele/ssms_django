@@ -1,4 +1,5 @@
 import api from './api';
+import { downloadFile } from './download';
 import { ApiResponse, Batch, BatchStage, MortalityEntry, QuantityUnit } from '../types';
 
 export interface BatchDetails {
@@ -35,6 +36,10 @@ export const batchService = {
 
   deleteMortality: (id: string, recordId: string) =>
     api.delete<ApiResponse<null>>(`/batches/${id}/mortality/${recordId}`),
+
+  /** The batch report as a PDF on the SSMS letterhead, in the language of the screen. */
+  downloadReport: (id: string, lang: string) =>
+    downloadFile(`/batches/${id}/report`, { lang }, 'batch_report.pdf'),
 
   updateStage: (id: string, stage: BatchStage) =>
     api.patch<ApiResponse<Batch>>(`/batches/${id}/stage`, { stage }),

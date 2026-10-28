@@ -20,6 +20,7 @@ from .devices import effective_status, record_device_reading, room_for_device
 from .models import IoTDevice, SensorReading
 from .room_readings import readings_for_batch
 from .serializers import DeviceReadingSerializer, SensorReadingCreateSerializer, SensorReadingSerializer
+from .series import batch_series
 
 CHOOSE_ROOM = "Please choose one of this farm's rooms."
 
@@ -112,33 +113,7 @@ class SensorBatchSeriesView(APIView):
     def get(self, request, batch_id):
         batch = get_batch_or_404(request.user, batch_id)
         hours = int_param(request, 'hours', 24, 1, 720)
-        bucket_hours = 1 if hours <= 168 else 6
-        since = timezone.now() - timedelta(hours=hours)
-
-        rows = (
-            readings_for_batch(batch)
-            .filter(timestamp__gte=since)
-            .order_by('timestamp')
-            .values_list('timestamp', 'temperature', 'humidity')
-        )
-        buckets = {}
-        for stamp, temperature, humidity in rows:
-            start = stamp.replace(minute=0, second=0, microsecond=0)
-            start = start.replace(hour=start.hour // bucket_hours * bucket_hours)
-            total = buckets.setdefault(start, [0.0, 0.0, 0])
-            total[0] += temperature
-            total[1] += humidity
-            total[2] += 1
-
-        return api_success([
-            {
-                'timestamp': start.isoformat(),
-                'temperature': round(temp_sum / count, 1),
-                'humidity': round(hum_sum / count, 1),
-                'count': count,
-            }
-            for start, (temp_sum, hum_sum, count) in sorted(buckets.items())
-        ])
+        return api_success(batch_series(batch, hours))
 
 
 def _serialize_device(device: IoTDevice) -> dict:

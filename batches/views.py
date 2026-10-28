@@ -1,4 +1,6 @@
 from django.db import transaction
+from django.http import HttpResponse
+from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
@@ -11,6 +13,7 @@ from farms.models import RearingRoom
 from .models import Batch
 from .placement import leave_room, place_batch
 from .queries import with_counts
+from .report import batch_report_pdf, clean_lang
 from .serializers import (
     BatchCreateSerializer,
     BatchDetailSerializer,
@@ -81,6 +84,21 @@ class BatchByFarmView(APIView):
         farm = get_farm_or_404(request.user, farm_id)
         batches = with_counts(Batch.objects.filter(farm=farm, is_active=True)).order_by('-created_at')
         return api_success(BatchListSerializer(batches, many=True).data)
+
+
+class BatchReportView(APIView):
+    """GET /api/batches/<id>/report?lang=en|fr|rw, the batch report as a PDF on the SSMS letterhead.
+
+    Anyone who may see the batch may ask for it. The name on the document is the person who asked.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        batch = get_batch_or_404(request.user, pk, Batch.objects.select_related('room'))
+        pdf = batch_report_pdf(batch, request.user.name or request.user.email, clean_lang(request.query_params.get('lang')))
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="batch_report_{batch.pk[-8:].upper()}_{timezone.now():%Y-%m-%d}.pdf"'
+        return response
 
 
 class BatchDetailView(APIView):
