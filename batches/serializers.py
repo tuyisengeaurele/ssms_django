@@ -94,7 +94,8 @@ class BatchDetailSerializer(serializers.ModelSerializer):
     def get_alert_logs(self, obj):
         from alerts.room_alerts import alerts_for_batch
         from alerts.serializers import AlertLogSerializer
-        qs = alerts_for_batch(obj).filter(is_read=False).select_related('room').order_by('-created_at')
+        from alerts.summary import with_comment_summary
+        qs = with_comment_summary(alerts_for_batch(obj).filter(is_read=False).select_related('room')).order_by('-created_at')
         return AlertLogSerializer(qs, many=True).data
 
 

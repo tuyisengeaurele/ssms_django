@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 from batches.models import BatchStage
@@ -38,6 +39,13 @@ class AlertLog(models.Model):
     created_at = models.DateTimeField(db_column='createdAt', auto_now_add=True)
     # A temperature or humidity alert stays open while the problem lasts. This is set when a good reading closes it.
     resolved_at = models.DateTimeField(db_column='resolvedAt', null=True, blank=True)
+    # A supervisor or admin who says "I'm on it". It is not the same as read: read is the same for everyone and says
+    # the alert was seen, this says who is dealing with it.
+    acknowledged_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        db_column='acknowledgedById', related_name='acknowledged_alerts',
+    )
+    acknowledged_at = models.DateTimeField(db_column='acknowledgedAt', null=True, blank=True)
 
     class Meta:
         db_table = 'alert_logs'
@@ -49,6 +57,28 @@ class AlertLog(models.Model):
 
     def __str__(self):
         return f'{self.type}: {self.message[:50]}'
+
+
+class AlertComment(models.Model):
+    """One thing said about an alert. A supervisor gives advice and the farmer answers. Deleting only hides it."""
+
+    id = models.CharField(primary_key=True, max_length=36, default=_generate_id, editable=False)
+    alert = models.ForeignKey(AlertLog, on_delete=models.CASCADE, db_column='alertId', related_name='comments')
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        db_column='authorId', related_name='alert_comments',
+    )
+    body = models.TextField()
+    is_active = models.BooleanField(db_column='isActive', default=True)
+    created_at = models.DateTimeField(db_column='createdAt', auto_now_add=True)
+
+    class Meta:
+        db_table = 'alert_comments'
+        ordering = ['created_at']
+        indexes = [models.Index(fields=['alert'], name='alert_comment_alert_idx')]
+
+    def __str__(self):
+        return f'{self.author_id}: {self.body[:40]}'
 
 
 class StageThreshold(models.Model):
