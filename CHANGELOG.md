@@ -1,5 +1,29 @@
 # Changelog
 
+## The batch report as a PDF (Plan 9, item K3, part 1)
+
+A batch report can now be downloaded as a PDF on the SSMS letterhead, in the language of the screen: English, French or Kinyarwanda.
+
+### Checked
+- Backend: 1136 tests pass (46 new). Frontend: 893 tests pass (6 new) and `tsc` is clean. No migration.
+- I looked at the rendered pages of a French report made from sample data and the layout is clean. I have not downloaded one from the running app in a browser.
+- The one "unhandled error" that `npm test` prints (`SupervisorFarmersPage`) is still the old one from `master`.
+
+### Added
+- **`GET /api/batches/<id>/report?lang=en|fr|rw`** returns the PDF. Anyone who may see the batch may ask for it. The name on the document is the person who asked. An unknown language reads in English.
+- **The same words as the screen.** The sentences come from `frontend/src/i18n/pages.ts`, copied into `core/doc_text.py` by `python scripts/build_doc_text.py`. A test fails when the screen and the PDF differ, so change a sentence on the screen, then run the script.
+- **The letterhead footer in three languages**: "Page 1 of 2", "Page 1 sur 2", "Urupapuro 1 kuri 2", and the date with French and Kinyarwanda month names.
+- **A "Download PDF" button** on the batch report page, beside "Print or save as PDF". The PDF holds every death entry and every disease check. The printed screen still stops at 8 and 5 so it fits one page.
+
+### Fixed
+- **The conditions line counted buckets, not hours.** A month of readings comes in six hour buckets, so "of the 120 hours" really covered 720. The screen and the PDF now say the real number of hours.
+
+### Known limits
+- Stage names (Egg, Larva, Pupa) are English in every language, as they are on the screen today.
+- The French and Kinyarwanda footer words and Kinyarwanda month names are my drafts for a native speaker to read.
+- Numbers use a comma in English and a narrow space in French and Kinyarwanda.
+- The farm summary PDF is the next part of K3.
+
 ## PDF documents with the SSMS letterhead (Plan 9, item K2)
 
 The system report and the audit log can now be downloaded as PDF documents that look like they came from one organisation: logo, name, title, a footer with the address and contact details, who made the document and when, and "Page x of y" on every page.
