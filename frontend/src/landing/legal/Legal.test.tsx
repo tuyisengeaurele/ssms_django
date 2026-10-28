@@ -40,7 +40,7 @@ describe('Privacy policy page', () => {
     const { container } = renderPage(<PrivacyPolicyPage />, '/privacy');
     const toc = screen.getByRole('navigation', { name: 'On this page' });
     const links = within(toc).getAllByRole('link');
-    expect(links).toHaveLength(9);
+    expect(links).toHaveLength(10);
     for (const link of links) {
       const id = (link.getAttribute('href') as string).slice(1);
       const section = container.querySelector(`article section[id="${id}"]`);

@@ -7,11 +7,14 @@ import { setReducedMotion } from '../../test/setup';
 const api = vi.hoisted(() => ({ getRisk: vi.fn() }));
 vi.mock('../../services/farm.service', () => ({ farmService: api }));
 
+// The real map is tested on its own. Here it only has to be shown, with the farms it was given.
+vi.mock('./FarmMap', () => ({ default: ({ rows }: { rows: unknown[] }) => <div data-testid="map">{rows.length} farms on the map</div> }));
+
 import FarmRiskPanel from './FarmRiskPanel';
 
 const row = (id: string, name: string, level: 'HIGH' | 'MEDIUM' | 'OK', over: object = {}) => ({
   id, name, ownerName: `Owner of ${name}`, location: 'Gatsibo', level, score: 0,
-  diseaseAlerts: 0, openAirAlerts: 0, offlineDevices: 0, activeBatches: 1, ...over,
+  diseaseAlerts: 0, openAirAlerts: 0, offlineDevices: 0, activeBatches: 1, position: null, ...over,
 });
 
 const rows = [
@@ -127,6 +130,66 @@ describe('Farm risk panel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('Hill Farm')).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+  });
+
+  describe('the map tab', () => {
+    it('offers the list and the map, with the list first', async () => {
+      open();
+      await screen.findByText('Hill Farm');
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs.map((t) => t.textContent)).toEqual(['List', 'Map']);
+      expect(screen.getByRole('tab', { name: 'List' })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('tab', { name: 'Map' })).toHaveAttribute('aria-selected', 'false');
+      expect(screen.queryByTestId('map')).not.toBeInTheDocument();
+    });
+
+    it('shows the map, with every farm and not only the ones that need a look', async () => {
+      open();
+      await screen.findByText('Hill Farm');
+      fireEvent.click(screen.getByRole('tab', { name: 'Map' }));
+      expect(await screen.findByTestId('map')).toHaveTextContent('4 farms on the map');
+      expect(screen.getByRole('tab', { name: 'Map' })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.queryByRole('list', { name: 'Farms that need a look first' })).not.toBeInTheDocument();
+    });
+
+    it('comes back to the list', async () => {
+      open();
+      await screen.findByText('Hill Farm');
+      fireEvent.click(screen.getByRole('tab', { name: 'Map' }));
+      await screen.findByTestId('map');
+      fireEvent.click(screen.getByRole('tab', { name: 'List' }));
+      expect(screen.getByText('Hill Farm')).toBeInTheDocument();
+      expect(screen.queryByTestId('map')).not.toBeInTheDocument();
+    });
+
+    it('does not ask the server again when the tab changes', async () => {
+      open();
+      await screen.findByText('Hill Farm');
+      fireEvent.click(screen.getByRole('tab', { name: 'Map' }));
+      await screen.findByTestId('map');
+      expect(api.getRisk).toHaveBeenCalledTimes(1);
+    });
+
+    it('offers no tabs when there are no farms', async () => {
+      api.getRisk.mockResolvedValue({ data: { data: [] } });
+      open();
+      await screen.findByText('No farms yet.');
+      expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    });
+
+    it('offers no tabs when the ranking could not be loaded', async () => {
+      api.getRisk.mockRejectedValue(new Error('x'));
+      open();
+      await screen.findByRole('alert');
+      expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    });
+
+    it('is named in French', async () => {
+      localStorage.setItem('ssms_locale', 'fr');
+      open();
+      await screen.findByText('Hill Farm');
+      expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Liste', 'Carte']);
+    });
   });
 
   it('reads in French', async () => {
