@@ -4,7 +4,6 @@ import logging
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework.permissions import IsAuthenticated
@@ -12,6 +11,7 @@ from rest_framework.views import APIView
 
 from audit_log.utils import log_action
 from cooperatives.models import Cooperative
+from core.mail import Email, send_email
 from core.tokens import revoke_all_refresh_tokens
 from core.utils import api_error, api_success
 
@@ -36,24 +36,17 @@ def _send_invitation(user):
     frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
     role = ROLE_WORDS.get(user.role, 'a user')
     link = f'{frontend_url}/reset-password?uid={uid}&token={token}'
-    message = '\n'.join([
-        f'Hi {user.name},',
-        '',
-        f'An SSMS account has been created for you as {role}.',
-        '',
-        'Choose your password with this link (it works for 1 hour):',
-        link,
-        '',
-        'If the link has expired, open the sign in page and use "Forgot password".',
-        '',
-        'The SSMS Team',
-    ])
-    send_mail(
-        subject='You have been added to SSMS',
-        message=message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=False,
+    send_email(
+        'You have been added to SSMS',
+        [user.email],
+        Email(
+            heading='Welcome to SSMS',
+            greeting=f'Hi {user.name},',
+            intro=(f'An SSMS account has been created for you as {role}.',),
+            button=('Choose my password', link),
+            closing=('The link works for 1 hour. If it has expired, open the sign in page and use "Forgot password".',),
+            reason='You received this because an SSMS account was created for this address.',
+        ),
     )
 
 

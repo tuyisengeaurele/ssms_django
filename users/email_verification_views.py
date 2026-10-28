@@ -9,12 +9,12 @@ import logging
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
+from core.mail import Email, send_email
 from core.throttles import PasswordResetRateThrottle
 from core.utils import api_error, api_success
 
@@ -30,18 +30,17 @@ def _send_verification_email(user):
     frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
     verify_url = f'{frontend_url}/verify-email?uid={uid}&token={token}'
 
-    send_mail(
-        subject='Verify your SSMS email address',
-        message=(
-            f'Hi {user.name},\n\n'
-            f'Welcome to SSMS! Please verify your email address by clicking the link below:\n\n'
-            f'{verify_url}\n\n'
-            f'This link is valid for 1 hour. If you did not create an account, you can safely ignore this email.\n\n'
-            f', The SSMS Team'
+    send_email(
+        'Verify your SSMS email address',
+        [user.email],
+        Email(
+            heading='Verify your email address',
+            greeting=f'Hi {user.name},',
+            intro=('Welcome to SSMS. Please confirm this address to start using your account.',),
+            button=('Verify my email', verify_url),
+            closing=('The link works for 1 hour. If you did not create an account, you can ignore this email.',),
+            reason='You received this because an SSMS account was created with this address.',
         ),
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=False,
     )
 
 

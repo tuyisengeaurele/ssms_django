@@ -94,7 +94,7 @@ def test_naming_an_email_also_sends_the_link_to_it(sup_client):
 
 
 def test_a_failed_email_still_makes_the_link(sup_client):
-    with mock.patch('cooperatives.invitations.send_mail', side_effect=OSError('smtp down')):
+    with mock.patch('cooperatives.invitations.send_email', side_effect=OSError('smtp down')):
         response = invite(sup_client, email='aline@example.rw')
     assert response.status_code == 201
     assert 'could not be sent' in response.json()['message']

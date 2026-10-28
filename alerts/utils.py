@@ -12,14 +12,15 @@ of range does not flood the farmer.
 Emails are sent in a background daemon thread so SMTP latency never blocks the sensor-reading API response.
 """
 
-import threading
 from dataclasses import dataclass
 from datetime import timedelta
 
 from django.conf import settings
-from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
+
+from core.mail import Email
+from core.mail import send_email_async as _send_mail_async
 
 from .models import AlertLog, StageThreshold
 
@@ -78,12 +79,6 @@ def room_range(stages: list[str]) -> SafeRange:
 EMAIL_THROTTLE_MINUTES = 60   # one alert email per room+type per hour
 
 
-def _send_mail_async(*args, **kwargs):
-    """Fire-and-forget: run send_mail in a daemon thread so SMTP never blocks the request."""
-    t = threading.Thread(target=send_mail, args=args, kwargs=kwargs, daemon=True)
-    t.start()
-
-
 def _should_send_email(room_id: str, alert_type: str) -> bool:
     """
     Return True only if no alert of this type was raised for this room
@@ -114,31 +109,24 @@ def _send_farmer_alert(room, batches, alert: AlertLog, safe: SafeRange) -> None:
             return
 
         type_label = alert.type.replace('_', ' ').title()
-        subject = f'[SSMS Alert] {type_label} warning for {room.name}, {farm.name}'
-        body = (
-            f'Dear {owner.name or "Farmer"},\n\n'
-            f'An environmental alert has been raised for {room.name} on {farm.name}.\n\n'
-            f'Alert type : {type_label}\n'
-            f'Details    : {alert.message}\n'
-            f'Batches    : {", ".join(short_id(b.pk) for b in batches) or "none"}\n'
-            f'Time (UTC) : {alert.created_at.strftime("%Y-%m-%d %H:%M") if alert.created_at else "now"}\n\n'
-            f'Please check your silkworm rearing conditions as soon as possible to ensure '
-            f'the health of your silkworms.\n\n'
-            f'Safe range for this room:\n'
-            f'  - Temperature : {safe.temp_min} °C to {safe.temp_max} °C\n'
-            f'  - Humidity    : {safe.hum_min} % to {safe.hum_max} %\n\n'
-            f'Log in to SSMS to view all alerts and sensor readings:\n'
-            f'{settings.FRONTEND_URL}/alerts\n\n'
-            f'Best regards,\nThe SSMS team\nSmart Sericulture Management System, Rwanda'
+        when = alert.created_at.strftime('%Y-%m-%d %H:%M') if alert.created_at else 'now'
+        content = Email(
+            heading=f'{type_label} warning for {room.name}',
+            greeting=f'Dear {owner.name or "Farmer"},',
+            intro=(f'An environmental alert has been raised for {room.name} on {farm.name}.',),
+            facts=(
+                ('Alert type', type_label),
+                ('Details', alert.message),
+                ('Batches', ', '.join(short_id(b.pk) for b in batches) or 'none'),
+                ('Time (UTC)', when),
+                ('Safe temperature', f'{safe.temp_min} °C to {safe.temp_max} °C'),
+                ('Safe humidity', f'{safe.hum_min} % to {safe.hum_max} %'),
+            ),
+            button=('Open alerts', f'{settings.FRONTEND_URL}/alerts'),
+            closing=('Please check your silkworm rearing conditions as soon as possible to protect the health of your silkworms.',),
+            reason=f'You received this because you own {farm.name} on SSMS.',
         )
-
-        _send_mail_async(
-            subject=subject,
-            message=body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
-            fail_silently=True,
-        )
+        _send_mail_async(f'[SSMS Alert] {type_label} warning for {room.name}, {farm.name}', [email], content)
     except Exception:
         pass   # never let email failure break the main flow
 

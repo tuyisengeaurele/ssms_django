@@ -1,5 +1,30 @@
 # Changelog
 
+## Professional emails (Plan 9, item K1)
+
+Every email SSMS sends now has one look: the logo, a clear heading, a button where there is something to do, and a footer that says who we are and why the person got the email.
+
+### Checked
+- Backend: 1050 tests pass (24 are new). No migration, no frontend change.
+- I could not look at an email in a mail app. The HTML is built with tables and inline styles, which is what mail apps need, but please send yourself one (register a new account, or ask for a password reset) and open it in Gmail on a phone and a computer.
+
+### Added
+- **One mailer, `core/mail.py`.** An email is a heading, a greeting, short paragraphs, optional facts, an optional button and a reason. The plain text part and the HTML part are made from the same fields, so they always agree.
+- **The logo travels inside the email**, so it shows on localhost and in apps that block pictures from the web.
+- **A footer on every email:** the SSMS name, address, contact email, website, links to Privacy and Terms, and one line saying why the person received it.
+- **Eight emails use it:** verify your email, reset your password, an account an admin added, a cooperative invitation, the reply to the contact form, the note to the team, the room alert and the disease alert.
+- **The team note can be answered with Reply.** It carries the sender's address as the reply address.
+- Settings for what the footer shows: `SUPPORT_EMAIL` (default smartsericulturerw@gmail.com), `ORG_ADDRESS` (default the UR-CST P.O. Box 3900, Kigali line) and `FRONTEND_URL` for the website. Change them in the environment, not in the templates.
+
+### Changed
+- Two emails began with a stray comma ("`, The SSMS Team`"). That is gone.
+- The room alert now lists the safe temperature and humidity as facts instead of a text block.
+
+### Known limits
+- Emails are in English. The person's language is not stored yet, so French and Kinyarwanda emails wait for that.
+- The address line is my wording of the UR-CST address. Please confirm the exact text and set `ORG_ADDRESS` if it differs. No phone number is shown, because none was given.
+- The footer website is `FRONTEND_URL`. On Render it must be set to the real landing page address, or the links point at localhost.
+
 ## First run and quiet milestones (Plan 9, item B10)
 
 A new farmer lands on a short welcome instead of a page of zeros, and the first batch and first harvest get a plain word of recognition.

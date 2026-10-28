@@ -10,13 +10,13 @@ import logging
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
+from core.mail import Email, send_email
 from core.throttles import PasswordResetRateThrottle
 from core.tokens import revoke_all_refresh_tokens
 from core.utils import api_error, api_success, body_field
@@ -35,19 +35,17 @@ def _send_reset_email(user):
     frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
     reset_url = f'{frontend_url}/reset-password?uid={uid}&token={token}'
 
-    send_mail(
-        subject='Reset your SSMS password',
-        message=(
-            f'Hi {user.name},\n\n'
-            f'We received a request to reset your password for your SSMS account.\n\n'
-            f'Click the link below to set a new password (valid for 1 hour):\n'
-            f'{reset_url}\n\n'
-            f'If you did not request a password reset, you can safely ignore this email.\n\n'
-            f', The SSMS Team'
+    send_email(
+        'Reset your SSMS password',
+        [user.email],
+        Email(
+            heading='Reset your password',
+            greeting=f'Hi {user.name},',
+            intro=('We received a request to reset the password of your SSMS account.',),
+            button=('Choose a new password', reset_url),
+            closing=('The link works for 1 hour. If you did not ask for this, you can ignore this email and your password stays the same.',),
+            reason='You received this because a password reset was requested for this address.',
         ),
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=False,
     )
 
 

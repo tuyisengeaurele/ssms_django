@@ -133,7 +133,7 @@ def test_reset_request_answers_the_same_for_a_known_and_an_unknown_address(api_c
 def test_reset_request_survives_a_mail_failure_with_the_same_answer(api_client):
     UserFactory(email='known@example.rw')
     unknown = api_client.post(RESET_REQUEST, {'email': 'nobody@example.rw'}, format='json')
-    with mock.patch('users.password_reset_views.send_mail', side_effect=OSError('smtp down')):
+    with mock.patch('users.password_reset_views.send_email', side_effect=OSError('smtp down')):
         known = api_client.post(RESET_REQUEST, {'email': 'known@example.rw'}, format='json')
     assert known.status_code == 200
     assert known.json() == unknown.json()
@@ -153,6 +153,6 @@ def test_resend_verification_says_the_same_for_verified_unknown_unverified_and_o
 
 def test_resend_verification_survives_a_mail_failure(api_client):
     UserFactory(email='waiting@example.rw', is_email_verified=False)
-    with mock.patch('users.email_verification_views.send_mail', side_effect=OSError('smtp down')):
+    with mock.patch('users.email_verification_views.send_email', side_effect=OSError('smtp down')):
         response = api_client.post(RESEND, {'email': 'waiting@example.rw'}, format='json')
     assert response.status_code == 200
