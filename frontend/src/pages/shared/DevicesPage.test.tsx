@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import { ToastProvider } from '../../context/ToastContext';
 import { setReducedMotion } from '../../test/setup';
@@ -11,10 +11,12 @@ vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me'
 const dev = (o: object) => ({
   batchId: null, room: null, isActive: true, createdAt: '2026-05-01T00:00:00Z', recentReadings: [], ...o,
 });
+// The clock is frozen here, so "5 minutes ago" stays 5 minutes however slow the machine is.
+const NOW = vi.hoisted(() => Date.UTC(2026, 9, 8, 10, 5, 0));
 const devices = vi.hoisted(() => [
-  { id: 'd1', name: 'DHT22-Bruce', deviceKey: 'ssms-dev-9sh8zdw', farmId: 'f1', farmName: "Bruce's Farm", room: { id: 'r1', name: 'Rearing house 1' }, location: 'Rearing room A', status: 'online', lastSeen: new Date(Date.now() - 5 * 60_000).toISOString(), latestReading: { temperature: 22.6, humidity: 81.3, timestamp: '2026-10-08T10:00:00Z' } },
+  { id: 'd1', name: 'DHT22-Bruce', deviceKey: 'ssms-dev-9sh8zdw', farmId: 'f1', farmName: "Bruce's Farm", room: { id: 'r1', name: 'Rearing house 1' }, location: 'Rearing room A', status: 'online', lastSeen: new Date(NOW - 5 * 60_000).toISOString(), latestReading: { temperature: 22.6, humidity: 81.3, timestamp: '2026-10-08T10:00:00Z' } },
   { id: 'd2', name: 'SHT31-Gad', deviceKey: 'ssms-dev-ddl1fcq', farmId: 'f2', farmName: "Gad's farm", location: '', status: 'offline', lastSeen: null, latestReading: null },
-  { id: 'd3', name: 'AM2301-Serge', deviceKey: 'ssms-dev-28dnpcn', farmId: 'f3', farmName: "Serge's farm", location: 'Gatsibo', status: 'error', lastSeen: new Date(Date.now() - 3 * 3600_000).toISOString(), latestReading: null },
+  { id: 'd3', name: 'AM2301-Serge', deviceKey: 'ssms-dev-28dnpcn', farmId: 'f3', farmName: "Serge's farm", location: 'Gatsibo', status: 'error', lastSeen: new Date(NOW - 3 * 3600_000).toISOString(), latestReading: null },
 ]);
 
 const api = vi.hoisted(() => ({ getAll: vi.fn(), getById: vi.fn(), create: vi.fn(), remove: vi.fn(), moveToRoom: vi.fn(), farms: vi.fn(), rooms: vi.fn() }));
@@ -41,6 +43,8 @@ beforeAll(async () => {
 }, 30000);
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(NOW);
   localStorage.clear();
   vi.clearAllMocks();
   auth.role = 'ADMIN';
@@ -50,6 +54,10 @@ beforeEach(() => {
   api.farms.mockResolvedValue({ data: { data: [{ id: 'f1', name: "Bruce's Farm", location: 'Gatsibo' }, { id: 'f2', name: "Gad's farm", location: 'Nyagatare' }, { id: 'f3', name: "Serge's farm", location: 'Gatsibo' }, { id: 'f9', name: 'New Farm', location: 'Huye' }] } });
   api.remove.mockResolvedValue({ data: { data: { id: 'd1' } } });
   api.rooms.mockImplementation((farmId: string) => Promise.resolve({ data: { data: ROOMS[farmId] ?? [] } }));
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 // Rooms by farm: f1 and f9 have two, f2 has one and the rest have none.
