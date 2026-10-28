@@ -1,5 +1,35 @@
 # Changelog
 
+## System health and safe ranges (Plan 9, item D5)
+
+Two admin pages under System. "Safe ranges" lets an admin change the temperature and humidity limits of each stage, and shows who changed them last. "System health" tells an admin in words whether the database, the disease check service and the sensors are working, and which services are set up.
+
+### Checked
+- Backend: 1449 tests pass (45 new). Frontend: 1081 tests pass (44 new) and `tsc` is clean. One migration, `alerts/0007`.
+- **I applied `alerts/0007` to your local database `ssms_db` myself.** Nothing else is pending.
+- I ran the health checks against `ssms_db`. That run found a real bug: the dev database returns some reading times without a time zone, and the sensors check crashed on them. A test now covers it and the checks run.
+- Locally the report says "Problem" for the disease check service (it is not running) and for the sensors (the demo readings are from yesterday). Both are true.
+- I have not looked at either page in a browser.
+- `npm test` still prints the one unhandled error from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+
+### Added
+- **Safe ranges** page. One row per stage with four boxes (lowest and highest temperature, lowest and highest humidity), "Save" and "Use the usual range". The page explains a wrong entry in a sentence before anything is sent, and the server checks it again. A change applies to the next reading. An alert that is already open stays open until a reading comes back inside the range.
+- **Who changed a range.** Each stage remembers the last admin who saved it and when. Only admins are shown this.
+- **System health** page. Six checks (database, disease check service, email, error reporting, photo storage, sensors), each with its status in words (OK, Problem, Not set up) and one sentence. It also counts unread alerts, open temperature and humidity alerts and unanswered messages. "Check again" asks again, and the last answer stays on screen while it does.
+- **API.** `PUT /api/alerts/thresholds/<stage>` records the admin. `GET /api/admin/health` is admin only. The authorization matrix has a row for it.
+
+### Decided
+- "Not set up" is not a problem. A local machine is meant to print its emails and keep its errors to itself.
+- Email, error reporting and photo storage only say that they are set up. SSMS sends no test message and uploads no test photo, and the page says so.
+- The report never shows a web address, a key or a password. The disease check service is asked for three seconds at most.
+- A reading time without a time zone is read as UTC, as it was written.
+
+### Known limits
+- The health page does not keep a history. It shows how things are now.
+- Scheduled jobs are not checked, because SSMS has none to report on yet.
+- The French and Kinyarwanda words of both pages are my drafts for a native speaker.
+
+
 ## Which contact messages have been answered (Plan 9, item D4)
 
 On the admin Messages page, an admin can mark a message as answered, and the page shows who answered it and when. Nothing is lost when two admins share the inbox.

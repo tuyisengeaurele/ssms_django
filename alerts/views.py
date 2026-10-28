@@ -119,9 +119,9 @@ class StageThresholdListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        rows = {t.stage: t for t in StageThreshold.objects.all()}
+        rows = {t.stage: t for t in StageThreshold.objects.select_related('updated_by')}
         ordered = [rows[stage] for stage in STAGE_ORDER if stage in rows]
-        return api_success(StageThresholdSerializer(ordered, many=True).data)
+        return api_success(StageThresholdSerializer(ordered, many=True, context={'admin': request.user.role == 'ADMIN'}).data)
 
 
 class StageThresholdDetailView(APIView):
@@ -137,9 +137,9 @@ class StageThresholdDetailView(APIView):
         serializer = StageThresholdSerializer(row, data=request.data)
         if not serializer.is_valid():
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
-        serializer.save()
+        serializer.save(updated_by=request.user)
         log_action(
             request, 'UPDATE', 'Threshold', stage,
             f'Safe range for {stage}: {row.temp_min} to {row.temp_max} C, {row.hum_min} to {row.hum_max} %',
         )
-        return api_success(StageThresholdSerializer(row).data, 'Safe range updated.')
+        return api_success(StageThresholdSerializer(row, context={'admin': True}).data, 'Safe range updated.')

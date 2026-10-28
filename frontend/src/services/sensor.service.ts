@@ -42,6 +42,9 @@ export interface StageRange {
   tempMax: number;
   humMin: number;
   humMax: number;
+  /** Only an admin is told who last changed a range, and when. Null for a range nobody has changed. */
+  updatedAt?: string | null;
+  updatedBy?: { id: string; name: string } | null;
 }
 
 /** One bucket of readings, averaged. */

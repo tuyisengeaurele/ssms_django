@@ -17,6 +17,8 @@ const FarmerDashboard = lazy(() => import('./pages/farmer/FarmerDashboard'));
 const SupervisorDashboard = lazy(() => import('./pages/supervisor/SupervisorDashboard'));
 const SupervisorFarmersPage = lazy(() => import('./pages/supervisor/SupervisorFarmersPage'));
 const CooperativeReportPage = lazy(() => import('./pages/supervisor/CooperativeReportPage'));
+const AdminThresholdsPage = lazy(() => import('./pages/admin/AdminThresholdsPage'));
+const AdminHealthPage = lazy(() => import('./pages/admin/AdminHealthPage'));
 const JoinPage = lazy(() => import('./pages/auth/JoinPage'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const FarmsPage = lazy(() => import('./pages/farmer/FarmsPage'));
@@ -99,6 +101,8 @@ export default function App() {
                 <Route path="/admin"                  element={<AdminDashboard />} />
                 <Route path="/admin/users"            element={<AdminUsersPage />} />
                 <Route path="/admin/cooperatives"     element={<AdminCooperativesPage />} />
+                <Route path="/admin/thresholds"       element={<AdminThresholdsPage />} />
+                <Route path="/admin/health"           element={<AdminHealthPage />} />
                 <Route path="/admin/contacts"         element={<AdminContactsPage />} />
                 <Route path="/admin/audit-log"        element={<AdminAuditLogPage />} />
                 <Route path="/admin/reports"          element={<AdminReportsPage />} />

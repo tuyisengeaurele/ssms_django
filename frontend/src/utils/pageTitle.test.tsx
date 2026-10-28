@@ -10,7 +10,7 @@ const APP_PATHS = [
   '/farmer', '/supervisor', '/supervisor/farmers', '/farms', '/farms/new', '/farms/abc123', '/farms/abc123/batches/new',
   '/batches', '/batches/abc123', '/batches/abc123/detect', '/batches/abc123/harvest',
   '/harvests', '/detections/reports', '/alerts', '/devices', '/profile', '/reports/cooperative',
-  '/admin', '/admin/users', '/admin/cooperatives', '/admin/contacts', '/admin/audit-log', '/admin/reports',
+  '/admin', '/admin/users', '/admin/cooperatives', '/admin/contacts', '/admin/audit-log', '/admin/reports', '/admin/thresholds', '/admin/health',
 ];
 
 describe('getPageInfo', () => {
@@ -21,6 +21,8 @@ describe('getPageInfo', () => {
     ['/admin/contacts', 'Messages', 'Administration'],
     ['/admin/audit-log', 'Audit log', 'Administration'],
     ['/admin/reports', 'System report', 'Administration'],
+    ['/admin/thresholds', 'Safe ranges', 'Administration'],
+    ['/admin/health', 'System health', 'Administration'],
     ['/supervisor/farmers', 'My farmers', 'Farming'],
     ['/farms', 'Farms', 'Farming'],
     ['/farms/new', 'New farm', 'Farming'],
