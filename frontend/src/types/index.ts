@@ -35,6 +35,20 @@ export interface User {
   updatedAt: string;
 }
 
+/** One farm in the supervisor's ranking, with the counts behind its level. See farms/risk.py for the rule. */
+export interface FarmRisk {
+  id: string;
+  name: string;
+  ownerName: string;
+  location: string;
+  level: 'HIGH' | 'MEDIUM' | 'OK';
+  score: number;
+  diseaseAlerts: number;
+  openAirAlerts: number;
+  offlineDevices: number;
+  activeBatches: number;
+}
+
 export interface Farm {
   id: string;
   name: string;

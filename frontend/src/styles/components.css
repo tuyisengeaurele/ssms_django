@@ -1024,3 +1024,18 @@ tr.is-off td:last-child { opacity: 1; }
 .first-run-intro { margin: 0 0 14px; color: var(--text-2); }
 .first-run-steps { margin: 0 0 20px; padding-left: 22px; color: var(--text); line-height: 1.6; }
 .first-run-steps li + li { margin-top: 8px; }
+
+/* ── Farm risk ranking (supervisor dashboard) ─────────────────────────────── */
+.risk-list { list-style: none; margin: 0; padding: 0; }
+.risk-list > li { display: grid; gap: 6px; padding: 14px 20px; border-top: 1px solid var(--border-light); }
+.risk-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.risk-name { font-weight: 600; color: var(--ink); text-decoration: none; }
+.risk-name:hover { text-decoration: underline; }
+.risk-owner { color: var(--text-muted); font-size: 0.85rem; }
+.risk-badge { padding: 2px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+.risk-high { background: #fbe3df; color: #7a1d12; }
+.risk-medium { background: #fdf0d5; color: #5f410d; }
+.risk-ok { background: #e3f1e8; color: #123524; }
+.risk-why { display: flex; flex-wrap: wrap; gap: 2px 16px; margin: 0; padding: 0; list-style: none; color: var(--text-2); font-size: 0.85rem; }
+.risk-calm { margin: 0; padding: 18px 20px; color: var(--text-2); }
+.risk-foot { padding: 10px 14px; border-top: 1px solid var(--border-light); }

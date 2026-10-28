@@ -8,8 +8,8 @@ import { setReducedMotion } from '../../test/setup';
 const auth = vi.hoisted(() => ({ user: { id: 'u', role: 'ADMIN', cooperativeId: null as string | null, cooperativeName: null as string | null } }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
 
-const api = vi.hoisted(() => ({ farms: vi.fn(), alerts: vi.fn(), chart: vi.fn(), active: vi.fn(), recent: vi.fn(), ticketUrl: vi.fn() }));
-vi.mock('../../services/farm.service', () => ({ farmService: { getAll: api.farms } }));
+const api = vi.hoisted(() => ({ farms: vi.fn(), risk: vi.fn(), alerts: vi.fn(), chart: vi.fn(), active: vi.fn(), recent: vi.fn(), ticketUrl: vi.fn() }));
+vi.mock('../../services/farm.service', () => ({ farmService: { getAll: api.farms, getRisk: api.risk } }));
 vi.mock('../../services/alert.service', () => ({ alertService: { getAll: api.alerts }, getAlertStreamUrl: api.ticketUrl }));
 vi.mock('../../services/sensor.service', () => ({
   sensorService: { getChart: api.chart },
@@ -59,6 +59,9 @@ beforeEach(() => {
   setReducedMotion(true);
   auth.user = { id: 'u', role: 'ADMIN', cooperativeId: null, cooperativeName: null };
   api.farms.mockResolvedValue({ data: { data: [{ id: 'f1' }, { id: 'f2' }, { id: 'f3' }] } });
+  api.risk.mockResolvedValue({
+    data: { data: [{ id: 'f1', name: 'Hill Farm', ownerName: 'Serge', location: 'Gatsibo', level: 'HIGH', score: 5, diseaseAlerts: 1, openAirAlerts: 0, offlineDevices: 0, activeBatches: 1 }] },
+  });
   api.alerts.mockResolvedValue({
     data: { data: [
       { id: 'a1', type: 'TEMPERATURE', message: 'Temperature too low: 21 C', isRead: false, createdAt: new Date(Date.now() - 600_000).toISOString(), batchId: 'b1' },
@@ -91,6 +94,20 @@ describe('System overview page', () => {
     expect(within(tile('Active batches')).getByText('2')).toBeInTheDocument();
     expect(within(tile('Unread alerts')).getByText('1')).toBeInTheDocument();
     expect(within(tile('Disease checks')).getByText('4')).toBeInTheDocument();
+  });
+
+  it('shows the farms that need a look first, near the top', async () => {
+    open();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Farms that need a look first' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Hill Farm' })).toHaveAttribute('href', '/farms/f1');
+    expect(api.risk).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the rest of the page when the ranking cannot be loaded', async () => {
+    api.risk.mockRejectedValue(new Error('x'));
+    open();
+    expect(await screen.findByText("We couldn't load the farm ranking. Please try again.")).toBeInTheDocument();
+    expect(await screen.findByText('Total farms')).toBeInTheDocument();
   });
 
   it('describes a supervisor by their cooperative', async () => {
