@@ -47,6 +47,8 @@ export interface FarmRisk {
   openAirAlerts: number;
   offlineDevices: number;
   activeBatches: number;
+  /** Where the farm goes on the map. exact: the spot its owner saved. village or sector: the middle of that place. Null: none. */
+  position: { lat: number; lng: number; precision: 'exact' | 'village' | 'sector' } | null;
 }
 
 export interface Farm {

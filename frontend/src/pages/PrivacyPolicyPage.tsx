@@ -45,6 +45,14 @@ const sections: LegalSection[] = [
     ),
   },
   {
+    title: 'The map',
+    body: (
+      <p>
+        Supervisors can see the farms of their cooperative on a map, and the SSMS team can see them all. The map pictures come from OpenStreetMap. When you open the map, your browser asks OpenStreetMap's servers for those pictures, so they can see your IP address and the area you are looking at. They are not sent any farm name or position: the pins are drawn in your browser.
+      </p>
+    ),
+  },
+  {
     title: 'Cookies and local storage',
     body: (
       <p>

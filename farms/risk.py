@@ -6,6 +6,8 @@ The rule is plain on purpose, so a supervisor can say it back to a farmer:
 * MEDIUM: a sensor that is offline or in error.
 * OK: none of those.
 
+Each row also says where the farm goes on the map (see map_position).
+
 Within a level the farm with more trouble comes first. A disease counts for 5, an air problem for 3 and a sensor for 2,
 and farms with the same trouble are in name order. These are counts of real events, not a prediction.
 """
@@ -16,6 +18,7 @@ from django.utils import timezone
 
 from alerts.models import AlertLog, AlertType
 from batches.models import Batch
+from locations import registry
 from sensors.devices import effective_status
 from sensors.models import IoTDevice
 
@@ -26,6 +29,20 @@ LEVEL_ORDER = {'HIGH': 0, 'MEDIUM': 1, 'OK': 2}
 
 def _counted(rows) -> dict:
     return {farm_id: n for farm_id, n in rows}
+
+
+def map_position(farm) -> dict | None:
+    """Where a farm goes on the map, and how sure that is.
+
+    exact: the spot its owner saved. village: the middle of its village outline. sector: the middle of its sector, for
+    a village that has no outline. None for a farm from before places, which cannot be put on a map.
+    """
+    if farm.latitude is not None and farm.longitude is not None:
+        return {'lat': farm.latitude, 'lng': farm.longitude, 'precision': 'exact'}
+    for precision, point in (('village', registry.village_centre(farm.village_code)), ('sector', registry.sector_centre(farm.sector_code))):
+        if point:
+            return {**point, 'precision': precision}
+    return None
 
 
 def farm_risk(farms) -> list[dict]:
@@ -63,6 +80,7 @@ def farm_risk(farms) -> list[dict]:
             'id': farm.pk, 'name': farm.name, 'owner_name': farm.owner.name, 'location': farm.location,
             'level': level, 'score': d * DISEASE_WEIGHT + a * AIR_WEIGHT + o * DEVICE_WEIGHT,
             'disease_alerts': d, 'open_air_alerts': a, 'offline_devices': o, 'active_batches': batches.get(farm.pk, 0),
+            'position': map_position(farm),
         })
     rows.sort(key=lambda row: (LEVEL_ORDER[row['level']], -row['score'], row['name'].casefold()))
     return rows

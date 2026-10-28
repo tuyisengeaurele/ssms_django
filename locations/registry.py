@@ -163,6 +163,60 @@ def _inside(x, y, rings) -> bool:
     return inside
 
 
+def _ring_centroid(ring):
+    """(x, y, area) of one closed ring by the shoelace rule, or None for a ring with no area."""
+    twice_area = cx = cy = 0.0
+    for (x1, y1), (x2, y2) in zip(ring, ring[1:]):
+        cross = x1 * y2 - x2 * y1
+        twice_area += cross
+        cx += (x1 + x2) * cross
+        cy += (y1 + y2) * cross
+    if twice_area == 0:
+        return None
+    return cx / (3 * twice_area), cy / (3 * twice_area), abs(twice_area) / 2
+
+
+def centre_of(rings) -> tuple[float, float]:
+    """A point inside an outline that stands for its middle, as (longitude, latitude).
+
+    It is the centre of gravity of the biggest ring. When that falls outside the shape (a bent village, or a hole), the
+    point inside the shape nearest to it is used instead, so a farm is never drawn in the neighbour's land.
+    """
+    sized = [(centroid[2], ring, centroid) for ring in rings if (centroid := _ring_centroid(ring))]
+    if not sized:
+        x, y = rings[0][0]
+        return x, y
+    _, main, (cx, cy, _) = max(sized, key=lambda item: item[0])
+    if _inside(cx, cy, rings):
+        return cx, cy
+    candidates = [(sum(p[0] for p in main[i:i + 3]) / 3, sum(p[1] for p in main[i:i + 3]) / 3) for i in range(len(main) - 3)]
+    candidates += [(x, y) for x, y in main]   # a point on the edge counts as inside
+    inside_points = [(x, y) for x, y in candidates if _inside(x, y, rings)]
+    return min(inside_points, key=lambda p: (p[0] - cx) ** 2 + (p[1] - cy) ** 2) if inside_points else main[0]
+
+
+def _spot(point: tuple[float, float]) -> dict:
+    return {'lat': round(point[1], 5), 'lng': round(point[0], 5)}
+
+
+def village_centre(code) -> dict | None:
+    """{'lat', 'lng'} in the middle of a village's outline, or None when the village is unknown or has no outline."""
+    place = _index()['places'].get(code) if isinstance(code, str) else None
+    if place is None or place['level'] != 'village':
+        return None
+    sector = chain(code)['sector']['code']
+    for *_, village, _cell, rings in _village_outlines().get(sector, ()):
+        if village == code:
+            return _spot(centre_of(rings))
+    return None
+
+
+def sector_centre(code) -> dict | None:
+    """{'lat', 'lng'} in the middle of a sector, or None for an unknown sector."""
+    rings = outline(code) if isinstance(code, str) else None
+    return _spot(centre_of(rings)) if rings else None
+
+
 def _number(value, low, high) -> float:
     try:
         number = float(value)
