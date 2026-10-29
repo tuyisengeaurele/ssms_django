@@ -43,7 +43,7 @@ def ai():
         yield client.__enter__.return_value
 
 
-def check(auth_client, person, batch, ai, result='Flacherie', confidence=0.83):
+def check(auth_client, person, batch, ai, result='Grasserie', confidence=0.83):
     ai.post.return_value = ai_answer(body={'result': result, 'confidence': confidence, 'allScores': {result: confidence}})
     return auth_client(person).post(URL, {'batchId': batch.pk, 'image': upload(image_bytes())}, format='multipart')
 
@@ -54,8 +54,8 @@ def disease_alerts(batch):
 
 # ── when an alert is raised ─────────────────────────────────────────────────
 
-@pytest.mark.parametrize('disease', ['Flacherie', 'Grasserie', 'Muscardine', 'Pebrine'])
-def test_each_disease_raises_an_alert_on_the_batch(auth_client, owner, batch, ai, email, disease):
+def test_grasserie_raises_an_alert_on_the_batch(auth_client, owner, batch, ai, email):
+    disease = 'Grasserie'
     assert check(auth_client, owner, batch, ai, disease, 0.83).status_code == 201
     alert = disease_alerts(batch).get()
     assert alert.room_id is None and alert.is_read is False and alert.resolved_at is None
@@ -68,36 +68,36 @@ def test_a_healthy_result_raises_nothing(auth_client, owner, batch, ai, email):
 
 
 def test_a_result_the_page_does_not_know_raises_nothing(auth_client, owner, batch, ai, email):
-    check(auth_client, owner, batch, ai, 'Class_7', 0.9)
+    assert check(auth_client, owner, batch, ai, 'Class_7', 0.9).status_code == 502
     assert AlertLog.objects.count() == 0
 
 
 def test_a_disease_the_check_is_not_sure_about_raises_nothing(auth_client, owner, batch, ai, email):
-    check(auth_client, owner, batch, ai, 'Pebrine', 0.49)
+    check(auth_client, owner, batch, ai, 'Grasserie', 0.49)
     assert AlertLog.objects.count() == 0
 
 
 def test_a_disease_at_the_limit_does_raise_one(auth_client, owner, batch, ai, email):
-    check(auth_client, owner, batch, ai, 'Pebrine', 0.5)
+    check(auth_client, owner, batch, ai, 'Grasserie', 0.5)
     assert disease_alerts(batch).count() == 1
 
 
 def test_the_limit_is_a_setting(auth_client, owner, batch, ai, email, settings):
     settings.DISEASE_ALERT_MIN_CONFIDENCE = 0.9
-    check(auth_client, owner, batch, ai, 'Pebrine', 0.8)
+    check(auth_client, owner, batch, ai, 'Grasserie', 0.8)
     assert AlertLog.objects.count() == 0
 
 
 def test_every_positive_check_is_its_own_alert(auth_client, owner, batch, ai, email):
-    check(auth_client, owner, batch, ai, 'Flacherie', 0.83)
+    check(auth_client, owner, batch, ai, 'Grasserie', 0.83)
     check(auth_client, owner, batch, ai, 'Grasserie', 0.7)
     assert disease_alerts(batch).count() == 2
 
 
 def test_the_answer_says_whether_an_alert_was_raised(auth_client, owner, batch, ai, email):
-    assert check(auth_client, owner, batch, ai, 'Flacherie', 0.83).json()['data']['alertRaised'] is True
+    assert check(auth_client, owner, batch, ai, 'Grasserie', 0.83).json()['data']['alertRaised'] is True
     assert check(auth_client, owner, batch, ai, 'Healthy', 0.97).json()['data']['alertRaised'] is False
-    assert check(auth_client, owner, batch, ai, 'Pebrine', 0.3).json()['data']['alertRaised'] is False
+    assert check(auth_client, owner, batch, ai, 'Grasserie', 0.3).json()['data']['alertRaised'] is False
 
 
 def test_the_check_still_works_when_the_alert_cannot_be_saved(auth_client, owner, batch, ai, email):
@@ -138,12 +138,12 @@ def test_no_email_when_the_owner_made_the_check_because_the_result_is_on_their_s
 
 def test_the_owner_is_emailed_when_someone_else_made_the_check(auth_client, coop, owner, batch, ai, email):
     supervisor = UserFactory(role='SUPERVISOR', cooperative=coop)
-    check(auth_client, supervisor, batch, ai, 'Pebrine', 0.9)
+    check(auth_client, supervisor, batch, ai, 'Grasserie', 0.9)
     subject, to, content = email.call_args.args
     assert to == ['serge@example.rw']
     assert 'Serge Farm' in subject
     body = content.plain()
-    assert 'Pebrine suspected' in body
+    assert 'Grasserie suspected' in body
     assert '90%' in body
     assert f'#{batch.pk[-8:].upper()}' in body
 

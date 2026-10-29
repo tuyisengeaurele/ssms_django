@@ -2,6 +2,9 @@
 SSMS Disease Detection AI Service
 Loads the trained ResNet50 sericulture model and serves predictions via HTTP.
 
+The check is about silkworms. It answers Grasserie or Healthy. When the photo is not a clear silkworm it says
+so with NotSilkworm (the model takes it for a mulberry leaf) or Uncertain (the model is not sure enough).
+
 Only the SSMS backend should call this service. It is not meant to be reached from a browser, so it
 sends no CORS headers and refuses every request that does not carry the shared secret.
 
@@ -12,6 +15,7 @@ For local development only you can skip the secret with AI_ALLOW_INSECURE=1.
 import hashlib
 import hmac
 import io
+import json
 import os
 
 import numpy as np
@@ -31,10 +35,38 @@ MODEL_PATH = os.environ.get(
 # Optional. When set, the model file must hash to this value or the service will not load it.
 MODEL_SHA256 = os.environ.get("MODEL_SHA256", "").strip().lower()
 
-# Class names MUST match the folder names used during training (alphabetical order).
-# Keras flow_from_directory assigns indices alphabetically.
-_default_classes = "Flacherie,Grasserie,Healthy,Muscardine,Pebrine"
-CLASS_NAMES: list[str] = os.environ.get("CLASS_NAMES", _default_classes).split(",")
+# The model's outputs in order: the folders it was trained on, alphabetical because Keras numbers them that way.
+# The list is saved next to the model so the order never has to be guessed again.
+CLASSES_PATH = os.environ.get("CLASSES_PATH", os.path.splitext(MODEL_PATH)[0] + ".classes.json")
+
+# What a silkworm can be called. Every other output of the model is a mulberry leaf, so not a silkworm.
+SILKWORM_RESULTS = {"grasserie_silkworms": "Grasserie", "healthy_silkworms": "Healthy"}
+
+# Below this score the model is not sure enough to name anything. A starting value, not a measured one.
+DEFAULT_UNCERTAIN_BELOW = 0.60
+
+
+def load_classes(path: str) -> list[str]:
+    try:
+        with open(path, encoding="utf-8") as handle:
+            names = json.load(handle)["classes"]
+        if not names or not all(isinstance(name, str) for name in names):
+            raise ValueError("empty or not text")
+        return names
+    except Exception:
+        raise RuntimeError(f"The class list next to the model could not be read: {path}") from None
+
+
+def read_limit(raw: str) -> float:
+    try:
+        value = float(raw)
+    except ValueError:
+        return DEFAULT_UNCERTAIN_BELOW
+    return value if 0 < value < 1 else DEFAULT_UNCERTAIN_BELOW
+
+
+CLASS_NAMES: list[str] = load_classes(CLASSES_PATH)
+UNCERTAIN_BELOW = read_limit(os.environ.get("UNCERTAIN_BELOW", ""))
 
 SECRET = os.environ.get("AI_SERVICE_SECRET", "")
 ALLOW_INSECURE = os.environ.get("AI_ALLOW_INSECURE") == "1"
@@ -85,6 +117,9 @@ def get_model():
         print(f"[AI] Loading model from: {path}")
         _model = tf.keras.models.load_model(path, safe_mode=True)
         print(f"[AI] Model loaded, output classes: {_model.output_shape[-1]}")
+        if _model.output_shape[-1] != len(CLASS_NAMES):
+            _model = None
+            raise RuntimeError("The model and its class list do not have the same number of classes.")
     return _model
 
 
@@ -149,18 +184,18 @@ app = FastAPI(
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "classes": CLASS_NAMES}
+    return {"status": "ok", "classes": [SILKWORM_RESULTS[n] for n in CLASS_NAMES if n in SILKWORM_RESULTS]}
 
 
 @app.post("/predict", dependencies=[Depends(require_secret), Depends(limit_body)])
 async def predict(file: UploadFile = File(...)):
     """
-    Accept a photo and return the predicted disease label + confidence.
+    Accept a photo and say what the model sees.
 
     Response:
-        result      - predicted class name
-        confidence  - float 0-1 (probability of predicted class)
-        allScores   - dict of {className: probability} for all classes
+        result      - Grasserie, Healthy, NotSilkworm or Uncertain
+        confidence  - float 0-1, the model's highest score
+        allScores   - the Grasserie and Healthy scores. They need not add up to one.
     """
     contents = await file.read(MAX_BYTES + 1)
     if len(contents) > MAX_BYTES:
@@ -168,22 +203,22 @@ async def predict(file: UploadFile = File(...)):
 
     arr = preprocess(read_photo(contents))
     scores = run_model(arr)
+    if len(scores) != len(CLASS_NAMES):
+        raise HTTPException(status_code=503, detail="The check is not available right now.")
 
-    predicted_idx = int(np.argmax(scores))
-    confidence = float(scores[predicted_idx])
-    result = (
-        CLASS_NAMES[predicted_idx]
-        if predicted_idx < len(CLASS_NAMES)
-        else f"Class_{predicted_idx}"
-    )
-
-    all_scores = {
-        (CLASS_NAMES[i] if i < len(CLASS_NAMES) else f"Class_{i}"): round(float(scores[i]), 4)
-        for i in range(len(scores))
-    }
+    top = int(np.argmax(scores))
+    confidence = float(scores[top])
+    if confidence < UNCERTAIN_BELOW:
+        result = "Uncertain"
+    else:
+        result = SILKWORM_RESULTS.get(CLASS_NAMES[top], "NotSilkworm")
 
     return {
         "result": result,
         "confidence": round(confidence, 4),
-        "allScores": all_scores,
+        "allScores": {
+            SILKWORM_RESULTS[name]: round(float(scores[i]), 4)
+            for i, name in enumerate(CLASS_NAMES)
+            if name in SILKWORM_RESULTS
+        },
     }

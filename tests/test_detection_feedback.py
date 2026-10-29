@@ -20,7 +20,7 @@ def owner(coop):
 
 @pytest.fixture
 def detection(owner):
-    return DiseaseDetectionFactory(batch=BatchFactory(farm=FarmFactory(owner=owner)), result='Flacherie')
+    return DiseaseDetectionFactory(batch=BatchFactory(farm=FarmFactory(owner=owner)), result='Grasserie')
 
 
 def answer(client, detection, **body):
@@ -56,7 +56,7 @@ def test_a_right_answer_forgets_any_result_sent_with_it(auth_client, owner, dete
     assert detection.actual_result is None
 
 
-@pytest.mark.parametrize('actual', ['Healthy', 'Flacherie', 'Grasserie', 'Muscardine', 'Pebrine', 'Something else'])
+@pytest.mark.parametrize('actual', ['Healthy', 'Grasserie', 'Something else'])
 def test_every_listed_result_is_taken(auth_client, owner, detection, actual):
     assert answer(auth_client(owner), detection, isCorrect=False, actualResult=actual).status_code == 200
 
@@ -90,9 +90,9 @@ def test_a_new_detection_has_no_answer_yet(detection):
 
 
 def test_the_answer_is_written_to_the_audit_log(auth_client, owner, detection):
-    answer(auth_client(owner), detection, isCorrect=False, actualResult='Pebrine')
+    answer(auth_client(owner), detection, isCorrect=False, actualResult='Grasserie')
     entry = AuditLog.objects.filter(resource='DiseaseDetection', resource_id=detection.pk).latest('created_at')
-    assert entry.action == 'UPDATE' and 'Pebrine' in entry.detail
+    assert entry.action == 'UPDATE' and 'Grasserie' in entry.detail
 
 
 # ── who may answer ──────────────────────────────────────────────────────────

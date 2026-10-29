@@ -1,0 +1,4 @@
+{
+  "classes": ["disease_free", "grasserie_silkworms", "healthy_silkworms", "leaf_rust", "leaf_spot"],
+  "note": "The alphabetical order of the folders the model was trained on. Output i of the model is classes[i]."
+}

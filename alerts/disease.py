@@ -17,8 +17,9 @@ from .models import AlertLog
 
 logger = logging.getLogger(__name__)
 
-# The results of the check that are diseases. "Healthy" and anything the page does not know are not.
-DISEASES = ['Flacherie', 'Grasserie', 'Muscardine', 'Pebrine']
+# The results of the check that are diseases. The model was trained on grasserie and healthy silkworms, so it can
+# find nothing else. "Healthy" and anything the page does not know are not diseases.
+DISEASES = ['Grasserie']
 EMAIL_THROTTLE_MINUTES = 60
 
 

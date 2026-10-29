@@ -108,6 +108,6 @@ def test_the_disease_alert_email():
     batch = BatchFactory(farm=FarmFactory(owner=owner, name='Serge Farm'))
     checker = UserFactory(role='SUPERVISOR')
     with mock.patch('alerts.utils._send_mail_async', side_effect=send_email):
-        raise_disease_alert(batch, 'Pebrine', 0.9, checker)
+        raise_disease_alert(batch, 'Grasserie', 0.9, checker)
     assert_branded(mail.outbox[0], 'You received this because you own Serge Farm on SSMS.')
-    assert 'Pebrine suspected' in mail.outbox[0].body
+    assert 'Grasserie suspected' in mail.outbox[0].body
