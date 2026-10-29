@@ -4,7 +4,7 @@ import { ApiResponse, AuthResponse, User } from '../types';
 export interface RegisterResponse { user: User }
 
 export const authService = {
-  register: (data: { name: string; email: string; password: string; role?: string; invitation?: string }) =>
+  register: (data: { name: string; email: string; password: string; role?: string; invitation?: string; acceptedTerms?: boolean }) =>
     api.post<ApiResponse<RegisterResponse>>('/auth/register', data),
 
   login: (data: { email: string; password: string }) =>

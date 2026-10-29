@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, get_user_model
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -24,6 +25,7 @@ class RegisterSerializer(serializers.Serializer):
     name     = serializers.CharField(max_length=100)
     email    = serializers.EmailField()
     password = serializers.CharField(write_only=True)
+    accepted_terms = serializers.BooleanField(write_only=True, required=False, default=False)
     # A link from a supervisor. With it, the new farmer joins that cooperative.
     invitation = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
@@ -68,6 +70,9 @@ class RegisterSerializer(serializers.Serializer):
                 name=validated_data['name'],
                 role='FARMER',   # hard-coded, never trust client-supplied role
             )
+            if validated_data.get('accepted_terms'):
+                user.terms_accepted_at = timezone.now()
+                user.save(update_fields=['terms_accepted_at'])
             if self.invitation is not None:
                 from cooperatives import invitations
                 try:

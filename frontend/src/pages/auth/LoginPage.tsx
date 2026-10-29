@@ -5,12 +5,17 @@ import { useAuth } from '../../context/AuthContext';
 import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 import { AuthAlert, AuthButton, AuthField, AuthShell } from '../../landing/auth/AuthShell';
+import GoogleButton from '../../landing/auth/GoogleButton';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // The account exists but its email was never verified. Said here, with a way to get a new link, so nothing typed is lost.
+  const [unverified, setUnverified] = useState(false);
+  const [resend, setResend] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const [resendError, setResendError] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -27,9 +32,29 @@ export default function LoginPage() {
     }
   });
 
+  const forgetUnverified = () => {
+    setUnverified(false);
+    setResend('idle');
+    setResendError(false);
+  };
+
+  const sendNewLink = async () => {
+    if (resend !== 'idle') return;
+    setResendError(false);
+    setResend('sending');
+    try {
+      await authService.resendVerification(email.trim());
+      setResend('sent');
+    } catch {
+      setResend('idle');
+      setResendError(true);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    forgetUnverified();
     setLoading(true);
     try {
       const res = await authService.login({ email, password });
@@ -42,7 +67,7 @@ export default function LoginPage() {
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || '';
       if (msg === 'email_not_verified') {
-        navigate(`/check-email?email=${encodeURIComponent(email)}`, { replace: true });
+        setUnverified(true);
         return;
       }
       setError(getErrorMessage(err));
@@ -59,6 +84,19 @@ export default function LoginPage() {
         </p>
       ) : null}
       {error ? <AuthAlert>{error}</AuthAlert> : null}
+      {unverified ? (
+        <div className="l-auth__note l-auth__note--gap" role="status">
+          <p>{t('loginUnverified')}</p>
+          {resend === 'sent' ? (
+            <p className="l-auth__ok">{t('loginResent')}</p>
+          ) : (
+            <button type="button" className="l-auth__ghost" onClick={sendNewLink} disabled={resend === 'sending'}>
+              {t(resend === 'sending' ? 'loginSending' : 'loginResend')}
+            </button>
+          )}
+        </div>
+      ) : null}
+      {resendError ? <AuthAlert>{t('loginResendError')}</AuthAlert> : null}
 
       <form onSubmit={handleSubmit}>
         <AuthField
@@ -66,7 +104,7 @@ export default function LoginPage() {
           label={t('loginEmailLabel')}
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => { setEmail(e.target.value); forgetUnverified(); }}
           placeholder="you@example.com"
           autoComplete="email"
           required
@@ -89,6 +127,8 @@ export default function LoginPage() {
           {t('loginSignIn')}
         </AuthButton>
       </form>
+
+      <GoogleButton />
 
       <p className="l-auth__alt">
         {t('loginNoAccount')}{' '}

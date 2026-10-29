@@ -41,6 +41,8 @@ class User(AbstractBaseUser):
     )
     is_active = models.BooleanField(db_column='isActive', default=True)
     is_email_verified = models.BooleanField(db_column='isEmailVerified', default=False)
+    # When the person ticked the box for the terms and the privacy policy while creating the account. Empty if they did not.
+    terms_accepted_at = models.DateTimeField(db_column='termsAcceptedAt', null=True, blank=True)
     created_at = models.DateTimeField(db_column='createdAt', auto_now_add=True)
     updated_at = models.DateTimeField(db_column='updatedAt', auto_now=True)
 

@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
 import { AuthAlert, AuthButton, AuthField, AuthShell } from '../../landing/auth/AuthShell';
+import NewAccountFields, { newAccountProblem } from '../../landing/auth/NewAccountFields';
 
 /** The page behind an invitation link from a supervisor. Public, so it does not rely on the app's pop-up styles. */
 export default function JoinPage() {
@@ -18,7 +19,8 @@ export default function JoinPage() {
 
   const [invitation, setInvitation] = useState<InvitationDetails | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'invalid'>('loading');
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [form, setForm] = useState({ name: '', email: '' });
+  const [secret, setSecret] = useState({ password: '', confirm: '', accepted: false });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -53,10 +55,15 @@ export default function JoinPage() {
 
   const register = async (e: FormEvent) => {
     e.preventDefault();
+    const problem = newAccountProblem(secret);
+    if (problem) {
+      setError(t(problem));
+      return;
+    }
     setError('');
     setBusy(true);
     try {
-      const res = await authService.register({ name: form.name, email: form.email, password: form.password, invitation: token });
+      const res = await authService.register({ name: form.name, email: form.email, password: secret.password, acceptedTerms: true, invitation: token });
       if (res.data.data.user.isEmailVerified) {
         // The link went to this address, so there is nothing to verify.
         try { sessionStorage.setItem('ssms_notice', 'account_ready'); } catch { /* the notice is a courtesy */ }
@@ -141,16 +148,7 @@ export default function JoinPage() {
           autoComplete="email"
           required
         />
-        <AuthField
-          id="join-password"
-          label={t('loginPasswordLabel')}
-          type="password"
-          value={form.password}
-          onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-          autoComplete="new-password"
-          hint={t('jnPasswordHint')}
-          required
-        />
+        <NewAccountFields idPrefix="join" {...secret} onChange={(patch) => setSecret((s) => ({ ...s, ...patch }))} />
         <AuthButton loading={busy} loadingLabel={t('jnCreating')}>{t('jnCreate')}</AuthButton>
       </form>
 
