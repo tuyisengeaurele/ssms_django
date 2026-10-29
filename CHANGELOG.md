@@ -1,5 +1,44 @@
 # Changelog
 
+## The disease check is about silkworms (Plan 9, item E, step 1)
+
+The check now says what the model really sees: grasserie or a healthy silkworm. A photo that is not a clear silkworm gets a calm answer and is not saved. No more Flacherie, Muscardine or Pebrine, which the model was never trained on.
+
+### Why
+- The model has five outputs, in the alphabetical order of its training folders: `disease_free`, `grasserie_silkworms`, `healthy_silkworms`, `leaf_rust`, `leaf_spot`. The service named them Flacherie, Grasserie, Healthy, Muscardine, Pebrine. Only Grasserie and Healthy were right.
+- So a healthy mulberry leaf came back as "Flacherie", and a leaf with rust as "Muscardine".
+- I confirmed the order by running 40 photos from each of your test folders through the model. Every class landed on the index above.
+
+### Checked
+- AI service: 39 tests pass (23 new), 1 skipped as before. Backend: 1475 tests pass (26 new). Frontend: 1088 tests pass (7 new) and `tsc` is clean.
+- I ran the real model through the real service on 12 photos of each class from your `test` folder: Grasserie 12 of 12, Healthy 12 of 12, and the leaf photos came back as "not a silkworm". Some large leaf photos were refused by the existing 5 MB and unreadable-photo limits, so they never reached the model.
+- This is a smoke test, not an evaluation. Evaluation numbers come in step 2.
+- No migration. I have not looked at the new result screen in a browser.
+- `npm test` still prints the one unhandled error from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+
+### Changed
+- **AI service.** The class order is read from `sericulture_resnet50_model.classes.json`, saved next to the model. The service will not start without it, and refuses to answer if the model and the file disagree on the number of classes.
+- **Four answers.** Grasserie, Healthy, NotSilkworm (the model takes it for a leaf) and Uncertain (its top score is under 0.60). Only the Grasserie and Healthy scores are reported. The limit 0.60 is a starting value, not a measured one. `UNCERTAIN_BELOW` changes it.
+- **Backend.** An unclear photo is answered with status 200 and a short message. It is not saved, not uploaded to Cloudinary and raises no alert. A result this version does not know (for example from an older service during a deploy) is refused with the usual "couldn't finish" message and nothing is saved.
+- **Alerts.** Only Grasserie raises a disease alert. The feedback choices are Healthy, Grasserie and Something else.
+- **Screens.** The result page shows "This does not look like a silkworm" or "The check is not sure about this photo", with what to do and "Nothing was saved". The disease card now covers grasserie only. The photo tips no longer mention leaves. The landing page FAQ and the example card say what the check was trained on.
+- **Demo seed.** The one sick check is now Grasserie.
+- **`docs/disease-guidance.md`.** The notes on flacherie, muscardine and pebrine are taken out, with a line saying why. They stay in the git history.
+
+### Added
+- `python manage.py list_old_detection_names`. It only counts saved results the check can no longer give, and the disease alerts that name them. It changes nothing.
+- On your local database it finds 3 old results (2 Flacherie, 1 Muscardine) and 1 old disease alert. They came from leaf photos or from the wrong names. I left them alone.
+
+### Decided
+- An unclear photo is not saved, so the healthy and disease counts stay true.
+- Old saved results are listed, not changed. Deleting or relabelling them is your call.
+- The leaf outputs of the model are not used. Adding leaf checks back later is mostly a screen and wording change.
+
+### Known limits
+- The French and Kinyarwanda words of the new messages are my drafts for a native speaker.
+- Existing records with an old name still show with that name, with no advice card and a neutral colour.
+- `DISEASE_ALERT_MIN_CONFIDENCE` (0.5) is now below the service limit (0.60), so it only matters if the limit is lowered.
+
 ## System health and safe ranges (Plan 9, item D5)
 
 Two admin pages under System. "Safe ranges" lets an admin change the temperature and humidity limits of each stage, and shows who changed them last. "System health" tells an admin in words whether the database, the disease check service and the sensors are working, and which services are set up.
