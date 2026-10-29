@@ -75,8 +75,10 @@ describe('Join page, signed out', () => {
     fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Aline Uwase' } });
     fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'aline@example.rw' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Zebra-Quartz-84' } });
+    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Zebra-Quartz-84' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /I agree to the/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Create account and join' }));
-    await waitFor(() => expect(api.register).toHaveBeenCalledWith({ name: 'Aline Uwase', email: 'aline@example.rw', password: 'Zebra-Quartz-84', invitation: 'tok123' }));
+    await waitFor(() => expect(api.register).toHaveBeenCalledWith({ name: 'Aline Uwase', email: 'aline@example.rw', password: 'Zebra-Quartz-84', acceptedTerms: true, invitation: 'tok123' }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/check-email?email=aline%40example.rw'));
   });
 
@@ -89,6 +91,8 @@ describe('Join page, signed out', () => {
     expect(email).toHaveAttribute('readonly');
     fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Aline Uwase' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Zebra-Quartz-84' } });
+    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Zebra-Quartz-84' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /I agree to the/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Create account and join' }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/login'));
     expect(sessionStorage.getItem('ssms_notice')).toBe('account_ready');
@@ -101,8 +105,30 @@ describe('Join page, signed out', () => {
     fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Aline' } });
     fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'aline@example.rw' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Zebra-Quartz-84' } });
+    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Zebra-Quartz-84' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /I agree to the/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Create account and join' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('An account with this email already exists.');
+  });
+
+  it('has the same password rules, confirmation and terms as the register page', async () => {
+    open();
+    await screen.findByRole('heading', { level: 1, name: 'Join Gatsibo Silk' });
+    expect(screen.getByRole('list', { name: 'Your password needs' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Confirm password')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Terms of Service' })).toHaveAttribute('href', '/terms');
+  });
+
+  it('does not ask the server until the terms are accepted', async () => {
+    open();
+    await screen.findByRole('heading', { level: 1, name: 'Join Gatsibo Silk' });
+    fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Aline Uwase' } });
+    fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'aline@example.rw' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Zebra-Quartz-84' } });
+    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Zebra-Quartz-84' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create account and join' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Please tick the box to accept the terms.');
+    expect(api.register).not.toHaveBeenCalled();
   });
 
   it('lets someone who already has an account sign in and come back to the link', async () => {

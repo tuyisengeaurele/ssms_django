@@ -36,6 +36,11 @@ describe('Privacy policy page', () => {
     expect(screen.getByText(/explains how the Smart Sericulture Management System/)).toBeInTheDocument();
   });
 
+  it('says that the time the terms were accepted is kept with the account', () => {
+    renderPage(<PrivacyPolicyPage />, '/privacy');
+    expect(screen.getByText(/the time you accepted the terms/)).toBeInTheDocument();
+  });
+
   it('lists every section in a contents navigation that links to it', () => {
     const { container } = renderPage(<PrivacyPolicyPage />, '/privacy');
     const toc = screen.getByRole('navigation', { name: 'On this page' });
