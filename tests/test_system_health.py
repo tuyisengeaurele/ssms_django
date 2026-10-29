@@ -36,7 +36,7 @@ def admin():
 def ai_answers():
     """The disease check service answers, unless a test says otherwise. Nothing here may call the network."""
     answer = mock.Mock(status_code=200)
-    answer.json.return_value = {'status': 'ok', 'classes': ['Healthy', 'Pebrine']}
+    answer.json.return_value = {'status': 'ok', 'classes': ['Grasserie', 'Healthy']}
     with mock.patch('core.health.httpx.get', return_value=answer) as patched:
         yield patched
 

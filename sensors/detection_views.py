@@ -34,6 +34,14 @@ from .uploads import validate_image_upload
 
 logger = logging.getLogger(__name__)
 
+# What the check can say about a silkworm, and what it says when the photo is not one. The words are the page's,
+# the screens translate them by result.
+SILKWORM_RESULTS = ('Grasserie', 'Healthy')
+UNCLEAR_PHOTO = {
+    'NotSilkworm': 'That does not look like a silkworm. Nothing was saved.',
+    'Uncertain': 'The check is not sure about this photo. Nothing was saved.',
+}
+
 
 def _upload_to_cloudinary(uploaded_file) -> str:
     """
@@ -102,6 +110,18 @@ class DiseaseDetectionCreateView(APIView):
             logger.exception('Could not reach the AI service')
             return api_error("The disease check couldn't finish. Please try again.", 502)
 
+        result = ai_data.get('result') if isinstance(ai_data, dict) else None
+        if result in UNCLEAR_PHOTO:
+            # A photo that is not a clear silkworm says nothing about the batch. It is not kept, so the counts stay true.
+            return api_success(
+                {'result': result, 'confidence': ai_data.get('confidence'), 'allScores': ai_data.get('allScores', {})},
+                UNCLEAR_PHOTO[result],
+            )
+        if result not in SILKWORM_RESULTS:
+            # Another version of the service may be answering. Better to say so than to keep a result nobody can read.
+            logger.error('AI service sent a result this version does not know: %r', result)
+            return api_error("The disease check couldn't finish. Please try again.", 502)
+
         # Reset file pointer so we can upload it
         image_file.seek(0)
 
@@ -135,8 +155,8 @@ class DiseaseDetectionCreateView(APIView):
         return api_success(payload, 'Disease detection completed.', 201)
 
 
-# What the farmer can say the photo really showed. "Something else" is for a worm that is none of the four diseases.
-ACTUAL_RESULTS = ['Healthy', 'Flacherie', 'Grasserie', 'Muscardine', 'Pebrine', 'Something else']
+# What the farmer can say the photo really showed. "Something else" is for a worm that is neither.
+ACTUAL_RESULTS = ['Healthy', 'Grasserie', 'Something else']
 
 
 class DiseaseDetectionFeedbackView(APIView):
