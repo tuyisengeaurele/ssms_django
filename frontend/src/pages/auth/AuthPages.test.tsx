@@ -98,13 +98,82 @@ describe('Login page', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Wrong email or password');
   });
 
-  it('sends an unverified account to the check email page', async () => {
-    api.login.mockRejectedValue(apiError('email_not_verified'));
-    open();
-    fill('Email address', 'a@b.rw');
-    fill('Password', 'Secret123');
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
-    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/check-email?email=a%40b.rw'));
+  describe('an account whose email is not verified', () => {
+    const tryToSignIn = async () => {
+      api.login.mockRejectedValue(apiError('email_not_verified'));
+      open();
+      fill('Email address', 'a@b.rw');
+      fill('Password', 'Secret123');
+      fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+      return screen.findByText(/Your email address is not verified yet/);
+    };
+
+    it('stays on the page and says so, with the values still in the boxes', async () => {
+      await tryToSignIn();
+      expect(screen.queryByTestId('where')).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Email address')).toHaveValue('a@b.rw');
+      expect(screen.getByLabelText('Password')).toHaveValue('Secret123');
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('offers a new link and sends it to the address typed', async () => {
+      api.resendVerification.mockResolvedValue({});
+      await tryToSignIn();
+      fireEvent.click(screen.getByRole('button', { name: 'Send a new link' }));
+      await waitFor(() => expect(api.resendVerification).toHaveBeenCalledWith('a@b.rw'));
+      expect(await screen.findByText(/a new link is on its way/)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Send a new link' })).not.toBeInTheDocument();
+    });
+
+    it('says so, and keeps the button, when the link could not be sent', async () => {
+      api.resendVerification.mockRejectedValue(apiError('x'));
+      await tryToSignIn();
+      fireEvent.click(screen.getByRole('button', { name: 'Send a new link' }));
+      expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't send the link. Please try again.");
+      expect(screen.getByRole('button', { name: 'Send a new link' })).toBeEnabled();
+    });
+
+    it('cannot send twice at once', async () => {
+      api.resendVerification.mockReturnValue(new Promise(() => {}));
+      await tryToSignIn();
+      fireEvent.click(screen.getByRole('button', { name: 'Send a new link' }));
+      expect(await screen.findByRole('button', { name: 'Sending' })).toBeDisabled();
+      expect(api.resendVerification).toHaveBeenCalledTimes(1);
+    });
+
+    it('is forgotten when the email is changed, because it was about the old one', async () => {
+      await tryToSignIn();
+      fill('Email address', 'other@b.rw');
+      expect(screen.queryByText(/Your email address is not verified yet/)).not.toBeInTheDocument();
+    });
+
+    it('is forgotten at the next attempt', async () => {
+      await tryToSignIn();
+      api.login.mockRejectedValue(apiError('Wrong email or password'));
+      fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+      expect(await screen.findByRole('alert')).toHaveTextContent('Wrong email or password');
+      expect(screen.queryByText(/Your email address is not verified yet/)).not.toBeInTheDocument();
+    });
+
+    it('is not shown for any other failure', async () => {
+      api.login.mockRejectedValue(apiError('Wrong email or password'));
+      open();
+      fill('Email address', 'a@b.rw');
+      fill('Password', 'x');
+      fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+      await screen.findByRole('alert');
+      expect(screen.queryByText(/not verified yet/)).not.toBeInTheDocument();
+    });
+
+    it('is written in French', async () => {
+      localStorage.setItem('ssms_locale', 'fr');
+      api.login.mockRejectedValue(apiError('email_not_verified'));
+      open();
+      fill('Adresse e-mail', 'a@b.rw');
+      fill('Mot de passe', 'Secret123');
+      fireEvent.click(screen.getByRole('button', { name: 'Se connecter' }));
+      expect(await screen.findByRole('button', { name: 'Envoyer un nouveau lien' })).toBeInTheDocument();
+    });
   });
 
   it('explains why the person was sent back when their session ended', () => {
@@ -153,17 +222,33 @@ describe('Login page', () => {
 
 describe('Register page', () => {
   const open = () => renderAt('/register', <RegisterPage />, '/register');
+  const submit = () => fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
+  const fillAll = (over: { password?: string; confirm?: string; terms?: boolean } = {}) => {
+    const { password = 'Secret123', confirm = password, terms = true } = over;
+    fill('Full name', 'Aline U');
+    fill('Email address', 'aline@b.rw');
+    fill('Password', password);
+    fill('Confirm password', confirm);
+    if (terms) fireEvent.click(screen.getByRole('checkbox', { name: /I agree to the/ }));
+  };
 
-  it('registers a farmer and opens the check email page', async () => {
+  it('registers a farmer, says the terms were accepted, and opens the check email page', async () => {
     api.register.mockResolvedValue({ data: {} });
     open();
     expect(screen.getByRole('heading', { level: 1, name: 'Create account' })).toBeInTheDocument();
-    fill('Full name', 'Aline U');
-    fill('Email address', 'aline@b.rw');
-    fill('Password', 'Secret123');
-    fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
+    fillAll();
+    submit();
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/check-email?email=aline%40b.rw'));
-    expect(api.register).toHaveBeenCalledWith({ name: 'Aline U', email: 'aline@b.rw', password: 'Secret123', role: 'FARMER' });
+    expect(api.register).toHaveBeenCalledWith({ name: 'Aline U', email: 'aline@b.rw', password: 'Secret123', acceptedTerms: true });
+  });
+
+  it('does not send a role, because the server decides it', async () => {
+    api.register.mockResolvedValue({ data: {} });
+    open();
+    fillAll();
+    submit();
+    await waitFor(() => expect(api.register).toHaveBeenCalled());
+    expect(api.register.mock.calls[0][0]).not.toHaveProperty('role');
   });
 
   it('has no note about roles and links to sign in', () => {
@@ -173,14 +258,68 @@ describe('Register page', () => {
     expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
   });
 
+  it('shows the password rules, which replace the old one line hint', () => {
+    open();
+    expect(screen.getByRole('list', { name: 'Your password needs' })).toBeInTheDocument();
+    expect(screen.queryByText(/one uppercase letter and one digit/)).not.toBeInTheDocument();
+  });
+
+  it('does not ask the server when the password breaks a rule', async () => {
+    open();
+    fillAll({ password: 'secret' });
+    submit();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Please choose a password that meets every rule.');
+    expect(api.register).not.toHaveBeenCalled();
+  });
+
+  it('does not ask the server when the two passwords differ', async () => {
+    open();
+    fillAll({ confirm: 'Secret124' });
+    submit();
+    expect(await screen.findByRole('alert')).toHaveTextContent('The two passwords do not match.');
+    expect(api.register).not.toHaveBeenCalled();
+  });
+
+  it('does not ask the server until the terms are accepted', async () => {
+    open();
+    fillAll({ terms: false });
+    submit();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Please tick the box to accept the terms.');
+    expect(api.register).not.toHaveBeenCalled();
+  });
+
+  it('clears that message when the problem is put right and tried again', async () => {
+    api.register.mockResolvedValue({ data: {} });
+    open();
+    fillAll({ terms: false });
+    submit();
+    await screen.findByRole('alert');
+    fireEvent.click(screen.getByRole('checkbox', { name: /I agree to the/ }));
+    submit();
+    await waitFor(() => expect(api.register).toHaveBeenCalled());
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('shows the server message when registration fails', async () => {
     api.register.mockRejectedValue(apiError('Email already registered'));
     open();
-    fill('Full name', 'A');
-    fill('Email address', 'a@b.rw');
-    fill('Password', 'Secret123');
-    fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
+    fillAll();
+    submit();
     expect(await screen.findByRole('alert')).toHaveTextContent('Email already registered');
+  });
+
+  it('is written in French', () => {
+    localStorage.setItem('ssms_locale', 'fr');
+    open();
+    expect(screen.getByRole('heading', { level: 1, name: 'Créer un compte' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Nom complet')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Créer un compte' })).toBeInTheDocument();
+  });
+
+  it('is written in Kinyarwanda, with no English left on the form', () => {
+    localStorage.setItem('ssms_locale', 'rw');
+    const { container } = open();
+    expect(container.textContent).not.toMatch(/Full name|Create account|Confirm password|Already have an account/);
   });
 });
 

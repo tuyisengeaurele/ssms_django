@@ -2,24 +2,35 @@ import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/auth.service';
 import { useApiError } from '../../hooks/useApiError';
+import { useLanguage } from '../../context/LanguageContext';
 import { AuthAlert, AuthButton, AuthField, AuthShell } from '../../landing/auth/AuthShell';
+import NewAccountFields, { newAccountProblem } from '../../landing/auth/NewAccountFields';
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'FARMER' });
+  const [form, setForm] = useState({ name: '', email: '' });
+  const [secret, setSecret] = useState({ password: '', confirm: '', accepted: false });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { getErrorMessage } = useApiError();
+  const { t } = useLanguage();
 
-  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const set = (field: 'name' | 'email') => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    // Said here, in plain words, so the person is not sent to the server to be told what the page already knows.
+    const problem = newAccountProblem(secret);
+    if (problem) {
+      setError(t(problem));
+      return;
+    }
     setError('');
     setLoading(true);
     try {
-      await authService.register(form);
+      // The server decides the role, so none is sent. Public sign up always makes a farmer.
+      await authService.register({ name: form.name, email: form.email, password: secret.password, acceptedTerms: true });
       navigate(`/check-email?email=${encodeURIComponent(form.email)}`, { replace: true });
     } catch (err) {
       setError(getErrorMessage(err));
@@ -28,35 +39,24 @@ export default function RegisterPage() {
     }
   };
 
-  // Only FARMER is available through public registration.
-  // SUPERVISOR and ADMIN accounts are created by administrators only.
   return (
-    <AuthShell title="Create account" subtitle="Fill in your details to get started.">
+    <AuthShell title={t('regTitle')} subtitle={t('regSubtitle')}>
       {error ? <AuthAlert>{error}</AuthAlert> : null}
 
       <form onSubmit={handleSubmit}>
-        <AuthField id="name" label="Full name" value={form.name} onChange={set('name')} placeholder="Your full name" autoComplete="name" required />
-        <AuthField id="reg-email" label="Email address" type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" autoComplete="email" required />
-        <AuthField
-          id="reg-password"
-          label="Password"
-          type="password"
-          value={form.password}
-          onChange={set('password')}
-          autoComplete="new-password"
-          hint="At least 8 characters, with one uppercase letter and one digit."
-          required
-        />
+        <AuthField id="name" label={t('regName')} value={form.name} onChange={set('name')} placeholder={t('regNamePlace')} autoComplete="name" required />
+        <AuthField id="reg-email" label={t('loginEmailLabel')} type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" autoComplete="email" required />
+        <NewAccountFields idPrefix="reg" {...secret} onChange={(patch) => setSecret((s) => ({ ...s, ...patch }))} />
 
-        <AuthButton loading={loading} loadingLabel="Creating account">
-          Create account
+        <AuthButton loading={loading} loadingLabel={t('regCreating')}>
+          {t('regTitle')}
         </AuthButton>
       </form>
 
       <p className="l-auth__alt">
-        Already have an account?{' '}
+        {t('regHaveAccount')}{' '}
         <Link className="l-auth__link" to="/login">
-          Sign in
+          {t('loginSignIn')}
         </Link>
       </p>
     </AuthShell>
