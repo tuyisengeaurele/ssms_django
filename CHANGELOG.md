@@ -1,5 +1,37 @@
 # Changelog
 
+## How the check does on photos it has not seen (Plan 9, item E, step 2)
+
+A script scores the silkworm check on photos that were not in training, and `docs/model-card.md` reports the result with its limits.
+
+### Result
+- 691 silkworm photos (594 Grasserie, 97 Healthy), none of them in the training folder. The check answered 690 and was right on 99.4% of those, and on 99.3% of all 691 (95% interval 98.3 to 99.7).
+- Grasserie recall 99.2%, Healthy recall 100.0%. Four Grasserie photos were called Healthy, three with a high score. A disease called healthy raises no alert, so that is the direction that matters.
+- All 110 mulberry leaf photos were refused as not a silkworm.
+- The 0.60 limit changes little on these photos, so I left it. The card has the table for 0.50 to 0.95.
+- The strict rule dropped 128 of 722 Grasserie photos and 235 of 332 Healthy photos from the test folder, because the same photo is in `new_dataset`.
+
+### What this does not show
+- These photos come from the same dataset as the training photos. Photos from Rwandan farms will be harder, so this is the best case.
+- The only non-silkworm photos tested are leaves. A hand, an empty tray or a cocoon could be called Grasserie or Healthy with a high score. Not tested.
+- The four mistakes are numbered close together, so related photos may count more than once. The intervals do not account for that.
+- Only 97 Healthy photos were left after the strict rule.
+- The 44 `disease_free` leaf photos could not be compared with training, because that folder is gone.
+
+### Checked
+- AI service: 92 tests pass (53 new in this step and the last), 1 skipped as before. Nothing else changed, so the backend and frontend suites were not rerun.
+- I ran `evaluate.py` on your dataset, 801 photos, with the real model. The numbers in `docs/model-evaluation.json` are that run. A test checks that every figure in the card matches that file.
+- No migration. Nothing in the app changed.
+
+### Added
+- `ai_service/decision.py`: the rule that turns scores into Grasserie, Healthy, NotSilkworm or Uncertain. The service and the evaluation share it, so the numbers are about what the service really says.
+- `ai_service/evaluation.py` and `ai_service/evaluate.py`: choose one file per photo, leave out photos seen in training, count the answers, give 95% intervals, list the mistakes and try other limits.
+- `docs/model-card.md` and `docs/model-evaluation.json`.
+
+### Known limits
+- Rerunning needs TensorFlow and the course dataset on your computer. The dataset is not in the repository.
+- The farmer answers in the app ("Was this result correct?") will be a better measure than this page once there are enough of them. Nothing summarises them yet.
+
 ## The disease check is about silkworms (Plan 9, item E, step 1)
 
 The check now says what the model really sees: grasserie or a healthy silkworm. A photo that is not a clear silkworm gets a calm answer and is not saved. No more Flacherie, Muscardine or Pebrine, which the model was never trained on.
