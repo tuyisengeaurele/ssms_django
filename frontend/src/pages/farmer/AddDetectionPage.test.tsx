@@ -94,7 +94,7 @@ describe('Disease check page', () => {
     expect(screen.getByRole('button', { name: 'Check this photo' })).toBeDisabled();
   });
 
-  it('sends the photo and the notes, then shows the result with a plain percentage', async () => {
+  it('sends the photo and the notes, then shows the result', async () => {
     api.create.mockResolvedValue(outcome());
     open();
     const file = photo();
@@ -103,16 +103,15 @@ describe('Disease check page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Check this photo' }));
     await waitFor(() => expect(api.create).toHaveBeenCalledWith('b1', file, 'Second tray'));
     expect(await screen.findByRole('heading', { level: 2, name: 'Grasserie' })).toBeInTheDocument();
-    expect(screen.getByText('83% sure')).toBeInTheDocument();
   });
 
-  it('asks for care when a disease may be present, and says the check can be wrong', async () => {
+  it('says the photo looks like grasserie and asks for care, without saying it is so', async () => {
     api.create.mockResolvedValue(outcome());
     open();
     await chooseReady(photo());
     fireEvent.click(screen.getByRole('button', { name: 'Check this photo' }));
-    expect(await screen.findByText(/may be present/)).toBeInTheDocument();
-    expect(screen.getByText(/can make mistakes/)).toBeInTheDocument();
+    expect(await screen.findByText(/This photo looks like a case of grasserie\. Consider keeping this batch apart/)).toBeInTheDocument();
+    expect(screen.queryByText(/may be present/)).not.toBeInTheDocument();
   });
 
   it('is calm when the worm looks healthy', async () => {
@@ -120,8 +119,9 @@ describe('Disease check page', () => {
     open();
     await chooseReady(photo());
     fireEvent.click(screen.getByRole('button', { name: 'Check this photo' }));
-    expect(await screen.findByText(/No sign of disease/)).toBeInTheDocument();
-    expect(screen.queryByText(/may be present/)).not.toBeInTheDocument();
+    expect(await screen.findByText('This photo looks healthy. Keep checking as usual.')).toBeInTheDocument();
+    expect(screen.queryByText(/No sign of disease/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/looks like a case of/)).not.toBeInTheDocument();
   });
 
   describe('after the result', () => {
@@ -173,6 +173,45 @@ describe('Disease check page', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Check another photo' }));
       expect(screen.queryByRole('heading', { name: 'What this may mean' })).not.toBeInTheDocument();
       expect(screen.queryByRole('group', { name: 'Was this result correct?' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('does not present the result as certain', () => {
+    const run = async (over: object = {}) => {
+      api.create.mockResolvedValue(outcome(over));
+      open();
+      await chooseReady(photo());
+      fireEvent.click(screen.getByRole('button', { name: 'Check this photo' }));
+      await screen.findByRole('heading', { level: 2, name: String((over as { result?: string }).result ?? 'Grasserie') });
+    };
+
+    it.each([{}, { result: 'Healthy', confidence: 1 }])('shows no "sure" line for %j', async (over) => {
+      await run(over);
+      expect(screen.queryByText(/% sure/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/\d+% (sure|certain)/i)).not.toBeInTheDocument();
+    });
+
+    it.each([{}, { result: 'Healthy', confidence: 1 }])('has no line saying the check can make mistakes for %j', async (over) => {
+      await run(over);
+      expect(screen.queryByText(/can make mistakes/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/quick second opinion, not a diagnosis/)).not.toBeInTheDocument();
+    });
+
+    it('still shows the scores, for anyone who wants the detail', async () => {
+      await run();
+      expect(screen.getByRole('list', { name: 'How likely each condition is' })).toBeInTheDocument();
+    });
+
+    it('is the same in French', async () => {
+      localStorage.setItem('ssms_locale', 'fr');
+      api.create.mockResolvedValue(outcome());
+      open();
+      fireEvent.change(screen.getByLabelText(/^Choisir une photo/), { target: { files: [photo()] } });
+      await screen.findByRole('img', { name: 'La photo choisie' });
+      fireEvent.click(screen.getByRole('button', { name: /Vérifier cette photo/ }));
+      expect(await screen.findByText(/Cette photo ressemble à un cas de grasserie/)).toBeInTheDocument();
+      expect(screen.queryByText(/de certitude/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/peut se tromper/)).not.toBeInTheDocument();
     });
   });
 
@@ -372,7 +411,7 @@ describe('Disease check page', () => {
     const { container } = open();
     await chooseReady(photo());
     fireEvent.click(screen.getByRole('button', { name: 'Check this photo' }));
-    await screen.findByText('83% sure');
+    await screen.findByRole('heading', { level: 2, name: 'Grasserie' });
     expect(container.textContent).not.toMatch(/\bAI\b|ResNet|Instant|under 5 seconds|powered/i);
     expect(container.querySelector('.progress-bar, .progress-fill')).toBeNull();
     expect(container.innerHTML.toLowerCase()).not.toMatch(/#dc2626|#16a34a|#d97706|#7c3aed|#db2777|brand-50|warning-bg/);

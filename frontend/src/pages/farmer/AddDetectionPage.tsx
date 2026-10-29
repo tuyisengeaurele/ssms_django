@@ -146,15 +146,13 @@ export default function AddDetectionPage() {
                 {preview && <img src={preview} alt={t('ckPreviewAlt')} className="check-result-photo" />}
                 <div>
                   <h2 className="check-result-name" style={{ color: colorFor('result', result.result) }}>{result.result}</h2>
-                  <p className="check-result-sure">{fill(t('ckSure'), { pct: Math.round(result.confidence * 100) })}</p>
                 </div>
               </div>
               <div className={`alert ${healthy ? 'alert-success' : 'alert-warning'}`} role="status">
                 <Icon name={healthy ? 'success' : 'warning'} size={18} />
-                <span>{healthy ? t('ckHealthy') : t('ckSick')}</span>
+                <span>{healthy ? t('ckHealthy') : fill(t('ckSick'), { result: result.result.toLowerCase() })}</span>
               </div>
               {result.alertRaised && <p className="form-hint">{t('ckAlertAdded')}</p>}
-              <p className="form-hint">{t('ckCaution')}</p>
               <DetectionFeedback key={result.id} detectionId={result.id} initial={result} />
             </Panel>
 

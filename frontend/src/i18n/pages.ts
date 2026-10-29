@@ -982,11 +982,9 @@ export const pageTranslations = {
   ckRun: k("Check this photo", "Vérifier cette photo", "Suzuma iyi foto"),
   ckRunning: k("Checking", "Vérification", "Birasuzumwa"),
   ckDone: k("Check finished: {result}.", "Contrôle terminé : {result}.", "Isuzuma ryarangiye: {result}."),
-  ckSure: k("{pct}% sure", "{pct} % de certitude", "Icyizere {pct}%"),
   ckResultLabel: k("Result", "Résultat", "Igisubizo"),
-  ckHealthy: k("No sign of disease in this photo. Keep checking as usual.", "Aucun signe de maladie sur cette photo. Continuez les contrôles habituels.", "Nta bimenyetso by'indwara kuri iyi foto. Komeza gusuzuma nk'uko bisanzwe."),
-  ckSick: k("A disease may be present. Consider keeping this batch apart and ask your supervisor to take a look.", "Une maladie est peut-être présente. Pensez à isoler ce lot et demandez à votre superviseur de regarder.", "Indwara ishobora kuba ihari. Tekereza gutandukanya iri tsinda hanyuma usabe umugenzuzi wawe kurireba."),
-  ckCaution: k("This check can make mistakes. Treat it as a quick second opinion, not a diagnosis.", "Ce contrôle peut se tromper. Voyez-y un second avis rapide, pas un diagnostic.", "Iri suzuma rishobora kwibeshya. Ribone nk'igitekerezo cya kabiri, ntiribe isuzuma ryuzuye."),
+  ckHealthy: k("This photo looks healthy. Keep checking as usual.", "Cette photo semble saine. Continuez les contrôles habituels.", "Iyi foto isa n'iy'inyo zifite ubuzima bwiza. Komeza gusuzuma nk'uko bisanzwe."),
+  ckSick: k("This photo looks like a case of {result}. Consider keeping this batch apart and ask your supervisor to take a look.", "Cette photo ressemble à un cas de {result}. Pensez à isoler ce lot et demandez à votre superviseur de regarder.", "Iyi foto isa n'iy'indwara ya {result}. Tekereza gutandukanya iri tsinda hanyuma usabe umugenzuzi wawe kurireba."),
   ckAlertAdded: k("An alert was added to this batch, so your supervisor can see it too.", "Une alerte a été ajoutée à ce lot, votre superviseur peut donc aussi la voir.", "Impuruza yongewe kuri iri tsinda, bityo umugenzuzi wawe na we ashobora kuyibona."),
   // Disease info card. General guidance only: no product, dose or number. Written for review by a sericulture officer.
   diTitle: k("What this may mean", "Ce que cela peut signifier", "Icyo bishobora kuba bisobanura"),
