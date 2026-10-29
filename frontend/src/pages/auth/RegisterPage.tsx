@@ -4,6 +4,7 @@ import { authService } from '../../services/auth.service';
 import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 import { AuthAlert, AuthButton, AuthField, AuthShell } from '../../landing/auth/AuthShell';
+import GoogleButton from '../../landing/auth/GoogleButton';
 import NewAccountFields, { newAccountProblem } from '../../landing/auth/NewAccountFields';
 
 export default function RegisterPage() {
@@ -52,6 +53,8 @@ export default function RegisterPage() {
           {t('regTitle')}
         </AuthButton>
       </form>
+
+      <GoogleButton />
 
       <p className="l-auth__alt">
         {t('regHaveAccount')}{' '}

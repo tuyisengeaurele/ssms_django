@@ -486,6 +486,103 @@
   background: none;
 }
 
+/* Continue with Google */
+.landing .l-auth__social {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.landing .l-auth__or {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--l-muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.landing .l-auth__or::before,
+.landing .l-auth__or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(11, 31, 23, 0.14);
+}
+
+.landing .l-auth__google {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 54px;
+  padding: 0 24px;
+  border: 1px solid rgba(11, 31, 23, 0.22);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--l-ink);
+  font: 600 1rem var(--l-font-ui);
+  cursor: pointer;
+  transition:
+    border-color 0.3s var(--l-ease),
+    background-color 0.3s var(--l-ease);
+}
+
+.landing .l-auth__google:hover {
+  border-color: var(--l-ink);
+  background: var(--l-ivory);
+}
+
+.landing .l-auth__google:focus-visible {
+  outline: 2px solid var(--l-gold);
+  outline-offset: 3px;
+}
+
+/* Said to a screen reader and not drawn */
+.landing .l-auth__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.landing .l-field__hint--problem {
+  color: #8a2c20;
+}
+
+/* A tick box with its sentence */
+.landing .l-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 18px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #33443b;
+}
+
+.landing .l-check input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--l-leaf);
+}
+
+.landing .l-check a {
+  color: var(--l-leaf);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* Status screens (check your email, verified, failed) */
 .landing .l-auth__status {
   display: grid;

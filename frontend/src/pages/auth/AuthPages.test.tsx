@@ -176,6 +176,21 @@ describe('Login page', () => {
     });
   });
 
+  it('has a Continue with Google button after the form and the sign in button, outside the form', () => {
+    open();
+    const google = screen.getByRole('button', { name: 'Continue with Google' });
+    const signIn = screen.getByRole('button', { name: 'Sign in' });
+    expect(google.closest('form')).toBeNull();
+    expect(signIn.compareDocumentPosition(google) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('does not try to sign in when Continue with Google is pressed', () => {
+    open();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with Google' }));
+    expect(api.login).not.toHaveBeenCalled();
+    expect(screen.getByText('Sign in with Google is not available yet.')).toBeInTheDocument();
+  });
+
   it('explains why the person was sent back when their session ended', () => {
     sessionStorage.setItem('ssms_notice', 'session_ended');
     open();
@@ -249,6 +264,21 @@ describe('Register page', () => {
     submit();
     await waitFor(() => expect(api.register).toHaveBeenCalled());
     expect(api.register.mock.calls[0][0]).not.toHaveProperty('role');
+  });
+
+  it('has a Continue with Google button after the form and the create account button, outside the form', () => {
+    open();
+    const google = screen.getByRole('button', { name: 'Continue with Google' });
+    const create = screen.getByRole('button', { name: 'Create account' });
+    expect(google.closest('form')).toBeNull();
+    expect(create.compareDocumentPosition(google) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('does not register anyone when Continue with Google is pressed', () => {
+    open();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with Google' }));
+    expect(api.register).not.toHaveBeenCalled();
+    expect(screen.getByText('Sign in with Google is not available yet.')).toBeInTheDocument();
   });
 
   it('has no note about roles and links to sign in', () => {
