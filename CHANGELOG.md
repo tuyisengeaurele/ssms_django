@@ -1,5 +1,31 @@
 # Changelog
 
+## The result screen no longer presents the check as certain (Plan 9, item E, wording)
+
+The disease check result no longer says "100% sure", no longer adds "This check can make mistakes. Treat it as a quick second opinion, not a diagnosis.", and describes what the photo looks like instead of stating what is so.
+
+### Checked
+- Frontend: 1094 tests pass (6 new) and `tsc` is clean. No backend change.
+- I have not looked at the result screen in a browser. It needs the backend and the AI service running, and the wording is covered by tests in English and French.
+- `npm test` still prints the one unhandled error from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+
+### Changed
+- **Removed** the "{n}% sure" line under the result.
+- **Removed** the line "This check can make mistakes. Treat it as a quick second opinion, not a diagnosis." from the result screen.
+- **Banner.** "No sign of disease in this photo" is now "This photo looks healthy. Keep checking as usual." and "A disease may be present" is now "This photo looks like a case of grasserie." Both still say what to do next. English, French and Kinyarwanda.
+- The unused style of the removed line is gone.
+
+### Decided
+- You chose to change the result screen only. The score bars ("How likely each condition is") stay, so what the Terms of Service and the landing FAQ say, that each result shows a confidence score, is still true.
+
+### Left as they are, in case you want them changed
+- The Terms of Service, the landing FAQ and the landing note still say the check can make mistakes. The Terms are the place for that, so I would keep it.
+- The alert text and the alert email still show a percentage, and the email says the check "can be wrong".
+- The history tables and the reports still show a confidence column.
+- The page subtitle still says "get a quick second opinion".
+- The photo-check info card still says it is general advice, not a diagnosis. That line is about the advice, not the result.
+- The French and Kinyarwanda words of the new banner are my drafts for a native speaker.
+
 ## How the check does on photos it has not seen (Plan 9, item E, step 2)
 
 A script scores the silkworm check on photos that were not in training, and `docs/model-card.md` reports the result with its limits.
