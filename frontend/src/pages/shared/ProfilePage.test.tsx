@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import { ToastProvider } from '../../context/ToastContext';
+import { getAccessToken } from '../../services/session';
 import { setReducedMotion } from '../../test/setup';
 
 const auth = vi.hoisted(() => ({
@@ -97,7 +98,8 @@ describe('Profile page', () => {
     await waitFor(() => expect(api.changePassword).toHaveBeenCalledWith({ currentPassword: 'Old12345', newPassword: 'NewPass123', confirmPassword: 'NewPass123' }));
     await waitFor(() => expect(screen.queryByLabelText('Current password')).not.toBeInTheDocument());
     // The server ended every other session, so this device keeps the fresh one it was given.
-    expect(localStorage.getItem('ssms_token')).toBe('fresh-jwt');
+    expect(getAccessToken()).toBe('fresh-jwt');
+    expect(JSON.stringify({ ...localStorage, ...sessionStorage })).not.toContain('fresh-jwt');
   });
 
   it('lets the person pick a language and shows which one is on', () => {
