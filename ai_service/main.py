@@ -19,10 +19,9 @@ import json
 import os
 
 import numpy as np
+from decision import DEFAULT_UNCERTAIN_BELOW, SILKWORM_RESULTS, decide, read_limit  # noqa: F401
 from fastapi import Depends, FastAPI, File, Header, HTTPException, Request, UploadFile
 from PIL import Image
-
-from decision import DEFAULT_UNCERTAIN_BELOW, SILKWORM_RESULTS, decide, read_limit  # noqa: F401
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Configuration

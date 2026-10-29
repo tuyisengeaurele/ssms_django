@@ -6,7 +6,6 @@ A fair test uses one file per photo, and none of those photos may be in the trai
 """
 import numpy as np
 import pytest
-
 from decision import decide
 from evaluation import not_in, origin_of, originals, sweep, tally, wilson
 

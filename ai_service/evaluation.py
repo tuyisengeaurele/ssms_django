@@ -9,7 +9,6 @@ import os
 import re
 
 import numpy as np
-
 from decision import SILKWORM_RESULTS, decide
 
 ANSWERS = ("Grasserie", "Healthy", "NotSilkworm", "Uncertain")

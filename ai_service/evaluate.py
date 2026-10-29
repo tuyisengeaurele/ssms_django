@@ -18,11 +18,10 @@ from datetime import date
 
 os.environ.setdefault("AI_ALLOW_INSECURE", "1")  # the service is not started here, only its pieces are used
 
-import numpy as np  # noqa: E402
-from PIL import Image  # noqa: E402
-
 import main  # noqa: E402
+import numpy as np  # noqa: E402
 from evaluation import gather, sweep, tally  # noqa: E402
+from PIL import Image  # noqa: E402
 
 LIMITS = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95]
 BATCH = 16

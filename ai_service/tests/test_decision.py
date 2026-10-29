@@ -1,7 +1,6 @@
 """The rule that turns the model's five scores into an answer, on its own so the service and the evaluation share it."""
 import numpy as np
 import pytest
-
 from decision import DEFAULT_UNCERTAIN_BELOW, SILKWORM_RESULTS, decide, read_limit
 
 CLASSES = ['disease_free', 'grasserie_silkworms', 'healthy_silkworms', 'leaf_rust', 'leaf_spot']
