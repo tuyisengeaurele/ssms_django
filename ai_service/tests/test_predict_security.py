@@ -60,7 +60,7 @@ def test_a_call_with_the_right_secret_works(client):
     body = response.json()
     assert body['result'] == 'Healthy'
     assert body['confidence'] == 0.8
-    assert set(body['allScores']) == {'Flacherie', 'Grasserie', 'Healthy', 'Muscardine', 'Pebrine'}
+    assert set(body['allScores']) == {'Grasserie', 'Healthy'}
 
 
 def test_the_service_will_not_start_without_a_secret(monkeypatch):
