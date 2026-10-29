@@ -29,7 +29,6 @@ The Register page now shows the password rules as you type, asks for the passwor
 - The terms box is required on both screens, but the server does not refuse a registration that leaves it out. It only records the time when it is sent. Refusing it on the server would break every other client of the API, and the page already stops it.
 - The server still judges common passwords and passwords close to the name or email. The page cannot check those, so the server's message shows if one is chosen.
 - A person with an unverified email now stays on Login. The "check your email" page is still used right after registering.
-
 - The Google button is there so the layout and the words are settled. Making it work needs a Google Cloud project, a client ID and a server route, and is a separate item.
 
 ### Known limits
