@@ -2,22 +2,23 @@
 
 ## A better Register page and a way to ask for a new link on Login (Plan 9, item I6)
 
-The Register page now shows the password rules as you type, asks for the password twice, asks for the terms to be accepted, and is in English, French and Kinyarwanda. The Join page (invitation link) has the same fields. Login keeps an unverified person on the page and offers a new verification link there.
+The Register page now shows the password rules as you type, asks for the password twice, asks for the terms to be accepted, and is in English, French and Kinyarwanda. Sign in and sign up both have a Continue with Google button, which does not work yet. The Join page (invitation link) has the same fields. Login keeps an unverified person on the page and offers a new verification link there.
 
 ### Checked
-- Backend: 1480 tests pass (5 new). Frontend: 1128 tests pass (40 new) and `tsc` is clean. One migration, `users/0004`.
+- Backend: 1480 tests pass (5 new). Frontend: 1140 tests pass (52 new) and `tsc` is clean. One migration, `users/0004`.
 - **I applied `users/0004` to your local database `ssms_db` myself.** It adds one empty column. Nothing else is pending.
-- I looked at the Register page in a browser, in English and in French, on a desktop and a phone width: the rules tick as you type, the mismatch message shows, the page does not scroll sideways and the console is clean.
-- I have not seen the Login notice or the Join page in a browser. They are covered by tests only.
+- I looked at the Register page in a browser, in English and in French, on a desktop and a phone width: the rules tick as you type, the mismatch message shows, the page does not scroll sideways and the console is clean. I also looked at the Login page and the Continue with Google button on a phone width.
+- I have not seen the Login notice for an unverified email or the Join page in a browser. They are covered by tests only.
 - `npm test` still prints the one unhandled error from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
 
 ### Added
-- **Live password rules** under the password: at least 8 characters, an uppercase letter, a lowercase letter and a number. Each rule says in words whether it is met, for a screen reader, and is drawn as a tick when met. The old hint said "one uppercase letter and one digit" and left out the lowercase rule the server has always required.
+- **Live password rules** under the password, as plain lines of text: at least 8 characters, an uppercase letter, a lowercase letter and a number. A met rule turns green, goes bolder and gets a tick, so it is not shown by colour alone. Each rule also says in words whether it is met, for a screen reader. The old hint said "one uppercase letter and one digit" and left out the lowercase rule the server has always required.
 - **Confirm password.** A message appears as soon as the second box differs from the first.
 - **Terms box.** "I agree to the Terms of Service and the Privacy Policy", with both links opening in a new tab so nothing typed is lost. The form is not sent without it.
 - **Plain messages before the server is asked** when a rule is broken, the two passwords differ or the box is not ticked.
 - **The acceptance time is kept.** `users.terms_accepted_at` is set when the box was ticked. It is not returned by the API. The privacy policy says it, and its date is now 29 October 2026.
 - **Login.** When an account's email is not verified, the page stays as it is, keeps what was typed, says so, and offers "Send a new link". It says when the link is on its way and when it could not be sent, and it forgets the notice when the email is changed or another attempt is made.
+- **Continue with Google** under the form on Login and on Register, after an "or" line. It does not work yet. Pressing it says "Sign in with Google is not available yet." and does nothing else. It is outside the form, so it never sends it.
 - **Translations** of all the Register, Join and new Login text into French and Kinyarwanda. They are my drafts for a native speaker.
 
 ### Changed
@@ -28,6 +29,8 @@ The Register page now shows the password rules as you type, asks for the passwor
 - The terms box is required on both screens, but the server does not refuse a registration that leaves it out. It only records the time when it is sent. Refusing it on the server would break every other client of the API, and the page already stops it.
 - The server still judges common passwords and passwords close to the name or email. The page cannot check those, so the server's message shows if one is chosen.
 - A person with an unverified email now stays on Login. The "check your email" page is still used right after registering.
+
+- The Google button is there so the layout and the words are settled. Making it work needs a Google Cloud project, a client ID and a server route, and is a separate item.
 
 ### Known limits
 - The Reset password page still has its own English rule list and English text. It is the next screen to bring in line.
