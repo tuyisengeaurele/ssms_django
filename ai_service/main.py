@@ -22,6 +22,8 @@ import numpy as np
 from fastapi import Depends, FastAPI, File, Header, HTTPException, Request, UploadFile
 from PIL import Image
 
+from decision import DEFAULT_UNCERTAIN_BELOW, SILKWORM_RESULTS, decide, read_limit  # noqa: F401
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Configuration
 # ─────────────────────────────────────────────────────────────────────────────
@@ -39,12 +41,6 @@ MODEL_SHA256 = os.environ.get("MODEL_SHA256", "").strip().lower()
 # The list is saved next to the model so the order never has to be guessed again.
 CLASSES_PATH = os.environ.get("CLASSES_PATH", os.path.splitext(MODEL_PATH)[0] + ".classes.json")
 
-# What a silkworm can be called. Every other output of the model is a mulberry leaf, so not a silkworm.
-SILKWORM_RESULTS = {"grasserie_silkworms": "Grasserie", "healthy_silkworms": "Healthy"}
-
-# Below this score the model is not sure enough to name anything. A starting value, not a measured one.
-DEFAULT_UNCERTAIN_BELOW = 0.60
-
 
 def load_classes(path: str) -> list[str]:
     try:
@@ -55,14 +51,6 @@ def load_classes(path: str) -> list[str]:
         return names
     except Exception:
         raise RuntimeError(f"The class list next to the model could not be read: {path}") from None
-
-
-def read_limit(raw: str) -> float:
-    try:
-        value = float(raw)
-    except ValueError:
-        return DEFAULT_UNCERTAIN_BELOW
-    return value if 0 < value < 1 else DEFAULT_UNCERTAIN_BELOW
 
 
 CLASS_NAMES: list[str] = load_classes(CLASSES_PATH)
@@ -206,12 +194,7 @@ async def predict(file: UploadFile = File(...)):
     if len(scores) != len(CLASS_NAMES):
         raise HTTPException(status_code=503, detail="The check is not available right now.")
 
-    top = int(np.argmax(scores))
-    confidence = float(scores[top])
-    if confidence < UNCERTAIN_BELOW:
-        result = "Uncertain"
-    else:
-        result = SILKWORM_RESULTS.get(CLASS_NAMES[top], "NotSilkworm")
+    result, confidence = decide(scores, CLASS_NAMES, UNCERTAIN_BELOW)
 
     return {
         "result": result,
