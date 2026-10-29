@@ -293,9 +293,9 @@ export const landingTranslations = {
     'Ni izihe ndwara porogaramu imenya?',
   ),
   lpFaq2A: k(
-    'Flacherie, Grasserie, Muscardine and Pebrine. It also tells you when a worm looks healthy.',
-    'Flacherie, grasserie, muscardine et pébrine. Elle indique aussi quand un ver semble sain.',
-    "Flacherie, Grasserie, Muscardine na Pebrine. Inavuga igihe inyo isa nk'ifite ubuzima bwiza.",
+    'Grasserie. The photo check was trained on grasserie and healthy silkworms, so it tells you which of the two a photo looks like, or that it cannot tell.',
+    'La grasserie. Le contrôle par photo a été entraîné sur des vers atteints de grasserie et des vers sains : il indique lequel des deux la photo évoque, ou qu\'il ne peut pas trancher.',
+    "Grasserie. Isuzuma rikoresheje ifoto ryigishijwe inyo zirwaye grasserie n'inyo zifite ubuzima bwiza. Rikubwira iyo ifoto isa, cyangwa ko ridashobora kubivuga.",
   ),
   lpFaq3Q: k(
     'Can the disease check be wrong?',

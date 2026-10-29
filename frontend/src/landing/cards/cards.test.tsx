@@ -71,7 +71,7 @@ describe('paper cards', () => {
     expect(within(card).getByText('Healthy', { selector: 'strong' })).toBeInTheDocument();
     expect(within(card).getByText(/Confidence/)).toHaveTextContent('96 %');
     const bars = Array.from(container.querySelectorAll<HTMLElement>('[data-score]'));
-    expect(bars).toHaveLength(5);
+    expect(bars).toHaveLength(2);
     expect(bars.reduce((sum, el) => sum + Number(el.dataset.score), 0)).toBe(100);
   });
 

@@ -113,6 +113,18 @@ describe('landing copy', () => {
     expect(landingTranslations.lpFaq3A.fr).toMatch(/se tromper/);
   });
 
+  it('does not claim the check finds diseases it was never trained on', () => {
+    for (const key of LANDING_KEYS) {
+      for (const locale of LOCALES) {
+        expect(/flacherie|muscardine|p[eé]brine/i.test(landingTranslations[key][locale]), `${key} ${locale}`).toBe(false);
+      }
+    }
+  });
+
+  it('says what the check was trained on, in every language', () => {
+    for (const locale of LOCALES) expect(landingTranslations.lpFaq2A[locale]).toMatch(/grasserie/i);
+  });
+
   it('is available through the shared translations map', () => {
     expect(translations.lpHeroTitle.en).toBe('Raise healthier silkworms.');
   });

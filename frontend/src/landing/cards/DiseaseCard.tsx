@@ -5,10 +5,7 @@ export function DiseaseCard({ className }: { className?: string }) {
   const { t } = useLanguage();
   const scores = [
     { name: t('lpCardHealthy'), score: 96 },
-    { name: 'Flacherie', score: 1 },
-    { name: 'Grasserie', score: 1 },
-    { name: 'Muscardine', score: 1 },
-    { name: 'Pebrine', score: 1 },
+    { name: 'Grasserie', score: 4 },
   ];
 
   return (
