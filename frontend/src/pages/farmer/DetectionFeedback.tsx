@@ -3,8 +3,8 @@ import { detectionService } from '../../services/detection.service';
 import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 
-// What the worm can be said to have really been. These are the five results of the check, and "something else".
-const RESULTS = ['Healthy', 'Flacherie', 'Grasserie', 'Muscardine', 'Pebrine'] as const;
+// What the worm can be said to have really been. These are the two results of the check, and "something else".
+const RESULTS = ['Healthy', 'Grasserie'] as const;
 
 interface Props {
   detectionId: string;

@@ -8,19 +8,14 @@ const show = (result: string) => render(<LanguageProvider><DiseaseInfoCard resul
 beforeEach(() => localStorage.clear());
 
 describe('Disease info card', () => {
-  it.each([
-    ['Grasserie', /Grasserie is a virus disease/],
-    ['Flacherie', /Flacherie is a disease of the worm's gut/],
-    ['Muscardine', /Muscardine is a fungus disease/],
-    ['Pebrine', /Pebrine is caused by a tiny parasite/],
-  ])('says in a sentence or two what %s is', (result, about) => {
-    show(result);
+  it('says in a sentence or two what grasserie is', () => {
+    show('Grasserie');
     expect(screen.getByRole('heading', { name: 'What this may mean' })).toBeInTheDocument();
-    expect(screen.getByText(about)).toBeInTheDocument();
+    expect(screen.getByText(/Grasserie is a virus disease/)).toBeInTheDocument();
   });
 
-  it.each(['Grasserie', 'Flacherie', 'Muscardine', 'Pebrine'])('gives the steps that apply to every disease, for %s', (result) => {
-    show(result);
+  it('gives the steps that apply to every disease', () => {
+    show('Grasserie');
     const steps = screen.getByRole('list', { name: 'What you can do now' });
     expect(within(steps).getByText(/Take the sick worms out of the tray/)).toBeInTheDocument();
     expect(within(steps).getByText(/Wash your hands and tools/)).toBeInTheDocument();
@@ -28,18 +23,10 @@ describe('Disease info card', () => {
     expect(within(steps).getByText(/Ask your supervisor or a sericulture officer before using any disinfectant or medicine/)).toBeInTheDocument();
   });
 
-  it('adds the steps that belong to each disease', () => {
-    show('Pebrine');
+  it('adds the steps that belong to grasserie', () => {
+    show('Grasserie');
     const steps = screen.getByRole('list', { name: 'What you can do now' });
-    expect(within(steps).getByText(/Tell the supplier of your eggs/)).toBeInTheDocument();
-    expect(within(steps).getByText(/Do not keep eggs from this batch/)).toBeInTheDocument();
-  });
-
-  it('keeps one disease\'s steps out of another\'s', () => {
-    show('Muscardine');
-    expect(screen.getByText(/Let air move through the room/)).toBeInTheDocument();
-    expect(screen.queryByText(/Tell the supplier of your eggs/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Feed only clean, good leaves/)).not.toBeInTheDocument();
+    expect(within(steps).getByText(/Feed only clean, good leaves/)).toBeInTheDocument();
   });
 
   it('says where the advice comes from and that it is not a diagnosis', () => {
@@ -53,7 +40,7 @@ describe('Disease info card', () => {
     expect(container.textContent).not.toMatch(/\d+(\.\d+)?\s?(%|ml|g\b|kg|litre|liter)|formalin|bleach|chlorine|lime/i);
   });
 
-  it.each(['Healthy', 'Something else', 'Class_7', ''])('shows nothing for "%s"', (result) => {
+  it.each(['Healthy', 'NotSilkworm', 'Uncertain', 'Flacherie', 'Muscardine', 'Pebrine', 'Something else', 'Class_7', ''])('shows nothing for "%s"', (result) => {
     const { container } = show(result);
     expect(container).toBeEmptyDOMElement();
   });

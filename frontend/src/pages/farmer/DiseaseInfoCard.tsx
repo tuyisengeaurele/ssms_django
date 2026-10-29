@@ -2,7 +2,8 @@ import { useLanguage } from '../../context/LanguageContext';
 import Panel from '../../components/ui/Panel';
 
 /**
- * What a result may mean and what to do about it, for the four diseases the check can name.
+ * What a result may mean and what to do about it, for the one disease the check can name. The model was trained on
+ * grasserie and healthy silkworms only.
  *
  * This is general guidance and it stays general on purpose: no product, no dose, no number. Treatment and disinfection
  * are for the supervisor or a sericulture officer to advise on. The wording is meant to be read by a sericulture
@@ -10,9 +11,6 @@ import Panel from '../../components/ui/Panel';
  */
 const DISEASES: Record<string, { about: string; extra: string[] }> = {
   Grasserie: { about: 'diAboutGrasserie', extra: ['diExtraGrasserie'] },
-  Flacherie: { about: 'diAboutFlacherie', extra: ['diExtraFlacherie'] },
-  Muscardine: { about: 'diAboutMuscardine', extra: ['diExtraMuscardine'] },
-  Pebrine: { about: 'diAboutPebrine', extra: ['diExtraPebrine1', 'diExtraPebrine2'] },
 };
 
 // The steps that are the same for every disease. Asking an officer comes last, after the steps of the disease itself.

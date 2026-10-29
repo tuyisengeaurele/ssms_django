@@ -25,8 +25,8 @@ const photo = (name = 'worm.jpg', type = 'image/jpeg') => new File(['x'.repeat(2
 const outcome = (over: object = {}) => ({
   data: {
     data: {
-      id: 'd1', batchId: 'b1', imageUrl: '', result: 'Flacherie', confidence: 0.834, detectedAt: '2026-10-01T00:00:00Z',
-      allScores: { Healthy: 0.1, Flacherie: 0.834, Grasserie: 0.04, Muscardine: 0.02, Pebrine: 0.006 },
+      id: 'd1', batchId: 'b1', imageUrl: '', result: 'Grasserie', confidence: 0.834, detectedAt: '2026-10-01T00:00:00Z',
+      allScores: { Healthy: 0.1, Grasserie: 0.834 },
       ...over,
     },
   },
@@ -102,7 +102,7 @@ describe('Disease check page', () => {
     fireEvent.change(screen.getByLabelText(/^Notes/), { target: { value: 'Second tray' } });
     fireEvent.click(screen.getByRole('button', { name: 'Check this photo' }));
     await waitFor(() => expect(api.create).toHaveBeenCalledWith('b1', file, 'Second tray'));
-    expect(await screen.findByRole('heading', { level: 2, name: 'Flacherie' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Grasserie' })).toBeInTheDocument();
     expect(screen.getByText('83% sure')).toBeInTheDocument();
   });
 
@@ -130,13 +130,13 @@ describe('Disease check page', () => {
       open();
       await chooseReady(photo());
       fireEvent.click(screen.getByRole('button', { name: 'Check this photo' }));
-      await screen.findByRole('heading', { level: 2, name: over && 'result' in over ? String((over as { result: string }).result) : 'Flacherie' });
+      await screen.findByRole('heading', { level: 2, name: over && 'result' in over ? String((over as { result: string }).result) : 'Grasserie' });
     };
 
     it('explains a disease and what to do, from the result that came back', async () => {
       await checked();
       expect(screen.getByRole('heading', { name: 'What this may mean' })).toBeInTheDocument();
-      expect(screen.getByText(/Flacherie is a disease of the worm's gut/)).toBeInTheDocument();
+      expect(screen.getByText(/Grasserie is a virus disease/)).toBeInTheDocument();
       expect(screen.getByRole('list', { name: 'What you can do now' })).toBeInTheDocument();
     });
 
@@ -176,6 +176,55 @@ describe('Disease check page', () => {
     });
   });
 
+  describe('when the photo is not a clear silkworm', () => {
+    const run = async (result: string) => {
+      api.create.mockResolvedValue({ data: { data: { result, confidence: 0.62, allScores: { Grasserie: 0.1, Healthy: 0.2 } } } });
+      open();
+      await chooseReady(photo());
+      fireEvent.click(screen.getByRole('button', { name: 'Check this photo' }));
+    };
+
+    it.each([
+      ['NotSilkworm', 'This does not look like a silkworm', /Take a photo of the silkworms themselves/],
+      ['Uncertain', 'The check is not sure about this photo', /Take another photo with the worms in focus/],
+    ])('says so plainly for %s', async (result, title, advice) => {
+      await run(result);
+      expect(await screen.findByRole('heading', { level: 2, name: title })).toBeInTheDocument();
+      expect(screen.getByText(advice)).toBeInTheDocument();
+      expect(screen.getByText(/Nothing was saved/)).toBeInTheDocument();
+    });
+
+    it.each(['NotSilkworm', 'Uncertain'])('shows no result, no question about it, no advice on a disease and no scores for %s', async (result) => {
+      await run(result);
+      await screen.findByText(/Nothing was saved/);
+      expect(screen.queryByText('Result')).not.toBeInTheDocument();
+      expect(screen.queryByText(/% sure/)).not.toBeInTheDocument();
+      expect(screen.queryByText('Was this result correct?')).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'What this may mean' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('list', { name: 'How likely each condition is' })).not.toBeInTheDocument();
+      expect(screen.queryByText(/may be present|No sign of disease/)).not.toBeInTheDocument();
+    });
+
+    it('does not say the check finished', async () => {
+      await run('NotSilkworm');
+      await screen.findByText(/Nothing was saved/);
+      expect(screen.queryByText(/Check finished/)).not.toBeInTheDocument();
+    });
+
+    it('says nothing about leaves', async () => {
+      await run('NotSilkworm');
+      await screen.findByText(/Nothing was saved/);
+      expect(document.body.textContent).not.toMatch(/\bleaf\b|\bleaves\b|rust|spot/i);
+    });
+
+    it('goes back to choosing a photo', async () => {
+      await run('Uncertain');
+      fireEvent.click(await screen.findByRole('button', { name: 'Check another photo' }));
+      expect(screen.getByRole('button', { name: 'Check this photo' })).toBeDisabled();
+      expect(screen.queryByText(/Nothing was saved/)).not.toBeInTheDocument();
+    });
+  });
+
   it('lists every score as a bar list, highest first', async () => {
     api.create.mockResolvedValue(outcome());
     open();
@@ -183,7 +232,7 @@ describe('Disease check page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Check this photo' }));
     const list = await screen.findByRole('list', { name: 'How likely each condition is' });
     const names = within(list).getAllByRole('listitem').map((li) => li.querySelector('.barlist-label')?.textContent);
-    expect(names).toEqual(['Flacherie', 'Healthy', 'Grasserie', 'Muscardine', 'Pebrine']);
+    expect(names).toEqual(['Grasserie', 'Healthy']);
     expect(within(list).getByText('83%')).toBeInTheDocument();
   });
 
@@ -194,7 +243,7 @@ describe('Disease check page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Check this photo' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Check another photo' }));
     expect(screen.getByRole('button', { name: 'Check this photo' })).toBeDisabled();
-    expect(screen.queryByRole('heading', { level: 2, name: 'Flacherie' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 2, name: 'Grasserie' })).not.toBeInTheDocument();
   });
 
   it('shows a friendly message when the check fails and keeps the photo', async () => {

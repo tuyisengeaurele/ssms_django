@@ -7,6 +7,13 @@ export interface DetectionResult extends DiseaseDetection {
   alertRaised?: boolean;
 }
 
+/** What comes back for a photo that is not a clear silkworm. Nothing was saved, so there is no id. */
+export interface UnclearResult {
+  result: 'NotSilkworm' | 'Uncertain';
+  confidence: number | null;
+  allScores?: Record<string, number>;
+}
+
 export const detectionService = {
   /** POST /api/detections — multipart form with image file + batchId */
   create: (batchId: string, image: File, notes?: string) => {
@@ -14,7 +21,7 @@ export const detectionService = {
     form.append('batchId', batchId);
     form.append('image', image);
     if (notes) form.append('notes', notes);
-    return api.post<ApiResponse<DetectionResult>>('/detections', form, {
+    return api.post<ApiResponse<DetectionResult | UnclearResult>>('/detections', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },

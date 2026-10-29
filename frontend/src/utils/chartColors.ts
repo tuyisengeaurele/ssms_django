@@ -10,7 +10,7 @@ const QUIET = '#6B7B73';
 
 const BY_KIND = {
   stage: { EGG: GOLD, LARVA: LEAF, PUPA: BLUE, COCOON: TERRACOTTA, HARVEST: PLUM },
-  result: { Healthy: LEAF, Flacherie: TERRACOTTA, Grasserie: GOLD, Muscardine: BLUE },
+  result: { Healthy: LEAF, Grasserie: GOLD },
   role: { ADMIN: PLUM, SUPERVISOR: BLUE, FARMER: LEAF },
   action: { CREATE: LEAF, UPDATE: BLUE, DELETE: TERRACOTTA, LOGIN: PLUM, LOGOUT: GOLD, OTHER: QUIET },
   grade: { A: LEAF, B: BLUE, C: GOLD },

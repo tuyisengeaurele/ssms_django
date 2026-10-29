@@ -45,7 +45,7 @@ describe('Detection feedback', () => {
     expect(api.sendFeedback).not.toHaveBeenCalled();
     const select = screen.getByLabelText('What was it?');
     expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual([
-      'I am not sure', 'Healthy', 'Flacherie', 'Grasserie', 'Muscardine', 'Pebrine', 'Something else',
+      'I am not sure', 'Healthy', 'Grasserie', 'Something else',
     ]);
     fireEvent.change(select, { target: { value: 'Grasserie' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send my answer' }));
@@ -77,7 +77,7 @@ describe('Detection feedback', () => {
   });
 
   it('shows an answer that was given before', () => {
-    show({ initial: { isCorrect: false, actualResult: 'Pebrine' } });
+    show({ initial: { isCorrect: false, actualResult: 'Grasserie' } });
     expect(screen.getByText('Thank you. Your answer was saved.')).toBeInTheDocument();
   });
 

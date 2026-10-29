@@ -1,6 +1,6 @@
 import { ChangeEvent, DragEvent, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { detectionService, DetectionResult } from '../../services/detection.service';
+import { detectionService, DetectionResult, UnclearResult } from '../../services/detection.service';
 import { useApiError } from '../../hooks/useApiError';
 import { useToast } from '../../context/ToastContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -16,6 +16,13 @@ import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 
 const percent = (value: number) => `${Math.round(value * 100)}%`;
+
+/** A photo that is not a clear silkworm gets a calm answer. It is not kept, and it is not a result. */
+const UNCLEAR = {
+  NotSilkworm: { title: 'ckUnclearNotTitle', text: 'ckUnclearNotText' },
+  Uncertain: { title: 'ckUnclearSureTitle', text: 'ckUnclearSureText' },
+} as const;
+const isUnclear = (answer: DetectionResult | UnclearResult): answer is UnclearResult => Object.prototype.hasOwnProperty.call(UNCLEAR, answer.result);
 
 const MB = 1024 * 1024;
 /** The size next to the file name, to one decimal. */
@@ -35,6 +42,7 @@ export default function AddDetectionPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<DetectionResult | null>(null);
+  const [unclear, setUnclear] = useState<UnclearResult['result'] | null>(null);
   const [dragging, setDragging] = useState(false);
   const [camera, setCamera] = useState(false);
   const [preparing, setPreparing] = useState(false);
@@ -54,6 +62,7 @@ export default function AddDetectionPage() {
     const turn = ++latest.current;
     setError('');
     setResult(null);
+    setUnclear(null);
     setPreparing(true);
     // If the photo cannot be made smaller, it is sent as it is and the server decides.
     const ready = await compressPhoto(chosen).catch(() => chosen);
@@ -83,10 +92,16 @@ export default function AddDetectionPage() {
     setLoading(true);
     setError('');
     setResult(null);
+    setUnclear(null);
     try {
       const res = await detectionService.create(batchId, file, notes || undefined);
-      setResult(res.data.data);
-      success(fill(t('ckDone'), { result: res.data.data.result }));
+      const answer = res.data.data;
+      if (isUnclear(answer)) {
+        setUnclear(answer.result);
+      } else {
+        setResult(answer);
+        success(fill(t('ckDone'), { result: answer.result }));
+      }
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -102,6 +117,7 @@ export default function AddDetectionPage() {
     setPreview(null);
     setNotes('');
     setResult(null);
+    setUnclear(null);
     setError('');
     if (inputRef.current) inputRef.current.value = '';
   };
@@ -163,6 +179,23 @@ export default function AddDetectionPage() {
             </div>
           </div>
         </>
+      ) : unclear ? (
+        <div className="stack-24">
+          <Panel title={t(UNCLEAR[unclear].title)}>
+            {preview && <img src={preview} alt={t('ckPreviewAlt')} className="check-result-photo" />}
+            <div className="alert alert-warning" role="status">
+              <Icon name="warning" size={18} />
+              <span>{t(UNCLEAR[unclear].text)}</span>
+            </div>
+          </Panel>
+          <div className="profile-actions">
+            <button type="button" className="btn btn-primary" onClick={reset}>
+              <Icon name="refresh" size={15} />
+              {t('ckAnother')}
+            </button>
+            <Link to={`/batches/${batchId}`} className="btn btn-ghost">{t('ckBack')}</Link>
+          </div>
+        </div>
       ) : (
         <>
           <Panel title={t('ckUpload')}>
