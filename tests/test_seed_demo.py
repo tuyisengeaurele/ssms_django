@@ -96,7 +96,7 @@ def test_one_disease_check_is_positive_and_has_an_unread_alert():
     seed()
     results = list(DiseaseDetection.objects.filter(batch__farm__owner__in=demo_users()).values_list('result', flat=True))
     assert results.count('Healthy') >= 5
-    assert results.count('Flacherie') == 1
+    assert results.count('Grasserie') == 1
     assert AlertLog.objects.filter(batch__farm__owner__in=demo_users(), type='DISEASE', is_read=False).count() == 1
 
 

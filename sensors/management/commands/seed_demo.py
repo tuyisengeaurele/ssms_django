@@ -269,7 +269,7 @@ class Command(BaseCommand):
             ))
         if sick and checks:
             when = now - timedelta(days=1)
-            checks[0] = DiseaseDetection(batch=batch, image_url=PICTURE, result='Flacherie', confidence=0.78, detected_at=when)
-            alerts.append(AlertLog(batch=batch, type='DISEASE', message='Flacherie suspected in this batch (78% confidence).', created_at=when))
+            checks[0] = DiseaseDetection(batch=batch, image_url=PICTURE, result='Grasserie', confidence=0.78, detected_at=when)
+            alerts.append(AlertLog(batch=batch, type='DISEASE', message='Grasserie suspected in this batch (78% confidence).', created_at=when))
         self._save_with_dates(DiseaseDetection, checks, 'detected_at')
         self._save_alerts(alerts)
