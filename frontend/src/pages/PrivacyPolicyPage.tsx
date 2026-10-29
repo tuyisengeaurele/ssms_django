@@ -9,7 +9,7 @@ const sections: LegalSection[] = [
       <>
         <p>We collect only what the platform needs to work:</p>
         <ul>
-          <li><strong>Account data:</strong> name, email address and role (farmer or supervisor).</li>
+          <li><strong>Account data:</strong> name, email address and role (farmer or supervisor), and the time you accepted the terms when you created your account.</li>
           <li><strong>Farm and batch data:</strong> farm names, the place you choose for each farm, batch stages and the sensor readings you enter. If you use "Use my location" when you add or edit a farm, the exact position of the farm is saved with it. Your cooperative's supervisors and the SSMS team can see it on a map. You can remove it from the farm form at any time.</li>
           <li><strong>Disease check images:</strong> photos you upload for analysis are stored on Cloudinary and used only to run the disease check.</li>
           <li><strong>Usage data:</strong> actions such as batch stage changes and logins are recorded in an audit log for security and accountability.</li>
@@ -121,7 +121,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalLayout
       title="Privacy Policy"
-      updated="October 8, 2026"
+      updated="October 29, 2026"
       intro={
         <>
           This policy explains how the Smart Sericulture Management System (SSMS, we, our) collects, uses and protects information about the people who use the platform. By registering or using SSMS you agree to it.
