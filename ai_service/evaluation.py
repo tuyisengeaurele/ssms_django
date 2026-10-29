@@ -140,3 +140,32 @@ def sweep(records: list[dict], class_names: list[str], limits: list[float]) -> l
             "leafRefusedShare": found["leaves"]["refusedShare"],
         })
     return rows
+
+
+PICTURES = (".jpg", ".jpeg", ".png", ".webp")
+
+
+def gather(test_dir: str, train_dir: str | None = None) -> tuple[dict[str, list[str]], dict[str, dict]]:
+    """
+    The photos to test on, per class folder: one file per photo, and none seen in the training folder.
+
+    The summary says, per folder, how many files there were, how many photos, how many were left out for being in
+    training, and whether a training folder of that name was there to compare with.
+    """
+    files: dict[str, list[str]] = {}
+    summary: dict[str, dict] = {}
+    for folder in sorted(os.listdir(test_dir)):
+        path = os.path.join(test_dir, folder)
+        if not os.path.isdir(path):
+            continue
+        names = [n for n in os.listdir(path) if n.lower().endswith(PICTURES)]
+        photos = originals(names)
+        train_path = os.path.join(train_dir, folder) if train_dir else None
+        compared = bool(train_path and os.path.isdir(train_path))
+        kept = not_in(os.listdir(train_path), photos) if compared else photos
+        files[folder] = kept
+        summary[folder] = {
+            "files": len(names), "photos": len(photos), "inTraining": len(photos) - len(kept),
+            "kept": len(kept), "comparedWithTraining": compared,
+        }
+    return files, summary

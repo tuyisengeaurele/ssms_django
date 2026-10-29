@@ -169,3 +169,49 @@ def test_each_row_of_the_sweep_says_how_leaves_were_treated():
     records = [record('grasserie_silkworms', i1=0.9), record('leaf_rust', i1=0.7, i3=0.2)]
     rows = sweep(records, CLASSES, [0.6, 0.8])
     assert [r['leafRefusedShare'] for r in rows] == [0.0, 1.0]
+
+
+# ── gathering the photos from folders ───────────────────────────────────────────────────────
+
+def make(folder, *names):
+    folder.mkdir(parents=True, exist_ok=True)
+    for name in names:
+        (folder / name).write_bytes(b'x')
+
+
+def test_the_test_photos_are_gathered_per_folder_without_copies(tmp_path):
+    from evaluation import gather
+
+    make(tmp_path / 'test' / 'healthy_silkworms', 'H1.jpg', 'H1_aug1.jpg', 'H2.jpg')
+    make(tmp_path / 'test' / 'leaf_rust', 'L1.jpg', 'L1_aug1.jpg')
+    files, summary = gather(str(tmp_path / 'test'))
+    assert files == {'healthy_silkworms': ['H1.jpg', 'H2.jpg'], 'leaf_rust': ['L1.jpg']}
+    assert summary['healthy_silkworms'] == {'files': 3, 'photos': 2, 'inTraining': 0, 'kept': 2, 'comparedWithTraining': False}
+
+
+def test_photos_seen_in_training_are_left_out_and_counted(tmp_path):
+    from evaluation import gather
+
+    make(tmp_path / 'test' / 'healthy_silkworms', 'H1.jpg', 'H2.jpg', 'H3.jpg')
+    make(tmp_path / 'train' / 'healthy_silkworms', 'H1_resized.jpg', 'H1_aug1.jpg', 'H2_aug4.jpg')
+    files, summary = gather(str(tmp_path / 'test'), str(tmp_path / 'train'))
+    assert files == {'healthy_silkworms': ['H3.jpg']}
+    assert summary['healthy_silkworms'] == {'files': 3, 'photos': 3, 'inTraining': 2, 'kept': 1, 'comparedWithTraining': True}
+
+
+def test_a_class_with_no_training_folder_is_kept_whole_and_said_to_be_unchecked(tmp_path):
+    from evaluation import gather
+
+    make(tmp_path / 'test' / 'disease_free', 'D1.jpg')
+    make(tmp_path / 'train' / 'healthy_silkworms', 'H1.jpg')
+    files, summary = gather(str(tmp_path / 'test'), str(tmp_path / 'train'))
+    assert files == {'disease_free': ['D1.jpg']}
+    assert summary['disease_free']['comparedWithTraining'] is False
+
+
+def test_only_picture_files_are_gathered(tmp_path):
+    from evaluation import gather
+
+    make(tmp_path / 'test' / 'leaf_spot', 'a.jpg', 'notes.txt', 'b.PNG', 'Thumbs.db')
+    files, _ = gather(str(tmp_path / 'test'))
+    assert files == {'leaf_spot': ['a.jpg', 'b.PNG']}
