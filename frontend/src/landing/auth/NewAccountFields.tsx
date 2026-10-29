@@ -60,7 +60,7 @@ export default function NewAccountFields({ idPrefix, password, confirm, accepted
         aria-describedby={rulesId}
         required
       />
-      <ul id={rulesId} className="l-auth__rules l-auth__rules--below" aria-label={t('regRulesTitle')}>
+      <ul id={rulesId} className="l-auth__rules l-auth__rules--text" aria-label={t('regRulesTitle')}>
         {RULES.map((rule) => (
           <li key={rule.key} className={met[rule.key] ? 'is-met' : undefined}>
             <span>{t(rule.label)}</span>
