@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { LOCALE_LABELS, type Locale } from '../../i18n/translations';
 import { alertService } from '../../services/alert.service';
 import { contactsService } from '../../services/contacts.service';
 import { AlertLog, ContactMessage } from '../../types';
@@ -11,6 +10,7 @@ import { usePageTitle } from '../../utils/pageTitle';
 import { useTheme, type ThemeChoice } from '../../utils/theme';
 import { timeAgo } from '../../utils/timeAgo';
 import { Icon } from '../ui/Icon';
+import LanguageSwitcher from '../ui/LanguageSwitcher';
 import Modal from '../ui/Modal';
 import { ROLE_LABEL_KEY } from './Sidebar';
 
@@ -115,7 +115,7 @@ function NotificationPanel({ isAdmin, alertCount, onClose }: { isAdmin: boolean;
 
 export default function TopBar({ onMenuToggle, onSearch, alertCount = 0 }: TopBarProps) {
   const { user, logout } = useAuth();
-  const { t, locale, setLocale } = useLanguage();
+  const { t } = useLanguage();
   const { title, section } = usePageTitle();
   const navigate = useNavigate();
   const { choice: themeChoice, setChoice: setThemeChoice } = useTheme();
@@ -195,16 +195,9 @@ export default function TopBar({ onMenuToggle, onSearch, alertCount = 0 }: TopBa
             </button>
           )}
 
-          <select
-            className="topbar-lang"
-            aria-label={t('lpLangLabel')}
-            value={locale}
-            onChange={(e) => setLocale(e.target.value as Locale)}
-          >
-            {(Object.keys(LOCALE_LABELS) as Locale[]).map((code) => (
-              <option key={code} value={code}>{LOCALE_LABELS[code]}</option>
-            ))}
-          </select>
+          <div className="topbar-lang-switch">
+            <LanguageSwitcher />
+          </div>
 
           <div ref={notifRef} className="topbar-anchor">
             <button
@@ -254,8 +247,12 @@ export default function TopBar({ onMenuToggle, onSearch, alertCount = 0 }: TopBa
                   {alertCount > 0 && <span className="menu-count">{alertCount}</span>}
                 </Link>
                 <div className="topbar-menu-rule" />
-                <div className="topbar-menu-theme" role="group" aria-label={t('thLabel')}>
-                  <span className="topbar-menu-theme-label" aria-hidden="true">{t('thLabel')}</span>
+                <div className="topbar-menu-choice topbar-menu-language">
+                  <span className="topbar-menu-choice-label" aria-hidden="true">{t('lpLangLabel')}</span>
+                  <LanguageSwitcher inMenu />
+                </div>
+                <div className="topbar-menu-choice" role="group" aria-label={t('thLabel')}>
+                  <span className="topbar-menu-choice-label" aria-hidden="true">{t('thLabel')}</span>
                   <div className="segmented">
                     {THEME_CHOICES.map(([value, key]) => (
                       <button
