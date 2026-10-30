@@ -59,7 +59,8 @@ export const pageTranslations = {
   stageCOCOON: k('Cocoon', 'Cocon', 'Igishishwa'),
   stageHARVEST: k('Harvest', 'Récolte', 'Isarura'),
   // QR codes on harvest lots
-  lotQrButton: k("QR code", "Code QR", "Kode QR"),
+  lotQrButton: k("Share with QR", "Partager par QR", "Sangiza kuri QR"),
+  lotOnReport: k("This code is also printed on the batch report.", "Ce code est aussi imprimé sur le rapport du lot.", "Iyi kode inanditse kuri raporo y'itsinda."),
   lotSharedTag: k("Shared", "Partagé", "Byasangijwe"),
   lotQrTitle: k("QR code for this lot", "Code QR de ce lot", "Kode QR y'iri sarura"),
   lotQrIntro: k("A buyer who scans the code sees a short page about this lot. You can switch it off at any time.", "Un acheteur qui scanne le code voit une courte page sur ce lot. Vous pouvez la désactiver à tout moment.", "Umuguzi usikana iyi kode abona urupapuro rugufi rw'iri sarura. Ushobora kuyihagarika igihe cyose."),

@@ -226,12 +226,12 @@ describe('Harvest page', () => {
 });
 
 describe('QR codes on lots', () => {
-  it('gives each record of the owner a QR code button that opens the dialog for that record', async () => {
+  it('gives each record of the owner a share button that opens the dialog for that record', async () => {
     open();
     await screen.findByText('First picking');
-    const buttons = screen.getAllByRole('button', { name: /^QR code/ });
+    const buttons = screen.getAllByRole('button', { name: /^Share with QR/ });
     expect(buttons).toHaveLength(3);
-    fireEvent.click(screen.getByRole('button', { name: /^QR code.*Sep 28/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Share with QR.*Sep 28/ }));
     expect(await screen.findByRole('dialog', { name: 'QR dialog' })).toHaveTextContent('QR for r3');
   });
 
@@ -248,6 +248,6 @@ describe('QR codes on lots', () => {
     auth.role = 'SUPERVISOR';
     open();
     await screen.findByText('First picking');
-    expect(screen.queryByRole('button', { name: /^QR code/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Share with QR/ })).not.toBeInTheDocument();
   });
 });

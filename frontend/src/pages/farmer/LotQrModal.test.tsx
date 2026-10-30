@@ -45,6 +45,12 @@ beforeEach(() => {
 });
 
 describe('a lot that is not shared yet', () => {
+  it('does not mention the report before there is a code to print', async () => {
+    open();
+    await dialog();
+    expect(screen.queryByText(/also printed on the batch report/)).not.toBeInTheDocument();
+  });
+
   it('asks the server whether the lot has a link, for the right lot', async () => {
     open();
     await dialog();
@@ -88,6 +94,11 @@ describe('a lot that is shared', () => {
     const d = within(await dialog());
     expect(await d.findByTestId('qr')).toHaveAttribute('data-value', LINK());
     expect(d.getByLabelText('Link')).toHaveValue(LINK());
+  });
+
+  it('says the code is also printed on the batch report', async () => {
+    open();
+    expect(await screen.findByText('This code is also printed on the batch report.')).toBeInTheDocument();
   });
 
   it('names the code for screen readers', async () => {

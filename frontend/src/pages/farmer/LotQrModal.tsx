@@ -143,6 +143,8 @@ export default function LotQrModal({ record, onClose, onChange }: LotQrModalProp
             <p className="lot-print-caption">{fill(t('lotPrintCaption'), { farm: record.farmName ?? '', date: day, kg })}</p>
           </div>
 
+          <p className="lot-hint lot-noprint">{t('lotOnReport')}</p>
+
           <div className="form-group lot-noprint">
             <label className="form-label" htmlFor="lot-link">{t('lotLink')}</label>
             <input id="lot-link" className="form-input" readOnly value={link} onFocus={(e) => e.currentTarget.select()} />
