@@ -14,6 +14,11 @@ vi.mock('../../services/harvest.service', () => ({
   harvestService: { getByBatch: api.list, create: api.create, delete: api.remove },
 }));
 
+// The dialog has its own tests. Here it only has to open for the right record.
+vi.mock('./LotQrModal', () => ({
+  default: ({ record }: { record: { id: string } | null }) => (record ? <div role="dialog" aria-label="QR dialog">QR for {record.id}</div> : null),
+}));
+
 import HarvestPage from './HarvestPage';
 
 // The API sends decimals as strings.
@@ -217,5 +222,32 @@ describe('Harvest page', () => {
       await screen.findByText('First picking');
       expect(screen.queryByText(/once the batch has reached the cocoon stage/)).not.toBeInTheDocument();
     });
+  });
+});
+
+describe('QR codes on lots', () => {
+  it('gives each record of the owner a QR code button that opens the dialog for that record', async () => {
+    open();
+    await screen.findByText('First picking');
+    const buttons = screen.getAllByRole('button', { name: /^QR code/ });
+    expect(buttons).toHaveLength(3);
+    fireEvent.click(screen.getByRole('button', { name: /^QR code.*Sep 28/ }));
+    expect(await screen.findByRole('dialog', { name: 'QR dialog' })).toHaveTextContent('QR for r3');
+  });
+
+  it('says which lots are already shared', async () => {
+    api.list.mockResolvedValue({ data: { data: [{ ...records[0], isShared: true }, records[1]] } });
+    open();
+    const shared = (await screen.findByText('First picking')).closest('tr') as HTMLElement;
+    expect(within(shared).getByText('Shared')).toBeInTheDocument();
+    const other = screen.getByText('8 kg').closest('tr') as HTMLElement;
+    expect(within(other).queryByText('Shared')).not.toBeInTheDocument();
+  });
+
+  it('gives a supervisor none, since they may read lots but not share them', async () => {
+    auth.role = 'SUPERVISOR';
+    open();
+    await screen.findByText('First picking');
+    expect(screen.queryByRole('button', { name: /^QR code/ })).not.toBeInTheDocument();
   });
 });

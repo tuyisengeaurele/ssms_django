@@ -18,6 +18,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import StatTile from '../../components/ui/StatTile';
+import LotQrModal from './LotQrModal';
 
 const GRADES: QualityGrade[] = ['A', 'B', 'C'];
 // A harvest is logged once the cocoons are made. The server holds the same rule.
@@ -44,6 +45,7 @@ export default function HarvestPage() {
   const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState<HarvestRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [qrFor, setQrFor] = useState<HarvestRecord | null>(null);
 
   const canEdit = user?.role === 'FARMER' || user?.role === 'ADMIN';
   const ripe = batch !== null && HARVEST_STAGES.includes(batch.stage);
@@ -197,6 +199,12 @@ export default function HarvestPage() {
         )}
       </Modal>
 
+      <LotQrModal
+        record={qrFor}
+        onClose={() => setQrFor(null)}
+        onChange={(id, shared) => setRecords((rows) => rows.map((x) => (x.id === id ? { ...x, isShared: shared } : x)))}
+      />
+
       <PageHeader
         title={t('ptHarvest')}
         subtitle={batch?.farm?.name ? fill(t('hpSubtitle'), { id: code, farm: batch.farm.name }) : fill(t('bdTitle'), { id: code })}
@@ -276,9 +284,15 @@ export default function HarvestPage() {
                         <td data-label={t('hpColNotes')} className="cell-muted">{r.notes ?? '-'}</td>
                         {canEdit && (
                           <td data-label="">
-                            <button className="btn btn-ghost btn-xs btn-quiet-danger" aria-label={`${t('hpDelete')} ${when}`} onClick={() => setToDelete(r)}>
-                              {t('hpDelete')}
-                            </button>
+                            <div className="table-actions">
+                              {r.isShared && <span className="cell-muted">{t('lotSharedTag')}</span>}
+                              <button className="btn btn-ghost btn-xs" aria-label={`${t('lotQrButton')} ${when}`} onClick={() => setQrFor({ ...r, farmName: r.farmName ?? batch?.farm?.name })}>
+                                {t('lotQrButton')}
+                              </button>
+                              <button className="btn btn-ghost btn-xs btn-quiet-danger" aria-label={`${t('hpDelete')} ${when}`} onClick={() => setToDelete(r)}>
+                                {t('hpDelete')}
+                              </button>
+                            </div>
                           </td>
                         )}
                       </tr>
