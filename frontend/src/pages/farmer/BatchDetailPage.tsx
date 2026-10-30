@@ -11,7 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { useApiError } from '../../hooks/useApiError';
-import { STAGE_LABELS } from '../../utils/constants';
+import { stageLabel } from '../../utils/constants';
 import { colorFor } from '../../utils/chartColors';
 import { fill } from '../../utils/fill';
 import { timeAgo } from '../../utils/timeAgo';
@@ -131,7 +131,7 @@ export default function BatchDetailPage() {
     setMoving(true);
     try {
       await batchService.updateStage(id, stage);
-      success(fill(t('bdAdvanced'), { stage: STAGE_LABELS[stage] }));
+      success(fill(t('bdAdvanced'), { stage: stageLabel(t, stage) }));
       if (stage === 'HARVEST') navigate(`/batches/${id}/harvest`);
       else setBatch((prev) => (prev ? { ...prev, stage } : prev));
     } catch (err) {
@@ -326,7 +326,7 @@ export default function BatchDetailPage() {
       <Modal
         open={!!pendingStage}
         onClose={() => setPendingStage(null)}
-        title={pendingStage ? fill(t('bdMoveTitle'), { stage: STAGE_LABELS[pendingStage] }) : ''}
+        title={pendingStage ? fill(t('bdMoveTitle'), { stage: stageLabel(t, pendingStage) }) : ''}
         footer={
           <>
             <button className="btn btn-secondary" onClick={() => setPendingStage(null)} disabled={moving}>{t('btnCancel')}</button>
@@ -337,7 +337,7 @@ export default function BatchDetailPage() {
         }
       >
         <p className="modal-text">
-          {pendingStage ? fill(t('bdMoveBody'), { id: code, from: STAGE_LABELS[batch.stage], to: STAGE_LABELS[pendingStage] }) : ''}
+          {pendingStage ? fill(t('bdMoveBody'), { id: code, from: stageLabel(t, batch.stage), to: stageLabel(t, pendingStage) }) : ''}
         </p>
       </Modal>
 
@@ -506,7 +506,7 @@ export default function BatchDetailPage() {
               <p className="lifecycle-day">{dayLine}</p>
               <p className="lifecycle-range">
                 {fill(t('bdStageRange'), {
-                  stage: STAGE_LABELS[batch.stage],
+                  stage: stageLabel(t, batch.stage),
                   tmin: range.tempMin, tmax: range.tempMax, hmin: range.humMin, hmax: range.humMax,
                 })}
               </p>
@@ -530,7 +530,7 @@ export default function BatchDetailPage() {
             <dl className="facts facts--pairs">
               <div>
                 <dt>{t('bdStage')}</dt>
-                <dd>{STAGE_LABELS[batch.stage]}</dd>
+                <dd>{stageLabel(t, batch.stage)}</dd>
               </div>
               <div>
                 <dt>{t('bdFarm')}</dt>

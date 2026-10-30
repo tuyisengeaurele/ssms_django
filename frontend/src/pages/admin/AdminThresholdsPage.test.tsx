@@ -208,6 +208,6 @@ describe('Safe ranges page', () => {
     localStorage.setItem('ssms_locale', 'fr');
     open();
     expect(await screen.findByRole('heading', { level: 1, name: 'Plages sûres' })).toBeInTheDocument();
-    expect(await screen.findByLabelText(/Larva, température minimale/)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/Larve, température minimale/)).toBeInTheDocument();
   });
 });

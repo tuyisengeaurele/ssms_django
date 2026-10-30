@@ -4,7 +4,7 @@ import { useToast } from '../../context/ToastContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
 import { colorFor } from '../../utils/chartColors';
-import { STAGE_LABELS, STAGE_ORDER } from '../../utils/constants';
+import { stageLabel, STAGE_ORDER } from '../../utils/constants';
 import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
 import { Role } from '../../types';
 import BarList from '../../components/ui/BarList';
@@ -130,7 +130,7 @@ export default function AdminReportsPage() {
               label={t('reportBatchesByStage')}
               rows={[...batches.byStage]
                 .sort((a, b) => stageRank(a.stage) - stageRank(b.stage))
-                .map((s) => ({ key: s.stage, label: STAGE_LABELS[s.stage] ?? s.stage, value: s.count, color: colorFor('stage', s.stage) }))}
+                .map((s) => ({ key: s.stage, label: stageLabel(t, s.stage), value: s.count, color: colorFor('stage', s.stage) }))}
             />
           )}
         </Panel>

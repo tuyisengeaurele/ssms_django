@@ -8,7 +8,7 @@ import { useToast } from '../../context/ToastContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
 import { timeAgo } from '../../utils/timeAgo';
-import { STAGE_LABELS } from '../../utils/constants';
+import { stageLabel } from '../../utils/constants';
 import { ALERT_TYPE_KEY } from '../../utils/alertTypes';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
@@ -184,13 +184,13 @@ export default function AlertsPage() {
                     {a.room ? <span className="cell-strong">{a.room.name}</span> : null}
                     {a.batch ? (
                       <Link to={`/batches/${a.batch.id}`} className="cell-link">
-                        {t('alBatch')} {a.batch.stage ? (STAGE_LABELS[a.batch.stage] ?? a.batch.stage) : ''}
+                        {t('alBatch')} {a.batch.stage ? (stageLabel(t, a.batch.stage)) : ''}
                       </Link>
                     ) : null}
                     {/* A room alert is about every batch in the room, so each one is a way in. */}
                     {!a.batch && a.batches?.map((b) => (
                       <Link key={b.id} to={`/batches/${b.id}`} className="cell-link">
-                        {`#${b.id.slice(-8).toUpperCase()} (${STAGE_LABELS[b.stage] ?? b.stage})`}
+                        {`#${b.id.slice(-8).toUpperCase()} (${stageLabel(t, b.stage)})`}
                       </Link>
                     ))}
                     <span>{timeAgo(a.createdAt, locale)}</span>

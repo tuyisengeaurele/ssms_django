@@ -5,7 +5,7 @@ import { batchService } from '../../services/batch.service';
 import { deviceService } from '../../services/device.service';
 import { roomService } from '../../services/room.service';
 import LocationPicker, { EMPTY_PLACE, PlaceValue } from '../../components/ui/LocationPicker';
-import { STAGE_LABELS } from '../../utils/constants';
+import { stageLabel } from '../../utils/constants';
 import { Farm, Batch, IoTDevice, Room } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -369,7 +369,7 @@ export default function FarmDetailPage() {
                       <span className="room-batches">
                         {room.batches.map((b) => (
                           <Link key={b.id} to={`/batches/${b.id}`} className="link">
-                            {`#${b.id.slice(-8).toUpperCase()} (${STAGE_LABELS[b.stage]})`}
+                            {`#${b.id.slice(-8).toUpperCase()} (${stageLabel(t, b.stage)})`}
                           </Link>
                         ))}
                       </span>

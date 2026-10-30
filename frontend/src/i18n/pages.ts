@@ -52,6 +52,12 @@ export const pageTranslations = {
   shellViewAllAlerts: k('View all alerts', 'Voir toutes les alertes', 'Reba ibiburaniswa byose'),
   shellViewAllMessages: k('View all messages', 'Voir tous les messages', 'Reba ubutumwa bwose'),
   shellSignOutAsk: k('Are you sure you want to sign out?', 'Voulez-vous vraiment vous déconnecter ?', 'Wizeye ko ushaka gusohoka?'),
+  // The five stages of a batch. The words match the landing page, and a test keeps them equal.
+  stageEGG: k('Egg', 'Œuf', 'Igi'),
+  stageLARVA: k('Larva', 'Larve', 'Larva'),
+  stagePUPA: k('Pupa', 'Pupe', 'Pupa'),
+  stageCOCOON: k('Cocoon', 'Cocon', 'Igishishwa'),
+  stageHARVEST: k('Harvest', 'Récolte', 'Isarura'),
   thLabel: k('Appearance', 'Apparence', 'Isura'),
   thAuto: k('Auto', 'Auto', 'Byikora'),
   thLight: k('Light', 'Clair', 'Umucyo'),

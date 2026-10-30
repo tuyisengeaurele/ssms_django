@@ -3,7 +3,7 @@ import { alertService } from '../../services/alert.service';
 import type { StageRange } from '../../services/sensor.service';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
-import { STAGE_LABELS } from '../../utils/constants';
+import { stageLabel } from '../../utils/constants';
 import { fill } from '../../utils/fill';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
@@ -112,7 +112,7 @@ export default function AdminThresholdsPage() {
                 {rows.map((row) => {
                   const draft = drafts[row.stage];
                   if (!draft) return null;
-                  const stageName = STAGE_LABELS[row.stage] ?? row.stage;
+                  const stageName = stageLabel(t, row.stage);
                   const problem = problemWith(draft);
                   const unchanged = !problem && sameAsSaved(draft, row);
                   const isUsual = toDraft({ ...row, ...USUAL }) && JSON.stringify(draft) === JSON.stringify(toDraft({ ...row, ...USUAL }));

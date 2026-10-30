@@ -1,5 +1,27 @@
 # Changelog
 
+## Stage names in three languages and a translation check (Plan 9, item G9, first part)
+
+The five batch stages now read in the language of the screen, and a test makes sure every text in the app has English, French and Kinyarwanda.
+
+### Checked
+- Frontend: 1391 tests pass (16 new) and `tsc` is clean. No backend change and no migration. ESLint is not installed on this machine, so lint was not run.
+- `npm test` still prints the one unhandled `RangeError` from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+- **I tried it in a real browser** with a throwaway administrator (deleted again). In French the batch list tabs, the stage badges and the stepper read Œuf, Larve, Pupe, Cocon, Récolte. In Kinyarwanda the stepper reads Igi, Larva, Pupa, Igishishwa, Isarura.
+- I broke one French text on purpose and the new test failed, then I put it back.
+- Not checked in a browser: every one of the 15 places the stage name is used. The batch list, batch page and stepper were looked at, the rest are covered by the type check and the tests.
+
+### What changed
+- **The bug.** The stage names (Egg, Larva, Pupa, Cocoon, Harvest) were one English-only list, used in 15 places. A French or Kinyarwanda user saw English stages on badges, in the stepper, in alerts, in the reports and inside sentences such as "Larva, température minimale".
+- **The fix.** `stageLabel(t, stage)` reads the name from the translations (`stageEGG` and the four others). An unknown stage is shown as it came.
+- **One name for each stage.** The words are the ones the landing page already used, and a test keeps the two lists equal.
+- **The translation check** (`i18n/parity.test.ts`) fails when a text is missing or empty in any language, when a language drops a placeholder such as `{name}`, when a text contains an en dash or em dash, when placeholder text such as TODO is left in, when a French or Kinyarwanda sentence is still English, or when the landing and page texts share a key. All 1540 texts pass today. The product name is allowed to stay the same in every language.
+- One old test expected the English word "Larva" inside a French label, which was the bug. It now expects "Larve".
+
+### Not changed
+- Alert messages that come from the server, such as "Grasserie suspected in this batch", are still written in English by the server. That is a separate change.
+- The Kinyarwanda words are my drafts. "Larva" and "Pupa" are kept as they are, and cocoon is "Igishishwa" on the landing page and in the stages, while other texts call the cocoon "imideri". A native speaker should choose one.
+
 ## A small language switcher and a better first language (Plan 9, item G3)
 
 The signed in app has a small EN FR RW switcher in the top bar, and the app picks its first language from the browser's whole ranked list.
