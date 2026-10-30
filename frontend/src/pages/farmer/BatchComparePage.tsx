@@ -144,7 +144,7 @@ function Chart({ batches }: { batches: BatchComparison[] }) {
             }
           />
           {batches.map((b, i) => (
-            <Line key={b.id} dataKey={b.id} type="stepAfter" stroke={`var(--chart-${i + 1})`} strokeDasharray={DASHES[i]} strokeWidth={2.5} dot={{ r: 3 }} connectNulls isAnimationActive={false} />
+            <Line key={b.id} dataKey={b.id} type="stepAfter" stroke={`var(--chart-${i + 1})`} strokeDasharray={DASHES[i]} strokeWidth={2.5} dot={{ r: 5, strokeWidth: 2, fill: 'var(--surface)', strokeDasharray: 'none' }} activeDot={{ r: 6 }} connectNulls isAnimationActive={false} />
           ))}
         </LineChart>
       </ResponsiveContainer>
