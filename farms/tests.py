@@ -5,14 +5,14 @@ Unit tests for cooperative scoping:
   - BatchListCreateView (GET /api/batches?farm_id=...)
   Verify FARMER, SUPERVISOR, and ADMIN visibility rules.
 """
-from django.utils import timezone
-from rest_framework.test import APITestCase
-from rest_framework import status
-
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.test import APITestCase
+
+from batches.models import Batch
 from cooperatives.models import Cooperative
 from farms.models import Farm
-from batches.models import Batch
 
 User = get_user_model()
 

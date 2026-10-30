@@ -1,7 +1,12 @@
 from django.urls import path
+
 from .detection_views import (
-    DiseaseDetectionCreateView, DiseaseDetectionByBatchView, DiseaseDetectionFeedbackView,
-    RecentDetectionsView, DetectionHistoryView, DetectionStatsView,
+    DetectionHistoryView,
+    DetectionStatsView,
+    DiseaseDetectionByBatchView,
+    DiseaseDetectionCreateView,
+    DiseaseDetectionFeedbackView,
+    RecentDetectionsView,
 )
 
 urlpatterns = [

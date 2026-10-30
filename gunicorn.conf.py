@@ -4,8 +4,8 @@ Gunicorn configuration for production (Render / Railway).
 Render free tier: 512 MB RAM, shared CPU.
 Keep workers at 2 to avoid OOM — increase when you upgrade the plan.
 """
-import os
 import multiprocessing
+import os
 
 # Bind to the PORT provided by Render / Railway (defaults to 8000 locally)
 bind = f"0.0.0.0:{os.environ.get('PORT', '8000')}"
