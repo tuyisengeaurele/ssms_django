@@ -1,5 +1,36 @@
 # Changelog
 
+## Dark mode for the signed in app (Plan 9, item G2)
+
+The signed in app has a dark theme. Open the account menu and pick Auto, Light or Dark under Appearance. Auto follows the computer and changes with it.
+
+### Checked
+- Frontend: 1340 tests pass (98 new) and `tsc` is clean. No backend change and no migration. ESLint is not installed on this machine, so lint was not run.
+- `npm test` still prints the one unhandled `RangeError` from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+- **I tried it in a real browser** with a throwaway administrator (deleted again), who sees the seeded farms, batches and alerts:
+  - Looked at screenshots of the dashboard, system report, new farm form, farm page, batch page with its charts, the account menu and quick search in dark. Light and dark switch over at once from the menu. The sign out dialog I only checked by its computed colours, since the screenshot of it arrived late.
+  - A script measured text against its background on 19 pages (every admin page, farms, batches, harvests, disease reports, alerts, devices, supervisor overview, cooperative report, profile, new farm, and one batch page) and found no text under 4.5 to 1. It reads computed colours and each page had under two seconds to load, so it does not replace looking.
+  - The landing page stays light for a signed in person who chose dark.
+  - A phone width screen is dark, with no sideways scroll.
+- Not checked in a browser: a screen reader, French and Kinyarwanda on screen, a computer whose setting changes while the page is open (this is tested, not tried), print, the farmer dashboard, the supervisor farmers page, and a reload straight into dark (the boot script is tested, not watched).
+
+### What it does
+- **Where it applies.** Only inside the signed in app. The landing page, sign in and sign up pages, and the legal pages keep their own light look. The theme goes on the page when the app opens and comes off when it closes.
+- **No cream flash.** A tiny script (`public/theme-boot.js`) runs before the app and sets dark for a signed in person who wants it, so a reload does not flash the light page while the app loads. It skips the public pages, and a test checks it against every public route in `App.tsx`.
+- **The choice** is saved in the browser (`ssms_theme`), shared between tabs, and still works when the browser refuses to save it.
+- **Colours are tokens.** Every surface, tint, message, risk label and coloured word in `index.css` now has a light and a dark value. The light values are the ones that were already there, so light mode should look the same.
+- **Charts** draw with `--chart-1` to `--chart-5` and keep a name's colour in both themes. The dark shades are lighter versions of the same five hues.
+- **Contrast is tested.** A test reads `index.css` and fails if text, links, messages, risk labels or chart colours drop under their limit in either theme: 4.5 to 1 for text and 3 to 1 for chart colours. Another test fails if the app stylesheets bring back a white surface or their own select arrow.
+
+### Decided
+- **Signed in app only.** The landing page has its own designed look. A dark landing page would be a design task of its own.
+- **Three choices, with Auto first.** Most people never open the menu and get what their computer is set to.
+- **The sidebar and toasts are dark in both themes**, so they do not change.
+- **Map tiles stay light.** They come from an outside map service.
+- **Light faint text and placeholders are not at 4.5 to 1.** The faint grey (`--text-faint`) and the placeholder grey were already under that in light mode. I kept them as they were, and the test only holds both themes to 3 to 1 for those two.
+- **I could not run the palette validator** from the data visualisation skill: its script is not on this machine. I checked the dark chart colours myself for contrast on a card (3 to 1 or more) and compared how far apart they are in OKLab: the closest pair is 11.0 in both themes (blue and plum), so dark keeps the separation light has. I did not simulate colour blindness.
+- The texts (Appearance, Auto, Light, Dark) are in English, French and Kinyarwanda. The French and Kinyarwanda are my drafts and need a native read.
+
 ## Quick search with Ctrl K (Plan 9, item G1)
 
 Press Ctrl K (Cmd K on a Mac) anywhere in the signed in app, or press Search in the top bar, to jump to a page or to one of your farms without using the menu.

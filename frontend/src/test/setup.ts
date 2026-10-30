@@ -7,9 +7,15 @@ afterEach(() => {
 });
 
 // jsdom has no matchMedia. Tests flip these flags to simulate user settings.
-const media = { reduced: false, coarse: false };
+const media = { reduced: false, coarse: false, dark: false };
+const darkListeners = new Set<() => void>();
 export function setReducedMotion(value: boolean) {
   media.reduced = value;
+}
+/** Flip the "prefers dark" setting of the computer, and tell whoever listens, as a browser does. */
+export function setPrefersDark(value: boolean) {
+  media.dark = value;
+  darkListeners.forEach((listener) => listener());
 }
 export function setCoarsePointer(value: boolean) {
   media.coarse = value;
@@ -18,6 +24,8 @@ export function setCoarsePointer(value: boolean) {
 afterEach(() => {
   media.reduced = false;
   media.coarse = false;
+  media.dark = false;
+  darkListeners.clear();
 });
 
 if (typeof window !== 'undefined') {
@@ -28,11 +36,17 @@ if (typeof window !== 'undefined') {
         ? media.reduced
         : query.includes('pointer: coarse')
           ? media.coarse
-          : false,
+          : query.includes('prefers-color-scheme: dark')
+            ? media.dark
+            : false,
       media: query,
       onchange: null,
-      addEventListener: () => {},
-      removeEventListener: () => {},
+      addEventListener: (_type: string, listener: () => void) => {
+        if (query.includes('prefers-color-scheme')) darkListeners.add(listener);
+      },
+      removeEventListener: (_type: string, listener: () => void) => {
+        darkListeners.delete(listener);
+      },
       addListener: () => {},
       removeListener: () => {},
       dispatchEvent: () => false,

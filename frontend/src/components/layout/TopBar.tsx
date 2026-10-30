@@ -8,6 +8,7 @@ import { contactsService } from '../../services/contacts.service';
 import { AlertLog, ContactMessage } from '../../types';
 import { ALERT_TYPE_KEY } from '../../utils/alertTypes';
 import { usePageTitle } from '../../utils/pageTitle';
+import { useTheme, type ThemeChoice } from '../../utils/theme';
 import { timeAgo } from '../../utils/timeAgo';
 import { Icon } from '../ui/Icon';
 import Modal from '../ui/Modal';
@@ -22,6 +23,8 @@ interface TopBarProps {
 
 /** What the shortcut is called on this computer. */
 const SHORTCUT = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K';
+
+const THEME_CHOICES: Array<[ThemeChoice, string]> = [['system', 'thAuto'], ['light', 'thLight'], ['dark', 'thDark']];
 
 // ── Notifications ────────────────────────────────────────────────────────────
 
@@ -115,6 +118,7 @@ export default function TopBar({ onMenuToggle, onSearch, alertCount = 0 }: TopBa
   const { t, locale, setLocale } = useLanguage();
   const { title, section } = usePageTitle();
   const navigate = useNavigate();
+  const { choice: themeChoice, setChoice: setThemeChoice } = useTheme();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -249,6 +253,24 @@ export default function TopBar({ onMenuToggle, onSearch, alertCount = 0 }: TopBa
                   <Icon name="alerts" size={16} />{t('ptAlerts')}
                   {alertCount > 0 && <span className="menu-count">{alertCount}</span>}
                 </Link>
+                <div className="topbar-menu-rule" />
+                <div className="topbar-menu-theme" role="group" aria-label={t('thLabel')}>
+                  <span className="topbar-menu-theme-label" aria-hidden="true">{t('thLabel')}</span>
+                  <div className="segmented">
+                    {THEME_CHOICES.map(([value, key]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={themeChoice === value}
+                        className={themeChoice === value ? 'is-on' : ''}
+                        onClick={() => setThemeChoice(value)}
+                      >
+                        {t(key)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="topbar-menu-rule" />
                 <button
                   type="button"

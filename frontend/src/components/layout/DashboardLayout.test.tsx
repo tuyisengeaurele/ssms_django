@@ -2,7 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
-import { setReducedMotion } from '../../test/setup';
+import { setPrefersDark, setReducedMotion } from '../../test/setup';
+import { reloadThemeChoice, setThemeChoice } from '../../utils/theme';
 
 vi.mock('../../context/AuthContext', () => ({
   useAuth: () => ({ user: { name: 'Auris Tuyisenge', role: 'ADMIN', email: 'a@x.rw' }, logout: vi.fn() }),
@@ -35,6 +36,8 @@ const rail = (container: HTMLElement) => container.querySelector('.app-sidebar')
 
 beforeEach(() => {
   localStorage.clear();
+  reloadThemeChoice();
+  document.documentElement.removeAttribute('data-theme');
   setReducedMotion(true);
 });
 afterEach(() => width(1024));
@@ -154,5 +157,37 @@ describe('Quick search', () => {
     fireEvent.change(screen.getByRole('combobox', { name: 'Quick search' }), { target: { value: 'users' } });
     fireEvent.keyDown(screen.getByRole('combobox', { name: 'Quick search' }), { key: 'Enter' });
     expect(box()).not.toBeInTheDocument();
+  });
+});
+
+describe('Theme', () => {
+  const attr = () => document.documentElement.getAttribute('data-theme');
+
+  it('puts the light theme on the page by default', () => {
+    open();
+    expect(attr()).toBe('light');
+  });
+
+  it('puts the dark theme on the page when the computer is on dark', () => {
+    setPrefersDark(true);
+    open();
+    expect(attr()).toBe('dark');
+  });
+
+  it('changes when the person picks a theme in the account menu', () => {
+    open();
+    fireEvent.click(screen.getByRole('button', { name: /Auris Tuyisenge/ }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Dark' }));
+    expect(attr()).toBe('dark');
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Light' }));
+    expect(attr()).toBe('light');
+  });
+
+  it('leaves the page light once the app closes, for the public pages', () => {
+    setThemeChoice('dark');
+    const { unmount } = open();
+    expect(attr()).toBe('dark');
+    unmount();
+    expect(attr()).toBeNull();
   });
 });

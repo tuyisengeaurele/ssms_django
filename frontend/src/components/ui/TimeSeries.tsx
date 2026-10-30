@@ -31,11 +31,11 @@ export default function TimeSeries({ label, unit, data, color, height = 210 }: T
     <div className="timeseries" role="img" aria-label={label}>
       <ResponsiveContainer width="100%" height={height}>
         <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -18 }}>
-          <CartesianGrid vertical={false} stroke="#E9E4D8" />
-          <XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#566760' }} tickFormatter={(d: string) => d.slice(5)} minTickGap={24} />
-          <YAxis tickLine={false} axisLine={false} allowDecimals={false} tick={{ fontSize: 11, fill: '#566760' }} />
-          <Tooltip cursor={{ stroke: '#C9C2B2' }} content={<Hover unit={unit} />} />
-          <Area type="monotone" dataKey="count" stroke={color} strokeWidth={2} fill={color} fillOpacity={0.1} dot={false} activeDot={{ r: 5, stroke: '#fff', strokeWidth: 2, fill: color }} />
+          <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
+          <XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--chart-axis)' }} tickFormatter={(d: string) => d.slice(5)} minTickGap={24} />
+          <YAxis tickLine={false} axisLine={false} allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--chart-axis)' }} />
+          <Tooltip cursor={{ stroke: 'var(--chart-cursor)' }} content={<Hover unit={unit} />} />
+          <Area type="monotone" dataKey="count" stroke={color} strokeWidth={2} fill={color} fillOpacity={0.1} dot={false} activeDot={{ r: 5, stroke: 'var(--surface)', strokeWidth: 2, fill: color }} />
         </AreaChart>
       </ResponsiveContainer>
       <table className="sr-only">
