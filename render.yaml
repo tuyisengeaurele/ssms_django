@@ -12,7 +12,7 @@ services:
     region: oregon          # closest to Rwanda via EU routing; change to frankfurt if preferred
     plan: free              # upgrade to starter ($7/mo) to remove cold starts
     buildCommand: "./build.sh"
-    startCommand: "gunicorn ssms_django.wsgi:application --config gunicorn.conf.py"
+    startCommand: "bash start.sh"
     healthCheckPath: /api/health
 
     envVars:
@@ -39,8 +39,9 @@ services:
       - key: JWT_SECRET
         generateValue: true
 
-      - key: JWT_EXPIRES_DAYS
-        value: "7"
+      # Render puts one proxy in front of the API. Without this every visitor shares the proxy's address.
+      - key: TRUSTED_PROXY_COUNT
+        value: "1"
 
       # ── CORS / Frontend ──────────────────────────────────────────────────────
       - key: CORS_ALLOWED_ORIGINS
@@ -70,53 +71,12 @@ services:
       - key: AI_SERVICE_URL
         value: "https://your-ai-service.onrender.com"  # update after deploying AI service
 
+      - key: AI_SERVICE_SECRET
+        sync: false    # the same value must be set on the AI service. Set it in the Render dashboard.
+
       # ── Sentry (optional) ────────────────────────────────────────────────────
       - key: SENTRY_DSN
         value: ""    # paste your Sentry DSN here when ready
-
-  # ── IoT simulation cron job ───────────────────────────────────────────────
-  # Generates live sensor readings every 5 minutes for demo / development.
-  # Remove or disable this in production when real IoT hardware is connected.
-  - type: cron
-    name: ssms-iot-simulate
-    env: python
-    region: oregon
-    plan: free
-    schedule: "*/5 * * * *"    # every 5 minutes
-    buildCommand: "./build.sh"
-    startCommand: "python manage.py simulate_sensors --readings 1"
-
-    envVars:
-      - key: SECRET_KEY
-        fromService:
-          name: ssms-api
-          type: web
-          property: SECRET_KEY
-      - key: DEBUG
-        value: false
-      - key: DATABASE_URL
-        fromDatabase:
-          name: ssms-db
-          property: connectionString
-      - key: JWT_SECRET
-        fromService:
-          name: ssms-api
-          type: web
-          property: JWT_SECRET
-      - key: EMAIL_HOST_USER
-        value: "smartsericulturerw@gmail.com"
-      - key: EMAIL_HOST_PASSWORD
-        sync: false
-      - key: DEFAULT_FROM_EMAIL
-        value: "SSMS <smartsericulturerw@gmail.com>"
-      - key: FRONTEND_URL
-        value: "https://ssms.vercel.app"
-      - key: CLOUDINARY_CLOUD_NAME
-        value: "dsmpn69ux"
-      - key: CLOUDINARY_UPLOAD_PRESET
-        value: "ssms_images"
-      - key: AI_SERVICE_URL
-        value: "https://your-ai-service.onrender.com"
 
   # ── Sensor cleanup cron job ───────────────────────────────────────────────
   # Purges sensor readings older than 90 days to keep storage lean.

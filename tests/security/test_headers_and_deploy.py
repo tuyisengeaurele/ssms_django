@@ -20,6 +20,7 @@ def production_env(**extra):
         'DEBUG': 'False',
         'SECRET_KEY': secrets.token_urlsafe(64),
         'SECURE_SSL_REDIRECT': 'True',
+        'TRUSTED_PROXY_COUNT': '1',
     })
     env.update(extra)
     return env
