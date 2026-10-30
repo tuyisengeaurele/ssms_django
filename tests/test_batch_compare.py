@@ -321,3 +321,32 @@ class TestCost:
         four = count_for(4)
         # Each batch has its own readings to count (two queries), but nothing is looked up for each record or check.
         assert four - two <= 4, (two, four)
+
+
+class TestOlderDatabase:
+    """Some databases were built before Django and hold the batch dates without a time zone, so Django hands them back naive."""
+
+    @pytest.fixture(autouse=True)
+    def naive_batch_dates(self):
+        # The test database is rolled back after each test, so the column goes back to what it was.
+        with connection.cursor() as cursor:
+            cursor.execute(
+                'ALTER TABLE batches ALTER COLUMN "startDate" TYPE timestamp without time zone, '
+                'ALTER COLUMN "expectedHarvestDate" TYPE timestamp without time zone'
+            )
+
+    def test_compares_batches_whose_dates_have_no_time_zone(self, auth_client, owner, farm):
+        a, b = make(farm), make(farm)
+        start(a, 12)
+        harvest(a, 4, days_after_start=10)
+        response = compare(auth_client(owner), a, b)
+        assert response.status_code == 200
+        first = rows(response)[0]
+        assert first['days_running'] == 12
+        assert first['harvest']['curve'] == [{'day': 10, 'kg': 4.0}]
+
+    def test_gives_the_dates_with_their_time_zone(self, auth_client, owner, farm):
+        a, b = make(farm), make(farm)
+        first = rows(compare(auth_client(owner), a, b))[0]
+        assert first['start_date'].utcoffset() is not None
+        assert first['expected_harvest_date'].utcoffset() is not None

@@ -4,6 +4,7 @@ The numbers are the ones the batch page and the harvest page already show, gathe
 better and why. Nothing here is stored. See BatchCompareView for who may compare which batches.
 """
 from collections import defaultdict
+from datetime import timezone as dt_timezone
 from decimal import Decimal
 
 from django.db.models import Count, Q, Sum
@@ -42,6 +43,12 @@ def parse_ids(raw: str) -> list[str]:
     if len(ids) > MOST:
         raise BadChoice(TOO_MANY)
     return ids
+
+
+def _aware(moment):
+    """A date with its time zone. A database built before Django holds some batch dates without one, so they come back
+    naive. They were saved in UTC."""
+    return timezone.make_aware(moment, dt_timezone.utc) if timezone.is_naive(moment) else moment
 
 
 def _kg(value) -> float:
@@ -85,7 +92,7 @@ def _curve(batch, records):
     points, running = [], Decimal(0)
     for record in records:
         running += record.cocoon_weight_kg
-        day = (record.harvested_at.date() - batch.start_date.date()).days
+        day = (record.harvested_at.date() - _aware(batch.start_date).date()).days
         points.append({'day': max(day, 0), 'kg': _kg(running)})
     return points
 
@@ -129,9 +136,9 @@ def compare_batches(user, ids: list[str]) -> list[dict]:
             'breed': batch.breed,
             'stage': batch.stage,
             'room': batch.room.name if batch.room else None,
-            'start_date': batch.start_date,
-            'expected_harvest_date': batch.expected_harvest_date,
-            'days_running': max((now - batch.start_date).days, 0),
+            'start_date': _aware(batch.start_date),
+            'expected_harvest_date': _aware(batch.expected_harvest_date),
+            'days_running': max((now - _aware(batch.start_date)).days, 0),
             'quantity': batch.quantity,
             'quantity_unit': batch.quantity_unit,
             'deaths': died,
