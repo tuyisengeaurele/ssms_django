@@ -2,13 +2,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { StatusLayout } from '../landing/StatusLayout';
+import { homePathFor } from '../utils/roleHome';
 
 export default function NotFoundPage() {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const { t } = useLanguage();
 
-  const dashboardPath = user?.role === 'ADMIN' ? '/admin' : user?.role === 'SUPERVISOR' ? '/supervisor' : '/farmer';
+  const dashboardPath = homePathFor(user?.role);
 
   return (
     <StatusLayout code="404" title={t('lpNotFoundTitle')} body={t('lpNotFoundBody')}>

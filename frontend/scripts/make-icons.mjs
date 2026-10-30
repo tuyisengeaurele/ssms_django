@@ -1,6 +1,7 @@
 // Builds every logo and icon file from the originals in design/logo.
 //   logo-for-light.png  the emblem with a cream cocoon, for light backgrounds
 //   logo-for-dark.png   the emblem with a white cocoon, for dark backgrounds
+// It also writes the app icons, plain and maskable.
 // Run with: npm run icons
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
@@ -37,6 +38,10 @@ const files = {
   'apple-touch-icon.png': await square(light, 180, { background: '#ffffff', pad: 0.12 }),
   'icon-192.png': await square(light, 192, { background: '#ffffff', pad: 0.12 }),
   'icon-512.png': await square(light, 512, { background: '#ffffff', pad: 0.12 }),
+  // For Android, which cuts the icon to a circle or a rounded square. Everything that matters has to sit inside the
+  // middle 80 percent, so the emblem is smaller here and the background is solid.
+  'icon-maskable-192.png': await square(light, 192, { background: '#ffffff', pad: 0.16 }),
+  'icon-maskable-512.png': await square(light, 512, { background: '#ffffff', pad: 0.16 }),
 };
 
 for (const [name, buf] of Object.entries(files)) {
