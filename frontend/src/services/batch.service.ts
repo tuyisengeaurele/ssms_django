@@ -1,6 +1,6 @@
 import api from './api';
 import { downloadFile } from './download';
-import { ApiResponse, Batch, BatchStage, MortalityEntry, QuantityUnit } from '../types';
+import { ApiResponse, Batch, BatchComparison, BatchStage, MortalityEntry, QuantityUnit } from '../types';
 
 export interface BatchDetails {
   /** The room a new batch goes in. The server picks it when the farm has one room or none. */
@@ -45,4 +45,8 @@ export const batchService = {
     api.patch<ApiResponse<Batch>>(`/batches/${id}/stage`, { stage }),
 
   delete: (id: string) => api.delete<ApiResponse<null>>(`/batches/${id}`),
+
+  /** GET /api/batches/compare, two to four batches side by side, in the order given. */
+  compare: (ids: string[]) =>
+    api.get<ApiResponse<{ batches: BatchComparison[] }>>('/batches/compare', { params: { ids: ids.join(',') } }),
 };
