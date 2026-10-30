@@ -24,7 +24,7 @@ export const ROLE_LABEL_KEY: Record<Role, string> = {
   FARMER: 'roleFarmer',
 };
 
-function getNavGroups(role: Role | undefined, alertCount: number, t: (k: string) => string): NavGroup[] {
+export function getNavGroups(role: Role | undefined, alertCount: number, t: (k: string) => string): NavGroup[] {
   const alerts: NavItem = { to: '/alerts', label: t('ptAlerts'), icon: 'alerts', badge: alertCount };
   const coopReport: NavItem = { to: '/reports/cooperative', label: t('ptCoopReport'), icon: 'activity' };
 
