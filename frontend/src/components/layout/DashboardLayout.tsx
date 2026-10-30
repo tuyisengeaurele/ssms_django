@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import BottomNav from './BottomNav';
+import QuickSearch from './QuickSearch';
 import { alertService } from '../../services/alert.service';
 
 const pageVariants = {
@@ -37,6 +38,7 @@ export default function DashboardLayout() {
   const [rail, setRail] = useState(startsAsRail);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     alertService.getAll(true)
@@ -45,6 +47,18 @@ export default function DashboardLayout() {
   }, [location.pathname]);
 
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+
+  // Ctrl K or Cmd K opens quick search from anywhere, a text field included. Shift and Alt keep their browser meanings.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== 'k' || !(event.ctrlKey || event.metaKey) || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      setMobileOpen(false);
+      setSearchOpen((open) => !open);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const toggleMenu = () => {
     if (window.innerWidth < 768) {
@@ -70,7 +84,7 @@ export default function DashboardLayout() {
       />
 
       <main className={`app-main ${rail ? 'sidebar-collapsed' : ''}`}>
-        <TopBar onMenuToggle={toggleMenu} alertCount={alertCount} />
+        <TopBar onMenuToggle={toggleMenu} onSearch={() => setSearchOpen(true)} alertCount={alertCount} />
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -87,6 +101,7 @@ export default function DashboardLayout() {
       </main>
 
       <BottomNav alertCount={alertCount} onMore={() => setMobileOpen(true)} />
+      <QuickSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );
 }

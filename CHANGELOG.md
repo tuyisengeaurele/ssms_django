@@ -1,5 +1,33 @@
 # Changelog
 
+## Quick search with Ctrl K (Plan 9, item G1)
+
+Press Ctrl K (Cmd K on a Mac) anywhere in the signed in app, or press Search in the top bar, to jump to a page or to one of your farms without using the menu.
+
+### Checked
+- Frontend: 1242 tests pass (49 new) and `tsc` is clean. No backend change and no migration. ESLint is not installed on this machine, so lint was not run.
+- `npm test` still prints the one unhandled `RangeError` from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+- **I tried it in a real browser** with a throwaway farmer who had two farms (the account and its farms are deleted again):
+  - Ctrl K opens the box with the cursor in it and lists the farmer's pages and farms.
+  - Typing a place name and pressing Enter opened the right farm, closed the box and gave the page its scroll back.
+  - At phone width the box fits, with no sideways scroll. The top bar button shrinks to the search icon.
+  - No console errors.
+- Not checked in a browser: the Cmd K key on a Mac, a screen reader, French and Kinyarwanda on screen (the box is tested in French, not looked at), and the supervisor and admin lists.
+
+### What it does
+- **Pages:** every page in the person's own menu, plus Profile, and New farm for farmers and admins. A farmer never sees admin pages in the list.
+- **Farms:** the farms the person may see, with the place under each name. Supervisors and admins can also find a farm by its owner's name.
+- **Matching:** every word typed must appear somewhere in the name, place or owner. It ignores capitals and accents, so "elevage" finds "Élevage". A name that starts with what you typed comes first. At most 8 farms show.
+- **Keyboard:** Up and Down to move (they wrap), Enter to open, Escape to close, Ctrl K again to close. The focus goes back to where it was.
+- **Screen readers:** it is a combobox with a list of options, and a hidden line says how many results there are.
+- The farms are read once, the first time the box opens, and searched on the device after that. If they cannot be read the pages still work, and the next opening tries again.
+- Shift K and Alt K are left alone, since browsers use them.
+
+### Decided
+- **Pages and farms only for now.** Batches, people and alerts are not searched. There is no list of all batches for a farmer, so searching them would mean one request per farm. It is a good next step once there is a search endpoint on the server.
+- **No recent items.** With nothing typed it shows every page and five farms.
+- The texts are in English, French and Kinyarwanda. The French and Kinyarwanda are my drafts and need a native read.
+
 ## The access token is kept in memory (Plan 9, item I5)
 
 The sign in token is no longer saved in the browser. It lives in the page's memory, and a reload gets a new one from the refresh cookie.

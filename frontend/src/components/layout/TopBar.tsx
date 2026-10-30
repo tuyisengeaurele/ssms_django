@@ -15,8 +15,13 @@ import { ROLE_LABEL_KEY } from './Sidebar';
 
 interface TopBarProps {
   onMenuToggle: () => void;
+  /** Opens quick search. The button shows only when this is given. */
+  onSearch?: () => void;
   alertCount?: number;
 }
+
+/** What the shortcut is called on this computer. */
+const SHORTCUT = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K';
 
 // ── Notifications ────────────────────────────────────────────────────────────
 
@@ -105,7 +110,7 @@ function NotificationPanel({ isAdmin, alertCount, onClose }: { isAdmin: boolean;
 
 // ── Top bar ──────────────────────────────────────────────────────────────────
 
-export default function TopBar({ onMenuToggle, alertCount = 0 }: TopBarProps) {
+export default function TopBar({ onMenuToggle, onSearch, alertCount = 0 }: TopBarProps) {
   const { user, logout } = useAuth();
   const { t, locale, setLocale } = useLanguage();
   const { title, section } = usePageTitle();
@@ -178,6 +183,14 @@ export default function TopBar({ onMenuToggle, alertCount = 0 }: TopBarProps) {
         <div className="topbar-spacer" />
 
         <div className="topbar-actions">
+          {onSearch && (
+            <button type="button" className="topbar-search" onClick={onSearch} aria-label={t('qsOpen')} aria-keyshortcuts="Control+K Meta+K">
+              <Icon name="search" size={17} />
+              <span className="topbar-search-text">{t('qsOpen')}</span>
+              <kbd className="topbar-search-key" aria-hidden="true">{SHORTCUT}</kbd>
+            </button>
+          )}
+
           <select
             className="topbar-lang"
             aria-label={t('lpLangLabel')}
