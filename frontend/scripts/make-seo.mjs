@@ -1,15 +1,16 @@
-// Writes robots.txt and sitemap.xml for the site address in VITE_SITE_URL.
+// Writes robots.txt and sitemap.xml for the site address (see siteUrl.mjs).
 // Runs before every build (see "prebuild" in package.json).
 import { writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveSiteUrl } from './siteUrl.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const pub = resolve(here, '../public');
 
-const raw = (process.env.VITE_SITE_URL ?? '').trim().replace(/\/+$/, '');
-const site = raw || 'http://localhost:5173';
-if (!raw) {
+const resolved = resolveSiteUrl(process.env);
+const site = resolved ?? 'http://localhost:5173';
+if (!resolved) {
   console.warn('VITE_SITE_URL is not set, using http://localhost:5173 for robots.txt and sitemap.xml');
 }
 
