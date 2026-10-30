@@ -1,5 +1,39 @@
 # Changelog
 
+## A QR code on a harvest lot (Plan 9, item G6)
+
+A farmer can make a QR code for a harvest lot. A buyer who scans it sees a short page about the lot, with no sign in, and the farmer can switch it off at any time.
+
+### Checked
+- Backend: 1562 tests pass (34 new, in `tests/test_lot_share.py`) and `ruff` is clean on the changed files. Frontend: 1518 tests pass (41 new) and `tsc` is clean. ESLint is not installed on this machine, so frontend lint was not run.
+- `npm test` still prints the one unhandled `RangeError` from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+- **In a real browser** with a throwaway administrator (deleted again) on your demo data: the QR button shows on a harvest record, the dialog explains what a buyer will and will not see, creating the code draws a real QR code, the lot gets a "Shared" tag, the public page at the link shows the farm, cooperative, dates, weight, silk and grade, ending the sharing makes the old link answer "This link is no longer valid." and puts the dialog back to the start. I checked the public answer for leaks and it holds only the 11 allowed fields. I left no share token in your database.
+- **The QR code itself:** I took the image the page drew and decoded it with a separate QR reader. It decodes to exactly the link. A phone camera was not tried.
+- Not checked: scanning with a phone, the Print and Download image buttons (the print layout is written and the PNG conversion needs a real click, neither was tried), a farm that has a district chosen (the demo farms have only an old text place, so the Place row was left out, which is the tested behaviour), the supervisor view, and French and Kinyarwanda on screen (the dialog and page are tested in French).
+
+### What it does
+- **Making the code.** On a batch's harvest page each record has a QR code button (the owner only). The dialog first says what a buyer will see and what they never will, and the code is only made when the farmer presses "Create the QR code".
+- **What a stranger sees:** the farm name, the district and province, the cooperative if there is one, the breed, the start and harvest dates, the days of rearing, the cocoon weight, the silk yield if recorded, and the grade, and a line saying the numbers were recorded by the farmer in SSMS.
+- **What a stranger never sees:** the owner's name, email or phone, the street, the exact position, the notes, or anything else. A test searches the whole answer for the owner's name, email, street, coordinates and notes.
+- **Stopping.** "Stop sharing" asks first and says that printed codes stop working. The link then answers "This link is no longer valid." like an unknown link, so nobody can tell an ended link from one that never existed. Sharing again makes a new code.
+- **Printing and saving.** Print leaves only the code, the line "Scan to see where this lot comes from." and a caption (farm, harvest date, weight) on the paper. "Download image" saves a PNG. The code is always drawn dark on white, also in dark mode, because that is how scanners read it.
+- **Safety of the link.** The code holds a 22 character random secret, not the lot's id. It is not in the harvest list (which only says whether a lot is shared), not in the audit log, and the page is never kept by browsers or listed by search engines (`Cache-Control: no-store`, `X-Robots-Tag: noindex`, a noindex tag, and `Disallow: /lot/` in robots.txt). A stranger is slowed to 30 requests a minute.
+- **Who may:** the owner and administrators make and end links. A supervisor may read lots but not change them, so gets nothing. Another farmer gets "not found".
+- **The privacy policy** has a new section about it.
+
+### Needs doing on Render
+- Run the migration `harvest/0003_harvestrecord_share_token` when you deploy. It adds two empty columns. It is already applied to your local database.
+
+### Decided
+- **A lot is one harvest record**, not a whole batch, since the weight and the grade belong to a harvest.
+- **The district, not the village.** A buyer needs the area, and a village can point at a household.
+- **The cooperative is shown** when the farm's owner is in one. It names an organisation, not a person.
+- **The numbers are the farmer's own.** The page says so. Nothing on it is checked by SSMS.
+- **The link is stored as it is**, so the farmer can print the code again later. Invitation links are stored hashed because they are shown once. A printed code cannot be shown once.
+- **No per-scan statistics.** Nothing is recorded about who opens a page.
+- **The French and Kinyarwanda texts are my drafts** and need a native read. The privacy policy section is in English only, like the rest of that page.
+- A leftover from the compare work: the cocoon word is Igishishwa on the landing page and in the stages, and "imideri" in other texts. The page uses "imideri" for cocoon weight as the other pages do.
+
 ## Chore: tidy imports
 
 `ruff` reported 21 older findings in files nobody had touched for a while. 18 are fixed with `ruff --fix`, which only reorders or removes import lines: imports out of order in 15 files and 3 unused imports.

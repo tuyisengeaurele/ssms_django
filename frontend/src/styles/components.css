@@ -1127,6 +1127,7 @@ tr.is-off td:last-child { opacity: 1; }
 
 /* ── QR code of a harvest lot ──────────────────────────────────────────────── */
 .lot-subhead { margin: 18px 0 4px; font: 600 0.72rem var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
+.lot-create { margin-top: 18px; }
 .lot-print-sheet { display: grid; justify-items: center; gap: 8px; margin-bottom: 18px; text-align: center; }
 .lot-qr { padding: 10px; border: 1px solid var(--border-light); border-radius: 16px; background: #fff; line-height: 0; }
 .lot-qr svg { max-width: 100%; height: auto; }

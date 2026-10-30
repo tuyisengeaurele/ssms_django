@@ -129,7 +129,7 @@ export default function LotQrModal({ record, onClose, onChange }: LotQrModalProp
           <h3 className="lot-subhead">{t('lotShowsTitle')}</h3>
           <p className="modal-text">{t('lotShows')}</p>
           <p className="modal-text">{t('lotHides')}</p>
-          <button type="button" className="btn btn-primary" onClick={create} disabled={busy}>{t('lotCreate')}</button>
+          <button type="button" className="btn btn-primary lot-create" onClick={create} disabled={busy}>{t('lotCreate')}</button>
         </>
       )}
 
