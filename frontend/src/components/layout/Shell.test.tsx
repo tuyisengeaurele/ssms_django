@@ -182,10 +182,22 @@ describe('TopBar', () => {
     expect(bell).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('lets the person change language', () => {
+  it('lets the person change language from the small switcher', () => {
     topbar('/admin');
-    fireEvent.change(screen.getByRole('combobox', { name: 'Language' }), { target: { value: 'fr' } });
+    expect(screen.queryByRole('combobox', { name: 'Language' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Français' }));
     expect(localStorage.getItem('ssms_locale')).toBe('fr');
+    expect(screen.getByRole('button', { name: 'Français' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('also offers the language in the account menu, for screens too narrow for the switcher', () => {
+    topbar('/admin');
+    fireEvent.click(screen.getByRole('button', { name: /Auris Tuyisenge/ }));
+    const group = within(screen.getByRole('menu')).getByRole('group', { name: 'Language' });
+    expect(within(group).getAllByRole('menuitemradio').map((b) => b.textContent)).toEqual(['EN', 'FR', 'RW']);
+    fireEvent.click(within(group).getByRole('menuitemradio', { name: 'Kinyarwanda' }));
+    expect(localStorage.getItem('ssms_locale')).toBe('rw');
+    expect(screen.getByRole('menu')).toBeInTheDocument();
   });
 
   it('shows the account menu with profile and sign out', () => {

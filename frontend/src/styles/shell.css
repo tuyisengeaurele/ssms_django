@@ -338,18 +338,6 @@
   position: relative;
 }
 
-.topbar-lang {
-  appearance: none;
-  margin-right: 6px;
-  padding: 8px 32px 8px 14px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--ivory) var(--caret) no-repeat right 12px center;
-  color: var(--ink);
-  font: 500 0.84rem var(--font-ui);
-  cursor: pointer;
-}
-
 .topbar-notif-dot {
   position: absolute;
   top: 9px;
@@ -612,23 +600,23 @@ a.topbar-note:hover {
   color: var(--danger-ink-2);
 }
 
-.topbar-menu-theme {
+.topbar-menu-choice {
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 8px 12px;
 }
 
-.topbar-menu-theme-label {
+.topbar-menu-choice-label {
   font: 500 0.84rem var(--font-ui);
   color: var(--text-muted);
 }
 
-.topbar-menu-theme .segmented {
+.topbar-menu-choice .segmented {
   flex-wrap: nowrap;
 }
 
-.topbar-menu-theme .segmented button {
+.topbar-menu-choice .segmented button {
   flex: 1;
   padding: 6px 8px;
   font-size: 0.82rem;
@@ -788,16 +776,52 @@ a.topbar-note:hover {
   .topbar-user-caret {
     display: none;
   }
+}
 
-  .topbar-lang {
-    padding-inline: 10px 26px;
-    margin-right: 0;
-    background-position: right 8px center;
+/* ── Language switcher ─────────────────────────────────────────────────────── */
+.topbar-lang-switch {
+  margin-right: 6px;
+}
+
+.lang-pill {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--ivory);
+}
+
+.lang-pill button {
+  min-width: 32px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-muted);
+  font: 600 0.72rem var(--font-ui);
+  letter-spacing: 0.06em;
+  transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
+}
+
+.lang-pill button:hover:not(.is-on) {
+  color: var(--ink);
+}
+
+.lang-pill button.is-on {
+  background: var(--ink);
+  color: var(--ivory);
+}
+
+/* Too narrow for the pill: the same choice is in the account menu instead. */
+@media (max-width: 639px) {
+  .topbar-lang-switch {
+    display: none;
   }
 }
 
-@media (max-width: 420px) {
-  .topbar-lang {
+@media (min-width: 640px) {
+  .topbar-menu-language {
     display: none;
   }
 }
