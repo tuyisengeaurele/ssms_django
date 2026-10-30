@@ -84,6 +84,19 @@ def test_a_day_before_the_batch_started_is_refused(auth_client, owner, batch):
     assert response.status_code == 422
 
 
+# ── databases that store the batch dates without a time zone ────────────────
+
+def test_deaths_can_be_recorded_when_the_batch_dates_have_no_time_zone(auth_client, owner, batch, naive_batch_dates):
+    response = log(auth_client(owner), batch)
+    assert response.status_code == 201, response.content[:200]
+
+
+def test_the_start_day_still_counts_when_the_batch_dates_have_no_time_zone(auth_client, owner, batch, naive_batch_dates):
+    start = (timezone.now() - timedelta(days=10)).date()
+    assert log(auth_client(owner), batch, recordedOn=start.isoformat()).status_code == 201
+    assert log(auth_client(owner), batch, recordedOn=(start - timedelta(days=1)).isoformat()).status_code == 422
+
+
 def test_recording_is_audited(auth_client, owner, batch):
     log(auth_client(owner), batch, count=7)
     entry = AuditLog.objects.get(action='CREATE', resource='Mortality')

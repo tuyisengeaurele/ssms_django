@@ -1,5 +1,26 @@
 # Changelog
 
+## Fix: the batch report and recording deaths on databases with naive batch dates
+
+Two things crashed on the local development database: opening a batch report as a PDF for any batch that is not at harvest stage, and recording deaths on a batch.
+
+### Cause
+The batch dates (`batches.startDate` and `expectedHarvestDate`) are stored as `timestamp without time zone` in the local database, because it was built before Django. Django returns those dates without a time zone even though the project uses time zones, and code that took one away from the current time (`batches/report.py`) or turned one into a local day (`batches/mortality_views.py`) stopped with `TypeError: can't subtract offset-naive and offset-aware datetimes` or `ValueError: localtime() cannot be applied to a naive datetime`. The test database is built from migrations and has proper columns, so the tests did not see it.
+
+### Fix
+- `core/timeutil.aware()` gives a date its time zone (UTC, which is how they were saved) when it has none, and leaves any other date as it is.
+- The report and the mortality view use it.
+- `conftest.py` has a `naive_batch_dates` fixture that changes the two columns to the older type inside the test's transaction, which is rolled back afterwards. The new tests use it, and they fail without the fix (checked by putting the old code back).
+
+### Checked
+- Backend: 1492 tests pass on this branch (12 new) and `ruff` is clean on the changed files. The whole project still has 22 older `ruff` findings in other files, which I left alone.
+- Against the local database, read only: the report for a batch at cocoon stage, which raised `TypeError` before, now builds (134 KB). Recording deaths was covered by the test only, since trying it would write to the local database.
+
+### Looked for, not changed
+- Other columns of the older type are `alert_logs.createdAt`, `disease_detections.detectedAt`, `farms` and `users` dates and `sensor_readings.timestamp`. I searched the code for places that take them away from the current time or turn them into a local day and found none; the other uses only print them. `core/health.py` already handled this case itself.
+- `batches/compare.py` on the compare batches branch has its own copy of this helper. It should use `core.timeutil.aware` once both are merged.
+- If the production database was also built before Django, these two crashes would have happened there too.
+
 ## Share preview and install check (Plan 9, item G7)
 
 The deployed site now points its share preview at its own address instead of localhost, and the web app is set up to be installed on a phone with an icon that survives Android's round mask and a start page of its own.

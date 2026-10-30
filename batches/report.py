@@ -10,6 +10,7 @@ from alerts.room_alerts import alerts_for_batch
 from core.doc_format import GRADES, STAGE_NAMES, clean_lang, count, day, num, round1
 from core.doc_text import t
 from core.pdf import build_pdf, data_table, facts_table, heading, para, spacer
+from core.timeutil import aware
 from harvest.models import HarvestRecord
 from sensors.series import batch_series, bucket_hours_for
 
@@ -77,8 +78,9 @@ def batch_report_pdf(batch, made_by: str, lang: str = 'en') -> bytes:
     story = [heading(t(lang, 'brBatch')), facts_table(facts)]
 
     if batch.stage != 'HARVEST':
-        day_number = (now - batch.start_date).days + 1
-        total_days = round((batch.expected_harvest_date - batch.start_date).total_seconds() / 86400)
+        started = aware(batch.start_date)
+        day_number = (now - started).days + 1
+        total_days = round((aware(batch.expected_harvest_date) - started).total_seconds() / 86400)
         key = 'bdDayLate' if day_number > total_days else 'bdDay'
         story.append(spacer(3))
         story.append(para(t(lang, key, n=day_number, total=total_days, date=day(batch.expected_harvest_date, lang))))
