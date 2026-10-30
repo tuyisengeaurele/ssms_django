@@ -59,6 +59,7 @@ describe('API client', () => {
     '/auth/password-reset/confirm',
     '/auth/resend-verification',
     '/auth/verify-email',
+    '/lots/abc123tokenXYZ',
   ])('does not send the token to %s', async (url) => {
     const headers = await sentHeaders(url, 'post');
     expect(headers.Authorization).toBeUndefined();

@@ -1124,3 +1124,26 @@ tr.is-off td:last-child { opacity: 1; }
 
 .compare-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0 0 12px; padding: 0; list-style: none; font-size: 0.86rem; }
 .compare-legend li { display: inline-flex; align-items: center; gap: 8px; }
+
+/* ── QR code of a harvest lot ──────────────────────────────────────────────── */
+.lot-subhead { margin: 18px 0 4px; font: 600 0.72rem var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
+.lot-create { margin-top: 18px; }
+.lot-hint { margin: 0 0 14px; color: var(--text-muted); font-size: 0.86rem; text-align: center; }
+.lot-print-sheet { display: grid; justify-items: center; gap: 8px; margin-bottom: 18px; text-align: center; }
+.lot-qr { padding: 10px; border: 1px solid var(--border-light); border-radius: 16px; background: #fff; line-height: 0; }
+.lot-qr svg { max-width: 100%; height: auto; }
+.lot-scan { margin: 6px 0 0; font-weight: 600; color: var(--text); }
+.lot-print-caption { margin: 0; font-size: 0.86rem; color: var(--text-muted); }
+
+/* Printing the code: only the dialog's sheet is left on the paper. */
+@media print {
+  body:has(.lot-print-sheet) > *:not(.modal-overlay) { display: none !important; }
+  body:has(.lot-print-sheet) .modal-overlay { position: static; display: block; padding: 0; background: none; backdrop-filter: none; }
+  body:has(.lot-print-sheet) .modal-box { max-width: none !important; padding: 0; box-shadow: none; background: none; }
+  body:has(.lot-print-sheet) .modal-header,
+  body:has(.lot-print-sheet) .modal-footer,
+  body:has(.lot-print-sheet) .lot-noprint { display: none !important; }
+  body:has(.lot-print-sheet) .lot-qr { border: 0; }
+  body:has(.lot-print-sheet) .lot-scan,
+  body:has(.lot-print-sheet) .lot-print-caption { color: #000; }
+}

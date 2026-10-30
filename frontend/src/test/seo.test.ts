@@ -109,6 +109,11 @@ describe('icons and static files', () => {
     expect(robots).toMatch(/Sitemap: /);
   });
 
+  it('keeps lot pages out of search results, since each is private to the people who were given its link', () => {
+    expect(readFileSync(pub('robots.txt'), 'utf8')).toMatch(/Disallow: \/lot\//);
+    expect(readFileSync(resolve(root, 'scripts/make-seo.mjs'), 'utf8')).toContain('Disallow: /lot/');
+  });
+
   it('keeps the sitemap script next to the other build scripts', () => {
     expect(existsSync(resolve(root, 'scripts/make-seo.mjs'))).toBe(true);
   });

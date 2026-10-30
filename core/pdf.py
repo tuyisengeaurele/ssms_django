@@ -13,6 +13,8 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 from django.conf import settings
+from reportlab.graphics.barcode.qr import QrCodeWidget
+from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_RIGHT
 from reportlab.lib.pagesizes import A4
@@ -86,6 +88,17 @@ def heading(text) -> Paragraph:
 
 def spacer(height_mm=4) -> Spacer:
     return Spacer(1, height_mm * mm)
+
+
+def qr_code(value: str, size_mm: float = 32) -> Drawing:
+    """A QR code for a document: black on white, with the blank border a scanner needs, `size_mm` wide and high."""
+    widget = QrCodeWidget(value, barLevel='M', barFillColor=colors.black, barStrokeColor=colors.black)
+    x0, y0, x1, y1 = widget.getBounds()
+    size = size_mm * mm
+    drawing = Drawing(size, size, transform=[size / (x1 - x0), 0, 0, size / (y1 - y0), 0, 0])
+    drawing.add(Rect(x0, y0, x1 - x0, y1 - y0, fillColor=colors.white, strokeColor=None))
+    drawing.add(widget)
+    return drawing
 
 
 def facts_table(pairs) -> Table:

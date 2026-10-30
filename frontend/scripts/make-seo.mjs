@@ -28,6 +28,7 @@ Allow: /
 Disallow: /admin
 Disallow: /farmer
 Disallow: /supervisor
+Disallow: /lot/
 
 Sitemap: ${site}/sitemap.xml
 `;

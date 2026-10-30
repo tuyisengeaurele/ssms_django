@@ -224,6 +224,29 @@ export interface HarvestRecord {
   // enriched fields (returned by /harvest global list)
   farmName?: string | null;
   farmId?: string | null;
+  /** Whether the lot has a QR code link. The link itself is read with the share call, by the owner only. */
+  isShared?: boolean;
+}
+
+/** The link of a lot, or null when it is not shared. */
+export interface LotShare {
+  token: string | null;
+  sharedAt: string | null;
+}
+
+/** What a stranger who scans a lot's QR code is shown. Nothing about the owner. */
+export interface PublicLot {
+  farmName: string;
+  province: string | null;
+  district: string | null;
+  cooperativeName: string | null;
+  breed: string | null;
+  grade: QualityGrade;
+  cocoonWeightKg: number;
+  silkYieldG: number | null;
+  startedOn: string;
+  harvestedOn: string;
+  rearingDays: number;
 }
 
 export interface HarvestStats {

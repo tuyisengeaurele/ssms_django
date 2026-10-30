@@ -1,0 +1,61 @@
+/* The page behind a lot's QR code. It sits in the public site, so it uses the landing tokens. */
+.landing.l-lot main {
+  place-items: start center;
+  padding: clamp(110px, 14vw, 170px) 0 clamp(56px, 8vw, 100px);
+}
+
+.landing .l-lot__inner {
+  width: min(100% - var(--l-gutter) * 2, 640px);
+}
+
+.landing .l-lot__card {
+  padding: clamp(24px, 5vw, 44px);
+  border: 1px solid var(--l-hairline);
+  border-radius: var(--l-radius-card);
+  background: var(--l-ivory);
+  box-shadow: var(--l-shadow-soft);
+}
+
+.landing .l-lot__eyebrow {
+  margin: 0 0 10px;
+  color: var(--l-muted);
+  font: 600 0.72rem var(--l-font-ui);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.landing .l-lot__card h1 {
+  margin: 0 0 24px;
+  font-size: clamp(2rem, 6vw, 3rem);
+  overflow-wrap: anywhere;
+}
+
+.landing .l-lot__facts {
+  margin: 0;
+}
+
+.landing .l-lot__facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 13px 0;
+  border-top: 1px solid var(--l-hairline);
+}
+
+.landing .l-lot__facts dt {
+  color: var(--l-muted);
+  font-size: 0.92rem;
+}
+
+.landing .l-lot__facts dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.landing .l-lot__note {
+  margin: 24px 0 0;
+  color: var(--l-muted);
+  font-size: 0.88rem;
+}

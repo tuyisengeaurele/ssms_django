@@ -41,11 +41,19 @@ describe('Privacy policy page', () => {
     expect(screen.getByText(/the time you accepted the terms/)).toBeInTheDocument();
   });
 
+  it('explains the QR code on a harvest lot, what a stranger sees, and how to switch it off', () => {
+    renderPage(<PrivacyPolicyPage />, '/privacy');
+    const section = screen.getByRole('heading', { level: 2, name: /QR codes on harvest lots/ }).closest('section') as HTMLElement;
+    expect(section).toHaveTextContent(/farm name, the district/);
+    expect(section).toHaveTextContent(/never shows your name, your email address, the street/);
+    expect(section).toHaveTextContent(/stop sharing/);
+  });
+
   it('lists every section in a contents navigation that links to it', () => {
     const { container } = renderPage(<PrivacyPolicyPage />, '/privacy');
     const toc = screen.getByRole('navigation', { name: 'On this page' });
     const links = within(toc).getAllByRole('link');
-    expect(links).toHaveLength(10);
+    expect(links).toHaveLength(11);
     for (const link of links) {
       const id = (link.getAttribute('href') as string).slice(1);
       const section = container.querySelector(`article section[id="${id}"]`);

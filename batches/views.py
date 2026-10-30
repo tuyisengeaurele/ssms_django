@@ -97,7 +97,11 @@ class BatchReportView(APIView):
 
     def get(self, request, pk):
         batch = get_batch_or_404(request.user, pk, Batch.objects.select_related('room'))
-        pdf = batch_report_pdf(batch, request.user.name or request.user.email, clean_lang(request.query_params.get('lang')))
+        # The report of a shared lot carries its QR code, which holds a secret address, so only those who may share see it.
+        pdf = batch_report_pdf(
+            batch, request.user.name or request.user.email, clean_lang(request.query_params.get('lang')),
+            lot_links=request.user.role in ('FARMER', 'ADMIN'),
+        )
         response = HttpResponse(pdf, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="batch_report_{batch.pk[-8:].upper()}_{timezone.now():%Y-%m-%d}.pdf"'
         return response

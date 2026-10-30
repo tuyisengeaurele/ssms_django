@@ -2,7 +2,7 @@
 // flash while the app loads. Public pages keep their own look, so they are skipped. src/utils/theme.ts does the rest.
 (function () {
   try {
-    var PUBLIC = ['/login', '/register', '/forgot-password', '/reset-password', '/check-email', '/verify-email', '/unauthorized', '/join', '/privacy', '/terms'];
+    var PUBLIC = ['/login', '/register', '/forgot-password', '/reset-password', '/check-email', '/verify-email', '/unauthorized', '/join', '/lot', '/privacy', '/terms'];
     var path = location.pathname;
     if (path === '/') return;
     for (var i = 0; i < PUBLIC.length; i++) {

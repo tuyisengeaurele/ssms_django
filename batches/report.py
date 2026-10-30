@@ -5,11 +5,15 @@ page, so every death entry and every disease check is listed.
 """
 from decimal import Decimal
 
+from django.conf import settings
+from reportlab.lib.units import mm
+from reportlab.platypus import Table
+
 from alerts.models import StageThreshold
 from alerts.room_alerts import alerts_for_batch
 from core.doc_format import GRADES, STAGE_NAMES, clean_lang, count, day, num, round1
 from core.doc_text import t
-from core.pdf import build_pdf, data_table, facts_table, heading, para, spacer
+from core.pdf import build_pdf, data_table, facts_table, heading, para, qr_code, small, spacer
 from core.timeutil import aware
 from harvest.models import HarvestRecord
 from sensors.series import batch_series, bucket_hours_for
@@ -47,7 +51,12 @@ def _range_for(stage: str) -> dict:
     return {'temp_min': row.temp_min, 'temp_max': row.temp_max, 'hum_min': row.hum_min, 'hum_max': row.hum_max}
 
 
-def batch_report_pdf(batch, made_by: str, lang: str = 'en') -> bytes:
+def lot_link(token: str) -> str:
+    """The address a lot's QR code holds, the page a buyer opens."""
+    return f"{settings.FRONTEND_URL.rstrip('/')}/lot/{token}"
+
+
+def batch_report_pdf(batch, made_by: str, lang: str = 'en', lot_links: bool = False) -> bytes:
     from django.utils import timezone
 
     lang = clean_lang(lang)
@@ -159,6 +168,12 @@ def batch_report_pdf(batch, made_by: str, lang: str = 'en') -> bytes:
         silk = sum((h.silk_yield_g or Decimal(0)) for h in harvests)
         story.append(para(t(lang, 'brHarvestSumOne' if len(harvests) == 1 else 'brHarvestSum', n=len(harvests), kg=num(round(kg, 2)), g=num(round(silk, 1)))))
         story.append(para(', '.join(f"{t(lang, 'hpGradeName', g=g)}: {sum(1 for h in harvests if h.quality_grade == g)}" for g in GRADES)))
+        # The QR code of each lot the farmer chose to share, to cut out or print on the box. Only for the people who may
+        # make the link, since the code holds a secret address.
+        for lot in (h for h in harvests if lot_links and h.share_token):
+            caption = t(lang, 'lotPrintCaption', farm=farm.name, date=day(lot.harvested_at, lang), kg=num(round(lot.cocoon_weight_kg, 2)))
+            story.append(spacer(3))
+            story.append(Table([[qr_code(lot_link(lot.share_token), 34), [para(caption), small(t(lang, 'lotScan'))]]], colWidths=[40 * mm, None], style=[('VALIGN', (0, 0), (-1, -1), 'MIDDLE')]))
 
     story.append(para(t(lang, 'brPrepared', date=day(now, lang), name=made_by)))
     return build_pdf(t(lang, 'ptBatchReport'), story, generated_by=made_by, subtitle=t(lang, 'hpSubtitle', id=code, farm=farm.name), lang=lang)

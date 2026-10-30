@@ -44,6 +44,7 @@ const AdminAuditLogPage = lazy(() => import('./pages/admin/AdminAuditLogPage'));
 const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage'));
+const PublicLotPage = lazy(() => import('./pages/PublicLotPage'));
 const AppHome = lazy(() => import('./pages/AppHome'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const UnauthorizedPage = lazy(() => import('./pages/UnauthorizedPage'));
@@ -67,6 +68,7 @@ export default function App() {
           <Route path="/verify-email"     element={<VerifyEmailPage />} />
           <Route path="/unauthorized"     element={<UnauthorizedPage />} />
           <Route path="/join/:token"      element={<JoinPage />} />
+          <Route path="/lot/:token"       element={<PublicLotPage />} />
 
           {/* All authenticated pages, inside DashboardLayout (sidebar + topbar) */}
           <Route element={<ProtectedRoute allowedRoles={['FARMER', 'SUPERVISOR', 'ADMIN']} />}>

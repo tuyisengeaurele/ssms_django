@@ -15,6 +15,7 @@ const PUBLIC_PATHS = [
   '/auth/resend-verification',
   '/auth/verify-email',
   '/auth/token/refresh',
+  '/lots/',
 ];
 
 api.interceptors.request.use((config) => {

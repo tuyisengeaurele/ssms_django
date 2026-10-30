@@ -19,6 +19,7 @@ urlpatterns = [
     path('api/rooms', include('farms.room_urls')),                       # /api/rooms/<id>
     path('api/team', include('cooperatives.team_urls')),                 # a supervisor's farmers and invitation links
     path('api/invitations', include('cooperatives.invitation_urls')),    # the page behind an invitation link
+    path('api/lots', include('harvest.lot_urls')),                       # the page behind a lot's QR code
     path('api/cooperatives', include('cooperatives.urls')),      # /api/cooperatives, /api/cooperatives/<id>
     path('api/admin', include('users.admin_urls')),              # /api/admin/users, /api/admin/users/<id>/role
     path('api/harvest', include('harvest.urls')),               # /api/harvest/batch/<id>, /api/harvest/stats

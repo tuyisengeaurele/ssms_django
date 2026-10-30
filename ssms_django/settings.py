@@ -173,6 +173,7 @@ REST_FRAMEWORK = {
         'contact': '5/hour',
         'device': '30/minute',   # readings per device key
         'invitation': '20/minute',
+        'lot': '30/minute',   # strangers opening the page behind a lot's QR code
     },
 }
 

@@ -12,6 +12,7 @@ from alerts.models import StageThreshold
 from batches.models import MortalityRecord
 from batches.placement import place_batch
 from farms.models import RearingRoom
+from harvest.models import HarvestRecord
 from sensors.models import SensorReading
 from tests.factories import (
     AlertLogFactory,
@@ -300,3 +301,70 @@ def test_a_harvested_batch_report_works_when_the_batch_dates_have_no_time_zone(a
 
     Batch.objects.filter(pk=batch.pk).update(stage='HARVEST')
     assert text_of(report(auth_client(owner), batch))
+
+
+# ── the QR code of a shared lot ─────────────────────────────────────────────
+
+SCAN = 'Scan to see where this lot comes from.'
+
+
+def shared_lot(batch, token='tok-abc-123'):
+    record = HarvestRecordFactory(batch=batch, cocoon_weight_kg=Decimal('18.50'), quality_grade='A')
+    HarvestRecord.objects.filter(pk=record.pk).update(share_token=token, shared_at=timezone.now())
+    return record
+
+
+def test_a_shared_lot_is_printed_on_the_owners_report_with_a_code_to_scan(auth_client, owner, batch):
+    shared_lot(batch)
+    text = text_of(report(auth_client(owner), batch))
+    assert SCAN in text
+    assert 'Serge Farm, harvested' in text
+    assert '18.5 kg' in text
+
+
+def test_the_code_holds_the_address_of_the_lot_page():
+    from django.conf import settings
+
+    from batches.report import lot_link
+
+    assert lot_link('tok-abc-123') == f"{settings.FRONTEND_URL.rstrip('/')}/lot/tok-abc-123"
+
+
+def test_a_lot_that_is_not_shared_has_no_code(auth_client, owner, batch):
+    HarvestRecordFactory(batch=batch)
+    assert SCAN not in text_of(report(auth_client(owner), batch))
+
+
+def test_each_shared_lot_has_its_own_code(auth_client, owner, batch):
+    shared_lot(batch, 'tok-one')
+    shared_lot(batch, 'tok-two')
+    HarvestRecordFactory(batch=batch)
+    assert text_of(report(auth_client(owner), batch)).count(SCAN) == 2
+
+
+def test_a_lot_that_was_ended_or_deleted_is_not_printed(auth_client, owner, batch):
+    ended = shared_lot(batch, 'tok-one')
+    deleted = shared_lot(batch, 'tok-two')
+    HarvestRecord.objects.filter(pk=ended.pk).update(share_token=None, shared_at=None)
+    HarvestRecord.objects.filter(pk=deleted.pk).update(is_active=False)
+    assert SCAN not in text_of(report(auth_client(owner), batch))
+
+
+def test_an_administrator_gets_the_code_too(auth_client, batch):
+    shared_lot(batch)
+    assert SCAN in text_of(report(auth_client(UserFactory(role='ADMIN')), batch))
+
+
+def test_a_supervisor_gets_the_report_but_not_the_secret_link(auth_client, owner, batch):
+    coop = CooperativeFactory()
+    type(owner).objects.filter(pk=owner.pk).update(cooperative=coop)
+    shared_lot(batch)
+    text = text_of(report(auth_client(UserFactory(role='SUPERVISOR', cooperative=coop)), batch))
+    assert SCAN not in text
+    assert 'Harvest' in text
+
+
+def test_the_scan_line_reads_in_french(auth_client, owner, batch):
+    shared_lot(batch)
+    assert 'Scannez pour voir d' in text_of(report(auth_client(owner), batch, 'fr'))
+
