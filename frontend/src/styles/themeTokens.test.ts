@@ -120,3 +120,17 @@ describe('chart colours', () => {
     }
   });
 });
+
+describe('the app stylesheets', () => {
+  const sheets = ['components.css', 'shell.css', 'toast.css'].map((name) => [name, readFileSync(join(__dirname, name), 'utf8')] as const);
+
+  it.each(sheets)('%s draws no select arrow of its own, which would vanish on dark', (_name, text) => {
+    expect(text).not.toMatch(/data:image\/svg\+xml/);
+  });
+
+  it.each(sheets)('%s has no white or cream surface that dark would leave behind', (_name, text) => {
+    const printBlock = text.slice(text.indexOf('@media print') >= 0 ? text.indexOf('@media print') : text.length);
+    const withoutPrint = text.replace(printBlock, '');
+    expect(withoutPrint).not.toMatch(/background(-color)?:\s*(#fff\b|#ffffff|white|#faf8f3)/i);
+  });
+});
