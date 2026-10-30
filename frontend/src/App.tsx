@@ -43,6 +43,7 @@ const AdminAuditLogPage = lazy(() => import('./pages/admin/AdminAuditLogPage'));
 const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage'));
+const AppHome = lazy(() => import('./pages/AppHome'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const UnauthorizedPage = lazy(() => import('./pages/UnauthorizedPage'));
 import { ErrorBoundary }  from './components/ui/ErrorBoundary';
@@ -112,6 +113,9 @@ export default function App() {
 
             </Route>
           </Route>
+
+          {/* Where the installed app opens. It decides by itself between the dashboard and the login page. */}
+          <Route path="/app" element={<AppHome />} />
 
           {/* Legal */}
           <Route path="/privacy" element={<PrivacyPolicyPage />} />

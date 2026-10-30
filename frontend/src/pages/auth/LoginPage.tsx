@@ -6,6 +6,7 @@ import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 import { AuthAlert, AuthButton, AuthField, AuthShell } from '../../landing/auth/AuthShell';
 import GoogleButton from '../../landing/auth/GoogleButton';
+import { homePathFor } from '../../utils/roleHome';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -62,7 +63,7 @@ export default function LoginPage() {
       login(user, token);
       // Coming back from an invitation link, the person returns to it. Only that kind of address is followed.
       const next = params.get('next') ?? '';
-      const path = /^\/join\/[A-Za-z0-9_-]+$/.test(next) ? next : user.role === 'ADMIN' ? '/admin' : user.role === 'SUPERVISOR' ? '/supervisor' : '/farmer';
+      const path = /^\/join\/[A-Za-z0-9_-]+$/.test(next) ? next : homePathFor(user.role);
       navigate(path, { replace: true });
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || '';
