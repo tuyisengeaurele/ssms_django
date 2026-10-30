@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios';
+import { clearLegacyStorage, forgetSession, getAccessToken, refreshAccessToken } from './session';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
@@ -6,7 +7,7 @@ const api = axios.create({
   withCredentials: true,  // send httpOnly refresh cookie on every request
 });
 
-// Pages anyone can open. A token left over in the browser must not be sent to them.
+// Pages anyone can open. A token must not be sent to them.
 const PUBLIC_PATHS = [
   '/auth/login',
   '/auth/register',
@@ -18,72 +19,36 @@ const PUBLIC_PATHS = [
 
 api.interceptors.request.use((config) => {
   const isPublic = PUBLIC_PATHS.some((path) => config.url?.includes(path));
-  const token = localStorage.getItem('ssms_token');
+  const token = getAccessToken();
   if (token && !isPublic) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// Track whether a refresh is in-flight to avoid parallel refresh attempts
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (value?: unknown) => void;
-  reject: (reason?: unknown) => void;
-  config: AxiosRequestConfig;
-}> = [];
-
-function processQueue(error: unknown, newToken: string | null) {
-  failedQueue.forEach(({ resolve, reject, config }) => {
-    if (error) {
-      reject(error);
-    } else if (newToken) {
-      (config.headers as Record<string, string>)['Authorization'] = `Bearer ${newToken}`;
-      resolve(api(config));
-    }
-  });
-  failedQueue = [];
-}
-
 api.interceptors.response.use(
   (res) => res,
   async (err) => {
-    const originalConfig = err.config as AxiosRequestConfig & { _retry?: boolean };
+    const originalConfig = err.config as (AxiosRequestConfig & { _retry?: boolean }) | undefined;
 
     // Only attempt refresh on 401 for non-auth endpoints (avoid refresh loop)
     if (
+      originalConfig &&
       err.response?.status === 401 &&
       !originalConfig._retry &&
       !originalConfig.url?.includes('/auth/login') &&
       !originalConfig.url?.includes('/auth/token/refresh') &&
       !originalConfig.url?.includes('/auth/logout')
     ) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject, config: originalConfig });
-        });
-      }
-
       originalConfig._retry = true;
-      isRefreshing = true;
-
       try {
-        // Cookie is sent automatically (withCredentials: true), no body needed
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL ?? '/api'}/auth/token/refresh`,
-          {},
-          { withCredentials: true },
-        );
-        const newAccessToken: string = response.data.access;
-        localStorage.setItem('ssms_token', newAccessToken);
-        api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
-        processQueue(null, newAccessToken);
+        // Requests that run out together share one renewal, and only one tab renews at a time.
+        const newAccessToken = await refreshAccessToken();
         (originalConfig.headers as Record<string, string>)['Authorization'] = `Bearer ${newAccessToken}`;
         return api(originalConfig);
       } catch (refreshError) {
-        processQueue(refreshError, null);
+        // No answer at all (offline, server restarting) says nothing about the session, so it is kept.
+        if (axios.isAxiosError(refreshError) && !refreshError.response) return Promise.reject(err);
         endSession();
         return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
       }
     }
 
@@ -91,10 +56,10 @@ api.interceptors.response.use(
   }
 );
 
-/** Clears the saved sign in and sends the person to the login page with a short explanation. */
+/** Forgets the sign in and sends the person to the login page with a short explanation. */
 export function endSession() {
-  localStorage.removeItem('ssms_token');
-  localStorage.removeItem('ssms_user');
+  forgetSession();
+  clearLegacyStorage();
   try {
     sessionStorage.setItem('ssms_notice', 'session_ended');
   } catch {

@@ -9,6 +9,7 @@ import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
 import { initialsOf } from '../../components/ui/Avatar';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
+import { setAccessToken } from '../../services/session';
 
 export default function ProfilePage() {
   const { user, refreshUser, updateUser } = useAuth();
@@ -73,7 +74,7 @@ export default function ProfilePage() {
     try {
       const res = await authService.changePassword({ currentPassword: current, newPassword: next, confirmPassword: repeat });
       // Changing the password signs every other device out and gives this one a fresh session.
-      if (res.data.data?.token) localStorage.setItem('ssms_token', res.data.data.token);
+      if (res.data.data?.token) setAccessToken(res.data.data.token);
       success(t('pfPasswordChanged'));
       closePassword();
     } catch (err) {

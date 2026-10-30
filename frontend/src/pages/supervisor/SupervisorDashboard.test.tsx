@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import { ToastProvider } from '../../context/ToastContext';
+import { setAccessToken } from '../../services/session';
 import { setReducedMotion } from '../../test/setup';
 
 const auth = vi.hoisted(() => ({ user: { id: 'u', role: 'ADMIN', cooperativeId: null as string | null, cooperativeName: null as string | null } }));
@@ -178,7 +179,7 @@ describe('Live alerts', () => {
   });
 
   it('connects with a short-lived ticket and never puts the sign in token in the address', async () => {
-    localStorage.setItem('ssms_token', 'secret-jwt');
+    setAccessToken('secret-jwt');
     open();
     await waitFor(() => expect(FakeEventSource.instances).toHaveLength(1));
     const url = FakeEventSource.instances[0].url;

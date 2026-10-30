@@ -1,5 +1,42 @@
 # Changelog
 
+## The access token is kept in memory (Plan 9, item I5)
+
+The sign in token is no longer saved in the browser. It lives in the page's memory, and a reload gets a new one from the refresh cookie.
+
+### Checked
+- Frontend: 1193 tests pass (47 new) and `tsc` is clean. No backend change and no migration. ESLint is not installed on this machine, so lint was not run.
+- **I tried it in a real browser** against your running backend, with a throwaway farmer account that I created and have deleted:
+  - A visitor who never signed in makes no API call and stores nothing.
+  - After signing in, browser storage holds one flag, `ssms_session`, and no token and no user.
+  - A reload keeps the person signed in: one refresh call, then `/auth/me`, with no login screen in between. It stays one refresh call even though `StrictMode` mounts the app twice.
+  - Signing out clears the flag, and a reload goes to the login page without any API call.
+  - A browser that still has the old `ssms_token` and `ssms_user` keys has them removed, and is not signed in from them.
+- The throwaway account left 2 audit-log rows (its login and logout) in your local `ssms_db`. I did not edit the audit log.
+- `npm test` still prints the one unhandled error from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+
+### What this changes
+- **Before:** the access token and the user (name, email, role) were saved in `localStorage`, so any script on the page, or anyone with the browser profile, could read them, and they stayed after the tab closed.
+- **Now:** the access token is a variable in a small `session` module. The user is read from the server after each reload. The only thing saved is `ssms_session`, a flag that says a sign in may still be alive, so a visitor does not trigger a pointless refresh. The refresh token was already an httpOnly cookie, and still is.
+- **Where it helps and where it does not.** This closes the easy theft of a saved token. It does not stop a script that runs inside the page: such a script can still call the API as the person, or ask for a new token with the cookie. Stopping that is the job of a Content Security Policy and of keeping untrusted code out of the page.
+
+### Changed
+- `services/session.ts` is new. It holds the token and the flag, and it does the renewal.
+- **One renewal at a time.** The server rotates the refresh cookie and refuses the old one, so two renewals at once would sign the person out. Requests that run out together now share one renewal, and a Web Lock makes tabs take turns.
+- **A renewal with no answer keeps the session.** If the server cannot be reached, the person is not signed out. Only a real refusal ends the session.
+- A page reload shows the loading spinner while the sign in is restored, then the page.
+- The three CSV exports (audit log, system report, disease checks) used `fetch` and read the token from storage. They now go through the shared client, like the PDF exports, so they renew a stale sign in too.
+- The password change on the Profile page keeps the fresh token in memory.
+- `useAuth()` no longer returns the token. Nothing used it.
+
+### Decided
+- The user is not saved either. It costs one `/auth/me` call after a reload and avoids showing an old role or name.
+- The flag stays in `localStorage`, so a new tab can restore the session too. It holds no secret.
+
+### Known limits
+- Each tab holds its own token. A sign in or sign out in one tab does not update the others until they next ask the server.
+- A Content Security Policy is not set up yet. It belongs with the security plan.
+
 ## The result screen no longer presents the check as certain (Plan 9, item E, wording)
 
 The disease check result no longer says "100% sure", no longer adds "This check can make mistakes. Treat it as a quick second opinion, not a diagnosis.", and describes what the photo looks like instead of stating what is so.

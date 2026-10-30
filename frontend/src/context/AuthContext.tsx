@@ -1,59 +1,81 @@
+import axios from 'axios';
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { User } from '../types';
 import api from '../services/api';
 import { authService } from '../services/auth.service';
+import {
+  clearLegacyStorage, forgetSession, hasSessionHint, refreshAccessToken, rememberSession, setAccessToken,
+} from '../services/session';
 
 interface AuthContextValue {
   user: User | null;
-  token: string | null;
+  /** True while a sign in from before a page reload is being restored. */
   isLoading: boolean;
   login: (user: User, token: string) => void;
   logout: () => void;
-  /** Overwrite the in-memory + localStorage user snapshot (e.g. after profile edit). */
+  /** Replace the user on screen, for example after the profile is edited. */
   updateUser: (user: User) => void;
-  /** Re-fetch /api/auth/me and sync the stored user snapshot. */
+  /** Read the user again from /api/auth/me. */
   refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+/**
+ * After a page reload there is no access token in memory. If a sign in may still be alive, ask for a new token with
+ * the refresh cookie and read who it belongs to. Nothing about the person is kept in browser storage.
+ */
+async function restoreSession(): Promise<User | null> {
+  if (!hasSessionHint()) return null;
+  try {
+    await refreshAccessToken();
+    const res = await api.get<{ data: User }>('/auth/me');
+    return res.data.data;
+  } catch (error) {
+    setAccessToken(null);
+    // No answer at all (offline) says nothing about the session, so the flag stays for the next try.
+    if (axios.isAxiosError(error) && !error.response) return null;
+    forgetSession();
+    try {
+      sessionStorage.setItem('ssms_notice', 'session_ended');
+    } catch {
+      // The note is a courtesy.
+    }
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('ssms_token');
-    const storedUser = localStorage.getItem('ssms_user');
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser) as User);
-    }
-    setIsLoading(false);
+    let live = true;
+    clearLegacyStorage();
+    restoreSession()
+      .then((restored) => { if (live) setUser(restored); })
+      .finally(() => { if (live) setIsLoading(false); });
+    return () => { live = false; };
   }, []);
 
   const login = (userData: User, jwt: string) => {
+    setAccessToken(jwt);
+    rememberSession();
     setUser(userData);
-    setToken(jwt);
-    localStorage.setItem('ssms_token', jwt);
-    localStorage.setItem('ssms_user', JSON.stringify(userData));
   };
 
   const logout = useCallback(() => {
     // Tell server to blacklist the refresh cookie and clear it
     authService.logout().catch(() => {
-      // Ignore — cookie will be cleared client-side regardless
+      // Ignore, the cookie is cleared by the server when it can be reached and the page forgets the sign in regardless
     });
+    forgetSession();
     setUser(null);
-    setToken(null);
-    localStorage.removeItem('ssms_token');
-    localStorage.removeItem('ssms_user');
   }, []);
 
   const updateUser = useCallback((userData: User) => {
     setUser(userData);
-    localStorage.setItem('ssms_user', JSON.stringify(userData));
   }, []);
 
   const refreshUser = useCallback(async () => {
@@ -66,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [updateUser]);
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout, updateUser, refreshUser, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, updateUser, refreshUser, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );
