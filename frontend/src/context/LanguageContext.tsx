@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { detectLocale } from '../i18n/detectLocale';
 import { Locale, translations } from '../i18n/translations';
 
 interface LanguageContextValue {
@@ -13,13 +14,15 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 const STORAGE_KEY = 'ssms_locale';
 
 function loadLocale(): Locale {
-  const saved = localStorage.getItem(STORAGE_KEY) as Locale | null;
-  if (saved && ['en', 'fr', 'rw'].includes(saved)) return saved;
-  // Browser language hint
-  const lang = navigator.language.slice(0, 2).toLowerCase();
-  if (lang === 'fr') return 'fr';
-  if (lang === 'rw') return 'rw';
-  return 'en';
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved && ['en', 'fr', 'rw'].includes(saved)) return saved as Locale;
+  } catch {
+    // Storage can be blocked. The browser language below still works.
+  }
+  // The browser's ranked list first, then the single language older browsers give.
+  const ranked = navigator.languages?.length ? navigator.languages : [navigator.language ?? ''];
+  return detectLocale(ranked) ?? 'en';
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
@@ -32,7 +35,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const setLocale = (l: Locale) => {
     setLocaleState(l);
-    localStorage.setItem(STORAGE_KEY, l);
+    try {
+      localStorage.setItem(STORAGE_KEY, l);
+    } catch {
+      // The choice still holds for this visit.
+    }
   };
 
   const t = (key: string): string => {
