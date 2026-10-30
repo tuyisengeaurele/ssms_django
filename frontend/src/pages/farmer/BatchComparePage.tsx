@@ -171,7 +171,7 @@ function Chart({ batches }: { batches: BatchComparison[] }) {
 
 function Result({ ids }: { ids: string[] }) {
   const { t, locale } = useLanguage();
-  const [state, setState] = useState<{ batches: BatchComparison[] } | 'loading' | 'failed'>('loading');
+  const [state, setState] = useState<{ batches: BatchComparison[] } | 'loading' | 'missing' | 'failed'>('loading');
   const key = ids.join(',');
 
   useEffect(() => {
@@ -179,18 +179,19 @@ function Result({ ids }: { ids: string[] }) {
     setState('loading');
     batchService.compare(ids)
       .then((r) => { if (live) setState(r.data.data); })
-      .catch(() => { if (live) setState('failed'); });
+      // A 404 means a batch is gone or not the person's to see. Anything else is a problem on our side.
+      .catch((e: { response?: { status?: number } }) => { if (live) setState(e?.response?.status === 404 ? 'missing' : 'failed'); });
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
   if (state === 'loading') return <SkeletonTable rows={8} cols={ids.length + 1} />;
-  if (state === 'failed') {
+  if (state === 'missing' || state === 'failed') {
     return (
       <EmptyState
         icon={<Icon name="batches" size={22} />}
         title={t('cmpErrorTitle')}
-        description={t('cmpErrorBody')}
+        description={t(state === 'missing' ? 'cmpErrorBody' : 'cmpErrorTryAgain')}
         action={{ label: t('cmpChange'), to: '/batches/compare' }}
       />
     );

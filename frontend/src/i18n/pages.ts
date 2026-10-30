@@ -102,6 +102,7 @@ export const pageTranslations = {
   cmpChartEmpty: k("No harvests recorded yet for these batches.", "Aucune récolte enregistrée pour ces lots.", "Nta sarura ryanditswe kuri aya matsinda."),
   cmpChartTip: k("Day {d}: {kg} kg", "Jour {d} : {kg} kg", "Umunsi {d}: {kg} kg"),
   cmpErrorTitle: k("We could not load this comparison", "Impossible de charger cette comparaison", "Ntibyakunze gutangiza iri gereranya"),
+  cmpErrorTryAgain: k("Something went wrong on our side. Please try again in a moment.", "Un problème est survenu de notre côté. Veuillez réessayer dans un instant.", "Hari ikibazo cyabaye ku ruhande rwacu. Ongera ugerageze mu kanya gato."),
   cmpErrorBody: k("One of the batches may have been deleted, or is not one you can see.", "Un des lots a peut-être été supprimé, ou vous ne pouvez pas le voir.", "Rimwe mu matsinda rishobora kuba ryasibwe, cyangwa ntiwemerewe kuribona."),
   thLabel: k('Appearance', 'Apparence', 'Isura'),
   thAuto: k('Auto', 'Auto', 'Byikora'),

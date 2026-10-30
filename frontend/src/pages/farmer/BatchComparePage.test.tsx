@@ -248,11 +248,23 @@ describe('the comparison', () => {
     expect(await screen.findByRole('button', { name: 'Compare' })).toBeInTheDocument();
   });
 
-  it('says so when the comparison cannot be loaded, and offers the choice again', async () => {
-    api.compare.mockRejectedValue(new Error('404'));
+  it('says a batch may be gone or hidden when the server cannot find one, and offers the choice again', async () => {
+    api.compare.mockRejectedValue(Object.assign(new Error('not found'), { response: { status: 404 } }));
     open(`/batches/compare${IDS}`);
     expect(await screen.findByText('We could not load this comparison')).toBeInTheDocument();
+    expect(screen.getByText('One of the batches may have been deleted, or is not one you can see.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Choose other batches' })).toBeInTheDocument();
+  });
+
+  it.each([
+    ['the server has a problem', Object.assign(new Error('boom'), { response: { status: 500 } })],
+    ['the server cannot be reached', new Error('Network Error')],
+  ])('does not blame the batches when %s', async (_name, error) => {
+    api.compare.mockRejectedValue(error);
+    open(`/batches/compare${IDS}`);
+    expect(await screen.findByText('We could not load this comparison')).toBeInTheDocument();
+    expect(screen.getByText('Something went wrong on our side. Please try again in a moment.')).toBeInTheDocument();
+    expect(screen.queryByText(/may have been deleted/)).not.toBeInTheDocument();
   });
 });
 
