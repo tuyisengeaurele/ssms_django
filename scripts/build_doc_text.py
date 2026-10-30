@@ -23,7 +23,7 @@ KEYS = [
     'brDeaths', 'brDeathsNone', 'bdDeathsTotal', 'bdDeathsTotalOf', 'bdDeathsDay', 'brColWorms', 'bdDeathsNote',
     'brChecks', 'brChecksNone', 'brChecksSummary', 'brChecksSummaryOne', 'hpColDate', 'brColResult', 'brColConfidence',
     'brAlerts', 'brAlertsNone', 'brAlertsWaiting', 'brAlertsWaitingOne',
-    'brHarvest', 'brHarvestNone', 'brHarvestSum', 'brHarvestSumOne', 'hpGradeName',
+    'brHarvest', 'brHarvestNone', 'brHarvestSum', 'brHarvestSumOne', 'hpGradeName', 'lotScan', 'lotPrintCaption',
     'brPrepared',
     # The farm summary
     'ptFarmSummary', 'fsFarm', 'fsOwner', 'fsRegistered', 'fsRoomCol', 'fsRoomBatchesCol', 'fsRoomsNone', 'fsBatches', 'fsBatchCol', 'fsBatchesNone',
