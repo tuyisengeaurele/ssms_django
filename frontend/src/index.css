@@ -1,6 +1,8 @@
 /* ── Reset ──────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
 
 /* ── Design Tokens ──────────────────────────────────────────────────────────── */
 :root {
@@ -385,6 +387,22 @@ img { max-width: 100%; }
 .anim-in   { animation: fadeSlideUp 0.4s var(--ease-out) both; }
 .anim-fade { animation: fadeIn 0.3s ease both; }
 .anim-scale { animation: scaleIn 0.25s var(--ease-out) both; }
+
+/* People who asked their computer for less motion get no sliding, fading in or looping. A loading spinner is the one
+   exception, since it is the only sign that something is loading. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .spinner {
+    animation-duration: 0.7s !important;
+    animation-iteration-count: infinite !important;
+  }
+}
 
 /* ── Scrollbar ───────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }

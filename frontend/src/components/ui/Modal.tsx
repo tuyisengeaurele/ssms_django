@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useId, useRef, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { settle } from '../../utils/motion';
 import { Icon } from './Icon';
 
 interface ModalProps {
@@ -69,7 +70,7 @@ export default function Modal({ open, onClose, title, children, maxWidth = 480, 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.18 }}
+          transition={settle}
           onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
           <motion.div
@@ -84,7 +85,7 @@ export default function Modal({ open, onClose, title, children, maxWidth = 480, 
             initial={{ opacity: 0, scale: 0.96, y: 14 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98, y: 8 }}
-            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            transition={settle}
           >
             <div className="modal-header">
               <h2 id={titleId} className="modal-title">{title}</h2>

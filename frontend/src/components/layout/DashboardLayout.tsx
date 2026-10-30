@@ -10,13 +10,8 @@ import TopBar from './TopBar';
 import BottomNav from './BottomNav';
 import QuickSearch from './QuickSearch';
 import { alertService } from '../../services/alert.service';
+import { pageVariants } from '../../utils/motion';
 import { useApplyTheme } from '../../utils/theme';
-
-const pageVariants = {
-  initial: { opacity: 0, y: 10 },
-  enter:   { opacity: 1, y: 0, transition: { duration: 0.28, ease: 'easeOut' as const } },
-  exit:    { opacity: 0, y: -6, transition: { duration: 0.15 } },
-};
 
 const NAV_KEY = 'ssms_nav';
 // Screens this wide have room for the labels, so the menu starts open there.

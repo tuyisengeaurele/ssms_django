@@ -292,7 +292,7 @@
   border-radius: 12px;
   background: none;
   color: var(--text-2);
-  transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
+  transition: background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out);
 }
 
 .topbar-toggle:hover,
@@ -358,7 +358,7 @@
   border-radius: 999px;
   background: none;
   text-align: left;
-  transition: background-color 0.2s var(--ease-out);
+  transition: background-color var(--duration-normal) var(--ease-out);
 }
 
 .topbar-user:hover,
@@ -504,7 +504,7 @@
   gap: 12px;
   padding: 12px 18px;
   border-bottom: 1px solid var(--border-light);
-  transition: background-color 0.2s var(--ease-out);
+  transition: background-color var(--duration-normal) var(--ease-out);
 }
 
 a.topbar-note:hover {
@@ -583,7 +583,7 @@ a.topbar-note:hover {
   color: var(--text-2);
   font: 500 0.9rem var(--font-ui);
   text-align: left;
-  transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
+  transition: background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out);
 }
 
 .topbar-menu-item:hover {
@@ -801,7 +801,7 @@ a.topbar-note:hover {
   color: var(--text-muted);
   font: 600 0.72rem var(--font-ui);
   letter-spacing: 0.06em;
-  transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
+  transition: background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out);
 }
 
 .lang-pill button:hover:not(.is-on) {
@@ -840,7 +840,7 @@ a.topbar-note:hover {
   color: var(--text-muted);
   font: 500 0.84rem var(--font-ui);
   cursor: pointer;
-  transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
+  transition: background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out);
 }
 
 .topbar-search:hover {

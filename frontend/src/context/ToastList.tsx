@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import { settle } from '../utils/motion';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -29,7 +30,7 @@ export default function ToastList({ toasts, onDismiss }: { toasts: Toast[]; onDi
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 10, scale: 0.95 }}
-          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          transition={settle}
         >
           <span className="toast-msg">{t.message}</span>
           {t.action ? (
