@@ -11,6 +11,7 @@ from core.doc_format import clean_lang
 from core.utils import api_error, api_success
 from farms.models import RearingRoom
 
+from .compare import BadChoice, compare_batches, parse_ids
 from .models import Batch
 from .placement import leave_room, place_batch
 from .queries import with_counts
@@ -227,3 +228,19 @@ class BatchUpdateStageView(APIView):
             settle_room_alerts(batch.room_id)
         log_action(request, 'UPDATE', 'Batch', batch.pk, f'Stage advanced to {new_stage}')
         return api_success(BatchListSerializer(batch).data, 'Stage updated.')
+
+
+class BatchCompareView(APIView):
+    """GET /api/batches/compare?ids=a,b,c, two to four batches side by side.
+
+    Each role may compare the batches the access rules allow (see core.access). A batch that does not exist and one the
+    person may not see get the same answer.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            ids = parse_ids(request.query_params.get('ids', ''))
+        except BadChoice as error:
+            return api_error(str(error), 422)
+        return api_success({'batches': compare_batches(request.user, ids)})

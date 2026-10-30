@@ -1089,3 +1089,38 @@ tr.is-off td:last-child { opacity: 1; }
 .health-numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin: 0; }
 .health-numbers dt { color: var(--text-muted); font-size: 0.875rem; }
 .health-numbers dd { margin: 4px 0 0; font: 600 1.75rem var(--font-display, var(--font-ui)); }
+
+/* ── Compare batches ───────────────────────────────────────────────────────── */
+.compare-options { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.compare-option {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  background: var(--ivory);
+  cursor: pointer;
+}
+.compare-option:hover { border-color: var(--border); }
+.compare-option.is-on { border-color: var(--ink); background: var(--surface); }
+.compare-option input { width: 18px; height: 18px; accent-color: var(--primary); }
+.compare-option input:disabled { cursor: not-allowed; }
+.compare-hint { margin: 14px 0 0; min-height: 1.4em; color: var(--text-muted); font-size: 0.88rem; }
+
+.compare-table { width: 100%; min-width: 560px; border-collapse: collapse; }
+.compare-table th,
+.compare-table td { padding: 12px 16px; border-bottom: 1px solid var(--border-light); text-align: left; vertical-align: top; }
+.compare-table thead th { min-width: 150px; font-weight: 500; }
+.compare-table thead th > * { display: block; }
+.compare-table thead th > * + * { margin-top: 4px; }
+.compare-code { font: 600 0.95rem var(--font-ui); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.compare-farm { color: var(--text-muted); font-size: 0.85rem; }
+.compare-table tbody th[scope='row'] { position: sticky; left: 0; z-index: 1; min-width: 150px; background: var(--surface); color: var(--text-muted); font-weight: 500; font-size: 0.88rem; }
+.compare-group th { padding-top: 22px; border-bottom: 1px solid var(--border); background: var(--surface); font: 600 0.7rem var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
+.compare-table td.is-best { background: color-mix(in srgb, var(--primary) 9%, transparent); font-weight: 600; }
+.compare-best { margin-left: 4px; padding: 1px 7px; border: 1px solid var(--primary); border-radius: 999px; color: var(--primary); font: 600 0.68rem var(--font-ui); letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+
+.compare-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0 0 12px; padding: 0; list-style: none; font-size: 0.86rem; }
+.compare-legend li { display: inline-flex; align-items: center; gap: 8px; }

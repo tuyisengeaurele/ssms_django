@@ -26,6 +26,7 @@ function pageItems(role: string | undefined, t: (key: string) => string): Search
   for (const group of getNavGroups(role as Parameters<typeof getNavGroups>[0], 0, t)) {
     for (const item of group.items) add(item.to, item.label);
   }
+  add('/batches/compare', t('ptCompare'));
   if (role === 'FARMER' || role === 'ADMIN') add('/farms/new', t('ptFarmNew'));
   add('/profile', t('ptProfile'));
   return items;

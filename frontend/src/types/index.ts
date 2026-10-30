@@ -297,3 +297,35 @@ export interface AuthResponse {
   user: User;
   token: string;
 }
+
+/** One batch of the side by side comparison, from GET /api/batches/compare. */
+export interface BatchComparison {
+  id: string;
+  code: string;
+  farm: { id: string; name: string };
+  breed: string;
+  stage: BatchStage;
+  room: string | null;
+  startDate: string;
+  expectedHarvestDate: string;
+  daysRunning: number;
+  quantity: number | null;
+  quantityUnit: QuantityUnit;
+  deaths: number;
+  /** Only when the batch was counted in worms. */
+  deathRatePct: number | null;
+  harvest: {
+    records: number;
+    cocoonKg: number;
+    silkG: number;
+    grades: Record<'A' | 'B' | 'C', number>;
+    /** Kilograms per egg box, or per thousand worms. Null without a harvest or a start count. */
+    yieldPerUnit: { unit: QuantityUnit; kg: number } | null;
+    /** The harvest so far, one point per record, by the day since the batch started. */
+    curve: Array<{ day: number; kg: number }>;
+  };
+  /** Null when the batch has no readings. */
+  conditions: { inRangePct: number; readings: number } | null;
+  checks: { total: number; grasserie: number };
+  alerts: number;
+}

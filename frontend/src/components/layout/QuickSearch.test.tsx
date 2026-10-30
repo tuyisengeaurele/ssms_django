@@ -97,7 +97,7 @@ describe('opening and closing', () => {
 describe('what it lists', () => {
   it('lists the pages a farmer can open, with the profile and a new farm', async () => {
     open();
-    expect(options()).toEqual(expect.arrayContaining(['Dashboard', 'My Farms', 'Batches', 'Alerts', 'Profile', 'New farm'].map((n) => expect.stringContaining(n))));
+    expect(options()).toEqual(expect.arrayContaining(['Dashboard', 'My Farms', 'Batches', 'Compare batches', 'Alerts', 'Profile', 'New farm'].map((n) => expect.stringContaining(n))));
     expect(options().join('|')).not.toContain('Users');
     expect(options().join('|')).not.toContain('Audit log');
   });
