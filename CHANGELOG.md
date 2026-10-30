@@ -2,7 +2,7 @@
 
 ## Chore: tidy imports
 
-`ruff` reported 21 older findings in files nobody had touched for a while: imports out of order in 17 files and unused imports in 4. They are fixed with `ruff --fix`, which only reorders or removes import lines.
+`ruff` reported 21 older findings in files nobody had touched for a while. 18 are fixed with `ruff --fix`, which only reorders or removes import lines: imports out of order in 15 files and 3 unused imports.
 
 - Backend: 1528 tests pass before and after, `python manage.py check` is clean, and `ruff` reports nothing outside the one file below.
 - Left alone: `rsn_train_sericulture_model.py`, the model training script. It has 3 findings (an unused `os`, an unused `tensorflow` import and the import order). I cannot run it here and it is not part of the app, so it is the owner's to tidy.
