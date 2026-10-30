@@ -9,7 +9,7 @@ import { Batch, DiseaseDetection, HarvestRecord, MortalityEntry, QualityGrade } 
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
-import { STAGE_LABELS } from '../../utils/constants';
+import { stageLabel } from '../../utils/constants';
 import { summariseConditions } from '../../utils/batchReport';
 import { fill } from '../../utils/fill';
 import { useDocumentTitle } from '../../utils/pageTitle';
@@ -169,7 +169,7 @@ export default function BatchReportPage() {
       <section className="report-section">
         <h2>{t('brBatch')}</h2>
         <dl className="facts facts--pairs">
-          <div><dt>{t('bdStage')}</dt><dd>{STAGE_LABELS[batch.stage]}</dd></div>
+          <div><dt>{t('bdStage')}</dt><dd>{stageLabel(t, batch.stage)}</dd></div>
           <div><dt>{t('bdFarm')}</dt><dd>{batch.farm?.name ?? '-'}</dd></div>
           {batch.farm?.location && <div><dt>{t('bdPlace')}</dt><dd>{batch.farm.location}</dd></div>}
           <div><dt>{t('bdStarted')}</dt><dd>{day(batch.startDate)}</dd></div>
@@ -203,7 +203,7 @@ export default function BatchReportPage() {
             <p className="report-line">{fill(t('brHum'), { min: number.format(conditions.humMin), avg: number.format(conditions.humAvg), max: number.format(conditions.humMax) })}</p>
             <p className="report-line">
               {fill(t('brInRange'), {
-                pct: conditions.inRangePct, n: conditions.hours, stage: STAGE_LABELS[batch.stage],
+                pct: conditions.inRangePct, n: conditions.hours, stage: stageLabel(t, batch.stage),
                 tmin: range.tempMin, tmax: range.tempMax, hmin: range.humMin, hmax: range.humMax,
               })}
             </p>

@@ -5,7 +5,7 @@ import { useToast } from '../../context/ToastContext';
 import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
-import { STAGE_LABELS, STAGE_ORDER } from '../../utils/constants';
+import { stageLabel, STAGE_ORDER } from '../../utils/constants';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
 import PageHeader from '../../components/ui/PageHeader';
@@ -40,7 +40,7 @@ export default function BatchesPage() {
 
   const tabs: Array<{ id: Tab; label: string }> = [
     { id: 'ALL', label: t('btTabAll') },
-    ...STAGE_ORDER.map((s) => ({ id: s as Tab, label: STAGE_LABELS[s] })),
+    ...STAGE_ORDER.map((s) => ({ id: s as Tab, label: stageLabel(t, s) })),
   ];
 
   return (

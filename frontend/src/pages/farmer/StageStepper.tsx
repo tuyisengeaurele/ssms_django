@@ -1,6 +1,6 @@
 import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
-import { STAGE_LABELS, STAGE_ORDER } from '../../utils/constants';
+import { stageLabel, STAGE_ORDER } from '../../utils/constants';
 import { BatchStage } from '../../types';
 import { Icon } from '../../components/ui/Icon';
 
@@ -21,7 +21,7 @@ export default function StageStepper({ current, canAdvance, busy, onAdvance }: P
     <ol className="stepper" aria-label={t('bdLifecycle')}>
       {STAGE_ORDER.map((stage, i) => {
         const state = i < at ? 'done' : i === at ? 'now' : i === at + 1 ? 'next' : 'later';
-        const label = STAGE_LABELS[stage];
+        const label = stageLabel(t, stage);
         return (
           <li key={stage} className={`stepper-step is-${state}`} aria-current={state === 'now' ? 'step' : undefined}>
             <span className="stepper-dot" aria-hidden="true">
