@@ -8,7 +8,7 @@ import { formatDocumentTitle, getPageInfo, useDocumentTitle, usePageTitle } from
 
 const APP_PATHS = [
   '/farmer', '/supervisor', '/supervisor/farmers', '/farms', '/farms/new', '/farms/abc123', '/farms/abc123/batches/new',
-  '/batches', '/batches/abc123', '/batches/abc123/detect', '/batches/abc123/harvest',
+  '/batches', '/batches/compare', '/batches/abc123', '/batches/abc123/detect', '/batches/abc123/harvest',
   '/harvests', '/detections/reports', '/alerts', '/devices', '/profile', '/reports/cooperative',
   '/admin', '/admin/users', '/admin/cooperatives', '/admin/contacts', '/admin/audit-log', '/admin/reports', '/admin/thresholds', '/admin/health',
 ];
@@ -28,6 +28,7 @@ describe('getPageInfo', () => {
     ['/farms/new', 'New farm', 'Farming'],
     ['/farms/abc123', 'Farm details', 'Farming'],
     ['/farms/abc123/batches/new', 'New batch', 'Farming'],
+    ['/batches/compare', 'Compare batches', 'Farming'],
     ['/batches/abc123/detect', 'Disease check', 'Farming'],
     ['/batches/abc123/harvest', 'Harvest records', 'Farming'],
     ['/alerts', 'Alerts', 'Monitoring'],

@@ -49,10 +49,13 @@ export default function BatchesPage() {
         title={t('ptBatches')}
         subtitle={loading ? undefined : fill(t(batches.length === 1 ? 'btSubtitleOne' : 'btSubtitleMany'), { n: batches.length })}
         actions={
-          <Link to="/farms" className="btn btn-primary btn-sm">
-            <Icon name="add" size={15} />
-            {t('btNew')}
-          </Link>
+          <>
+            <Link to="/batches/compare" className="btn btn-secondary btn-sm">{t('ptCompare')}</Link>
+            <Link to="/farms" className="btn btn-primary btn-sm">
+              <Icon name="add" size={15} />
+              {t('btNew')}
+            </Link>
+          </>
         }
       />
 

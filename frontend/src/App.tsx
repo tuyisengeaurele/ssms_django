@@ -26,6 +26,7 @@ const FarmsPage = lazy(() => import('./pages/farmer/FarmsPage'));
 const AddFarmPage = lazy(() => import('./pages/farmer/AddFarmPage'));
 const FarmDetailPage = lazy(() => import('./pages/farmer/FarmDetailPage'));
 const AddBatchPage = lazy(() => import('./pages/farmer/AddBatchPage'));
+const BatchComparePage = lazy(() => import('./pages/farmer/BatchComparePage'));
 const BatchDetailPage = lazy(() => import('./pages/farmer/BatchDetailPage'));
 const AddDetectionPage = lazy(() => import('./pages/farmer/AddDetectionPage'));
 const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
@@ -78,6 +79,7 @@ export default function App() {
               <Route path="/farms/:id"                 element={<FarmDetailPage />} />
               <Route path="/farms/:farmId/batches/new" element={<AddBatchPage />} />
               <Route path="/batches"                   element={<BatchesPage />} />
+              <Route path="/batches/compare"           element={<BatchComparePage />} />
               <Route path="/batches/:id"               element={<BatchDetailPage />} />
               <Route path="/batches/:id/detect"        element={<AddDetectionPage />} />
               <Route path="/batches/:id/harvest"       element={<HarvestPage />} />

@@ -59,6 +59,11 @@ describe('Batches page', () => {
     expect(screen.getByRole('link', { name: 'New batch' })).toHaveAttribute('href', '/farms');
   });
 
+  it('offers to compare batches', async () => {
+    open();
+    expect(await screen.findByRole('link', { name: 'Compare batches' })).toHaveAttribute('href', '/batches/compare');
+  });
+
   it('filters by stage with tabs that show counts', async () => {
     open();
     await screen.findByText("Serge's farm");
