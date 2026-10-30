@@ -36,3 +36,13 @@ describe('reduced motion in the stylesheet', () => {
     expect(reduce).toMatch(/\.spinner[^{]*\{[^}]*animation-iteration-count:\s*infinite\s*!important/);
   });
 });
+
+describe('the app stylesheets', () => {
+  const sheets = ['../index.css', 'components.css', 'shell.css', 'toast.css'].map((name) => [name, readFileSync(join(__dirname, name), 'utf8')] as const);
+
+  it.each(sheets)('%s takes the usual 200 ms from the duration token', (_name, text) => {
+    // The token holds the 200 ms, so changing it changes every transition that uses it.
+    const declarations = text.split('\n').filter((line) => /\b(transition|animation)[a-z-]*\s*:/.test(line));
+    expect(declarations.filter((line) => /(^|[\s,])0?\.2s\b/.test(line))).toEqual([]);
+  });
+});

@@ -38,7 +38,7 @@
   background: none;
   color: rgba(246, 243, 236, 0.55);
   flex-shrink: 0;
-  transition: color 0.2s var(--ease-out);
+  transition: color var(--duration-normal) var(--ease-out);
 }
 
 .toast-close:hover { color: var(--on-dark); }
