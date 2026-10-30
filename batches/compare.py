@@ -12,6 +12,7 @@ from django.utils import timezone
 from rest_framework.exceptions import NotFound
 
 from alerts.models import StageThreshold
+from alerts.room_alerts import alert_count
 from alerts.utils import DEFAULT_RANGE, SafeRange
 from core.access import scope_batches
 from harvest.models import HarvestRecord, QualityGrade
@@ -22,6 +23,8 @@ from .models import Batch, MortalityRecord
 from .queries import with_counts
 
 MOST = 4
+# The alerts that say something went wrong. A stage change or a system notice is not a problem.
+PROBLEM_ALERTS = ['TEMPERATURE', 'HUMIDITY', 'DISEASE']
 NEEDS_TWO = 'Choose at least two batches to compare.'
 TOO_MANY = f'You can compare up to {MOST} batches at a time.'
 NOT_FOUND = "We couldn't find that batch."
@@ -102,6 +105,7 @@ def compare_batches(user, ids: list[str]) -> list[dict]:
     found = {
         batch.pk: batch
         for batch in with_counts(scope_batches(user, Batch.objects.filter(pk__in=ids)).select_related('farm'))
+        .annotate(problem_alert_total=alert_count(PROBLEM_ALERTS))
     }
     if len(found) != len(ids):
         raise NotFound(NOT_FOUND)
@@ -153,6 +157,6 @@ def compare_batches(user, ids: list[str]) -> list[dict]:
             },
             'conditions': _conditions(batch, ranges),
             'checks': {'total': batch.detection_total, 'grasserie': grasserie.get(batch_id, 0)},
-            'alerts': batch.alert_total,
+            'alerts': batch.problem_alert_total,
         })
     return rows

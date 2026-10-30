@@ -43,9 +43,12 @@ def _count(qs):
     return Coalesce(Subquery(rows, output_field=IntegerField()), 0)
 
 
-def alert_count():
-    """How many alerts each batch of a list has, worked out in the one query."""
-    return _count(AlertLog.objects.filter(belongs_to_batch(OuterRef('pk'))))
+def alert_count(types=None):
+    """How many alerts each batch of a list has, worked out in the one query. Only those of `types`, when given."""
+    alerts = AlertLog.objects.filter(belongs_to_batch(OuterRef('pk')))
+    if types:
+        alerts = alerts.filter(type__in=types)
+    return _count(alerts)
 
 
 def open_problem_count():

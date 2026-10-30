@@ -1,9 +1,8 @@
+from django.db.models import Prefetch
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from audit_log.utils import log_action
-from django.db.models import Prefetch
-
 from batches.models import Batch
 from core.access import get_batch_or_404, scope_alerts
 from core.pagination import StandardPagination

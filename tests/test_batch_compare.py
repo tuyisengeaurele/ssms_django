@@ -221,13 +221,23 @@ class TestChecksAndAlerts:
         assert first['checks'] == {'total': 3, 'grasserie': 2}
         assert second['checks'] == {'total': 0, 'grasserie': 0}
 
-    def test_counts_the_alerts(self, auth_client, owner, farm):
+    def test_counts_the_alerts_about_a_problem(self, auth_client, owner, farm):
         a, b = make(farm), make(farm)
-        AlertLogFactory(batch=a)
-        AlertLogFactory(batch=a)
+        AlertLogFactory(batch=a, type='TEMPERATURE')
+        AlertLogFactory(batch=a, type='HUMIDITY')
+        AlertLogFactory(batch=a, type='DISEASE')
         first, second = rows(compare(auth_client(owner), a, b))
-        assert first['alerts'] == 2
+        assert first['alerts'] == 3
         assert second['alerts'] == 0
+
+    def test_does_not_count_notices_that_are_not_problems(self, auth_client, owner, farm):
+        a, b = make(farm), make(farm)
+        AlertLogFactory(batch=a, type='STAGE_CHANGE')
+        AlertLogFactory(batch=a, type='STAGE_CHANGE')
+        AlertLogFactory(batch=a, type='SYSTEM')
+        AlertLogFactory(batch=a, type='TEMPERATURE')
+        first, _ = rows(compare(auth_client(owner), a, b))
+        assert first['alerts'] == 1
 
 
 class TestWhichBatchesMayBeCompared:
