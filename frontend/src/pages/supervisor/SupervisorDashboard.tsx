@@ -128,8 +128,8 @@ export default function SupervisorDashboard() {
   const subtitle = updated ? `${scope} ${fill(t('svUpdated'), { when: timeAgo(updated.toISOString(), locale) })}` : scope;
 
   const charts = [
-    { key: 'avgTemp', label: t('svTempChart'), unit: '°C', color: '#B4472F', safe: [22, 28] as [number, number], range: t('svTempRange') },
-    { key: 'avgHumidity', label: t('svHumChart'), unit: '%', color: '#2F78B5', safe: [70, 85] as [number, number], range: t('svHumRange') },
+    { key: 'avgTemp', label: t('svTempChart'), unit: '°C', color: colorFor('stage', 'COCOON'), safe: [22, 28] as [number, number], range: t('svTempRange') },
+    { key: 'avgHumidity', label: t('svHumChart'), unit: '%', color: colorFor('stage', 'PUPA'), safe: [70, 85] as [number, number], range: t('svHumRange') },
   ];
 
   return (

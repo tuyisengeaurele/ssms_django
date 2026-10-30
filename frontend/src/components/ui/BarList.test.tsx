@@ -56,12 +56,12 @@ describe('chart colours', () => {
 
   it('gives the same colour to the same name every time', () => {
     expect(colorFor('stage', 'LARVA')).toBe(colorFor('stage', 'LARVA'));
-    expect(colorFor('result', 'Healthy')).toBe('#1F7A52');
-    expect(colorFor('role', 'FARMER')).toBe('#1F7A52');
-    expect(colorFor('action', 'DELETE')).toBe('#B4472F');
+    expect(colorFor('result', 'Healthy')).toBe('var(--chart-2)');
+    expect(colorFor('role', 'FARMER')).toBe('var(--chart-2)');
+    expect(colorFor('action', 'DELETE')).toBe('var(--chart-4)');
   });
 
   it('falls back to a quiet grey for a name it does not know', () => {
-    expect(colorFor('stage', 'MYSTERY')).toBe('#6B7B73');
+    expect(colorFor('stage', 'MYSTERY')).toBe('var(--chart-quiet)');
   });
 });

@@ -18,8 +18,8 @@
   max-width: 400px;
   padding: 14px 18px;
   border-radius: 16px;
-  background: var(--ink);
-  color: var(--ivory);
+  background: var(--fixed-ink);
+  color: var(--on-dark);
   box-shadow: var(--shadow-lg);
   font-size: 0.9rem;
   font-weight: 500;
@@ -41,7 +41,7 @@
   transition: color 0.2s var(--ease-out);
 }
 
-.toast-close:hover { color: var(--ivory); }
+.toast-close:hover { color: var(--on-dark); }
 
 .toast-action {
   padding: 2px 4px;
@@ -54,7 +54,7 @@
   flex-shrink: 0;
 }
 
-.toast-action:hover { color: var(--ivory); }
+.toast-action:hover { color: var(--on-dark); }
 
 
 @media (max-width: 640px) {

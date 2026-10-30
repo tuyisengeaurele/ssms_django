@@ -6,14 +6,15 @@ import { IoTDevice, Room } from '../../types';
 import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
+import { colorFor } from '../../utils/chartColors';
 import { fill } from '../../utils/fill';
 import { timeAgo } from '../../utils/timeAgo';
 import { Icon } from '../../components/ui/Icon';
 import Modal from '../../components/ui/Modal';
 import DeviceStatusBadge from './DeviceStatusBadge';
 
-const TEMP_COLOR = '#B4472F';
-const HUM_COLOR = '#2F78B5';
+const TEMP_COLOR = colorFor('stage', 'COCOON');
+const HUM_COLOR = colorFor('stage', 'PUPA');
 
 interface Props {
   device: IoTDevice;
@@ -155,13 +156,13 @@ export default function DeviceDetailModal({ device, canManage, onClose, onRemove
           <div role="img" aria-label={t('dvRecent')}>
             <ResponsiveContainer width="100%" height={190}>
               <ComposedChart data={readings} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}>
-                <CartesianGrid vertical={false} stroke="#E9E4D8" />
-                <XAxis dataKey="time" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#566760' }} interval="preserveStartEnd" />
-                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#566760' }} />
-                <Tooltip cursor={{ stroke: '#C9C2B2' }} content={<ReadingTip />} />
+                <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
+                <XAxis dataKey="time" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--chart-axis)' }} interval="preserveStartEnd" />
+                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--chart-axis)' }} />
+                <Tooltip cursor={{ stroke: 'var(--chart-cursor)' }} content={<ReadingTip />} />
                 <Area type="monotone" dataKey="hum" stroke="none" fill={HUM_COLOR} fillOpacity={0.08} />
-                <Line type="monotone" dataKey="temp" stroke={TEMP_COLOR} strokeWidth={2} dot={false} activeDot={{ r: 5, stroke: '#fff', strokeWidth: 2 }} />
-                <Line type="monotone" dataKey="hum" stroke={HUM_COLOR} strokeWidth={2} dot={false} activeDot={{ r: 5, stroke: '#fff', strokeWidth: 2 }} />
+                <Line type="monotone" dataKey="temp" stroke={TEMP_COLOR} strokeWidth={2} dot={false} activeDot={{ r: 5, stroke: 'var(--surface)', strokeWidth: 2 }} />
+                <Line type="monotone" dataKey="hum" stroke={HUM_COLOR} strokeWidth={2} dot={false} activeDot={{ r: 5, stroke: 'var(--surface)', strokeWidth: 2 }} />
               </ComposedChart>
             </ResponsiveContainer>
             <ul className="legend">

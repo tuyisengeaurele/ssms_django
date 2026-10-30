@@ -33,12 +33,12 @@ export default function RangeChart({ label, data, dataKey, unit, color, safe, he
     <div role="img" aria-label={label}>
       <ResponsiveContainer width="100%" height={height}>
         <AreaChart data={data} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}>
-          <CartesianGrid vertical={false} stroke="#E9E4D8" />
-          <ReferenceArea y1={safe[0]} y2={safe[1]} fill="#1F7A52" fillOpacity={0.07} strokeOpacity={0} />
-          <XAxis dataKey="hour" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#566760' }} minTickGap={28} />
-          <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#566760' }} domain={['auto', 'auto']} />
-          <Tooltip cursor={{ stroke: '#C9C2B2' }} content={<Hover unit={unit} />} />
-          <Area type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2} fill={color} fillOpacity={0.08} dot={false} connectNulls activeDot={{ r: 5, stroke: '#fff', strokeWidth: 2, fill: color }} />
+          <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
+          <ReferenceArea y1={safe[0]} y2={safe[1]} fill="var(--chart-2)" fillOpacity={0.07} strokeOpacity={0} />
+          <XAxis dataKey="hour" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--chart-axis)' }} minTickGap={28} />
+          <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--chart-axis)' }} domain={['auto', 'auto']} />
+          <Tooltip cursor={{ stroke: 'var(--chart-cursor)' }} content={<Hover unit={unit} />} />
+          <Area type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2} fill={color} fillOpacity={0.08} dot={false} connectNulls activeDot={{ r: 5, stroke: 'var(--surface)', strokeWidth: 2, fill: color }} />
         </AreaChart>
       </ResponsiveContainer>
       <table className="sr-only">
