@@ -200,7 +200,6 @@ function Result({ ids }: { ids: string[] }) {
   const { batches } = state;
   const num = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 });
   const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
-  const some = (unit: 'BOXES' | 'WORMS') => batches.some((b) => b.quantityUnit === unit);
   const perUnit = (unit: 'BOXES' | 'WORMS') => batches.map((b) => (b.harvest.yieldPerUnit?.unit === unit ? b.harvest.yieldPerUnit.kg : null));
   const startedWith = (b: BatchComparison) => {
     if (!b.quantity) return null;
@@ -232,9 +231,10 @@ function Result({ ids }: { ids: string[] }) {
           values: batches.map((b) => `${num.format(b.harvest.silkG)} g`),
           better: { numbers: batches.map((b) => b.harvest.silkG), way: 'high' },
         },
-        // Per egg box and per thousand worms are different measures, so each has its own row and they are never ranked together.
-        ...(some('BOXES') ? [{ label: t('cmpRowYieldBox'), values: perUnit('BOXES').map((v) => (v === null ? null : `${num.format(v)} kg`)), better: { numbers: perUnit('BOXES'), way: 'high' as const } }] : []),
-        ...(some('WORMS') ? [{ label: t('cmpRowYieldWorms'), values: perUnit('WORMS').map((v) => (v === null ? null : `${num.format(v)} kg`)), better: { numbers: perUnit('WORMS'), way: 'high' as const } }] : []),
+        // Per egg box and per thousand worms are different measures, so each has its own row and they are never ranked
+        // together. A row that no batch has a value for is left out.
+        ...(perUnit('BOXES').some((v) => v !== null) ? [{ label: t('cmpRowYieldBox'), values: perUnit('BOXES').map((v) => (v === null ? null : `${num.format(v)} kg`)), better: { numbers: perUnit('BOXES'), way: 'high' as const } }] : []),
+        ...(perUnit('WORMS').some((v) => v !== null) ? [{ label: t('cmpRowYieldWorms'), values: perUnit('WORMS').map((v) => (v === null ? null : `${num.format(v)} kg`)), better: { numbers: perUnit('WORMS'), way: 'high' as const } }] : []),
         { label: t('cmpRowRecords'), values: batches.map((b) => num.format(b.harvest.records)) },
         { label: t('cmpRowGrades'), values: batches.map((b) => `A ${b.harvest.grades.A} · B ${b.harvest.grades.B} · C ${b.harvest.grades.C}`) },
       ],

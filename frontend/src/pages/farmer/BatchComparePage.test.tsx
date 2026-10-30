@@ -162,7 +162,7 @@ describe('the comparison', () => {
     // Counting deaths alone says nothing when the batches started with different numbers, so only the death rate is marked.
     expect(await row('Deaths')).toEqual(['40', '10']);
     expect(await row('Grasserie found')).toEqual(['2', '0 Best']);
-    expect(await row('Alerts')).toEqual(['5', '1 Best']);
+    expect(await row('Problem alerts')).toEqual(['5', '1 Best']);
     // More checks is not better or worse, so there is no marker.
     expect(await row('Disease checks')).toEqual(['4', '6']);
   });
@@ -213,6 +213,18 @@ describe('the comparison', () => {
     await table();
     expect(screen.queryByRole('rowheader', { name: 'Cocoons per 1,000 worms' })).not.toBeInTheDocument();
     expect(screen.getByRole('rowheader', { name: 'Cocoons per egg box' })).toBeInTheDocument();
+  });
+
+  it('leaves out a yield row that has nothing to show for any batch', async () => {
+    api.compare.mockResolvedValue({ data: { data: { batches: [
+      comparison(1, { quantity: null }, { yieldPerUnit: null }),
+      comparison(2, { quantity: null }, { yieldPerUnit: null }),
+    ] } } });
+    open(`/batches/compare${IDS}`);
+    await table();
+    expect(screen.queryByRole('rowheader', { name: 'Cocoons per egg box' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('rowheader', { name: 'Cocoons per 1,000 worms' })).not.toBeInTheDocument();
+    expect(screen.getByRole('rowheader', { name: 'Cocoons harvested' })).toBeInTheDocument();
   });
 
   it('shows the death rate only for batches counted in worms', async () => {

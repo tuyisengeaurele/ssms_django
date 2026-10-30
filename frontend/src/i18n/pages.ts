@@ -92,7 +92,7 @@ export const pageTranslations = {
   cmpRowSafe: k("Time in the safe range", "Temps dans la plage sûre", "Igihe mu bipimo bikwiye"),
   cmpRowChecks: k("Disease checks", "Contrôles de maladies", "Isuzuma ry'indwara"),
   cmpRowGrasserie: k("Grasserie found", "Grasserie détectée", "Grasserie yabonetse"),
-  cmpRowAlerts: k("Alerts", "Alertes", "Ibiburaniswa"),
+  cmpRowAlerts: k("Problem alerts", "Alertes de problème", "Ibiburaniswa by'ibibazo"),
   cmpStartBoxOne: k("1 egg box", "1 boîte d'œufs", "Agasanduku 1 k'amagi"),
   cmpStartBoxes: k("{n} egg boxes", "{n} boîtes d'œufs", "Udusanduku {n} tw'amagi"),
   cmpStartWorms: k("{n} worms", "{n} vers", "Inyo {n}"),
