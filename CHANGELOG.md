@@ -1,5 +1,29 @@
 # Changelog
 
+## A small language switcher and a better first language (Plan 9, item G3)
+
+The signed in app has a small EN FR RW switcher in the top bar, and the app picks its first language from the browser's whole ranked list.
+
+### Checked
+- Frontend: 1375 tests pass (35 new) and `tsc` is clean. No backend change and no migration. ESLint is not installed on this machine, so lint was not run.
+- `npm test` still prints the one unhandled `RangeError` from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+- **I tried it in a real browser** with a throwaway administrator (deleted again):
+  - The EN FR RW switcher sits in the top bar next to Search. Pressing FR changed the whole page to French at once, and the French was still there after a reload.
+  - At phone width the switcher is not in the top bar. The same choice is in the account menu, under Language, above Appearance, and it fits with no sideways scroll.
+- Not checked in a browser: picking the first language from the browser (an emulated browser does not let me change its language list, so this is tested with a stubbed list), Kinyarwanda on screen, and a screen reader.
+
+### What changed
+- **Phones had no switcher in the app.** The old language menu in the top bar was hidden on screens under 420 pixels wide, so a person on a small phone could not change language inside the app. Now a small row of codes, EN FR RW, is in the top bar from 640 pixels up, and the same choice is in the account menu on narrower screens.
+- **The switcher** (`components/ui/LanguageSwitcher.tsx`) shows the short code. The full name (English, Français, Kinyarwanda) is the tooltip and the accessible name, and each button carries its own `lang`, so a screen reader says each name in its own language.
+- **The first language** is the first one in the browser's ranked list that the app speaks. Before, only the browser's first entry was read, so a browser set to German then French got English. "fr-CA" counts as French, and so does Kinyarwanda given as `kin`. A browser that speaks none of them gets English.
+- **A blocked browser store no longer breaks the app.** Reading or saving the language threw when the browser refused storage, which could stop the page from loading at all. Now the language works for the visit and is just not remembered.
+- A language picked from the browser is not saved. Only a choice the person makes is saved, so a browser language change is followed until they choose.
+
+### Decided
+- **The landing page and the sign in pages keep their language menus.** They already work on a phone, and the landing page has its own design. Changing them is a separate design decision.
+- **Two places on purpose.** The pill and the account menu row exist in the page at the same time and one is hidden by screen width, so a keyboard or screen reader user on a narrow screen finds the menu row, and on a wide screen the pill.
+- The word "Language" is the one the landing page already had in the three languages. The new texts are the same ones, so there is nothing new for a native reader to check beyond the codes.
+
 ## Dark mode for the signed in app (Plan 9, item G2)
 
 The signed in app has a dark theme. Open the account menu and pick Auto, Light or Dark under Appearance. Auto follows the computer and changes with it.
