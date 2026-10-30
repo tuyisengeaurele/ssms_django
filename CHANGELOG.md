@@ -8,7 +8,7 @@ A new page puts two to four batches next to each other, marks the best result in
 - Backend: 1516 tests pass (36 new for this). Frontend: 1477 tests pass (42 new) and `tsc` is clean. No migration. `ruff` is clean. ESLint is not installed on this machine, so frontend lint was not run.
 - `npm test` still prints the one unhandled `RangeError` from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
 - **In a real browser** with a throwaway administrator (deleted again) and your seeded demo data: the picker lists the batches, three finished demo batches compare, the best cocoon weight and silk yield are marked, and the chart draws one point for each. Looked at in light, dark and at phone width (the page does not scroll sideways, and the table scrolls inside its own box).
-- **Checking against your real database found two problems the tests could not see**, both fixed here, and a third in older code that I left alone (see below).
+- **Checking against your real database found two problems the tests could not see**, both fixed here, and a third in older code that was fixed separately (see below).
 - Not checked in a browser: French and Kinyarwanda on screen (the page is tested in French), the farmer and supervisor views (the same page and the same access rules, tested), the yield per egg box and per 1,000 worms rows (your demo batches have no start count, so those rows are left out; they are tested), and a screen reader.
 
 ### What it does
@@ -21,7 +21,7 @@ A new page puts two to four batches next to each other, marks the best result in
 
 ### Found on the way
 - **A crash on your database.** In your database the batch dates (`startDate`, `expectedHarvestDate`) are stored as `timestamp without time zone`, so Django hands them back naive even though the project uses time zones. The first version of the endpoint subtracted one from the current time and returned an error on real data. The test database is built from migrations and has proper time zone columns, so the tests passed. There is now a test that reproduces your column type (it changes the column inside a transaction that is rolled back), and the comparison makes those dates aware first.
-- **The same crash exists in the batch report PDF** (`batches/report.py`): on your database it fails for any batch that is not at harvest stage. I did not change it here. It is a separate fix, and I offered it as its own task.
+- **The same crash existed in the batch report PDF and in recording deaths.** Those were fixed separately and merged first (see the next entry), and the comparison now uses the same shared helper, `core.timeutil.aware`.
 - **Stage changes counted as alerts.** The existing alert count includes the "stage changed" notices, so every finished demo batch showed 4 alerts. The comparison now counts only temperature, humidity and disease alerts and calls them "problem alerts".
 
 ### Decided
@@ -32,6 +32,27 @@ A new page puts two to four batches next to each other, marks the best result in
 - **Per farm trends are not built.** "Yield over time" here means within a batch's own harvests, lined up from its start day. A view of one farm's batches one after another would be a separate page.
 - **Not in the sidebar.** The page is reached from Batches and from Ctrl K, so the menu does not get longer.
 - The French and Kinyarwanda texts are my drafts and need a native read.
+
+## Fix: the batch report and recording deaths on databases with naive batch dates
+
+Two things crashed on the local development database: opening a batch report as a PDF for any batch that is not at harvest stage, and recording deaths on a batch.
+
+### Cause
+The batch dates (`batches.startDate` and `expectedHarvestDate`) are stored as `timestamp without time zone` in the local database, because it was built before Django. Django returns those dates without a time zone even though the project uses time zones, and code that took one away from the current time (`batches/report.py`) or turned one into a local day (`batches/mortality_views.py`) stopped with `TypeError: can't subtract offset-naive and offset-aware datetimes` or `ValueError: localtime() cannot be applied to a naive datetime`. The test database is built from migrations and has proper columns, so the tests did not see it.
+
+### Fix
+- `core/timeutil.aware()` gives a date its time zone (UTC, which is how they were saved) when it has none, and leaves any other date as it is.
+- The report and the mortality view use it.
+- `conftest.py` has a `naive_batch_dates` fixture that changes the two columns to the older type inside the test's transaction, which is rolled back afterwards. The new tests use it, and they fail without the fix (checked by putting the old code back).
+
+### Checked
+- Backend: 1492 tests pass on this branch (12 new) and `ruff` is clean on the changed files. The whole project still has 22 older `ruff` findings in other files, which I left alone.
+- Against the local database, read only: the report for a batch at cocoon stage, which raised `TypeError` before, now builds (134 KB). Recording deaths was covered by the test only, since trying it would write to the local database.
+
+### Looked for, not changed
+- Other columns of the older type are `alert_logs.createdAt`, `disease_detections.detectedAt`, `farms` and `users` dates and `sensor_readings.timestamp`. I searched the code for places that take them away from the current time or turn them into a local day and found none; the other uses only print them. `core/health.py` already handled this case itself.
+- `batches/compare.py` on the compare batches branch has its own copy of this helper. It should use `core.timeutil.aware` once both are merged.
+- If the production database was also built before Django, these two crashes would have happened there too.
 
 ## Share preview and install check (Plan 9, item G7)
 

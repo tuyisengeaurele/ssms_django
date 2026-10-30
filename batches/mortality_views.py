@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 
 from audit_log.utils import log_action
 from core.access import get_batch_or_404
+from core.timeutil import aware
 from core.utils import api_error, api_success
 
 from .models import MortalityRecord
@@ -32,7 +33,7 @@ class BatchMortalityView(APIView):
         day = serializer.validated_data.get('recorded_on', today)
         if day > today:
             return api_error('Please choose a day that is not in the future.', 422, {'recorded_on': ['Please choose a day that is not in the future.']})
-        if day < timezone.localtime(batch.start_date).date():
+        if day < timezone.localtime(aware(batch.start_date)).date():
             return api_error('Please choose a day on or after the batch started.', 422, {'recorded_on': ['Please choose a day on or after the batch started.']})
 
         record = MortalityRecord.objects.create(

@@ -63,3 +63,23 @@ def jwt_client():
         return client
 
     return make
+
+
+@pytest.fixture
+def naive_batch_dates(db):
+    """The batch dates as an older database holds them: no time zone, so Django hands them back naive.
+
+    The owner's local database was built before Django and stores batches.startDate and expectedHarvestDate this way,
+    while the test database is built from migrations and has proper time zone columns, so a test has to ask for it. The
+    change is made inside the test's transaction and rolled back with it.
+    """
+    from django.db import connection
+
+    with connection.cursor() as cursor:
+        # Rows made earlier in the test leave constraint checks waiting, and a table cannot be altered until they run.
+        cursor.execute('SET CONSTRAINTS ALL IMMEDIATE')
+        cursor.execute(
+            'ALTER TABLE batches ALTER COLUMN "startDate" TYPE timestamp without time zone, '
+            'ALTER COLUMN "expectedHarvestDate" TYPE timestamp without time zone'
+        )
+        cursor.execute('SET CONSTRAINTS ALL DEFERRED')

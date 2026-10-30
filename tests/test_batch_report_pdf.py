@@ -277,3 +277,26 @@ def test_the_share_inside_the_range_counts_both_temperature_and_humidity():
     from batches.report import summarise_conditions
     points = [point(25, 78), point(25, 95), point(31, 78), point(25, 78)]
     assert summarise_conditions(points, 1, RANGE)['in_range_pct'] == 50
+
+
+# ── databases that store the batch dates without a time zone ────────────────
+
+def test_the_report_works_when_the_batch_dates_have_no_time_zone(auth_client, owner, batch, naive_batch_dates):
+    text = text_of(report(auth_client(owner), batch))
+    assert re.search(r'Day \d+ of \d+\. Harvest is expected on \d+ [A-Z][a-z]+ \d{4}\.', text)
+
+
+def test_the_day_count_is_right_when_the_batch_dates_have_no_time_zone(auth_client, owner, batch, naive_batch_dates):
+    from batches.models import Batch
+
+    Batch.objects.filter(pk=batch.pk).update(
+        start_date=timezone.now() - timedelta(days=9, hours=1), expected_harvest_date=timezone.now() + timedelta(days=19, hours=23),
+    )
+    assert 'Day 10 of 29.' in text_of(report(auth_client(owner), batch))
+
+
+def test_a_harvested_batch_report_works_when_the_batch_dates_have_no_time_zone(auth_client, owner, batch, naive_batch_dates):
+    from batches.models import Batch
+
+    Batch.objects.filter(pk=batch.pk).update(stage='HARVEST')
+    assert text_of(report(auth_client(owner), batch))
