@@ -18,6 +18,7 @@ vi.mock('../../services/contacts.service', () => ({
   contactsService: { getUnread: vi.fn().mockResolvedValue({ data: { data: { messages: [], count: 0 } } }) },
 }));
 
+import { reloadThemeChoice } from '../../utils/theme';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 
@@ -31,6 +32,7 @@ function renderAt(path: string, node: JSX.Element) {
 
 beforeEach(() => {
   localStorage.clear();
+  reloadThemeChoice();
   auth.value = { user: { name: 'Auris Tuyisenge', role: 'ADMIN', email: 'auris@ssms.com' }, logout: vi.fn() };
 });
 
@@ -193,5 +195,42 @@ describe('TopBar', () => {
     fireEvent.click(trigger);
     expect(screen.getByRole('menuitem', { name: 'My Profile' })).toHaveAttribute('href', '/profile');
     expect(screen.getByRole('menuitem', { name: 'Sign Out' })).toBeInTheDocument();
+  });
+});
+
+describe('TopBar appearance', () => {
+  const openMenu = () => {
+    renderAt('/admin', <TopBar onMenuToggle={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: /Auris Tuyisenge/ }));
+  };
+  const choice = (name: string) => screen.getByRole('menuitemradio', { name });
+
+  it('offers Auto, Light and Dark in the account menu, with Auto picked at first', () => {
+    openMenu();
+    const group = screen.getByRole('group', { name: 'Appearance' });
+    expect(within(group).getAllByRole('menuitemradio').map((b) => b.textContent)).toEqual(['Auto', 'Light', 'Dark']);
+    expect(choice('Auto')).toHaveAttribute('aria-checked', 'true');
+    expect(choice('Dark')).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('remembers the choice and shows which one is picked', () => {
+    openMenu();
+    fireEvent.click(choice('Dark'));
+    expect(localStorage.getItem('ssms_theme')).toBe('dark');
+    expect(choice('Dark')).toHaveAttribute('aria-checked', 'true');
+    expect(choice('Auto')).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('keeps the menu open so the person sees the change', () => {
+    openMenu();
+    fireEvent.click(choice('Light'));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+
+  it('reads in French', () => {
+    localStorage.setItem('ssms_locale', 'fr');
+    openMenu();
+    const group = screen.getByRole('group', { name: 'Apparence' });
+    expect(within(group).getAllByRole('menuitemradio').map((b) => b.textContent)).toEqual(['Auto', 'Clair', 'Sombre']);
   });
 });

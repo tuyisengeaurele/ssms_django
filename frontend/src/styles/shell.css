@@ -612,6 +612,24 @@ a.topbar-note:hover {
   color: var(--danger-ink-2);
 }
 
+.topbar-menu-theme {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+}
+
+.topbar-menu-theme-label {
+  font: 500 0.84rem var(--font-ui);
+  color: var(--text-muted);
+}
+
+.topbar-menu-theme .segmented button {
+  padding: 5px 11px;
+  font-size: 0.8rem;
+}
+
 .topbar-menu-rule {
   height: 1px;
   margin: 6px 4px;

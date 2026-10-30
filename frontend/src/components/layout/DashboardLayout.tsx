@@ -10,6 +10,7 @@ import TopBar from './TopBar';
 import BottomNav from './BottomNav';
 import QuickSearch from './QuickSearch';
 import { alertService } from '../../services/alert.service';
+import { useApplyTheme } from '../../utils/theme';
 
 const pageVariants = {
   initial: { opacity: 0, y: 10 },
@@ -39,6 +40,7 @@ export default function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
+  useApplyTheme();
 
   useEffect(() => {
     alertService.getAll(true)
