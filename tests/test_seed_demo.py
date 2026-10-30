@@ -10,8 +10,8 @@ from alerts.models import AlertLog
 from batches.models import Batch, BatchRoomStay
 from cooperatives.models import Cooperative
 from farms.models import Farm, RearingRoom
-from locations import registry
 from harvest.models import HarvestRecord
+from locations import registry
 from sensors.management.commands.seed_demo import make_password
 from sensors.models import DiseaseDetection, IoTDevice, SensorReading
 from sensors.room_readings import readings_for_batch

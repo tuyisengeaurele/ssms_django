@@ -1,5 +1,6 @@
 from django.urls import path
-from .views import HarvestListCreateView, HarvestStatsView, HarvestDeleteView, HarvestAllView
+
+from .views import HarvestAllView, HarvestDeleteView, HarvestListCreateView, HarvestStatsView
 
 urlpatterns = [
     path('',                       HarvestAllView.as_view(),         name='harvest_all'),

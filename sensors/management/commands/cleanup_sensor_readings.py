@@ -11,9 +11,11 @@ Schedule via Render cron job (dashboard → Jobs):
     Schedule: 0 2 * * 0   (every Sunday at 02:00 UTC)
 """
 
+from datetime import timedelta
+
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from datetime import timedelta
+
 from sensors.models import SensorReading
 
 

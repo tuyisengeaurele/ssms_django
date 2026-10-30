@@ -1,9 +1,10 @@
-from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.urls import include, path
+
+from contacts.urls import admin_urlpatterns as contacts_admin_urlpatterns
 from core.utils import health_check
 from reports.health_views import SystemHealthView
-from contacts.urls import admin_urlpatterns as contacts_admin_urlpatterns
 from sensors.urls import device_urlpatterns
 
 urlpatterns = [
