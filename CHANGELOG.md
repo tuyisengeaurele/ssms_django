@@ -1,5 +1,38 @@
 # Changelog
 
+## Compare batches side by side (Plan 9, item G5)
+
+A new page puts two to four batches next to each other, marks the best result in each row, and draws how much each one harvested over time.
+
+### Checked
+- Backend: 1516 tests pass (36 new for this). Frontend: 1477 tests pass (42 new) and `tsc` is clean. No migration. `ruff` is clean. ESLint is not installed on this machine, so frontend lint was not run.
+- `npm test` still prints the one unhandled `RangeError` from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+- **In a real browser** with a throwaway administrator (deleted again) and your seeded demo data: the picker lists the batches, three finished demo batches compare, the best cocoon weight and silk yield are marked, and the chart draws one point for each. Looked at in light, dark and at phone width (the page does not scroll sideways, and the table scrolls inside its own box).
+- **Checking against your real database found two problems the tests could not see**, both fixed here, and a third in older code that I left alone (see below).
+- Not checked in a browser: French and Kinyarwanda on screen (the page is tested in French), the farmer and supervisor views (the same page and the same access rules, tested), the yield per egg box and per 1,000 worms rows (your demo batches have no start count, so those rows are left out; they are tested), and a screen reader.
+
+### What it does
+- **Where:** a "Compare batches" button on the Batches page, "Compare batches" in Ctrl K, or `/batches/compare`. Pick two to four batches (up to four, in the order you click), press Compare, and the choice is in the address, so a comparison can be bookmarked or sent.
+- **The table** has one column for each batch and rows in three groups. The batch: breed, start date, days running, what it started with, room. What it gave: cocoons harvested (kg), silk (g), cocoons per egg box and per 1,000 worms, harvests recorded, grades. How it went: deaths, death rate, share of readings inside the safe range, disease checks, grasserie found, problem alerts.
+- **"Best"** is written next to the best value in a row, not shown by colour alone. It is marked for cocoon weight, silk and yield (highest), death rate, grasserie and problem alerts (lowest), and time in the safe range (highest). Nothing is marked when the batches are equal, or when fewer than two have a value.
+- **The chart** shows the total cocoons harvested so far, by the day since each batch started, one line for each batch with its own colour and its own dash, and a table of the same numbers for screen readers.
+- **Who may compare what:** the same rules as everywhere else. A farmer compares their own batches, a supervisor their cooperative's, an administrator any. A batch that does not exist and one you may not see give the same answer.
+- **The server:** `GET /api/batches/compare?ids=a,b,c`. Two to four different ids (a repeated id counts once, anything else gives a plain message), a fixed handful of queries however many harvests or checks there are, and nothing is changed.
+
+### Found on the way
+- **A crash on your database.** In your database the batch dates (`startDate`, `expectedHarvestDate`) are stored as `timestamp without time zone`, so Django hands them back naive even though the project uses time zones. The first version of the endpoint subtracted one from the current time and returned an error on real data. The test database is built from migrations and has proper time zone columns, so the tests passed. There is now a test that reproduces your column type (it changes the column inside a transaction that is rolled back), and the comparison makes those dates aware first.
+- **The same crash exists in the batch report PDF** (`batches/report.py`): on your database it fails for any batch that is not at harvest stage. I did not change it here. It is a separate fix, and I offered it as its own task.
+- **Stage changes counted as alerts.** The existing alert count includes the "stage changed" notices, so every finished demo batch showed 4 alerts. The comparison now counts only temperature, humidity and disease alerts and calls them "problem alerts".
+
+### Decided
+- **Deaths are shown but not ranked.** A batch that started with more worms will have more deaths. Only the death rate is marked, and it is only known for batches counted in worms.
+- **Yield per egg box and per 1,000 worms are separate rows** and are never ranked against each other. A row that no batch has a value for is left out.
+- **Harvests recorded and disease checks are not ranked**, since more or fewer of them is not better or worse in itself.
+- **Safe range uses the batch's current stage** for the whole life of the batch, as the batch report does. A batch that has moved on is judged by its latest range.
+- **Per farm trends are not built.** "Yield over time" here means within a batch's own harvests, lined up from its start day. A view of one farm's batches one after another would be a separate page.
+- **Not in the sidebar.** The page is reached from Batches and from Ctrl K, so the menu does not get longer.
+- The French and Kinyarwanda texts are my drafts and need a native read.
+
 ## Share preview and install check (Plan 9, item G7)
 
 The deployed site now points its share preview at its own address instead of localhost, and the web app is set up to be installed on a phone with an icon that survives Android's round mask and a start page of its own.
