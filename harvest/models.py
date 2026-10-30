@@ -40,6 +40,10 @@ class HarvestRecord(models.Model):
     )
     notes = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(db_column='isActive', default=True)
+    # The secret in the address behind the lot's QR code. Empty until the farmer shares the lot, and emptied again when
+    # they stop sharing it, which is what ends the link. See harvest/lots.py for what a stranger is shown.
+    share_token = models.CharField(max_length=43, unique=True, null=True, blank=True, db_column='shareToken')
+    shared_at = models.DateTimeField(null=True, blank=True, db_column='sharedAt')
     harvested_at = models.DateTimeField(db_column='harvestedAt', auto_now_add=True)
     created_at   = models.DateTimeField(db_column='createdAt',   auto_now_add=True)
     updated_at   = models.DateTimeField(db_column='updatedAt',   auto_now=True)

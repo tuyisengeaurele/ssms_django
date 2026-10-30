@@ -23,6 +23,10 @@ class InvitationRateThrottle(AnonRateThrottle):
     scope = 'invitation'   # a stranger asking about invitation links, 20 a minute per address
 
 
+class LotRateThrottle(AnonRateThrottle):
+    scope = 'lot'   # a stranger opening lot pages, 30 a minute per address
+
+
 class DeviceKeyThrottle(SimpleRateThrottle):
     """30 readings a minute for each device key. A device that sends no key is counted by its address."""
     scope = 'device'

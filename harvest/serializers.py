@@ -8,15 +8,20 @@ from .models import HarvestRecord
 class HarvestRecordSerializer(serializers.ModelSerializer):
     farm_name = serializers.SerializerMethodField()
     farm_id   = serializers.SerializerMethodField()
+    # Whether the lot has a QR code link. The link itself is only given to the owner, by the share address.
+    is_shared = serializers.SerializerMethodField()
 
     class Meta:
         model  = HarvestRecord
         fields = [
             'id', 'batch_id', 'cocoon_weight_kg', 'silk_yield_g',
             'quality_grade', 'notes', 'harvested_at', 'created_at',
-            'farm_name', 'farm_id',
+            'farm_name', 'farm_id', 'is_shared',
         ]
-        read_only_fields = ['id', 'batch_id', 'harvested_at', 'created_at', 'farm_name', 'farm_id']
+        read_only_fields = ['id', 'batch_id', 'harvested_at', 'created_at', 'farm_name', 'farm_id', 'is_shared']
+
+    def get_is_shared(self, obj):
+        return bool(obj.share_token)
 
     def get_farm_name(self, obj):
         try:
