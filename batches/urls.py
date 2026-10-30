@@ -4,6 +4,7 @@ from .mortality_views import BatchMortalityDetailView, BatchMortalityView
 from .views import (
     BatchActiveSupervisorView,
     BatchByFarmView,
+    BatchCompareView,
     BatchCreateView,
     BatchDetailView,
     BatchReportView,
@@ -14,6 +15,7 @@ from .views import (
 urlpatterns = [
     path('', BatchCreateView.as_view(), name='batch_create'),                                  # POST /api/batches
     path('/active', BatchActiveSupervisorView.as_view(), name='batch_active_supervisor'),      # GET  /api/batches/active
+    path('/compare', BatchCompareView.as_view(), name='batch_compare'),                       # GET  /api/batches/compare?ids=a,b
     path('/farm/<str:farm_id>', BatchByFarmView.as_view(), name='batch_by_farm'),              # GET  /api/batches/farm/<id>
     path('/<str:pk>', BatchDetailView.as_view(), name='batch_detail'),                         # GET/DELETE /api/batches/<id>
     path('/<str:pk>/report', BatchReportView.as_view(), name='batch_report'),                  # GET  /api/batches/<id>/report?lang=
