@@ -13,7 +13,7 @@ The batch dates (`batches.startDate` and `expectedHarvestDate`) are stored as `t
 - `conftest.py` has a `naive_batch_dates` fixture that changes the two columns to the older type inside the test's transaction, which is rolled back afterwards. The new tests use it, and they fail without the fix (checked by putting the old code back).
 
 ### Checked
-- Backend: 1492 tests pass on this branch (13 new) and `ruff` is clean on the changed files. The whole project still has 22 older `ruff` findings in other files, which I left alone.
+- Backend: 1492 tests pass on this branch (12 new) and `ruff` is clean on the changed files. The whole project still has 22 older `ruff` findings in other files, which I left alone.
 - Against the local database, read only: the report for a batch at cocoon stage, which raised `TypeError` before, now builds (134 KB). Recording deaths was covered by the test only, since trying it would write to the local database.
 
 ### Looked for, not changed
