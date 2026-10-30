@@ -53,6 +53,22 @@ const sections: LegalSection[] = [
     ),
   },
   {
+    title: 'QR codes on harvest lots',
+    body: (
+      <>
+        <p>
+          A farmer can make a QR code for a harvest lot. Only the farmer who owns the lot can do this, and only on purpose. Anyone who scans the code, or opens its link, sees a short page with the farm name, the district and province, the cooperative if there is one, the breed, the dates, the weight, the silk yield and the grade. They do not need an account.
+        </p>
+        <p>
+          The page never shows your name, your email address, the street, the exact position of the farm or your notes. Search engines are asked not to list it, and the page is not kept by browsers.
+        </p>
+        <p>
+          You can stop sharing a lot at any time from its harvest page. The link then stops working at once, including on any code you have printed. If you share the lot again you get a new code.
+        </p>
+      </>
+    ),
+  },
+  {
     title: 'Cookies and local storage',
     body: (
       <p>
