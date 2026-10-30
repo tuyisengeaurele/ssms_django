@@ -1,5 +1,34 @@
 # Changelog
 
+## One motion style that respects reduced motion (Plan 9, item G8)
+
+The signed in app now follows the "reduce motion" setting of the computer everywhere, and its code and stylesheets share one set of durations and one easing curve.
+
+### Checked
+- Frontend: 1409 tests pass (18 new) and `tsc` is clean. No backend change and no migration. ESLint is not installed on this machine, so lint was not run.
+- `npm test` still prints the one unhandled `RangeError` from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+- **In a real browser** with a throwaway administrator (deleted again): the app signs in and changes pages, the sign out dialog opens and closes, and the new reduced motion rules are loaded in the page. The browser pane cannot switch on the computer's "reduce motion" setting, so that path is covered by the tests and not by watching it. Timers in the pane also run slowly, so I could confirm that the dialog opens and closes but not how smooth it is.
+- Not checked: a real computer with "reduce motion" turned on, and the landing page (its own motion code is unchanged).
+
+### The audit
+What I found before changing anything:
+- **Framer animations ignored the setting.** Page changes (a fade with a 10 pixel slide), dialogs (scale and slide) and toasts (slide and scale) always moved. Framer only follows the setting if it is told to.
+- **Smooth scrolling was on for everyone** (`html { scroll-behavior: smooth }`). Only the landing page turned it off.
+- **The stylesheet rules covered part of the app.** A few blocks switched off the skeleton shimmer, the progress bar and the sidebar. The `anim-in`, `anim-fade` and `anim-scale` classes had no rule.
+- **No shared style.** Durations in code were 0.28, 0.15, 0.18, 0.24 and 0.2 seconds, and in the stylesheets 0.2 seconds in 22 places, 0.25 in 12, 0.3 in 5, 0.4 in 4 and a few more. The easing curve was written out by hand in three files.
+
+### What changed
+- **`MotionProvider`** wraps the app and tells framer whether the person asked for less motion. When they did, slides and scaling are dropped and only fades remain. It follows the setting while the page is open.
+- **`utils/motion.ts`** holds the shared easing (`EASE_OUT`), the three durations (`fast` 0.12, `base` 0.2, `slow` 0.35 seconds) and the page change and arrive and leave transitions. The page change, dialogs and toasts use them. A test fails if the values drift from the `--ease-out` and `--duration-*` tokens in `index.css`, or if one of those three files brings back its own numbers.
+- **In the stylesheet**, smooth scrolling is only for people who did not ask for less motion. One rule under "reduce motion" cuts every animation and transition to a hundredth of a millisecond and runs animations once. The loading spinner is the one exception, because it is the only sign that something is loading.
+- **The usual 200 ms** in the app stylesheets now comes from `--duration-normal` (15 lines), and a test stops raw 0.2 second values coming back. The value is the same, so nothing looks different.
+- **Test setup:** `matchMedia` in the tests now answers with the live setting and tells listeners when it changes, like a browser does.
+
+### Decided
+- **Fades stay for people who asked for less motion.** A fade is not the kind of movement the setting is about. Slides, scaling, looping and smooth scrolling go.
+- **The other raw durations stay** (0.25 seconds in 12 places, 0.3 in 5, 0.4 in 4, 0.15 in 2 and a few single ones). Moving them to the tokens would change how some things feel for no gain a person would notice. They are all cut to nothing under "reduce motion" anyway.
+- **The landing page keeps its own motion code.** It already respects the setting.
+
 ## Stage names in three languages and a translation check (Plan 9, item G9, first part)
 
 The five batch stages now read in the language of the screen, and a test makes sure every text in the app has English, French and Kinyarwanda.
