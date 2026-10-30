@@ -94,12 +94,12 @@ describe('icons and static files', () => {
     expect(Math.abs(info.width - info.height) / info.width).toBeLessThan(0.15);
   });
 
-  it('has a manifest with the project name and icons', () => {
+  it('has a manifest with the project name and colours', () => {
     const manifest = JSON.parse(readFileSync(pub('site.webmanifest'), 'utf8'));
     expect(manifest.name).toBe('Smart Sericulture Management System');
     expect(manifest.short_name).toBe('SSMS');
     expect(manifest.theme_color).toBe('#0B1F17');
-    expect(manifest.icons.map((i: { sizes: string }) => i.sizes)).toEqual(['192x192', '512x512']);
+    expect(manifest.background_color).toMatch(/^#[0-9A-Fa-f]{6}$/);
   });
 
   it('allows crawlers and points to the sitemap', () => {
@@ -111,5 +111,66 @@ describe('icons and static files', () => {
 
   it('keeps the sitemap script next to the other build scripts', () => {
     expect(existsSync(resolve(root, 'scripts/make-seo.mjs'))).toBe(true);
+  });
+});
+
+describe('installing the app', () => {
+  const manifest = JSON.parse(readFileSync(pub('site.webmanifest'), 'utf8'));
+  type Icon = { src: string; sizes: string; type: string; purpose?: string };
+  const icons: Icon[] = manifest.icons;
+
+  it('opens a standalone app that finds its own way home', () => {
+    expect(manifest.display).toBe('standalone');
+    // /app sends a signed in person to their dashboard and anyone else to the login page.
+    expect(manifest.start_url).toBe('/app');
+    expect(manifest.id).toBe('/app');
+    expect(manifest.scope).toBe('/');
+    expect(readFileSync(resolve(root, 'src/App.tsx'), 'utf8')).toMatch(/path="\/app"/);
+  });
+
+  it('names its language', () => {
+    expect(manifest.lang).toBe('en');
+  });
+
+  it.each([192, 512])('has a plain and a maskable icon at %i pixels', (size) => {
+    const same = icons.filter((i) => i.sizes === `${size}x${size}`);
+    expect(same.map((i) => i.purpose ?? 'any').sort()).toEqual(['any', 'maskable']);
+    for (const icon of same) expect(icon.type).toBe('image/png');
+  });
+
+  it('never mixes "any" and "maskable" in one entry, which makes the icon look wrong in one of the two uses', () => {
+    for (const icon of icons) expect(icon.purpose ?? 'any').not.toMatch(/\s/);
+  });
+
+  it('points every icon at a file of exactly the size it says', async () => {
+    for (const icon of icons) {
+      const [w, h] = icon.sizes.split('x').map(Number);
+      const file = pub(icon.src.replace(/^\//, ''));
+      expect(existsSync(file), icon.src).toBe(true);
+      const meta = await sharp(file).metadata();
+      expect([meta.width, meta.height], icon.src).toEqual([w, h]);
+    }
+  });
+
+  it.each([192, 512])('keeps the emblem of the %i pixel maskable icon inside the safe circle, so a round or squircle mask does not cut it', async (size) => {
+    const icon = icons.find((i) => i.sizes === `${size}x${size}` && i.purpose === 'maskable')!;
+    const { data, info } = await sharp(pub(icon.src.replace(/^\//, ''))).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    let farthest = 0;
+    for (let y = 0; y < info.height; y += 1) {
+      for (let x = 0; x < info.width; x += 1) {
+        const at = (y * info.width + x) * 4;
+        const drawn = data[at + 3] > 10 && (data[at] < 235 || data[at + 1] < 235 || data[at + 2] < 235);
+        if (drawn) farthest = Math.max(farthest, Math.hypot(x + 0.5 - info.width / 2, y + 0.5 - info.height / 2));
+      }
+    }
+    // The safe zone is a circle with a diameter of 80 % of the icon.
+    expect(farthest).toBeLessThanOrEqual(size * 0.4);
+  });
+
+  it('has a solid background on the maskable icons, since the mask shows whatever is behind the emblem', async () => {
+    for (const icon of icons.filter((i) => i.purpose === 'maskable')) {
+      const { data } = await sharp(pub(icon.src.replace(/^\//, ''))).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+      expect(data[3], icon.src).toBe(255);
+    }
   });
 });
