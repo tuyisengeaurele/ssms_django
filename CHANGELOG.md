@@ -1,5 +1,38 @@
 # Changelog
 
+## Share preview and install check (Plan 9, item G7)
+
+The deployed site now points its share preview at its own address instead of localhost, and the web app is set up to be installed on a phone with an icon that survives Android's round mask and a start page of its own.
+
+### Checked
+- Frontend: 1435 tests pass (26 new) and `tsc` is clean. No backend change and no migration. ESLint is not installed on this machine, so lint was not run.
+- `npm test` still prints the one unhandled `RangeError` from `SupervisorFarmersPage.test.tsx`. It happens on `master` too.
+- **Share preview:** I built the site with Vercel's variable set by hand (`VERCEL_PROJECT_PRODUCTION_URL=ssms-django.vercel.app`). The built page has `canonical`, `og:url` and `og:image` on `https://ssms-django.vercel.app` and no `localhost` anywhere.
+- **In a real browser** with a throwaway administrator (deleted again): opening `/app` signed out lands on the login page. Signed in, a fresh load of `/app` restores the session and lands on `/admin`. The manifest and all four icons load and have the sizes they say.
+- Not checked: a real Vercel build (the variable was set by hand, and it only works if the project exposes Vercel's system variables, which is the default), what WhatsApp shows for the link after a deploy, and the "Add to home screen" prompt on a phone. The pane cannot do the last one, so the install side is covered by tests of the manifest and icons.
+
+### What was wrong
+- **The share preview was broken on the live site.** `ssms-django.vercel.app` served `og:image`, `og:url` and the canonical link as `http://localhost:4173/...`, because `VITE_SITE_URL` is not set on Vercel and the build fell back to the local default. A WhatsApp or Facebook link would show no image. The live `sitemap.xml` and `robots.txt` pointed at `localhost:5173` for the same reason.
+- **The installed app would open on the public landing page** (`start_url` was `/`), even for someone who was signed in.
+- **The app icons were not safe for Android's mask.** The farthest point of the emblem is 43 percent of the icon width away from the centre, and the safe zone for Android's round mask ends at 40 percent, so the leaf tips would be cut.
+- A correction to my own earlier plan: the **WhatsApp share button on invite links already exists** (the invite dialog has Copy and Share on WhatsApp, and it is tested). Nothing was needed there.
+
+### What changed
+- **`scripts/siteUrl.mjs`** works out the site address: `VITE_SITE_URL` when it is set, otherwise on Vercel the production address Vercel gives the project, otherwise the address of that deployment. `vite.config.ts` and the sitemap script both use it, so a deployed build never points at localhost. Local builds are unchanged.
+- **`/app`** is a new page that sends a signed in person to their own dashboard and anyone else to the login page. The manifest's `start_url` and `id` are `/app`. The role to dashboard rule was written out in two places and is now one function, `homePathFor`.
+- **Maskable icons.** `icon-maskable-192.png` and `icon-maskable-512.png` have the emblem smaller on a solid white square, so it stays inside the safe circle. The plain icons are untouched. `npm run icons` builds them, and it rebuilds the other icons byte for byte.
+- **The manifest** now has `id`, `scope`, `lang`, the start page, and the four icon entries (plain and maskable, never both in one entry).
+- **Tests** check the address rules, the start page and its route, that every icon file exists with exactly the size it says, that the maskable emblem sits inside the safe circle on a solid background, and the new page for each role and for a signed out visitor.
+
+### After the merge
+- Vercel redeploys. Open the site's page source and check that `og:image` starts with `https://ssms-django.vercel.app`, then paste the link into WhatsApp. WhatsApp keeps old previews for a while, so a link shared earlier may still show the old one. Facebook's Sharing Debugger can refresh it.
+- If the page still says `localhost`, set `VITE_SITE_URL` to the real address in the Vercel project settings. It takes priority over everything above.
+
+### Decided
+- **Nothing sets `VITE_SITE_URL` by hand.** The Vercel address is used when it is missing. A custom domain later needs `VITE_SITE_URL` set once.
+- **No service worker was added.** The app needs the network anyway, and offline use is G10, which is not being built. I could not try the install prompt on a phone, so if a phone refuses to offer it, a minimal service worker is the first thing to try.
+- **Join links share the general preview.** A link to `/join/...` shows the site's title, description and image, because the app is a single page and link previews do not run JavaScript. Giving each invite its own preview would need the server to render that page.
+
 ## One motion style that respects reduced motion (Plan 9, item G8)
 
 The signed in app now follows the "reduce motion" setting of the computer everywhere, and its code and stylesheets share one set of durations and one easing curve.
