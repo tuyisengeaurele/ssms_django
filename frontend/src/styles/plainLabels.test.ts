@@ -58,12 +58,10 @@ describe('Plain labels', () => {
     expect(components).not.toMatch(/\.note-dot|\.inbox-dot/);
   });
 
-  it('shows menu and sidebar counts as plain numbers', () => {
-    for (const [css, selector] of [[shell, '.sidebar-badge'], [shell, '.menu-count']] as const) {
-      const block = rule(css, selector);
-      expect(block).not.toBe('');
-      expect(block).not.toMatch(/border-radius|background/);
-    }
+  it('shows the sidebar count as a plain number', () => {
+    const block = rule(shell, '.sidebar-badge');
+    expect(block).not.toBe('');
+    expect(block).not.toMatch(/border-radius|background/);
   });
 
   it('leaves no dot or pill classes in the markup', () => {

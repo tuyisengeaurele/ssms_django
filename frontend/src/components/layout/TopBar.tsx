@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { alertService } from '../../services/alert.service';
@@ -7,11 +7,9 @@ import { contactsService } from '../../services/contacts.service';
 import { AlertLog, ContactMessage } from '../../types';
 import { ALERT_TYPE_KEY } from '../../utils/alertTypes';
 import { usePageTitle } from '../../utils/pageTitle';
-import { THEME_OPTIONS, useTheme } from '../../utils/theme';
 import { timeAgo } from '../../utils/timeAgo';
 import { Icon } from '../ui/Icon';
 import LanguageSwitcher from '../ui/LanguageSwitcher';
-import Modal from '../ui/Modal';
 import { ROLE_LABEL_KEY } from './Sidebar';
 
 interface TopBarProps {
@@ -113,30 +111,21 @@ function NotificationPanel({ isAdmin, alertCount, onClose }: { isAdmin: boolean;
 // ── Top bar ──────────────────────────────────────────────────────────────────
 
 export default function TopBar({ onMenuToggle, onSearch, alertCount = 0 }: TopBarProps) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { t } = useLanguage();
   const { title, section } = usePageTitle();
-  const navigate = useNavigate();
-  const { choice: themeChoice, setChoice: setThemeChoice } = useTheme();
 
-  const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = user?.role === 'ADMIN';
 
   useEffect(() => {
     function onPointer(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
     }
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        setMenuOpen(false);
-        setNotifOpen(false);
-      }
+      if (e.key === 'Escape') setNotifOpen(false);
     }
     document.addEventListener('mousedown', onPointer);
     document.addEventListener('keydown', onKey);
@@ -146,12 +135,6 @@ export default function TopBar({ onMenuToggle, onSearch, alertCount = 0 }: TopBa
     };
   }, []);
 
-  const confirmSignOut = () => {
-    setConfirmOpen(false);
-    logout();
-    navigate('/login', { replace: true });
-  };
-
   const initials = user?.name
     ? user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
     : 'U';
@@ -159,20 +142,6 @@ export default function TopBar({ onMenuToggle, onSearch, alertCount = 0 }: TopBa
 
   return (
     <>
-      <Modal
-        open={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        title={t('btnSignOut')}
-        footer={
-          <>
-            <button className="btn btn-secondary" onClick={() => setConfirmOpen(false)}>{t('btnCancel')}</button>
-            <button className="btn btn-danger" onClick={confirmSignOut}>{t('btnSignOut')}</button>
-          </>
-        }
-      >
-        <p className="modal-text">{t('shellSignOutAsk')}</p>
-      </Modal>
-
       <header className="app-topbar">
         <button type="button" className="topbar-toggle" onClick={onMenuToggle} aria-label={t('shellOpenMenu')}>
           <Icon name="menu" />
@@ -205,7 +174,7 @@ export default function TopBar({ onMenuToggle, onSearch, alertCount = 0 }: TopBa
               aria-label={bellLabel}
               aria-expanded={notifOpen}
               aria-haspopup="true"
-              onClick={() => { setNotifOpen((o) => !o); setMenuOpen(false); }}
+              onClick={() => setNotifOpen((o) => !o)}
             >
               <Icon name="alerts" size={19} />
               {alertCount > 0 && <span className="topbar-notif-dot" aria-hidden="true" />}
@@ -213,72 +182,13 @@ export default function TopBar({ onMenuToggle, onSearch, alertCount = 0 }: TopBa
             {notifOpen && <NotificationPanel isAdmin={isAdmin} alertCount={alertCount} onClose={() => setNotifOpen(false)} />}
           </div>
 
-          <div ref={menuRef} className="topbar-anchor">
-            <button
-              type="button"
-              className="topbar-user"
-              aria-expanded={menuOpen}
-              aria-haspopup="menu"
-              onClick={() => { setMenuOpen((o) => !o); setNotifOpen(false); }}
-            >
-              <span className="topbar-avatar" aria-hidden="true">{initials}</span>
-              <span className="topbar-user-info">
-                <span className="t-name">{user?.name}</span>
-                <span className="t-role">{user ? t(ROLE_LABEL_KEY[user.role]) : ''}</span>
-              </span>
-              <Icon name="down" size={15} className="topbar-user-caret" />
-            </button>
-
-            {menuOpen && (
-              <div className="topbar-menu" role="menu">
-                <div className="topbar-menu-head">
-                  <span className="topbar-avatar topbar-avatar--lg" aria-hidden="true">{initials}</span>
-                  <div>
-                    <p className="menu-name">{user?.name}</p>
-                    <p className="menu-email">{user?.email}</p>
-                  </div>
-                </div>
-                <Link to="/settings/account" role="menuitem" className="topbar-menu-item" onClick={() => setMenuOpen(false)}>
-                  <Icon name="settings" size={16} />{t('btnSettings')}
-                </Link>
-                <Link to="/alerts" role="menuitem" className="topbar-menu-item" onClick={() => setMenuOpen(false)}>
-                  <Icon name="alerts" size={16} />{t('ptAlerts')}
-                  {alertCount > 0 && <span className="menu-count">{alertCount}</span>}
-                </Link>
-                <div className="topbar-menu-rule" />
-                <div className="topbar-menu-choice topbar-menu-language">
-                  <span className="topbar-menu-choice-label" aria-hidden="true">{t('lpLangLabel')}</span>
-                  <LanguageSwitcher inMenu />
-                </div>
-                <div className="topbar-menu-choice" role="group" aria-label={t('thLabel')}>
-                  <span className="topbar-menu-choice-label" aria-hidden="true">{t('thLabel')}</span>
-                  <div className="segmented">
-                    {THEME_OPTIONS.map(([value, key]) => (
-                      <button
-                        key={value}
-                        type="button"
-                        role="menuitemradio"
-                        aria-checked={themeChoice === value}
-                        className={themeChoice === value ? 'is-on' : ''}
-                        onClick={() => setThemeChoice(value)}
-                      >
-                        {t(key)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="topbar-menu-rule" />
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="topbar-menu-item topbar-menu-item--danger"
-                  onClick={() => { setMenuOpen(false); setConfirmOpen(true); }}
-                >
-                  <Icon name="logout" size={16} />{t('btnSignOut')}
-                </button>
-              </div>
-            )}
-          </div>
+          <Link to="/settings/account" className="topbar-user" aria-label={`${user?.name ?? ''}, ${t('btnSettings')}`}>
+            <span className="topbar-avatar" aria-hidden="true">{initials}</span>
+            <span className="topbar-user-info">
+              <span className="t-name">{user?.name}</span>
+              <span className="t-role">{user ? t(ROLE_LABEL_KEY[user.role]) : ''}</span>
+            </span>
+          </Link>
         </div>
       </header>
     </>
