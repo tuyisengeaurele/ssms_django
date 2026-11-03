@@ -200,12 +200,12 @@ describe('TopBar', () => {
     expect(screen.getByRole('menu')).toBeInTheDocument();
   });
 
-  it('shows the account menu with profile and sign out', () => {
+  it('shows the account menu with settings and sign out', () => {
     topbar('/admin');
     const trigger = screen.getByRole('button', { name: /Auris Tuyisenge/ });
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(trigger);
-    expect(screen.getByRole('menuitem', { name: 'My Profile' })).toHaveAttribute('href', '/profile');
+    expect(screen.getByRole('menuitem', { name: 'Settings' })).toHaveAttribute('href', '/settings/account');
     expect(screen.getByRole('menuitem', { name: 'Sign Out' })).toBeInTheDocument();
   });
 });

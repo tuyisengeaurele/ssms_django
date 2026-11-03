@@ -7,7 +7,7 @@ import { contactsService } from '../../services/contacts.service';
 import { AlertLog, ContactMessage } from '../../types';
 import { ALERT_TYPE_KEY } from '../../utils/alertTypes';
 import { usePageTitle } from '../../utils/pageTitle';
-import { useTheme, type ThemeChoice } from '../../utils/theme';
+import { THEME_OPTIONS, useTheme } from '../../utils/theme';
 import { timeAgo } from '../../utils/timeAgo';
 import { Icon } from '../ui/Icon';
 import LanguageSwitcher from '../ui/LanguageSwitcher';
@@ -24,7 +24,6 @@ interface TopBarProps {
 /** What the shortcut is called on this computer. */
 const SHORTCUT = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K';
 
-const THEME_CHOICES: Array<[ThemeChoice, string]> = [['system', 'thAuto'], ['light', 'thLight'], ['dark', 'thDark']];
 
 // ── Notifications ────────────────────────────────────────────────────────────
 
@@ -239,8 +238,8 @@ export default function TopBar({ onMenuToggle, onSearch, alertCount = 0 }: TopBa
                     <p className="menu-email">{user?.email}</p>
                   </div>
                 </div>
-                <Link to="/profile" role="menuitem" className="topbar-menu-item" onClick={() => setMenuOpen(false)}>
-                  <Icon name="profile" size={16} />{t('btnMyProfile')}
+                <Link to="/settings/account" role="menuitem" className="topbar-menu-item" onClick={() => setMenuOpen(false)}>
+                  <Icon name="settings" size={16} />{t('btnSettings')}
                 </Link>
                 <Link to="/alerts" role="menuitem" className="topbar-menu-item" onClick={() => setMenuOpen(false)}>
                   <Icon name="alerts" size={16} />{t('ptAlerts')}
@@ -254,7 +253,7 @@ export default function TopBar({ onMenuToggle, onSearch, alertCount = 0 }: TopBa
                 <div className="topbar-menu-choice" role="group" aria-label={t('thLabel')}>
                   <span className="topbar-menu-choice-label" aria-hidden="true">{t('thLabel')}</span>
                   <div className="segmented">
-                    {THEME_CHOICES.map(([value, key]) => (
+                    {THEME_OPTIONS.map(([value, key]) => (
                       <button
                         key={value}
                         type="button"
