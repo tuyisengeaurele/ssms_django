@@ -367,12 +367,13 @@
   border: 0;
   border-radius: 999px;
   background: none;
+  color: inherit;
   text-align: left;
+  text-decoration: none;
   transition: background-color var(--duration-normal) var(--ease-out);
 }
 
-.topbar-user:hover,
-.topbar-user[aria-expanded='true'] {
+.topbar-user:hover {
   background: var(--tint);
 }
 
@@ -386,11 +387,6 @@
   background: var(--ink);
   color: var(--ivory);
   font: 600 0.78rem var(--font-ui);
-}
-
-.topbar-avatar--lg {
-  width: 42px;
-  height: 42px;
 }
 
 .topbar-user-info {
@@ -410,13 +406,8 @@
   color: var(--text-muted);
 }
 
-.topbar-user-caret {
-  color: var(--text-muted);
-}
-
 /* Dropdown surfaces */
-.topbar-panel,
-.topbar-menu {
+.topbar-panel {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
@@ -550,98 +541,6 @@ a.topbar-note:hover {
 
 .topbar-panel-foot:hover {
   background: var(--surface-2);
-}
-
-.topbar-menu {
-  width: 270px;
-  padding: 8px;
-}
-
-.topbar-menu-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 10px 14px;
-  margin-bottom: 6px;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.menu-name {
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.menu-email {
-  overflow: hidden;
-  max-width: 170px;
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.topbar-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 12px;
-  background: none;
-  color: var(--text-2);
-  font: 500 0.9rem var(--font-ui);
-  text-align: left;
-  transition: background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out);
-}
-
-.topbar-menu-item:hover {
-  background: var(--surface-2);
-  color: var(--ink);
-}
-
-.topbar-menu-item--danger {
-  color: var(--danger-ink);
-}
-
-.topbar-menu-item--danger:hover {
-  background: var(--danger-wash);
-  color: var(--danger-ink-2);
-}
-
-.topbar-menu-choice {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px 12px;
-}
-
-.topbar-menu-choice-label {
-  font: 500 0.84rem var(--font-ui);
-  color: var(--text-muted);
-}
-
-.topbar-menu-choice .segmented {
-  flex-wrap: nowrap;
-}
-
-.topbar-menu-choice .segmented button {
-  flex: 1;
-  padding: 6px 8px;
-  font-size: 0.82rem;
-}
-
-.topbar-menu-rule {
-  height: 1px;
-  margin: 6px 4px;
-  background: var(--border-light);
-}
-
-.menu-count {
-  margin-left: auto;
-  color: var(--text-muted);
-  font: 600 0.8rem var(--font-ui);
 }
 
 /* Focus rings that match the public site */
@@ -782,10 +681,6 @@ a.topbar-note:hover {
   .topbar-section {
     display: none;
   }
-
-  .topbar-user-caret {
-    display: none;
-  }
 }
 
 /* ── Language switcher ─────────────────────────────────────────────────────── */
@@ -826,12 +721,6 @@ a.topbar-note:hover {
 /* Too narrow for the pill: the same choice is in the account menu instead. */
 @media (max-width: 639px) {
   .topbar-lang-switch {
-    display: none;
-  }
-}
-
-@media (min-width: 640px) {
-  .topbar-menu-language {
     display: none;
   }
 }
@@ -1016,7 +905,6 @@ a.topbar-note:hover {
   .app-sidebar,
   .app-main,
   .topbar-panel,
-  .topbar-menu,
   .topbar-search {
     animation: none;
     transition: none;

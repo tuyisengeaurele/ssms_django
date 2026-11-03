@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
@@ -174,12 +174,11 @@ describe('Theme', () => {
     expect(attr()).toBe('dark');
   });
 
-  it('changes when the person picks a theme in the account menu', () => {
+  it('changes at once when the person picks a theme in Settings', () => {
     open();
-    fireEvent.click(screen.getByRole('button', { name: /Auris Tuyisenge/ }));
-    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Dark' }));
+    act(() => setThemeChoice('dark'));
     expect(attr()).toBe('dark');
-    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Light' }));
+    act(() => setThemeChoice('light'));
     expect(attr()).toBe('light');
   });
 

@@ -50,22 +50,4 @@ describe('LanguageSwitcher', () => {
     show();
     for (const button of screen.getAllByRole('button')) expect(button).not.toHaveAttribute('tabindex', '-1');
   });
-
-  describe('inside a menu', () => {
-    it('uses the roles a menu expects', () => {
-      show(<div role="menu"><LanguageSwitcher inMenu /></div>);
-      const group = screen.getByRole('group', { name: 'Language' });
-      const items = within(group).getAllByRole('menuitemradio');
-      expect(items.map((b) => b.textContent)).toEqual(['EN', 'FR', 'RW']);
-      expect(items[0]).toHaveAttribute('aria-checked', 'true');
-      expect(items[1]).toHaveAttribute('aria-checked', 'false');
-    });
-
-    it('switches language and stays open', () => {
-      show(<div role="menu"><LanguageSwitcher inMenu /></div>);
-      fireEvent.click(screen.getByRole('menuitemradio', { name: 'Français' }));
-      expect(localStorage.getItem('ssms_locale')).toBe('fr');
-      expect(screen.getByRole('menu')).toBeInTheDocument();
-    });
-  });
 });

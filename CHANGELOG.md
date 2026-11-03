@@ -1,5 +1,23 @@
 # Changelog
 
+## The account menu becomes a link, and a calmer error page
+
+The person in the top bar is now one link to Settings, with no dropdown. The page that appears when a screen breaks says less.
+
+### Checked
+- Frontend: 1573 tests pass and `tsc` is clean (6 new tests for the error page, 4 new for the top bar link; the tests of the old dropdown were removed). Backend unchanged.
+- **In a real browser** on your dev servers, with a throwaway admin (deleted again): the person in the top bar is a link (no caret, no underline) that opens Settings, Account, and no menu appears; reloading `/settings/safe-ranges` directly shows Safe ranges inside Settings with its five rows and no crash.
+- Not checked: the new error page itself on screen (its words and layout are tested, but I could not make a real screen break on purpose), a phone, and French and Kinyarwanda on screen (the link's name is tested in French).
+
+### What changed
+- **Top bar.** The name and role are a link to Settings, Account. The dropdown is gone, so Alerts is no longer listed twice (the bell and the sidebar have it), and Sign Out stays only in the sidebar. The sidebar's Settings link is the same place.
+- **Language and theme** are now only in Settings, Appearance. On a very narrow screen the small language switch is hidden, so the language is chosen there or on the login page.
+- **Error page.** It now says "We're sorry. Please refresh the page." and no longer offers "Technical details" or mentions the dashboard. The error is still written to the browser console for whoever debugs.
+- **Left over code removed:** the dropdown's styles, the language switcher's menu mode and one unused word.
+
+### A note on the page that crashed in your screenshot
+- While I was editing files with your dev server running, the open tab can end up with two copies of the same module ("useLanguage must be used inside LanguageProvider"), which shows this page. Refreshing fixes it, and it cannot happen in the built site. I could not make it happen on a fresh page load.
+
 ## A Settings page in place of the Profile page (phase 1b, part 1)
 
 Everything a person configures now sits in one Settings page, with a section list beside it (above it on a phone). The Profile page is gone.

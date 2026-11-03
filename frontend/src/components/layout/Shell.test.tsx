@@ -217,59 +217,33 @@ describe('TopBar', () => {
     expect(screen.getByRole('button', { name: 'Français' })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('also offers the language in the account menu, for screens too narrow for the switcher', () => {
+  it('shows the person as one link to Settings, with no menu to open', () => {
     topbar('/admin');
-    fireEvent.click(screen.getByRole('button', { name: /Auris Tuyisenge/ }));
-    const group = within(screen.getByRole('menu')).getByRole('group', { name: 'Language' });
-    expect(within(group).getAllByRole('menuitemradio').map((b) => b.textContent)).toEqual(['EN', 'FR', 'RW']);
-    fireEvent.click(within(group).getByRole('menuitemradio', { name: 'Kinyarwanda' }));
-    expect(localStorage.getItem('ssms_locale')).toBe('rw');
-    expect(screen.getByRole('menu')).toBeInTheDocument();
+    const link = screen.getByRole('link', { name: /Auris Tuyisenge/ });
+    expect(link).toHaveAttribute('href', '/settings/account');
+    expect(link).toHaveTextContent('Auris Tuyisenge');
+    expect(link).toHaveTextContent('Administrator');
+    fireEvent.click(link);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Auris Tuyisenge/ })).not.toBeInTheDocument();
   });
 
-  it('shows the account menu with settings and sign out', () => {
+  it('says in its name that the link opens Settings', () => {
     topbar('/admin');
-    const trigger = screen.getByRole('button', { name: /Auris Tuyisenge/ });
-    expect(trigger).toHaveAttribute('aria-expanded', 'false');
-    fireEvent.click(trigger);
-    expect(screen.getByRole('menuitem', { name: 'Settings' })).toHaveAttribute('href', '/settings/account');
-    expect(screen.getByRole('menuitem', { name: 'Sign Out' })).toBeInTheDocument();
-  });
-});
-
-describe('TopBar appearance', () => {
-  const openMenu = () => {
-    renderAt('/admin', <TopBar onMenuToggle={() => {}} />);
-    fireEvent.click(screen.getByRole('button', { name: /Auris Tuyisenge/ }));
-  };
-  const choice = (name: string) => screen.getByRole('menuitemradio', { name });
-
-  it('offers Auto, Light and Dark in the account menu, with Auto picked at first', () => {
-    openMenu();
-    const group = screen.getByRole('group', { name: 'Appearance' });
-    expect(within(group).getAllByRole('menuitemradio').map((b) => b.textContent)).toEqual(['Auto', 'Light', 'Dark']);
-    expect(choice('Auto')).toHaveAttribute('aria-checked', 'true');
-    expect(choice('Dark')).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('link', { name: 'Auris Tuyisenge, Settings' })).toBeInTheDocument();
   });
 
-  it('remembers the choice and shows which one is picked', () => {
-    openMenu();
-    fireEvent.click(choice('Dark'));
-    expect(localStorage.getItem('ssms_theme')).toBe('dark');
-    expect(choice('Dark')).toHaveAttribute('aria-checked', 'true');
-    expect(choice('Auto')).toHaveAttribute('aria-checked', 'false');
-  });
-
-  it('keeps the menu open so the person sees the change', () => {
-    openMenu();
-    fireEvent.click(choice('Light'));
-    expect(screen.getByRole('menu')).toBeInTheDocument();
+  it('keeps Sign Out in the sidebar only, and no second Alerts link beside the bell', () => {
+    topbar('/admin');
+    expect(screen.queryByRole('button', { name: 'Sign Out' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Alerts' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Notifications/ })).toBeInTheDocument();
   });
 
   it('reads in French', () => {
     localStorage.setItem('ssms_locale', 'fr');
-    openMenu();
-    const group = screen.getByRole('group', { name: 'Apparence' });
-    expect(within(group).getAllByRole('menuitemradio').map((b) => b.textContent)).toEqual(['Auto', 'Clair', 'Sombre']);
+    topbar('/admin');
+    expect(screen.getByRole('link', { name: 'Auris Tuyisenge, Paramètres' })).toHaveAttribute('href', '/settings/account');
   });
 });
