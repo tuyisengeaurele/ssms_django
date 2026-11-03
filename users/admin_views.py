@@ -128,7 +128,7 @@ class AdminUserDeactivateView(APIView):
 
         user.is_active = False
         user.save(update_fields=['is_active'])
-        revoke_all_refresh_tokens(user)
+        revoke_all_refresh_tokens(user, 'account_removed')
         log_action(request, 'DELETE', 'User', user.pk, f'Deleted user {user.email}')
         return api_success(None, 'User deleted.')
 

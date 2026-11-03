@@ -2,6 +2,7 @@ from django.urls import path
 
 from .email_verification_views import ResendVerificationView, VerifyEmailView
 from .password_reset_views import PasswordResetConfirmView, PasswordResetRequestView
+from .session_views import SessionDetailView, SessionListView, SessionRevokeOthersView
 from .views import ChangePasswordView, CookieTokenRefreshView, LoginView, LogoutView, ProfileView, RegisterView
 
 urlpatterns = [
@@ -10,6 +11,9 @@ urlpatterns = [
     path('logout',            LogoutView.as_view(),           name='auth_logout'),
     path('me',                ProfileView.as_view(),          name='auth_me'),
     path('change-password',   ChangePasswordView.as_view(),   name='auth_change_password'),
+    path('sessions',                SessionListView.as_view(),         name='auth_sessions'),
+    path('sessions/revoke-others',  SessionRevokeOthersView.as_view(), name='auth_sessions_revoke_others'),
+    path('sessions/<str:pk>',       SessionDetailView.as_view(),       name='auth_session'),
     path('token/refresh',     CookieTokenRefreshView.as_view(), name='token_refresh'),
     path('password-reset/request', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('password-reset/confirm', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),

@@ -64,3 +64,43 @@ class User(AbstractBaseUser):
     @property
     def is_staff(self):
         return self.role == Role.ADMIN
+
+
+class UserSession(models.Model):
+    """One signed in browser or app. Its id travels inside the tokens as the claim `sid`.
+
+    The refresh token in the cookie changes on every renewal. The row remembers the recent ones and which were used,
+    so a renewal whose answer never arrived can be asked again without signing the person out.
+    """
+    id = models.CharField(primary_key=True, max_length=36, default=_generate_id, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sessions', db_column='userId')
+    # The last few refresh tokens handed out: [{'jti': ..., 'used_at': seconds or None}]. A token is used once.
+    # Using it again soon, from the same browser, is a renewal whose answer was lost. Using it again later is theft.
+    tokens = models.JSONField(default=list, blank=True)
+    device_label = models.CharField(max_length=80, blank=True, default='', db_column='deviceLabel')
+    browser = models.CharField(max_length=40, blank=True, default='')
+    os = models.CharField(max_length=40, blank=True, default='')
+    is_installed_app = models.BooleanField(default=False, db_column='isInstalledApp')
+    custom_name = models.CharField(max_length=40, blank=True, default='', db_column='customName')
+    user_agent = models.CharField(max_length=300, blank=True, default='', db_column='userAgent')
+    created_at = models.DateTimeField(auto_now_add=True, db_column='createdAt')
+    last_used_at = models.DateTimeField(db_column='lastUsedAt')
+    last_activity_at = models.DateTimeField(db_column='lastActivityAt')
+    expires_at = models.DateTimeField(db_column='expiresAt')
+    revoked_at = models.DateTimeField(null=True, blank=True, db_column='revokedAt')
+    revoked_reason = models.CharField(max_length=20, blank=True, default='', db_column='revokedReason')
+
+    class Meta:
+        db_table = 'user_sessions'
+        indexes = [models.Index(fields=['user', 'revoked_at'], name='user_sessions_user_revoked')]
+
+    @staticmethod
+    def ends_at(start):
+        """The last moment a session can live, however often it is renewed."""
+        from datetime import timedelta
+
+        from django.conf import settings
+        return start + timedelta(days=settings.SESSION_ABSOLUTE_DAYS)
+
+    def is_alive(self, now) -> bool:
+        return self.revoked_at is None and now < self.expires_at

@@ -2,7 +2,6 @@ from django.contrib.auth import authenticate, get_user_model
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as DRFValidationError
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.validators import validate_new_password
 
@@ -152,11 +151,3 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError('email_not_verified')
         attrs['user'] = user
         return attrs
-
-
-def get_tokens_for_user(user):
-    refresh = RefreshToken.for_user(user)
-    return {
-        'access': str(refresh.access_token),
-        'refresh': str(refresh),
-    }

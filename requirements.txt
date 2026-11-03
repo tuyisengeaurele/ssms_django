@@ -39,3 +39,7 @@ anyio==4.15.1
 # PDF documents with the SSMS letterhead (charset-normalizer comes with reportlab)
 reportlab==5.1.0
 charset-normalizer==3.5.2
+
+# Names a signed in device from the browser's agent text (ua-parser-builtins carries its rules)
+ua-parser==1.0.2
+ua-parser-builtins==202610

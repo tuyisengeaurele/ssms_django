@@ -1,5 +1,36 @@
 # Changelog
 
+## Signed in devices, and a sign in that survives a lost answer (security plan, phase 1)
+
+Every sign in is now a session the person can see on their Profile page, name, and sign out. A renewal whose answer was lost on a weak signal no longer signs the person out.
+
+### Checked
+- Backend: 1673 tests pass (71 new) and `ruff` is clean on the changed files. Frontend: 1544 tests pass (24 new) and `tsc` is clean. `pip-audit` finds nothing in the two new packages. `npm test` still prints the one unhandled `RangeError` from `SupervisorFarmersPage.test.tsx`, which also happens on `master`.
+- **In a real browser** on your running dev servers, with a throwaway farmer (deleted again, its sessions with it): signing in showed one device on the Profile page; a second sign in from an iPhone agent added "Safari on iPhone"; I renamed it to "My phone" with the Enter key; "Sign out" asked first, and after confirming the phone's access token and refresh cookie both answered 401 at once while the browser stayed signed in; the audit log says "Signed out device: Safari on iPhone". A page reload renewed the sign in through the new session. Kinyarwanda reads correctly and there is no sideways scroll at 375 pixels.
+- The address was removed after the browser check, so that check saw it and the final screen was not looked at again in a browser (the page tests cover it).
+- Not checked: a real phone model (Chrome only gives it on request, and I did not try a phone), Safari and Firefox, the "new device" email in a real mailbox (tested with the test mail box only), a renewal lost on a real weak network (tested by throwing the answer away in a test), waiting 15 minutes for a token to run out, load (each request that carries a session token now does one more indexed read), light mode, and French on screen (tested in the test suite).
+
+### What it does
+- **Devices list.** Profile shows each place the account is signed in: the name, which one is this device and when it was last used. No network address is kept for a device (removed before this shipped). The audit log still records an address for security events such as sign in, as the privacy policy says. Rename a device, sign one out (with a question first), or sign out all the others.
+- **Names.** "Chrome on Windows", "Safari on iPhone", "SSMS app on Windows" for the installed app. Chrome hides the phone model, so "Chrome on Pixel 9" appears only when the browser agrees to say it; otherwise it says "Chrome on Android". Anything the page sends is cleaned and cut to 40 characters.
+- **A lost answer.** Every refresh cookie is used once. If the answer never arrives, the same browser may ask again with the old cookie for 30 seconds. The same cookie from another browser, or later, means a copy, and the whole session ends and is written to the audit log. Two tabs asking together are both answered.
+- **A limit.** A sign in ends 30 days after it began, however often it renews. Before this it could slide for ever.
+- **Ending at once.** Signing a device out, changing the password, a password reset or turning a user off now stops that device's access token at its next request, not when the token runs out in up to 15 minutes.
+- **New device email.** A sign in from a device the account has not used before sends a short email (no address in it) that says what to do if it was not them. The very first sign in of an account sends nothing.
+- **Nightly clean up.** Sessions that ended more than 30 days ago are deleted (`prune_sessions`, in the nightly job).
+- **The privacy policy** says what is kept and for how long.
+
+### Needs doing on Render
+- Run the migrations `users/0005_usersession` and `users/0006_session_recent_tokens`. Both are applied to your local database.
+- Install the new packages (`ua-parser`, `ua-parser-builtins`). Nothing else.
+- People who are signed in on the day this ships stay signed in: their old cookie is accepted once and given a session.
+
+### Decided
+- **Same browser only, for a short time.** A copied cookie used at once from a different browser is refused. A test that replayed an old cookie from an identical client had to change, because that is exactly the retry this allows. It now replays from another browser.
+- **Remembering tokens, not "current and previous".** The session keeps the last 5 refresh tokens and which were used. Keeping only two would let two racing tabs leave the cookie holding a token that is neither, and sign the person out 15 minutes later.
+- **Devices list shows live sessions only.** Ended ones are kept for 30 days for the record and then pruned.
+- **The "signed out everywhere" reason has a short name** (`signed_out_all`) because the column holds 20 characters. The tests found this.
+
 ## A QR code on a harvest lot (Plan 9, item G6)
 
 A farmer can make a QR code for a harvest lot. A buyer who scans it sees a short page about the lot, with no sign in, and the farmer can switch it off at any time.

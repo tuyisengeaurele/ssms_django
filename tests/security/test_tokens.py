@@ -58,7 +58,9 @@ def test_a_used_refresh_token_cannot_be_replayed():
     client, login = sign_in(UserFactory())
     old = login.cookies['ssms_refresh'].value
     assert client.post(REFRESH).status_code == 200
+    # The same browser may ask again for a few seconds (the answer can be lost). A copy used elsewhere may not.
     thief = APIClient()
+    thief.defaults['HTTP_USER_AGENT'] = 'another-browser'
     thief.cookies['ssms_refresh'] = old
     assert thief.post(REFRESH).status_code == 401
 

@@ -13,6 +13,7 @@ const sections: LegalSection[] = [
           <li><strong>Farm and batch data:</strong> farm names, the place you choose for each farm, batch stages and the sensor readings you enter. If you use "Use my location" when you add or edit a farm, the exact position of the farm is saved with it. Your cooperative's supervisors and the SSMS team can see it on a map. You can remove it from the farm form at any time.</li>
           <li><strong>Disease check images:</strong> photos you upload for analysis are stored on Cloudinary and used only to run the disease check.</li>
           <li><strong>Usage data:</strong> actions such as batch stage changes and logins are recorded in an audit log for security and accountability.</li>
+          <li><strong>Signed in devices:</strong> each time you sign in we keep the name of the device (for example "Chrome on Windows"), the browser's identification text, and when it was last used. This is what your Profile page shows, so you can sign out a device you do not recognise. A sign in that has ended is deleted after 30 days.</li>
           <li><strong>Technical data:</strong> IP address, browser type and request times, collected automatically for security.</li>
         </ul>
       </>
@@ -137,7 +138,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalLayout
       title="Privacy Policy"
-      updated="October 29, 2026"
+      updated="November 3, 2026"
       intro={
         <>
           This policy explains how the Smart Sericulture Management System (SSMS, we, our) collects, uses and protects information about the people who use the platform. By registering or using SSMS you agree to it.

@@ -18,7 +18,9 @@ from core.validators import validate_new_password
 
 from .cookie_utils import REFRESH_COOKIE, clear_refresh_cookie, set_refresh_cookie
 from .email_verification_views import _send_verification_email
-from .serializers import LoginSerializer, RegisterSerializer, UserSerializer, get_tokens_for_user
+from .models import UserSession
+from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
+from .sessions import SessionEnded, end_all_but, reissue, revoke, rotate, start_session
 
 logger = logging.getLogger(__name__)
 
@@ -79,13 +81,13 @@ class LoginView(APIView):
             return api_error('Please check what you entered and try again.', 422, errors)
         user = serializer.validated_data['user']
         lockout.clear(email)
-        tokens = get_tokens_for_user(user)
+        _, access, refresh = start_session(request, user, request.data.get('device'))
         log_action(request, 'LOGIN', 'User', user.pk, f'Login: {user.email}', actor=user)
         response = api_success(
-            {'user': UserSerializer(user).data, 'token': tokens['access']},
+            {'user': UserSerializer(user).data, 'token': access},
             'Logged in successfully.',
         )
-        set_refresh_cookie(response, tokens['refresh'])
+        set_refresh_cookie(response, refresh)
         return response
 
 
@@ -126,6 +128,9 @@ class LogoutView(APIView):
                 token = RefreshToken(refresh_token_str)
                 actor = User.objects.get(pk=token.payload['user_id'])
                 token.blacklist()
+                session = UserSession.objects.filter(pk=token.payload.get('sid')).first()
+                if session:
+                    revoke(session, 'logout')
             except (TokenError, KeyError, User.DoesNotExist):
                 pass  # Already blacklisted or invalid, still clear the cookie
 
@@ -148,28 +153,18 @@ class CookieTokenRefreshView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-
-        refresh_token_str = request.COOKIES.get(REFRESH_COOKIE)
-        if not refresh_token_str:
+        presented = request.COOKIES.get(REFRESH_COOKIE)
+        if not presented:
             return api_error('Your session has ended. Please sign in again.', 401)
         try:
-            refresh = RefreshToken(refresh_token_str)
-            # A deactivated or deleted account cannot renew a session.
-            user = User.objects.filter(pk=refresh['user_id']).first()
-            if user is None or not user.is_active:
-                return api_error('Your session has ended. Please sign in again.', 401)
-            access_token = str(refresh.access_token)
-            # Rotate: blacklist old, generate new refresh token
-            refresh.blacklist()
-            refresh.set_jti()
-            refresh.set_exp()
-            new_refresh_str = str(refresh)
-        except TokenError:
+            session, access, refresh = rotate(request, presented)
+        except SessionEnded as ended:
+            if ended.reason == 'reused' and ended.session is not None:
+                log_action(request, 'OTHER', 'User', ended.session.user_id,
+                           f'Old sign in cookie used again, session ended: {ended.session.device_label}', actor=ended.session.user)
             return api_error('Your session has ended. Please sign in again.', 401)
-        response = Response({'access': access_token})
-        set_refresh_cookie(response, new_refresh_str)
+        response = Response({'access': access})
+        set_refresh_cookie(response, refresh)
         return response
 
 
@@ -201,9 +196,15 @@ class ChangePasswordView(APIView):
         request.user.set_password(new_pass)
         request.user.save(update_fields=['password'])
 
-        # Every other device is signed out. This one gets a fresh session so the person is not.
-        revoke_all_refresh_tokens(request.user)
-        tokens = get_tokens_for_user(request.user)
-        response = api_success({'token': tokens['access']}, 'Password changed successfully.')
-        set_refresh_cookie(response, tokens['refresh'])
+        # Every other device is signed out. This one stays signed in.
+        sid = getattr(request, 'session_id', None)
+        kept = UserSession.objects.filter(pk=sid, user=request.user, revoked_at__isnull=True).first() if sid else None
+        if kept:
+            end_all_but(request.user, kept, 'password')
+            access, refresh = reissue(kept)
+        else:
+            revoke_all_refresh_tokens(request.user, 'password')
+            _, access, refresh = start_session(request, request.user)
+        response = api_success({'token': access}, 'Password changed successfully.')
+        set_refresh_cookie(response, refresh)
         return response

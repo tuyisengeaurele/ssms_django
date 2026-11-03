@@ -1,0 +1,89 @@
+"""The signed in devices of the person who asks. Nobody sees or touches another person's."""
+from django.utils import timezone
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+
+from audit_log.utils import log_action
+from core.throttles import SessionsRateThrottle
+from core.utils import api_error, api_success
+
+from .cookie_utils import clear_refresh_cookie
+from .devices import clean_text
+from .models import UserSession
+from .sessions import end_all_but, revoke
+
+LIST_LIMIT = 50
+
+
+def _row(session: UserSession, current_id) -> dict:
+    return {
+        'id': session.id,
+        'device_label': session.device_label,
+        'custom_name': session.custom_name,
+        'browser': session.browser,
+        'os': session.os,
+        'is_installed_app': session.is_installed_app,
+        'created_at': session.created_at,
+        'last_used_at': session.last_used_at,
+        'is_current': session.id == current_id,
+    }
+
+
+def _alive(user):
+    return UserSession.objects.filter(user=user, revoked_at__isnull=True, expires_at__gt=timezone.now())
+
+
+class _SessionView(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [SessionsRateThrottle]
+
+    def current_id(self, request):
+        return getattr(request, 'session_id', None)
+
+
+class SessionListView(_SessionView):
+    """GET /api/auth/sessions: the live devices, the most recently used first."""
+
+    def get(self, request):
+        found = _alive(request.user).order_by('-last_used_at')[:LIST_LIMIT]
+        return api_success([_row(s, self.current_id(request)) for s in found])
+
+
+class SessionDetailView(_SessionView):
+    """PATCH renames a device, DELETE signs it out."""
+
+    def _own(self, request, pk):
+        return _alive(request.user).filter(pk=pk).first()
+
+    def patch(self, request, pk):
+        session = self._own(request, pk)
+        if session is None:
+            return api_error("We couldn't find that device.", 404)
+        name = request.data.get('custom_name')
+        if not isinstance(name, str):
+            return api_error('Please enter a name.', 422)
+        session.custom_name = clean_text(name)
+        session.save(update_fields=['custom_name'])
+        return api_success(_row(session, self.current_id(request)), 'Device renamed.')
+
+    def delete(self, request, pk):
+        session = self._own(request, pk)
+        if session is None:
+            return api_error("We couldn't find that device.", 404)
+        revoke(session, 'revoked')
+        log_action(request, 'LOGOUT', 'User', request.user.pk, f'Signed out device: {session.device_label}')
+        response = api_success(None, 'Device signed out.')
+        if session.id == self.current_id(request):
+            clear_refresh_cookie(response)
+        return response
+
+
+class SessionRevokeOthersView(_SessionView):
+    """POST /api/auth/sessions/revoke-others: sign out every device but this one."""
+
+    def post(self, request):
+        sid = self.current_id(request)
+        kept = _alive(request.user).filter(pk=sid).first() if sid else None
+        ended = end_all_but(request.user, kept, 'revoked')
+        log_action(request, 'LOGOUT', 'User', request.user.pk, f'Signed out {ended} other device(s)')
+        return api_success({'revoked': ended}, 'Other devices signed out.')

@@ -173,6 +173,7 @@ REST_FRAMEWORK = {
         'contact': '5/hour',
         'device': '30/minute',   # readings per device key
         'invitation': '20/minute',
+        'sessions': '30/minute',   # signed in devices: list, rename, sign out
         'lot': '30/minute',   # strangers opening the page behind a lot's QR code
     },
 }
@@ -190,6 +191,11 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS':   True,   # issue a new refresh token on every refresh
     'BLACKLIST_AFTER_ROTATION': True,  # blacklist the old refresh token after rotation
 }
+
+# A signed in device lives at most this long, however often it renews. The refresh token alone slides for 7 days.
+SESSION_ABSOLUTE_DAYS = config('SESSION_ABSOLUTE_DAYS', default=30, cast=int)
+# A renewal whose answer was lost (weak mobile signal) can be asked again with the old cookie for this long.
+SESSION_REFRESH_GRACE_SECONDS = config('SESSION_REFRESH_GRACE_SECONDS', default=30, cast=int)
 
 CORS_ALLOWED_ORIGINS = parse_list(config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173'))
 CORS_ALLOW_CREDENTIALS = True
