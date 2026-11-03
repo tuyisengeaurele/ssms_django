@@ -14,7 +14,6 @@ from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, Ou
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.mail import Email, send_email_async
-from core.net import get_client_ip
 
 from .devices import DeviceInfo, describe_device
 from .models import User, UserSession
@@ -68,8 +67,7 @@ def start_session(request, user, hints=None) -> tuple[UserSession, str, str]:
 
     session = UserSession.objects.create(
         user=user, device_label=info.label, browser=info.browser, os=info.os, is_installed_app=info.is_installed_app,
-        user_agent=_agent(request), ip_address=get_client_ip(request), last_used_at=now, last_activity_at=now,
-        expires_at=UserSession.ends_at(now),
+        user_agent=_agent(request), last_used_at=now, last_activity_at=now, expires_at=UserSession.ends_at(now),
     )
     refresh = _issue(session)
     _remember(session, refresh['jti'])
@@ -108,7 +106,7 @@ def _legacy_session(request, token: RefreshToken) -> UserSession:
     info = describe_device(_agent(request), None)
     return UserSession.objects.create(
         user=user, device_label=info.label, browser=info.browser, os=info.os, user_agent=_agent(request),
-        ip_address=get_client_ip(request), last_used_at=now, last_activity_at=now, expires_at=UserSession.ends_at(now),
+        last_used_at=now, last_activity_at=now, expires_at=UserSession.ends_at(now),
         tokens=[{'jti': token['jti'], 'used_at': None}],
     )
 
@@ -148,8 +146,7 @@ def rotate(request, presented: str) -> tuple[UserSession, str, str]:
                     entry['used_at'] = now.timestamp()
             _remember(session, refresh['jti'])
             session.last_used_at = now
-            session.ip_address = get_client_ip(request) or session.ip_address
-            session.save(update_fields=['tokens', 'last_used_at', 'ip_address'])
+            session.save(update_fields=['tokens', 'last_used_at'])
     if verdict:
         if verdict == 'reused':
             revoke(session, 'reused')

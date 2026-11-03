@@ -47,8 +47,9 @@ def test_the_list_shows_my_devices_and_marks_this_one():
     assert sorted(r['deviceLabel'] for r in found) == ['Chrome on Windows', 'Safari on iPhone']
     assert [r['deviceLabel'] for r in found if r['isCurrent']] == ['Chrome on Windows']
     first = found[0]
-    assert {'id', 'deviceLabel', 'customName', 'browser', 'os', 'isInstalledApp', 'ipAddress', 'createdAt', 'lastUsedAt', 'isCurrent'} <= set(first)
+    assert {'id', 'deviceLabel', 'customName', 'browser', 'os', 'isInstalledApp', 'createdAt', 'lastUsedAt', 'isCurrent'} <= set(first)
     assert 'userAgent' not in first and 'tokens' not in first
+    assert 'ipAddress' not in first
 
 
 def test_ended_sessions_are_not_listed():

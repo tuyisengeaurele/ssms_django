@@ -45,7 +45,6 @@ def test_login_creates_one_session_with_the_device_and_address():
     session = UserSession.objects.get(user=user)
     assert session.device_label == 'Chrome on Windows'
     assert (session.browser, session.os, session.is_installed_app) == ('Chrome', 'Windows', False)
-    assert session.ip_address == '127.0.0.1'
     assert session.user_agent == CHROME_WINDOWS
     assert abs(session.expires_at - (timezone.now() + timedelta(days=30))) < timedelta(minutes=1)
     assert session.revoked_at is None

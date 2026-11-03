@@ -23,7 +23,6 @@ def _row(session: UserSession, current_id) -> dict:
         'browser': session.browser,
         'os': session.os,
         'is_installed_app': session.is_installed_app,
-        'ip_address': session.ip_address,
         'created_at': session.created_at,
         'last_used_at': session.last_used_at,
         'is_current': session.id == current_id,

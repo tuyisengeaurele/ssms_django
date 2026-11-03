@@ -53,3 +53,7 @@ def test_deleting_a_user_deletes_their_sessions():
 
 def test_a_new_session_starts_with_no_remembered_tokens():
     assert make_session(UserFactory()).tokens == []
+
+
+def test_a_session_does_not_keep_the_address_of_the_person():
+    assert 'ip_address' not in {field.name for field in UserSession._meta.get_fields()}

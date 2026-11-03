@@ -83,7 +83,6 @@ class UserSession(models.Model):
     is_installed_app = models.BooleanField(default=False, db_column='isInstalledApp')
     custom_name = models.CharField(max_length=40, blank=True, default='', db_column='customName')
     user_agent = models.CharField(max_length=300, blank=True, default='', db_column='userAgent')
-    ip_address = models.GenericIPAddressField(null=True, blank=True, db_column='ipAddress')
     created_at = models.DateTimeField(auto_now_add=True, db_column='createdAt')
     last_used_at = models.DateTimeField(db_column='lastUsedAt')
     last_activity_at = models.DateTimeField(db_column='lastActivityAt')
