@@ -135,7 +135,6 @@ export default function SignedInDevices() {
                       {device.customName ? <p className="signin-sub">{device.deviceLabel}</p> : null}
                       <p className="signin-sub">
                         {fill(t('sdLastUsed'), { when: when.format(new Date(device.lastUsedAt)) })}
-                        {device.ipAddress ? ` · ${fill(t('sdAddress'), { ip: device.ipAddress })}` : ''}
                         {device.isInstalledApp ? ` · ${t('sdInstalledApp')}` : ''}
                       </p>
                     </>

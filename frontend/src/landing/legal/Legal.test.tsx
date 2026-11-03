@@ -41,11 +41,12 @@ describe('Privacy policy page', () => {
     expect(screen.getByText(/the time you accepted the terms/)).toBeInTheDocument();
   });
 
-  it('says that each sign in keeps a device name and address, and for how long an ended one stays', () => {
+  it('says that each sign in keeps a device name and no address, and for how long an ended one stays', () => {
     renderPage(<PrivacyPolicyPage />, '/privacy');
     const item = screen.getByText((_, el) => el?.tagName === 'LI' && /Signed in devices:/.test(el.textContent ?? ''));
     expect(item).toHaveTextContent(/name of the device/);
-    expect(item).toHaveTextContent(/address/);
+    expect(item).toHaveTextContent(/identification text/);
+    expect(item).not.toHaveTextContent(/address/);
     expect(item).toHaveTextContent(/deleted after 30 days/);
   });
 

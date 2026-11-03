@@ -11,13 +11,13 @@ import SignedInDevices from './SignedInDevices';
 
 const laptop = {
   id: 'one', deviceLabel: 'Chrome on Windows', customName: '', browser: 'Chrome', os: 'Windows', isInstalledApp: false,
-  ipAddress: '41.186.0.7', createdAt: '2026-10-20T08:00:00Z', lastUsedAt: '2026-10-30T09:15:00Z', isCurrent: true,
+  createdAt: '2026-10-20T08:00:00Z', lastUsedAt: '2026-10-30T09:15:00Z', isCurrent: true,
 };
 const phone = {
   ...laptop, id: 'two', deviceLabel: 'Chrome on Pixel 9', customName: 'My phone', browser: 'Chrome', os: 'Android',
-  ipAddress: '41.186.0.9', lastUsedAt: '2026-10-29T18:00:00Z', isCurrent: false,
+  lastUsedAt: '2026-10-29T18:00:00Z', isCurrent: false,
 };
-const tablet = { ...laptop, id: 'three', deviceLabel: 'Safari on iPad', customName: '', ipAddress: null, isCurrent: false };
+const tablet = { ...laptop, id: 'three', deviceLabel: 'Safari on iPad', customName: '', isCurrent: false };
 
 function open() {
   return render(
@@ -49,8 +49,13 @@ describe('Signed in devices', () => {
     expect(await screen.findByText('Chrome on Windows')).toBeInTheDocument();
     const row = screen.getByText('My phone').closest('li') as HTMLElement;
     expect(within(row).getByText('Chrome on Pixel 9')).toBeInTheDocument();
-    expect(within(row).getByText(/41\.186\.0\.9/)).toBeInTheDocument();
-    expect(screen.getByText('Safari on iPad').closest('li')).not.toHaveTextContent('Address');
+  });
+
+  it('never shows an address, even if the server were to send one', async () => {
+    open();
+    await screen.findByText('Chrome on Windows');
+    expect(screen.queryByText(/Address/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/41\.186/)).not.toBeInTheDocument();
   });
 
   it('says in words which one is this device, and offers it no sign out', async () => {

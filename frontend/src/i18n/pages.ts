@@ -641,7 +641,6 @@ export const pageTranslations = {
   sdHint: k("These are the places your account is signed in. Sign out any you do not recognise.", "Voici les endroits où votre compte est connecté. Déconnectez ceux que vous ne reconnaissez pas.", "Aha ni ho konti yawe yinjiriwe. Sohora ibyo utazi."),
   sdThisDevice: k("This device", "Cet appareil", "Iki gikoresho"),
   sdLastUsed: k("Last used {when}", "Dernière utilisation {when}", "Cyakoreshejwe {when}"),
-  sdAddress: k("Address {ip}", "Adresse {ip}", "Aderesi {ip}"),
   sdInstalledApp: k("Installed app", "Application installée", "Porogaramu yashyizweho"),
   sdRename: k("Rename", "Renommer", "Hindura izina"),
   sdNameLabel: k("Name for this device", "Nom de cet appareil", "Izina ry'iki gikoresho"),

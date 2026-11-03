@@ -44,7 +44,6 @@ export interface SignedInDevice {
   browser: string;
   os: string;
   isInstalledApp: boolean;
-  ipAddress: string | null;
   createdAt: string;
   lastUsedAt: string;
   isCurrent: boolean;
