@@ -55,7 +55,7 @@ describe('Sidebar for an administrator', () => {
       'Dashboard', 'System overview',
       'Users', 'Cooperatives', 'Messages',
       'Farms', 'Harvests', 'Detection reports', 'Devices',
-      'Alerts', 'Cooperative report', 'Audit log', 'System report', 'System health',
+      'Alerts', 'Audit log', 'System report', 'System health',
       'Settings',
     ]);
   });
@@ -153,26 +153,42 @@ describe('Sidebar for other roles', () => {
     expect(screen.queryByRole('link', { name: 'Cooperatives' })).not.toBeInTheDocument();
   });
 
-  it('gives a supervisor their farmers, and nobody else', () => {
+  it('gives a supervisor My cooperative, which holds their farmers and their report', () => {
     auth.value = { user: { name: 'Sup', role: 'SUPERVISOR', email: 's@x.rw' }, logout: vi.fn() };
-    sidebar('/supervisor');
-    expect(screen.getByRole('link', { name: 'My farmers' })).toHaveAttribute('href', '/supervisor/farmers');
+    sidebar('/supervisor/cooperative');
+    const link = screen.getByRole('link', { name: 'My cooperative' });
+    expect(link).toHaveAttribute('href', '/supervisor/cooperative');
+    expect(link).toHaveAttribute('aria-current', 'page');
   });
 
-  it('gives a supervisor and an admin the cooperative report, and a farmer not', () => {
+  it('keeps My cooperative marked on each of its sections', () => {
     auth.value = { user: { name: 'Sup', role: 'SUPERVISOR', email: 's@x.rw' }, logout: vi.fn() };
-    const view = sidebar('/supervisor');
-    expect(screen.getByRole('link', { name: 'Cooperative report' })).toHaveAttribute('href', '/reports/cooperative');
-    view.unmount();
-    auth.value = { user: { name: 'Far', role: 'FARMER', email: 'f@x.rw' }, logout: vi.fn() };
-    sidebar('/farmer');
-    expect(screen.queryByRole('link', { name: 'Cooperative report' })).not.toBeInTheDocument();
+    sidebar('/supervisor/cooperative/farmers');
+    expect(screen.getByRole('link', { name: 'My cooperative' })).toHaveAttribute('aria-current', 'page');
   });
 
-  it('does not show My farmers to a farmer or an admin', () => {
-    auth.value = { user: { name: 'Far', role: 'FARMER', email: 'f@x.rw' }, logout: vi.fn() };
-    sidebar('/farmer');
-    expect(screen.queryByRole('link', { name: 'My farmers' })).not.toBeInTheDocument();
+  it('has no separate cooperative report or My farmers link for anyone, because both are in the cooperative page', () => {
+    for (const role of ['SUPERVISOR', 'ADMIN', 'FARMER']) {
+      auth.value = { user: { name: 'Someone', role, email: 'a@x.rw' }, logout: vi.fn() };
+      const view = sidebar('/farmer');
+      expect(screen.queryByRole('link', { name: 'Cooperative report' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'My farmers' })).not.toBeInTheDocument();
+      view.unmount();
+    }
+  });
+
+  it('keeps Cooperatives marked on one cooperative of the admin', () => {
+    sidebar('/admin/cooperatives/abc123/members');
+    expect(screen.getByRole('link', { name: 'Cooperatives' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('does not show My cooperative to a farmer or an admin', () => {
+    for (const role of ['FARMER', 'ADMIN']) {
+      auth.value = { user: { name: 'Someone', role, email: 'a@x.rw' }, logout: vi.fn() };
+      const view = sidebar('/farmer');
+      expect(screen.queryByRole('link', { name: 'My cooperative' })).not.toBeInTheDocument();
+      view.unmount();
+    }
   });
 });
 
