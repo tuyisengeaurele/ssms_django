@@ -95,6 +95,17 @@ describe('opening and closing', () => {
 });
 
 describe('what it lists', () => {
+  it('lists Settings once, and finds Safe ranges for an admin only', () => {
+    auth.role = 'ADMIN';
+    const view = open();
+    expect(options().filter((o) => o.includes('Settings'))).toHaveLength(1);
+    expect(options().some((o) => o.includes('Safe ranges'))).toBe(true);
+    view.unmount();
+    auth.role = 'FARMER';
+    open();
+    expect(options().some((o) => o.includes('Safe ranges'))).toBe(false);
+  });
+
   it('lists the pages a farmer can open, with Settings and a new farm', async () => {
     open();
     expect(options()).toEqual(expect.arrayContaining(['Dashboard', 'My Farms', 'Batches', 'Compare batches', 'Alerts', 'Settings', 'New farm'].map((n) => expect.stringContaining(n))));
