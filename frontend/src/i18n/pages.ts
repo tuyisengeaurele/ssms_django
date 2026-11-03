@@ -143,7 +143,6 @@ export const pageTranslations = {
   cmpErrorTitle: k("We could not load this comparison", "Impossible de charger cette comparaison", "Ntibyakunze gutangiza iri gereranya"),
   cmpErrorTryAgain: k("Something went wrong on our side. Please try again in a moment.", "Un problème est survenu de notre côté. Veuillez réessayer dans un instant.", "Hari ikibazo cyabaye ku ruhande rwacu. Ongera ugerageze mu kanya gato."),
   cmpErrorBody: k("One of the batches may have been deleted, or is not one you can see.", "Un des lots a peut-être été supprimé, ou vous ne pouvez pas le voir.", "Rimwe mu matsinda rishobora kuba ryasibwe, cyangwa ntiwemerewe kuribona."),
-  thLabel: k('Appearance', 'Apparence', 'Isura'),
   thAuto: k('Auto', 'Auto', 'Byikora'),
   thLight: k('Light', 'Clair', 'Umucyo'),
   thDark: k('Dark', 'Sombre', 'Umwijima'),
