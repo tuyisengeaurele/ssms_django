@@ -72,6 +72,15 @@ describe('The farms of a cooperative', () => {
     expect(within(quiet).queryByText(/alert|offline/)).not.toBeInTheDocument();
   });
 
+  it('lets the reasons wrap, so a long list of them is read in full and not cut off', async () => {
+    api.get.mockResolvedValue({ data: { data: report({ farms: [
+      { id: 'f9', name: 'Busy Farm', ownerName: 'Owner', location: 'Gatsibo', level: 'HIGH', score: 9, diseaseAlerts: 3, openAirAlerts: 2, offlineDevices: 4, activeBatches: 1, harvestKg: 0, alerts: 5 },
+    ] }) } });
+    renderCoop(PATH);
+    const reasons = await screen.findByText(/disease alerts in the last 14 days; .*; .*/);
+    expect(reasons).toHaveClass('cell-sub--wrap');
+  });
+
   it('shows the batches, the cocoons and the alerts of each farm', async () => {
     renderCoop(PATH);
     await loaded();

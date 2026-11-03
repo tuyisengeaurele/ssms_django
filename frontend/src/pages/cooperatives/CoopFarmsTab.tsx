@@ -59,7 +59,7 @@ export default function CoopFarmsTab() {
                           <td data-label={t('cpColRisk')}>
                             <div className="cell-stack">
                               <span><span className={`risk-badge risk-${f.level.toLowerCase()}`}>{t(LEVEL_KEY[f.level])}</span></span>
-                              {why ? <span className="cell-sub">{why}</span> : null}
+                              {why ? <span className="cell-sub cell-sub--wrap">{why}</span> : null}
                             </div>
                           </td>
                           <td data-label={t('crColBatches')}>{number.format(f.activeBatches)}</td>
