@@ -191,6 +191,11 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,  # blacklist the old refresh token after rotation
 }
 
+# A signed in device lives at most this long, however often it renews. The refresh token alone slides for 7 days.
+SESSION_ABSOLUTE_DAYS = config('SESSION_ABSOLUTE_DAYS', default=30, cast=int)
+# A renewal whose answer was lost (weak mobile signal) can be asked again with the old cookie for this long.
+SESSION_REFRESH_GRACE_SECONDS = config('SESSION_REFRESH_GRACE_SECONDS', default=30, cast=int)
+
 CORS_ALLOWED_ORIGINS = parse_list(config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173'))
 CORS_ALLOW_CREDENTIALS = True
 
