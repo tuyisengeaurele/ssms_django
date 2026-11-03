@@ -59,7 +59,7 @@ class SessionDetailView(_SessionView):
     def patch(self, request, pk):
         session = self._own(request, pk)
         if session is None:
-            return api_error('That device was not found.', 404)
+            return api_error("We couldn't find that device.", 404)
         name = request.data.get('custom_name')
         if not isinstance(name, str):
             return api_error('Please enter a name.', 422)
@@ -70,7 +70,7 @@ class SessionDetailView(_SessionView):
     def delete(self, request, pk):
         session = self._own(request, pk)
         if session is None:
-            return api_error('That device was not found.', 404)
+            return api_error("We couldn't find that device.", 404)
         revoke(session, 'revoked')
         log_action(request, 'LOGOUT', 'User', request.user.pk, f'Signed out device: {session.device_label}')
         response = api_success(None, 'Device signed out.')
