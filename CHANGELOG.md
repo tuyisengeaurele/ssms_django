@@ -5,7 +5,7 @@
 The person in the top bar is now one link to Settings, with no dropdown. The page that appears when a screen breaks says less.
 
 ### Checked
-- Frontend: 1573 tests pass and `tsc` is clean (6 new tests for the error page, 3 new for the top bar link; the tests of the old dropdown were removed). Backend unchanged.
+- Frontend: 1573 tests pass and `tsc` is clean (6 new tests for the error page, 4 new for the top bar link; the tests of the old dropdown were removed). Backend unchanged.
 - **In a real browser** on your dev servers, with a throwaway admin (deleted again): the person in the top bar is a link (no caret, no underline) that opens Settings, Account, and no menu appears; reloading `/settings/safe-ranges` directly shows Safe ranges inside Settings with its five rows and no crash.
 - Not checked: the new error page itself on screen (its words and layout are tested, but I could not make a real screen break on purpose), a phone, and French and Kinyarwanda on screen (the link's name is tested in French).
 
