@@ -93,7 +93,7 @@ def test_resetting_the_password_ends_every_session():
 
 
 def test_signing_out_everywhere_also_ends_a_device_that_has_renewed_its_cookie():
-    # A renewed cookie was once missed by the sign out, because only the first token of a sign in was on record.
+    # The cookie a device holds after a renewal is not the one it signed in with, and it must end too.
     user = UserFactory()
     client = sign_in(user)
     assert client.post(REFRESH).status_code == 200
