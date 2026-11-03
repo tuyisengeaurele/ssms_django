@@ -7,10 +7,10 @@ import { translations } from '../i18n/translations';
 import { formatDocumentTitle, getPageInfo, useDocumentTitle, usePageTitle } from './pageTitle';
 
 const APP_PATHS = [
-  '/farmer', '/supervisor', '/supervisor/farmers', '/farms', '/farms/new', '/farms/abc123', '/farms/abc123/batches/new',
+  '/farmer', '/supervisor', '/supervisor/cooperative', '/supervisor/cooperative/farms', '/supervisor/cooperative/farmers', '/farms', '/farms/new', '/farms/abc123', '/farms/abc123/batches/new',
   '/batches', '/batches/compare', '/batches/abc123', '/batches/abc123/detect', '/batches/abc123/harvest',
-  '/harvests', '/detections/reports', '/alerts', '/devices', '/settings/account', '/settings/security', '/settings/appearance', '/settings/safe-ranges', '/reports/cooperative',
-  '/admin', '/admin/users', '/admin/cooperatives', '/admin/contacts', '/admin/audit-log', '/admin/reports', '/admin/health',
+  '/harvests', '/detections/reports', '/alerts', '/devices', '/settings/account', '/settings/security', '/settings/appearance', '/settings/safe-ranges',
+  '/admin', '/admin/users', '/admin/cooperatives', '/admin/cooperatives/all', '/admin/cooperatives/abc123', '/admin/cooperatives/abc123/members', '/admin/contacts', '/admin/audit-log', '/admin/reports', '/admin/health',
 ];
 
 describe('getPageInfo', () => {
@@ -22,7 +22,14 @@ describe('getPageInfo', () => {
     ['/admin/audit-log', 'Audit log', 'Administration'],
     ['/admin/reports', 'System report', 'Administration'],
     ['/admin/health', 'System health', 'Administration'],
-    ['/supervisor/farmers', 'My farmers', 'Farming'],
+    ['/supervisor/cooperative', 'My cooperative', 'Farming'],
+    ['/supervisor/cooperative/farms', 'My cooperative', 'Farming'],
+    ['/supervisor/cooperative/farmers', 'My cooperative', 'Farming'],
+    ['/admin/cooperatives/abc123', 'Cooperative', 'Administration'],
+    ['/admin/cooperatives/abc123/farms', 'Cooperative', 'Administration'],
+    ['/admin/cooperatives/abc123/members', 'Cooperative', 'Administration'],
+    ['/admin/cooperatives/abc123/details', 'Cooperative', 'Administration'],
+    ['/admin/cooperatives/all', 'Cooperative', 'Administration'],
     ['/farms', 'Farms', 'Farming'],
     ['/farms/new', 'New farm', 'Farming'],
     ['/farms/abc123', 'Farm details', 'Farming'],
@@ -31,7 +38,6 @@ describe('getPageInfo', () => {
     ['/batches/abc123/detect', 'Disease check', 'Farming'],
     ['/batches/abc123/harvest', 'Harvest records', 'Farming'],
     ['/alerts', 'Alerts', 'Monitoring'],
-    ['/reports/cooperative', 'Cooperative report', 'Monitoring'],
     ['/devices', 'Devices', 'Monitoring'],
     ['/settings/account', 'Settings', 'Account'],
     ['/settings/security', 'Settings', 'Account'],

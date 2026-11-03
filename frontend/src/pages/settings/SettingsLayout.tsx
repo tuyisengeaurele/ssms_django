@@ -1,9 +1,10 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import PageHeader from '../../components/ui/PageHeader';
+import TabNav from '../../components/ui/TabNav';
 
-/** The Settings page: one title, a list of sections, and the open section beside it (above it on a phone). */
+/** The Settings page: one title, a row of tabs, and the open section under them. */
 export default function SettingsLayout() {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -19,17 +20,7 @@ export default function SettingsLayout() {
     <div>
       <PageHeader title={t('ptSettings')} subtitle={t('stSubtitle')} />
       <div className="settings-layout">
-        <nav className="settings-nav" aria-label={t('stNavLabel')}>
-          <ul>
-            {sections.map((section) => (
-              <li key={section.to}>
-                <NavLink to={section.to} className={({ isActive }) => `settings-link${isActive ? ' is-on' : ''}`}>
-                  {section.label}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <TabNav label={t('stNavLabel')} items={sections} />
         <div className="settings-body">
           <Outlet />
         </div>

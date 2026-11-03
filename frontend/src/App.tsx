@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import MotionProvider from './components/MotionProvider';
+import { cooperativeRoutes } from './pages/cooperatives/cooperativeRoutes';
 import { settingsRoutes } from './pages/settings/settingsRoutes';
 import ProtectedRoute from './components/ui/ProtectedRoute';
 const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
@@ -17,8 +18,6 @@ const CheckEmailPage = lazy(() => import('./pages/auth/CheckEmailPage'));
 const VerifyEmailPage = lazy(() => import('./pages/auth/VerifyEmailPage'));
 const FarmerDashboard = lazy(() => import('./pages/farmer/FarmerDashboard'));
 const SupervisorDashboard = lazy(() => import('./pages/supervisor/SupervisorDashboard'));
-const SupervisorFarmersPage = lazy(() => import('./pages/supervisor/SupervisorFarmersPage'));
-const CooperativeReportPage = lazy(() => import('./pages/supervisor/CooperativeReportPage'));
 const AdminHealthPage = lazy(() => import('./pages/admin/AdminHealthPage'));
 const JoinPage = lazy(() => import('./pages/auth/JoinPage'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
@@ -30,7 +29,6 @@ const BatchComparePage = lazy(() => import('./pages/farmer/BatchComparePage'));
 const BatchDetailPage = lazy(() => import('./pages/farmer/BatchDetailPage'));
 const AddDetectionPage = lazy(() => import('./pages/farmer/AddDetectionPage'));
 const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
-const AdminCooperativesPage = lazy(() => import('./pages/admin/AdminCooperativesPage'));
 const DetectionReportsPage = lazy(() => import('./pages/farmer/DetectionReportsPage'));
 const HarvestPage = lazy(() => import('./pages/farmer/HarvestPage'));
 const BatchReportPage = lazy(() => import('./pages/farmer/BatchReportPage'));
@@ -94,19 +92,15 @@ export default function App() {
               {/* Supervisor + Admin */}
               <Route element={<ProtectedRoute allowedRoles={['SUPERVISOR', 'ADMIN']} />}>
                 <Route path="/supervisor" element={<SupervisorDashboard />} />
-                <Route path="/reports/cooperative" element={<CooperativeReportPage />} />
               </Route>
 
-              {/* Supervisor only: their own cooperative's farmers and invitation links */}
-              <Route element={<ProtectedRoute allowedRoles={['SUPERVISOR']} />}>
-                <Route path="/supervisor/farmers" element={<SupervisorFarmersPage />} />
-              </Route>
+              {/* Cooperatives: the admin's list and pages, the supervisor's own, and the old addresses */}
+              {cooperativeRoutes()}
 
               {/* Admin only */}
               <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
                 <Route path="/admin"                  element={<AdminDashboard />} />
                 <Route path="/admin/users"            element={<AdminUsersPage />} />
-                <Route path="/admin/cooperatives"     element={<AdminCooperativesPage />} />
                 <Route path="/admin/health"           element={<AdminHealthPage />} />
                 <Route path="/admin/contacts"         element={<AdminContactsPage />} />
                 <Route path="/admin/audit-log"        element={<AdminAuditLogPage />} />

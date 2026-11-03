@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { cooperativeService, CreateCooperativePayload } from '../../services/cooperative.service';
-import { adminService } from '../../services/admin.service';
-import { Cooperative, CooperativeDetail, User } from '../../types';
+import { Link } from 'react-router-dom';
+import { cooperativeService } from '../../services/cooperative.service';
+import { Cooperative } from '../../types';
 import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
@@ -11,12 +11,13 @@ import { Icon } from '../../components/ui/Icon';
 import Modal from '../../components/ui/Modal';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
-import { SkeletonStatCard, SkeletonTable } from '../../components/ui/SkeletonLoader';
-import StatTile from '../../components/ui/StatTile';
-import CooperativeDetailModal from './CooperativeDetailModal';
+import { SkeletonTable } from '../../components/ui/SkeletonLoader';
+import CooperativeFormModal from '../cooperatives/CooperativeFormModal';
 
-const EMPTY_FORM: CreateCooperativePayload = { name: '', description: '', location: '' };
-
+/**
+ * The cooperatives, active and deleted. A cooperative opens as its own page with its report, farms, members and details,
+ * and the first row opens every cooperative together.
+ */
 export default function AdminCooperativesPage() {
   const { t, locale } = useLanguage();
   const { getErrorMessage } = useApiError();
@@ -25,24 +26,11 @@ export default function AdminCooperativesPage() {
   const [coops, setCoops] = useState<Cooperative[]>([]);
   const [deletedCoops, setDeletedCoops] = useState<Cooperative[]>([]);
   const [tab, setTab] = useState<'active' | 'deleted'>('active');
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
   const [confirmRestore, setConfirmRestore] = useState<Cooperative | null>(null);
   const [restoring, setRestoring] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
-  const [editCoop, setEditCoop] = useState<Cooperative | null>(null);
-  const [detail, setDetail] = useState<CooperativeDetail | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [confirmOff, setConfirmOff] = useState<Cooperative | null>(null);
-  const [turningOff, setTurningOff] = useState(false);
-  const [form, setForm] = useState<CreateCooperativePayload>(EMPTY_FORM);
-  const [formError, setFormError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState('');
-  const [candidates, setCandidates] = useState<User[]>([]);
-  const [addId, setAddId] = useState('');
-  const [memberBusy, setMemberBusy] = useState(false);
-  // The question asked before a person joins or leaves the cooperative that is open.
-  const [memberAsk, setMemberAsk] = useState<{ kind: 'add' | 'remove'; userId: string; name: string } | null>(null);
 
   useEffect(() => {
     Promise.all([cooperativeService.getAll(), cooperativeService.getDeleted()])
@@ -54,66 +42,6 @@ export default function AdminCooperativesPage() {
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const closeForm = () => {
-    setShowCreate(false);
-    setEditCoop(null);
-    setForm(EMPTY_FORM);
-    setFormError('');
-  };
-
-  const openCreate = () => {
-    setForm(EMPTY_FORM);
-    setFormError('');
-    setShowCreate(true);
-  };
-
-  const openEdit = (c: Cooperative) => {
-    setEditCoop(c);
-    setForm({ name: c.name, description: c.description ?? '', location: c.location ?? '' });
-    setFormError('');
-  };
-
-  const handleSave = async () => {
-    setFormError('');
-    if (!form.name.trim()) {
-      setFormError(t('coNameNeeded'));
-      return;
-    }
-    setSubmitting(true);
-    try {
-      if (editCoop) {
-        const res = await cooperativeService.update(editCoop.id, form);
-        setCoops((prev) => prev.map((c) => (c.id === editCoop.id ? res.data.data : c)));
-        success(t('coUpdated'));
-      } else {
-        const res = await cooperativeService.create(form);
-        setCoops((prev) => [res.data.data, ...prev]);
-        success(t('coCreated'));
-      }
-      closeForm();
-    } catch (e) {
-      setFormError(getErrorMessage(e));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleTurnOff = async () => {
-    if (!confirmOff) return;
-    setTurningOff(true);
-    try {
-      await cooperativeService.delete(confirmOff.id);
-      setCoops((prev) => prev.filter((c) => c.id !== confirmOff.id));
-      setDeletedCoops((prev) => [{ ...confirmOff, isActive: false }, ...prev]);
-      setConfirmOff(null);
-      success(t('coDeleted'));
-    } catch (e) {
-      showError(getErrorMessage(e));
-    } finally {
-      setTurningOff(false);
-    }
-  };
 
   const handleRestore = async () => {
     if (!confirmRestore) return;
@@ -131,86 +59,21 @@ export default function AdminCooperativesPage() {
     }
   };
 
-  const openView = async (c: Cooperative) => {
-    setDetail(null);
-    setAddId('');
-    setDetailOpen(true);
-    try {
-      const [detailRes, usersRes] = await Promise.all([cooperativeService.getById(c.id), adminService.getUsers()]);
-      setDetail(detailRes.data.data);
-      setCandidates(usersRes.data.data.filter((u) => u.role !== 'ADMIN'));
-    } catch (e) {
-      setDetailOpen(false);
-      showError(getErrorMessage(e));
-    }
-  };
-
-  const refreshDetail = async (id: string) => {
-    const res = await cooperativeService.getById(id);
-    setDetail(res.data.data);
-    setCoops((prev) => prev.map((c) => (c.id === id ? { ...c, memberCount: res.data.data.memberCount } : c)));
-  };
-
-  const changeMember = async (userId: string, cooperativeId: string | null, message: string) => {
-    if (!detail) return;
-    setMemberBusy(true);
-    try {
-      await adminService.updateCooperative(userId, cooperativeId);
-      await refreshDetail(detail.id);
-      setAddId('');
-      success(message);
-    } catch (e) {
-      showError(getErrorMessage(e));
-    } finally {
-      setMemberBusy(false);
-    }
-  };
-
-  const askAdd = () => {
-    const person = candidates.find((u) => u.id === addId);
-    if (person) setMemberAsk({ kind: 'add', userId: person.id, name: person.name });
-  };
-
-  const askRemove = (userId: string) => {
-    const person = detail?.members.find((m) => m.id === userId);
-    if (person) setMemberAsk({ kind: 'remove', userId, name: person.name });
-  };
-
-  const confirmMember = async () => {
-    if (!memberAsk || !detail) return;
-    await changeMember(
-      memberAsk.userId,
-      memberAsk.kind === 'add' ? detail.id : null,
-      memberAsk.kind === 'add' ? t('coMemberAdded') : t('coMemberRemoved'),
-    );
-    setMemberAsk(null);
-  };
-
   const query = search.trim().toLowerCase();
   const shownCoops = tab === 'active' ? coops : deletedCoops;
   const filtered = shownCoops.filter((c) => !query || c.name.toLowerCase().includes(query) || (c.location ?? '').toLowerCase().includes(query));
   const totalMembers = coops.reduce((sum, c) => sum + c.memberCount, 0);
   const totalFarms = coops.reduce((sum, c) => sum + c.farmCount, 0);
   const created = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
-  const formOpen = showCreate || !!editCoop;
+  const showAll = tab === 'active' && !query && coops.length > 0;
 
   return (
     <div>
-      <Modal
-        open={!!confirmOff}
-        onClose={() => setConfirmOff(null)}
-        title={t('coDeleteTitle')}
-        footer={
-          <>
-            <button className="btn btn-secondary" onClick={() => setConfirmOff(null)}>{t('btnCancel')}</button>
-            <button className="btn btn-danger" onClick={handleTurnOff} disabled={turningOff}>
-              {turningOff ? <><span className="spinner" />{t('coDeleteBusy')}</> : t('coDeleteConfirm')}
-            </button>
-          </>
-        }
-      >
-        <p className="modal-text">{confirmOff ? fill(t('coDeleteBody'), { name: confirmOff.name }) : ''}</p>
-      </Modal>
+      <CooperativeFormModal
+        open={creating}
+        onClose={() => setCreating(false)}
+        onSaved={(saved) => setCoops((prev) => [saved, ...prev])}
+      />
 
       <Modal
         open={!!confirmRestore}
@@ -228,93 +91,16 @@ export default function AdminCooperativesPage() {
         <p className="modal-text">{confirmRestore ? fill(t('coRestoreBody'), { name: confirmRestore.name }) : ''}</p>
       </Modal>
 
-      <Modal
-        open={formOpen}
-        onClose={closeForm}
-        title={editCoop ? t('coEditTitle') : t('coNew')}
-        footer={
-          <>
-            <button className="btn btn-secondary" onClick={closeForm}>{t('btnCancel')}</button>
-            <button className="btn btn-primary" disabled={submitting} onClick={handleSave}>
-              {submitting
-                ? <><span className="spinner" />{editCoop ? t('coSaving') : t('coCreating')}</>
-                : editCoop ? t('coSave') : t('coCreate')}
-            </button>
-          </>
-        }
-      >
-        {formError && <div className="alert alert-error" role="alert">{formError}</div>}
-        <div className="form-group">
-          <label className="form-label" htmlFor="co-name">{t('coFieldName')} <span className="required" aria-hidden="true">*</span></label>
-          <input id="co-name" className="form-input" value={form.name} maxLength={150} placeholder={t('coPlaceName')}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
-        </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="co-location">{t('coFieldLocation')}</label>
-          <input id="co-location" className="form-input" value={form.location} maxLength={250} placeholder={t('coPlaceLocation')}
-            onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} />
-        </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="co-description">{t('coFieldDescription')}</label>
-          <textarea id="co-description" className="form-textarea" rows={3} value={form.description} maxLength={500} placeholder={t('coPlaceDescription')}
-            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
-        </div>
-      </Modal>
-
-      <Modal
-        open={!!memberAsk}
-        onClose={() => setMemberAsk(null)}
-        title={memberAsk && detail ? fill(t(memberAsk.kind === 'add' ? 'coAddTitle' : 'coRemoveTitle'), { name: memberAsk.name, coop: detail.name }) : ''}
-        footer={
-          <>
-            <button className="btn btn-secondary" onClick={() => setMemberAsk(null)} disabled={memberBusy}>{t('btnCancel')}</button>
-            <button className={`btn ${memberAsk?.kind === 'remove' ? 'btn-danger' : 'btn-primary'}`} onClick={confirmMember} disabled={memberBusy}>
-              {memberBusy ? <span className="spinner" aria-hidden="true" /> : null}
-              {memberAsk?.kind === 'add' ? t('coAddYes') : t('coRemoveYes')}
-            </button>
-          </>
-        }
-      >
-        <p className="modal-text">
-          {memberAsk && detail ? fill(t(memberAsk.kind === 'add' ? 'coAddBody' : 'coRemoveBody'), { name: memberAsk.name, coop: detail.name }) : ''}
-        </p>
-      </Modal>
-
-      <CooperativeDetailModal
-        open={detailOpen}
-        loading={!detail}
-        detail={detail}
-        candidates={candidates}
-        addId={addId}
-        onAddIdChange={setAddId}
-        busy={memberBusy}
-        onAdd={askAdd}
-        onRemove={askRemove}
-        onClose={() => { if (!memberAsk) setDetailOpen(false); }}
-      />
-
       <PageHeader
         title={t('ptCooperatives')}
         subtitle={t('coSubtitle')}
         actions={
-          <button className="btn btn-primary btn-sm" onClick={openCreate}>
+          <button className="btn btn-primary btn-sm" onClick={() => setCreating(true)}>
             <Icon name="add" size={15} />
             {t('coNew')}
           </button>
         }
       />
-
-      <div className="grid-3" style={{ marginBottom: 24 }}>
-        {loading ? (
-          [0, 1, 2].map((i) => <SkeletonStatCard key={i} />)
-        ) : (
-          <>
-            <StatTile icon="cooperatives" label={t('coStatCoops')} value={coops.length} />
-            <StatTile icon="users" label={t('coStatMembers')} value={totalMembers} />
-            <StatTile icon="farms" label={t('coStatFarms')} value={totalFarms} />
-          </>
-        )}
-      </div>
 
       <Panel
         title={`${t('ptCooperatives')} (${coops.length})`}
@@ -341,7 +127,7 @@ export default function AdminCooperativesPage() {
             icon={<Icon name="cooperatives" size={22} />}
             title={query ? t('coNoMatch') : tab === 'deleted' ? t('coNoDeleted') : t('coNone')}
             description={query ? fill(t('coNoMatchBody'), { q: search.trim() }) : tab === 'deleted' ? t('coNoDeletedBody') : t('coNoneBody')}
-            action={!query && tab === 'active' ? { label: t('coCreateFirst'), onClick: openCreate } : undefined}
+            action={!query && tab === 'active' ? { label: t('coCreateFirst'), onClick: () => setCreating(true) } : undefined}
           />
         ) : (
           <div className="table-wrapper">
@@ -357,13 +143,35 @@ export default function AdminCooperativesPage() {
                 </tr>
               </thead>
               <tbody>
+                {showAll && (
+                  <tr className="tbody-row">
+                    <td className="cell-lead">
+                      <div className="cell-person">
+                        <span className="row-avatar" aria-hidden="true"><Icon name="cooperatives" size={16} /></span>
+                        <div className="cell-stack">
+                          <Link to="/admin/cooperatives/all" className="cell-strong">{t('crAll')}</Link>
+                          <span className="cell-sub">{t('cpAllRowNote')}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td data-label={t('coColLocation')} className="cell-muted">-</td>
+                    <td data-label={t('coColMembers')} className="cell-strong">{totalMembers}</td>
+                    <td data-label={t('coColFarms')} className="cell-strong">{totalFarms}</td>
+                    <td data-label={t('coColCreated')} className="cell-muted">-</td>
+                    <td data-label="">
+                      <div className="table-actions">
+                        <Link to="/admin/cooperatives/all" className="btn btn-ghost btn-xs" aria-label={`${t('coView')} ${t('crAll')}`}>{t('coView')}</Link>
+                      </div>
+                    </td>
+                  </tr>
+                )}
                 {filtered.map((c) => (
                   <tr key={c.id} className="tbody-row">
                     <td className="cell-lead">
                       <div className="cell-person">
                         <span className="row-avatar" aria-hidden="true"><Icon name="cooperatives" size={16} /></span>
                         <div className="cell-stack">
-                          <span className="cell-strong">{c.name}</span>
+                          {tab === 'active' ? <Link to={`/admin/cooperatives/${c.id}`} className="cell-strong">{c.name}</Link> : <span className="cell-strong">{c.name}</span>}
                           {c.description ? <span className="cell-sub cell-trim">{c.description}</span> : null}
                         </div>
                       </div>
@@ -375,11 +183,7 @@ export default function AdminCooperativesPage() {
                     <td data-label="">
                       <div className="table-actions">
                         {tab === 'active' ? (
-                          <>
-                            <button className="btn btn-ghost btn-xs" aria-label={`${t('coView')} ${c.name}`} onClick={() => openView(c)}>{t('coView')}</button>
-                            <button className="btn btn-ghost btn-xs" aria-label={`${t('coEdit')} ${c.name}`} onClick={() => openEdit(c)}>{t('coEdit')}</button>
-                            <button className="btn btn-ghost btn-xs btn-quiet-danger" aria-label={`${t('coDelete')} ${c.name}`} onClick={() => setConfirmOff(c)}>{t('coDelete')}</button>
-                          </>
+                          <Link to={`/admin/cooperatives/${c.id}`} className="btn btn-ghost btn-xs" aria-label={`${t('coView')} ${c.name}`}>{t('coView')}</Link>
                         ) : (
                           <button className="btn btn-ghost btn-xs" aria-label={`${t('coRestore')} ${c.name}`} onClick={() => setConfirmRestore(c)}>{t('coRestore')}</button>
                         )}

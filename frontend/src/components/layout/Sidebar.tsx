@@ -33,7 +33,6 @@ export function getNavGroups(role: Role | undefined, alertCount: number, t: (k: 
 
 function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) => string): NavGroup[] {
   const alerts: NavItem = { to: '/alerts', label: t('ptAlerts'), icon: 'alerts', badge: alertCount };
-  const coopReport: NavItem = { to: '/reports/cooperative', label: t('ptCoopReport'), icon: 'activity' };
 
   if (role === 'FARMER') {
     return [
@@ -63,7 +62,7 @@ function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) =
         label: t('navGroupOverview'),
         items: [
           { to: '/supervisor', label: t('ptSupervisor'), icon: 'overview' },
-          { to: '/supervisor/farmers', label: t('ptTeam'), icon: 'users' },
+          { to: '/supervisor/cooperative', label: t('ptMyCooperative'), icon: 'cooperatives' },
         ],
       },
       {
@@ -75,7 +74,7 @@ function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) =
           { to: '/devices', label: t('ptDevices'), icon: 'devices' },
         ],
       },
-      { label: t('navGroupMonitoring'), items: [alerts, coopReport] },
+      { label: t('navGroupMonitoring'), items: [alerts] },
     ];
   }
 
@@ -109,7 +108,6 @@ function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) =
         label: t('navGroupSystem'),
         items: [
           alerts,
-          coopReport,
           { to: '/admin/audit-log', label: t('ptAudit'), icon: 'audit' },
           { to: '/admin/reports', label: t('ptSystemReport'), icon: 'systemReport' },
           { to: '/admin/health', label: t('ptHealth'), icon: 'activity' },
