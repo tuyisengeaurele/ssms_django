@@ -34,7 +34,7 @@ export const pageTranslations = {
   ptDetectionReports: k('Detection reports', 'Rapports de détection', "Raporo z'isuzuma"),
   ptAlerts: k('Alerts', 'Alertes', 'Ibiburaniswa'),
   ptDevices: k('Devices', 'Appareils', 'Ibikoresho'),
-  ptProfile: k('Profile', 'Profil', 'Umwirondoro'),
+  ptSettings: k('Settings', 'Paramètres', 'Igenamiterere'),
 
   // App shell
   navGroupOverview: k('Overview', "Vue d'ensemble", 'Incamake'),
@@ -636,7 +636,16 @@ export const pageTranslations = {
   pfSecurity: k("Password", "Mot de passe", "Ijambo ry'ibanga"),
   pfSecurityHint: k("Choose a new password when you want to.", "Choisissez un nouveau mot de passe quand vous le souhaitez.", "Hitamo irindi jambo ry'ibanga igihe ubishakiye."),
 
-  // Signed in devices (profile page). Keys start with "sd".
+  // The Settings page. Keys start with "st".
+  stSubtitle: k("Your account, your security and how SSMS looks.", "Votre compte, votre sécurité et l'apparence de SSMS.", "Konti yawe, umutekano wawe n'uko SSMS igaragara."),
+  stNavLabel: k("Settings sections", "Sections des paramètres", "Ibice by'igenamiterere"),
+  stTabAccount: k("Account", "Compte", "Konti"),
+  stTabSecurity: k("Security", "Sécurité", "Umutekano"),
+  stTabAppearance: k("Appearance", "Apparence", "Isura"),
+  stThemeTitle: k("Light or dark", "Clair ou sombre", "Umucyo cyangwa umwijima"),
+  stThemeHint: k("Choose how SSMS looks on this device. Auto follows your device.", "Choisissez l'apparence de SSMS sur cet appareil. Auto suit votre appareil.", "Hitamo uko SSMS igaragara kuri iki gikoresho. Byikora bikurikira igikoresho cyawe."),
+
+  // Signed in devices (Settings, Security). Keys start with "sd".
   sdTitle: k("Signed in devices", "Appareils connectés", "Ibikoresho winjiriyeho"),
   sdHint: k("These are the places your account is signed in. Sign out any you do not recognise.", "Voici les endroits où votre compte est connecté. Déconnectez ceux que vous ne reconnaissez pas.", "Aha ni ho konti yawe yinjiriwe. Sohora ibyo utazi."),
   sdThisDevice: k("This device", "Cet appareil", "Iki gikoresho"),

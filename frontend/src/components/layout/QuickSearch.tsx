@@ -28,7 +28,7 @@ function pageItems(role: string | undefined, t: (key: string) => string): Search
   }
   add('/batches/compare', t('ptCompare'));
   if (role === 'FARMER' || role === 'ADMIN') add('/farms/new', t('ptFarmNew'));
-  add('/profile', t('ptProfile'));
+  add('/settings/account', t('ptSettings'));
   return items;
 }
 

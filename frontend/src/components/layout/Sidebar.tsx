@@ -105,7 +105,7 @@ export function getNavGroups(role: Role | undefined, alertCount: number, t: (k: 
           coopReport,
           { to: '/admin/audit-log', label: t('ptAudit'), icon: 'audit' },
           { to: '/admin/reports', label: t('ptSystemReport'), icon: 'systemReport' },
-          { to: '/admin/thresholds', label: t('ptThresholds'), icon: 'settings' },
+          { to: '/settings/safe-ranges', label: t('ptThresholds'), icon: 'settings' },
           { to: '/admin/health', label: t('ptHealth'), icon: 'activity' },
         ],
       },

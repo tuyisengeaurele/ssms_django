@@ -5,6 +5,8 @@ export type Theme = 'light' | 'dark';
 
 export const THEME_KEY = 'ssms_theme';
 const CHOICES: ThemeChoice[] = ['system', 'light', 'dark'];
+/** The three choices with the key of the word shown for each. */
+export const THEME_OPTIONS: Array<[ThemeChoice, string]> = [['system', 'thAuto'], ['light', 'thLight'], ['dark', 'thDark']];
 const DARK_QUERY = '(prefers-color-scheme: dark)';
 
 export function readThemeChoice(): ThemeChoice {
