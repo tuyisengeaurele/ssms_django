@@ -14,6 +14,7 @@ vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
 
 const api = vi.hoisted(() => ({ updateProfile: vi.fn(), changePassword: vi.fn() }));
 vi.mock('../../services/auth.service', () => ({ authService: api }));
+vi.mock('../../services/sessions.service', () => ({ sessionsService: { list: vi.fn().mockResolvedValue({ data: { data: [] } }) } }));
 
 import ProfilePage from './ProfilePage';
 

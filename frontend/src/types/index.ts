@@ -35,6 +35,21 @@ export interface User {
   updatedAt: string;
 }
 
+/** One place the account is signed in. See users/session_views.py. */
+export interface SignedInDevice {
+  id: string;
+  deviceLabel: string;
+  /** The name the person gave it. Empty until they rename it. */
+  customName: string;
+  browser: string;
+  os: string;
+  isInstalledApp: boolean;
+  ipAddress: string | null;
+  createdAt: string;
+  lastUsedAt: string;
+  isCurrent: boolean;
+}
+
 /** The cooperative report for a range of dates. See reports/coop.py. */
 export interface CoopReport {
   generatedAt: string;

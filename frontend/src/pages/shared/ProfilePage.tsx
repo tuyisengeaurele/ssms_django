@@ -10,6 +10,7 @@ import { initialsOf } from '../../components/ui/Avatar';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import { setAccessToken } from '../../services/session';
+import SignedInDevices from './SignedInDevices';
 
 export default function ProfilePage() {
   const { user, refreshUser, updateUser } = useAuth();
@@ -162,6 +163,8 @@ export default function ProfilePage() {
               </form>
             ) : null}
           </Panel>
+
+          <SignedInDevices />
 
           <Panel title={t('pfLanguage')} note={t('pfLanguageHint')}>
             <div className="segmented" role="group" aria-label={t('pfLanguage')}>

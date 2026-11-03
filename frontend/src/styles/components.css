@@ -709,6 +709,16 @@ tr.is-off td:last-child { opacity: 1; }
 .fixed-value small { color: var(--text-muted); font-size: 0.8rem; }
 .profile-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
+/* Signed in devices */
+.signin-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.signin-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 14px 0; border-top: 1px solid var(--border-light); }
+.signin-row:first-child { padding-top: 0; border-top: 0; }
+.signin-main { flex: 1 1 260px; min-width: 0; }
+.signin-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; color: var(--ink); overflow-wrap: anywhere; }
+.signin-sub { margin: 2px 0 0; color: var(--text-muted); font-size: 0.84rem; overflow-wrap: anywhere; }
+.signin-actions, .signin-edit { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.signin-edit .form-input { flex: 1 1 200px; }
+
 .segmented { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 999px; background: var(--tint); }
 .segmented button { padding: 8px 18px; border: 0; border-radius: 999px; background: none; color: var(--text-2); font: 500 0.88rem var(--font-ui); transition: background-color 0.25s var(--ease-out), color 0.25s var(--ease-out); }
 .segmented button:hover:not(.is-on) { color: var(--ink); }
