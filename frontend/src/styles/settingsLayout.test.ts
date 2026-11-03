@@ -15,17 +15,17 @@ function rule(css: string, selector: string): string {
 
 describe('Settings tabs', () => {
   it('puts the sections in one row above the content', () => {
-    expect(rule(components, '.settings-nav ul')).toMatch(/display:\s*flex/);
+    expect(rule(components, '.tab-nav ul')).toMatch(/display:\s*flex/);
     expect(rule(components, '.settings-layout')).not.toMatch(/grid-template-columns/);
   });
 
   it('keeps the row reachable on a narrow screen by letting it scroll sideways', () => {
-    expect(rule(components, '.settings-nav ul')).toMatch(/overflow-x:\s*auto/);
+    expect(rule(components, '.tab-nav ul')).toMatch(/overflow-x:\s*auto/);
   });
 
   it('draws a line under the tabs and marks the open one with a stronger line, not a filled pill', () => {
-    expect(rule(components, '.settings-nav')).toMatch(/border-bottom:/);
-    const open = rule(components, '.settings-link.is-on');
+    expect(rule(components, '.tab-nav')).toMatch(/border-bottom:/);
+    const open = rule(components, '.tab-link.is-on');
     expect(open).toMatch(/border-bottom-color/);
     expect(open).not.toMatch(/background/);
   });
