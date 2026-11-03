@@ -41,6 +41,14 @@ describe('Privacy policy page', () => {
     expect(screen.getByText(/the time you accepted the terms/)).toBeInTheDocument();
   });
 
+  it('says that each sign in keeps a device name and address, and for how long an ended one stays', () => {
+    renderPage(<PrivacyPolicyPage />, '/privacy');
+    const item = screen.getByText((_, el) => el?.tagName === 'LI' && /Signed in devices:/.test(el.textContent ?? ''));
+    expect(item).toHaveTextContent(/name of the device/);
+    expect(item).toHaveTextContent(/address/);
+    expect(item).toHaveTextContent(/deleted after 30 days/);
+  });
+
   it('explains the QR code on a harvest lot, what a stranger sees, and how to switch it off', () => {
     renderPage(<PrivacyPolicyPage />, '/privacy');
     const section = screen.getByRole('heading', { level: 2, name: /QR codes on harvest lots/ }).closest('section') as HTMLElement;
