@@ -9,7 +9,6 @@ import Avatar from '../../components/ui/Avatar';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
 import Modal from '../../components/ui/Modal';
-import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonStatCard, SkeletonTable } from '../../components/ui/SkeletonLoader';
 import StatTile from '../../components/ui/StatTile';
@@ -21,7 +20,8 @@ const STATUS_KEY = {
   revoked: 'tmStRevoked',
 } as const;
 
-export default function SupervisorFarmersPage() {
+/** The farmers of the supervisor's cooperative, the invitation links, and the way to invite or remove a farmer. */
+export default function CoopFarmersTab() {
   const { user } = useAuth();
   const { t, locale } = useLanguage();
   const { getErrorMessage } = useApiError();
@@ -202,16 +202,12 @@ export default function SupervisorFarmersPage() {
         )}
       </Modal>
 
-      <PageHeader
-        title={t('ptTeam')}
-        subtitle={t('tmSubtitle')}
-        actions={
-          <button className="btn btn-primary btn-sm" onClick={openInvite}>
-            <Icon name="add" size={15} />
-            {t('tmInvite')}
-          </button>
-        }
-      />
+      <div className="page-actions coop-farmers-actions">
+        <button className="btn btn-primary btn-sm" onClick={openInvite}>
+          <Icon name="add" size={15} />
+          {t('tmInvite')}
+        </button>
+      </div>
 
       <div className="grid-3" style={{ marginBottom: 24 }}>
         {loading ? (

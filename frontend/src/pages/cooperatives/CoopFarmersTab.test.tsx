@@ -17,7 +17,7 @@ vi.mock('../../services/team.service', () => ({
   teamService: { getFarmers: api.farmers, getInvitations: api.invitations, createInvitation: api.create, revokeInvitation: api.revoke, removeFarmer: api.remove },
 }));
 
-import SupervisorFarmersPage from './SupervisorFarmersPage';
+import CoopFarmersTab from './CoopFarmersTab';
 
 const farmers = [
   { id: 'f1', name: 'Bruce Ishimwe', email: 'bruce@gmail.com', joinedAt: '2026-05-01T10:00:00Z', farmCount: 2 },
@@ -33,7 +33,7 @@ const open = () => render(
   <MemoryRouter>
     <LanguageProvider>
       <ToastProvider>
-        <SupervisorFarmersPage />
+        <CoopFarmersTab />
       </ToastProvider>
     </LanguageProvider>
   </MemoryRouter>,
@@ -54,11 +54,10 @@ beforeEach(() => {
   Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
 });
 
-describe('My farmers page', () => {
-  it('has one title, a subtitle and an invite button', async () => {
+describe('The farmers of my cooperative', () => {
+  it('has an invite button and no title of its own, because the cooperative page has one', async () => {
     open();
-    expect(screen.getByRole('heading', { level: 1, name: 'My farmers' })).toBeInTheDocument();
-    expect(screen.getByText('The farmers in your cooperative, and the links you sent to invite more.')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Invite a farmer' })).toBeInTheDocument();
     await screen.findByText('Bruce Ishimwe');
   });
