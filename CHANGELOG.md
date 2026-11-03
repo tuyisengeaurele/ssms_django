@@ -1,5 +1,30 @@
 # Changelog
 
+## One page for a cooperative
+
+A cooperative is now one page with its report, farms, members and details as tabs. This replaces the separate Cooperative report page, the Members window on the Cooperatives list and, for supervisors, the My farmers page.
+
+### Checked
+- Frontend: 1634 tests pass and `tsc` is clean (net 55 new). Backend untouched, so its suite was not run again for this change.
+- **In a real browser** on your dev servers with a throwaway admin and a throwaway supervisor of a real cooperative (both deleted again), looking and opening dialogs but never saving:
+  - **Admin.** The list has "All cooperatives" as its first row with the totals and no tiles; opening Gatsibo Sericulture 1 shows its name and place, the tabs Report, Farms, Members and Details, the real numbers (4 farms, 3 farmers, 10 batches running), one farms table with the risk and its reasons, all 5 members, and the details; the dates carry from one tab to the next; the edit form opens filled in and cancels without saving; the old report address lands on All cooperatives; the sidebar no longer has "Cooperative report".
+  - **Supervisor.** "My cooperative" with the cooperative's name under it and the tabs Report, Farms and Farmers; the old My farmers address lands on the Farmers tab; an admin page is refused; the menu is 7 items plus Settings.
+  - **Phone (375 px).** The tabs fit, the dates stack, the farms become cards, and there is no sideways scroll.
+- A crash I found there, not in the plan: the reasons a farm is at risk were cut off with "..." on a phone. They now wrap (found in the browser, then fixed with a test).
+- Not checked: the delete, the member add and remove and the create flows in the real browser (they are covered by tests and I did not want to change your real cooperatives), the supervisor invitation flow in the real browser, French and Kinyarwanda on screen (tested), and the PDF and CSV downloads from the new page (the buttons call the same service as before, tested with fakes). `npm test` still prints the one unhandled `RangeError`, now from the Farmers tab tests (it is the same one that was in the My farmers tests, and it is on `master` too).
+
+### What changed
+- **Cooperatives list.** Each row opens its own page. The first row, "All cooperatives", opens every cooperative together. The tiles that repeated the dashboard are gone, and so are Edit and Delete in the rows (they are on the cooperative's Details tab). Restore stays on the Deleted tab.
+- **One cooperative (admin).** Tabs: Report (dates, tiles, harvest, checks, alerts, CSV and PDF), Farms (one table, riskiest first, with the reasons under the level, replacing the two farm tables), Members (add and remove, as before), Details (edit and delete). No cooperative picker: you choose by opening one.
+- **My cooperative (supervisor).** The same page for their own cooperative: Report, Farms, and Farmers (the farmers and invitation links, from My farmers). They cannot edit it.
+- **Old addresses keep working.** `/reports/cooperative` goes to All cooperatives for an admin and to My cooperative for a supervisor; `/supervisor/farmers` goes to the Farmers tab.
+- **Sidebar.** Admin: "Cooperative report" is gone. Supervisor: "My farmers" and "Cooperative report" became "My cooperative". Cooperatives stays marked on every page of a cooperative.
+- **One tab bar.** Settings and the cooperative page share one component and one set of styles.
+- **Removed:** the old report page, the Members window, and 14 words nothing used.
+
+### Left for the next part
+- Part 2: the shorter admin sidebar, "System overview" renamed Dashboard for supervisors, "Farm monitoring" for the admin's all-farms view, and the System hub with Health, Logs and Activity tabs.
+
 ## Settings sections as tabs, and a sidebar that scrolls as one list
 
 The Settings sections now sit as tabs under the page title instead of a second menu beside the main one. The Account group in the sidebar is back in the normal list.
