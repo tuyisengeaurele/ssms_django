@@ -72,3 +72,7 @@ def test_no_scheduled_job_writes_simulated_readings_into_the_live_database():
 
 def test_the_api_service_starts_with_the_start_script():
     assert render_services()['ssms-api']['startCommand'].strip() == 'bash start.sh'
+
+
+def test_the_nightly_job_also_prunes_old_sessions():
+    assert 'prune_sessions' in render_services()['ssms-sensor-cleanup']['startCommand']
