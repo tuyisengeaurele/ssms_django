@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 import pytest
-from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from tests.factories import UserFactory
@@ -13,7 +12,7 @@ pytestmark = pytest.mark.django_db
 def make_session(user, **extra):
     now = timezone.now()
     fields = dict(
-        user=user, refresh_jti=f'jti-{UserSession.objects.count()}', expires_at=now + timedelta(days=30),
+        user=user, expires_at=now + timedelta(days=30),
         last_used_at=now, last_activity_at=now,
     )
     fields.update(extra)
@@ -52,7 +51,5 @@ def test_deleting_a_user_deletes_their_sessions():
     assert UserSession.objects.count() == 0
 
 
-def test_a_refresh_token_id_belongs_to_one_session_only():
-    make_session(UserFactory(), refresh_jti='same')
-    with pytest.raises(IntegrityError), transaction.atomic():
-        make_session(UserFactory(), refresh_jti='same')
+def test_a_new_session_starts_with_no_remembered_tokens():
+    assert make_session(UserFactory()).tokens == []

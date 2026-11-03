@@ -69,14 +69,14 @@ class User(AbstractBaseUser):
 class UserSession(models.Model):
     """One signed in browser or app. Its id travels inside the tokens as the claim `sid`.
 
-    The refresh token in the cookie changes on every renewal. The row remembers the current one and the one it
-    replaced, so a renewal whose answer never arrived can be asked again without signing the person out.
+    The refresh token in the cookie changes on every renewal. The row remembers the recent ones and which were used,
+    so a renewal whose answer never arrived can be asked again without signing the person out.
     """
     id = models.CharField(primary_key=True, max_length=36, default=_generate_id, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sessions', db_column='userId')
-    refresh_jti = models.CharField(max_length=64, unique=True, db_column='refreshJti')
-    previous_jti = models.CharField(max_length=64, blank=True, default='', db_column='previousJti')
-    rotated_at = models.DateTimeField(null=True, blank=True, db_column='rotatedAt')
+    # The last few refresh tokens handed out: [{'jti': ..., 'used_at': seconds or None}]. A token is used once.
+    # Using it again soon, from the same browser, is a renewal whose answer was lost. Using it again later is theft.
+    tokens = models.JSONField(default=list, blank=True)
     device_label = models.CharField(max_length=80, blank=True, default='', db_column='deviceLabel')
     browser = models.CharField(max_length=40, blank=True, default='')
     os = models.CharField(max_length=40, blank=True, default='')
