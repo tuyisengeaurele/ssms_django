@@ -1,6 +1,6 @@
 import hashlib
 
-from rest_framework.throttling import AnonRateThrottle, SimpleRateThrottle
+from rest_framework.throttling import AnonRateThrottle, SimpleRateThrottle, UserRateThrottle
 
 
 class LoginRateThrottle(AnonRateThrottle):
@@ -25,6 +25,10 @@ class InvitationRateThrottle(AnonRateThrottle):
 
 class LotRateThrottle(AnonRateThrottle):
     scope = 'lot'   # a stranger opening lot pages, 30 a minute per address
+
+
+class SessionsRateThrottle(UserRateThrottle):
+    scope = 'sessions'   # a person looking at, renaming or signing out their devices, 30 a minute
 
 
 class DeviceKeyThrottle(SimpleRateThrottle):

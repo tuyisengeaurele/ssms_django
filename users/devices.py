@@ -28,7 +28,7 @@ class DeviceInfo:
     model: str = ''
 
 
-def _clean(text) -> str:
+def clean_text(text) -> str:
     if not isinstance(text, str):
         return ''
     return ' '.join(PLAIN.sub('', TAGS.sub('', text)).split())[:MODEL_LIMIT].strip()
@@ -41,7 +41,7 @@ def _browser(family: str | None) -> str:
 
 
 def _usable_model(name) -> str:
-    cleaned = _clean(name)
+    cleaned = clean_text(name)
     return '' if cleaned.lower() in NOT_A_MODEL or len(cleaned) < 2 else cleaned
 
 
@@ -53,7 +53,7 @@ def describe_device(user_agent, hints) -> DeviceInfo:
         parsed = None
     browser = _browser(parsed.user_agent.family) if parsed and parsed.user_agent else ''
     os_family = parsed.os.family if parsed and parsed.os and parsed.os.family != 'Other' else ''
-    os_name = OS_NAMES.get(os_family, os_family) or _clean(hints.get('platform'))
+    os_name = OS_NAMES.get(os_family, os_family) or clean_text(hints.get('platform'))
     device = parsed.device if parsed and parsed.device else None
     model = _usable_model(hints.get('model')) or (_usable_model(device.model or device.family) if device else '')
     installed = hints.get('installed') is True
