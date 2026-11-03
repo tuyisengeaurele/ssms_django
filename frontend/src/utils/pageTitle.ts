@@ -20,9 +20,7 @@ const ROUTES: Array<[RegExp, PageInfo]> = [
   [/^\/admin\/cooperatives$/, { titleKey: 'ptCooperatives', sectionKey: ADMIN }],
   [/^\/admin\/cooperatives\/[^/]+(\/(farms|members|details))?$/, { titleKey: 'ptCooperative', sectionKey: ADMIN }],
   [/^\/admin\/contacts$/, { titleKey: 'ptMessages', sectionKey: ADMIN }],
-  [/^\/admin\/audit-log$/, { titleKey: 'ptAudit', sectionKey: ADMIN }],
-  [/^\/admin\/reports$/, { titleKey: 'ptSystemReport', sectionKey: ADMIN }],
-  [/^\/admin\/health$/, { titleKey: 'ptHealth', sectionKey: ADMIN }],
+  [/^\/admin\/system(\/(health|logs|activity))?$/, { titleKey: 'ptSystem', sectionKey: ADMIN }],
   [/^\/farmer$/, { titleKey: 'ptFarmer', sectionKey: FARMING }],
   [/^\/supervisor$/, { titleKey: 'ptSupervisor', sectionKey: FARMING }],
   [/^\/supervisor\/cooperative(\/(farms|farmers))?$/, { titleKey: 'ptMyCooperative', sectionKey: FARMING }],
@@ -43,8 +41,10 @@ const ROUTES: Array<[RegExp, PageInfo]> = [
   [/^\/settings\/(account|security|appearance|safe-ranges)$/, { titleKey: 'ptSettings', sectionKey: ACCOUNT }],
 ];
 
-export function getPageInfo(pathname: string): PageInfo {
+export function getPageInfo(pathname: string, role?: string): PageInfo {
   const path = pathname.split('?')[0].replace(/\/+$/, '') || '/';
+  // The supervisor's landing page is also the admin's view of every farm, so it has another name there.
+  if (path === '/supervisor' && role === 'ADMIN') return { titleKey: 'ptFarmMonitoring', sectionKey: FARMING };
   for (const [pattern, info] of ROUTES) {
     if (pattern.test(path)) return info;
   }
@@ -67,10 +67,10 @@ export function useDocumentTitle(title: string) {
 }
 
 /** The title and section of the current route, in the current language. Also sets the tab title. */
-export function usePageTitle(): { title: string; section: string } {
+export function usePageTitle(role?: string): { title: string; section: string } {
   const { pathname } = useLocation();
   const { t } = useLanguage();
-  const info = getPageInfo(pathname);
+  const info = getPageInfo(pathname, role);
   const title = t(info.titleKey);
   useDocumentTitle(title);
   return { title, section: t(info.sectionKey) };

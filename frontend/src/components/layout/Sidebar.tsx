@@ -84,15 +84,7 @@ function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) =
         label: t('navGroupOverview'),
         items: [
           { to: '/admin', label: t('navDashboard'), icon: 'adminDashboard' },
-          { to: '/supervisor', label: t('ptSupervisor'), icon: 'overview' },
-        ],
-      },
-      {
-        label: t('navGroupPeople'),
-        items: [
-          { to: '/admin/users', label: t('ptUsers'), icon: 'users' },
-          { to: '/admin/cooperatives', label: t('ptCooperatives'), icon: 'cooperatives' },
-          { to: '/admin/contacts', label: t('ptMessages'), icon: 'messages' },
+          { to: '/supervisor', label: t('ptFarmMonitoring'), icon: 'overview' },
         ],
       },
       {
@@ -102,15 +94,16 @@ function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) =
           { to: '/harvests', label: t('ptHarvests'), icon: 'harvests' },
           { to: '/detections/reports', label: t('ptDetectionReports'), icon: 'detections' },
           { to: '/devices', label: t('ptDevices'), icon: 'devices' },
+          alerts,
         ],
       },
       {
-        label: t('navGroupSystem'),
+        label: t('ptSectionAdmin'),
         items: [
-          alerts,
-          { to: '/admin/audit-log', label: t('ptAudit'), icon: 'audit' },
-          { to: '/admin/reports', label: t('ptSystemReport'), icon: 'systemReport' },
-          { to: '/admin/health', label: t('ptHealth'), icon: 'activity' },
+          { to: '/admin/users', label: t('ptUsers'), icon: 'users' },
+          { to: '/admin/cooperatives', label: t('ptCooperatives'), icon: 'cooperatives' },
+          { to: '/admin/contacts', label: t('ptMessages'), icon: 'messages' },
+          { to: '/admin/system', label: t('ptSystem'), icon: 'activity' },
         ],
       },
     ];

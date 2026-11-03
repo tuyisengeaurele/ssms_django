@@ -122,6 +122,14 @@ describe('what it lists', () => {
     expect(all).toContain('System health');
   });
 
+  it('still finds Audit log, System health and Activity, now tabs of System', () => {
+    auth.role = 'ADMIN';
+    open();
+    const all = options();
+    expect(all.some((o) => o.includes('Activity'))).toBe(true);
+    expect(all.filter((o) => o.includes('System')).length).toBeGreaterThanOrEqual(2);
+  });
+
   it('gives a supervisor no new farm page', () => {
     auth.role = 'SUPERVISOR';
     open();

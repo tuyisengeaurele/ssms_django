@@ -24,6 +24,8 @@ export default function SupervisorDashboard() {
   const { user } = useAuth();
   const { success } = useToast();
   const { t, locale } = useLanguage();
+  // The supervisor's landing page is the admin's view of every farm, so it has another name there.
+  const title = user?.role === 'ADMIN' ? t('ptFarmMonitoring') : t('ptSupervisor');
 
   const [farms, setFarms] = useState<Farm[]>([]);
   const [batches, setBatches] = useState<ActiveBatch[]>([]);
@@ -113,7 +115,7 @@ export default function SupervisorDashboard() {
   if (loading) {
     return (
       <div>
-        <PageHeader title={t('ptSupervisor')} />
+        <PageHeader title={title} />
         <div className="grid-4">
           {[0, 1, 2, 3].map((i) => <SkeletonStatCard key={i} />)}
         </div>
@@ -135,7 +137,7 @@ export default function SupervisorDashboard() {
   return (
     <div>
       <PageHeader
-        title={t('ptSupervisor')}
+        title={title}
         subtitle={subtitle}
         actions={
           <>

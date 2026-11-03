@@ -28,8 +28,13 @@ function pageItems(role: string | undefined, t: (key: string) => string): Search
   }
   add('/batches/compare', t('ptCompare'));
   if (role === 'FARMER' || role === 'ADMIN') add('/farms/new', t('ptFarmNew'));
-  // Safe ranges lives in Settings now, so the menu no longer lists it. An admin can still jump straight to it.
-  if (role === 'ADMIN') add('/settings/safe-ranges', t('ptThresholds'));
+  // These moved into Settings and the System hub, so the menu no longer lists them. An admin can still jump straight to them.
+  if (role === 'ADMIN') {
+    add('/settings/safe-ranges', t('ptThresholds'));
+    add('/admin/system/health', t('ptHealth'));
+    add('/admin/system/logs', t('ptAudit'));
+    add('/admin/system/activity', t('ptActivity'));
+  }
   return items;
 }
 

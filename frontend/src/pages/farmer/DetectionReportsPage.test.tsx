@@ -49,10 +49,10 @@ beforeEach(() => {
   api.farms.mockResolvedValue({ data: { data: [{ id: 'f1', name: "Serge's farm" }, { id: 'f2', name: "Gad's farm" }] } });
 });
 
-describe('Detection reports page', () => {
+describe('Disease checks page', () => {
   it('has one title and the last month as the default dates', async () => {
     open();
-    expect(screen.getByRole('heading', { level: 1, name: 'Detection reports' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Disease checks' })).toBeInTheDocument();
     await waitFor(() => expect(api.history).toHaveBeenCalledWith(expect.objectContaining({ limit: 200, dateFrom: expect.any(String), dateTo: expect.any(String) })));
     const { dateFrom, dateTo } = api.history.mock.calls[0][0];
     expect(dateFrom < dateTo).toBe(true);

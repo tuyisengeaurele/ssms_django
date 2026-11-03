@@ -44,7 +44,7 @@ describe('Sidebar for an administrator', () => {
     sidebar();
     const nav = screen.getByRole('navigation', { name: 'Main menu' });
     const groups = within(nav).getAllByRole('group');
-    expect(groups.map((g) => g.getAttribute('aria-label'))).toEqual(['Overview', 'People', 'Farming', 'System', 'Account']);
+    expect(groups.map((g) => g.getAttribute('aria-label'))).toEqual(['Overview', 'Farming', 'Administration', 'Account']);
   });
 
   it('lists every admin page in order', () => {
@@ -52,10 +52,9 @@ describe('Sidebar for an administrator', () => {
     const nav = screen.getByRole('navigation', { name: 'Main menu' });
     const names = within(nav).getAllByRole('link').map((a) => a.textContent?.replace(/\d+$/, '').trim());
     expect(names).toEqual([
-      'Dashboard', 'System overview',
-      'Users', 'Cooperatives', 'Messages',
-      'Farms', 'Harvests', 'Detection reports', 'Devices',
-      'Alerts', 'Audit log', 'System report', 'System health',
+      'Dashboard', 'Farm monitoring',
+      'Farms', 'Harvests', 'Disease checks', 'Devices', 'Alerts',
+      'Users', 'Cooperatives', 'Messages', 'System',
       'Settings',
     ]);
   });
@@ -111,6 +110,57 @@ describe('Sidebar for an administrator', () => {
   });
 });
 
+describe('The admin menu after the cleanup', () => {
+  it('has 11 pages and Settings, down from 15', () => {
+    sidebar();
+    const nav = screen.getByRole('navigation', { name: 'Main menu' });
+    expect(within(nav).getAllByRole('link')).toHaveLength(12);
+  });
+
+  it('shows the all-farms view as Farm monitoring, at the address the supervisor dashboard has', () => {
+    sidebar('/supervisor');
+    const link = screen.getByRole('link', { name: 'Farm monitoring' });
+    expect(link).toHaveAttribute('href', '/supervisor');
+    expect(link).toHaveAttribute('aria-current', 'page');
+    expect(screen.queryByRole('link', { name: 'System overview' })).not.toBeInTheDocument();
+  });
+
+  it('has one System link in place of Audit log, System report and System health', () => {
+    sidebar('/admin');
+    expect(screen.getByRole('link', { name: 'System' })).toHaveAttribute('href', '/admin/system');
+    for (const name of ['Audit log', 'System report', 'System health']) {
+      expect(screen.queryByRole('link', { name })).not.toBeInTheDocument();
+    }
+  });
+
+  it.each(['/admin/system/health', '/admin/system/logs', '/admin/system/activity'])('keeps System marked on %s', (path) => {
+    sidebar(path);
+    expect(screen.getByRole('link', { name: 'System' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('puts the admin pages in a group called Administration', () => {
+    sidebar();
+    const group = screen.getByRole('group', { name: 'Administration' });
+    expect(within(group).getAllByRole('link').map((a) => a.textContent)).toEqual(['Users', 'Cooperatives', 'Messages', 'System']);
+  });
+});
+
+describe('The supervisor and farmer menus after the cleanup', () => {
+  it('calls the supervisor landing page Dashboard, and no longer System overview', () => {
+    auth.value = { user: { name: 'Sup', role: 'SUPERVISOR', email: 's@x.rw' }, logout: vi.fn() };
+    sidebar('/supervisor');
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/supervisor');
+    expect(screen.queryByRole('link', { name: 'System overview' })).not.toBeInTheDocument();
+  });
+
+  it.each(['SUPERVISOR', 'FARMER', 'ADMIN'])('calls the disease checks page Disease checks for a %s', (role) => {
+    auth.value = { user: { name: 'Someone', role, email: 'a@x.rw' }, logout: vi.fn() };
+    sidebar('/farmer');
+    expect(screen.getByRole('link', { name: 'Disease checks' })).toHaveAttribute('href', '/detections/reports');
+    expect(screen.queryByRole('link', { name: 'Detection reports' })).not.toBeInTheDocument();
+  });
+});
+
 describe('Settings in the sidebar', () => {
   it.each([['FARMER', '/farmer'], ['SUPERVISOR', '/supervisor'], ['ADMIN', '/admin']])('ends the %s menu with Settings', (role, path) => {
     auth.value = { user: { name: 'Someone', role, email: 'a@x.rw' }, logout: vi.fn() };
@@ -146,10 +196,10 @@ describe('Sidebar for other roles', () => {
     expect(screen.queryByRole('link', { name: 'Audit log' })).not.toBeInTheDocument();
   });
 
-  it('gives a supervisor the overview', () => {
+  it('gives a supervisor the dashboard', () => {
     auth.value = { user: { name: 'Sup', role: 'SUPERVISOR', email: 's@x.rw' }, logout: vi.fn() };
     sidebar('/supervisor');
-    expect(screen.getByRole('link', { name: 'System overview' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Cooperatives' })).not.toBeInTheDocument();
   });
 
@@ -203,8 +253,8 @@ describe('TopBar', () => {
 
   it('changes with the page and the language', () => {
     localStorage.setItem('ssms_locale', 'fr');
-    topbar('/admin/audit-log');
-    expect(screen.getByTestId('page-title')).toHaveTextContent("Journal d'audit");
+    topbar('/admin/system/logs');
+    expect(screen.getByTestId('page-title')).toHaveTextContent('Système');
   });
 
   it('does not add a second page heading', () => {

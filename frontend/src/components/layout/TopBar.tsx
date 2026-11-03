@@ -113,7 +113,7 @@ function NotificationPanel({ isAdmin, alertCount, onClose }: { isAdmin: boolean;
 export default function TopBar({ onMenuToggle, onSearch, alertCount = 0 }: TopBarProps) {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const { title, section } = usePageTitle();
+  const { title, section } = usePageTitle(user?.role);
 
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);

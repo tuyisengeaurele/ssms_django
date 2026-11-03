@@ -14,10 +14,10 @@ import StatTile from '../../components/ui/StatTile';
 const QUICK_ACTIONS: Array<{ to: string; icon: IconName; label: string; hint: string }> = [
   { to: '/admin/users', icon: 'users', label: 'ptUsers', hint: 'adQaUsers' },
   { to: '/detections/reports', icon: 'detections', label: 'ptDetectionReports', hint: 'adQaDetections' },
-  { to: '/supervisor', icon: 'overview', label: 'ptSupervisor', hint: 'adQaOverview' },
+  { to: '/supervisor', icon: 'overview', label: 'ptFarmMonitoring', hint: 'adQaOverview' },
   { to: '/farms/new', icon: 'farms', label: 'adAddFarm', hint: 'adQaAddFarm' },
   { to: '/alerts', icon: 'alerts', label: 'ptAlerts', hint: 'adQaAlerts' },
-  { to: '/admin/audit-log', icon: 'audit', label: 'ptAudit', hint: 'adQaAudit' },
+  { to: '/admin/system/logs', icon: 'audit', label: 'ptAudit', hint: 'adQaAudit' },
 ];
 
 export default function AdminDashboard() {
@@ -57,7 +57,7 @@ export default function AdminDashboard() {
             </Link>
             <Link to="/supervisor" className="btn btn-primary btn-sm">
               <Icon name="overview" size={15} />
-              {t('ptSupervisor')}
+              {t('ptFarmMonitoring')}
             </Link>
           </>
         }
