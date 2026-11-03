@@ -1,5 +1,18 @@
 # Changelog
 
+## Settings sections as tabs, and a sidebar that scrolls as one list
+
+The Settings sections now sit as tabs under the page title instead of a second menu beside the main one. The Account group in the sidebar is back in the normal list.
+
+### Checked
+- Frontend: 1579 tests pass and `tsc` is clean (6 new tests that read the stylesheets, because layout cannot be seen by the other tests). Backend unchanged.
+- **In a real browser** on your dev servers with a throwaway admin (deleted again): the four tabs sit above the content with the open one underlined, the content is 820 pixels wide and the account card is smaller; each tab shows the right panels and the page does not scroll sideways; the last sidebar group is `static`, no longer pinned. At 375 pixels the tab row scrolls sideways (the fourth tab, Safe ranges, is partly cut off as a hint) and the page does not scroll sideways.
+- Not checked: a farmer or supervisor (they see three tabs, covered by the earlier tests), French and Kinyarwanda on screen, light mode, and keyboard use in a real browser.
+
+### What changed
+- **Tabs.** Account, Security, Appearance and, for admin, Safe ranges, as a row under the title with a line under the open one. The content keeps a readable width, and the account card is more compact.
+- **Sidebar.** Settings and Sign Out are the last group of the menu and scroll with it, as asked. The earlier pinned placement is removed.
+
 ## The account menu becomes a link, and a calmer error page
 
 The person in the top bar is now one link to Settings, with no dropdown. The page that appears when a screen breaks says less.
