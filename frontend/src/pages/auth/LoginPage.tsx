@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authService } from '../../services/auth.service';
+import { collectDeviceHints } from '../../services/clientHints';
 import { useAuth } from '../../context/AuthContext';
 import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
@@ -58,7 +59,9 @@ export default function LoginPage() {
     forgetUnverified();
     setLoading(true);
     try {
-      const res = await authService.login({ email, password });
+      // The browser may say which phone this is. A sign in never waits long for it, and never fails because of it.
+      const device = await collectDeviceHints().catch(() => ({ installed: false }));
+      const res = await authService.login({ email, password, device });
       const { user, token } = res.data.data;
       login(user, token);
       // Coming back from an invitation link, the person returns to it. Only that kind of address is followed.

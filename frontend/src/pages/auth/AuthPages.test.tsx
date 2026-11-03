@@ -16,6 +16,8 @@ const api = vi.hoisted(() => ({
 }));
 
 vi.mock('../../services/auth.service', () => ({ authService: api }));
+const hints = vi.hoisted(() => ({ collectDeviceHints: vi.fn() }));
+vi.mock('../../services/clientHints', () => hints);
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ login }) }));
 
 import CheckEmailPage from './CheckEmailPage';
@@ -63,6 +65,7 @@ beforeEach(() => {
   localStorage.clear();
   sessionStorage.clear();
   vi.clearAllMocks();
+  hints.collectDeviceHints.mockResolvedValue({ installed: false });
 });
 
 describe('Login page', () => {
@@ -85,8 +88,32 @@ describe('Login page', () => {
     fill('Password', 'Secret123');
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/supervisor'));
-    expect(api.login).toHaveBeenCalledWith({ email: 'a@b.rw', password: 'Secret123' });
+    expect(api.login).toHaveBeenCalledWith({ email: 'a@b.rw', password: 'Secret123', device: { installed: false } });
     expect(login).toHaveBeenCalledWith({ role: 'SUPERVISOR' }, 'abc');
+  });
+
+  it('tells the server what the browser says about the device', async () => {
+    hints.collectDeviceHints.mockResolvedValue({ installed: true, model: 'Pixel 9', platform: 'Android' });
+    api.login.mockResolvedValue({ data: { data: { user: { role: 'FARMER' }, token: 'abc' } } });
+    open();
+    fill('Email address', 'a@b.rw');
+    fill('Password', 'Secret123');
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    await waitFor(() => expect(api.login).toHaveBeenCalled());
+    expect(api.login).toHaveBeenCalledWith({
+      email: 'a@b.rw', password: 'Secret123', device: { installed: true, model: 'Pixel 9', platform: 'Android' },
+    });
+  });
+
+  it('still signs in when the browser cannot say anything about the device', async () => {
+    hints.collectDeviceHints.mockRejectedValue(new Error('no hints'));
+    api.login.mockResolvedValue({ data: { data: { user: { role: 'FARMER' }, token: 'abc' } } });
+    open();
+    fill('Email address', 'a@b.rw');
+    fill('Password', 'Secret123');
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    await waitFor(() => expect(login).toHaveBeenCalled());
+    expect(api.login).toHaveBeenCalledWith({ email: 'a@b.rw', password: 'Secret123', device: { installed: false } });
   });
 
   it('shows the server message when sign in fails', async () => {
