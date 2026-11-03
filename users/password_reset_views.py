@@ -105,6 +105,6 @@ class PasswordResetConfirmView(APIView):
 
         user.set_password(new_password)
         user.save(update_fields=['password'])
-        revoke_all_refresh_tokens(user)
+        revoke_all_refresh_tokens(user, 'password')
 
         return api_success(None, 'Password reset successfully. You can now log in.')

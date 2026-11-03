@@ -173,3 +173,23 @@ def revoke_others(user, keep_id: str | None, reason: str) -> int:
         revoke(session, reason)
         count += 1
     return count
+
+
+def reissue(session: UserSession) -> tuple[str, str]:
+    """A new pair of tokens for a session that stays signed in, for example after a password change."""
+    refresh = _issue(session)
+    _remember(session, refresh['jti'])
+    session.save(update_fields=['tokens'])
+    return str(refresh.access_token), str(refresh)
+
+
+def end_all_but(user, keep: UserSession | None, reason: str) -> int:
+    """Sign every device out except `keep`. Returns how many sessions it ended.
+
+    Refresh tokens that belong to no session (made before sessions existed) go on the blacklist too.
+    """
+    kept_jtis = {t['jti'] for t in keep.tokens} if keep else set()
+    count = revoke_others(user, keep.pk if keep else None, reason)
+    for outstanding in OutstandingToken.objects.filter(user=user).exclude(jti__in=kept_jtis):
+        BlacklistedToken.objects.get_or_create(token=outstanding)
+    return count
