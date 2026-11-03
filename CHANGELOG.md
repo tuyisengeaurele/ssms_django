@@ -1,5 +1,26 @@
 # Changelog
 
+## A Settings page in place of the Profile page (phase 1b, part 1)
+
+Everything a person configures now sits in one Settings page, with a section list beside it (above it on a phone). The Profile page is gone.
+
+### Checked
+- Frontend: 1571 tests pass and `tsc` is clean (26 new tests for Settings and seven for the sidebar link; the nine old Profile page tests moved into them). Backend: 1673 tests pass, with one test line added for the email link.
+- **In a real browser** on your dev servers, with a throwaway admin and a throwaway farmer (both deleted): `/profile` lands on Settings, Account with the title "Settings | SSMS"; the admin sees Account, Security, Appearance and Safe ranges, the farmer sees the first three; the sidebar shows an Account group with Settings and no Safe ranges item, and Settings stays on screen at the top and the bottom of the scrolling menu and stays highlighted on every section; each section has exactly one page title; Safe ranges shows the five stage rows inside Settings; the Light, Dark and Auto buttons change the theme and I put it back on Auto; the avatar menu says "Settings"; the sidebar's Safe ranges link and the old `/admin/thresholds` address both land in the new place; a farmer typing the Safe ranges address is sent to the "not allowed" page; at 375 pixels there is no sideways page scroll and the section list scrolls sideways.
+- The sticky placement of Settings is a stylesheet rule that tests cannot see, so I checked it only by measuring in the browser at 800 pixels high with the menu expanded. The narrow icon rail was not scrolled.
+- Not checked: a supervisor in a browser (covered by tests, same as a farmer), French and Kinyarwanda on screen (covered by tests), light mode of the new layout, keyboard use in the browser (the section links are plain links, tested for order), and a real change of name or password through the new tabs (tested with fakes, not run against the server).
+
+### What changed
+- **Settings, with sections.** Account (the identity card and the name), Security (password and signed in devices), Appearance (language, and light or dark), and for admin only Safe ranges.
+- **Old addresses keep working.** `/profile` goes to Account and `/admin/thresholds` goes to Safe ranges. Anyone who is not an admin who opens Safe ranges is sent to the "not allowed" page, as for other admin pages.
+- **Settings in the sidebar.** Every role has a last group, Account, with Settings in it, kept at the foot of the sidebar next to Sign Out so a long menu never scrolls it out of sight. The admin's separate Safe ranges link is gone (it is a section of Settings, and quick search still finds it).
+- **The account menu** says "Settings", and quick search finds it. The new device email and the privacy policy now point to Settings, Security.
+- **Language and theme** are still in the account menu as a shortcut. The theme choices are defined once and used by both.
+- **Loaded when opened**, like the other pages, so the main bundle does not grow.
+
+### Left for the next parts
+- Alerts still appears in the account menu, Sign out is still in two places, and the admin menu is still long. Part 2 (sidebar cleanup and the System hub) deals with those.
+
 ## Signed in devices, and a sign in that survives a lost answer (security plan, phase 1)
 
 Every sign in is now a session the person can see on their Profile page, name, and sign out. A renewal whose answer was lost on a weak signal no longer signs the person out.

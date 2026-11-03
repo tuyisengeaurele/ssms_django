@@ -28,7 +28,8 @@ function pageItems(role: string | undefined, t: (key: string) => string): Search
   }
   add('/batches/compare', t('ptCompare'));
   if (role === 'FARMER' || role === 'ADMIN') add('/farms/new', t('ptFarmNew'));
-  add('/profile', t('ptProfile'));
+  // Safe ranges lives in Settings now, so the menu no longer lists it. An admin can still jump straight to it.
+  if (role === 'ADMIN') add('/settings/safe-ranges', t('ptThresholds'));
   return items;
 }
 

@@ -44,7 +44,7 @@ describe('Sidebar for an administrator', () => {
     sidebar();
     const nav = screen.getByRole('navigation', { name: 'Main menu' });
     const groups = within(nav).getAllByRole('group');
-    expect(groups.map((g) => g.getAttribute('aria-label'))).toEqual(['Overview', 'People', 'Farming', 'System']);
+    expect(groups.map((g) => g.getAttribute('aria-label'))).toEqual(['Overview', 'People', 'Farming', 'System', 'Account']);
   });
 
   it('lists every admin page in order', () => {
@@ -55,7 +55,8 @@ describe('Sidebar for an administrator', () => {
       'Dashboard', 'System overview',
       'Users', 'Cooperatives', 'Messages',
       'Farms', 'Harvests', 'Detection reports', 'Devices',
-      'Alerts', 'Cooperative report', 'Audit log', 'System report', 'Safe ranges', 'System health',
+      'Alerts', 'Cooperative report', 'Audit log', 'System report', 'System health',
+      'Settings',
     ]);
   });
 
@@ -107,6 +108,32 @@ describe('Sidebar for an administrator', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Sign Out' }));
     expect(auth.value.logout).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Settings in the sidebar', () => {
+  it.each([['FARMER', '/farmer'], ['SUPERVISOR', '/supervisor'], ['ADMIN', '/admin']])('ends the %s menu with Settings', (role, path) => {
+    auth.value = { user: { name: 'Someone', role, email: 'a@x.rw' }, logout: vi.fn() };
+    sidebar(path);
+    const nav = screen.getByRole('navigation', { name: 'Main menu' });
+    const links = within(nav).getAllByRole('link');
+    expect(links[links.length - 1]).toHaveAccessibleName('Settings');
+    expect(links[links.length - 1]).toHaveAttribute('href', '/settings');
+  });
+
+  it('keeps Settings marked on every section of the Settings page', () => {
+    sidebar('/settings/security');
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('does not mark Settings on other pages', () => {
+    sidebar('/admin/users');
+    expect(screen.getByRole('link', { name: 'Settings' })).not.toHaveAttribute('aria-current');
+  });
+
+  it('no longer lists Safe ranges as a page of its own, because it lives in Settings', () => {
+    sidebar('/admin');
+    expect(screen.queryByRole('link', { name: 'Safe ranges' })).not.toBeInTheDocument();
   });
 });
 
@@ -200,12 +227,12 @@ describe('TopBar', () => {
     expect(screen.getByRole('menu')).toBeInTheDocument();
   });
 
-  it('shows the account menu with profile and sign out', () => {
+  it('shows the account menu with settings and sign out', () => {
     topbar('/admin');
     const trigger = screen.getByRole('button', { name: /Auris Tuyisenge/ });
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(trigger);
-    expect(screen.getByRole('menuitem', { name: 'My Profile' })).toHaveAttribute('href', '/profile');
+    expect(screen.getByRole('menuitem', { name: 'Settings' })).toHaveAttribute('href', '/settings/account');
     expect(screen.getByRole('menuitem', { name: 'Sign Out' })).toBeInTheDocument();
   });
 });

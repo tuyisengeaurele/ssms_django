@@ -139,6 +139,16 @@
   font: 700 0.78rem var(--font-ui);
 }
 
+/* Settings and Sign out stay at the foot of the menu, so a long list never scrolls them out of sight. */
+.sidebar-nav > .sidebar-group:last-child {
+  position: sticky;
+  bottom: -20px; /* the menu has 20px of padding under its last group */
+  z-index: 1;
+  margin-top: auto;
+  padding-bottom: 20px;
+  background: var(--sidebar-bg);
+}
+
 /* Sign out sits at the end of the list and looks like every other item. */
 .sidebar-signout {
   width: 100%;

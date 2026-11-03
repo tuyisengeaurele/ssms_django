@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import MotionProvider from './components/MotionProvider';
+import { settingsRoutes } from './pages/settings/settingsRoutes';
 import ProtectedRoute from './components/ui/ProtectedRoute';
 const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
 
@@ -18,7 +19,6 @@ const FarmerDashboard = lazy(() => import('./pages/farmer/FarmerDashboard'));
 const SupervisorDashboard = lazy(() => import('./pages/supervisor/SupervisorDashboard'));
 const SupervisorFarmersPage = lazy(() => import('./pages/supervisor/SupervisorFarmersPage'));
 const CooperativeReportPage = lazy(() => import('./pages/supervisor/CooperativeReportPage'));
-const AdminThresholdsPage = lazy(() => import('./pages/admin/AdminThresholdsPage'));
 const AdminHealthPage = lazy(() => import('./pages/admin/AdminHealthPage'));
 const JoinPage = lazy(() => import('./pages/auth/JoinPage'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
@@ -38,7 +38,6 @@ const HarvestsPage = lazy(() => import('./pages/farmer/HarvestsPage'));
 const AlertsPage = lazy(() => import('./pages/shared/AlertsPage'));
 const DevicesPage = lazy(() => import('./pages/shared/DevicesPage'));
 const BatchesPage = lazy(() => import('./pages/farmer/BatchesPage'));
-const ProfilePage = lazy(() => import('./pages/shared/ProfilePage'));
 const AdminContactsPage = lazy(() => import('./pages/admin/AdminContactsPage'));
 const AdminAuditLogPage = lazy(() => import('./pages/admin/AdminAuditLogPage'));
 const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
@@ -90,7 +89,7 @@ export default function App() {
               <Route path="/detections/reports"        element={<DetectionReportsPage />} />
               <Route path="/alerts"                    element={<AlertsPage />} />
               <Route path="/devices"                   element={<DevicesPage />} />
-              <Route path="/profile"                  element={<ProfilePage />} />
+              {settingsRoutes()}
 
               {/* Supervisor + Admin */}
               <Route element={<ProtectedRoute allowedRoles={['SUPERVISOR', 'ADMIN']} />}>
@@ -108,7 +107,6 @@ export default function App() {
                 <Route path="/admin"                  element={<AdminDashboard />} />
                 <Route path="/admin/users"            element={<AdminUsersPage />} />
                 <Route path="/admin/cooperatives"     element={<AdminCooperativesPage />} />
-                <Route path="/admin/thresholds"       element={<AdminThresholdsPage />} />
                 <Route path="/admin/health"           element={<AdminHealthPage />} />
                 <Route path="/admin/contacts"         element={<AdminContactsPage />} />
                 <Route path="/admin/audit-log"        element={<AdminAuditLogPage />} />

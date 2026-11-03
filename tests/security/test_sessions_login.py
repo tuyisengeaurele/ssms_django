@@ -108,6 +108,7 @@ def test_a_new_device_gets_one_notice_and_a_known_one_none():
     assert message.to == [user.email]
     assert 'Safari on iPhone' in message.body
     assert '127.0.0.1' not in message.body
+    assert 'localhost:5173/settings/security' in message.body
     sign_in(user, SAFARI_IPHONE)
     sign_in(user, CHROME_WINDOWS)
     assert len(mail.outbox) == 1

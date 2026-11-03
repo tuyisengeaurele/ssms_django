@@ -24,7 +24,14 @@ export const ROLE_LABEL_KEY: Record<Role, string> = {
   FARMER: 'roleFarmer',
 };
 
+/** The menu of each kind of person, then a last group with Settings, which every kind of person has. */
 export function getNavGroups(role: Role | undefined, alertCount: number, t: (k: string) => string): NavGroup[] {
+  const groups = pageGroups(role, alertCount, t);
+  if (groups.length === 0) return groups;
+  return [...groups, { label: t('ptSectionAccount'), items: [{ to: '/settings', label: t('ptSettings'), icon: 'settings' }] }];
+}
+
+function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) => string): NavGroup[] {
   const alerts: NavItem = { to: '/alerts', label: t('ptAlerts'), icon: 'alerts', badge: alertCount };
   const coopReport: NavItem = { to: '/reports/cooperative', label: t('ptCoopReport'), icon: 'activity' };
 
@@ -105,7 +112,6 @@ export function getNavGroups(role: Role | undefined, alertCount: number, t: (k: 
           coopReport,
           { to: '/admin/audit-log', label: t('ptAudit'), icon: 'audit' },
           { to: '/admin/reports', label: t('ptSystemReport'), icon: 'systemReport' },
-          { to: '/admin/thresholds', label: t('ptThresholds'), icon: 'settings' },
           { to: '/admin/health', label: t('ptHealth'), icon: 'activity' },
         ],
       },

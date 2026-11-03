@@ -35,7 +35,7 @@ const sameAsSaved = (d: Draft, r: StageRange) => {
 };
 
 /** The safe temperature and humidity of each stage. An alert is raised when a reading falls outside its stage's range. */
-export default function AdminThresholdsPage() {
+export default function AdminThresholdsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { t, locale } = useLanguage();
   const { success, error: showError } = useToast();
 
@@ -84,7 +84,7 @@ export default function AdminThresholdsPage() {
 
   return (
     <div>
-      <PageHeader title={t('ptThresholds')} subtitle={t('thIntro')} />
+      {embedded ? <p className="settings-intro">{t('thIntro')}</p> : <PageHeader title={t('ptThresholds')} subtitle={t('thIntro')} />}
 
       <Panel title={t('ptThresholds')} note={t('thNote')} flush>
         {loading ? (

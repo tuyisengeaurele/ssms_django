@@ -2,7 +2,6 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import { ToastProvider } from '../../context/ToastContext';
-import { getAccessToken } from '../../services/session';
 import { setReducedMotion } from '../../test/setup';
 
 const auth = vi.hoisted(() => ({
@@ -12,17 +11,16 @@ const auth = vi.hoisted(() => ({
 }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
 
-const api = vi.hoisted(() => ({ updateProfile: vi.fn(), changePassword: vi.fn() }));
+const api = vi.hoisted(() => ({ updateProfile: vi.fn() }));
 vi.mock('../../services/auth.service', () => ({ authService: api }));
-vi.mock('../../services/sessions.service', () => ({ sessionsService: { list: vi.fn().mockResolvedValue({ data: { data: [] } }) } }));
 
-import ProfilePage from './ProfilePage';
+import AccountSettings from './AccountSettings';
 
 function open() {
   return render(
     <LanguageProvider>
       <ToastProvider>
-        <ProfilePage />
+        <AccountSettings />
       </ToastProvider>
     </LanguageProvider>,
   );
@@ -39,14 +37,11 @@ beforeEach(() => {
   auth.user.cooperativeId = null;
   auth.user.cooperativeName = null;
   api.updateProfile.mockResolvedValue({ data: { data: { ...auth.user, name: 'Auris T' } } });
-  api.changePassword.mockResolvedValue({ data: { data: { token: 'fresh-jwt' } } });
 });
 
-describe('Profile page', () => {
-  it('has one title and refreshes the account from the server', () => {
+describe('Account settings', () => {
+  it('refreshes the account from the server, so nothing shown is stale', () => {
     open();
-    expect(screen.getByRole('heading', { level: 1, name: 'Profile' })).toBeInTheDocument();
-    expect(screen.getByText('See and update your account details.')).toBeInTheDocument();
     expect(auth.refreshUser).toHaveBeenCalled();
   });
 
@@ -84,36 +79,8 @@ describe('Profile page', () => {
     expect(await screen.findByText('Your profile is updated.', {}, { timeout: 5000 })).toBeInTheDocument();
   });
 
-  it('changes the password after checking the two new ones match', async () => {
+  it('does not repeat the title of the page, which the Settings page already has', () => {
     open();
-    fireEvent.click(screen.getByRole('button', { name: 'Change password' }));
-    fireEvent.change(screen.getByLabelText('Current password'), { target: { value: 'Old12345' } });
-    fireEvent.change(screen.getByLabelText('New password'), { target: { value: 'NewPass123' } });
-    fireEvent.change(screen.getByLabelText('Repeat the new password'), { target: { value: 'Different1' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Update password' }));
-    expect(screen.getByRole('alert')).toHaveTextContent("The two passwords don't match.");
-    expect(api.changePassword).not.toHaveBeenCalled();
-
-    fireEvent.change(screen.getByLabelText('Repeat the new password'), { target: { value: 'NewPass123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Update password' }));
-    await waitFor(() => expect(api.changePassword).toHaveBeenCalledWith({ currentPassword: 'Old12345', newPassword: 'NewPass123', confirmPassword: 'NewPass123' }));
-    await waitFor(() => expect(screen.queryByLabelText('Current password')).not.toBeInTheDocument());
-    // The server ended every other session, so this device keeps the fresh one it was given.
-    expect(getAccessToken()).toBe('fresh-jwt');
-    expect(JSON.stringify({ ...localStorage, ...sessionStorage })).not.toContain('fresh-jwt');
-  });
-
-  it('lets the person pick a language and shows which one is on', () => {
-    open();
-    expect(screen.getByRole('button', { name: 'English' })).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(screen.getByRole('button', { name: 'Français' }));
-    expect(localStorage.getItem('ssms_locale')).toBe('fr');
-    expect(screen.getByRole('button', { name: 'Français' })).toHaveAttribute('aria-pressed', 'true');
-  });
-
-  it('uses no technical wording and no old gradients', () => {
-    const { container } = open();
-    expect(container.textContent).not.toMatch(/JWT|token/i);
-    expect(container.innerHTML.toLowerCase()).not.toMatch(/gradient|#7c3aed|#d97706|#f3e8ff/);
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
   });
 });

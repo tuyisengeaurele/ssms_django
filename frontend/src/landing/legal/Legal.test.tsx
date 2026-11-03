@@ -46,6 +46,7 @@ describe('Privacy policy page', () => {
     const item = screen.getByText((_, el) => el?.tagName === 'LI' && /Signed in devices:/.test(el.textContent ?? ''));
     expect(item).toHaveTextContent(/name of the device/);
     expect(item).toHaveTextContent(/identification text/);
+    expect(item).toHaveTextContent(/Settings, Security/);
     expect(item).not.toHaveTextContent(/address/);
     expect(item).toHaveTextContent(/deleted after 30 days/);
   });

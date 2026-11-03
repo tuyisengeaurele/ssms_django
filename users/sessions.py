@@ -85,7 +85,7 @@ def _tell_about_new_device(user, info: DeviceInfo, when) -> None:
         greeting=f'Hello {user.name},',
         intro=('Your account was just used to sign in on a new device.',),
         facts=(('Device', info.label), ('Time', when.strftime('%d %b %Y, %H:%M UTC'))),
-        button=('Review your devices', f'{settings.FRONTEND_URL.rstrip("/")}/profile'),
+        button=('Review your devices', f'{settings.FRONTEND_URL.rstrip("/")}/settings/security'),
         closing=(
             'If this was you, there is nothing more to do.',
             'If it was not you, change your password now. That signs out every other device.',

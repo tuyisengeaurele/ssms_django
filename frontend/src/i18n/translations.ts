@@ -67,7 +67,7 @@ export const translations: TranslationMap = {
   btnViewFarm:     { en: 'View farm',        fr: 'Voir la ferme',           rw: 'Reba Umuhindu' },
   btnViewBatch:    { en: 'View batch',       fr: 'Voir le lot',             rw: 'Reba Itsinda' },
   btnSignOut:      { en: 'Sign Out',         fr: 'Se déconnecter',          rw: 'Sohoka' },
-  btnMyProfile:    { en: 'My Profile',       fr: 'Mon profil',              rw: 'Umwirondoro Wanjye' },
+  btnSettings:     { en: 'Settings',         fr: 'Paramètres',              rw: 'Igenamiterere' },
   btnViewAll:      { en: 'View all alerts',  fr: 'Voir toutes les alertes', rw: 'Reba Ibiburaniswa Byose' },
 
   // ── Form labels ──────────────────────────────────────────────────────────────
