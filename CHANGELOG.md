@@ -15,7 +15,7 @@ GitHub now runs the tests and checks on every pull request and on every push to 
 - ESLint is installed and configured with the two stable React hook rules. The `lint` script worked with no config before.
 
 ### Found and fixed on the way
-- The banned wording test could never fail: a stray backspace character sat in its pattern where `` was meant. It works now.
+- The banned wording test could never fail: a stray backspace character sat in its pattern where a word boundary was meant. It works now.
 - The motion token test pattern lost its `\s` inside a template string. It passed by luck.
 - One invitation test used empty dates, which the real API never sends. It caused the unhandled `RangeError` that made `vitest run` exit with an error.
 - Three ruff findings in the training script.
