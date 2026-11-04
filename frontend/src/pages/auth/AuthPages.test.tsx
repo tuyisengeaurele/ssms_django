@@ -225,6 +225,13 @@ describe('Login page', () => {
     expect(sessionStorage.getItem('ssms_notice')).toBeNull();
   });
 
+  it('says so when the person was signed out for sitting idle', () => {
+    sessionStorage.setItem('ssms_notice', 'session_idle');
+    open();
+    expect(screen.getByRole('status')).toHaveTextContent('You were signed out because nobody used this page for a while. Please sign in again.');
+    expect(sessionStorage.getItem('ssms_notice')).toBeNull();
+  });
+
   it('shows no notice on a normal visit', () => {
     open();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();

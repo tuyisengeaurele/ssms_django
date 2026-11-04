@@ -9,6 +9,12 @@ import { AuthAlert, AuthButton, AuthField, AuthShell } from '../../landing/auth/
 import GoogleButton from '../../landing/auth/GoogleButton';
 import { homePathFor } from '../../utils/roleHome';
 
+const NOTICE_WORDS: Record<string, string> = {
+  account_ready: 'loginAccountReady',
+  session_ended: 'loginSessionEnded',
+  session_idle: 'loginSessionIdle',
+};
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,7 +34,7 @@ export default function LoginPage() {
     try {
       const found = sessionStorage.getItem('ssms_notice');
       sessionStorage.removeItem('ssms_notice');
-      return found === 'session_ended' || found === 'account_ready' ? found : null;
+      return found === 'session_ended' || found === 'session_idle' || found === 'account_ready' ? found : null;
     } catch {
       return null;
     }
@@ -84,7 +90,7 @@ export default function LoginPage() {
     <AuthShell title={t('loginWelcome')} subtitle={t('loginSubtitle')}>
       {notice && !error ? (
         <p className="l-auth__note l-auth__note--gap" role="status">
-          {t(notice === 'account_ready' ? 'loginAccountReady' : 'loginSessionEnded')}
+          {t(NOTICE_WORDS[notice] ?? 'loginSessionEnded')}
         </p>
       ) : null}
       {error ? <AuthAlert>{error}</AuthAlert> : null}
