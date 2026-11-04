@@ -8,7 +8,6 @@ from core.throttles import SessionsRateThrottle
 from core.utils import api_error, api_success
 
 from .cookie_utils import clear_refresh_cookie
-from .devices import clean_text
 from .models import UserSession
 from .sessions import end_all_but, revoke
 
@@ -19,7 +18,6 @@ def _row(session: UserSession, current_id) -> dict:
     return {
         'id': session.id,
         'device_label': session.device_label,
-        'custom_name': session.custom_name,
         'browser': session.browser,
         'os': session.os,
         'is_installed_app': session.is_installed_app,
@@ -50,21 +48,10 @@ class SessionListView(_SessionView):
 
 
 class SessionDetailView(_SessionView):
-    """PATCH renames a device, DELETE signs it out."""
+    """DELETE signs a device out."""
 
     def _own(self, request, pk):
         return _alive(request.user).filter(pk=pk).first()
-
-    def patch(self, request, pk):
-        session = self._own(request, pk)
-        if session is None:
-            return api_error("We couldn't find that device.", 404)
-        name = request.data.get('custom_name')
-        if not isinstance(name, str):
-            return api_error('Please enter a name.', 422)
-        session.custom_name = clean_text(name)
-        session.save(update_fields=['custom_name'])
-        return api_success(_row(session, self.current_id(request)), 'Device renamed.')
 
     def delete(self, request, pk):
         session = self._own(request, pk)
