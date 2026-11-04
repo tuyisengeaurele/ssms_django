@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authService } from '../../services/auth.service';
 import { collectDeviceHints } from '../../services/clientHints';
@@ -8,6 +8,12 @@ import { useLanguage } from '../../context/LanguageContext';
 import { AuthAlert, AuthButton, AuthField, AuthShell } from '../../landing/auth/AuthShell';
 import GoogleButton from '../../landing/auth/GoogleButton';
 import { homePathFor } from '../../utils/roleHome';
+
+const NOTICE_WORDS: Record<string, string> = {
+  account_ready: 'loginAccountReady',
+  session_ended: 'loginSessionEnded',
+  session_idle: 'loginSessionIdle',
+};
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -27,12 +33,23 @@ export default function LoginPage() {
   const [notice] = useState<string | null>(() => {
     try {
       const found = sessionStorage.getItem('ssms_notice');
-      sessionStorage.removeItem('ssms_notice');
-      return found === 'session_ended' || found === 'account_ready' ? found : null;
+      return found === 'session_ended' || found === 'session_idle' || found === 'account_ready' ? found : null;
     } catch {
       return null;
     }
   });
+
+  // Shown once. It is removed after the page has drawn, because a page that is drawn twice (as React does while
+  // developing) would otherwise read it the second time with nothing left.
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem('ssms_notice');
+    } catch {
+      // Nothing to remove.
+    }
+  }, []);
+
+  const [shared, setShared] = useState(false);
 
   const forgetUnverified = () => {
     setUnverified(false);
@@ -61,7 +78,7 @@ export default function LoginPage() {
     try {
       // The browser may say which phone this is. A sign in never waits long for it, and never fails because of it.
       const device = await collectDeviceHints().catch(() => ({ installed: false }));
-      const res = await authService.login({ email, password, device });
+      const res = await authService.login({ email, password, device, sharedDevice: shared });
       const { user, token } = res.data.data;
       login(user, token);
       // Coming back from an invitation link, the person returns to it. Only that kind of address is followed.
@@ -84,7 +101,7 @@ export default function LoginPage() {
     <AuthShell title={t('loginWelcome')} subtitle={t('loginSubtitle')}>
       {notice && !error ? (
         <p className="l-auth__note l-auth__note--gap" role="status">
-          {t(notice === 'account_ready' ? 'loginAccountReady' : 'loginSessionEnded')}
+          {t(NOTICE_WORDS[notice] ?? 'loginSessionEnded')}
         </p>
       ) : null}
       {error ? <AuthAlert>{error}</AuthAlert> : null}
@@ -127,6 +144,13 @@ export default function LoginPage() {
             </Link>
           }
         />
+        <div className="l-check">
+          <input id="shared-device" type="checkbox" checked={shared} onChange={(e) => setShared(e.target.checked)} aria-describedby="shared-device-hint" />
+          <label htmlFor="shared-device">
+            {t('loginShared')}
+            <span id="shared-device-hint" className="l-check__hint">{t('loginSharedHint')}</span>
+          </label>
+        </div>
         <AuthButton loading={loading} loadingLabel={t('loginSigningIn')}>
           {t('loginSignIn')}
         </AuthButton>

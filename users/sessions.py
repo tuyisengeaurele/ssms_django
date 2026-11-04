@@ -5,6 +5,7 @@ signal), the same browser may ask again with the old token for a short while. Th
 or long after, means someone copied it, and the whole session ends.
 """
 import logging
+from datetime import timedelta
 
 from django.conf import settings
 from django.db import transaction
@@ -21,11 +22,12 @@ from .models import User, UserSession
 logger = logging.getLogger(__name__)
 
 REMEMBERED_TOKENS = 5
+IDLE_MESSAGE = 'You were signed out because nobody used this page for a while. Please sign in again.'
 USER_AGENT_LIMIT = 300
 
 
 class SessionEnded(Exception):
-    """The session cannot go on. `reason` is one of revoked, expired, reused."""
+    """The session cannot go on. `reason` is one of revoked, expired, idle, reused."""
 
     def __init__(self, reason: str, session: UserSession | None = None):
         super().__init__(reason)
@@ -35,6 +37,23 @@ class SessionEnded(Exception):
 
 def _now():
     return timezone.now()
+
+
+def idle_limit(user, shared: bool = False) -> timedelta | None:
+    """How long this sign in may sit unused, or None when it may sit for as long as it lives.
+
+    A shared computer gets the shared limit, but never a looser one than the person's role already has.
+    """
+    wanted = [settings.SESSION_IDLE_MINUTES.get(user.role)]
+    if shared:
+        wanted.append(settings.SESSION_IDLE_SHARED_MINUTES)
+    minutes = min((m for m in wanted if m), default=None)
+    return timedelta(minutes=minutes) if minutes else None
+
+
+def is_idle(user, last_activity_at, now, shared: bool = False) -> bool:
+    limit = idle_limit(user, shared)
+    return limit is not None and now - last_activity_at > limit
 
 
 def _agent(request) -> str:
@@ -57,7 +76,7 @@ def _remember(session: UserSession, jti: str) -> None:
     session.tokens = [*session.tokens, {'jti': jti, 'used_at': None}][-REMEMBERED_TOKENS:]
 
 
-def start_session(request, user, hints=None) -> tuple[UserSession, str, str]:
+def start_session(request, user, hints=None, shared: bool = False) -> tuple[UserSession, str, str]:
     """Sign a device in. Returns the session, the access token and the refresh token."""
     now = _now()
     info = describe_device(_agent(request), hints)
@@ -67,7 +86,7 @@ def start_session(request, user, hints=None) -> tuple[UserSession, str, str]:
 
     session = UserSession.objects.create(
         user=user, device_label=info.label, browser=info.browser, os=info.os, is_installed_app=info.is_installed_app,
-        user_agent=_agent(request), last_used_at=now, last_activity_at=now, expires_at=UserSession.ends_at(now),
+        is_shared_device=shared, user_agent=_agent(request), last_used_at=now, last_activity_at=now, expires_at=UserSession.ends_at(now),
     )
     refresh = _issue(session)
     _remember(session, refresh['jti'])
@@ -135,6 +154,8 @@ def rotate(request, presented: str) -> tuple[UserSession, str, str]:
             verdict = 'revoked'
         elif now >= session.expires_at:
             verdict = 'expired'
+        elif is_idle(session.user, session.last_activity_at, now, session.is_shared_device):
+            verdict = 'idle'
         else:
             entry = next((t for t in session.tokens if t['jti'] == token['jti']), None)
             if entry is None or (entry['used_at'] is not None and not _may_ask_again(request, session, entry, now)):
@@ -148,8 +169,8 @@ def rotate(request, presented: str) -> tuple[UserSession, str, str]:
             session.last_used_at = now
             session.save(update_fields=['tokens', 'last_used_at'])
     if verdict:
-        if verdict == 'reused':
-            revoke(session, 'reused')
+        if verdict in ('reused', 'idle'):
+            revoke(session, verdict)
         raise SessionEnded(verdict, session)
     return session, str(refresh.access_token), str(refresh)
 

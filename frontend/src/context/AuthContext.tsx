@@ -4,7 +4,7 @@ import { User } from '../types';
 import api from '../services/api';
 import { authService } from '../services/auth.service';
 import {
-  clearLegacyStorage, forgetSession, hasSessionHint, refreshAccessToken, rememberSession, setAccessToken,
+  clearLegacyStorage, endedNotice, forgetSession, hasSessionHint, leaveNotice, refreshAccessToken, rememberSession, setAccessToken,
 } from '../services/session';
 
 interface AuthContextValue {
@@ -37,11 +37,7 @@ async function restoreSession(): Promise<User | null> {
     // No answer at all (offline) says nothing about the session, so the flag stays for the next try.
     if (axios.isAxiosError(error) && !error.response) return null;
     forgetSession();
-    try {
-      sessionStorage.setItem('ssms_notice', 'session_ended');
-    } catch {
-      // The note is a courtesy.
-    }
+    leaveNotice(endedNotice(error));
     return null;
   }
 }

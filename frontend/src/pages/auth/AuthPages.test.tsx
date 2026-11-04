@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AxiosError } from 'axios';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
@@ -88,8 +89,37 @@ describe('Login page', () => {
     fill('Password', 'Secret123');
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/supervisor'));
-    expect(api.login).toHaveBeenCalledWith({ email: 'a@b.rw', password: 'Secret123', device: { installed: false } });
+    expect(api.login).toHaveBeenCalledWith({ email: 'a@b.rw', password: 'Secret123', device: { installed: false }, sharedDevice: false });
     expect(login).toHaveBeenCalledWith({ role: 'SUPERVISOR' }, 'abc');
+  });
+
+  it('offers a tick for a shared computer, off until the person turns it on', () => {
+    open();
+    const tick = screen.getByRole('checkbox', { name: /shared computer/i });
+    expect(tick).not.toBeChecked();
+    expect(screen.getByText(/signed out sooner/i)).toBeInTheDocument();
+  });
+
+  it('tells the server when the computer is shared', async () => {
+    api.login.mockResolvedValue({ data: { data: { user: { role: 'FARMER' }, token: 'abc' } } });
+    open();
+    fill('Email address', 'a@b.rw');
+    fill('Password', 'Secret123');
+    fireEvent.click(screen.getByRole('checkbox', { name: /shared computer/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    await waitFor(() => expect(api.login).toHaveBeenCalled());
+    expect(api.login).toHaveBeenCalledWith(expect.objectContaining({ sharedDevice: true }));
+  });
+
+  it('asks about a shared computer in French and Kinyarwanda too', () => {
+    localStorage.setItem('ssms_locale', 'fr');
+    const { unmount } = open();
+    expect(screen.getByRole('checkbox', { name: /ordinateur partagé/i })).toBeInTheDocument();
+    unmount();
+    localStorage.setItem('ssms_locale', 'rw');
+    open();
+    expect(screen.queryByRole('checkbox', { name: /shared computer/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('checkbox')).toHaveLength(1);
   });
 
   it('tells the server what the browser says about the device', async () => {
@@ -101,7 +131,7 @@ describe('Login page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     await waitFor(() => expect(api.login).toHaveBeenCalled());
     expect(api.login).toHaveBeenCalledWith({
-      email: 'a@b.rw', password: 'Secret123', device: { installed: true, model: 'Pixel 9', platform: 'Android' },
+      email: 'a@b.rw', password: 'Secret123', device: { installed: true, model: 'Pixel 9', platform: 'Android' }, sharedDevice: false,
     });
   });
 
@@ -113,7 +143,7 @@ describe('Login page', () => {
     fill('Password', 'Secret123');
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     await waitFor(() => expect(login).toHaveBeenCalled());
-    expect(api.login).toHaveBeenCalledWith({ email: 'a@b.rw', password: 'Secret123', device: { installed: false } });
+    expect(api.login).toHaveBeenCalledWith({ email: 'a@b.rw', password: 'Secret123', device: { installed: false }, sharedDevice: false });
   });
 
   it('shows the server message when sign in fails', async () => {
@@ -222,6 +252,32 @@ describe('Login page', () => {
     sessionStorage.setItem('ssms_notice', 'session_ended');
     open();
     expect(screen.getByRole('status')).toHaveTextContent('Your session ended, so we signed you out. Please sign in again.');
+    expect(sessionStorage.getItem('ssms_notice')).toBeNull();
+  });
+
+  it('says so when the person was signed out for sitting idle', () => {
+    sessionStorage.setItem('ssms_notice', 'session_idle');
+    open();
+    expect(screen.getByRole('status')).toHaveTextContent('You were signed out because nobody used this page for a while. Please sign in again.');
+    expect(sessionStorage.getItem('ssms_notice')).toBeNull();
+  });
+
+  it('still shows the notice when React draws the page twice, as it does while developing', () => {
+    sessionStorage.setItem('ssms_notice', 'session_idle');
+    render(
+      <StrictMode>
+        <MemoryRouter initialEntries={['/login']}>
+          <LanguageProvider>
+            <ToastProvider>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+              </Routes>
+            </ToastProvider>
+          </LanguageProvider>
+        </MemoryRouter>
+      </StrictMode>,
+    );
+    expect(screen.getByRole('status')).toHaveTextContent('nobody used this page');
     expect(sessionStorage.getItem('ssms_notice')).toBeNull();
   });
 

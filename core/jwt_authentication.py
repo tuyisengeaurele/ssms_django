@@ -1,8 +1,14 @@
+from datetime import timedelta
+
 from django.utils import timezone
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 
 from users.models import UserSession
+from users.sessions import IDLE_MESSAGE, idle_limit
+
+# Using the site moves the idle clock, but it is written at most this often, so a busy page costs one write a minute.
+TOUCH_EVERY = timedelta(seconds=60)
 
 
 class ActiveUserJWTAuthentication(JWTAuthentication):
@@ -33,7 +39,15 @@ class ActiveUserJWTAuthentication(JWTAuthentication):
         request.session_id = token.payload.get('sid')
         if request.session_id:
             # One indexed lookup on the primary key.
-            state = UserSession.objects.filter(pk=request.session_id).values_list('revoked_at', 'expires_at').first()
-            if state is None or state[0] is not None or timezone.now() >= state[1]:
+            state = UserSession.objects.filter(pk=request.session_id).values_list(
+                'revoked_at', 'expires_at', 'last_activity_at', 'is_shared_device',
+            ).first()
+            now = timezone.now()
+            if state is None or state[0] is not None or now >= state[1]:
                 raise AuthenticationFailed('Your session has ended. Please sign in again.', code='session_revoked')
+            limit = idle_limit(result[0], state[3])
+            if limit is not None and now - state[2] > limit:
+                raise AuthenticationFailed(IDLE_MESSAGE, code='session_idle')
+            if now - state[2] >= TOUCH_EVERY:
+                UserSession.objects.filter(pk=request.session_id, last_activity_at__lt=now - TOUCH_EVERY).update(last_activity_at=now)
         return result

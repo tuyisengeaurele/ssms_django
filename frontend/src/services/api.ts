@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios';
-import { clearLegacyStorage, forgetSession, getAccessToken, refreshAccessToken } from './session';
+import { clearLegacyStorage, endedNotice, forgetSession, getAccessToken, leaveNotice, refreshAccessToken } from './session';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
@@ -48,7 +48,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // No answer at all (offline, server restarting) says nothing about the session, so it is kept.
         if (axios.isAxiosError(refreshError) && !refreshError.response) return Promise.reject(err);
-        endSession();
+        endSession(endedNotice(refreshError) === 'session_idle' ? 'idle' : 'ended');
         return Promise.reject(refreshError);
       }
     }
@@ -58,14 +58,10 @@ api.interceptors.response.use(
 );
 
 /** Forgets the sign in and sends the person to the login page with a short explanation. */
-export function endSession() {
+export function endSession(reason: 'ended' | 'idle' = 'ended') {
   forgetSession();
   clearLegacyStorage();
-  try {
-    sessionStorage.setItem('ssms_notice', 'session_ended');
-  } catch {
-    // The note is a courtesy. Signing out still works without it.
-  }
+  leaveNotice(reason === 'idle' ? 'session_idle' : 'session_ended');
   window.location.href = '/login';
 }
 

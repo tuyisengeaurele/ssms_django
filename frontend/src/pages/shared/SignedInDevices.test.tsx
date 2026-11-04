@@ -50,6 +50,15 @@ describe('Signed in devices', () => {
     expect(screen.getByText('Safari on iPad')).toBeInTheDocument();
   });
 
+  it('says which devices were signed in as a shared computer', async () => {
+    api.list.mockResolvedValue({ data: { data: [{ ...laptop, isSharedDevice: false }, { ...phone, isSharedDevice: true }] } });
+    open();
+    const row = (await screen.findByText('Chrome on Pixel 9')).closest('li') as HTMLElement;
+    expect(within(row).getByText('Shared computer')).toBeInTheDocument();
+    const own = screen.getByText('Chrome on Windows').closest('li') as HTMLElement;
+    expect(within(own).queryByText('Shared computer')).not.toBeInTheDocument();
+  });
+
   it('has no way to rename a device', async () => {
     open();
     await screen.findByText('Chrome on Windows');

@@ -196,6 +196,18 @@ SIMPLE_JWT = {
 }
 
 # A signed in device lives at most this long, however often it renews. The refresh token alone slides for 7 days.
+# A sign in nobody uses is ended sooner for people with more power. 0 means no limit.
+def _idle_minutes(name, default):
+    return config(name, default=default, cast=int) or None
+
+
+# A computer ticked as shared at sign in gets this limit at most, whoever signs in on it.
+SESSION_IDLE_SHARED_MINUTES = _idle_minutes('SESSION_IDLE_SHARED_MINUTES', 30)
+SESSION_IDLE_MINUTES = {
+    'ADMIN': _idle_minutes('SESSION_IDLE_ADMIN_MINUTES', 15),
+    'SUPERVISOR': _idle_minutes('SESSION_IDLE_SUPERVISOR_MINUTES', 30),
+    'FARMER': _idle_minutes('SESSION_IDLE_FARMER_MINUTES', 0),
+}
 SESSION_ABSOLUTE_DAYS = config('SESSION_ABSOLUTE_DAYS', default=30, cast=int)
 # A renewal whose answer was lost (weak mobile signal) can be asked again with the old cookie for this long.
 SESSION_REFRESH_GRACE_SECONDS = config('SESSION_REFRESH_GRACE_SECONDS', default=30, cast=int)

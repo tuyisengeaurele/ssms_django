@@ -8,7 +8,7 @@ export const authService = {
   register: (data: { name: string; email: string; password: string; role?: string; invitation?: string; acceptedTerms?: boolean }) =>
     api.post<ApiResponse<RegisterResponse>>('/auth/register', data),
 
-  login: (data: { email: string; password: string; device?: DeviceHints }) =>
+  login: (data: { email: string; password: string; device?: DeviceHints; sharedDevice?: boolean }) =>
     api.post<ApiResponse<AuthResponse>>('/auth/login', data),
 
   verifyEmail: (data: { uid: string; token: string }) =>

@@ -9,7 +9,7 @@ from core.utils import api_error, api_success
 
 from .cookie_utils import clear_refresh_cookie
 from .models import UserSession
-from .sessions import end_all_but, revoke
+from .sessions import end_all_but, idle_limit, revoke
 
 LIST_LIMIT = 50
 
@@ -21,6 +21,7 @@ def _row(session: UserSession, current_id) -> dict:
         'browser': session.browser,
         'os': session.os,
         'is_installed_app': session.is_installed_app,
+        'is_shared_device': session.is_shared_device,
         'created_at': session.created_at,
         'last_used_at': session.last_used_at,
         'is_current': session.id == current_id,
@@ -37,6 +38,24 @@ class _SessionView(APIView):
 
     def current_id(self, request):
         return getattr(request, 'session_id', None)
+
+
+class SessionPingView(_SessionView):
+    """POST /api/auth/session/ping: somebody is still here. Counts as activity and says how long the sign in may sit idle.
+
+    Reading a long page makes no request of its own, so the page sends this now and then. An idle session is already
+    refused before this view runs, so a ping can never bring one back.
+    """
+
+    def post(self, request):
+        session_id = self.current_id(request)
+        shared = False
+        if session_id:
+            shared = bool(UserSession.objects.filter(pk=session_id).values_list('is_shared_device', flat=True).first())
+            UserSession.objects.filter(pk=session_id).update(last_activity_at=timezone.now())
+        limit = idle_limit(request.user, shared)
+        seconds = int(limit.total_seconds()) if limit else None
+        return api_success({'idle_limit_seconds': seconds, 'idle_seconds_left': seconds})
 
 
 class SessionListView(_SessionView):

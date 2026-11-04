@@ -88,6 +88,14 @@ describe('opening the app', () => {
     expect(sessionStorage.getItem('ssms_notice')).toBe('session_ended');
   });
 
+  it('leaves the idle note when the server ended the sign in for sitting idle', async () => {
+    rememberSession();
+    post.mockRejectedValue(new AxiosError('no', 'ERR_BAD_REQUEST', undefined, undefined, { status: 401, data: { reason: 'idle' }, statusText: '', headers: {}, config: {} as InternalAxiosRequestConfig }));
+    open();
+    await waitFor(() => expect(state()).toBe('out'));
+    expect(sessionStorage.getItem('ssms_notice')).toBe('session_idle');
+  });
+
   it('is signed out for now but keeps trying later when the server could not be reached', async () => {
     rememberSession();
     post.mockRejectedValue(offline());

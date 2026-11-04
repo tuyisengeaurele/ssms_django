@@ -122,6 +122,13 @@ describe('When the access token has run out', () => {
     expect(sessionStorage.getItem('ssms_notice')).toBe('session_ended');
   });
 
+  it('says the sign in sat idle when the server says so', async () => {
+    rememberSession();
+    post.mockRejectedValue(new AxiosError('no', 'ERR_BAD_REQUEST', undefined, undefined, { status: 401, data: { reason: 'idle' }, statusText: '', headers: {}, config: {} as InternalAxiosRequestConfig }));
+    await expect(api.request({ url: '/farms', adapter: answersWith401ThenOk([]) })).rejects.toBeInstanceOf(AxiosError);
+    expect(sessionStorage.getItem('ssms_notice')).toBe('session_idle');
+  });
+
   it('keeps the session when the renewal got no answer at all, because that says nothing about it', async () => {
     rememberSession();
     post.mockRejectedValue(new AxiosError('Network Error', 'ERR_NETWORK'));
@@ -135,6 +142,11 @@ describe('When the session cannot be renewed', () => {
   it('leaves a note for the login page', () => {
     endSession();
     expect(sessionStorage.getItem('ssms_notice')).toBe('session_ended');
+  });
+
+  it('leaves a different note when the page ended the sign in because nobody used it', () => {
+    endSession('idle');
+    expect(sessionStorage.getItem('ssms_notice')).toBe('session_idle');
   });
 
   it('forgets the token, the hint and anything older versions saved', () => {

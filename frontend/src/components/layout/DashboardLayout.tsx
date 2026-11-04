@@ -2,16 +2,22 @@ import '@fontsource-variable/fraunces/wght.css';
 import '@fontsource-variable/geist';
 import '../../styles/shell.css';
 import '../../styles/components.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import BottomNav from './BottomNav';
 import QuickSearch from './QuickSearch';
+import IdleWarningModal from './IdleWarningModal';
+import { useAuth } from '../../context/AuthContext';
 import { alertService } from '../../services/alert.service';
+import { endSession } from '../../services/api';
+import { authService } from '../../services/auth.service';
+import { sessionsService } from '../../services/sessions.service';
 import { pageVariants } from '../../utils/motion';
 import { useCrampedTables } from '../../hooks/useCrampedTables';
+import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 import { useApplyTheme } from '../../utils/theme';
 
 const NAV_KEY = 'ssms_nav';
@@ -38,6 +44,26 @@ export default function DashboardLayout() {
   const [searchOpen, setSearchOpen] = useState(false);
   useApplyTheme();
   useCrampedTables();
+
+  // The server decides when a sign in that nobody uses ends, and tells the page the limit. This only warns first.
+  const { logout } = useAuth();
+  const [idleLimit, setIdleLimit] = useState<number | null>(null);
+  useEffect(() => {
+    let live = true;
+    // The first ping is the page opening, which is activity too. Without an answer there is simply no warning.
+    sessionsService.ping()
+      .then((res) => { if (live) setIdleLimit(res.data.data.idleLimitSeconds); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, []);
+  const ping = useCallback(() => { sessionsService.ping().catch(() => {}); }, []);
+  const signOutIdle = useCallback(() => {
+    // The page leaves for the login page right after, so the server gets a moment to hear about it, not longer.
+    const told = authService.logout().catch(() => {});
+    const patience = new Promise((resolve) => window.setTimeout(resolve, 1500));
+    Promise.race([told, patience]).then(() => endSession('idle'));
+  }, []);
+  const idle = useIdleTimeout({ limitSeconds: idleLimit, onExpire: signOutIdle, onPing: ping });
 
   useEffect(() => {
     alertService.getAll(true)
@@ -101,6 +127,7 @@ export default function DashboardLayout() {
 
       <BottomNav alertCount={alertCount} onMore={() => setMobileOpen(true)} />
       <QuickSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <IdleWarningModal open={idle.warning} secondsLeft={idle.secondsLeft} onStay={idle.stay} onSignOut={logout} />
     </div>
   );
 }

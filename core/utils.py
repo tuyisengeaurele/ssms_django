@@ -18,6 +18,13 @@ def api_error(message='Error', status_code=status.HTTP_400_BAD_REQUEST, errors=N
     return Response(body, status=status_code)
 
 
+def _failure_code(exc) -> str:
+    """The code an authentication class gave. The token library keeps it in a dict, Django REST framework on the text."""
+    detail = exc.detail
+    code = detail.get('code') if isinstance(detail, dict) else getattr(detail, 'code', '')
+    return str(code or '')
+
+
 def _friendly_message(exc, status_code, data):
     """Plain, kind wording for every error the API can raise."""
     if isinstance(exc, Throttled):
@@ -60,6 +67,8 @@ def custom_exception_handler(exc, context):
         errors = {k: v for k, v in data.items() if k != 'detail'}
 
     response.data = {'success': False, 'message': message}
+    if isinstance(exc, AuthenticationFailed) and _failure_code(exc) == 'session_idle':
+        response.data['code'] = 'session_idle'
     if isinstance(exc, Throttled) and exc.wait:
         response.data['retryAfter'] = int(math.ceil(exc.wait))
     if errors:

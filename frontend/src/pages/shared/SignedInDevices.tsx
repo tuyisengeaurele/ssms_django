@@ -85,6 +85,7 @@ export default function SignedInDevices() {
                   <p className="signin-name">
                     <strong>{device.deviceLabel}</strong>
                     {device.isCurrent ? <span className="badge badge-green">{t('sdThisDevice')}</span> : null}
+                    {device.isSharedDevice ? <span className="badge badge-gray">{t('sdShared')}</span> : null}
                   </p>
                   <p className="signin-sub">
                     {fill(t('sdLastUsed'), { when: when.format(new Date(device.lastUsedAt)) })}

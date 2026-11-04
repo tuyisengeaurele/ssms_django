@@ -42,6 +42,23 @@ export function forgetSession() {
   }
 }
 
+export type EndedNotice = 'session_ended' | 'session_idle';
+
+/** Why a sign in could not be renewed, from the server's answer. Sitting idle gets its own, kinder, note. */
+export function endedNotice(error: unknown): EndedNotice {
+  const reason = axios.isAxiosError(error) ? (error.response?.data as { reason?: string } | undefined)?.reason : undefined;
+  return reason === 'idle' ? 'session_idle' : 'session_ended';
+}
+
+/** Leaves a one time note for the login page. The note is a courtesy, so a browser that refuses storage loses nothing else. */
+export function leaveNotice(notice: EndedNotice) {
+  try {
+    sessionStorage.setItem('ssms_notice', notice);
+  } catch {
+    // Signing out still works without it.
+  }
+}
+
 /** Earlier versions kept the token and the user in localStorage. They are removed so nothing old stays readable. */
 export function clearLegacyStorage() {
   try {
