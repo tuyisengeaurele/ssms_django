@@ -11,6 +11,7 @@ from batches.queries import with_counts
 from core.access import get_farm_or_404, scope_farms
 from core.doc_format import clean_lang
 from core.pagination import StandardPagination
+from core.permissions import RolePermission
 from core.throttles import ReportRateThrottle
 from core.utils import api_error, api_success
 
@@ -30,7 +31,8 @@ def _with_active_batches():
 
 
 class FarmListCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'farms'
 
     def get(self, request):
         farms = (
@@ -46,8 +48,6 @@ class FarmListCreateView(APIView):
         return api_success(FarmSerializer(farms, many=True).data)
 
     def post(self, request):
-        if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error("You don't have permission to do that.", 403)
         serializer = FarmCreateSerializer(data=request.data)
         if not serializer.is_valid():
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
@@ -66,11 +66,11 @@ class FarmRiskView(APIView):
     Each row says why: disease alerts in the last 14 days, open temperature or humidity problems, and sensors that are
     offline. See farms/risk.py for the rule.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'farms'
+    actions = {'get': 'risk'}
 
     def get(self, request):
-        if request.user.role not in ('SUPERVISOR', 'ADMIN'):
-            return api_error("You don't have permission to do that.", 403)
         return api_success(farm_risk(scope_farms(request.user)))
 
 
@@ -79,7 +79,9 @@ class FarmSummaryView(APIView):
 
     Anyone who may see the farm may ask for it. The name on the document is the person who asked.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'farms'
+    actions = {'get': 'summary'}
     throttle_classes = [UserRateThrottle, ReportRateThrottle]
 
     def get(self, request, pk):
@@ -91,15 +93,14 @@ class FarmSummaryView(APIView):
 
 
 class FarmDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'farms'
 
     def get(self, request, pk):
         farm = get_farm_or_404(request.user, pk, Farm.objects.prefetch_related(_with_active_batches()))
         return api_success(FarmDetailSerializer(farm).data)
 
     def patch(self, request, pk):
-        if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error("You don't have permission to do that.", 403)
         farm = get_farm_or_404(request.user, pk)
         serializer = FarmUpdateSerializer(farm, data=request.data, partial=True)
         if not serializer.is_valid():
@@ -109,8 +110,6 @@ class FarmDetailView(APIView):
         return api_success(FarmSerializer(farm).data, 'Farm updated.')
 
     def delete(self, request, pk):
-        if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error("You don't have permission to do that.", 403)
         farm = get_farm_or_404(request.user, pk)
         farm.is_active = False
         farm.save(update_fields=['is_active'])

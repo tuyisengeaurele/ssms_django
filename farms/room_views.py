@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from audit_log.utils import log_action
 from batches.models import Batch
 from core.access import get_farm_or_404, get_room_or_404
+from core.permissions import RolePermission
 from core.utils import api_error, api_success
 
 from .models import RearingRoom
@@ -74,13 +75,10 @@ def _name_taken(farm, name: str, exclude_pk: str | None = None) -> bool:
     return taken.exists()
 
 
-def _can_write(user) -> bool:
-    return user.role in ('FARMER', 'ADMIN')
-
-
 class FarmRoomListView(APIView):
     """GET lists the rooms of a farm with the batches in each. POST adds a room (the owner or an admin)."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'rooms'
 
     def get(self, request, farm_id):
         farm = get_farm_or_404(request.user, farm_id)
@@ -88,8 +86,6 @@ class FarmRoomListView(APIView):
         return api_success([_row(r) for r in rooms])
 
     def post(self, request, farm_id):
-        if not _can_write(request.user):
-            return api_error("You don't have permission to do that.", 403)
         farm = get_farm_or_404(request.user, farm_id)
         serializer = RoomWriteSerializer(data=request.data)
         if not serializer.is_valid():
@@ -104,11 +100,10 @@ class FarmRoomListView(APIView):
 
 class RoomDetailView(APIView):
     """PATCH renames a room or changes its notes. DELETE hides it, but only when no batch is in it."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'rooms'
 
     def patch(self, request, pk):
-        if not _can_write(request.user):
-            return api_error("You don't have permission to do that.", 403)
         room = get_room_or_404(request.user, pk)
         serializer = RoomWriteSerializer(data={'name': room.name, **request.data}, partial=False)
         if not serializer.is_valid():
@@ -124,8 +119,6 @@ class RoomDetailView(APIView):
         return api_success(_row(room), 'Room updated.')
 
     def delete(self, request, pk):
-        if not _can_write(request.user):
-            return api_error("You don't have permission to do that.", 403)
         room = get_room_or_404(request.user, pk)
         if room.batches.filter(is_active=True).exists():
             return api_error('Move the batches out of this room first.', 409)
