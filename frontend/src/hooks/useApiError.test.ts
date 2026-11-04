@@ -1,8 +1,9 @@
 import { AxiosError, AxiosHeaders, type AxiosResponse } from 'axios';
+import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { useApiError } from './useApiError';
 
-const { getErrorMessage } = useApiError();
+const { getErrorMessage } = renderHook(() => useApiError()).result.current;
 
 function withResponse(status: number, data: unknown) {
   const config = { headers: new AxiosHeaders() };

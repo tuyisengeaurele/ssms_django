@@ -17,6 +17,8 @@ export function useBatches(farmId: string) {
       .finally(() => setLoading(false));
   };
 
+  // refetch is rebuilt every render, so only a new farm should trigger it.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { refetch(); }, [farmId]);
 
   return { batches, loading, error, refetch };

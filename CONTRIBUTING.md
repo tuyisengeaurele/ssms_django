@@ -70,9 +70,10 @@ python scripts/check_content.py --all
 
 - Every fix starts with a test that fails for the right reason.
 - Every new behaviour ships with a test.
-- Run the checker tests with `python -m unittest scripts.tests.test_check_content`.
-- Run the backend tests with `python manage.py test`.
-- In `frontend/`, run `npx tsc --noEmit` and `npm run build` before you push.
+- Run the backend tests with `python -m pytest -q`. They need a local Postgres (see `.env.example`). The checker tests under `scripts/tests` run in the same command.
+- Run `ruff check .` for the Python style checks.
+- In `frontend/`, run `npm run lint`, `npx tsc --noEmit`, `npm test` and `npm run build` before you push.
+- GitHub runs all of these on every pull request (`.github/workflows/ci.yml`), plus `pip-audit`, `npm audit` for the packages that ship to the browser, `manage.py check --deploy` and an 80 percent coverage gate on the backend. A red check means the pull request waits.
 
 ## Interface
 
