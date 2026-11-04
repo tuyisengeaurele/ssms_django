@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from audit_log.utils import log_action
 from core.mail import Email
 from core.mail import send_email_async as _send_mail_async
+from core.permissions import RolePermission
 from core.throttles import ContactRateThrottle
 from core.utils import api_error, api_success
 
@@ -85,18 +86,15 @@ def _serialize_message(m):
 
 class ContactListView(APIView):
     """GET /api/admin/contacts, admin only."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'contacts'
 
     def get(self, request):
-        if request.user.role != 'ADMIN':
-            return api_error("You don't have permission to do that.", 403)
         messages = ContactMessage.objects.select_related('replied_by').order_by('-created_at')
         return api_success([_serialize_message(m) for m in messages])
 
     def patch(self, request, pk):
         """PATCH /api/admin/contacts/:id/read, mark as read."""
-        if request.user.role != 'ADMIN':
-            return api_error("You don't have permission to do that.", 403)
         try:
             msg = ContactMessage.objects.get(pk=pk)
         except ContactMessage.DoesNotExist:
@@ -112,11 +110,10 @@ class ContactRepliedView(APIView):
     The reply itself is sent from the admin's own mail app, so this is a mark made by hand. Answering also marks the
     message read. Marking it again keeps the first answer, so the record says who really answered first.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'contacts'
 
     def _message(self, request, pk):
-        if request.user.role != 'ADMIN':
-            return None, api_error("You don't have permission to do that.", 403)
         msg = ContactMessage.objects.select_related('replied_by').filter(pk=pk).first()
         if msg is None:
             return None, api_error("We couldn't find that message.", 404)
@@ -152,11 +149,10 @@ class ContactUnreadView(APIView):
     GET /api/admin/contacts/unread
     Returns unread count + latest 5 unread messages for admin notification bell.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'contacts'
 
     def get(self, request):
-        if request.user.role != 'ADMIN':
-            return api_error("You don't have permission to do that.", 403)
         unread = ContactMessage.objects.filter(is_read=False).select_related('replied_by').order_by('-created_at')
         data = {
             'count':    unread.count(),
