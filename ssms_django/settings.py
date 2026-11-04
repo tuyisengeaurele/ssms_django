@@ -174,6 +174,9 @@ REST_FRAMEWORK = {
         'device': '30/minute',   # readings per device key
         'invitation': '20/minute',
         'sessions': '30/minute',   # signed in devices: list and sign out
+        'report': '20/minute',   # PDF reports, per person
+        'export': '10/minute',   # CSV and PDF exports of a list, per person
+        'detection': '20/minute',   # photo checks, per person
         'lot': '30/minute',   # strangers opening the page behind a lot's QR code
     },
 }

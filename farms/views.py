@@ -2,6 +2,7 @@ from django.db.models import Prefetch
 from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from audit_log.utils import log_action
@@ -10,6 +11,7 @@ from batches.queries import with_counts
 from core.access import get_farm_or_404, scope_farms
 from core.doc_format import clean_lang
 from core.pagination import StandardPagination
+from core.throttles import ReportRateThrottle
 from core.utils import api_error, api_success
 
 from .models import Farm
@@ -78,6 +80,7 @@ class FarmSummaryView(APIView):
     Anyone who may see the farm may ask for it. The name on the document is the person who asked.
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle, ReportRateThrottle]
 
     def get(self, request, pk):
         farm = get_farm_or_404(request.user, pk)
