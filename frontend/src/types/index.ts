@@ -39,8 +39,6 @@ export interface User {
 export interface SignedInDevice {
   id: string;
   deviceLabel: string;
-  /** The name the person gave it. Empty until they rename it. */
-  customName: string;
   browser: string;
   os: string;
   isInstalledApp: boolean;

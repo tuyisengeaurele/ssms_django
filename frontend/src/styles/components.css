@@ -794,8 +794,7 @@ tr.is-off td:last-child { opacity: 1; }
 .signin-main { flex: 1 1 260px; min-width: 0; }
 .signin-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; color: var(--ink); overflow-wrap: anywhere; }
 .signin-sub { margin: 2px 0 0; color: var(--text-muted); font-size: 0.84rem; overflow-wrap: anywhere; }
-.signin-actions, .signin-edit { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.signin-edit .form-input { flex: 1 1 200px; }
+.signin-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
 .segmented { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 999px; background: var(--tint); }
 .segmented button { padding: 8px 18px; border: 0; border-radius: 999px; background: none; color: var(--text-2); font: 500 0.88rem var(--font-ui); transition: background-color 0.25s var(--ease-out), color 0.25s var(--ease-out); }
