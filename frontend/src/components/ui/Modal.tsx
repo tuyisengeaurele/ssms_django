@@ -11,11 +11,15 @@ interface ModalProps {
   children: ReactNode;
   maxWidth?: number;
   footer?: ReactNode;
+  /** An alert dialog is read out at once. For a question that cannot wait, such as a sign out about to happen. */
+  role?: 'dialog' | 'alertdialog';
+  /** A selector for what gets the focus first. Without it the first field, or else the first control, does. */
+  initialFocus?: string;
 }
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-export default function Modal({ open, onClose, title, children, maxWidth = 480, footer }: ModalProps) {
+export default function Modal({ open, onClose, title, children, maxWidth = 480, footer, role = 'dialog', initialFocus }: ModalProps) {
   const titleId = useId();
   const boxRef = useRef<HTMLDivElement>(null);
 
@@ -41,9 +45,12 @@ export default function Modal({ open, onClose, title, children, maxWidth = 480, 
     if (!open) return;
     const before = document.activeElement as HTMLElement | null;
     const box = boxRef.current;
-    const first = box?.querySelector<HTMLElement>('input, select, textarea') ?? box?.querySelector<HTMLElement>(FOCUSABLE);
+    const wanted = initialFocus ? box?.querySelector<HTMLElement>(initialFocus) : null;
+    const first = wanted ?? box?.querySelector<HTMLElement>('input, select, textarea') ?? box?.querySelector<HTMLElement>(FOCUSABLE);
     (first ?? box)?.focus();
     return () => before?.focus?.();
+    // The target is read once, when the dialog opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // Keep Tab inside the dialog.
@@ -76,7 +83,7 @@ export default function Modal({ open, onClose, title, children, maxWidth = 480, 
           <motion.div
             ref={boxRef}
             className="modal-box"
-            role="dialog"
+            role={role}
             aria-modal="true"
             aria-labelledby={titleId}
             tabIndex={-1}

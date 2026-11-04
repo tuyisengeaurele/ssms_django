@@ -575,6 +575,8 @@ tr.is-off td:last-child { opacity: 1; }
 .btn-quiet-danger { color: var(--danger-ink); }
 .btn-quiet-danger:hover:not(:disabled) { background: var(--danger-wash); color: var(--danger-ink-2); }
 
+.idle-count { margin: 12px 0 0; color: var(--ink); font: 450 2.4rem var(--font-display); font-variant-numeric: tabular-nums; text-align: center; }
+
 .sr-only {
   position: absolute;
   width: 1px;
