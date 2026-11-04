@@ -7,7 +7,7 @@
 - **Not checked in a browser:** nothing on screen changed. The only visible effect is the audit log text for admin edits.
 
 ### What changed
-- `core/permissions_table.py` is the one place that says which role may do what, for 86 views in 25 resources. A view names its `resource` and the new `RolePermission` class reads the table. The 70 or so role checks written by hand inside views are gone, and so are the two `IsAdmin` classes. The live alert stream reads the table too.
+- `core/permissions_table.py` is the one place that says which role may do what, for 72 views in 23 resources (12 more are open to anyone on purpose, 2 are not classes). A view names its `resource` and the new `RolePermission` class reads the table. More than 40 role checks written by hand inside views are gone, and so are the two `IsAdmin` classes. The live alert stream reads the table too.
 - Behaviour is unchanged: a role the table refuses gets 403 before anything else, a stranger gets 401, and a method the view does not have still gets 405. Which records a role may reach is still `core/access.py`.
 - `tests/security/test_permission_walk.py` finds every view under `/api` and fails when one has no table entry. It also asks every view as each role and checks the answer against the table, both ways: refused when the table says no, never refused when it says yes. Open views must be named in its `PUBLIC` list, so a new open view has to be added by hand.
 - **On behalf of.** When an admin changes a farm, room, batch, mortality record, harvest, shared lot or disease check that a farmer owns, the audit entry ends with "(on behalf of farmer@example.rw)". A farmer's own change reads as before. New helper: `on_behalf_of(request, farm)`.
