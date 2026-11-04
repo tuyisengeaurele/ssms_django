@@ -36,6 +36,9 @@ class RequestLogMiddleware:
         if request.path in NEVER:
             return
         failed = response.status_code >= 400
+        # A browser asks permission before a cross site call. A good answer to that says nothing.
+        if request.method == 'OPTIONS' and not failed:
+            return
         if not failed and random.random() >= settings.REQUEST_LOG_SAMPLE_RATE:
             return
         user = getattr(request, 'user', None)

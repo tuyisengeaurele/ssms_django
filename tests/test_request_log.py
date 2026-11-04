@@ -73,6 +73,12 @@ def test_the_health_probe_is_never_logged(everything):
     assert rows() == []
 
 
+def test_a_browsers_preflight_question_is_not_logged_when_it_is_answered(everything):
+    response = APIClient().options('/api/farms', HTTP_ORIGIN='http://localhost:5173', HTTP_ACCESS_CONTROL_REQUEST_METHOD='GET')
+    assert response.status_code == 200
+    assert rows() == []
+
+
 def test_a_row_has_the_reference_the_method_the_route_the_time_and_the_person(everything):
     user = UserFactory(role='SUPERVISOR')
     client = APIClient()
@@ -147,7 +153,8 @@ def test_the_prune_command_deletes_only_what_is_past_its_keeping_time():
     call_command('prune_logs')
     assert set(RequestLog.objects.values_list('pk', flat=True)) == {keep_request} and drop_request
     assert set(SecurityEvent.objects.values_list('pk', flat=True)) == {keep_event} and drop_event
-    assert set(JobLog.objects.values_list('pk', flat=True)) == {keep_job} and drop_job
+    # The command writes its own start and end rows, which are new and stay.
+    assert set(JobLog.objects.exclude(kind__startswith='command_').values_list('pk', flat=True)) == {keep_job} and drop_job
 
 
 def test_the_audit_log_is_never_pruned():
