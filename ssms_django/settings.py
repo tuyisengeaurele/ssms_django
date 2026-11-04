@@ -205,6 +205,11 @@ REQUEST_LOG_SAMPLE_RATE = config('REQUEST_LOG_SAMPLE_RATE', default=0.05, cast=f
 REQUEST_LOG_KEEP_DAYS = config('REQUEST_LOG_KEEP_DAYS', default=14, cast=int)
 SECURITY_LOG_KEEP_DAYS = config('SECURITY_LOG_KEEP_DAYS', default=365, cast=int)
 JOB_LOG_KEEP_DAYS = config('JOB_LOG_KEEP_DAYS', default=90, cast=int)
+# `check_log_bursts` mails the admins when this many failures come within LOG_BURST_MINUTES, then stays quiet for a while.
+LOG_BURST_MINUTES = config('LOG_BURST_MINUTES', default=5, cast=int)
+LOG_BURST_SERVER_ERRORS = config('LOG_BURST_SERVER_ERRORS', default=10, cast=int)
+LOG_BURST_REFUSALS = config('LOG_BURST_REFUSALS', default=30, cast=int)
+LOG_BURST_QUIET_MINUTES = config('LOG_BURST_QUIET_MINUTES', default=30, cast=int)
 
 # A sign in nobody uses is ended sooner for people with more power. 0 means no limit.
 def _idle_minutes(name, default):
