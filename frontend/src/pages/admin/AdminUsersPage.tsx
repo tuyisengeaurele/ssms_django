@@ -313,7 +313,6 @@ export default function AdminUsersPage() {
 
       <PageHeader
         title={t('ptUsers')}
-        subtitle={t('usSubtitle')}
         actions={
           <button className="btn btn-primary btn-sm" onClick={() => setShowCreate(true)}>
             <Icon name="add" size={15} />

@@ -469,6 +469,7 @@ export default function BatchDetailPage() {
 
       <PageHeader
         title={fill(t('bdTitle'), { id: code })}
+        showTitle
         actions={
           <>
             <Link to={`/batches/${id}/detect`} className="btn btn-primary btn-sm">

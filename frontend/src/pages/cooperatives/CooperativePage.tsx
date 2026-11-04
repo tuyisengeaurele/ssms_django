@@ -74,14 +74,14 @@ export default function CooperativePage({ scope }: { scope: CoopScope }) {
   ];
 
   const title = scope === 'all' ? t('crAll') : scope === 'mine' ? t('ptMyCooperative') : (detail?.name ?? t('ptCooperative'));
-  const subtitle = scope === 'all' ? t('cpAllSubtitle') : scope === 'mine' ? (user?.cooperativeName ?? t('cpMineSubtitle')) : detail?.location || undefined;
+  const subtitle = scope === 'all' ? undefined : scope === 'mine' ? (user?.cooperativeName ?? t('cpMineSubtitle')) : detail?.location || undefined;
 
   const context: CoopContext = { scope, period, detail, setDetail, refreshDetail };
 
   return (
     <div>
       {scope !== 'mine' ? back : null}
-      <PageHeader title={title} subtitle={subtitle} />
+      <PageHeader title={title} subtitle={subtitle} showTitle />
       <TabNav label={t('cpNavLabel')} items={tabs} />
       <Outlet context={context} />
     </div>

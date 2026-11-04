@@ -149,7 +149,8 @@ describe('Farmer dashboard', () => {
   it('greets the farmer by first name', async () => {
     open();
     expect(screen.getByRole('heading', { level: 1, name: 'Welcome back, Serge' })).toBeInTheDocument();
-    expect(await screen.findByText('Here is how your farms are doing today.')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: /New farm/ })).toBeInTheDocument();
+    expect(screen.queryByText('Here is how your farms are doing today.')).not.toBeInTheDocument();
   });
 
   it('still greets someone whose name is missing', async () => {
@@ -160,7 +161,7 @@ describe('Farmer dashboard', () => {
 
   it('counts farms, running batches and unread alerts, each with a short hint', async () => {
     open();
-    await screen.findByText('Here is how your farms are doing today.');
+    await screen.findByRole('link', { name: /New farm/ });
     expect(tile('Active batches')).toHaveTextContent('2');
     expect(tile('Active batches')).toHaveTextContent('Across 2 farms');
     expect(tile('Unread alerts')).toHaveTextContent('1');
@@ -172,7 +173,7 @@ describe('Farmer dashboard', () => {
     api.farms.mockResolvedValue({ data: { data: [] } });
     api.active.mockResolvedValue({ data: { data: [batch(1, 'EGG')] } });
     open();
-    await screen.findByText('Here is how your farms are doing today.');
+    await screen.findByRole('link', { name: /New farm/ });
     expect(tile('My farms')).toHaveTextContent('Create your first farm');
     expect(tile('Active batches')).toHaveTextContent('Across 1 farm');
   });
@@ -194,7 +195,7 @@ describe('Farmer dashboard', () => {
   it('keeps the rest of the page when one request fails', async () => {
     api.chart.mockRejectedValue(new Error('x'));
     open();
-    await screen.findByText('Here is how your farms are doing today.');
+    await screen.findByRole('link', { name: /New farm/ });
     expect(tile('Active batches')).toHaveTextContent('2');
     expect(screen.getAllByText('No sensor readings yet.').length).toBe(2);
   });
@@ -236,7 +237,7 @@ describe('Farmer dashboard', () => {
 
   it('links to the reports, a new farm and the farm list', async () => {
     open();
-    await screen.findByText('Here is how your farms are doing today.');
+    await screen.findByRole('link', { name: /New farm/ });
     expect(screen.getByRole('link', { name: 'Disease reports' })).toHaveAttribute('href', '/detections/reports');
     expect(screen.getByRole('link', { name: 'New farm' })).toHaveAttribute('href', '/farms/new');
     expect(screen.getByRole('link', { name: 'My farms' })).toHaveAttribute('href', '/farms');

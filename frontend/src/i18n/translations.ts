@@ -181,7 +181,6 @@ export const translations: TranslationMap = {
 
   // ── Admin dashboard ───────────────────────────────────────────────────────────
   adminTitle:           { en: 'Admin Dashboard',                     fr: 'Tableau de bord Admin',               rw: 'Ikibaho cya Admin' },
-  adminSubtitle:        { en: 'Full system oversight and management', fr: 'Surveillance et gestion du système',  rw: 'Gucunga no kugenzura sisitemu' },
   adminTotalFarms:      { en: 'Total Farms',     fr: 'Total des fermes',   rw: 'Amahindu Yose' },
   adminTotalBatches:    { en: 'Total Batches',   fr: 'Total des lots',     rw: 'Amatsinda Yose' },
   adminUniqueFarmers:   { en: 'Unique Farmers',  fr: 'Agriculteurs uniques', rw: 'Abahinzi Batandukanye' },

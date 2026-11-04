@@ -129,7 +129,6 @@ export default function AddDetectionPage() {
     <div className="page-narrow">
       <PageHeader
         title={t('ptDetect')}
-        subtitle={t('ckSubtitle')}
         actions={
           <Link to={`/batches/${batchId}`} className="btn btn-ghost btn-sm">
             <Icon name="back" size={15} />

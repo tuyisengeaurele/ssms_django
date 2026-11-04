@@ -18,7 +18,7 @@ export default function SettingsLayout() {
 
   return (
     <div>
-      <PageHeader title={t('ptSettings')} subtitle={t('stSubtitle')} />
+      <PageHeader title={t('ptSettings')} />
       <div className="settings-layout">
         <TabNav label={t('stNavLabel')} items={sections} />
         <div className="settings-body">

@@ -71,7 +71,6 @@ export default function AddBatchPage() {
     <div className="page-narrow">
       <PageHeader
         title={t('ptBatchNew')}
-        subtitle={t('abSubtitle')}
         actions={
           <Link to={`/farms/${farmId}`} className="btn btn-secondary btn-sm">
             <Icon name="back" size={15} />

@@ -14,7 +14,7 @@ export default function SystemLayout() {
 
   return (
     <div>
-      <PageHeader title={t('ptSystem')} subtitle={t('syHint')} />
+      <PageHeader title={t('ptSystem')} />
       <TabNav label={t('syNavLabel')} items={tabs} />
       <Outlet />
     </div>

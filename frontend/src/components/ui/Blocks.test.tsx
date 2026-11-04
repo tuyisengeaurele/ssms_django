@@ -82,6 +82,29 @@ describe('PageHeader', () => {
     render(<PageHeader title="Alerts" />);
     expect(screen.getByRole('heading', { level: 1, name: 'Alerts' })).toBeInTheDocument();
   });
+
+  it('keeps the title for screen readers only, because the top bar already shows it', () => {
+    render(<PageHeader title="Users" />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Users' })).toHaveClass('sr-only');
+    expect(screen.getByRole('heading', { level: 1, name: 'Users' })).not.toHaveClass('page-title');
+  });
+
+  it('shows the title when the page asks for it, as a farm or batch name does', () => {
+    render(<PageHeader title="Habimana Silk Farm" showTitle />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Habimana Silk Farm' })).toHaveClass('page-title');
+  });
+
+  it('draws no header row when there is nothing but the hidden title', () => {
+    const { container } = render(<PageHeader title="Alerts" />);
+    expect(container.querySelector('.page-header')).toBeNull();
+  });
+
+  it('draws the row for a subtitle or for actions', () => {
+    const { container, rerender } = render(<PageHeader title="Alerts" subtitle="12 unread" />);
+    expect(container.querySelector('.page-header')).not.toBeNull();
+    rerender(<PageHeader title="Alerts" actions={<button>Add</button>} />);
+    expect(container.querySelector('.page-header')).not.toBeNull();
+  });
 });
 
 describe('Panel', () => {
