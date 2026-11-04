@@ -11,6 +11,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from audit_log.utils import log_action
 from core import lockout
+from core.permissions import RolePermission
 from core.throttles import LoginRateThrottle, RegisterRateThrottle
 from core.tokens import revoke_all_refresh_tokens
 from core.utils import api_error, api_success, body_field
@@ -94,7 +95,8 @@ class LoginView(APIView):
 
 
 class ProfileView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'account'
 
     def get(self, request):
         return api_success(UserSerializer(request.user).data)
@@ -178,7 +180,8 @@ class CookieTokenRefreshView(APIView):
 
 class ChangePasswordView(APIView):
     """PATCH /api/auth/change-password, authenticated users only."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'account'
 
     def patch(self, request):
         current  = body_field(request.data, 'current_password', 'currentPassword').strip()

@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from audit_log.utils import log_action
+from core.permissions import RolePermission
 from core.utils import api_error, api_success
 
 from .models import Cooperative
@@ -11,13 +12,12 @@ from .serializers import CooperativeDetailSerializer, CooperativeSerializer, Coo
 
 
 def _require_admin(user):
-    if user.role != 'ADMIN':
-        return api_error("You don't have permission to do that.", 403)
     return None
 
 
 class CooperativeListCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'cooperatives'
 
     def get(self, request):
         """GET /api/cooperatives, admin sees all, others see only their own.
@@ -32,9 +32,6 @@ class CooperativeListCreateView(APIView):
 
     def post(self, request):
         """POST /api/cooperatives, create a cooperative (admin only)."""
-        err = _require_admin(request.user)
-        if err:
-            return err
         serializer = CooperativeWriteSerializer(data=request.data)
         if not serializer.is_valid():
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
@@ -43,7 +40,8 @@ class CooperativeListCreateView(APIView):
 
 
 class CooperativeDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'cooperatives'
 
     def _get_coop(self, pk, user):
         try:
@@ -64,9 +62,6 @@ class CooperativeDetailView(APIView):
 
     def patch(self, request, pk):
         """PATCH /api/cooperatives/<id>, update (admin only)."""
-        err = _require_admin(request.user)
-        if err:
-            return err
         coop, err = self._get_coop(pk, request.user)
         if err:
             return err
@@ -78,9 +73,6 @@ class CooperativeDetailView(APIView):
 
     def delete(self, request, pk):
         """DELETE /api/cooperatives/<id>, delete, which switches it off (admin only)."""
-        err = _require_admin(request.user)
-        if err:
-            return err
         coop, err = self._get_coop(pk, request.user)
         if err:
             return err
@@ -91,13 +83,12 @@ class CooperativeDetailView(APIView):
 
 
 class CooperativeRestoreView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'cooperatives'
+    actions = {'post': 'restore'}
 
     def post(self, request, pk):
         """POST /api/cooperatives/<id>/restore, bring a deleted cooperative back (admin only)."""
-        err = _require_admin(request.user)
-        if err:
-            return err
         try:
             coop = Cooperative.objects.get(pk=pk)
         except Cooperative.DoesNotExist:

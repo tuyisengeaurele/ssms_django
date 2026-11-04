@@ -75,6 +75,13 @@ python scripts/check_content.py --all
 - In `frontend/`, run `npm run lint`, `npx tsc --noEmit`, `npm test` and `npm run build` before you push.
 - GitHub runs all of these on every pull request (`.github/workflows/ci.yml`), plus `pip-audit`, `npm audit` for the packages that ship to the browser, `manage.py check --deploy` and an 80 percent coverage gate on the backend. A red check means the pull request waits.
 
+## Who may do what
+
+- Every API view names its `resource` and uses `permission_classes = [IsAuthenticated, RolePermission]`. What each role may do on it is one line in `core/permissions_table.py`. Do not check `request.user.role` by hand.
+- A view with no entry fails `tests/security/test_permission_walk.py`. A view that is open to anyone has to be added to its `PUBLIC` list by hand.
+- Which records a role reaches is `core/access.py`, not the table.
+- When an admin changes data a farmer owns, pass `owner=on_behalf_of(request, farm)` to `log_action`, so the audit log says whose it was.
+
 ## Interface
 
 - Every visible string exists in English, French and Kinyarwanda.

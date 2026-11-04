@@ -1,6 +1,7 @@
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
+from core.permissions import RolePermission
 from core.utils import api_error, api_success
 
 from . import registry
@@ -8,7 +9,8 @@ from . import registry
 
 class PlaceListView(APIView):
     """GET /api/locations?parent=<code>, the places directly under a place. No parent gives the provinces."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'locations'
 
     def get(self, request):
         rows = registry.children(request.query_params.get('parent') or None)
@@ -22,7 +24,9 @@ class LocateView(APIView):
 
     The point is only looked up and never stored. It travels in the body and not in the address, so it does not end
     up in the access logs of a proxy."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'locations'
+    actions = {'post': 'locate'}
 
     def post(self, request):
         try:

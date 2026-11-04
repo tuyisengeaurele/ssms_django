@@ -3,8 +3,9 @@ from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from audit_log.utils import log_action
+from audit_log.utils import log_action, on_behalf_of
 from core.access import get_batch_or_404
+from core.permissions import RolePermission
 from core.timeutil import aware
 from core.utils import api_error, api_success
 
@@ -14,7 +15,8 @@ from .serializers import MortalityCreateSerializer, MortalityRecordSerializer
 
 class BatchMortalityView(APIView):
     """GET lists the entries, latest day first. POST adds one (the owner or an admin)."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'mortality'
 
     def get(self, request, pk):
         batch = get_batch_or_404(request.user, pk)
@@ -22,8 +24,6 @@ class BatchMortalityView(APIView):
         return api_success(MortalityRecordSerializer(rows, many=True).data)
 
     def post(self, request, pk):
-        if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error("You don't have permission to do that.", 403)
         batch = get_batch_or_404(request.user, pk)
         serializer = MortalityCreateSerializer(data=request.data)
         if not serializer.is_valid():
@@ -40,22 +40,21 @@ class BatchMortalityView(APIView):
             batch=batch, count=serializer.validated_data['count'],
             note=serializer.validated_data.get('note', ''), recorded_on=day,
         )
-        log_action(request, 'CREATE', 'Mortality', record.pk, f'Recorded {record.count} deaths in batch {batch.pk}')
+        log_action(request, 'CREATE', 'Mortality', record.pk, f'Recorded {record.count} deaths in batch {batch.pk}', owner=on_behalf_of(request, batch.farm))
         return api_success(MortalityRecordSerializer(record).data, 'Deaths recorded.', 201)
 
 
 class BatchMortalityDetailView(APIView):
     """DELETE hides one entry. The row is kept."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'mortality'
 
     def delete(self, request, pk, record_id):
-        if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error("You don't have permission to do that.", 403)
         batch = get_batch_or_404(request.user, pk)
         record = batch.mortality_records.filter(pk=record_id, is_active=True).first()
         if record is None:
             return api_error("We couldn't find that entry.", 404)
         record.is_active = False
         record.save(update_fields=['is_active'])
-        log_action(request, 'DELETE', 'Mortality', record.pk, f'Deleted an entry of {record.count} deaths in batch {batch.pk}')
+        log_action(request, 'DELETE', 'Mortality', record.pk, f'Deleted an entry of {record.count} deaths in batch {batch.pk}', owner=on_behalf_of(request, batch.farm))
         return api_success(None, 'Entry deleted.')

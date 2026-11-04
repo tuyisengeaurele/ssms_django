@@ -8,6 +8,7 @@ from rest_framework.serializers import EmailField, ValidationError
 from rest_framework.views import APIView
 
 from audit_log.utils import log_action
+from core.permissions import RolePermission
 from core.throttles import InvitationRateThrottle
 from core.utils import api_error, api_success
 from users.models import User
@@ -50,7 +51,8 @@ def _row(invitation: CooperativeInvitation) -> dict:
 
 class TeamInvitationListView(APIView):
     """GET lists the invitations of the cooperative. POST makes one and returns its link, which is shown only once."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'team'
 
     def get(self, request):
         coop, err = team_cooperative(request)
@@ -87,7 +89,8 @@ class TeamInvitationListView(APIView):
 
 class TeamInvitationDetailView(APIView):
     """DELETE revokes a pending invitation, and its link stops working."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'team'
 
     def delete(self, request, invitation_id):
         coop, err = team_cooperative(request)
@@ -106,7 +109,8 @@ class TeamInvitationDetailView(APIView):
 
 class TeamFarmerListView(APIView):
     """GET /api/team/farmers, the farmers of the cooperative with how many farms each has."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'team'
 
     def get(self, request):
         coop, err = team_cooperative(request)
@@ -125,7 +129,8 @@ class TeamFarmerListView(APIView):
 
 class TeamFarmerDetailView(APIView):
     """DELETE takes a farmer out of the cooperative. Their account and farms stay."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'team'
 
     def delete(self, request, user_id):
         coop, err = team_cooperative(request)
@@ -159,11 +164,11 @@ class InvitationDetailView(APIView):
 
 class InvitationAcceptView(APIView):
     """POST /api/invitations/<token>/accept, a signed in farmer joins the cooperative."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'invitations'
+    actions = {'post': 'accept'}
 
     def post(self, request, token):
-        if request.user.role != 'FARMER':
-            return api_error("You don't have permission to do that.", 403)
         invitation = invitations.find_pending(token)
         if invitation is None:
             return api_error(invitations.NO_LONGER_VALID, 404)

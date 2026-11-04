@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from audit_log.utils import log_action
+from core.permissions import RolePermission
 from core.throttles import SessionsRateThrottle
 from core.utils import api_error, api_success
 
@@ -33,7 +34,8 @@ def _alive(user):
 
 
 class _SessionView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'account'
     throttle_classes = [SessionsRateThrottle]
 
     def current_id(self, request):
@@ -46,6 +48,7 @@ class SessionPingView(_SessionView):
     Reading a long page makes no request of its own, so the page sends this now and then. An idle session is already
     refused before this view runs, so a ping can never bring one back.
     """
+    actions = {'post': 'ping'}
 
     def post(self, request):
         session_id = self.current_id(request)
@@ -86,6 +89,7 @@ class SessionDetailView(_SessionView):
 
 class SessionRevokeOthersView(_SessionView):
     """POST /api/auth/sessions/revoke-others: sign out every device but this one."""
+    actions = {'post': 'revoke_others'}
 
     def post(self, request):
         sid = self.current_id(request)

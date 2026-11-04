@@ -17,6 +17,7 @@ from rest_framework.views import APIView
 from audit_log.models import AuditLog
 from batches.models import Batch
 from core.csvsafe import safe_writer
+from core.permissions import RolePermission
 from core.throttles import ExportRateThrottle
 from core.utils import api_success
 from farms.models import Farm
@@ -28,13 +29,9 @@ from .pdf import report_pdf
 User = get_user_model()
 
 
-class IsAdmin(IsAuthenticated):
-    def has_permission(self, request, view):
-        return super().has_permission(request, view) and request.user.role == 'ADMIN'
-
-
 class ReportSummaryView(APIView):
-    permission_classes = [IsAdmin]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'reports'
     throttle_classes = [UserRateThrottle, ExportRateThrottle]
 
     def get(self, request):

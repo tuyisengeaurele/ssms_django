@@ -5,8 +5,9 @@ from django.utils import timezone
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 
-from audit_log.utils import log_action
+from audit_log.utils import log_action, on_behalf_of
 from core.access import scope_by_batch
+from core.permissions import RolePermission
 from core.throttles import LotRateThrottle
 from core.utils import api_error, api_success
 
@@ -20,11 +21,11 @@ class LotShareView(APIView):
     Not for supervisors, who may read lots but not change them. The link is a secret, so it is not in the harvest list and
     not in the audit log.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'harvests'
+    actions = {'get': 'share', 'post': 'share', 'delete': 'share'}
 
     def _lot(self, request, pk):
-        if request.user.role not in ('FARMER', 'ADMIN'):
-            return None, api_error("You don't have permission to do that.", 403)
         record = scope_by_batch(
             request.user, HarvestRecord.objects.live().select_related('batch__farm'),
         ).filter(pk=pk).first()
@@ -49,7 +50,7 @@ class LotShareView(APIView):
         record.share_token = secrets.token_urlsafe(16)
         record.shared_at = timezone.now()
         record.save(update_fields=['share_token', 'shared_at'])
-        log_action(request, 'UPDATE', 'HarvestRecord', record.pk, 'Shared the lot through a QR code link')
+        log_action(request, 'UPDATE', 'HarvestRecord', record.pk, 'Shared the lot through a QR code link', owner=on_behalf_of(request, record.batch.farm))
         return api_success(self._link(record), 'The lot can now be seen through its QR code.', 201)
 
     def delete(self, request, pk):
@@ -60,7 +61,7 @@ class LotShareView(APIView):
             record.share_token = None
             record.shared_at = None
             record.save(update_fields=['share_token', 'shared_at'])
-            log_action(request, 'UPDATE', 'HarvestRecord', record.pk, 'Stopped sharing the lot through its QR code link')
+            log_action(request, 'UPDATE', 'HarvestRecord', record.pk, 'Stopped sharing the lot through its QR code link', owner=on_behalf_of(request, record.batch.farm))
         return api_success(None, 'The QR code no longer works.')
 
 

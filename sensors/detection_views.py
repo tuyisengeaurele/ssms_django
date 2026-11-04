@@ -22,11 +22,12 @@ from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from alerts.disease import raise_disease_alert
-from audit_log.utils import log_action
+from audit_log.utils import log_action, on_behalf_of
 from core.access import get_batch_or_404, scope_by_batch
 from core.csvsafe import safe_writer
 from core.pagination import StandardPagination
 from core.params import date_param, int_param
+from core.permissions import RolePermission
 from core.throttles import DetectionRateThrottle, ExportRateThrottle
 from core.utils import api_error, api_success
 
@@ -66,13 +67,12 @@ class DiseaseDetectionCreateView(APIView):
     POST /api/detections
     Form fields: batchId (text), image (file), notes (text, optional)
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'detections'
     throttle_classes = [UserRateThrottle, DetectionRateThrottle]
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
-        if request.user.role not in ('FARMER', 'ADMIN', 'SUPERVISOR'):
-            return api_error("You don't have permission to do that.", 403)
 
         batch_id = request.data.get('batchId') or request.data.get('batch_id')
         image_file = request.FILES.get('image')
@@ -154,7 +154,7 @@ class DiseaseDetectionCreateView(APIView):
             payload['alert_raised'] = False
 
         log_action(request, 'CREATE', 'DiseaseDetection', detection.pk,
-                   f'Detection: {detection.result} ({detection.confidence:.0%}) on batch {batch_id}')
+                   f'Detection: {detection.result} ({detection.confidence:.0%}) on batch {batch_id}', owner=on_behalf_of(request, batch.farm))
         return api_success(payload, 'Disease detection completed.', 201)
 
 
@@ -166,11 +166,11 @@ class DiseaseDetectionFeedbackView(APIView):
     """POST /api/detections/<id>/feedback, {isCorrect, actualResult?}: was the result right, and if not, what was it?
 
     The latest answer replaces the one before. The people who may see a check may answer for it."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'detections'
+    actions = {'post': 'feedback'}
 
     def post(self, request, pk):
-        if request.user.role not in ('FARMER', 'ADMIN', 'SUPERVISOR'):
-            return api_error("You don't have permission to do that.", 403)
         detection = scope_by_batch(
             request.user, DiseaseDetection.objects.all(),
         ).filter(pk=pk).first()
@@ -192,13 +192,14 @@ class DiseaseDetectionFeedbackView(APIView):
         detection.feedback_at = timezone.now()
         detection.save(update_fields=['is_correct', 'actual_result', 'feedback_at'])
         said = 'correct' if is_correct else f'wrong, really {detection.actual_result or "not stated"}'
-        log_action(request, 'UPDATE', 'DiseaseDetection', detection.pk, f'Said the result {detection.result} was {said}')
+        log_action(request, 'UPDATE', 'DiseaseDetection', detection.pk, f'Said the result {detection.result} was {said}', owner=on_behalf_of(request, detection.batch.farm))
         return api_success(DiseaseDetectionSerializer(detection).data, 'Thank you. Your answer was saved.')
 
 
 class DiseaseDetectionByBatchView(APIView):
     """GET /api/detections/batch/<batch_id>"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'detections'
 
     def get(self, request, batch_id):
         get_batch_or_404(request.user, batch_id)
@@ -217,12 +218,11 @@ class DetectionHistoryView(APIView):
     Query params: farm_id, date_from (YYYY-MM-DD), date_to (YYYY-MM-DD), limit (default 200)
     Each role sees the detections the access rules allow (see core.access).
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'detections'
     throttle_classes = [UserRateThrottle, ExportRateThrottle]
 
     def get(self, request):
-        if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
-            return api_error("You don't have permission to do that.", 403)
 
         qs = DiseaseDetection.objects.select_related('batch', 'batch__farm').order_by('-detected_at')
 
@@ -305,11 +305,10 @@ class DetectionStatsView(APIView):
     Returns {result: count} aggregate, used for the frequency chart.
     Same filters as DetectionHistoryView.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'detections'
 
     def get(self, request):
-        if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
-            return api_error("You don't have permission to do that.", 403)
 
         from django.db.models import Count
 
@@ -336,11 +335,11 @@ class DetectionStatsView(APIView):
 
 class RecentDetectionsView(APIView):
     """GET /api/detections/recent?limit=20, supervisor-wide detection history."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'detections'
+    actions = {'get': 'recent'}
 
     def get(self, request):
-        if request.user.role not in ('SUPERVISOR', 'ADMIN'):
-            return api_error("You don't have permission to do that.", 403)
 
         limit = int_param(request, 'limit', 20, 1, 100)
 

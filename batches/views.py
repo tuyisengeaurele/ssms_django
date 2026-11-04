@@ -6,9 +6,11 @@ from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from alerts.models import AlertLog, AlertType
-from audit_log.utils import log_action
+from audit_log.utils import log_action, on_behalf_of
 from core.access import get_batch_or_404, get_farm_or_404, scope_batches
 from core.doc_format import clean_lang
+from core.permissions import RolePermission
+from core.permissions_table import may
 from core.throttles import ReportRateThrottle
 from core.utils import api_error, api_success
 from farms.models import RearingRoom
@@ -50,11 +52,10 @@ def _room_for_new_batch(farm, room_id):
 
 
 class BatchCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'batches'
 
     def post(self, request):
-        if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error("You don't have permission to do that.", 403)
         serializer = BatchCreateSerializer(data=request.data)
         if not serializer.is_valid():
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
@@ -76,13 +77,14 @@ class BatchCreateView(APIView):
         )
         place_batch(batch, room, when=batch.start_date)
         batch.refresh_from_db()
-        log_action(request, 'CREATE', 'Batch', batch.pk, f'Created batch on farm {farm.name}')
+        log_action(request, 'CREATE', 'Batch', batch.pk, f'Created batch on farm {farm.name}', owner=on_behalf_of(request, farm))
         data = {**BatchListSerializer(batch).data, 'milestone': 'FIRST_BATCH' if first else None}
         return api_success(data, 'Batch created.', 201)
 
 
 class BatchByFarmView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'batches'
 
     def get(self, request, farm_id):
         farm = get_farm_or_404(request.user, farm_id)
@@ -95,7 +97,9 @@ class BatchReportView(APIView):
 
     Anyone who may see the batch may ask for it. The name on the document is the person who asked.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'batches'
+    actions = {'get': 'report'}
     throttle_classes = [UserRateThrottle, ReportRateThrottle]
 
     def get(self, request, pk):
@@ -103,7 +107,7 @@ class BatchReportView(APIView):
         # The report of a shared lot carries its QR code, which holds a secret address, so only those who may share see it.
         pdf = batch_report_pdf(
             batch, request.user.name or request.user.email, clean_lang(request.query_params.get('lang')),
-            lot_links=request.user.role in ('FARMER', 'ADMIN'),
+            lot_links=may(request.user.role, 'harvests', 'share'),
         )
         response = HttpResponse(pdf, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="batch_report_{batch.pk[-8:].upper()}_{timezone.now():%Y-%m-%d}.pdf"'
@@ -111,7 +115,8 @@ class BatchReportView(APIView):
 
 
 class BatchDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'batches'
 
     def get(self, request, pk):
         batch = get_batch_or_404(
@@ -122,8 +127,6 @@ class BatchDetailView(APIView):
 
     def patch(self, request, pk):
         """PATCH /api/batches/<id>, correct the breed, quantity, unit or notes. The stage has its own route."""
-        if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error("You don't have permission to do that.", 403)
         batch = get_batch_or_404(request.user, pk)
         serializer = BatchUpdateSerializer(data=request.data)
         if not serializer.is_valid():
@@ -131,34 +134,32 @@ class BatchDetailView(APIView):
         for field, value in serializer.validated_data.items():
             setattr(batch, field, value)
         batch.save(update_fields=list(serializer.validated_data) or None)
-        log_action(request, 'UPDATE', 'Batch', batch.pk, f'Changed details of batch {batch.pk}')
+        log_action(request, 'UPDATE', 'Batch', batch.pk, f'Changed details of batch {batch.pk}', owner=on_behalf_of(request, batch.farm))
         return api_success(BatchListSerializer(batch).data, 'Batch updated.')
 
     def delete(self, request, pk):
-        if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error("You don't have permission to do that.", 403)
         batch = get_batch_or_404(request.user, pk)
         batch.is_active = False
         batch.save(update_fields=['is_active'])
         leave_room(batch)
-        log_action(request, 'DELETE', 'Batch', batch.pk, f'Deleted batch {batch.pk}')
+        log_action(request, 'DELETE', 'Batch', batch.pk, f'Deleted batch {batch.pk}', owner=on_behalf_of(request, batch.farm))
         return api_success(None, 'Batch deleted.')
 
 
 class BatchRoomView(APIView):
     """POST /api/batches/<id>/room, move a batch to another room of its farm. Where it has been is kept."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'batches'
+    actions = {'post': 'move_room'}
 
     def post(self, request, pk):
-        if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error("You don't have permission to do that.", 403)
         batch = get_batch_or_404(request.user, pk, Batch.objects.select_related('room'))
         room = RearingRoom.objects.filter(pk=request.data.get('room_id') or '', farm=batch.farm, is_active=True).first()
         if room is None:
             return api_error(NOT_THIS_FARMS_ROOM, 422, {'room_id': [NOT_THIS_FARMS_ROOM]})
         if batch.room_id != room.pk:
             place_batch(batch, room)
-            log_action(request, 'UPDATE', 'Batch', batch.pk, f'Moved batch {batch.pk} to {room.name}')
+            log_action(request, 'UPDATE', 'Batch', batch.pk, f'Moved batch {batch.pk} to {room.name}', owner=on_behalf_of(request, batch.farm))
         return api_success(BatchListSerializer(batch).data, 'Batch moved.')
 
 
@@ -167,11 +168,11 @@ class BatchActiveSupervisorView(APIView):
     GET /api/batches/active
     Each role sees the batches the access rules allow (see core.access).
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'batches'
+    actions = {'get': 'active'}
 
     def get(self, request):
-        if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
-            return api_error("You don't have permission to do that.", 403)
         from django.db.models import Count, OuterRef, Subquery
 
         from alerts.room_alerts import open_problem_count
@@ -198,11 +199,11 @@ STAGE_ORDER = ['EGG', 'LARVA', 'PUPA', 'COCOON', 'HARVEST']
 
 
 class BatchUpdateStageView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'batches'
+    actions = {'patch': 'advance_stage'}
 
     def patch(self, request, pk):
-        if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error("You don't have permission to do that.", 403)
         batch = get_batch_or_404(request.user, pk)
         serializer = BatchUpdateStageSerializer(data=request.data)
         if not serializer.is_valid():
@@ -233,7 +234,7 @@ class BatchUpdateStageView(APIView):
             # A room judges only the batches still being reared, so this may have emptied it.
             from alerts.utils import settle_room_alerts
             settle_room_alerts(batch.room_id)
-        log_action(request, 'UPDATE', 'Batch', batch.pk, f'Stage advanced to {new_stage}')
+        log_action(request, 'UPDATE', 'Batch', batch.pk, f'Stage advanced to {new_stage}', owner=on_behalf_of(request, batch.farm))
         return api_success(BatchListSerializer(batch).data, 'Stage updated.')
 
 
@@ -243,7 +244,9 @@ class BatchCompareView(APIView):
     Each role may compare the batches the access rules allow (see core.access). A batch that does not exist and one the
     person may not see get the same answer.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'batches'
+    actions = {'get': 'compare'}
 
     def get(self, request):
         try:

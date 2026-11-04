@@ -15,6 +15,7 @@ from django.http import JsonResponse, StreamingHttpResponse
 from django.utils import timezone
 
 from core.access import scope_alerts
+from core.permissions_table import may
 
 from .models import AlertLog
 from .tickets import redeem_ticket
@@ -63,7 +64,7 @@ async def _events(user):
 
 async def alert_stream(request):
     user = await redeem_ticket(request.GET.get('ticket', ''))
-    if user is None or user.role not in ('SUPERVISOR', 'ADMIN'):
+    if user is None or not may(user.role, 'alerts', 'stream'):
         return JsonResponse({'success': False, 'message': 'Your session has ended. Please sign in again.'}, status=401)
 
     response = StreamingHttpResponse(_events(user), content_type='text/event-stream')
