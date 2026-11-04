@@ -38,7 +38,6 @@ export default function AddFarmPage() {
     <div className="page-narrow">
       <PageHeader
         title={t('ptFarmNew')}
-        subtitle={t('afSubtitle')}
         actions={
           <Link to="/farms" className="btn btn-secondary btn-sm">
             <Icon name="back" size={15} />

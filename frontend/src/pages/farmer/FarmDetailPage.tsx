@@ -316,6 +316,7 @@ export default function FarmDetailPage() {
 
       <PageHeader
         title={farm.name}
+        showTitle
         subtitle={farm.location}
         actions={
           <>

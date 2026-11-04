@@ -56,8 +56,8 @@ const tile = (label: string) => screen.getByText(label).closest('.stat-tile') as
 describe('System report page', () => {
   it('has one title and says when it was made', async () => {
     open();
-    expect(await screen.findByRole('heading', { level: 2, name: 'Activity' })).toBeInTheDocument();
-    expect(screen.getByText(/^Generated at:/)).toBeInTheDocument();
+    expect(await screen.findByText(/^Generated at:/)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Activity' })).toBeInTheDocument();
   });
 
   it('shows the headline numbers with a short note', async () => {

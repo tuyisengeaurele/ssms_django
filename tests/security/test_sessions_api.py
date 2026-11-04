@@ -47,9 +47,10 @@ def test_the_list_shows_my_devices_and_marks_this_one():
     assert sorted(r['deviceLabel'] for r in found) == ['Chrome on Windows', 'Safari on iPhone']
     assert [r['deviceLabel'] for r in found if r['isCurrent']] == ['Chrome on Windows']
     first = found[0]
-    assert {'id', 'deviceLabel', 'customName', 'browser', 'os', 'isInstalledApp', 'createdAt', 'lastUsedAt', 'isCurrent'} <= set(first)
+    assert {'id', 'deviceLabel', 'browser', 'os', 'isInstalledApp', 'createdAt', 'lastUsedAt', 'isCurrent'} <= set(first)
     assert 'userAgent' not in first and 'tokens' not in first
     assert 'ipAddress' not in first
+    assert 'customName' not in first
 
 
 def test_ended_sessions_are_not_listed():
@@ -75,25 +76,13 @@ def test_the_list_is_capped_and_newest_first():
     assert stamps == sorted(stamps, reverse=True)
 
 
-def test_a_device_can_be_renamed_and_the_name_is_cleaned():
+def test_a_device_cannot_be_renamed():
+    # The label comes from the browser and system, and that is all a person needs to spot a device they do not know.
     user = UserFactory()
     client = sign_in(user)
     session = UserSession.objects.get(user=user)
-    response = client.patch(f'{SESSIONS}/{session.id}', {'customName': '<b>My</b> work laptop ' + 'x' * 60}, format='json')
-    assert response.status_code == 200, response.content
-    session.refresh_from_db()
-    assert session.custom_name.startswith('My work laptop x')
-    assert len(session.custom_name) <= 40 and '<' not in session.custom_name
-
-
-def test_a_name_can_be_cleared_and_must_be_text():
-    user = UserFactory()
-    client = sign_in(user)
-    session = UserSession.objects.get(user=user)
-    assert client.patch(f'{SESSIONS}/{session.id}', {'customName': 'Laptop'}, format='json').status_code == 200
-    assert client.patch(f'{SESSIONS}/{session.id}', {'customName': ''}, format='json').status_code == 200
-    assert UserSession.objects.get(pk=session.id).custom_name == ''
-    assert client.patch(f'{SESSIONS}/{session.id}', {'customName': 7}, format='json').status_code == 422
+    assert client.patch(f'{SESSIONS}/{session.id}', {'customName': 'Laptop'}, format='json').status_code == 405
+    assert not hasattr(session, 'custom_name')
 
 
 def test_nobody_can_touch_another_persons_device():
@@ -101,7 +90,6 @@ def test_nobody_can_touch_another_persons_device():
     other = UserFactory()
     sign_in(other, IPHONE)
     theirs = UserSession.objects.get(user=other)
-    assert mine.patch(f'{SESSIONS}/{theirs.id}', {'customName': 'x'}, format='json').status_code == 404
     assert mine.delete(f'{SESSIONS}/{theirs.id}').status_code == 404
     assert UserSession.objects.get(pk=theirs.id).revoked_at is None
 

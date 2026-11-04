@@ -18,14 +18,17 @@
 }
 
 .page-subtitle {
-  margin-top: 8px;
+  margin-top: 0;
   max-width: 62ch;
   color: var(--text-muted);
   font-size: 0.95rem;
 }
 
+.page-title + .page-subtitle { margin-top: 8px; }
+
 .page-actions {
   display: flex;
+  margin-left: auto;
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
@@ -405,7 +408,8 @@ td .cell-muted { color: var(--text-muted); }
   min-width: 0;
 }
 
-/* On phones a table turns into a list of cards. Each cell names itself. */
+/* On phones a table turns into a list of cards. Each cell names itself. A table card too narrow for its columns
+   turns into the same list at any width: useCrampedTables marks it. */
 @media (max-width: 720px) {
   .table-stack thead { display: none; }
 
@@ -454,6 +458,54 @@ td .cell-muted { color: var(--text-muted); }
 
   .table-stack .table-actions { justify-content: flex-start; }
 }
+
+
+.table-wrapper[data-cramped] .table-stack thead { display: none; }
+
+.table-wrapper[data-cramped] .table-stack,
+.table-wrapper[data-cramped] .table-stack tbody,
+.table-wrapper[data-cramped] .table-stack tr,
+.table-wrapper[data-cramped] .table-stack td { display: block; width: 100%; }
+
+.table-wrapper[data-cramped] .table-stack tr {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.table-wrapper[data-cramped] .table-stack tr:last-child { border-bottom: none; }
+
+.table-wrapper[data-cramped] .table-stack td {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 0;
+  border: 0;
+  text-align: right;
+}
+
+.table-wrapper[data-cramped] .table-stack td::before {
+  content: attr(data-label);
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font: 600 0.68rem var(--font-ui);
+  letter-spacing: 0.12em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.table-wrapper[data-cramped] .table-stack td[data-label=''],
+.table-wrapper[data-cramped] .table-stack td:not([data-label])::before { display: none; }
+
+.table-wrapper[data-cramped] .table-stack td.cell-lead {
+  display: block;
+  padding-bottom: 10px;
+  text-align: left;
+}
+
+.table-wrapper[data-cramped] .table-stack td.cell-lead::before { display: none; }
+
+.table-wrapper[data-cramped] .table-stack .table-actions { justify-content: flex-start; }
 
 /* Rows inside a table cell */
 .cell-link { color: var(--ink); font-weight: 600; border-bottom: 1px solid transparent; transition: border-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out); }
@@ -742,8 +794,7 @@ tr.is-off td:last-child { opacity: 1; }
 .signin-main { flex: 1 1 260px; min-width: 0; }
 .signin-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; color: var(--ink); overflow-wrap: anywhere; }
 .signin-sub { margin: 2px 0 0; color: var(--text-muted); font-size: 0.84rem; overflow-wrap: anywhere; }
-.signin-actions, .signin-edit { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.signin-edit .form-input { flex: 1 1 200px; }
+.signin-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
 .segmented { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 999px; background: var(--tint); }
 .segmented button { padding: 8px 18px; border: 0; border-radius: 999px; background: none; color: var(--text-2); font: 500 0.88rem var(--font-ui); transition: background-color 0.25s var(--ease-out), color 0.25s var(--ease-out); }

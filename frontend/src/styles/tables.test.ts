@@ -26,4 +26,14 @@ describe('Tables', () => {
     const max = Number(detail.match(/max-width:\s*(\d+)px/)?.[1] ?? 9999);
     expect(max).toBeLessThanOrEqual(240);
   });
+
+  it('turns a cramped table card into the phone list, whatever the screen width', () => {
+    const phone = css.match(/@media \(max-width: 720px\) \{[\s\S]*?\r?\n\}\r?\n/)![0];
+    const phoneRules = [...phone.matchAll(/^ {2}(\.table-stack[^{]*?)\{/gm)].map((m) => m[1].trim());
+    expect(phoneRules.length).toBeGreaterThan(5);
+    for (const selector of phoneRules) {
+      const first = selector.split(',')[0].trim();
+      expect(css, first).toContain(`.table-wrapper[data-cramped] ${first}`);
+    }
+  });
 });

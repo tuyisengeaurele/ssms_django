@@ -85,7 +85,7 @@ export default function FarmerDashboard() {
   if (loading) {
     return (
       <div>
-        <PageHeader title={title} />
+        <PageHeader title={title} showTitle />
         <div className="grid-3">
           {[0, 1, 2].map((i) => <SkeletonStatCard key={i} />)}
         </div>
@@ -96,7 +96,7 @@ export default function FarmerDashboard() {
   if (listsLoaded && farms.length === 0 && batches.length === 0) {
     return (
       <div>
-        <PageHeader title={title} />
+        <PageHeader title={title} showTitle />
         <Panel title={t('fhFirstTitle')}>
           <p className="first-run-intro">{t('fhFirstIntro')}</p>
           <ol className="first-run-steps" aria-label={t('fhFirstSteps')}>
@@ -120,7 +120,7 @@ export default function FarmerDashboard() {
     <div>
       <PageHeader
         title={title}
-        subtitle={t('fhSubtitle')}
+        showTitle
         actions={
           <>
             <Link to="/detections/reports" className="btn btn-secondary btn-sm">

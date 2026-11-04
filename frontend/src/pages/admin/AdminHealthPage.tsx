@@ -69,7 +69,7 @@ export default function AdminHealthPage() {
 
   return (
     <div>
-      <SectionHeader title={t('ptHealth')} subtitle={t('hlIntro')} actions={again} />
+      <SectionHeader title={t('ptHealth')} actions={again} />
 
       {failed && (
         <div className="alert alert-error" role="alert">
@@ -81,7 +81,7 @@ export default function AdminHealthPage() {
       {!report && !failed && <Panel title={t('hlChecks')} flush><SkeletonTable rows={6} cols={2} /></Panel>}
 
       {report && (
-        <>
+        <div className="stack-24">
           <div role="status" className={`alert ${report.overall === 'ok' ? 'alert-success' : 'alert-error'}`}>
             <span>{t(report.overall === 'ok' ? 'hlAllWell' : 'hlSomeProblem')}</span>
             <span className="health-when">{fill(t('hlCheckedAt'), { when: when.format(new Date(report.checkedAt)) })}</span>
@@ -108,7 +108,7 @@ export default function AdminHealthPage() {
               <div><dt>{t('hlUnanswered')}</dt><dd>{report.numbers.unansweredMessages}</dd></div>
             </dl>
           </Panel>
-        </>
+        </div>
       )}
     </div>
   );

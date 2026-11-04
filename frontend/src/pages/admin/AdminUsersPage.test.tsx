@@ -59,10 +59,10 @@ beforeEach(() => {
 const rowOf = async (name: string) => (await screen.findByText(name)).closest('tr') as HTMLElement;
 
 describe('Users page', () => {
-  it('has one title, a subtitle and a create button', async () => {
+  it('has one title, no sentence under it and a create button', async () => {
     open();
     expect(screen.getByRole('heading', { level: 1, name: 'Users' })).toBeInTheDocument();
-    expect(screen.getByText('Create accounts, assign roles and manage access.')).toBeInTheDocument();
+    expect(screen.queryByText('Create accounts, assign roles and manage access.')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create user' })).toBeInTheDocument();
     await screen.findByText('Bruce Ishimwe');
   });

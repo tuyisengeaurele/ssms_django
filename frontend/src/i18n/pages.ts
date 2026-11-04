@@ -37,7 +37,6 @@ export const pageTranslations = {
   // The admin's all-farms view, and the System hub with its tabs. Keys start with "sy".
   ptFarmMonitoring: k('Farm monitoring', 'Suivi des fermes', 'Gukurikirana amahindu'),
   ptSystem: k('System', 'Système', 'Sisitemu'),
-  syHint: k('Whether SSMS is working, who did what, and how it is used.', 'Si SSMS fonctionne, qui a fait quoi, et comment il est utilisé.', "Niba SSMS ikora, uwakoze iki, n'uko ikoreshwa."),
   syNavLabel: k('System sections', 'Sections du système', 'Ibice bya sisitemu'),
   syTabHealth: k('Health', 'État', 'Imikorere'),
   syTabLogs: k('Logs', 'Journaux', 'Ibyanditswe'),
@@ -104,7 +103,6 @@ export const pageTranslations = {
   lotInvalidBody: k("The farmer may have switched it off, or the lot was removed.", "L'éleveur l'a peut-être désactivé, ou le lot a été supprimé.", "Umuhinzi ashobora kuba yarawuhagaritse, cyangwa isarura ryasibwe."),
   // Compare batches
   ptCompare: k("Compare batches", "Comparer des lots", "Gereranya amatsinda"),
-  cmpPickSubtitle: k("Choose two to four batches to see side by side.", "Choisissez de deux à quatre lots à comparer côte à côte.", "Hitamo amatsinda abiri kugeza kuri ane kugira ngo ubigereranye."),
   cmpPickTitle: k("Choose batches", "Choisir des lots", "Hitamo amatsinda"),
   cmpPicked: k("{n} of 4 chosen", "{n} sur 4 choisis", "{n} kuri 4 yatoranyijwe"),
   cmpLimit: k("You can compare up to 4 batches.", "Vous pouvez comparer jusqu'à 4 lots.", "Ushobora kugereranya amatsinda agera kuri ane."),
@@ -112,7 +110,6 @@ export const pageTranslations = {
   cmpGoHint: k("Choose at least two batches.", "Choisissez au moins deux lots.", "Hitamo nibura amatsinda abiri."),
   cmpFewTitle: k("You need at least two batches to compare", "Il faut au moins deux lots pour comparer", "Ukeneye nibura amatsinda abiri kugira ngo ugereranye"),
   cmpFewBody: k("Start another batch on one of your farms, then come back.", "Démarrez un autre lot sur l'une de vos fermes, puis revenez.", "Tangira irindi tsinda ku rimwe mu mahindu yawe, hanyuma ugaruke."),
-  cmpResultSubtitle: k("Side by side. The best result in each row is marked.", "Côte à côte. Le meilleur résultat de chaque ligne est marqué.", "Hamwe ku ruhande. Igisubizo cyiza kuri buri murongo kiragaragazwa."),
   cmpChange: k("Choose other batches", "Choisir d'autres lots", "Hitamo andi matsinda"),
   cmpBest: k("Best", "Meilleur", "Icyiza"),
   cmpBestTip: k("Best result in this row", "Meilleur résultat de cette ligne", "Igisubizo cyiza kuri uyu murongo"),
@@ -197,7 +194,6 @@ export const pageTranslations = {
   btnRetry: k('Try again', 'Réessayer', 'Ongera ugerageze'),
 
   // Users page
-  usSubtitle: k('Create accounts, assign roles and manage access.', 'Créez des comptes, attribuez des rôles et gérez les accès.', 'Fungura konti, utange inshingano, ucunge uburenganzira.'),
   usAdmins: k('Administrators', 'Administrateurs', 'Abayobozi'),
   usSupervisors: k('Supervisors', 'Superviseurs', 'Abakurikirana'),
   usFarmers: k('Farmers', 'Agriculteurs', 'Abahinzi'),
@@ -259,7 +255,6 @@ export const pageTranslations = {
   usNoUsersAtAll: k('No users in the system yet.', "Aucun utilisateur dans le système pour l'instant.", 'Nta mukoresha urabaho muri sisitemu.'),
   btnCreating: k('Creating', 'Création', 'Kurema'),
   // Cooperatives page
-  coSubtitle: k("Group farmers and supervisors, and see who belongs where.", "Regroupez agriculteurs et superviseurs, et voyez qui appartient à quoi.", "Huriza abahinzi n'abakurikirana, urebe uwo ari uwa nde."),
   coNew: k("New cooperative", "Nouvelle coopérative", "Koperative nshya"),
   coSearch: k("Search cooperatives", "Rechercher une coopérative", "Shakisha koperative"),
   coColName: k("Name", "Nom", "Izina"),
@@ -631,7 +626,6 @@ export const pageTranslations = {
   pfSecurityHint: k("Choose a new password when you want to.", "Choisissez un nouveau mot de passe quand vous le souhaitez.", "Hitamo irindi jambo ry'ibanga igihe ubishakiye."),
 
   // The Settings page. Keys start with "st".
-  stSubtitle: k("Your account, your security and how SSMS looks.", "Votre compte, votre sécurité et l'apparence de SSMS.", "Konti yawe, umutekano wawe n'uko SSMS igaragara."),
   stNavLabel: k("Settings sections", "Sections des paramètres", "Ibice by'igenamiterere"),
   stTabAccount: k("Account", "Compte", "Konti"),
   stTabSecurity: k("Security", "Sécurité", "Umutekano"),
@@ -645,9 +639,6 @@ export const pageTranslations = {
   sdThisDevice: k("This device", "Cet appareil", "Iki gikoresho"),
   sdLastUsed: k("Last used {when}", "Dernière utilisation {when}", "Cyakoreshejwe {when}"),
   sdInstalledApp: k("Installed app", "Application installée", "Porogaramu yashyizweho"),
-  sdRename: k("Rename", "Renommer", "Hindura izina"),
-  sdNameLabel: k("Name for this device", "Nom de cet appareil", "Izina ry'iki gikoresho"),
-  sdSave: k("Save", "Enregistrer", "Bika"),
   sdSignOut: k("Sign out", "Se déconnecter", "Sohoka"),
   sdSignOutOthers: k("Sign out all other devices", "Déconnecter tous les autres appareils", "Sohora ibindi bikoresho byose"),
   sdConfirmTitle: k("Sign out this device?", "Déconnecter cet appareil ?", "Gusohora iki gikoresho?"),
@@ -658,7 +649,6 @@ export const pageTranslations = {
   sdBusy: k("Signing out", "Déconnexion", "Birasohorwa"),
   sdSignedOut: k("Device signed out.", "Appareil déconnecté.", "Igikoresho cyasohowe."),
   sdOthersDone: k("Other devices signed out.", "Autres appareils déconnectés.", "Ibindi bikoresho byasohowe."),
-  sdRenamed: k("Device renamed.", "Appareil renommé.", "Izina ryahinduwe."),
   sdNoOthers: k("No other devices are signed in.", "Aucun autre appareil n'est connecté.", "Nta bindi bikoresho byinjiriye."),
   sdLoading: k("Loading your devices", "Chargement de vos appareils", "Turimo gufata ibikoresho byawe"),
   sdLoadError: k("We could not load your devices.", "Nous n'avons pas pu charger vos appareils.", "Ntitwashoboye gufata ibikoresho byawe."),
@@ -756,7 +746,6 @@ export const pageTranslations = {
   thTempOrder: k("Please set the highest temperature above the lowest.", "Veuillez placer la température maximale au-dessus de la minimale.", "Shyira ubushyuhe bwinshi hejuru y'ubuke."),
   thHumOrder: k("Please set the highest humidity above the lowest.", "Veuillez placer l'humidité maximale au-dessus de la minimale.", "Shyira ubuhehere bwinshi hejuru y'ubuke."),
   ptHealth: k("System health", "État du système", "Imikorere ya sisitemu"),
-  hlIntro: k("Whether the parts of SSMS that matter are answering. They are asked each time you open this page.", "Indique si les parties importantes de SSMS répondent. Elles sont interrogées à chaque ouverture de cette page.", "Yerekana niba ibice by'ingenzi bya SSMS bikora. Bibazwa buri uko ufunguye iyi paji."),
   hlAllWell: k("Everything that was checked is working.", "Tout ce qui a été vérifié fonctionne.", "Ibyose byapimwe bikora neza."),
   hlSomeProblem: k("Something needs attention. Look for the checks marked Problem.", "Quelque chose demande de l'attention. Cherchez les vérifications marquées Problème.", "Hari ikeneye kwitabwaho. Reba ibipimo biriho Ikibazo."),
   hlChecks: k("Checks", "Vérifications", "Ibipimo"),
@@ -840,7 +829,6 @@ export const pageTranslations = {
   cpTabReport: k("Report", "Rapport", "Raporo"),
   cpTabDetails: k("Details", "Détails", "Amakuru"),
   cpTabFarmers: k("Farmers", "Agriculteurs", "Abahinzi"),
-  cpAllSubtitle: k("The results and farms of every cooperative together.", "Les résultats et les fermes de toutes les coopératives réunies.", "Ibyavuye mu makoperative yose n'amahindu yayo hamwe."),
   cpMineSubtitle: k("The farms, people and results of your cooperative.", "Les fermes, les personnes et les résultats de votre coopérative.", "Amahindu, abantu n'ibyavuye muri koperative yawe."),
   cpAllRowNote: k("Every cooperative together", "Toutes les coopératives réunies", "Amakoperative yose hamwe"),
   cpNotFound: k("We couldn't find that cooperative.", "Nous n'avons pas trouvé cette coopérative.", "Ntitwabonye iyo koperative."),
@@ -926,7 +914,6 @@ export const pageTranslations = {
   fmNoMatchBody: k("Nothing matches \"{q}\". Try a different name or place.", "Rien ne correspond à « {q} ». Essayez un autre nom ou lieu.", "Nta kihuye na \"{q}\". Gerageza irindi zina cyangwa ahandi."),
   fmClear: k("Clear search", "Effacer la recherche", "Siba ishakisha"),
   // New farm page
-  afSubtitle: k("Add a silkworm farm to your account.", "Ajoutez une ferme de vers à soie à votre compte.", "Ongeraho ihinga ry'inyo z'ubudodo kuri konti yawe."),
   afBack: k("Back to farms", "Retour aux fermes", "Subira ku mahindu"),
   afPanel: k("Farm details", "Détails de la ferme", "Amakuru y'ihinga"),
   afName: k("Farm name", "Nom de la ferme", "Izina ry'ihinga"),
@@ -1020,7 +1007,6 @@ export const pageTranslations = {
   btNoStage: k("No batches in this stage", "Aucun lot à ce stade", "Nta tsinda riri kuri iki cyiciro"),
   btNoMatch: k("No batches match", "Aucun lot ne correspond", "Nta tsinda rihuye"),
   btNoMatchBody: k("Try a different farm name, or look in another stage.", "Essayez un autre nom de ferme, ou regardez un autre stade.", "Gerageza irindi zina ry'ihinga, cyangwa urebe ikindi cyiciro."),
-  abSubtitle: k("Start tracking a new batch of silkworms.", "Commencez à suivre un nouveau lot de vers à soie.", "Tangira gukurikirana itsinda rishya ry'inyo."),
   abBack: k("Back to the farm", "Retour à la ferme", "Subira ku hinga"),
   abPanel: k("Batch details", "Détails du lot", "Amakuru y'itsinda"),
   abHarvest: k("Expected harvest date", "Date de récolte prévue", "Itariki y'isarura iteganyijwe"),
@@ -1124,7 +1110,6 @@ export const pageTranslations = {
   bdNoSeries: k("No readings in this time.", "Aucune mesure sur cette période.", "Nta bipimo muri iki gihe."),
   bdLatestAlerts: k("Latest alerts", "Dernières alertes", "Ibiburaniswa bya vuba"),
   // Disease check page
-  ckSubtitle: k("Upload a close photo of a silkworm and get a quick second opinion.", "Envoyez une photo de près d'un ver à soie et obtenez un second avis rapide.", "Shyiraho ifoto y'inyo ifatiwe hafi ubone igitekerezo cya kabiri vuba."),
   ckBack: k("Back to the batch", "Retour au lot", "Subira ku itsinda"),
   ckUpload: k("Your photo", "Votre photo", "Ifoto yawe"),
   ckChoose: k("Choose a photo", "Choisir une photo", "Hitamo ifoto"),
@@ -1189,7 +1174,6 @@ export const pageTranslations = {
   ckUnclearSureTitle: k("The check is not sure about this photo", "Le contrôle n'est pas sûr de cette photo", "Isuzuma ntiryizeye iyi foto"),
   ckUnclearSureText: k("Take another photo with the worms in focus and in daylight. Nothing was saved.", "Prenez une autre photo, avec les vers bien nets et à la lumière du jour. Rien n'a été enregistré.", "Fata indi foto inyo zigaragara neza mu rumuri rw'izuba. Nta kintu cyabitswe."),
   // Detection reports page
-  drSubtitle: k("Every disease check in the dates you choose, and how often each condition turned up.", "Tous les contrôles de maladies sur les dates choisies, et la fréquence de chaque état.", "Isuzuma ryose ry'indwara mu matariki wahisemo, n'inshuro buri ndwara yagaragaye."),
   drExport: k("Export CSV", "Exporter en CSV", "Kohereza CSV"),
   drExporting: k("Exporting", "Export en cours", "Kohereza"),
   drBackDash: k("Back to the dashboard", "Retour au tableau de bord", "Subira ku rubuga rukuru"),
@@ -1323,7 +1307,6 @@ export const pageTranslations = {
   // Farmer dashboard
   fhWelcome: k("Welcome back", "Bon retour", "Murakaza neza"),
   fhWelcomeName: k("Welcome back, {name}", "Bon retour, {name}", "Murakaza neza, {name}"),
-  fhSubtitle: k("Here is how your farms are doing today.", "Voici où en sont vos fermes aujourd'hui.", "Dore uko amahindu yawe ameze uyu munsi."),
   fhReports: k("Disease reports", "Rapports sur les maladies", "Raporo z'indwara"),
   fhNewFarm: k("New farm", "Nouvelle ferme", "Ihinga rishya"),
   fhMyFarms: k("My farms", "Mes fermes", "Amahinga yanjye"),

@@ -43,10 +43,10 @@ beforeEach(() => {
 const rowOf = async (name: string) => (await screen.findByText(name)).closest('tr') as HTMLElement;
 
 describe('Cooperatives page', () => {
-  it('has one title, a subtitle and a new cooperative button', async () => {
+  it('has one title, no sentence under it and a new cooperative button', async () => {
     open();
     expect(screen.getByRole('heading', { level: 1, name: 'Cooperatives' })).toBeInTheDocument();
-    expect(screen.getByText('Group farmers and supervisors, and see who belongs where.')).toBeInTheDocument();
+    expect(screen.queryByText('Group farmers and supervisors, and see who belongs where.')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'New cooperative' })).toBeInTheDocument();
     await screen.findByText('Gatsibo Sericulture 1');
   });

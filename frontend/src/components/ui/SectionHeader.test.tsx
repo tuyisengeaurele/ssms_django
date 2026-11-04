@@ -20,4 +20,16 @@ describe('SectionHeader', () => {
     expect(container.querySelector('p')).toBeNull();
     expect(container.querySelector('.section-actions')).toBeNull();
   });
+
+  it('keeps the title for screen readers only, because the tab above it already names the section', () => {
+    render(<SectionHeader title="Audit log" />);
+    expect(screen.getByRole('heading', { level: 2, name: 'Audit log' })).toHaveClass('sr-only');
+  });
+
+  it('draws no row when there is nothing but the hidden title', () => {
+    const { container, rerender } = render(<SectionHeader title="Activity" />);
+    expect(container.querySelector('.section-head')).toBeNull();
+    rerender(<SectionHeader title="Activity" subtitle="218 recorded events." />);
+    expect(container.querySelector('.section-head')).not.toBeNull();
+  });
 });

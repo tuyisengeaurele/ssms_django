@@ -48,7 +48,6 @@ export default function AdminDashboard() {
     <div>
       <PageHeader
         title={t('adminTitle')}
-        subtitle={t('adminSubtitle')}
         actions={
           <>
             <Link to="/admin/users" className="btn btn-secondary btn-sm">

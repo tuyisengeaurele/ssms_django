@@ -327,10 +327,7 @@ export default function BatchComparePage() {
 
   return (
     <div>
-      <PageHeader
-        title={t('ptCompare')}
-        subtitle={ids ? t('cmpResultSubtitle') : t('cmpPickSubtitle')}
-      />
+      <PageHeader title={t('ptCompare')} />
       {ids ? <Result ids={ids} /> : <Picker />}
     </div>
   );

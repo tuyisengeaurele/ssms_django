@@ -94,7 +94,6 @@ export default function DetectionReportsPage() {
     <div>
       <PageHeader
         title={t('ptDetectionReports')}
-        subtitle={t('drSubtitle')}
         actions={
           <>
             <button className="btn btn-secondary btn-sm" onClick={exportCsv} disabled={exporting || loading}>

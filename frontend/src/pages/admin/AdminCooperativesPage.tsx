@@ -93,7 +93,6 @@ export default function AdminCooperativesPage() {
 
       <PageHeader
         title={t('ptCooperatives')}
-        subtitle={t('coSubtitle')}
         actions={
           <button className="btn btn-primary btn-sm" onClick={() => setCreating(true)}>
             <Icon name="add" size={15} />
