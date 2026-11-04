@@ -7,6 +7,7 @@ from audit_log.utils import log_action
 from core.permissions import RolePermission
 from core.throttles import SessionsRateThrottle
 from core.utils import api_error, api_success
+from logs.security import record_security_event
 
 from .cookie_utils import clear_refresh_cookie
 from .models import UserSession
@@ -81,6 +82,7 @@ class SessionDetailView(_SessionView):
             return api_error("We couldn't find that device.", 404)
         revoke(session, 'revoked')
         log_action(request, 'LOGOUT', 'User', request.user.pk, f'Signed out device: {session.device_label}')
+        record_security_event('session_revoked', request, detail=session.device_label)
         response = api_success(None, 'Device signed out.')
         if session.id == self.current_id(request):
             clear_refresh_cookie(response)
@@ -96,4 +98,5 @@ class SessionRevokeOthersView(_SessionView):
         kept = _alive(request.user).filter(pk=sid).first() if sid else None
         ended = end_all_but(request.user, kept, 'revoked')
         log_action(request, 'LOGOUT', 'User', request.user.pk, f'Signed out {ended} other device(s)')
+        record_security_event('session_revoked', request, detail=f'{ended} other device(s)')
         return api_success({'revoked': ended}, 'Other devices signed out.')

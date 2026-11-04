@@ -54,6 +54,16 @@ def _friendly_message(exc, status_code, data):
     return 'Something went wrong. Please try again.'
 
 
+def _note_refusal(exc, context, status_code):
+    """A refusal for the role, or a slow down, goes in the security log. Only the method and the route pattern, never the query."""
+    kind = 'throttled' if isinstance(exc, Throttled) else 'permission_denied' if status_code == 403 else None
+    request = context.get('request')
+    if kind and request is not None:
+        from logs.security import record_security_event
+        match = getattr(request, 'resolver_match', None)
+        record_security_event(kind, request, detail=f"{request.method} {getattr(match, 'route', '') or '(unmatched)'}")
+
+
 def custom_exception_handler(exc, context):
     response = exception_handler(exc, context)
     if response is None:
@@ -69,6 +79,7 @@ def custom_exception_handler(exc, context):
         errors = {k: v for k, v in data.items() if k != 'detail'}
 
     response.data = {'success': False, 'message': message, 'reference': current_request_id()}
+    _note_refusal(exc, context, status_code)
     if isinstance(exc, AuthenticationFailed) and _failure_code(exc) == 'session_idle':
         response.data['code'] = 'session_idle'
     if isinstance(exc, Throttled) and exc.wait:

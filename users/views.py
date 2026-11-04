@@ -16,6 +16,7 @@ from core.throttles import LoginRateThrottle, RegisterRateThrottle
 from core.tokens import revoke_all_refresh_tokens
 from core.utils import api_error, api_success, body_field
 from core.validators import validate_new_password
+from logs.security import record_security_event
 
 from .cookie_utils import REFRESH_COOKIE, clear_refresh_cookie, set_refresh_cookie
 from .email_verification_views import _send_verification_email
@@ -66,6 +67,7 @@ class LoginView(APIView):
         if wait:
             minutes = max(1, math.ceil(wait / 60))
             unit = 'minute' if minutes == 1 else 'minutes'
+            record_security_event('lockout', request, detail=email)
             return api_error(f'Too many attempts. Please try again in {minutes} {unit}.', 429)
 
         serializer = LoginSerializer(data=request.data, context={'request': request})
@@ -77,14 +79,16 @@ class LoginView(APIView):
                 # Right credentials on an account still waiting for its email link are not a guess.
                 if email and message != 'email_not_verified':
                     lockout.record_failure(email)
-                    log_action(request, 'OTHER', 'User', detail=f'Failed login: {email}')
+                    log_action(request, 'OTHER', 'User', detail=f'Failed login: {email}', outcome='failure')
+                record_security_event('login_failed', request, detail=email)
                 return api_error(message, 401)
             return api_error('Please check what you entered and try again.', 422, errors)
         user = serializer.validated_data['user']
         lockout.clear(email)
         # Only a real tick counts. Text such as "yes" or a number is not one.
         shared = request.data.get('shared_device', request.data.get('sharedDevice')) is True
-        _, access, refresh = start_session(request, user, request.data.get('device'), shared)
+        session, access, refresh = start_session(request, user, request.data.get('device'), shared)
+        record_security_event('login_ok', request, user=user, detail=session.device_label)
         log_action(request, 'LOGIN', 'User', user.pk, f'Login: {user.email}', actor=user)
         response = api_success(
             {'user': UserSerializer(user).data, 'token': access},
@@ -166,7 +170,10 @@ class CookieTokenRefreshView(APIView):
             if ended.reason == 'reused' and ended.session is not None:
                 log_action(request, 'OTHER', 'User', ended.session.user_id,
                            f'Old sign in cookie used again, session ended: {ended.session.device_label}', actor=ended.session.user)
+            if ended.reason == 'reused' and ended.session is not None:
+                record_security_event('session_reused', request, user=ended.session.user, detail=ended.session.device_label)
             if ended.reason == 'idle' and ended.session is not None:
+                record_security_event('session_idle', request, user=ended.session.user, detail=ended.session.device_label)
                 log_action(request, 'OTHER', 'User', ended.session.user_id,
                            f'Session ended after sitting idle: {ended.session.device_label}', actor=ended.session.user)
                 response = api_error(IDLE_MESSAGE, 401)
@@ -216,6 +223,7 @@ class ChangePasswordView(APIView):
         else:
             revoke_all_refresh_tokens(request.user, 'password')
             _, access, refresh = start_session(request, request.user)
+        record_security_event('password_changed', request, detail='Changed in settings')
         response = api_success({'token': access}, 'Password changed successfully.')
         set_refresh_cookie(response, refresh)
         return response
