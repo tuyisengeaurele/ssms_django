@@ -9,13 +9,13 @@ Run it every night. The keeping times are REQUEST_LOG_KEEP_DAYS (14), SECURITY_L
 from datetime import timedelta
 
 from django.conf import settings
-from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from logs.jobs import LoggedCommand
 from logs.models import JobLog, RequestLog, SecurityEvent
 
 
-class Command(BaseCommand):
+class Command(LoggedCommand):
     help = 'Delete log rows that are past their keeping time.'
 
     def handle(self, *args, **options):

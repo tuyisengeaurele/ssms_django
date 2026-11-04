@@ -57,7 +57,15 @@ def send_email(subject: str, recipient_list: list, email: Email, fail_silently: 
     logo.add_header('Content-ID', f'<{LOGO_CID}>')
     logo.add_header('Content-Disposition', 'inline', filename='logo.png')
     message.attach(logo)
-    message.send(fail_silently=fail_silently)
+    try:
+        message.send(fail_silently=False)
+    except Exception as exc:
+        # Only the subject and the kind of failure are kept. The address the mail was for, which a mail server's own
+        # complaint often repeats, never is.
+        from logs.jobs import record_job
+        record_job('email_failed', subject, type(exc).__name__)
+        if not fail_silently:
+            raise
 
 
 def send_email_async(subject: str, recipient_list: list, email: Email, fail_silently: bool = True, reply_to: list | None = None) -> None:

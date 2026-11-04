@@ -22,9 +22,8 @@ import time
 import zlib
 from datetime import datetime
 
-from django.core.management.base import BaseCommand
-
 from farms.models import RearingRoom
+from logs.jobs import LoggedCommand
 from sensors.devices import record_device_reading
 from sensors.models import IoTDevice
 
@@ -58,7 +57,7 @@ def device_name(room) -> str:
     return f'{SENSOR_TYPES[zlib.crc32(room.id.encode()) % len(SENSOR_TYPES)]}-{farm_slug}'
 
 
-class Command(BaseCommand):
+class Command(LoggedCommand):
     help = 'Simulate IoT sensor devices for all active batches, through the same path real devices use.'
 
     def add_arguments(self, parser):

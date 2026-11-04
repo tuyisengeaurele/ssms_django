@@ -16,6 +16,7 @@ from core.permissions import RolePermission
 from core.throttles import DeviceKeyThrottle
 from core.utils import api_error, api_success
 from farms.models import RearingRoom
+from logs.jobs import record_job
 
 from .devices import effective_status, record_device_reading, room_for_device
 from .models import IoTDevice, SensorReading
@@ -289,14 +290,18 @@ class DeviceIngestView(APIView):
         # One message for a missing, wrong or switched off key, and for a device whose room was deleted, so it says
         # nothing about which keys exist.
         if device is None or (device.room_id and not device.room.is_active):
+            # The key itself is never written down, only that an unknown one was tried.
+            record_job('device_rejected', device.name if device else '(unknown key)', 'Key refused' if device is None else 'Its room was deleted')
             return api_error("That device key isn't valid.", 401)
 
         serializer = DeviceReadingSerializer(data=request.data)
         if not serializer.is_valid():
+            record_job('device_rejected', device.name, 'The reading did not make sense')
             return api_error('Please check the reading and try again.', 422, serializer.errors)
 
         room = room_for_device(device)
         if room is None:
+            record_job('device_rejected', device.name, 'The device is not in a room')
             return api_error('This device is not in a room yet.', 409)
 
         record_device_reading(device, room, serializer.validated_data['temperature'], serializer.validated_data['humidity'])

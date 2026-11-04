@@ -6,14 +6,14 @@ Deletes signed in sessions that ended (signed out, revoked or ran out) more than
 """
 from datetime import timedelta
 
-from django.core.management.base import BaseCommand
 from django.db.models import Q
 from django.utils import timezone
 
+from logs.jobs import LoggedCommand
 from users.models import UserSession
 
 
-class Command(BaseCommand):
+class Command(LoggedCommand):
     help = 'Delete sessions that ended more than N days ago.'
 
     def add_arguments(self, parser):
