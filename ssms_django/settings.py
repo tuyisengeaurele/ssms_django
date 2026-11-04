@@ -6,6 +6,7 @@ import sentry_sdk
 from decouple import config
 
 from core.config import parse_list
+from core.logging import sentry_before_send
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -301,6 +302,20 @@ if not DEBUG:
     # Referrer policy
     SECURE_REFERRER_POLICY       = 'strict-origin-when-cross-origin'
 
+# ── Logging ───────────────────────────────────────────────────────────────────
+# One JSON object per line with the reference of the request, so the host's log viewer can search by it.
+LOG_LEVEL = config('LOG_LEVEL', default='INFO').upper()
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {'request_id': {'()': 'core.logging.RequestIdFilter'}},
+    'formatters': {'json': {'()': 'core.logging.JsonFormatter'}},
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler', 'formatter': 'json', 'filters': ['request_id']},
+    },
+    'root': {'handlers': ['console'], 'level': LOG_LEVEL},
+}
+
 # ── Sentry error monitoring ───────────────────────────────────────────────────
 SENTRY_DSN = config('SENTRY_DSN', default='')
 
@@ -311,4 +326,5 @@ if SENTRY_DSN:
         profiles_sample_rate=config('SENTRY_PROFILES_SAMPLE_RATE', default=0.1, cast=float),
         environment=config('DJANGO_ENV', default='production'),
         send_default_pii=False,
+        before_send=sentry_before_send,
     )
