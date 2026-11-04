@@ -1,5 +1,19 @@
 # Changelog
 
+## Limits, a wait message and website security headers
+
+### Checked
+- Backend: new tests for each limit, the wait time in the answer and the CORS header; the full suite is in the pull request.
+- Frontend: tests for the wait message in three languages and for the header file. In a real browser, with the policy enforced by a small local server and violations logged: the landing page, the sign in page and nine signed in admin pages gave no violation.
+- **Not checked:** the map tiles, the bot check, error reports and photo uploads against the policy, and anything on the real domain. French and Kinyarwanda on screen. The Kinyarwanda wording of the wait message is a draft.
+
+### What changed
+- Each person gets 20 PDF reports a minute (batch report, farm summary), 10 exports a minute (CSV and PDF of a list, counted only when exported) and 20 photo checks a minute. They are counted per person, so an office sharing one address does not share an allowance. A device sending readings is not counted.
+- After a 429 the screen says "Too many requests. Try again in 12 seconds." in English, French or Kinyarwanda, never the server's words. The answer now carries `retryAfter`, and the `Retry-After` header is readable from another address.
+- The photo check already looked inside the file and refused a text file renamed to `.jpg`, a huge picture and a wrong format. New tests cover an empty file and one cut off halfway.
+- The website host now sends a Content Security Policy (report only for now), Permissions-Policy (camera and location for this site, no microphone) and Strict-Transport-Security. The one inline script moved to `hero-preload.js`, so the page has no inline script.
+- Enforcing the policy waits for the domain decision. `docs/deploy-checklist.md` says what to switch.
+
 ## React Router 7
 
 React Router is upgraded from 6.23 to 7.18.5. It clears the two moderate advisories (an open redirect through `<Link>` and `useNavigate`, and a constructor injection in server rendering that SSMS does not use). `npm audit` for the packages that ship to the browser now reports 0 vulnerabilities, and CI fails on moderate or above, up from high.

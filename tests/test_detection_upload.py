@@ -71,6 +71,20 @@ def test_a_text_file_renamed_to_jpg_is_refused_before_the_ai_sees_it(auth_client
     ai.post.assert_not_called()
 
 
+def test_an_empty_file_is_refused_before_the_ai_sees_it(auth_client, farmer_and_batch, ai):
+    response = send(auth_client, *farmer_and_batch, upload(b'', 'empty.jpg', 'image/jpeg'))
+    assert response.status_code == 422
+    assert 'photo' in response.json()['message'].lower()
+    assert not ai.post.called
+
+
+def test_a_photo_cut_off_halfway_is_refused(auth_client, farmer_and_batch, ai):
+    whole = image_bytes('PNG')
+    response = send(auth_client, *farmer_and_batch, upload(whole[: len(whole) // 2], 'cut.png', 'image/png'))
+    assert response.status_code == 422
+    assert not ai.post.called
+
+
 def test_a_photo_over_5_megabytes_is_refused(auth_client, farmer_and_batch, ai):
     big = image_bytes('PNG') + b'\0' * (5 * 1024 * 1024)
     response = send(auth_client, *farmer_and_batch, upload(big))

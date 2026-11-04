@@ -8,6 +8,7 @@
 from django.http import HttpResponse, StreamingHttpResponse
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from audit_log.utils import log_action
@@ -15,6 +16,7 @@ from cooperatives.models import Cooperative
 from core.access import scope_farms
 from core.csvsafe import safe_writer
 from core.doc_format import clean_lang
+from core.throttles import ExportRateThrottle
 from core.utils import api_error, api_success
 
 from .coop import NO_COOPERATIVE, ReportInputError, cooperative_report, parse_period
@@ -66,6 +68,7 @@ def _csv_rows(report: dict):
 
 class CooperativeReportView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle, ExportRateThrottle]
 
     def get(self, request):
         user = request.user

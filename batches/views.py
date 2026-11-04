@@ -2,12 +2,14 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from alerts.models import AlertLog, AlertType
 from audit_log.utils import log_action
 from core.access import get_batch_or_404, get_farm_or_404, scope_batches
 from core.doc_format import clean_lang
+from core.throttles import ReportRateThrottle
 from core.utils import api_error, api_success
 from farms.models import RearingRoom
 
@@ -94,6 +96,7 @@ class BatchReportView(APIView):
     Anyone who may see the batch may ask for it. The name on the document is the person who asked.
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle, ReportRateThrottle]
 
     def get(self, request, pk):
         batch = get_batch_or_404(request.user, pk, Batch.objects.select_related('room'))

@@ -13,7 +13,8 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 const STORAGE_KEY = 'ssms_locale';
 
-function loadLocale(): Locale {
+/** The language the person chose, or the browser's. Also read outside React, by the error messages. */
+export function loadLocale(): Locale {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved && ['en', 'fr', 'rw'].includes(saved)) return saved as Locale;

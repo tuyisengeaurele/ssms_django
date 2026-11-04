@@ -18,6 +18,7 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from alerts.disease import raise_disease_alert
@@ -26,6 +27,7 @@ from core.access import get_batch_or_404, scope_by_batch
 from core.csvsafe import safe_writer
 from core.pagination import StandardPagination
 from core.params import date_param, int_param
+from core.throttles import DetectionRateThrottle, ExportRateThrottle
 from core.utils import api_error, api_success
 
 from .models import DiseaseDetection
@@ -65,6 +67,7 @@ class DiseaseDetectionCreateView(APIView):
     Form fields: batchId (text), image (file), notes (text, optional)
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle, DetectionRateThrottle]
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
@@ -215,6 +218,7 @@ class DetectionHistoryView(APIView):
     Each role sees the detections the access rules allow (see core.access).
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle, ExportRateThrottle]
 
     def get(self, request):
         if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):

@@ -174,6 +174,9 @@ REST_FRAMEWORK = {
         'device': '30/minute',   # readings per device key
         'invitation': '20/minute',
         'sessions': '30/minute',   # signed in devices: list and sign out
+        'report': '20/minute',   # PDF reports, per person
+        'export': '10/minute',   # CSV and PDF exports of a list, per person
+        'detection': '20/minute',   # photo checks, per person
         'lot': '30/minute',   # strangers opening the page behind a lot's QR code
     },
 }
@@ -199,6 +202,8 @@ SESSION_REFRESH_GRACE_SECONDS = config('SESSION_REFRESH_GRACE_SECONDS', default=
 
 CORS_ALLOWED_ORIGINS = parse_list(config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173'))
 CORS_ALLOW_CREDENTIALS = True
+# A site on another address can only read these response headers. The screen needs the wait time after a 429.
+CORS_EXPOSE_HEADERS = ['Retry-After']
 
 APPEND_SLASH = False
 

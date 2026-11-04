@@ -3,12 +3,14 @@ import io
 from django.db.models import Avg, Count, Q, Sum
 from django.http import StreamingHttpResponse
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from audit_log.utils import log_action
 from core.access import get_batch_or_404, scope_by_batch
 from core.csvsafe import safe_writer
 from core.pagination import StandardPagination
+from core.throttles import ExportRateThrottle
 from core.utils import api_error, api_success
 
 from .models import HarvestRecord
@@ -26,6 +28,7 @@ class HarvestAllView(APIView):
     GET /api/harvest?export=csv   , streaming CSV download
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle, ExportRateThrottle]
 
     def _scoped_qs(self, user):
         return scope_by_batch(

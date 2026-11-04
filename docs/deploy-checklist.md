@@ -52,15 +52,13 @@ Then, from outside:
 - Stop the AI service: the disease check says so plainly and the rest of the site works.
 - Take a database backup and restore it somewhere else.
 
-## 5. Known gaps on 2026-10-30
+## 5. Known gaps on 2026-11-04
 
 These are written down so nobody is surprised. Each is on the backlog.
 
 - No idle timeout and no warning before a sign in ends.
-- No list of signed in devices, and no way to sign a device out.
 - No second factor for admin accounts.
-- Frontend host sends no Content-Security-Policy.
-- `react-router-dom` 6.30.6 has two moderate advisories. The server rendering one does not apply to a single page app. The open redirect one needs a user controlled address passed to a link or `navigate`, and the app only passes fixed paths. The fix is the 7.x line, a major upgrade.
+- The Content Security Policy in `frontend/vercel.json` is report only. Switch the header name to `Content-Security-Policy` after the real domain is set and the browser console is clean on the deployed site for every role. The API address in `connect-src` is `ssms-api.onrender.com` from `render.yaml`: change both together, or drop it if the host proxies `/api` so the site only talks to itself. Map tiles, the bot check, error reports and photo uploads were not exercised against the policy.
 - The daily sensor simulation workflow in `.github/workflows` writes simulated readings into whatever database its secrets point at. Disable it for a live site.
 
 ## 6. If it goes wrong
