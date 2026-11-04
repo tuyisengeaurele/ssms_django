@@ -651,6 +651,7 @@ export const pageTranslations = {
   sdOthersDone: k("Other devices signed out.", "Autres appareils déconnectés.", "Ibindi bikoresho byasohowe."),
   sdNoOthers: k("No other devices are signed in.", "Aucun autre appareil n'est connecté.", "Nta bindi bikoresho byinjiriye."),
   sdLoading: k("Loading your devices", "Chargement de vos appareils", "Turimo gufata ibikoresho byawe"),
+  erReference: k("Reference: {ref}", "Référence : {ref}", "Inomero y'icyitonderwa: {ref}"),
   rlWait: k("Too many requests. Try again in {n} seconds.", "Trop de demandes. Réessayez dans {n} secondes.", "Hari ibisabwa byinshi cyane. Ongera ugerageze nyuma y'amasegonda {n}."),
   rlWaitOne: k("Too many requests. Try again in 1 second.", "Trop de demandes. Réessayez dans 1 seconde.", "Hari ibisabwa byinshi cyane. Ongera ugerageze nyuma y'isegonda 1."),
   rlWaitUnknown: k("Too many requests. Please wait a moment and try again.", "Trop de demandes. Patientez un instant puis réessayez.", "Hari ibisabwa byinshi cyane. Tegereza akanya ugerageze nanone."),

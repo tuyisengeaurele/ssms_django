@@ -5,7 +5,9 @@ import { fill } from '../utils/fill';
 
 const GENERIC = 'Something went wrong. Please try again.';
 
-type ServerBody = { message?: string; errors?: Record<string, unknown>; retryAfter?: number };
+type ServerBody = { message?: string; errors?: Record<string, unknown>; retryAfter?: number; reference?: string };
+
+const REFERENCE = /^[A-Za-z0-9._-]{8,64}$/;
 
 // A wait of more than a day is a mistake somewhere, so it is not shown.
 const LONGEST_WAIT = 86_400;
@@ -26,6 +28,21 @@ function tooManyRequests(seconds: number | null): string {
   const entry = translations[key];
   const text = entry[loadLocale()] ?? entry.en;
   return seconds === null ? text : fill(text, { n: seconds });
+}
+
+/** The reference to quote when asking for help, from the body or the header. Only a plain one is shown. */
+function referenceOf(headers: unknown, body: ServerBody): string | null {
+  const fromHeader = (headers as Record<string, unknown> | undefined)?.['x-request-id'];
+  for (const raw of [body.reference, fromHeader]) {
+    if (typeof raw === 'string' && REFERENCE.test(raw)) return raw;
+  }
+  return null;
+}
+
+function withReference(message: string, reference: string | null): string {
+  if (!reference) return message;
+  const entry = translations.erReference;
+  return `${message} ${fill(entry[loadLocale()] ?? entry.en, { ref: reference })}`;
 }
 
 /** First readable sentence from a field error list such as { email: ['Already taken.'] }. */
@@ -59,9 +76,10 @@ export function useApiError() {
     if (status === 422 && !body.message) {
       return 'Please check what you entered and try again.';
     }
-    if (typeof body.message === 'string' && body.message.trim()) return body.message;
+    const reference = status >= 500 ? referenceOf(err.response.headers, body) : null;
+    if (typeof body.message === 'string' && body.message.trim()) return withReference(body.message, reference);
 
-    if (status >= 500) return 'Our server hit a problem. Please try again in a moment.';
+    if (status >= 500) return withReference('Our server hit a problem. Please try again in a moment.', reference);
     if (status === 404) return "We couldn't find what you were looking for.";
     if (status === 403) return "You don't have permission to do that.";
     if (status === 401) return 'Your session has ended. Please sign in again.';
