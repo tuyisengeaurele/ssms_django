@@ -10,6 +10,7 @@ from audit_log.utils import log_action
 from core.access import get_batch_or_404, scope_by_batch
 from core.csvsafe import safe_writer
 from core.pagination import StandardPagination
+from core.permissions import RolePermission
 from core.throttles import ExportRateThrottle
 from core.utils import api_error, api_success
 
@@ -27,7 +28,8 @@ class HarvestAllView(APIView):
     GET /api/harvest?page=N       , the same a page at a time (?page_size=N, ?search=text)
     GET /api/harvest?export=csv   , streaming CSV download
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'harvests'
     throttle_classes = [UserRateThrottle, ExportRateThrottle]
 
     def _scoped_qs(self, user):
@@ -82,7 +84,8 @@ class HarvestAllView(APIView):
 
 
 class HarvestListCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'harvests'
 
     def get(self, request, batch_id):
         get_batch_or_404(request.user, batch_id)
@@ -90,8 +93,6 @@ class HarvestListCreateView(APIView):
         return api_success(HarvestRecordSerializer(records, many=True).data)
 
     def post(self, request, batch_id):
-        if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error("You don't have permission to record a harvest.", 403)
         batch = get_batch_or_404(request.user, batch_id)
         if batch.stage not in HARVEST_STAGES:
             return api_error(TOO_EARLY, 422, {'batch_id': [TOO_EARLY]})
@@ -119,7 +120,8 @@ class HarvestListCreateView(APIView):
 
 
 class HarvestStatsView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'harvests'
 
     def get(self, request):
         qs = scope_by_batch(request.user, HarvestRecord.objects.live())
@@ -157,11 +159,10 @@ class HarvestStatsView(APIView):
 
 
 class HarvestDeleteView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'harvests'
 
     def delete(self, request, pk):
-        if request.user.role not in ('FARMER', 'ADMIN'):
-            return api_error("You don't have permission to do that.", 403)
         record = scope_by_batch(
             request.user, HarvestRecord.objects.live().select_related('batch__farm'),
         ).filter(pk=pk).first()

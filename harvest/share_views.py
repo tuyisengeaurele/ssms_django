@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 
 from audit_log.utils import log_action
 from core.access import scope_by_batch
+from core.permissions import RolePermission
 from core.throttles import LotRateThrottle
 from core.utils import api_error, api_success
 
@@ -20,11 +21,11 @@ class LotShareView(APIView):
     Not for supervisors, who may read lots but not change them. The link is a secret, so it is not in the harvest list and
     not in the audit log.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'harvests'
+    actions = {'get': 'share', 'post': 'share', 'delete': 'share'}
 
     def _lot(self, request, pk):
-        if request.user.role not in ('FARMER', 'ADMIN'):
-            return None, api_error("You don't have permission to do that.", 403)
         record = scope_by_batch(
             request.user, HarvestRecord.objects.live().select_related('batch__farm'),
         ).filter(pk=pk).first()
