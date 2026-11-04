@@ -7,3 +7,4 @@ factory_boy
 ruff
 pip-audit
 pypdf
+pyyaml
