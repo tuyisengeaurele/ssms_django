@@ -166,7 +166,7 @@ describe('The farmers of my cooperative', () => {
   });
 
   it('sends the address when one is typed', async () => {
-    api.create.mockResolvedValue({ data: { data: { id: 'i9', email: 'aline@example.rw', status: 'pending', createdAt: '', expiresAt: '', invitedByName: '', acceptedByName: '', link: 'http://localhost:5173/join/zzz' } } });
+    api.create.mockResolvedValue({ data: { data: { id: 'i9', email: 'aline@example.rw', status: 'pending', createdAt: '2026-10-27T08:00:00Z', expiresAt: '2026-11-03T08:00:00Z', invitedByName: '', acceptedByName: '', link: 'http://localhost:5173/join/zzz' } } });
     open();
     await screen.findByText('Bruce Ishimwe');
     fireEvent.click(screen.getByRole('button', { name: 'Invite a farmer' }));
