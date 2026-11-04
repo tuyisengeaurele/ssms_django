@@ -12,6 +12,7 @@ from alerts.utils import check_room_alerts
 from audit_log.utils import log_action
 from core.access import get_batch_or_404, get_farm_or_404, scope_by_farm, scope_readings
 from core.params import int_param
+from core.permissions import RolePermission
 from core.throttles import DeviceKeyThrottle
 from core.utils import api_error, api_success
 from farms.models import RearingRoom
@@ -30,11 +31,10 @@ def _gen_device_key():
 
 
 class SensorReadingCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'readings'
 
     def post(self, request):
-        if request.user.role not in ('FARMER', 'ADMIN', 'SUPERVISOR'):
-            return api_error("You don't have permission to do that.", 403)
 
         serializer = SensorReadingCreateSerializer(data=request.data)
         if not serializer.is_valid():
@@ -62,11 +62,10 @@ class SensorChartView(APIView):
     Returns hourly average temperature and humidity across the batches the caller may see.
     Used by the supervisor dashboard charts.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'readings'
 
     def get(self, request):
-        if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
-            return api_error("You don't have permission to do that.", 403)
 
         hours = int_param(request, 'hours', 24, 1, 168)
         since = timezone.now() - timedelta(hours=hours)
@@ -93,7 +92,8 @@ class SensorChartView(APIView):
 
 
 class SensorReadingByBatchView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'readings'
 
     def get(self, request, batch_id):
         batch = get_batch_or_404(request.user, batch_id)
@@ -108,7 +108,8 @@ class SensorBatchSeriesView(APIView):
     Readings are averaged into hourly buckets, or six hour buckets for more than a week, so a month still
     draws as a short line. Oldest first.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'readings'
 
     def get(self, request, batch_id):
         batch = get_batch_or_404(request.user, batch_id)
@@ -150,7 +151,8 @@ class IoTDeviceListView(APIView):
     GET  /api/devices         , list (role-scoped, optional ?farm=<id> filter)
     POST /api/devices         , create device (ADMIN or SUPERVISOR only)
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'devices'
 
     def _scoped_qs(self, user):
         return scope_by_farm(user, IoTDevice.objects.select_related('farm', 'batch', 'room').filter(is_active=True))
@@ -167,8 +169,6 @@ class IoTDeviceListView(APIView):
 
     def post(self, request):
         """Create a new IoT device for a farm (ADMIN or SUPERVISOR)."""
-        if request.user.role not in ('ADMIN', 'SUPERVISOR'):
-            return api_error("You don't have permission to do that.", 403)
 
         # The JSON parser turns farmId into farm_id, so read the underscored names (and accept both).
         data     = request.data
@@ -215,7 +215,8 @@ class IoTDeviceDetailView(APIView):
     PATCH  /api/devices/:id, move the device to another room of its farm (ADMIN or SUPERVISOR)
     DELETE /api/devices/:id, deactivate device (ADMIN or SUPERVISOR)
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'devices'
 
     def _get_device(self, request, pk):
         """Return (device, None), or (None, a 404 response) when it is missing or out of scope."""
@@ -249,8 +250,6 @@ class IoTDeviceDetailView(APIView):
         return api_success(data)
 
     def patch(self, request, pk):
-        if request.user.role not in ('ADMIN', 'SUPERVISOR'):
-            return api_error("You don't have permission to do that.", 403)
         device, err = self._get_device(request, pk)
         if err:
             return err
@@ -263,8 +262,6 @@ class IoTDeviceDetailView(APIView):
         return api_success(_serialize_device(device), 'Device moved.')
 
     def delete(self, request, pk):
-        if request.user.role not in ('ADMIN', 'SUPERVISOR'):
-            return api_error("You don't have permission to do that.", 403)
 
         device, err = self._get_device(request, pk)
         if err:
