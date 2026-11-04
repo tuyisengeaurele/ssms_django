@@ -38,9 +38,10 @@ interface Filters {
   search: string;
   action: string;
   resource: string;
+  reference: string;
 }
 
-const NO_FILTERS: Filters = { search: '', action: '', resource: '' };
+const NO_FILTERS: Filters = { search: '', action: '', resource: '', reference: '' };
 
 export default function AdminAuditLogPage() {
   const { t, locale } = useLanguage();
@@ -140,6 +141,15 @@ export default function AdminAuditLogPage() {
               placeholder={t('auResourcePlaceholder')}
               value={draft.resource}
               onChange={(e) => set({ resource: e.target.value })}
+            />
+          </label>
+
+          <label className="filter-field">
+            <span>{t('lgReference')}</span>
+            <input
+              className="form-input filter-input"
+              value={draft.reference}
+              onChange={(e) => set({ reference: e.target.value.trim() })}
             />
           </label>
 

@@ -231,3 +231,8 @@ def test_an_export_is_always_written_down_and_says_so(client):
 
 def test_the_audit_log_endpoint_that_was_there_before_still_works(client, rows):
     assert client.get('/api/admin/audit-log').status_code == 200
+
+
+def test_the_older_audit_endpoint_finds_a_reference_too(client, rows):
+    found = client.get('/api/admin/audit-log?reference=aaaa11112222').json()['data']
+    assert [r['requestId'] for r in found] == ['AAAA11112222']

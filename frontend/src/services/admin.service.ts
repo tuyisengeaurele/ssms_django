@@ -43,6 +43,10 @@ export interface AuditLogEntry {
   detail: string;
   ipAddress: string | null;
   createdAt: string;
+  requestId?: string;
+  outcome?: string;
+  onBehalfOfEmail?: string;
+  deviceLabel?: string;
 }
 
 export interface ReportSummary {
@@ -61,30 +65,33 @@ export interface ReportSummary {
 }
 
 export const auditLogService = {
-  getList: (params: { page?: number; action?: string; resource?: string; search?: string }) => {
+  getList: (params: { page?: number; action?: string; resource?: string; search?: string; reference?: string }) => {
     const q = new URLSearchParams();
     if (params.page)     q.set('page',     String(params.page));
     if (params.action)   q.set('action',   params.action);
     if (params.resource) q.set('resource', params.resource);
     if (params.search)   q.set('search',   params.search);
+    if (params.reference) q.set('reference', params.reference);
     return api.get<{ success: boolean; data: AuditLogEntry[]; pagination: { page: number; pageSize: number; totalItems: number; totalPages: number; hasNext: boolean; hasPrev: boolean } }>(`/admin/audit-log?${q.toString()}`);
   },
 
   /** The audit log as a PDF on the SSMS letterhead, with the same filters as the screen. */
-  exportPdf: (params: { action?: string; resource?: string; search?: string }): Promise<void> => {
+  exportPdf: (params: { action?: string; resource?: string; search?: string; reference?: string }): Promise<void> => {
     const query: Record<string, string> = { export: 'pdf' };
     if (params.action)   query.action   = params.action;
     if (params.resource) query.resource = params.resource;
     if (params.search)   query.search   = params.search;
+    if (params.reference) query.reference = params.reference;
     return downloadFile('/admin/audit-log', query, 'audit_log.pdf');
   },
 
   /** The audit log as CSV, with the same filters as the screen. */
-  exportCsv: (params: { action?: string; resource?: string; search?: string }): Promise<void> => {
+  exportCsv: (params: { action?: string; resource?: string; search?: string; reference?: string }): Promise<void> => {
     const query: Record<string, string> = { export: 'csv' };
     if (params.action)   query.action   = params.action;
     if (params.resource) query.resource = params.resource;
     if (params.search)   query.search   = params.search;
+    if (params.reference) query.reference = params.reference;
     return downloadFile('/admin/audit-log', query, `audit_log_${today()}.csv`);
   },
 };
