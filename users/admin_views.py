@@ -9,6 +9,7 @@ from django.utils.http import urlsafe_base64_encode
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
+from audit_log.changes import build_changes
 from audit_log.utils import log_action
 from cooperatives.models import Cooperative
 from core.mail import Email, send_email
@@ -98,7 +99,10 @@ class AdminUserRoleView(APIView):
         old_role = user.role
         user.role = new_role
         user.save(update_fields=['role'])
-        log_action(request, 'UPDATE', 'User', user.pk, f'Role changed {old_role} → {new_role} for {user.email}')
+        log_action(
+            request, 'UPDATE', 'User', user.pk, f'Role changed {old_role} → {new_role} for {user.email}',
+            changes=build_changes({'role': old_role}, {'role': new_role}),
+        )
         return api_success(UserSerializer(user).data, 'Role updated.')
 
 

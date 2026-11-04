@@ -2,6 +2,7 @@ from django.db.models import Prefetch
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
+from audit_log.changes import build_changes, snapshot
 from audit_log.utils import log_action
 from batches.models import Batch
 from core.access import get_batch_or_404, scope_alerts
@@ -139,9 +140,12 @@ class StageThresholdDetailView(APIView):
         serializer = StageThresholdSerializer(row, data=request.data)
         if not serializer.is_valid():
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
+        fields = ['temp_min', 'temp_max', 'hum_min', 'hum_max']
+        before = snapshot(row, fields)
         serializer.save(updated_by=request.user)
         log_action(
             request, 'UPDATE', 'Threshold', stage,
             f'Safe range for {stage}: {row.temp_min} to {row.temp_max} C, {row.hum_min} to {row.hum_max} %',
+            changes=build_changes(before, snapshot(row, fields)),
         )
         return api_success(StageThresholdSerializer(row, context={'admin': True}).data, 'Safe range updated.')

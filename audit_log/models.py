@@ -24,6 +24,14 @@ class AuditLog(models.Model):
     resource_id = models.CharField(max_length=100, blank=True)
     detail      = models.TextField(blank=True)
     ip_address  = models.GenericIPAddressField(null=True, blank=True)
+    # The reference of the request, to find the rest of what happened in the other logs.
+    request_id  = models.CharField(max_length=64, blank=True, db_index=True)
+    # {field: {'from': ..., 'to': ...}} for the fields the change touched. Secrets are never in it.
+    changes     = models.JSONField(default=dict, blank=True)
+    device_label = models.CharField(max_length=80, blank=True)
+    # Set when an admin changed data that somebody else owns.
+    on_behalf_of_email = models.EmailField(blank=True)
+    outcome     = models.CharField(max_length=10, default='success')
     created_at  = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:

@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
+from audit_log.changes import build_changes, snapshot
 from audit_log.utils import log_action, on_behalf_of
 from batches.models import Batch
 from batches.queries import with_counts
@@ -105,8 +106,12 @@ class FarmDetailView(APIView):
         serializer = FarmUpdateSerializer(farm, data=request.data, partial=True)
         if not serializer.is_valid():
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
+        before = snapshot(farm, serializer.validated_data)
         serializer.save()
-        log_action(request, 'UPDATE', 'Farm', farm.pk, f'Updated farm: {farm.name}', owner=on_behalf_of(request, farm))
+        log_action(
+            request, 'UPDATE', 'Farm', farm.pk, f'Updated farm: {farm.name}', owner=on_behalf_of(request, farm),
+            changes=build_changes(before, snapshot(farm, before)),
+        )
         return api_success(FarmSerializer(farm).data, 'Farm updated.')
 
     def delete(self, request, pk):
