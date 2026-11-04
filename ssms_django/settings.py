@@ -44,6 +44,7 @@ INSTALLED_APPS = [
 PASSWORD_RESET_TIMEOUT = 3600
 
 MIDDLEWARE = [
+    'core.request_id.RequestIdMiddleware',   # first, so every answer carries a reference
     'django.middleware.security.SecurityMiddleware',
     'core.middleware.SecurityHeadersMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',   # serve static files in production
@@ -214,8 +215,9 @@ SESSION_REFRESH_GRACE_SECONDS = config('SESSION_REFRESH_GRACE_SECONDS', default=
 
 CORS_ALLOWED_ORIGINS = parse_list(config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173'))
 CORS_ALLOW_CREDENTIALS = True
-# A site on another address can only read these response headers. The screen needs the wait time after a 429.
-CORS_EXPOSE_HEADERS = ['Retry-After']
+# A site on another address can only read these response headers. The screen needs the wait time after a 429
+# and the reference of an error, to quote it.
+CORS_EXPOSE_HEADERS = ['Retry-After', 'X-Request-ID']
 
 APPEND_SLASH = False
 

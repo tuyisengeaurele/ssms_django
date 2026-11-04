@@ -253,7 +253,8 @@ class TestWhichBatchesMayBeCompared:
         missing = compare(auth_client(owner), ids=f'{mine.pk},does-not-exist')
         not_theirs = compare(auth_client(owner), mine, theirs)
         assert missing.status_code == not_theirs.status_code == 404
-        assert missing.data == not_theirs.data
+        # Each answer carries its own reference, which is the only thing allowed to differ.
+        assert {k: v for k, v in missing.data.items() if k != 'reference'} == {k: v for k, v in not_theirs.data.items() if k != 'reference'}
 
     def test_a_deleted_batch_cannot_be_compared(self, auth_client, owner, farm):
         a, b = make(farm), make(farm)

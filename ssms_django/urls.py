@@ -7,6 +7,9 @@ from core.utils import health_check
 from reports.health_views import SystemHealthView
 from sensors.urls import device_urlpatterns
 
+handler404 = 'core.utils.not_found'
+handler500 = 'core.utils.server_error'
+
 urlpatterns = [
     path('api/health', health_check),
     path('api/auth/', include('users.urls')),          # /api/auth/register, /api/auth/login, /api/auth/me

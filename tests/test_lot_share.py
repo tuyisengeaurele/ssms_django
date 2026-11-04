@@ -263,7 +263,8 @@ class TestABadLink:
         revoked = public(api_client, token)
         unknown = public(api_client, 'x' * 22)
         assert revoked.status_code == unknown.status_code == 404
-        assert revoked.data == unknown.data
+        # Each answer has its own reference, which is the only thing allowed to differ.
+        assert {k: v for k, v in revoked.data.items() if k != 'reference'} == {k: v for k, v in unknown.data.items() if k != 'reference'}
 
     def test_an_empty_token_is_not_a_match_for_a_lot_that_was_never_shared(self, api_client, lot):
         assert lot.share_token is None
