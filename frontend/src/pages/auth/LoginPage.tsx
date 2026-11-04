@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authService } from '../../services/auth.service';
 import { collectDeviceHints } from '../../services/clientHints';
@@ -33,12 +33,21 @@ export default function LoginPage() {
   const [notice] = useState<string | null>(() => {
     try {
       const found = sessionStorage.getItem('ssms_notice');
-      sessionStorage.removeItem('ssms_notice');
       return found === 'session_ended' || found === 'session_idle' || found === 'account_ready' ? found : null;
     } catch {
       return null;
     }
   });
+
+  // Shown once. It is removed after the page has drawn, because a page that is drawn twice (as React does while
+  // developing) would otherwise read it the second time with nothing left.
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem('ssms_notice');
+    } catch {
+      // Nothing to remove.
+    }
+  }, []);
 
   const forgetUnverified = () => {
     setUnverified(false);

@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AxiosError } from 'axios';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
@@ -229,6 +230,25 @@ describe('Login page', () => {
     sessionStorage.setItem('ssms_notice', 'session_idle');
     open();
     expect(screen.getByRole('status')).toHaveTextContent('You were signed out because nobody used this page for a while. Please sign in again.');
+    expect(sessionStorage.getItem('ssms_notice')).toBeNull();
+  });
+
+  it('still shows the notice when React draws the page twice, as it does while developing', () => {
+    sessionStorage.setItem('ssms_notice', 'session_idle');
+    render(
+      <StrictMode>
+        <MemoryRouter initialEntries={['/login']}>
+          <LanguageProvider>
+            <ToastProvider>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+              </Routes>
+            </ToastProvider>
+          </LanguageProvider>
+        </MemoryRouter>
+      </StrictMode>,
+    );
+    expect(screen.getByRole('status')).toHaveTextContent('nobody used this page');
     expect(sessionStorage.getItem('ssms_notice')).toBeNull();
   });
 
