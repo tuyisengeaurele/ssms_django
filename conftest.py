@@ -23,6 +23,8 @@ def _quiet_settings(request, settings):
         rest['DEFAULT_THROTTLE_CLASSES'] = []
     settings.REST_FRAMEWORK = rest
     settings.EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+    # Good answers are not sampled into the request log, so one test cannot change another's counts. Failures still are.
+    settings.REQUEST_LOG_SAMPLE_RATE = 0.0
     # A cheap hasher first, so building a dozen users stays fast. The real hashers stay in the list,
     # so old hashes still verify. Tests about hashing can set PASSWORD_HASHERS themselves.
     settings.PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher', *settings.PASSWORD_HASHERS]

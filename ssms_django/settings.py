@@ -46,6 +46,7 @@ PASSWORD_RESET_TIMEOUT = 3600
 
 MIDDLEWARE = [
     'core.request_id.RequestIdMiddleware',   # first, so every answer carries a reference
+    'logs.middleware.RequestLogMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'core.middleware.SecurityHeadersMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',   # serve static files in production
@@ -198,6 +199,12 @@ SIMPLE_JWT = {
 }
 
 # A signed in device lives at most this long, however often it renews. The refresh token alone slides for 7 days.
+# The request log keeps every failed request and this share of the good ones. 14 days, then `prune_logs` deletes them.
+REQUEST_LOG_SAMPLE_RATE = config('REQUEST_LOG_SAMPLE_RATE', default=0.05, cast=float)
+REQUEST_LOG_KEEP_DAYS = config('REQUEST_LOG_KEEP_DAYS', default=14, cast=int)
+SECURITY_LOG_KEEP_DAYS = config('SECURITY_LOG_KEEP_DAYS', default=365, cast=int)
+JOB_LOG_KEEP_DAYS = config('JOB_LOG_KEEP_DAYS', default=90, cast=int)
+
 # A sign in nobody uses is ended sooner for people with more power. 0 means no limit.
 def _idle_minutes(name, default):
     return config(name, default=default, cast=int) or None
