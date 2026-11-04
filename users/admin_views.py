@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from audit_log.utils import log_action
 from cooperatives.models import Cooperative
 from core.mail import Email, send_email
+from core.permissions import RolePermission
 from core.tokens import revoke_all_refresh_tokens
 from core.utils import api_error, api_success
 
@@ -24,8 +25,6 @@ ROLE_WORDS = {'ADMIN': 'an administrator', 'SUPERVISOR': 'a supervisor', 'FARMER
 
 
 def _require_admin(user):
-    if user.role != 'ADMIN':
-        return api_error("You don't have permission to do that.", 403)
     return None
 
 
@@ -51,21 +50,16 @@ def _send_invitation(user):
 
 
 class AdminUserListCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'admin_users'
 
     def get(self, request):
         """GET /api/admin/users, list every user."""
-        err = _require_admin(request.user)
-        if err:
-            return err
         users = User.objects.all().order_by('role', 'name')
         return api_success(UserSerializer(users, many=True).data)
 
     def post(self, request):
         """POST /api/admin/users, an admin adds a person with the role they choose."""
-        err = _require_admin(request.user)
-        if err:
-            return err
         serializer = AdminCreateUserSerializer(data=request.data, context={'request': request})
         if not serializer.is_valid():
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
@@ -85,13 +79,11 @@ class AdminUserListCreateView(APIView):
 
 
 class AdminUserRoleView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'admin_users'
 
     def patch(self, request, user_id):
         """PATCH /api/admin/users/<id>/role, change a user's role."""
-        err = _require_admin(request.user)
-        if err:
-            return err
         if user_id == request.user.id:
             return api_error("You can't change your own role.", 400)
         try:
@@ -111,14 +103,12 @@ class AdminUserRoleView(APIView):
 
 
 class AdminUserDeactivateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'admin_users'
 
     def delete(self, request, user_id):
         """DELETE /api/admin/users/<id>, delete a user. This is a soft delete: the row stays, the account is switched
         off, and an admin can restore it. A hard delete would take the farmer's farms and batches with it."""
-        err = _require_admin(request.user)
-        if err:
-            return err
         if user_id == request.user.id:
             return api_error("You can't delete your own account.", 400)
         try:
@@ -134,13 +124,12 @@ class AdminUserDeactivateView(APIView):
 
 
 class AdminUserRestoreView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'admin_users'
+    actions = {'post': 'restore'}
 
     def post(self, request, user_id):
         """POST /api/admin/users/<id>/restore, bring a deleted user back with the same role and cooperative."""
-        err = _require_admin(request.user)
-        if err:
-            return err
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
@@ -154,13 +143,11 @@ class AdminUserRestoreView(APIView):
 
 
 class AdminUserCooperativeView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'admin_users'
 
     def patch(self, request, user_id):
         """PATCH /api/admin/users/<id>/cooperative, assign or remove cooperative."""
-        err = _require_admin(request.user)
-        if err:
-            return err
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
