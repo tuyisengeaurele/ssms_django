@@ -82,4 +82,4 @@ jobs:
       - name: Build
         run: npm run build
       - name: Audit packages that ship to the browser
-        run: npm audit --omit=dev --audit-level=high
+        run: npm audit --omit=dev --audit-level=moderate
