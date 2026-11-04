@@ -81,11 +81,21 @@ beforeEach(() => {
 
 const tile = (label: string) => screen.getAllByText(label).map((e) => e.closest('.stat-tile')).find(Boolean) as HTMLElement;
 
-describe('System overview page', () => {
+describe('Supervisor dashboard page', () => {
   it('has one title and says what it covers', async () => {
     open();
-    expect(screen.getByRole('heading', { level: 1, name: 'System overview' }) ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Farm monitoring' })).toBeInTheDocument();
     expect(await screen.findByText(/Numbers from every cooperative\./)).toBeInTheDocument();
+  });
+
+  it('is called Dashboard for a supervisor', async () => {
+    auth.user.role = 'SUPERVISOR';
+    auth.user.cooperativeId = 'c1';
+    open();
+    expect(screen.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeInTheDocument();
+    auth.user.role = 'ADMIN';
+    auth.user.cooperativeId = null;
+    await screen.findAllByText(/./);
   });
 
   it('counts farms, running batches, unread alerts and disease checks', async () => {

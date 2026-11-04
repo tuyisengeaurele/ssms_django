@@ -50,7 +50,7 @@ beforeEach(() => {
 describe('System health page', () => {
   it('has one title and asks the server once on opening', async () => {
     open();
-    expect(screen.getByRole('heading', { level: 1, name: 'System health' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'System health' })).toBeInTheDocument();
     await screen.findByText('Disease check service');
     expect(api.get).toHaveBeenCalledTimes(1);
   });
@@ -199,7 +199,7 @@ describe('System health page', () => {
   it('is written in French', async () => {
     localStorage.setItem('ssms_locale', 'fr');
     open();
-    expect(await screen.findByRole('heading', { level: 1, name: 'État du système' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: 'État du système' })).toBeInTheDocument();
     expect(within(await rowOf('Base de données')).getByText('OK')).toBeInTheDocument();
   });
 

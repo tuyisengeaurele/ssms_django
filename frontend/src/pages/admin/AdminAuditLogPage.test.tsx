@@ -43,7 +43,7 @@ beforeEach(() => {
 describe('Audit log page', () => {
   it('has one title and counts the recorded events', async () => {
     open();
-    expect(screen.getByRole('heading', { level: 1, name: 'Audit log' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Audit log' })).toBeInTheDocument();
     expect(await screen.findByText('3 recorded events.')).toBeInTheDocument();
   });
 

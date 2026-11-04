@@ -9,7 +9,7 @@ import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
 import { Role } from '../../types';
 import BarList from '../../components/ui/BarList';
 import { Icon } from '../../components/ui/Icon';
-import PageHeader from '../../components/ui/PageHeader';
+import SectionHeader from '../../components/ui/SectionHeader';
 import Panel from '../../components/ui/Panel';
 import StatTile from '../../components/ui/StatTile';
 import TimeSeries from '../../components/ui/TimeSeries';
@@ -56,7 +56,7 @@ export default function AdminReportsPage() {
   if (loading) {
     return (
       <div>
-        <PageHeader title={t('ptSystemReport')} />
+        <SectionHeader title={t('ptActivity')} />
         <p className="panel-loading"><span className="spinner" /></p>
       </div>
     );
@@ -65,7 +65,7 @@ export default function AdminReportsPage() {
   if (failed || !data) {
     return (
       <div>
-        <PageHeader title={t('ptSystemReport')} />
+        <SectionHeader title={t('ptActivity')} />
         <div className="alert alert-error" role="alert">
           <span style={{ flex: 1 }}>{t('rpLoadError')}</span>
           <button type="button" className="btn btn-secondary btn-xs" onClick={load}>{t('btnRetry')}</button>
@@ -80,8 +80,8 @@ export default function AdminReportsPage() {
 
   return (
     <div className="print-page">
-      <PageHeader
-        title={t('ptSystemReport')}
+      <SectionHeader
+        title={t('ptActivity')}
         subtitle={`${t('reportGenerated')} ${generated}`}
         actions={
           <div className="page-actions no-print">

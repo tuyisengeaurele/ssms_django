@@ -1,5 +1,18 @@
 # Changelog
 
+## A shorter admin menu and a System hub (not yet pushed)
+
+Health, Logs and Activity are tabs of one System page. The admin menu is 12 items in 4 groups, down from 15.
+
+### Checked
+- Frontend: 1664 tests pass and `tsc` is clean. Backend untouched.
+- In a real browser with a throwaway admin (deleted): the menu groups and items, the System hub with its three tabs and the sidebar marking System on each, the old addresses redirecting, Farm monitoring in the title, top bar, sidebar and tab, quick search finding System health, and the phone width (no sideways scroll).
+- **Not checked:** the supervisor's "Dashboard" name in a real browser (my browser check was cut off); it is covered by tests only. French and Kinyarwanda on screen, the Health tab's test results.
+
+### What changed
+- System hub at `/admin/system` with tabs Health, Logs (the audit log) and Activity (the old system report). The old addresses redirect.
+- Admin menu groups: Overview, Farming, Administration, Account. "System overview" is "Farm monitoring" for admin and "Dashboard" for supervisors. "Detection reports" is "Disease checks".
+
 ## One page for a cooperative
 
 A cooperative is now one page with its report, farms, members and details as tabs. This replaces the separate Cooperative report page, the Members window on the Cooperatives list and, for supervisors, the My farmers page.

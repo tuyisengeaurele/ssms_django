@@ -10,7 +10,7 @@ const APP_PATHS = [
   '/farmer', '/supervisor', '/supervisor/cooperative', '/supervisor/cooperative/farms', '/supervisor/cooperative/farmers', '/farms', '/farms/new', '/farms/abc123', '/farms/abc123/batches/new',
   '/batches', '/batches/compare', '/batches/abc123', '/batches/abc123/detect', '/batches/abc123/harvest',
   '/harvests', '/detections/reports', '/alerts', '/devices', '/settings/account', '/settings/security', '/settings/appearance', '/settings/safe-ranges',
-  '/admin', '/admin/users', '/admin/cooperatives', '/admin/cooperatives/all', '/admin/cooperatives/abc123', '/admin/cooperatives/abc123/members', '/admin/contacts', '/admin/audit-log', '/admin/reports', '/admin/health',
+  '/admin', '/admin/users', '/admin/cooperatives', '/admin/cooperatives/all', '/admin/cooperatives/abc123', '/admin/cooperatives/abc123/members', '/admin/contacts', '/admin/system', '/admin/system/health', '/admin/system/logs', '/admin/system/activity',
 ];
 
 describe('getPageInfo', () => {
@@ -19,9 +19,10 @@ describe('getPageInfo', () => {
     ['/admin/users', 'Users', 'Administration'],
     ['/admin/cooperatives', 'Cooperatives', 'Administration'],
     ['/admin/contacts', 'Messages', 'Administration'],
-    ['/admin/audit-log', 'Audit log', 'Administration'],
-    ['/admin/reports', 'System report', 'Administration'],
-    ['/admin/health', 'System health', 'Administration'],
+    ['/admin/system', 'System', 'Administration'],
+    ['/admin/system/health', 'System', 'Administration'],
+    ['/admin/system/logs', 'System', 'Administration'],
+    ['/admin/system/activity', 'System', 'Administration'],
     ['/supervisor/cooperative', 'My cooperative', 'Farming'],
     ['/supervisor/cooperative/farms', 'My cooperative', 'Farming'],
     ['/supervisor/cooperative/farmers', 'My cooperative', 'Farming'],
@@ -94,8 +95,15 @@ describe('usePageTitle', () => {
   });
 
   it('sets the browser tab title for the current page', () => {
-    renderHook(() => usePageTitle(), { wrapper: wrapper('/admin/audit-log') });
-    expect(document.title).toBe('Audit log | SSMS');
+    renderHook(() => usePageTitle(), { wrapper: wrapper('/admin/system/logs') });
+    expect(document.title).toBe('System | SSMS');
+  });
+
+  it('calls the all-farms view Farm monitoring for an admin and Dashboard for a supervisor', () => {
+    const admin = renderHook(() => usePageTitle('ADMIN'), { wrapper: wrapper('/supervisor') });
+    expect(admin.result.current).toEqual({ title: 'Farm monitoring', section: 'Farming' });
+    const supervisor = renderHook(() => usePageTitle('SUPERVISOR'), { wrapper: wrapper('/supervisor') });
+    expect(supervisor.result.current).toEqual({ title: 'Dashboard', section: 'Farming' });
   });
 
   it('returns the title and section for the top bar', () => {

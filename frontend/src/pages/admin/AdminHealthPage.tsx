@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { healthService, HealthCheck, HealthReport, HealthStatus } from '../../services/health.service';
 import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
-import PageHeader from '../../components/ui/PageHeader';
+import SectionHeader from '../../components/ui/SectionHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 
@@ -69,7 +69,7 @@ export default function AdminHealthPage() {
 
   return (
     <div>
-      <PageHeader title={t('ptHealth')} subtitle={t('hlIntro')} actions={again} />
+      <SectionHeader title={t('ptHealth')} subtitle={t('hlIntro')} actions={again} />
 
       {failed && (
         <div className="alert alert-error" role="alert">

@@ -6,7 +6,7 @@ import { useAutoFilters } from '../../hooks/useAutoFilters';
 import { fill } from '../../utils/fill';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
-import PageHeader from '../../components/ui/PageHeader';
+import SectionHeader from '../../components/ui/SectionHeader';
 import Pagination from '../../components/ui/Pagination';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
@@ -91,7 +91,7 @@ export default function AdminAuditLogPage() {
 
   return (
     <div>
-      <PageHeader
+      <SectionHeader
         title={t('ptAudit')}
         subtitle={loading && entries.length === 0 ? undefined : fill(t(meta.totalItems === 1 ? 'auSummaryOne' : 'auSummary'), { n: meta.totalItems.toLocaleString(locale) })}
         actions={

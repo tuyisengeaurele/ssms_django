@@ -39,7 +39,7 @@ describe('Admin dashboard', () => {
     open();
     expect(screen.getByRole('heading', { level: 1, name: 'Admin Dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Users' })).toHaveAttribute('href', '/admin/users');
-    expect(screen.getByRole('link', { name: 'System overview' })).toHaveAttribute('href', '/supervisor');
+    expect(screen.getByRole('link', { name: 'Farm monitoring' })).toHaveAttribute('href', '/supervisor');
     await waitFor(() => expect(getFarms).toHaveBeenCalled());
   });
 
@@ -73,7 +73,7 @@ describe('Admin dashboard', () => {
     await screen.findByText('Total farms');
     const list = screen.getByRole('list', { name: 'Quick actions' });
     const links = within(list).getAllByRole('link').map((a) => a.getAttribute('href'));
-    expect(links).toEqual(['/admin/users', '/detections/reports', '/supervisor', '/farms/new', '/alerts', '/admin/audit-log']);
+    expect(links).toEqual(['/admin/users', '/detections/reports', '/supervisor', '/farms/new', '/alerts', '/admin/system/logs']);
   });
 
   it('says so, kindly, when there are no farms', async () => {

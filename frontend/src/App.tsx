@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import MotionProvider from './components/MotionProvider';
 import { cooperativeRoutes } from './pages/cooperatives/cooperativeRoutes';
+import { systemRoutes } from './pages/system/systemRoutes';
 import { settingsRoutes } from './pages/settings/settingsRoutes';
 import ProtectedRoute from './components/ui/ProtectedRoute';
 const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
@@ -18,7 +19,6 @@ const CheckEmailPage = lazy(() => import('./pages/auth/CheckEmailPage'));
 const VerifyEmailPage = lazy(() => import('./pages/auth/VerifyEmailPage'));
 const FarmerDashboard = lazy(() => import('./pages/farmer/FarmerDashboard'));
 const SupervisorDashboard = lazy(() => import('./pages/supervisor/SupervisorDashboard'));
-const AdminHealthPage = lazy(() => import('./pages/admin/AdminHealthPage'));
 const JoinPage = lazy(() => import('./pages/auth/JoinPage'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const FarmsPage = lazy(() => import('./pages/farmer/FarmsPage'));
@@ -37,8 +37,6 @@ const AlertsPage = lazy(() => import('./pages/shared/AlertsPage'));
 const DevicesPage = lazy(() => import('./pages/shared/DevicesPage'));
 const BatchesPage = lazy(() => import('./pages/farmer/BatchesPage'));
 const AdminContactsPage = lazy(() => import('./pages/admin/AdminContactsPage'));
-const AdminAuditLogPage = lazy(() => import('./pages/admin/AdminAuditLogPage'));
-const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage'));
 const PublicLotPage = lazy(() => import('./pages/PublicLotPage'));
@@ -97,14 +95,14 @@ export default function App() {
               {/* Cooperatives: the admin's list and pages, the supervisor's own, and the old addresses */}
               {cooperativeRoutes()}
 
+              {/* System: health, logs and activity for admins, and the old addresses */}
+              {systemRoutes()}
+
               {/* Admin only */}
               <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
                 <Route path="/admin"                  element={<AdminDashboard />} />
                 <Route path="/admin/users"            element={<AdminUsersPage />} />
-                <Route path="/admin/health"           element={<AdminHealthPage />} />
                 <Route path="/admin/contacts"         element={<AdminContactsPage />} />
-                <Route path="/admin/audit-log"        element={<AdminAuditLogPage />} />
-                <Route path="/admin/reports"          element={<AdminReportsPage />} />
               </Route>
 
             </Route>

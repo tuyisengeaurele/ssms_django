@@ -35,7 +35,7 @@ describe('Bottom tab bar', () => {
   it('gives a supervisor their own four', () => {
     auth.value = { user: { name: 'Sup', role: 'SUPERVISOR' } };
     renderAt('/supervisor');
-    expect(names()).toEqual(['System overview', 'Farms', 'Detection reports', 'Alerts']);
+    expect(names()).toEqual(['Dashboard', 'Farms', 'Disease checks', 'Alerts']);
   });
 
   it('gives an administrator their own four', () => {
