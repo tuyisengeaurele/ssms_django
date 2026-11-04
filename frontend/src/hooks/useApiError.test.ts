@@ -1,13 +1,13 @@
 import { AxiosError, AxiosHeaders, type AxiosResponse } from 'axios';
 import { renderHook } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { useApiError } from './useApiError';
 
 const { getErrorMessage } = renderHook(() => useApiError()).result.current;
 
-function withResponse(status: number, data: unknown) {
+function withResponse(status: number, data: unknown, headers: Record<string, string> = {}) {
   const config = { headers: new AxiosHeaders() };
-  const response = { status, statusText: '', headers: {}, config, data } as AxiosResponse;
+  const response = { status, statusText: '', headers, config, data } as AxiosResponse;
   return new AxiosError(`Request failed with status code ${status}`, 'ERR_BAD_RESPONSE', config, null, response);
 }
 
@@ -48,8 +48,47 @@ describe('getErrorMessage', () => {
     );
   });
 
-  it('asks for patience when there are too many requests', () => {
-    expect(getErrorMessage(withResponse(429, {}))).toBe('Too many attempts. Please wait a moment and try again.');
+  it('asks for patience when there are too many requests and no wait time is known', () => {
+    expect(getErrorMessage(withResponse(429, {}))).toBe('Too many requests. Please wait a moment and try again.');
+  });
+
+  describe('after too many requests', () => {
+    afterEach(() => localStorage.clear());
+
+    it('says how long to wait, from the Retry-After header', () => {
+      expect(getErrorMessage(withResponse(429, {}, { 'retry-after': '12' }))).toBe('Too many requests. Try again in 12 seconds.');
+    });
+
+    it('says one second in the singular', () => {
+      expect(getErrorMessage(withResponse(429, {}, { 'retry-after': '1' }))).toBe('Too many requests. Try again in 1 second.');
+    });
+
+    it('takes the wait from the body when the browser hides the header', () => {
+      expect(getErrorMessage(withResponse(429, { message: 'x', retryAfter: 30 }))).toBe('Too many requests. Try again in 30 seconds.');
+    });
+
+    it('never shows the words the server sent', () => {
+      const body = { message: 'Too many attempts. Please try again in 12 seconds.', retryAfter: 12 };
+      expect(getErrorMessage(withResponse(429, body))).not.toContain('attempts');
+    });
+
+    it('ignores a wait that is not a sensible number', () => {
+      for (const bad of ['soon', '-5', '0', '99999999']) {
+        expect(getErrorMessage(withResponse(429, {}, { 'retry-after': bad }))).toBe('Too many requests. Please wait a moment and try again.');
+      }
+    });
+
+    it('speaks French', () => {
+      localStorage.setItem('ssms_locale', 'fr');
+      expect(getErrorMessage(withResponse(429, {}, { 'retry-after': '12' }))).toBe('Trop de demandes. Réessayez dans 12 secondes.');
+      expect(getErrorMessage(withResponse(429, {}))).toBe('Trop de demandes. Patientez un instant puis réessayez.');
+    });
+
+    it('speaks Kinyarwanda', () => {
+      localStorage.setItem('ssms_locale', 'rw');
+      expect(getErrorMessage(withResponse(429, {}, { 'retry-after': '12' }))).toContain('12');
+      expect(getErrorMessage(withResponse(429, {}, { 'retry-after': '12' }))).not.toContain('Too many');
+    });
   });
 
   it('never shows the raw library message', () => {
