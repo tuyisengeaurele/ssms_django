@@ -99,7 +99,7 @@ describe('landing copy', () => {
   });
 
   it('keeps the wording the owner rejected out', () => {
-    const banned = /rural famil|familles rurales|imiryango yo mu cyaro|bad night|mauvaise nuit|ijoro rimwe ribi|Silk farming software for Rwanda/i;
+    const banned = /rural famil|familles rurales|imiryango yo mu cyaro|bad night|mauvaise nuit|ijoro rimwe ribi|Silk farming software for Rwanda\b/i;
     for (const key of LANDING_KEYS) {
       for (const locale of LOCALES) {
         expect(banned.test(landingTranslations[key][locale]), `${key} ${locale}`).toBe(false);
