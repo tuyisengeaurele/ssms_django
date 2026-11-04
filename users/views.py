@@ -20,7 +20,7 @@ from .cookie_utils import REFRESH_COOKIE, clear_refresh_cookie, set_refresh_cook
 from .email_verification_views import _send_verification_email
 from .models import UserSession
 from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
-from .sessions import SessionEnded, end_all_but, reissue, revoke, rotate, start_session
+from .sessions import IDLE_MESSAGE, SessionEnded, end_all_but, reissue, revoke, rotate, start_session
 
 logger = logging.getLogger(__name__)
 
@@ -162,6 +162,12 @@ class CookieTokenRefreshView(APIView):
             if ended.reason == 'reused' and ended.session is not None:
                 log_action(request, 'OTHER', 'User', ended.session.user_id,
                            f'Old sign in cookie used again, session ended: {ended.session.device_label}', actor=ended.session.user)
+            if ended.reason == 'idle' and ended.session is not None:
+                log_action(request, 'OTHER', 'User', ended.session.user_id,
+                           f'Session ended after sitting idle: {ended.session.device_label}', actor=ended.session.user)
+                response = api_error(IDLE_MESSAGE, 401)
+                response.data['reason'] = 'idle'
+                return response
             return api_error('Your session has ended. Please sign in again.', 401)
         response = Response({'access': access})
         set_refresh_cookie(response, refresh)

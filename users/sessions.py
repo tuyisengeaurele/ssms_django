@@ -5,6 +5,7 @@ signal), the same browser may ask again with the old token for a short while. Th
 or long after, means someone copied it, and the whole session ends.
 """
 import logging
+from datetime import timedelta
 
 from django.conf import settings
 from django.db import transaction
@@ -21,11 +22,12 @@ from .models import User, UserSession
 logger = logging.getLogger(__name__)
 
 REMEMBERED_TOKENS = 5
+IDLE_MESSAGE = 'You were signed out because nobody used this page for a while. Please sign in again.'
 USER_AGENT_LIMIT = 300
 
 
 class SessionEnded(Exception):
-    """The session cannot go on. `reason` is one of revoked, expired, reused."""
+    """The session cannot go on. `reason` is one of revoked, expired, idle, reused."""
 
     def __init__(self, reason: str, session: UserSession | None = None):
         super().__init__(reason)
@@ -35,6 +37,17 @@ class SessionEnded(Exception):
 
 def _now():
     return timezone.now()
+
+
+def idle_limit(user) -> timedelta | None:
+    """How long this person's sign in may sit unused, or None when it may sit for as long as it lives."""
+    minutes = settings.SESSION_IDLE_MINUTES.get(user.role)
+    return timedelta(minutes=minutes) if minutes else None
+
+
+def is_idle(user, last_activity_at, now) -> bool:
+    limit = idle_limit(user)
+    return limit is not None and now - last_activity_at > limit
 
 
 def _agent(request) -> str:
@@ -135,6 +148,8 @@ def rotate(request, presented: str) -> tuple[UserSession, str, str]:
             verdict = 'revoked'
         elif now >= session.expires_at:
             verdict = 'expired'
+        elif is_idle(session.user, session.last_activity_at, now):
+            verdict = 'idle'
         else:
             entry = next((t for t in session.tokens if t['jti'] == token['jti']), None)
             if entry is None or (entry['used_at'] is not None and not _may_ask_again(request, session, entry, now)):
@@ -148,8 +163,8 @@ def rotate(request, presented: str) -> tuple[UserSession, str, str]:
             session.last_used_at = now
             session.save(update_fields=['tokens', 'last_used_at'])
     if verdict:
-        if verdict == 'reused':
-            revoke(session, 'reused')
+        if verdict in ('reused', 'idle'):
+            revoke(session, verdict)
         raise SessionEnded(verdict, session)
     return session, str(refresh.access_token), str(refresh)
 
