@@ -5,7 +5,7 @@ import { DURATION, EASE_OUT } from './motion';
 
 // One motion style: the stylesheet tokens and the framer values must say the same thing.
 const css = readFileSync(join(__dirname, '../index.css'), 'utf8');
-const token = (name: string) => css.match(new RegExp(`${name}:\s*([^;]+);`))?.[1].trim() ?? '';
+const token = (name: string) => css.match(new RegExp(`${name}:\\s*([^;]+);`))?.[1].trim() ?? '';
 
 describe('motion style', () => {
   it('uses the same easing curve in code as in the stylesheet', () => {
