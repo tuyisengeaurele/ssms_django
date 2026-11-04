@@ -5,7 +5,7 @@ from django.utils import timezone
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 
-from audit_log.utils import log_action
+from audit_log.utils import log_action, on_behalf_of
 from core.access import scope_by_batch
 from core.permissions import RolePermission
 from core.throttles import LotRateThrottle
@@ -50,7 +50,7 @@ class LotShareView(APIView):
         record.share_token = secrets.token_urlsafe(16)
         record.shared_at = timezone.now()
         record.save(update_fields=['share_token', 'shared_at'])
-        log_action(request, 'UPDATE', 'HarvestRecord', record.pk, 'Shared the lot through a QR code link')
+        log_action(request, 'UPDATE', 'HarvestRecord', record.pk, 'Shared the lot through a QR code link', owner=on_behalf_of(request, record.batch.farm))
         return api_success(self._link(record), 'The lot can now be seen through its QR code.', 201)
 
     def delete(self, request, pk):
@@ -61,7 +61,7 @@ class LotShareView(APIView):
             record.share_token = None
             record.shared_at = None
             record.save(update_fields=['share_token', 'shared_at'])
-            log_action(request, 'UPDATE', 'HarvestRecord', record.pk, 'Stopped sharing the lot through its QR code link')
+            log_action(request, 'UPDATE', 'HarvestRecord', record.pk, 'Stopped sharing the lot through its QR code link', owner=on_behalf_of(request, record.batch.farm))
         return api_success(None, 'The QR code no longer works.')
 
 

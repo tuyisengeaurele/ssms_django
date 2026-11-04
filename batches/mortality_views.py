@@ -3,7 +3,7 @@ from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from audit_log.utils import log_action
+from audit_log.utils import log_action, on_behalf_of
 from core.access import get_batch_or_404
 from core.permissions import RolePermission
 from core.timeutil import aware
@@ -40,7 +40,7 @@ class BatchMortalityView(APIView):
             batch=batch, count=serializer.validated_data['count'],
             note=serializer.validated_data.get('note', ''), recorded_on=day,
         )
-        log_action(request, 'CREATE', 'Mortality', record.pk, f'Recorded {record.count} deaths in batch {batch.pk}')
+        log_action(request, 'CREATE', 'Mortality', record.pk, f'Recorded {record.count} deaths in batch {batch.pk}', owner=on_behalf_of(request, batch.farm))
         return api_success(MortalityRecordSerializer(record).data, 'Deaths recorded.', 201)
 
 
@@ -56,5 +56,5 @@ class BatchMortalityDetailView(APIView):
             return api_error("We couldn't find that entry.", 404)
         record.is_active = False
         record.save(update_fields=['is_active'])
-        log_action(request, 'DELETE', 'Mortality', record.pk, f'Deleted an entry of {record.count} deaths in batch {batch.pk}')
+        log_action(request, 'DELETE', 'Mortality', record.pk, f'Deleted an entry of {record.count} deaths in batch {batch.pk}', owner=on_behalf_of(request, batch.farm))
         return api_success(None, 'Entry deleted.')

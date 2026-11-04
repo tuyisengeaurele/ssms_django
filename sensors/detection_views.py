@@ -22,7 +22,7 @@ from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from alerts.disease import raise_disease_alert
-from audit_log.utils import log_action
+from audit_log.utils import log_action, on_behalf_of
 from core.access import get_batch_or_404, scope_by_batch
 from core.csvsafe import safe_writer
 from core.pagination import StandardPagination
@@ -154,7 +154,7 @@ class DiseaseDetectionCreateView(APIView):
             payload['alert_raised'] = False
 
         log_action(request, 'CREATE', 'DiseaseDetection', detection.pk,
-                   f'Detection: {detection.result} ({detection.confidence:.0%}) on batch {batch_id}')
+                   f'Detection: {detection.result} ({detection.confidence:.0%}) on batch {batch_id}', owner=on_behalf_of(request, batch.farm))
         return api_success(payload, 'Disease detection completed.', 201)
 
 
@@ -192,7 +192,7 @@ class DiseaseDetectionFeedbackView(APIView):
         detection.feedback_at = timezone.now()
         detection.save(update_fields=['is_correct', 'actual_result', 'feedback_at'])
         said = 'correct' if is_correct else f'wrong, really {detection.actual_result or "not stated"}'
-        log_action(request, 'UPDATE', 'DiseaseDetection', detection.pk, f'Said the result {detection.result} was {said}')
+        log_action(request, 'UPDATE', 'DiseaseDetection', detection.pk, f'Said the result {detection.result} was {said}', owner=on_behalf_of(request, detection.batch.farm))
         return api_success(DiseaseDetectionSerializer(detection).data, 'Thank you. Your answer was saved.')
 
 

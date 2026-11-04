@@ -4,7 +4,7 @@ from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from audit_log.utils import log_action
+from audit_log.utils import log_action, on_behalf_of
 from batches.models import Batch
 from core.access import get_farm_or_404, get_room_or_404
 from core.permissions import RolePermission
@@ -94,7 +94,7 @@ class FarmRoomListView(APIView):
         if _name_taken(farm, name):
             return api_error(NAME_TAKEN, 422, {'name': [NAME_TAKEN]})
         room = RearingRoom.objects.create(farm=farm, name=name, notes=serializer.validated_data.get('notes', ''))
-        log_action(request, 'CREATE', 'Room', room.pk, f'Added room {room.name} to {farm.name}')
+        log_action(request, 'CREATE', 'Room', room.pk, f'Added room {room.name} to {farm.name}', owner=on_behalf_of(request, farm))
         return api_success(_row(room), 'Room added.', 201)
 
 
@@ -115,7 +115,7 @@ class RoomDetailView(APIView):
         if 'notes' in serializer.validated_data:
             room.notes = serializer.validated_data['notes']
         room.save(update_fields=['name', 'notes'])
-        log_action(request, 'UPDATE', 'Room', room.pk, f'Changed room {room.name}')
+        log_action(request, 'UPDATE', 'Room', room.pk, f'Changed room {room.name}', owner=on_behalf_of(request, room.farm))
         return api_success(_row(room), 'Room updated.')
 
     def delete(self, request, pk):
@@ -124,5 +124,5 @@ class RoomDetailView(APIView):
             return api_error('Move the batches out of this room first.', 409)
         room.is_active = False
         room.save(update_fields=['is_active'])
-        log_action(request, 'DELETE', 'Room', room.pk, f'Deleted room {room.name}')
+        log_action(request, 'DELETE', 'Room', room.pk, f'Deleted room {room.name}', owner=on_behalf_of(request, room.farm))
         return api_success(None, 'Room deleted.')

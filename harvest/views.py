@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
-from audit_log.utils import log_action
+from audit_log.utils import log_action, on_behalf_of
 from core.access import get_batch_or_404, scope_by_batch
 from core.csvsafe import safe_writer
 from core.pagination import StandardPagination
@@ -114,7 +114,7 @@ class HarvestListCreateView(APIView):
         )
         # Re-fetch with select_related so farm_name / farm_id resolve without extra queries
         record = HarvestRecord.objects.select_related('batch__farm').get(pk=record.pk)
-        log_action(request, 'CREATE', 'HarvestRecord', record.pk, f'Logged harvest {record.cocoon_weight_kg} kg for batch {batch_id}')
+        log_action(request, 'CREATE', 'HarvestRecord', record.pk, f'Logged harvest {record.cocoon_weight_kg} kg for batch {batch_id}', owner=on_behalf_of(request, batch.farm))
         data = {**HarvestRecordSerializer(record).data, 'milestone': 'FIRST_HARVEST' if first else None}
         return api_success(data, 'Harvest record saved.', 201)
 
@@ -170,5 +170,5 @@ class HarvestDeleteView(APIView):
             return api_error("We couldn't find that record.", 404)
         record.is_active = False
         record.save(update_fields=['is_active'])
-        log_action(request, 'DELETE', 'HarvestRecord', pk, f'Deleted harvest record {pk}')
+        log_action(request, 'DELETE', 'HarvestRecord', pk, f'Deleted harvest record {pk}', owner=on_behalf_of(request, record.batch.farm))
         return api_success(None, 'Harvest record deleted.')

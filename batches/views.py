@@ -6,7 +6,7 @@ from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from alerts.models import AlertLog, AlertType
-from audit_log.utils import log_action
+from audit_log.utils import log_action, on_behalf_of
 from core.access import get_batch_or_404, get_farm_or_404, scope_batches
 from core.doc_format import clean_lang
 from core.permissions import RolePermission
@@ -77,7 +77,7 @@ class BatchCreateView(APIView):
         )
         place_batch(batch, room, when=batch.start_date)
         batch.refresh_from_db()
-        log_action(request, 'CREATE', 'Batch', batch.pk, f'Created batch on farm {farm.name}')
+        log_action(request, 'CREATE', 'Batch', batch.pk, f'Created batch on farm {farm.name}', owner=on_behalf_of(request, farm))
         data = {**BatchListSerializer(batch).data, 'milestone': 'FIRST_BATCH' if first else None}
         return api_success(data, 'Batch created.', 201)
 
@@ -134,7 +134,7 @@ class BatchDetailView(APIView):
         for field, value in serializer.validated_data.items():
             setattr(batch, field, value)
         batch.save(update_fields=list(serializer.validated_data) or None)
-        log_action(request, 'UPDATE', 'Batch', batch.pk, f'Changed details of batch {batch.pk}')
+        log_action(request, 'UPDATE', 'Batch', batch.pk, f'Changed details of batch {batch.pk}', owner=on_behalf_of(request, batch.farm))
         return api_success(BatchListSerializer(batch).data, 'Batch updated.')
 
     def delete(self, request, pk):
@@ -142,7 +142,7 @@ class BatchDetailView(APIView):
         batch.is_active = False
         batch.save(update_fields=['is_active'])
         leave_room(batch)
-        log_action(request, 'DELETE', 'Batch', batch.pk, f'Deleted batch {batch.pk}')
+        log_action(request, 'DELETE', 'Batch', batch.pk, f'Deleted batch {batch.pk}', owner=on_behalf_of(request, batch.farm))
         return api_success(None, 'Batch deleted.')
 
 
@@ -159,7 +159,7 @@ class BatchRoomView(APIView):
             return api_error(NOT_THIS_FARMS_ROOM, 422, {'room_id': [NOT_THIS_FARMS_ROOM]})
         if batch.room_id != room.pk:
             place_batch(batch, room)
-            log_action(request, 'UPDATE', 'Batch', batch.pk, f'Moved batch {batch.pk} to {room.name}')
+            log_action(request, 'UPDATE', 'Batch', batch.pk, f'Moved batch {batch.pk} to {room.name}', owner=on_behalf_of(request, batch.farm))
         return api_success(BatchListSerializer(batch).data, 'Batch moved.')
 
 
@@ -234,7 +234,7 @@ class BatchUpdateStageView(APIView):
             # A room judges only the batches still being reared, so this may have emptied it.
             from alerts.utils import settle_room_alerts
             settle_room_alerts(batch.room_id)
-        log_action(request, 'UPDATE', 'Batch', batch.pk, f'Stage advanced to {new_stage}')
+        log_action(request, 'UPDATE', 'Batch', batch.pk, f'Stage advanced to {new_stage}', owner=on_behalf_of(request, batch.farm))
         return api_success(BatchListSerializer(batch).data, 'Stage updated.')
 
 
