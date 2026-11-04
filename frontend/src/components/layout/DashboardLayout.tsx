@@ -11,6 +11,7 @@ import BottomNav from './BottomNav';
 import QuickSearch from './QuickSearch';
 import { alertService } from '../../services/alert.service';
 import { pageVariants } from '../../utils/motion';
+import { useCrampedTables } from '../../hooks/useCrampedTables';
 import { useApplyTheme } from '../../utils/theme';
 
 const NAV_KEY = 'ssms_nav';
@@ -36,6 +37,7 @@ export default function DashboardLayout() {
   const [alertCount, setAlertCount] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   useApplyTheme();
+  useCrampedTables();
 
   useEffect(() => {
     alertService.getAll(true)
