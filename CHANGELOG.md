@@ -1,6 +1,32 @@
 # Changelog
 
-## A shorter admin menu and a System hub (not yet pushed)
+## Checks on every pull request
+
+GitHub now runs the tests and checks on every pull request and on every push to master.
+
+### Checked
+- Backend, run locally with the same commands: `ruff check .` clean, `pip-audit` found nothing, `check --deploy --fail-level WARNING` clean, 1683 tests pass with 93.71 percent coverage against the 80 percent gate.
+- Frontend, run locally: `npm run lint`, `tsc --noEmit` and `npm run build` clean, 1664 tests pass with no unhandled errors, `npm audit --omit=dev --audit-level=high` passes.
+- **Not checked:** the workflow itself has not run on GitHub yet. This pull request is its first run. Windows and Linux differ in file name case, so the first Linux run may find something.
+
+### What changed
+- `.github/workflows/ci.yml`: a backend job (Postgres 16, ruff, pip-audit, deploy check, tests with the coverage gate) and a frontend job (ESLint, tsc, vitest, build, npm audit). A newer push cancels the older run. The jobs can only read the repository.
+- A test that reads the workflow file and fails when a required step is missing.
+- ESLint is installed and configured with the two stable React hook rules. The `lint` script worked with no config before.
+
+### Found and fixed on the way
+- The banned wording test could never fail: a stray backspace character sat in its pattern where `` was meant. It works now.
+- The motion token test pattern lost its `\s` inside a template string. It passed by luck.
+- One invitation test used empty dates, which the real API never sends. It caused the unhandled `RangeError` that made `vitest run` exit with an error.
+- Three ruff findings in the training script.
+
+### Known and not gating yet
+- `npm audit` reports 2 moderate advisories in React Router (fixed by the React Router 7 upgrade, next item) and critical ones in `vitest` through `tinypool` (development only, never shipped). CI gates on high and above for what ships.
+- The newer React Compiler rules in the hooks plugin flag 36 places that work today (28 are `set-state-in-effect`). They stay off.
+- `check_content.py --all` finds 40 older em dashes (settings, models, `render.yaml` and others). It is not in CI until the content review item clears them.
+- Tests that need the AI model do not exist in the main suite, so none are skipped.
+
+## A shorter admin menu and a System hub
 
 Health, Logs and Activity are tabs of one System page. The admin menu is 12 items in 4 groups, down from 15.
 
