@@ -201,6 +201,8 @@ def _idle_minutes(name, default):
     return config(name, default=default, cast=int) or None
 
 
+# A computer ticked as shared at sign in gets this limit at most, whoever signs in on it.
+SESSION_IDLE_SHARED_MINUTES = _idle_minutes('SESSION_IDLE_SHARED_MINUTES', 30)
 SESSION_IDLE_MINUTES = {
     'ADMIN': _idle_minutes('SESSION_IDLE_ADMIN_MINUTES', 15),
     'SUPERVISOR': _idle_minutes('SESSION_IDLE_SUPERVISOR_MINUTES', 30),

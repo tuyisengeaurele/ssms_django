@@ -21,6 +21,7 @@ def _row(session: UserSession, current_id) -> dict:
         'browser': session.browser,
         'os': session.os,
         'is_installed_app': session.is_installed_app,
+        'is_shared_device': session.is_shared_device,
         'created_at': session.created_at,
         'last_used_at': session.last_used_at,
         'is_current': session.id == current_id,
@@ -47,10 +48,12 @@ class SessionPingView(_SessionView):
     """
 
     def post(self, request):
-        limit = idle_limit(request.user)
         session_id = self.current_id(request)
+        shared = False
         if session_id:
+            shared = bool(UserSession.objects.filter(pk=session_id).values_list('is_shared_device', flat=True).first())
             UserSession.objects.filter(pk=session_id).update(last_activity_at=timezone.now())
+        limit = idle_limit(request.user, shared)
         seconds = int(limit.total_seconds()) if limit else None
         return api_success({'idle_limit_seconds': seconds, 'idle_seconds_left': seconds})
 

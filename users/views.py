@@ -81,7 +81,9 @@ class LoginView(APIView):
             return api_error('Please check what you entered and try again.', 422, errors)
         user = serializer.validated_data['user']
         lockout.clear(email)
-        _, access, refresh = start_session(request, user, request.data.get('device'))
+        # Only a real tick counts. Text such as "yes" or a number is not one.
+        shared = request.data.get('shared_device', request.data.get('sharedDevice')) is True
+        _, access, refresh = start_session(request, user, request.data.get('device'), shared)
         log_action(request, 'LOGIN', 'User', user.pk, f'Login: {user.email}', actor=user)
         response = api_success(
             {'user': UserSerializer(user).data, 'token': access},

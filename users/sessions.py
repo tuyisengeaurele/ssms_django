@@ -39,14 +39,20 @@ def _now():
     return timezone.now()
 
 
-def idle_limit(user) -> timedelta | None:
-    """How long this person's sign in may sit unused, or None when it may sit for as long as it lives."""
-    minutes = settings.SESSION_IDLE_MINUTES.get(user.role)
+def idle_limit(user, shared: bool = False) -> timedelta | None:
+    """How long this sign in may sit unused, or None when it may sit for as long as it lives.
+
+    A shared computer gets the shared limit, but never a looser one than the person's role already has.
+    """
+    wanted = [settings.SESSION_IDLE_MINUTES.get(user.role)]
+    if shared:
+        wanted.append(settings.SESSION_IDLE_SHARED_MINUTES)
+    minutes = min((m for m in wanted if m), default=None)
     return timedelta(minutes=minutes) if minutes else None
 
 
-def is_idle(user, last_activity_at, now) -> bool:
-    limit = idle_limit(user)
+def is_idle(user, last_activity_at, now, shared: bool = False) -> bool:
+    limit = idle_limit(user, shared)
     return limit is not None and now - last_activity_at > limit
 
 
@@ -70,7 +76,7 @@ def _remember(session: UserSession, jti: str) -> None:
     session.tokens = [*session.tokens, {'jti': jti, 'used_at': None}][-REMEMBERED_TOKENS:]
 
 
-def start_session(request, user, hints=None) -> tuple[UserSession, str, str]:
+def start_session(request, user, hints=None, shared: bool = False) -> tuple[UserSession, str, str]:
     """Sign a device in. Returns the session, the access token and the refresh token."""
     now = _now()
     info = describe_device(_agent(request), hints)
@@ -80,7 +86,7 @@ def start_session(request, user, hints=None) -> tuple[UserSession, str, str]:
 
     session = UserSession.objects.create(
         user=user, device_label=info.label, browser=info.browser, os=info.os, is_installed_app=info.is_installed_app,
-        user_agent=_agent(request), last_used_at=now, last_activity_at=now, expires_at=UserSession.ends_at(now),
+        is_shared_device=shared, user_agent=_agent(request), last_used_at=now, last_activity_at=now, expires_at=UserSession.ends_at(now),
     )
     refresh = _issue(session)
     _remember(session, refresh['jti'])
@@ -148,7 +154,7 @@ def rotate(request, presented: str) -> tuple[UserSession, str, str]:
             verdict = 'revoked'
         elif now >= session.expires_at:
             verdict = 'expired'
-        elif is_idle(session.user, session.last_activity_at, now):
+        elif is_idle(session.user, session.last_activity_at, now, session.is_shared_device):
             verdict = 'idle'
         else:
             entry = next((t for t in session.tokens if t['jti'] == token['jti']), None)

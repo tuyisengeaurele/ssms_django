@@ -81,6 +81,8 @@ class UserSession(models.Model):
     browser = models.CharField(max_length=40, blank=True, default='')
     os = models.CharField(max_length=40, blank=True, default='')
     is_installed_app = models.BooleanField(default=False, db_column='isInstalledApp')
+    # Ticked at sign in: other people may use this computer, so a forgotten sign in must end sooner.
+    is_shared_device = models.BooleanField(default=False, db_column='isSharedDevice')
     user_agent = models.CharField(max_length=300, blank=True, default='', db_column='userAgent')
     created_at = models.DateTimeField(auto_now_add=True, db_column='createdAt')
     last_used_at = models.DateTimeField(db_column='lastUsedAt')

@@ -40,12 +40,12 @@ class ActiveUserJWTAuthentication(JWTAuthentication):
         if request.session_id:
             # One indexed lookup on the primary key.
             state = UserSession.objects.filter(pk=request.session_id).values_list(
-                'revoked_at', 'expires_at', 'last_activity_at',
+                'revoked_at', 'expires_at', 'last_activity_at', 'is_shared_device',
             ).first()
             now = timezone.now()
             if state is None or state[0] is not None or now >= state[1]:
                 raise AuthenticationFailed('Your session has ended. Please sign in again.', code='session_revoked')
-            limit = idle_limit(result[0])
+            limit = idle_limit(result[0], state[3])
             if limit is not None and now - state[2] > limit:
                 raise AuthenticationFailed(IDLE_MESSAGE, code='session_idle')
             if now - state[2] >= TOUCH_EVERY:
