@@ -9,7 +9,7 @@ from core.utils import api_error, api_success
 
 from .cookie_utils import clear_refresh_cookie
 from .models import UserSession
-from .sessions import end_all_but, revoke
+from .sessions import end_all_but, idle_limit, revoke
 
 LIST_LIMIT = 50
 
@@ -37,6 +37,22 @@ class _SessionView(APIView):
 
     def current_id(self, request):
         return getattr(request, 'session_id', None)
+
+
+class SessionPingView(_SessionView):
+    """POST /api/auth/session/ping: somebody is still here. Counts as activity and says how long the sign in may sit idle.
+
+    Reading a long page makes no request of its own, so the page sends this now and then. An idle session is already
+    refused before this view runs, so a ping can never bring one back.
+    """
+
+    def post(self, request):
+        limit = idle_limit(request.user)
+        session_id = self.current_id(request)
+        if session_id:
+            UserSession.objects.filter(pk=session_id).update(last_activity_at=timezone.now())
+        seconds = int(limit.total_seconds()) if limit else None
+        return api_success({'idle_limit_seconds': seconds, 'idle_seconds_left': seconds})
 
 
 class SessionListView(_SessionView):
