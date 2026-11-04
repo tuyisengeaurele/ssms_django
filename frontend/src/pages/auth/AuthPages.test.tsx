@@ -89,8 +89,37 @@ describe('Login page', () => {
     fill('Password', 'Secret123');
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/supervisor'));
-    expect(api.login).toHaveBeenCalledWith({ email: 'a@b.rw', password: 'Secret123', device: { installed: false } });
+    expect(api.login).toHaveBeenCalledWith({ email: 'a@b.rw', password: 'Secret123', device: { installed: false }, sharedDevice: false });
     expect(login).toHaveBeenCalledWith({ role: 'SUPERVISOR' }, 'abc');
+  });
+
+  it('offers a tick for a shared computer, off until the person turns it on', () => {
+    open();
+    const tick = screen.getByRole('checkbox', { name: /shared computer/i });
+    expect(tick).not.toBeChecked();
+    expect(screen.getByText(/signed out sooner/i)).toBeInTheDocument();
+  });
+
+  it('tells the server when the computer is shared', async () => {
+    api.login.mockResolvedValue({ data: { data: { user: { role: 'FARMER' }, token: 'abc' } } });
+    open();
+    fill('Email address', 'a@b.rw');
+    fill('Password', 'Secret123');
+    fireEvent.click(screen.getByRole('checkbox', { name: /shared computer/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    await waitFor(() => expect(api.login).toHaveBeenCalled());
+    expect(api.login).toHaveBeenCalledWith(expect.objectContaining({ sharedDevice: true }));
+  });
+
+  it('asks about a shared computer in French and Kinyarwanda too', () => {
+    localStorage.setItem('ssms_locale', 'fr');
+    const { unmount } = open();
+    expect(screen.getByRole('checkbox', { name: /ordinateur partagé/i })).toBeInTheDocument();
+    unmount();
+    localStorage.setItem('ssms_locale', 'rw');
+    open();
+    expect(screen.queryByRole('checkbox', { name: /shared computer/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('checkbox')).toHaveLength(1);
   });
 
   it('tells the server what the browser says about the device', async () => {
@@ -102,7 +131,7 @@ describe('Login page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     await waitFor(() => expect(api.login).toHaveBeenCalled());
     expect(api.login).toHaveBeenCalledWith({
-      email: 'a@b.rw', password: 'Secret123', device: { installed: true, model: 'Pixel 9', platform: 'Android' },
+      email: 'a@b.rw', password: 'Secret123', device: { installed: true, model: 'Pixel 9', platform: 'Android' }, sharedDevice: false,
     });
   });
 
@@ -114,7 +143,7 @@ describe('Login page', () => {
     fill('Password', 'Secret123');
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     await waitFor(() => expect(login).toHaveBeenCalled());
-    expect(api.login).toHaveBeenCalledWith({ email: 'a@b.rw', password: 'Secret123', device: { installed: false } });
+    expect(api.login).toHaveBeenCalledWith({ email: 'a@b.rw', password: 'Secret123', device: { installed: false }, sharedDevice: false });
   });
 
   it('shows the server message when sign in fails', async () => {

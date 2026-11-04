@@ -42,6 +42,8 @@ export interface SignedInDevice {
   browser: string;
   os: string;
   isInstalledApp: boolean;
+  /** Signed in with the shared computer tick, so a forgotten sign in ends sooner. */
+  isSharedDevice: boolean;
   createdAt: string;
   lastUsedAt: string;
   isCurrent: boolean;

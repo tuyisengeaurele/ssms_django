@@ -49,6 +49,8 @@ export default function LoginPage() {
     }
   }, []);
 
+  const [shared, setShared] = useState(false);
+
   const forgetUnverified = () => {
     setUnverified(false);
     setResend('idle');
@@ -76,7 +78,7 @@ export default function LoginPage() {
     try {
       // The browser may say which phone this is. A sign in never waits long for it, and never fails because of it.
       const device = await collectDeviceHints().catch(() => ({ installed: false }));
-      const res = await authService.login({ email, password, device });
+      const res = await authService.login({ email, password, device, sharedDevice: shared });
       const { user, token } = res.data.data;
       login(user, token);
       // Coming back from an invitation link, the person returns to it. Only that kind of address is followed.
@@ -142,6 +144,13 @@ export default function LoginPage() {
             </Link>
           }
         />
+        <div className="l-check">
+          <input id="shared-device" type="checkbox" checked={shared} onChange={(e) => setShared(e.target.checked)} aria-describedby="shared-device-hint" />
+          <label htmlFor="shared-device">
+            {t('loginShared')}
+            <span id="shared-device-hint" className="l-check__hint">{t('loginSharedHint')}</span>
+          </label>
+        </div>
         <AuthButton loading={loading} loadingLabel={t('loginSigningIn')}>
           {t('loginSignIn')}
         </AuthButton>

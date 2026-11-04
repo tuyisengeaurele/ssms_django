@@ -660,6 +660,7 @@ export const pageTranslations = {
   idLeft: k("{n} seconds left before you are signed out.", "Il reste {n} secondes avant votre déconnexion.", "Hasigaye amasegonda {n} ngo usohorwe."),
   idStay: k("Stay signed in", "Rester connecté", "Komeza uri muri konti"),
   idSignOut: k("Sign out now", "Me déconnecter maintenant", "Sohoka ubu"),
+  sdShared: k("Shared computer", "Ordinateur partagé", "Mudasobwa dusangiye"),
   sdLoadError: k("We could not load your devices.", "Nous n'avons pas pu charger vos appareils.", "Ntitwashoboye gufata ibikoresho byawe."),
   sdRetry: k("Try again", "Réessayer", "Ongera ugerageze"),
   pfChangePassword: k("Change password", "Changer le mot de passe", "Hindura ijambo ry'ibanga"),
