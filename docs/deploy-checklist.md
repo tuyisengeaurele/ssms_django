@@ -56,7 +56,7 @@ Then, from outside:
 
 These are written down so nobody is surprised. Each is on the backlog.
 
-- No idle timeout and no warning before a sign in ends.
+- Farmers have no idle limit (admins 15 minutes, supervisors 30). `SESSION_IDLE_FARMER_MINUTES` sets one. A shared device tick at sign in is not built.
 - No second factor for admin accounts.
 - The Content Security Policy in `frontend/vercel.json` is report only. Switch the header name to `Content-Security-Policy` after the real domain is set and the browser console is clean on the deployed site for every role. The API address in `connect-src` is `ssms-api.onrender.com` from `render.yaml`: change both together, or drop it if the host proxies `/api` so the site only talks to itself. Map tiles, the bot check, error reports and photo uploads were not exercised against the policy.
 - The daily sensor simulation workflow in `.github/workflows` writes simulated readings into whatever database its secrets point at. Disable it for a live site.

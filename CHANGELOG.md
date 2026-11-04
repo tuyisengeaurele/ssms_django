@@ -1,5 +1,20 @@
 # Changelog
 
+## Idle sign out with a warning
+
+### Checked
+- Backend: tests for the idle limit, the once a minute write, the refresh refusal with its audit entry, the ping and the settings override. The full suite is in the pull request.
+- Frontend: tests with fake timers for the timer (warning, expiry, stay, activity in another tab, a laptop waking, no timers left after unmount), the dialog (role, focus, countdown, three languages) and the layout.
+- In a real browser as a throwaway admin (deleted) with the admin limit set to 2 minutes: the dialog appeared after 60 seconds of silence with the focus on "Stay signed in", Stay closed it and pinged the server, and the page signed out and went to the login page at the limit. The login notice shows.
+- **Not checked:** a second tab in a real browser (the tab to tab sharing is covered by tests with a fake channel), a laptop that really slept, a phone, and French and Kinyarwanda on screen. The Kinyarwanda wording is a draft.
+
+### What changed
+- An admin's sign in ends after 15 minutes without use, a supervisor's after 30. Farmers have no limit. Set `SESSION_IDLE_ADMIN_MINUTES`, `SESSION_IDLE_SUPERVISOR_MINUTES` or `SESSION_IDLE_FARMER_MINUTES` (0 means none). The server decides: it refuses an idle session on the next request, and a renewal of an idle session is refused and written to the audit log.
+- Using the site moves the clock, written at most once a minute per session. A silent renewal does not count, because it is the page asking, not the person.
+- `POST /api/auth/session/ping` tells the server somebody is still reading, and says the limit. The page sends it at most every 5 minutes, and only after the person did something.
+- One minute before the end a dialog asks "Are you still there?" with a countdown. Escape, a click outside or Stay signed in keeps the person in. Activity in another tab clears the warning here. Time is read from the clock, so a sleeping laptop signs out on wake.
+- The login page says "You were signed out because nobody used this page for a while." It did not show at all while developing, for any notice, because React draws the page twice and the first draw removed it. That is fixed.
+
 ## Limits, a wait message and website security headers
 
 ### Checked
