@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 
 from core.csvsafe import safe_writer
 from core.pagination import StandardPagination
+from core.permissions import RolePermission
 from core.throttles import ExportRateThrottle
 
 from .models import AuditLog
@@ -14,13 +15,9 @@ from .pdf import audit_pdf
 from .serializers import AuditLogSerializer
 
 
-class IsAdmin(IsAuthenticated):
-    def has_permission(self, request, view):
-        return super().has_permission(request, view) and request.user.role == 'ADMIN'
-
-
 class AuditLogListView(APIView):
-    permission_classes = [IsAdmin]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'audit_log'
     throttle_classes = [UserRateThrottle, ExportRateThrottle]
 
     def get(self, request):

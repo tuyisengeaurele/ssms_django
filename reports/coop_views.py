@@ -16,6 +16,7 @@ from cooperatives.models import Cooperative
 from core.access import scope_farms
 from core.csvsafe import safe_writer
 from core.doc_format import clean_lang
+from core.permissions import RolePermission
 from core.throttles import ExportRateThrottle
 from core.utils import api_error, api_success
 
@@ -67,13 +68,12 @@ def _csv_rows(report: dict):
 
 
 class CooperativeReportView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'cooperative_reports'
     throttle_classes = [UserRateThrottle, ExportRateThrottle]
 
     def get(self, request):
         user = request.user
-        if user.role not in ('SUPERVISOR', 'ADMIN'):
-            return api_error(NO_PERMISSION, 403)
 
         try:
             start, end = parse_period(request.query_params.get('from'), request.query_params.get('to'), timezone.now().date())
