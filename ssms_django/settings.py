@@ -202,6 +202,8 @@ SESSION_REFRESH_GRACE_SECONDS = config('SESSION_REFRESH_GRACE_SECONDS', default=
 
 CORS_ALLOWED_ORIGINS = parse_list(config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173'))
 CORS_ALLOW_CREDENTIALS = True
+# A site on another address can only read these response headers. The screen needs the wait time after a 429.
+CORS_EXPOSE_HEADERS = ['Retry-After']
 
 APPEND_SLASH = False
 

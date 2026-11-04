@@ -44,6 +44,12 @@ def test_the_fourth_batch_report_in_a_minute_is_refused_with_a_wait_time(auth_cl
     refused = client.get(f'/api/batches/{batch.pk}/report')
     assert int(refused['Retry-After']) >= 1
     assert 'Too many' in refused.json()['message']
+    # The screen words the wait itself, in the person's language, so it needs the number.
+    assert refused.json()['retryAfter'] == int(refused['Retry-After'])
+
+
+def test_a_site_on_another_address_can_read_how_long_to_wait():
+    assert 'Retry-After' in django_settings.CORS_EXPOSE_HEADERS
 
 
 def test_a_farm_summary_shares_the_report_allowance(auth_client, tight):

@@ -60,6 +60,8 @@ def custom_exception_handler(exc, context):
         errors = {k: v for k, v in data.items() if k != 'detail'}
 
     response.data = {'success': False, 'message': message}
+    if isinstance(exc, Throttled) and exc.wait:
+        response.data['retryAfter'] = int(math.ceil(exc.wait))
     if errors:
         response.data['errors'] = errors
 
