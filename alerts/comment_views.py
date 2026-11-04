@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from audit_log.utils import log_action
 from core.access import scope_alerts
 from core.mail import Email, send_email_async
+from core.permissions import RolePermission
 from core.utils import api_error, api_success
 
 from .models import AlertComment, AlertLog
@@ -43,11 +44,10 @@ def _comment_json(comment, viewer) -> dict:
 
 class AlertAcknowledgeView(APIView):
     """POST /api/alerts/<id>/acknowledge says "I'm on it". DELETE takes it back. Supervisors and admins only."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'alert_acknowledgements'
 
     def post(self, request, pk):
-        if request.user.role not in ('SUPERVISOR', 'ADMIN'):
-            return api_error(NO_PERMISSION, 403)
         alert = _alert_or_404(request.user, pk)
         if alert is None:
             return api_error("We couldn't find that alert.", 404)
@@ -59,8 +59,6 @@ class AlertAcknowledgeView(APIView):
         return api_success(AlertLogSerializer(alert).data, 'Alert acknowledged.')
 
     def delete(self, request, pk):
-        if request.user.role not in ('SUPERVISOR', 'ADMIN'):
-            return api_error(NO_PERMISSION, 403)
         alert = _alert_or_404(request.user, pk)
         if alert is None:
             return api_error("We couldn't find that alert.", 404)
@@ -74,7 +72,8 @@ class AlertAcknowledgeView(APIView):
 
 class AlertCommentsView(APIView):
     """GET /api/alerts/<id>/comments lists the thread, oldest first. POST adds a comment."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'alert_comments'
 
     def get(self, request, pk):
         alert = _alert_or_404(request.user, pk)
@@ -126,7 +125,8 @@ class AlertCommentsView(APIView):
 
 class AlertCommentDetailView(APIView):
     """DELETE /api/alerts/<id>/comments/<comment id> hides a comment. Its author may, and so may an admin."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'alert_comments'
 
     def delete(self, request, pk, comment_id):
         alert = _alert_or_404(request.user, pk)

@@ -7,6 +7,7 @@ from batches.models import Batch
 from core.access import get_batch_or_404, scope_alerts
 from core.pagination import StandardPagination
 from core.params import int_param
+from core.permissions import RolePermission
 from core.utils import api_error, api_success
 
 from .models import AlertLog, StageThreshold
@@ -32,11 +33,10 @@ class AlertListView(APIView):
       ?unread=true  , only unread (default)
       ?limit=N      , cap results (default 100)
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'alerts'
 
     def get(self, request):
-        if request.user.role not in ('SUPERVISOR', 'ADMIN', 'FARMER'):
-            return api_error("You don't have permission to do that.", 403)
 
         unread_only = request.query_params.get('unread', 'true').lower() != 'false'
         limit = int_param(request, 'limit', 100, 1, 500)
@@ -59,11 +59,11 @@ class AlertListView(APIView):
 
 class AlertMarkAllReadView(APIView):
     """POST /api/alerts/mark-all-read, mark every unread alert the caller may see as read."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'alerts'
+    actions = {'post': 'mark_all_read'}
 
     def post(self, request):
-        if request.user.role not in ('SUPERVISOR', 'ADMIN'):
-            return api_error("You don't have permission to do that.", 403)
 
         qs = scope_alerts(request.user, AlertLog.objects.filter(is_read=False))
 
@@ -72,7 +72,8 @@ class AlertMarkAllReadView(APIView):
 
 
 class AlertsByBatchView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'alerts'
 
     def get(self, request, batch_id):
         batch = get_batch_or_404(request.user, batch_id)
@@ -82,7 +83,9 @@ class AlertsByBatchView(APIView):
 
 
 class AlertMarkReadView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'alerts'
+    actions = {'patch': 'mark_read'}
     # Marking unread is the undo of marking read, so both views share one rule for who may touch an alert.
     read = True
 
@@ -102,11 +105,11 @@ class AlertMarkUnreadView(AlertMarkReadView):
 
 class AlertStreamTicketView(APIView):
     """POST /api/alerts/stream-ticket, a 30 second single-use ticket for the live alert stream."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'alerts'
+    actions = {'post': 'stream_ticket'}
 
     def post(self, request):
-        if request.user.role not in ('SUPERVISOR', 'ADMIN'):
-            return api_error("You don't have permission to do that.", 403)
         return api_success({'ticket': issue_ticket(request.user), 'expiresIn': TICKET_SECONDS})
 
 
@@ -115,7 +118,8 @@ STAGE_ORDER = ['EGG', 'LARVA', 'PUPA', 'COCOON', 'HARVEST']
 
 class StageThresholdListView(APIView):
     """GET /api/alerts/thresholds, the safe range of every stage. Anyone signed in may read it."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'thresholds'
 
     def get(self, request):
         rows = {t.stage: t for t in StageThreshold.objects.select_related('updated_by')}
@@ -125,11 +129,10 @@ class StageThresholdListView(APIView):
 
 class StageThresholdDetailView(APIView):
     """PUT /api/alerts/thresholds/<stage>, change the safe range of one stage. Admin only."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'thresholds'
 
     def put(self, request, stage):
-        if request.user.role != 'ADMIN':
-            return api_error("You don't have permission to do that.", 403)
         row = StageThreshold.objects.filter(stage=stage).first()
         if row is None:
             return api_error("We couldn't find that stage.", 404)
