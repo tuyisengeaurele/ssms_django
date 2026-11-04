@@ -1,5 +1,15 @@
 # Changelog
 
+## React Router 7
+
+React Router is upgraded from 6.23 to 7.18.5. It clears the two moderate advisories (an open redirect through `<Link>` and `useNavigate`, and a constructor injection in server rendering that SSMS does not use). `npm audit` for the packages that ship to the browser now reports 0 vulnerabilities, and CI fails on moderate or above, up from high.
+
+### Checked
+- Frontend: 1675 tests pass, `tsc`, ESLint and the production build clean. The router future flag warnings are gone from the test output.
+- In a real browser with a throwaway admin (deleted): sign in redirect, sidebar links, the System tabs and the old address redirects, back and forward, one cooperative with its tabs, and the 404 page.
+- **Not checked:** the supervisor and farmer routes in a real browser, and every dialog that navigates after saving (tests cover them with a memory router).
+- Still reported, development only: 17 advisories in `vitest`, `vite` and `esbuild` (one critical in `tinypool`). They never ship. Upgrading `vitest` is a separate change.
+
 ## Each page title once, tables that fit, no Rename on devices
 
 ### Checked

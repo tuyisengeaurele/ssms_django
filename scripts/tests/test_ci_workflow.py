@@ -46,10 +46,10 @@ class CiWorkflow(unittest.TestCase):
         for needle in ('npm ci', 'npm run lint', 'tsc --noEmit', 'npm run test', 'npm run build', 'npm audit'):
             self.assertIn(needle, text)
 
-    def test_frontend_audit_covers_production_packages_at_high_or_above(self):
+    def test_frontend_audit_covers_production_packages_at_moderate_or_above(self):
         text = run_lines(self.wf['jobs']['frontend'])
         self.assertIn('--omit=dev', text)
-        self.assertIn('--audit-level=high', text)
+        self.assertIn('--audit-level=moderate', text)
 
     def test_actions_are_pinned_to_a_version(self):
         for job in self.wf['jobs'].values():
