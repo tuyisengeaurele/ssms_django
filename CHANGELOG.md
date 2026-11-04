@@ -1,5 +1,20 @@
 # Changelog
 
+## Each page title once, tables that fit, no Rename on devices
+
+### Checked
+- Frontend: 1675 tests pass, `tsc` and ESLint clean. Backend: 1682 tests pass at 93.70 percent coverage (gate 80).
+- In a real browser as a throwaway admin (deleted), at 1219 px wide with the menu open (the width where the tables clipped): Devices and the audit log became card lists with no sideways scroll, the System health panels have a 24 px gap, signed in devices show no Rename.
+- **Not checked:** every other page at every width. The cramped rule is general (it measures each table), but I only looked at Devices and the audit log. French and Kinyarwanda on screen.
+
+### What changed
+- The top bar names the page, so the big title under it is gone. The title stays for screen readers. A line under the top bar stays only when it carries a count or a name (for example "17 devices registered."). Farm and batch names, the welcome line and cooperative names stay as titles.
+- The explanatory sentences are gone from Users, Cooperatives, Settings, System, Disease checks, the dashboards, the add pages, the batch picker and System health. 13 unused words removed.
+- Tabs (System, Settings) no longer repeat their name in a heading inside the tab.
+- A table card too narrow for its columns now turns into the phone card list at any screen width. `useCrampedTables` measures every table card, so a long place name or a narrow window cannot clip a column again.
+- System health panels are spaced.
+- Signed in devices: Rename is removed. The label (browser and system) and the last use time are enough to spot a device you do not know, and Rename needed a column, an endpoint, validation and tests. Migration `0008` drops `customName`. Run `python manage.py migrate` after pulling.
+
 ## Checks on every pull request
 
 GitHub now runs the tests and checks on every pull request and on every push to master.
