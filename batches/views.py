@@ -6,6 +6,7 @@ from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from alerts.models import AlertLog, AlertType
+from audit_log.changes import build_changes, snapshot
 from audit_log.utils import log_action, on_behalf_of
 from core.access import get_batch_or_404, get_farm_or_404, scope_batches
 from core.doc_format import clean_lang
@@ -131,10 +132,14 @@ class BatchDetailView(APIView):
         serializer = BatchUpdateSerializer(data=request.data)
         if not serializer.is_valid():
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
+        before = snapshot(batch, serializer.validated_data)
         for field, value in serializer.validated_data.items():
             setattr(batch, field, value)
         batch.save(update_fields=list(serializer.validated_data) or None)
-        log_action(request, 'UPDATE', 'Batch', batch.pk, f'Changed details of batch {batch.pk}', owner=on_behalf_of(request, batch.farm))
+        log_action(
+            request, 'UPDATE', 'Batch', batch.pk, f'Changed details of batch {batch.pk}', owner=on_behalf_of(request, batch.farm),
+            changes=build_changes(before, snapshot(batch, before)),
+        )
         return api_success(BatchListSerializer(batch).data, 'Batch updated.')
 
     def delete(self, request, pk):

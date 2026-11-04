@@ -91,6 +91,35 @@ describe('getErrorMessage', () => {
     });
   });
 
+  describe('the reference of a server problem', () => {
+    afterEach(() => localStorage.clear());
+
+    it('is shown after the message, from the body', () => {
+      const message = getErrorMessage(withResponse(500, { message: 'Something went wrong on our side. Please try again in a moment.', reference: 'A1B2C3D4E5F6' }));
+      expect(message).toBe('Something went wrong on our side. Please try again in a moment. Reference: A1B2C3D4E5F6');
+    });
+
+    it('is read from the header when the body has none', () => {
+      expect(getErrorMessage(withResponse(502, '<html>bad gateway</html>', { 'x-request-id': 'ABCDEF123456' }))).toBe(
+        'Our server hit a problem. Please try again in a moment. Reference: ABCDEF123456',
+      );
+    });
+
+    it('is left out of a mistake the person can fix', () => {
+      expect(getErrorMessage(withResponse(422, { message: 'Please enter a name.', reference: 'A1B2C3D4E5F6' }))).toBe('Please enter a name.');
+      expect(getErrorMessage(withResponse(403, { reference: 'A1B2C3D4E5F6' }))).toBe("You don't have permission to do that.");
+    });
+
+    it('is never shown when it does not look like one', () => {
+      expect(getErrorMessage(withResponse(500, { reference: '<b>bad</b>' }))).toBe('Our server hit a problem. Please try again in a moment.');
+    });
+
+    it('is worded in French', () => {
+      localStorage.setItem('ssms_locale', 'fr');
+      expect(getErrorMessage(withResponse(500, { reference: 'A1B2C3D4E5F6' }))).toMatch(/Référence : A1B2C3D4E5F6$/);
+    });
+  });
+
   it('never shows the raw library message', () => {
     expect(getErrorMessage(withResponse(418, {}))).not.toMatch(/status code/i);
   });

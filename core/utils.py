@@ -6,13 +6,15 @@ from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated, Pa
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
 
+from .request_id import current_request_id
+
 
 def api_success(data=None, message='Success', status_code=status.HTTP_200_OK):
     return Response({'success': True, 'message': message, 'data': data}, status=status_code)
 
 
 def api_error(message='Error', status_code=status.HTTP_400_BAD_REQUEST, errors=None):
-    body = {'success': False, 'message': message}
+    body = {'success': False, 'message': message, 'reference': current_request_id()}
     if errors is not None:
         body['errors'] = errors
     return Response(body, status=status_code)
@@ -52,6 +54,16 @@ def _friendly_message(exc, status_code, data):
     return 'Something went wrong. Please try again.'
 
 
+def _note_refusal(exc, context, status_code):
+    """A refusal for the role, or a slow down, goes in the security log. Only the method and the route pattern, never the query."""
+    kind = 'throttled' if isinstance(exc, Throttled) else 'permission_denied' if status_code == 403 else None
+    request = context.get('request')
+    if kind and request is not None:
+        from logs.security import record_security_event
+        match = getattr(request, 'resolver_match', None)
+        record_security_event(kind, request, detail=f"{request.method} {getattr(match, 'route', '') or '(unmatched)'}")
+
+
 def custom_exception_handler(exc, context):
     response = exception_handler(exc, context)
     if response is None:
@@ -66,7 +78,8 @@ def custom_exception_handler(exc, context):
     if status_code not in (401, 403) and isinstance(data, dict) and any(k != 'detail' for k in data):
         errors = {k: v for k, v in data.items() if k != 'detail'}
 
-    response.data = {'success': False, 'message': message}
+    response.data = {'success': False, 'message': message, 'reference': current_request_id()}
+    _note_refusal(exc, context, status_code)
     if isinstance(exc, AuthenticationFailed) and _failure_code(exc) == 'session_idle':
         response.data['code'] = 'session_idle'
     if isinstance(exc, Throttled) and exc.wait:
@@ -75,6 +88,22 @@ def custom_exception_handler(exc, context):
         response.data['errors'] = errors
 
     return response
+
+
+def not_found(request, exception=None):
+    """An address the API does not have. Plain JSON, like every other answer, with the reference."""
+    return JsonResponse(
+        {'success': False, 'message': "We couldn't find what you were looking for.", 'reference': current_request_id()},
+        status=404,
+    )
+
+
+def server_error(request):
+    """Something broke. Nothing about what is said, only that it happened and the reference to find it by."""
+    return JsonResponse(
+        {'success': False, 'message': 'Something went wrong on our side. Please try again in a moment.', 'reference': current_request_id()},
+        status=500,
+    )
 
 
 def health_check(request):

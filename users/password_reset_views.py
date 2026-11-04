@@ -21,6 +21,7 @@ from core.throttles import PasswordResetRateThrottle
 from core.tokens import revoke_all_refresh_tokens
 from core.utils import api_error, api_success, body_field
 from core.validators import validate_new_password
+from logs.security import record_security_event
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -62,6 +63,7 @@ class PasswordResetRequestView(APIView):
 
         # The answer never depends on whether the account exists or the mail went out,
         # so this page cannot be used to find out who has an account.
+        record_security_event('reset_requested', request, detail=email)
         user = User.objects.filter(email=email, is_active=True).first()
         if user is not None:
             try:
@@ -106,5 +108,6 @@ class PasswordResetConfirmView(APIView):
         user.set_password(new_password)
         user.save(update_fields=['password'])
         revoke_all_refresh_tokens(user, 'password')
+        record_security_event('password_changed', request, user=user, detail='Reset with an email link')
 
         return api_success(None, 'Password reset successfully. You can now log in.')

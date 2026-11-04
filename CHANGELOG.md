@@ -1,5 +1,24 @@
 # Changelog
 
+## Four logs and a reference on every answer
+
+### Checked
+- Backend and frontend suites: the full numbers are in the pull request. Every new part has its own tests: the reference, the change builder, each log, the Logs API, the burst alert, the JSON lines and the Logs page.
+- In a real browser as a throwaway admin (deleted, and the rows it wrote removed from the dev database): System, Logs, the four streams, a real sign in and a real wrong password showing in Security with their references, the Requests stream with real rows, and a reference typed into the box finding its row.
+- **Not checked:** the Jobs stream and the audit stream in the browser with real rows, a real 500 on screen with its reference, French and Kinyarwanda on screen (the Kinyarwanda is a draft), the burst mail in a real mailbox, and `prune_logs` and `check_log_bursts` on a real schedule.
+
+### What changed
+- **A reference on every answer.** `X-Request-ID` on every response, and `reference` in every error body (404 and 500 are now plain JSON too). A plain reference from the caller is kept, anything else is replaced. A server problem on screen ends with "Reference: ABC123..." so a person can quote it.
+- **Audit log, richer.** Each entry can carry the request reference, the device, what each field was and became (`changes`, secrets never included, long text cut), who it was on behalf of and the outcome. Farm, batch, room, safe range and role changes record their changes. Migration `audit_log.0003`.
+- **Security log.** Sign ins, wrong passwords, lockouts, password changes and resets asked for, new devices, devices signed out, a copied sign in cookie used again, a sign in ended for sitting idle, refusals for the role and slow downs. 12 months.
+- **Request log.** Every failed request and 5 percent of the good ones: reference, method, route pattern, status, milliseconds, role and address. Never the address that was typed (a lot token cannot land in it), the query, a header or a body. Good browser preflight questions and the health probe are left out. 14 days.
+- **Jobs and devices log.** Mail that did not go out (subject only, never the address), refused device readings (never the key), devices that went quiet, and every scheduled command starting and ending. 90 days.
+- **Logs tab.** System, Logs has four streams with filters that apply by themselves (date range, reference, kind, status, route, search), pages, CSV export and empty and error states. A reference finds the same request in every stream. `GET /api/admin/logs/<stream>`, admins only. Every look is written in the audit log (once a minute per log), and every export always.
+- **JSON log lines.** One object per line with `request_id`. `LOG_LEVEL` sets the level. Sentry reports carry the reference as a tag.
+- **Burst alert.** `check_log_bursts` (every 5 minutes) mails the admins once when 10 server errors or 30 refusals come within 5 minutes, then stays quiet for 30.
+- **Pruning.** `prune_logs` runs in the nightly cron. The audit log is never pruned.
+- Migrations: `audit_log.0003` and the new `logs` app. Run `python manage.py migrate`.
+
 ## One table for who may do what
 
 ### Checked

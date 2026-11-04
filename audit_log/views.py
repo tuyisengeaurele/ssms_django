@@ -28,6 +28,7 @@ class AuditLogListView(APIView):
         resource = request.query_params.get('resource')
         user_id  = request.query_params.get('user')
         search   = request.query_params.get('search', '').strip()
+        reference = request.query_params.get('reference', '').strip()[:64]
 
         if action:
             qs = qs.filter(action=action.upper())
@@ -37,6 +38,8 @@ class AuditLogListView(APIView):
             qs = qs.filter(user_id=user_id)
         if search:
             qs = qs.filter(user_email__icontains=search) | qs.filter(detail__icontains=search)
+        if reference:
+            qs = qs.filter(request_id__iexact=reference)
 
         if request.query_params.get('export') == 'csv':
             return self._csv_response(qs)

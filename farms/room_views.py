@@ -4,6 +4,7 @@ from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
+from audit_log.changes import build_changes, snapshot
 from audit_log.utils import log_action, on_behalf_of
 from batches.models import Batch
 from core.access import get_farm_or_404, get_room_or_404
@@ -111,11 +112,15 @@ class RoomDetailView(APIView):
         name = serializer.validated_data['name']
         if _name_taken(room.farm, name, exclude_pk=room.pk):
             return api_error(NAME_TAKEN, 422, {'name': [NAME_TAKEN]})
+        before = snapshot(room, ['name', 'notes'])
         room.name = name
         if 'notes' in serializer.validated_data:
             room.notes = serializer.validated_data['notes']
         room.save(update_fields=['name', 'notes'])
-        log_action(request, 'UPDATE', 'Room', room.pk, f'Changed room {room.name}', owner=on_behalf_of(request, room.farm))
+        log_action(
+            request, 'UPDATE', 'Room', room.pk, f'Changed room {room.name}', owner=on_behalf_of(request, room.farm),
+            changes=build_changes(before, snapshot(room, before)),
+        )
         return api_success(_row(room), 'Room updated.')
 
     def delete(self, request, pk):

@@ -41,6 +41,13 @@ beforeEach(() => {
 });
 
 describe('Audit log page', () => {
+  it('finds one reference', async () => {
+    open();
+    await screen.findByText('Bruce Ishimwe');
+    fireEvent.change(screen.getByLabelText('Reference'), { target: { value: 'AAAA11112222' } });
+    await waitFor(() => expect(api.getList).toHaveBeenLastCalledWith(expect.objectContaining({ reference: 'AAAA11112222' })), { timeout: 3000 });
+  });
+
   it('has one title and counts the recorded events', async () => {
     open();
     expect(screen.getByRole('heading', { level: 2, name: 'Audit log' })).toBeInTheDocument();
@@ -96,7 +103,7 @@ describe('Audit log page', () => {
     fireEvent.change(screen.getByLabelText('Resource'), { target: { value: 'Farm' } });
     // Nothing is sent for every key press.
     expect(api.getList).toHaveBeenCalledTimes(1);
-    await waitFor(() => expect(api.getList).toHaveBeenLastCalledWith({ page: 1, action: '', resource: 'Farm', search: 'bruce' }), { timeout: 3000 });
+    await waitFor(() => expect(api.getList).toHaveBeenLastCalledWith({ page: 1, action: '', resource: 'Farm', search: 'bruce', reference: '' }), { timeout: 3000 });
     expect(api.getList).toHaveBeenCalledTimes(2);
   });
 
@@ -104,7 +111,7 @@ describe('Audit log page', () => {
     open();
     await screen.findByText('Bruce Ishimwe');
     fireEvent.change(screen.getByLabelText('Action'), { target: { value: 'LOGIN' } });
-    await waitFor(() => expect(api.getList).toHaveBeenLastCalledWith({ page: 1, action: 'LOGIN', resource: '', search: '' }));
+    await waitFor(() => expect(api.getList).toHaveBeenLastCalledWith({ page: 1, action: 'LOGIN', resource: '', search: '', reference: '' }));
   });
 
   it('shows Reset only while a filter is set, and clears every filter with it', async () => {
@@ -113,7 +120,7 @@ describe('Audit log page', () => {
     expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Resource'), { target: { value: 'Farm' } });
     fireEvent.click(await screen.findByRole('button', { name: 'Reset' }));
-    await waitFor(() => expect(api.getList).toHaveBeenLastCalledWith({ page: 1, action: '', resource: '', search: '' }));
+    await waitFor(() => expect(api.getList).toHaveBeenLastCalledWith({ page: 1, action: '', resource: '', search: '', reference: '' }));
     expect((screen.getByLabelText('Resource') as HTMLInputElement).value).toBe('');
     expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
   });
@@ -123,14 +130,14 @@ describe('Audit log page', () => {
     open();
     await screen.findByText('Bruce Ishimwe');
     fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
-    await waitFor(() => expect(api.getList).toHaveBeenLastCalledWith({ page: 2, action: '', resource: '', search: '' }));
+    await waitFor(() => expect(api.getList).toHaveBeenLastCalledWith({ page: 2, action: '', resource: '', search: '', reference: '' }));
   });
 
   it('downloads the CSV with the current filters and says so', async () => {
     open();
     await screen.findByText('Bruce Ishimwe');
     fireEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
-    await waitFor(() => expect(api.exportCsv).toHaveBeenCalledWith({ action: '', resource: '', search: '' }));
+    await waitFor(() => expect(api.exportCsv).toHaveBeenCalledWith({ action: '', resource: '', search: '', reference: '' }));
     expect(await screen.findByText('Your CSV file is ready.', {}, { timeout: 5000 })).toBeInTheDocument();
   });
 
@@ -138,7 +145,7 @@ describe('Audit log page', () => {
     open();
     await screen.findByText('Bruce Ishimwe');
     fireEvent.click(screen.getByRole('button', { name: 'Export PDF' }));
-    await waitFor(() => expect(api.exportPdf).toHaveBeenCalledWith({ action: '', resource: '', search: '' }));
+    await waitFor(() => expect(api.exportPdf).toHaveBeenCalledWith({ action: '', resource: '', search: '', reference: '' }));
     expect(await screen.findByText('Your PDF file is ready.', {}, { timeout: 5000 })).toBeInTheDocument();
   });
 

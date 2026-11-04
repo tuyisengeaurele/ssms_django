@@ -13,13 +13,13 @@ Schedule via Render cron job (dashboard → Jobs):
 
 from datetime import timedelta
 
-from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from logs.jobs import LoggedCommand
 from sensors.models import SensorReading
 
 
-class Command(BaseCommand):
+class Command(LoggedCommand):
     help = 'Delete sensor readings older than N days to prevent unbounded table growth.'
 
     def add_arguments(self, parser):

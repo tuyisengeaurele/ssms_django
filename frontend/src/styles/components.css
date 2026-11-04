@@ -575,6 +575,13 @@ tr.is-off td:last-child { opacity: 1; }
 .btn-quiet-danger { color: var(--danger-ink); }
 .btn-quiet-danger:hover:not(:disabled) { background: var(--danger-wash); color: var(--danger-ink-2); }
 
+/* The switch between the logs of the System page */
+.stream-switch { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 18px; }
+.stream-button { min-height: 36px; padding: 6px 16px; border: 1px solid var(--border-light); border-radius: 999px; background: transparent; color: var(--text-2); font: 500 0.88rem var(--font-ui); cursor: pointer; }
+.stream-button:hover { background: var(--row-hover); }
+.stream-button.is-on { border-color: var(--ink); background: var(--ink); color: var(--surface); }
+.stream-button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
 .idle-count { margin: 12px 0 0; color: var(--ink); font: 450 2.4rem var(--font-display); font-variant-numeric: tabular-nums; text-align: center; }
 
 .sr-only {

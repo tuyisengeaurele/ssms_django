@@ -9,6 +9,7 @@ from django.utils import timezone
 from alerts.models import AlertLog
 from alerts.utils import check_room_alerts, running_batches
 from farms.models import RearingRoom
+from logs.jobs import record_job
 
 from .models import IoTDevice, SensorReading
 
@@ -75,6 +76,7 @@ def mark_offline_devices(now=None) -> list[IoTDevice]:
         device.status = IoTDevice.STATUS_OFFLINE
         device.save(update_fields=['status'])
         changed.append(device)
+        record_job('device_offline', device.name, f'No reading for {minutes} minutes')
 
         if device.room_id is None or not running_batches(device.room_id).exists():
             continue

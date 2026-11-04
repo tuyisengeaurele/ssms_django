@@ -6,6 +6,7 @@ import sentry_sdk
 from decouple import config
 
 from core.config import parse_list
+from core.logging import sentry_before_send
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
     'harvest',
     'contacts',
     'audit_log',
+    'logs',
     'reports',
 ]
 
@@ -44,6 +46,8 @@ INSTALLED_APPS = [
 PASSWORD_RESET_TIMEOUT = 3600
 
 MIDDLEWARE = [
+    'core.request_id.RequestIdMiddleware',   # first, so every answer carries a reference
+    'logs.middleware.RequestLogMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'core.middleware.SecurityHeadersMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',   # serve static files in production
@@ -196,6 +200,17 @@ SIMPLE_JWT = {
 }
 
 # A signed in device lives at most this long, however often it renews. The refresh token alone slides for 7 days.
+# The request log keeps every failed request and this share of the good ones. 14 days, then `prune_logs` deletes them.
+REQUEST_LOG_SAMPLE_RATE = config('REQUEST_LOG_SAMPLE_RATE', default=0.05, cast=float)
+REQUEST_LOG_KEEP_DAYS = config('REQUEST_LOG_KEEP_DAYS', default=14, cast=int)
+SECURITY_LOG_KEEP_DAYS = config('SECURITY_LOG_KEEP_DAYS', default=365, cast=int)
+JOB_LOG_KEEP_DAYS = config('JOB_LOG_KEEP_DAYS', default=90, cast=int)
+# `check_log_bursts` mails the admins when this many failures come within LOG_BURST_MINUTES, then stays quiet for a while.
+LOG_BURST_MINUTES = config('LOG_BURST_MINUTES', default=5, cast=int)
+LOG_BURST_SERVER_ERRORS = config('LOG_BURST_SERVER_ERRORS', default=10, cast=int)
+LOG_BURST_REFUSALS = config('LOG_BURST_REFUSALS', default=30, cast=int)
+LOG_BURST_QUIET_MINUTES = config('LOG_BURST_QUIET_MINUTES', default=30, cast=int)
+
 # A sign in nobody uses is ended sooner for people with more power. 0 means no limit.
 def _idle_minutes(name, default):
     return config(name, default=default, cast=int) or None
@@ -214,8 +229,9 @@ SESSION_REFRESH_GRACE_SECONDS = config('SESSION_REFRESH_GRACE_SECONDS', default=
 
 CORS_ALLOWED_ORIGINS = parse_list(config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173'))
 CORS_ALLOW_CREDENTIALS = True
-# A site on another address can only read these response headers. The screen needs the wait time after a 429.
-CORS_EXPOSE_HEADERS = ['Retry-After']
+# A site on another address can only read these response headers. The screen needs the wait time after a 429
+# and the reference of an error, to quote it.
+CORS_EXPOSE_HEADERS = ['Retry-After', 'X-Request-ID']
 
 APPEND_SLASH = False
 
@@ -291,6 +307,20 @@ if not DEBUG:
     # Referrer policy
     SECURE_REFERRER_POLICY       = 'strict-origin-when-cross-origin'
 
+# ── Logging ───────────────────────────────────────────────────────────────────
+# One JSON object per line with the reference of the request, so the host's log viewer can search by it.
+LOG_LEVEL = config('LOG_LEVEL', default='INFO').upper()
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {'request_id': {'()': 'core.logging.RequestIdFilter'}},
+    'formatters': {'json': {'()': 'core.logging.JsonFormatter'}},
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler', 'formatter': 'json', 'filters': ['request_id']},
+    },
+    'root': {'handlers': ['console'], 'level': LOG_LEVEL},
+}
+
 # ── Sentry error monitoring ───────────────────────────────────────────────────
 SENTRY_DSN = config('SENTRY_DSN', default='')
 
@@ -301,4 +331,5 @@ if SENTRY_DSN:
         profiles_sample_rate=config('SENTRY_PROFILES_SAMPLE_RATE', default=0.1, cast=float),
         environment=config('DJANGO_ENV', default='production'),
         send_default_pii=False,
+        before_send=sentry_before_send,
     )

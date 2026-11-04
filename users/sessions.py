@@ -15,6 +15,7 @@ from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, Ou
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.mail import Email, send_email_async
+from logs.security import record_security_event
 
 from .devices import DeviceInfo, describe_device
 from .models import User, UserSession
@@ -92,6 +93,7 @@ def start_session(request, user, hints=None, shared: bool = False) -> tuple[User
     _remember(session, refresh['jti'])
     session.save(update_fields=['tokens'])
     if new_device:
+        record_security_event('new_device', request, user=user, detail=info.label)
         _tell_about_new_device(user, info, now)
     return session, str(refresh.access_token), str(refresh)
 

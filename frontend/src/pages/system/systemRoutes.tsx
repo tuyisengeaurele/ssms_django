@@ -5,7 +5,7 @@ import ProtectedRoute from '../../components/ui/ProtectedRoute';
 // Like every other page, these load when they are first opened.
 const SystemLayout = lazy(() => import('./SystemLayout'));
 const AdminHealthPage = lazy(() => import('../admin/AdminHealthPage'));
-const AdminAuditLogPage = lazy(() => import('../admin/AdminAuditLogPage'));
+const AdminLogsPage = lazy(() => import('../admin/AdminLogsPage'));
 const AdminReportsPage = lazy(() => import('../admin/AdminReportsPage'));
 
 const loading = <p className="panel-loading"><span className="spinner" /></p>;
@@ -25,7 +25,7 @@ export function systemRoutes() {
         <Route path="/admin/system" element={page(<SystemLayout />)}>
           <Route index element={<Navigate to="health" replace />} />
           <Route path="health" element={page(<AdminHealthPage />)} />
-          <Route path="logs" element={page(<AdminAuditLogPage />)} />
+          <Route path="logs" element={page(<AdminLogsPage />)} />
           <Route path="activity" element={page(<AdminReportsPage />)} />
         </Route>
       </Route>
