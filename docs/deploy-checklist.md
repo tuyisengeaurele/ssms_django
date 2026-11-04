@@ -20,6 +20,10 @@ Work through this top to bottom for every deploy, including a rehearsal on a tes
 | `AI_SERVICE_URL`, `AI_SERVICE_SECRET` | same secret on both services |
 | `SENTRY_DSN` | set, so errors reach someone |
 | `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | set, or switch the backend to console on purpose |
+| `LOG_LEVEL` | `INFO` (default). Logs are one JSON line each, with the request reference |
+| `REQUEST_LOG_SAMPLE_RATE` | `0.05` (default): every failed request is logged, and this share of the good ones |
+
+Scheduled jobs: `prune_logs` nightly (the nightly cron in `render.yaml` runs it), `mark_offline_devices` every few minutes and `check_log_bursts` every 5 minutes. A scheduler that stopped shows in the System page, Logs, Jobs and devices: each command writes when it starts and ends.
 
 `start.sh` runs migrations, creates the cache table for the rate limits and starts the API under ASGI. Read its first lines of output in the host's log.
 
@@ -65,5 +69,5 @@ These are written down so nobody is surprised. Each is on the backlog.
 
 1. Say so on the site's notice and tell the test users.
 2. Roll the API back to the previous deploy on the host. Migrations only go forward: never roll back past one without a database backup taken first.
-3. Read the error reporter and the host log with the time of the first report.
+3. Read the error reporter and the host log with the time of the first report. A person who saw an error quotes its reference: search it on the System page, Logs, in every stream, and in the host log (`request_id`).
 4. Write down what happened and add a test that would have caught it.

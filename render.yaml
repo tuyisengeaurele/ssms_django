@@ -79,7 +79,7 @@ services:
         value: ""    # paste your Sentry DSN here when ready
 
   # ── Sensor cleanup cron job ───────────────────────────────────────────────
-  # Purges sensor readings older than 90 days and ended sign ins older than 30 days to keep storage lean.
+  # Purges sensor readings older than 90 days, ended sign ins older than 30 days and the logs past their keeping time.
   - type: cron
     name: ssms-sensor-cleanup
     env: python
@@ -87,7 +87,7 @@ services:
     plan: free
     schedule: "0 2 * * *"     # daily at 02:00 UTC
     buildCommand: "./build.sh"
-    startCommand: "python manage.py cleanup_sensor_readings --days 90 && python manage.py prune_sessions --days 30"
+    startCommand: "python manage.py cleanup_sensor_readings --days 90 && python manage.py prune_sessions --days 30 && python manage.py prune_logs"
 
     envVars:
       - key: SECRET_KEY

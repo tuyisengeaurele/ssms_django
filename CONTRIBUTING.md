@@ -82,6 +82,13 @@ python scripts/check_content.py --all
 - Which records a role reaches is `core/access.py`, not the table.
 - When an admin changes data a farmer owns, pass `owner=on_behalf_of(request, farm)` to `log_action`, so the audit log says whose it was.
 
+## Logs
+
+- Every answer carries a reference (`X-Request-ID`), and every error body has it as `reference`. Log lines are JSON with `request_id`.
+- Four streams, all under System, Logs: audit (who changed what), security (sign ins, refusals), requests (failures and a sample) and jobs (mail, devices, commands).
+- Never log a body, a header, a query or a token. The request log keeps the route pattern, never the address that was typed. Pass `changes=` to `log_action` for what a field was and became: `build_changes` hides anything that looks like a secret.
+- A new scheduled command extends `logs.jobs.LoggedCommand`, so its runs show up.
+
 ## Interface
 
 - Every visible string exists in English, French and Kinyarwanda.
