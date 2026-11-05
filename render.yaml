@@ -22,6 +22,17 @@ services:
     buildCommand: "./build.sh"
     startCommand: "bash start.sh"
     healthCheckPath: /api/health
+    # A restart briefly runs two copies of the API against a small database pool, so a change that cannot reach the
+    # API (the website, docs, tests, workflows, scripts, the disease service) does not start a deploy.
+    buildFilter:
+      ignoredPaths:
+        - frontend/**
+        - docs/**
+        - tests/**
+        - ai_service/**
+        - .github/**
+        - scripts/**
+        - "*.md"
 
     envVars:
       - key: PYTHON_VERSION
@@ -104,6 +115,9 @@ services:
     buildCommand: "bash ai_service/build.sh"
     startCommand: "cd ai_service && uvicorn main:app --host 0.0.0.0 --port $PORT"
     healthCheckPath: /health
+    buildFilter:
+      paths:
+        - ai_service/**
 
     envVars:
       - key: PYTHON_VERSION
