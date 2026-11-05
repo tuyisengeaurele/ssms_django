@@ -1,0 +1,50 @@
+name: Nightly jobs
+
+# Once a night at 02:00 UTC: remove sensor readings older than 90 days, ended sign ins older than 30 days,
+# and the logs past their keeping time.
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: jobs-nightly
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      DEBUG: "false"
+      ALLOWED_HOSTS: "*"
+      FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Remove old sensor readings
+        run: python manage.py cleanup_sensor_readings --days 90
+
+      - name: Remove old sign ins
+        run: python manage.py prune_sessions --days 30
+
+      - name: Remove old logs
+        run: python manage.py prune_logs

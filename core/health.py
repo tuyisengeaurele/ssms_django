@@ -208,14 +208,22 @@ def _safely(key: str, check) -> dict:
         return {'key': key, 'status': PROBLEM, 'values': {'reason': 'error'}}
 
 
-def run_checks() -> dict:
+def _all_checks(now) -> dict:
+    return {
+        'web': check_web, 'database': check_database, 'aiService': check_ai_service,
+        'email': check_email, 'errorMonitoring': check_error_monitoring,
+        'imageStorage': check_image_storage, 'sensors': lambda: check_sensors(now),
+        'jobs': lambda: check_jobs(now), 'alertStream': check_alert_stream, 'website': check_website,
+    }
+
+
+SERVICE_KEYS = tuple(_all_checks(None))
+
+
+def run_checks(skip=()) -> dict:
+    """Run every check except the named ones. A scheduled run on a free host skips the services it must not wake."""
     now = timezone.now()
-    checks = [
-        _safely('web', check_web), _safely('database', check_database), _safely('aiService', check_ai_service),
-        _safely('email', check_email), _safely('errorMonitoring', check_error_monitoring),
-        _safely('imageStorage', check_image_storage), _safely('sensors', lambda: check_sensors(now)),
-        _safely('jobs', lambda: check_jobs(now)), _safely('alertStream', check_alert_stream), _safely('website', check_website),
-    ]
+    checks = [_safely(key, fn) for key, fn in _all_checks(now).items() if key not in skip]
     return {
         'checked_at': now.isoformat(),
         'overall': PROBLEM if any(c['status'] == PROBLEM for c in checks) else OK,

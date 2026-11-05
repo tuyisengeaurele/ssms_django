@@ -1,5 +1,21 @@
 # Changelog
 
+## Deploy setup: Render, Supabase and GitHub Actions
+
+The API and the disease check service run on Render, the database on Supabase, the scheduled jobs on GitHub Actions and the website on Vercel. The steps are in `docs/deploy-runbook.md`.
+
+### Checked
+- Backend tests for the manifest, the two job workflows, the simulation workflow, the Vercel forward and the new `--skip` option. The frontend headers test still passes against the new `render.yaml`.
+- **Not checked:** nothing has been deployed yet. Not run on a real host: the Render builds, the model download, the memory use of the disease service on the free plan, the live alert stream through the Vercel forward, the client address behind two proxies, and the GitHub schedules.
+
+### What changed
+- `render.yaml` describes two web services, `ssms-api` and `ssms-ai`. The Render database and both Render crons are gone. `DATABASE_URL`, the shared secret and the model link are typed into the dashboard.
+- `ai_service/build.sh` downloads the model from `MODEL_URL` and refuses it unless it matches `MODEL_SHA256`.
+- `jobs-frequent.yml` (every 5 minutes) and `jobs-nightly.yml` run the health check, the burst check, the offline marking and the cleanups. `run_health_checks --skip aiService` keeps the free disease service asleep.
+- `frontend/vercel.json` forwards `/api` to the API, so the browser sees one site and the sign in cookie keeps working.
+- `TRUSTED_PROXY_COUNT` is 2 (Vercel and Render). `start.sh` reads `WEB_CONCURRENCY`, set to 1 on the free plan.
+- The sensor simulation workflow now runs only when someone presses the button.
+
 ## System health with history, uptime and test buttons
 
 ### Checked
