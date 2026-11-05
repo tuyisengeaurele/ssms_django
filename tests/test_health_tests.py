@@ -107,19 +107,17 @@ def test_an_email_that_cannot_be_sent_says_failed_and_does_not_crash(client):
 
 # ── photo storage ───────────────────────────────────────────────────────────────────────────
 
-def test_the_storage_test_uploads_one_pixel_and_deletes_it(client, settings):
+def test_the_storage_test_uploads_one_pixel_under_one_name(client, settings):
     settings.CLOUDINARY_CLOUD_NAME = 'demo'
     settings.CLOUDINARY_UPLOAD_PRESET = 'preset'
-    with mock.patch('core.health_tests.cloudinary.uploader.unsigned_upload', return_value={'delete_token': 'tok-1'}) as upload, \
-            mock.patch('core.health_tests.httpx.post', return_value=mock.Mock(status_code=200)) as delete:
+    with mock.patch('core.health_tests.cloudinary.uploader.unsigned_upload', return_value={'public_id': 'x'}) as upload:
         answer = run(client, 'storage')
+        run(client, 'storage')
     assert answer['ok'] is True and answer['outcome'] == 'stored'
-    sent = upload.call_args.args[0]
-    assert Image.open(io.BytesIO(sent)).size == (1, 1)
-    assert upload.call_args.kwargs.get('return_delete_token') is True
-    delete.assert_called_once()
-    assert delete.call_args.args[0] == 'https://api.cloudinary.com/v1_1/demo/delete_by_token'
-    assert delete.call_args.kwargs['data'] == {'token': 'tok-1'}
+    assert Image.open(io.BytesIO(upload.call_args.args[0])).size == (1, 1)
+    # The same name every time, so a hundred tests leave one picture, and no option that unsigned uploads refuse.
+    assert upload.call_args.kwargs['public_id'] == 'health-test-pixel'
+    assert 'return_delete_token' not in upload.call_args.kwargs
 
 
 def test_the_storage_test_says_so_when_storage_is_not_set_up(client, settings):
@@ -136,14 +134,6 @@ def test_the_storage_test_says_when_the_upload_fails(client, settings):
         answer = run(client, 'storage')
     assert answer['ok'] is False and answer['outcome'] == 'failed'
     assert 'preset' not in str(answer)
-
-
-def test_the_storage_test_says_when_the_picture_could_not_be_taken_down(client, settings):
-    settings.CLOUDINARY_CLOUD_NAME = 'demo'
-    with mock.patch('core.health_tests.cloudinary.uploader.unsigned_upload', return_value={'delete_token': 't'}), \
-            mock.patch('core.health_tests.httpx.post', side_effect=httpx.ConnectError('nope')):
-        answer = run(client, 'storage')
-    assert answer['ok'] is False and answer['outcome'] == 'stored_not_deleted'
 
 
 # ── the disease check ───────────────────────────────────────────────────────────────────────

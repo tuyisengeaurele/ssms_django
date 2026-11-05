@@ -1181,7 +1181,7 @@ tr.is-off td:last-child { opacity: 1; }
 .health-trend { min-height: 56px; }
 .health-strip { display: flex; gap: 2px; height: 22px; }
 .health-cell { flex: 1 1 0; min-width: 2px; border-radius: 2px; background: var(--tint); }
-.health-cell.is-ok { background: var(--chart-1); }
+.health-cell.is-ok { background: var(--tone-green); }
 .health-cell.is-problem { background: var(--danger-ink); }
 .health-strip-text { margin: 6px 0 0; color: var(--text-muted); font-size: 0.82rem; }
 .health-uptime { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; padding-top: 12px; border-top: 1px solid var(--border-light); }

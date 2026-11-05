@@ -2,7 +2,7 @@
 
 None of them touches a farmer's data or writes to anyone but the admin who pressed it:
 * email goes to that admin's own address;
-* storage uploads a one pixel picture and takes it down again;
+* storage uploads a one pixel picture, always under the same name, so tests never pile pictures up;
 * the disease check is sent a small picture made here;
 * the database write is rolled back;
 * the device test builds a throwaway farm, room and device, takes a reading through the same code a device uses, and
@@ -32,6 +32,8 @@ from sensors.models import IoTDevice
 logger = logging.getLogger(__name__)
 
 AI_TEST_TIMEOUT = 10.0
+# Photo storage does not allow an unsigned upload to be deleted, so every test uploads this one picture under this name.
+STORAGE_TEST_PICTURE = 'health-test-pixel'
 
 
 def _png(size: int, colour=(34, 110, 60)) -> bytes:
@@ -57,31 +59,18 @@ def test_email(user) -> dict:
 
 
 def test_storage(user) -> dict:
+    """Upload one pixel. An unsigned upload cannot be taken down again, so it is always the same picture."""
     if not settings.CLOUDINARY_CLOUD_NAME or not settings.CLOUDINARY_UPLOAD_PRESET:
         return {'ok': False, 'outcome': 'not_set_up'}
     try:
         cloudinary.config(cloud_name=settings.CLOUDINARY_CLOUD_NAME)
-        result = cloudinary.uploader.unsigned_upload(
-            _png(1), settings.CLOUDINARY_UPLOAD_PRESET, folder='ssms/health-test', resource_type='image',
-            return_delete_token=True,
+        cloudinary.uploader.unsigned_upload(
+            _png(1), settings.CLOUDINARY_UPLOAD_PRESET, folder='ssms/health-test', public_id=STORAGE_TEST_PICTURE,
+            resource_type='image',
         )
     except Exception:
         logger.exception('The storage test could not upload')
         return {'ok': False, 'outcome': 'failed'}
-    token = (result or {}).get('delete_token')
-    try:
-        if not token:
-            raise ValueError('storage gave no way to take the picture down')
-        # The Python SDK has no call for this. The token is good for ten minutes and needs no secret.
-        taken_down = httpx.post(
-            f'https://api.cloudinary.com/v1_1/{settings.CLOUDINARY_CLOUD_NAME}/delete_by_token',
-            data={'token': token}, timeout=AI_TEST_TIMEOUT,
-        )
-        if taken_down.status_code != 200:
-            raise ValueError('storage did not take the picture down')
-    except Exception:
-        logger.exception('The storage test could not delete its picture')
-        return {'ok': False, 'outcome': 'stored_not_deleted'}
     return {'ok': True, 'outcome': 'stored'}
 
 
