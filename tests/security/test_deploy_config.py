@@ -228,6 +228,7 @@ FAKE_URL = 'postgresql://user:pass@localhost:5432/ssms'
 
 def show_db(**env):
     import json
+
     from tests.security.test_headers_and_deploy import run_python
     return json.loads(run_python(SHOW_DB, production_env(**env)))
 
