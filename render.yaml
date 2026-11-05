@@ -17,7 +17,7 @@ services:
   - type: web
     name: ssms-api
     runtime: python
-    region: oregon
+    region: frankfurt
     plan: free              # sleeps after 15 minutes without a visit and wakes in about a minute
     buildCommand: "./build.sh"
     startCommand: "bash start.sh"
@@ -99,7 +99,7 @@ services:
   - type: web
     name: ssms-ai
     runtime: python
-    region: oregon
+    region: frankfurt
     plan: free              # may need a paid plan: the model can use more memory than the free 512 MB
     buildCommand: "bash ai_service/build.sh"
     startCommand: "cd ai_service && uvicorn main:app --host 0.0.0.0 --port $PORT"
