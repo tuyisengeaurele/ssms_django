@@ -17,6 +17,14 @@
 - **Health tab.** A card per service: status in words, the answer time over the last 24 hours as a line (or a row of checks, with the same facts in words), uptime figures, a Run test button and its result. It refreshes by itself every minute while the page is on screen.
 - Settings: `HEALTH_API_URL`, `HEALTH_LOG_KEEP_DAYS`, `SCHEDULE_STALE_HOURS`. The deploy checklist now asks for an outside monitor on `/api/health`.
 
+## Compare batches from Farm monitoring
+
+Admins and supervisors had no way to the batch comparison: the Batches page, which holds its button, is in the farmer menu only. The Active batches panel on Farm monitoring (the supervisor's Dashboard) now ends with "Compare batches" in place of "View farms", which duplicated the Farms menu item. Batches stays out of the admin and supervisor menus on purpose.
+
+### Checked
+- Frontend tests: the link goes to `/batches/compare` and the old link is gone. `tsc` and ESLint clean.
+- **Not checked:** the page in a real browser (a one link change), and the farmer's own route to the comparison, which is unchanged.
+
 ## Four logs and a reference on every answer
 
 ### Checked

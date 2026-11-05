@@ -992,7 +992,6 @@ export const pageTranslations = {
   fkLoadError: k("We couldn't load the farm ranking. Please try again.", "Nous n'avons pas pu charger le classement des fermes. Veuillez réessayer.", "Ntitwabashije gufungura urutonde rw'amahinga. Ongera ugerageze."),
   fkRetry: k("Try again", "Réessayer", "Ongera ugerageze"),
   svBatchesTitle: k("Active batches", "Lots actifs", "Amatsinda akora"),
-  svViewFarms: k("View farms", "Voir les fermes", "Reba amahindu"),
   svNoBatches: k("No active batches", "Aucun lot actif", "Nta tsinda rikora"),
   svColFarm: k("Farm", "Ferme", "Ihinga"),
   svColStage: k("Stage", "Stade", "Icyiciro"),
