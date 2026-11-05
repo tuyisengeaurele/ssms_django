@@ -12,6 +12,7 @@ whitenoise==6.12.0
 
 # Database
 psycopg[binary]==3.2.4
+psycopg-pool==3.2.4
 dj-database-url==2.2.0
 
 # Settings and passwords

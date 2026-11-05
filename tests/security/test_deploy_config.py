@@ -213,3 +213,40 @@ def test_each_request_closes_its_database_connection():
     from tests.security.test_headers_and_deploy import run_python
     for url in ('postgresql://user:pass@localhost:5432/ssms', ''):
         assert run_python(SHOW_CONN_MAX_AGE, production_env(DATABASE_URL=url)) == '0'
+
+
+SHOW_DB = (
+    "import os, json, django;"
+    "os.environ['DJANGO_SETTINGS_MODULE']='ssms_django.settings';"
+    "django.setup();"
+    "from django.conf import settings as s;"
+    "d = s.DATABASES['default'];"
+    "print(json.dumps({'age': d['CONN_MAX_AGE'], 'options': d.get('OPTIONS', {})}))"
+)
+FAKE_URL = 'postgresql://user:pass@localhost:5432/ssms'
+
+
+def show_db(**env):
+    import json
+
+    from tests.security.test_headers_and_deploy import run_python
+    return json.loads(run_python(SHOW_DB, production_env(**env)))
+
+
+def test_the_deployed_database_shares_a_small_pool_that_fits_under_the_pooler_limit():
+    found = show_db(DATABASE_URL=FAKE_URL)
+    assert found['age'] == 0
+    assert found['options']['pool'] == {'min_size': 1, 'max_size': 4, 'timeout': 10}
+
+
+def test_the_pool_size_can_be_set_from_the_environment():
+    assert show_db(DATABASE_URL=FAKE_URL, DB_POOL_MAX='6')['options']['pool']['max_size'] == 6
+
+
+def test_the_local_database_is_not_pooled_so_tests_carry_no_pool_threads():
+    assert 'pool' not in show_db(DATABASE_URL='')['options']
+
+
+def test_the_pooling_package_is_pinned_to_the_same_version_as_the_driver():
+    text = (ROOT / 'requirements.txt').read_text(encoding='utf-8')
+    assert 'psycopg[binary]==3.2.4' in text and 'psycopg-pool==3.2.4' in text
