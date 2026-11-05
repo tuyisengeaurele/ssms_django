@@ -48,7 +48,7 @@ After saving, run **Frequent jobs** by hand from the Actions tab (**Run workflow
 2. Render dashboard, **New**, **Blueprint**, pick this repository. Render lists `ssms-api` and `ssms-ai` and asks for the values marked "sync: false".
 3. For `ssms-api`: `DATABASE_URL`, `SECRET_KEY` and `JWT_SECRET` (the same values as the GitHub secrets), `EMAIL_HOST_PASSWORD`, `AI_SERVICE_SECRET`, and `SENTRY_DSN` if you have one.
 4. For `ssms-ai`: the same `AI_SERVICE_SECRET`, `MODEL_URL`, `MODEL_SHA256`.
-5. Check the real address of each service on its page. If it is not exactly `ssms-api.onrender.com` and `ssms-ai.onrender.com`, change these together: `ALLOWED_HOSTS`, `HEALTH_API_URL` and `AI_SERVICE_URL` in `render.yaml`, the `/api` rewrite and `connect-src` in `frontend/vercel.json`, and the GitHub secrets.
+5. Read the real address of each service on its page. Render adds a random suffix when a name is taken (for example `ssms-api-cmqa.onrender.com`), and the bare name then belongs to someone else. Put the real addresses in `ALLOWED_HOSTS`, `HEALTH_API_URL` and `AI_SERVICE_URL` in `render.yaml`, in the `/api` rewrite and `connect-src` in `frontend/vercel.json`, and in the GitHub secrets. The API also trusts the host Render reports (`RENDER_EXTERNAL_HOSTNAME`) by itself, which is what lets it start before those files are fixed.
 6. Watch the `ssms-api` log. It runs `migrate` against Supabase, then starts.
 
 ## 5. Vercel (the website)

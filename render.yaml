@@ -42,7 +42,7 @@ services:
         value: production
 
       - key: ALLOWED_HOSTS
-        value: "ssms-api.onrender.com"
+        value: "ssms-api-cmqa.onrender.com"
 
       # ── Database: Supabase, session mode pooler, with ?sslmode=require ───────
       - key: DATABASE_URL
@@ -66,7 +66,7 @@ services:
 
       # The API's own public address, so the Health tab can ask it from outside.
       - key: HEALTH_API_URL
-        value: "https://ssms-api.onrender.com"
+        value: "https://ssms-api-cmqa.onrender.com"
 
       # ── Email (Gmail SMTP) ───────────────────────────────────────────────────
       - key: EMAIL_HOST_USER

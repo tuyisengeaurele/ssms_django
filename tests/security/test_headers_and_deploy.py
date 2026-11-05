@@ -89,6 +89,19 @@ def test_settings_read_cors_origins_and_hosts_without_stray_spaces():
     assert got['ALLOWED_HOSTS'] == ['api.example.rw', 'localhost']
 
 
+def test_the_host_render_assigns_is_trusted_without_naming_it():
+    # Render adds a suffix when a service name is taken, so the real address is only known on the host.
+    env = production_env(ALLOWED_HOSTS='api.example.rw', RENDER_EXTERNAL_HOSTNAME='ssms-api-ab12.onrender.com')
+    got = json.loads(run_python(SHOW_SETTINGS, env))
+    assert got['ALLOWED_HOSTS'] == ['api.example.rw', 'ssms-api-ab12.onrender.com']
+
+
+def test_the_render_host_is_not_added_twice():
+    env = production_env(ALLOWED_HOSTS='ssms-api-ab12.onrender.com', RENDER_EXTERNAL_HOSTNAME='ssms-api-ab12.onrender.com')
+    got = json.loads(run_python(SHOW_SETTINGS, env))
+    assert got['ALLOWED_HOSTS'] == ['ssms-api-ab12.onrender.com']
+
+
 # ── production settings ─────────────────────────────────────────────────────────────────────
 
 def test_production_uses_secure_cookies_https_redirect_and_hsts():
