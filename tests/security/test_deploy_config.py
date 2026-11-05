@@ -250,3 +250,10 @@ def test_the_local_database_is_not_pooled_so_tests_carry_no_pool_threads():
 def test_the_pooling_package_is_pinned_to_the_same_version_as_the_driver():
     text = (ROOT / 'requirements.txt').read_text(encoding='utf-8')
     assert 'psycopg[binary]==3.2.4' in text and 'psycopg-pool==3.2.4' in text
+
+
+def test_the_frequent_jobs_ping_the_api_only_in_the_working_window():
+    # 06:00 to 20:00 in Rwanda (UTC+2). Outside it the free API sleeps, which keeps Render's 750 free hours for the month.
+    _, commands = workflow('jobs-frequent.yml')
+    assert '--awake-hours-utc 4-18' in commands
+    assert 'check_log_bursts' in commands and 'mark_offline_devices' in commands
