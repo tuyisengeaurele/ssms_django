@@ -105,6 +105,15 @@ describe('opening the app', () => {
     expect(sessionStorage.getItem('ssms_notice')).toBeNull();
   });
 
+  it.each([500, 502, 503, 504])('keeps the sign in for the next try when the server answers %i, as it does while it wakes up', async (status) => {
+    rememberSession();
+    post.mockRejectedValue(new AxiosError('bad gateway', 'ERR_BAD_RESPONSE', undefined, undefined, { status, data: {}, statusText: '', headers: {}, config: {} as InternalAxiosRequestConfig }));
+    open();
+    await waitFor(() => expect(state()).toBe('out'));
+    expect(hasSessionHint()).toBe(true);
+    expect(sessionStorage.getItem('ssms_notice')).toBeNull();
+  });
+
   it('signs out and forgets when the token was renewed but the account cannot be read', async () => {
     rememberSession();
     post.mockResolvedValue({ data: { access: 'restored.token' } });

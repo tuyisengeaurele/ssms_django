@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios';
-import { clearLegacyStorage, endedNotice, forgetSession, getAccessToken, leaveNotice, refreshAccessToken } from './session';
+import { clearLegacyStorage, endedNotice, forgetSession, getAccessToken, leaveNotice, refreshAccessToken, serverRefusedTheSession } from './session';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
@@ -46,8 +46,8 @@ api.interceptors.response.use(
         (originalConfig.headers as Record<string, string>)['Authorization'] = `Bearer ${newAccessToken}`;
         return api(originalConfig);
       } catch (refreshError) {
-        // No answer at all (offline, server restarting) says nothing about the session, so it is kept.
-        if (axios.isAxiosError(refreshError) && !refreshError.response) return Promise.reject(err);
+        // No answer, or a 5xx while the server wakes or restarts, says nothing about the session, so it is kept.
+        if (!serverRefusedTheSession(refreshError)) return Promise.reject(err);
         endSession(endedNotice(refreshError) === 'session_idle' ? 'idle' : 'ended');
         return Promise.reject(refreshError);
       }

@@ -1,10 +1,9 @@
-import axios from 'axios';
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { User } from '../types';
 import api from '../services/api';
 import { authService } from '../services/auth.service';
 import {
-  clearLegacyStorage, endedNotice, forgetSession, hasSessionHint, leaveNotice, refreshAccessToken, rememberSession, setAccessToken,
+  clearLegacyStorage, endedNotice, forgetSession, hasSessionHint, leaveNotice, refreshAccessToken, rememberSession, serverRefusedTheSession, setAccessToken,
 } from '../services/session';
 
 interface AuthContextValue {
@@ -34,8 +33,8 @@ async function restoreSession(): Promise<User | null> {
     return res.data.data;
   } catch (error) {
     setAccessToken(null);
-    // No answer at all (offline) says nothing about the session, so the flag stays for the next try.
-    if (axios.isAxiosError(error) && !error.response) return null;
+    // No answer, or a 5xx while the server wakes or restarts, says nothing about the session, so the flag stays for the next try.
+    if (!serverRefusedTheSession(error)) return null;
     forgetSession();
     leaveNotice(endedNotice(error));
     return null;
