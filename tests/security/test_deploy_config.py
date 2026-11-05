@@ -194,3 +194,22 @@ def test_the_api_address_is_ours_and_not_the_bare_name_somebody_else_holds():
     # every API call, sign in included, to a stranger.
     assert api_host() != 'ssms-api.onrender.com'
     assert api_host().startswith('ssms-api-') and api_host().endswith('.onrender.com')
+
+
+# ── the database connection under ASGI ──────────────────────────────────────────────────────
+
+SHOW_CONN_MAX_AGE = (
+    "import os, django;"
+    "os.environ['DJANGO_SETTINGS_MODULE']='ssms_django.settings';"
+    "django.setup();"
+    "from django.conf import settings as s;"
+    "print(s.DATABASES['default']['CONN_MAX_AGE'])"
+)
+
+
+def test_each_request_closes_its_database_connection():
+    # Under ASGI every request runs in its own thread, so a connection kept open "for reuse" is never reused and
+    # never closed. Supabase's session pooler allows 15 of them, and a deploy failed when they were all taken.
+    from tests.security.test_headers_and_deploy import run_python
+    for url in ('postgresql://user:pass@localhost:5432/ssms', ''):
+        assert run_python(SHOW_CONN_MAX_AGE, production_env(DATABASE_URL=url)) == '0'

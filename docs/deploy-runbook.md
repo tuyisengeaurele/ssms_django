@@ -78,6 +78,7 @@ Point UptimeRobot (free) at `https://<vercel address>/api/health` every 5 minute
 | Build fails on `pip install` | wrong Python on Render | check `PYTHON_VERSION` in the service's environment |
 | `could not translate host name` or `Network is unreachable` | the direct Supabase address (IPv6) | use the Session pooler string |
 | `password authentication failed` | wrong password or an unencoded symbol | reset the database password, use letters and digits |
+| `EMAXCONNSESSION max clients reached` | database connections left open, the session pooler allows 15 | connections now close after each request. If a deploy still fails, suspend `ssms-api` in Render for a minute so the old ones drop, then resume |
 | `prepared statement ... does not exist` | transaction mode (port 6543) | use port 5432, Session mode |
 | API log: `DisallowedHost` or 400 on every call | `ALLOWED_HOSTS` does not name the service | set it to the real Render host |
 | Sign in works but you are signed out after 15 minutes | the browser talks to Render directly | remove `VITE_API_BASE_URL` in Vercel, redeploy |
