@@ -62,10 +62,11 @@ describe('StatTile', () => {
     expect(screen.getByText('Online')).toBeInTheDocument();
   });
 
-  it('draws a plain line icon with no coloured tile', () => {
-    const { container } = render(<StatTile label="Users" value={9} icon="users" />);
-    const icon = container.querySelector('.stat-tile-icon svg');
-    expect(icon).toHaveAttribute('aria-hidden', 'true');
+  it('is a card of text only, with no icon and no coloured tile', () => {
+    // The icon prop is gone, so a page that still passed one would show it. This one passes it on purpose.
+    const stale = { icon: 'users' } as object;
+    const { container } = render(<StatTile label="Users" value={9} {...stale} />);
+    expect(container.querySelector('svg, .stat-tile-icon')).toBeNull();
     expect(container.querySelector('[style*="gradient"], .stat-card-icon, .stat-card-glow')).toBeNull();
   });
 });

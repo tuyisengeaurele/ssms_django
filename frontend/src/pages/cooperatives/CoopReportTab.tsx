@@ -23,10 +23,10 @@ export default function CoopReportTab() {
           return (
             <div className="stack-24">
               <div className="grid-4">
-                <StatTile icon="farms" label={t('crFarms')} value={number.format(totals.farms)} />
-                <StatTile icon="users" label={t('crFarmers')} value={number.format(totals.farmers)} />
-                <StatTile icon="batches" label={t('crBatchesNow')} value={number.format(totals.batchesRunning)} />
-                <StatTile icon="activity" label={t('crBatchesStarted')} value={number.format(totals.batchesStarted)} />
+                <StatTile label={t('crFarms')} value={number.format(totals.farms)} />
+                <StatTile label={t('crFarmers')} value={number.format(totals.farmers)} />
+                <StatTile label={t('crBatchesNow')} value={number.format(totals.batchesRunning)} />
+                <StatTile label={t('crBatchesStarted')} value={number.format(totals.batchesStarted)} />
               </div>
 
               <Panel title={t('crHarvest')}>

@@ -105,18 +105,10 @@
 }
 
 .stat-tile-label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
   font: 600 0.7rem var(--font-ui);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-muted);
-}
-
-.stat-tile-icon {
-  color: var(--text-faint);
 }
 
 .stat-tile-value {

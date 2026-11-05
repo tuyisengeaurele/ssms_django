@@ -98,6 +98,31 @@ describe('theme tokens', () => {
   });
 });
 
+describe('the dark theme', () => {
+  const channels = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+
+  it('is neutral black on the page, the cards, the sidebar and the inset tiles, with no green cast', () => {
+    for (const name of ['--bg', '--surface', '--surface-2', '--ivory', '--sidebar-bg', '--border']) {
+      const [r, g, b] = channels(resolve(dark, name));
+      expect(Math.max(r, g, b) - Math.min(r, g, b), `${name} is not neutral`).toBeLessThanOrEqual(6);
+    }
+  });
+
+  it('puts the page below the cards, and the cards below the inset tiles', () => {
+    const light = (name: string) => channels(resolve(dark, name))[0];
+    expect(light('--bg')).toBeLessThan(0x10);
+    expect(light('--bg')).toBeLessThan(light('--surface'));
+    expect(light('--surface')).toBeLessThan(light('--surface-2'));
+    expect(light('--surface-2')).toBeLessThan(0x28);
+  });
+
+  it('keeps the logo green as the accent', () => {
+    const [r, g, b] = channels(resolve(dark, '--primary'));
+    expect(g).toBeGreaterThan(r);
+    expect(g).toBeGreaterThan(b);
+  });
+});
+
 describe('chart colours', () => {
   it('are drawn from the tokens, so a chart follows the theme', () => {
     for (const [kind, name] of [['stage', 'EGG'], ['result', 'Healthy'], ['role', 'ADMIN'], ['action', 'OTHER'], ['grade', 'C']] as const) {

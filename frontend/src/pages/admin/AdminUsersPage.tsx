@@ -329,7 +329,6 @@ export default function AdminUsersPage() {
                 key={r}
                 label={r === 'ADMIN' ? t('usAdmins') : r === 'SUPERVISOR' ? t('usSupervisors') : t('usFarmers')}
                 value={byRole(r)}
-                icon={r === 'ADMIN' ? 'lock' : r === 'SUPERVISOR' ? 'users' : 'leaf'}
               />
             ))}
       </div>

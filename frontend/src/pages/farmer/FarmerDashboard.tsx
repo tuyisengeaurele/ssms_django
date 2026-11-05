@@ -141,19 +141,16 @@ export default function FarmerDashboard() {
 
         <div className="grid-3">
           <StatTile
-            icon="farms"
             label={t('fhMyFarms')}
             value={farms.length}
             hint={farms.length > 0 ? fill(t('fhHintActive'), { n: farms.filter((f) => f.isActive).length }) : t('fhHintFirst')}
           />
           <StatTile
-            icon="batches"
             label={t('fhStatBatches')}
             value={batches.length}
             hint={batches.length === 0 ? t('fhHintNoBatches') : fill(t(farmsWithBatches === 1 ? 'fhHintAcrossOne' : 'fhHintAcross'), { n: farmsWithBatches })}
           />
           <StatTile
-            icon="alerts"
             label={t('fhStatAlerts')}
             value={unread}
             hint={unread > 0 ? t('fhHintAttention') : t('fhHintClear')}
