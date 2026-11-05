@@ -137,6 +137,11 @@ def test_the_nightly_jobs_clean_readings_sessions_and_logs():
         assert name in commands
 
 
+def test_simulated_readings_are_only_written_when_somebody_presses_the_button():
+    flow, _ = workflow('simulate_sensors.yml')
+    assert 'schedule' not in flow['triggers'] and 'workflow_dispatch' in flow['triggers']
+
+
 def test_the_job_workflows_take_every_secret_from_github_and_write_none():
     for name in ('jobs-frequent.yml', 'jobs-nightly.yml'):
         text = (ROOT / '.github' / 'workflows' / name).read_text(encoding='utf-8')

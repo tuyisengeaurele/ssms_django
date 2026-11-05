@@ -1,9 +1,10 @@
-name: Daily Sensor Simulation
+name: Sensor Simulation
+
+# Manual only. It writes made-up readings into the database in DATABASE_URL, so it must never run by itself
+# against a database that holds real farm data. Press "Run workflow" on a test site when you want demo readings.
 
 on:
-  schedule:
-    - cron: '0 0 * * *'   # runs every day at midnight UTC
-  workflow_dispatch:        # allows manual trigger from GitHub Actions tab
+  workflow_dispatch:
 
 jobs:
   simulate:
