@@ -49,8 +49,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # The API is pinged only from 04:00 to 18:00 UTC, which is 06:00 to 20:00 in Rwanda. At night it sleeps, which keeps
+      # Render's 750 free hours a month for all the services.
       - name: Check the services
-        run: python manage.py run_health_checks --skip aiService
+        run: python manage.py run_health_checks --skip aiService --awake-hours-utc 4-18
 
       - name: Look for bursts of errors
         run: python manage.py check_log_bursts
