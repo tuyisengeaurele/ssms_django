@@ -56,7 +56,8 @@ class AdminUserListCreateView(APIView):
 
     def get(self, request):
         """GET /api/admin/users, list every user."""
-        users = User.objects.all().order_by('role', 'name')
+        # The cooperative name is read for every row, so it is fetched in the same query instead of once per person.
+        users = User.objects.select_related('cooperative').order_by('role', 'name')
         return api_success(UserSerializer(users, many=True).data)
 
     def post(self, request):
