@@ -69,9 +69,25 @@ After saving, run **Frequent jobs** by hand from the Actions tab (**Run workflow
 
 ## 7. Outside monitor
 
-Point UptimeRobot (free) at `https://<vercel address>/api/health` every 5 minutes, email to the owner. It also stops the API from sleeping, and its time-outs show whether Render is down.
+On the free plan, do not point a 24 hour monitor at the API. It would keep the API awake all night and use about 720 of Render's 750 free hours a month, shared by every free service in the workspace. The GitHub job already pings the API during working hours (section 8) and its failures show on the Health tab. A monitor that can only run in a time window, or a paid plan, is fine.
 
-## 8. If something fails
+## 8. Working hours, the database pool and the load test
+
+Meant for about 50 people at once on the free plans, between 06:00 and 20:00 in Rwanda.
+
+- **Working hours.** `.github/workflows/jobs-frequent.yml` runs `run_health_checks --awake-hours-utc 4-18`. That is 04:00 to 18:00 UTC, or 06:00 to 20:00 in Rwanda (UTC+2, no daylight saving). Inside it the job pings the API, which keeps it awake. Outside it the API is left alone and sleeps after 15 minutes, which keeps Render's 750 free hours for the month. To change the hours, change the two numbers in that file. The Health tab shows no Web API rows at night. That is expected.
+- **The first visit after the API slept** takes about a minute. The website shows "The server is waking up" and tries again by itself for up to 90 seconds. Only reads and sign in are repeated, never a save.
+- **Database pool.** The API shares 1 to 4 database connections (`DB_POOL_MAX`, default 4). Supabase's session pooler allows 15 at once, and a deploy briefly runs two copies of the API, so 4 each stays under the limit with room for the GitHub jobs and your own terminal. If you raise `DB_POOL_MAX`, keep twice its value plus 4 under 15.
+- **Fewer restarts.** `render.yaml` has a build filter, so a change that only touches `frontend/`, `docs/`, `tests/`, `scripts/`, `.github/`, `ai_service/` or a markdown file does not redeploy the API. If a docs only merge still starts a deploy, the filter patterns need adjusting for Render.
+- **Load test.** It proves the site holds about 50 people reading at once. Run it with the API awake, in working hours, and nobody else using the site.
+  1. In your own terminal set `DATABASE_URL` as for `createsuperuser`, then run `python manage.py prepare_load_test --users 50 --tokens-file load_tokens.json`.
+  2. Right away (the tokens last 15 minutes): `python scripts/load_test.py https://<vercel address> --tokens-file load_tokens.json --minutes 3`.
+  3. Pass means no failed request (a 429 counts as one) and a 95th percentile under 2 seconds. It prints each page's numbers.
+  4. Clean up: delete `load_tokens.json`, then `python manage.py prepare_load_test --remove`, then close the terminal.
+  
+  The script only reads, but the 50 throwaway accounts exist in the live database until you remove them. If many requests fail, send the printed summary. If there are no failures and the 95th percentile is high, the free CPU is the limit, which is the signal to look at a paid plan or another host.
+
+## 9. If something fails
 
 | What you see | Likely cause | Fix |
 |---|---|---|

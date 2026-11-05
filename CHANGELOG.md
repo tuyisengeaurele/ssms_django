@@ -1,5 +1,19 @@
 # Changelog
 
+## Pilot capacity: about 50 people at once on the free plans
+
+### Checked
+- Backend and frontend suites pass. New tests cover the database settings, the working hours (their edges, midnight and bad values), the Render build filter, the waking up retry and banner in three languages, query counts on the busiest endpoints, the load account command and the load script.
+- The pool was tried locally against a scratch database: 300 requests, 30 at a time, held 2 server connections (the cap is 4). The load test was rehearsed locally with 8 simulated people and 165 requests, none failed. Both used this machine's network, not the real one.
+- **Not checked:** the pool and the load test on Render and Supabase with 50 people, whether Render's build filter patterns skip a docs only merge, the waking up banner against a really sleeping Render service, how the working hours behave over a full night, and the Kinyarwanda and French banner text (the Kinyarwanda is a draft).
+
+### What changed
+- **Database pool.** On a host the API shares 1 to 4 database connections (`DB_POOL_MAX`) instead of opening one per request. Closing connections per request had stopped a leak that filled Supabase's 15 connection limit, but cost a new connection every time.
+- **Working hours.** The five minute job pings the API only from 04:00 to 18:00 UTC (06:00 to 20:00 in Rwanda) with `run_health_checks --awake-hours-utc 4-18`, so the free API sleeps at night and Render's 750 free hours last. `render.yaml` also stops the API redeploying for website, docs, test, script or workflow changes.
+- **Waking up.** While the free API wakes, the site shows "The server is waking up" and tries reads and sign in again for up to 90 seconds. Saves are never repeated.
+- **Fewer queries.** The admin users list made one query per person for the cooperative name. It now joins it. A test checks the busiest endpoints do not grow with the data.
+- **Load test.** `manage.py prepare_load_test` makes throwaway farmers and tokens, and `scripts/load_test.py` simulates them reading at once and says pass or fail. The API limits each person to 300 requests a minute, so each simulated person has their own account. The runbook has the steps.
+
 ## Deploy setup: Render, Supabase and GitHub Actions
 
 The API and the disease check service run on Render, the database on Supabase, the scheduled jobs on GitHub Actions and the website on Vercel. The steps are in `docs/deploy-runbook.md`.
