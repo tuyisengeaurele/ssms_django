@@ -1,0 +1,138 @@
+"""The code step of an admin's sign in, and the first time set-up of the authenticator app.
+
+None of these needs a session: the caller holds a challenge (users/mfa_challenge.py) from a correct password. They are
+open to anyone on purpose, throttled per address, and add no detail about why a challenge is refused.
+
+Nothing here writes a code, a secret, a challenge or a recovery code to a log, an event or the audit log.
+"""
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.utils import timezone
+from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
+
+from audit_log.utils import log_action
+from core import lockout
+from core.throttles import MfaRateThrottle
+from core.utils import api_error, api_success
+from logs.security import record_security_event
+
+from . import mfa, mfa_challenge
+from .models import Role, SecondFactor
+from .signin import finish_sign_in, too_many_attempts
+
+User = get_user_model()
+
+CHALLENGE_GONE = 'That sign in took too long. Please start again.'
+WRONG_CODE = "That code isn't right. Please try again."
+
+
+def _start_over(message: str = CHALLENGE_GONE):
+    """The challenge is no good. `reason` tells the page to go back to the password step."""
+    response = api_error(message, 401)
+    response.data['reason'] = 'challenge'
+    return response
+
+
+def _open(request, step: str):
+    """The challenge in the request and the admin it names. Returns (held, user, None) or (None, None, answer)."""
+    try:
+        held = mfa_challenge.read(request.data.get('challenge'))
+    except mfa_challenge.ChallengeError:
+        return None, None, _start_over()
+    user = User.objects.filter(pk=held.user_id, is_active=True, role=Role.ADMIN).first()
+    if held.step != step or user is None:
+        return None, None, _start_over()
+    return held, user, None
+
+
+def _wrong(request, user, held):
+    """A wrong code or recovery code. It counts against the email, so guessing across challenges still stops at five."""
+    lockout.record_failure(user.email)
+    record_security_event('mfa_failed', request, user=user)
+    log_action(request, 'OTHER', 'User', user.pk, 'Wrong second factor code', actor=user, outcome='failure')
+    dead = mfa_challenge.wrong_code(held)
+    wait = lockout.is_locked(user.email)
+    if wait:
+        return too_many_attempts(request, user.email, wait)
+    if dead:
+        return _start_over('Too many wrong codes. Please sign in again.')
+    return api_error(WRONG_CODE, 401)
+
+
+class _MfaView(APIView):
+    # A leftover token in the browser must not block a public page.
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    throttle_classes = [MfaRateThrottle]
+
+
+class MfaVerifyView(_MfaView):
+    def post(self, request):
+        """POST /api/auth/mfa/verify: a code from the app, or a recovery code, finishes an admin's sign in."""
+        held, user, problem = _open(request, 'code')
+        if problem:
+            return problem
+        wait = lockout.is_locked(user.email)
+        if wait:
+            return too_many_attempts(request, user.email, wait)
+        factor = SecondFactor.objects.filter(user=user, enabled_at__isnull=False).first()
+        if factor is None:
+            # Reset while the admin was typing. Starting over leads to set-up.
+            return _start_over()
+
+        recovery = request.data.get('recovery_code')
+        if recovery:
+            good = mfa.use_recovery_code(user, recovery)
+        else:
+            good = mfa.check_code(factor, request.data.get('code'))
+        if not good:
+            return _wrong(request, user, held)
+
+        lockout.clear(user.email)
+        mfa_challenge.spend(held)
+        record_security_event('mfa_recovery_used' if recovery else 'mfa_ok', request, user=user)
+        return finish_sign_in(request, user, mfa_verified=True)
+
+
+class MfaSetupStartView(_MfaView):
+    def post(self, request):
+        """POST /api/auth/mfa/setup/start: a new secret waits until a code from it is confirmed."""
+        _, user, problem = _open(request, 'setup')
+        if problem:
+            return problem
+        factor, _ = SecondFactor.objects.get_or_create(user=user)
+        if factor.enabled_at is not None:
+            return _start_over()
+        secret = mfa.new_secret()
+        factor.pending_secret_encrypted = mfa.encrypt(secret)
+        factor.save(update_fields=['pending_secret_encrypted', 'updated_at'])
+        return api_success({'secret': secret, 'otpauth_uri': mfa.otpauth_uri(user, secret)})
+
+
+class MfaSetupConfirmView(_MfaView):
+    def post(self, request):
+        """POST /api/auth/mfa/setup/confirm: a good code from the new secret turns it on and signs the admin in."""
+        held, user, problem = _open(request, 'setup')
+        if problem:
+            return problem
+        wait = lockout.is_locked(user.email)
+        if wait:
+            return too_many_attempts(request, user.email, wait)
+        factor = SecondFactor.objects.filter(user=user, enabled_at__isnull=True).exclude(pending_secret_encrypted='').first()
+        if factor is None:
+            return api_error('Please start the set-up again.', 400)
+        if not mfa.check_code(factor, request.data.get('code'), pending=True):
+            return _wrong(request, user, held)
+
+        with transaction.atomic():
+            factor.secret_encrypted = factor.pending_secret_encrypted
+            factor.pending_secret_encrypted = ''
+            factor.enabled_at = timezone.now()
+            factor.save(update_fields=['secret_encrypted', 'pending_secret_encrypted', 'enabled_at', 'updated_at'])
+            codes = mfa.new_recovery_codes(user)
+        lockout.clear(user.email)
+        mfa_challenge.spend(held)
+        record_security_event('mfa_enrolled', request, user=user)
+        log_action(request, 'UPDATE', 'User', user.pk, 'Turned on the second factor', actor=user)
+        return finish_sign_in(request, user, mfa_verified=True, extra={'recovery_codes': codes})

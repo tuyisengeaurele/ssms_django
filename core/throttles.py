@@ -7,6 +7,10 @@ class LoginRateThrottle(AnonRateThrottle):
     scope = 'login'
 
 
+class MfaRateThrottle(AnonRateThrottle):
+    scope = 'mfa'   # second factor codes and set-up, 10 a minute per address
+
+
 class RegisterRateThrottle(AnonRateThrottle):
     scope = 'register'   # 20/minute — see settings.DEFAULT_THROTTLE_RATES
 

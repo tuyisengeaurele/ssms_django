@@ -6,6 +6,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from tests.factories import UserFactory
+from tests.mfa_helpers import sign_in_admin
 from users.models import UserSession
 
 pytestmark = pytest.mark.django_db
@@ -16,7 +17,7 @@ PING = '/api/auth/session/ping'
 
 def sign_in(user):
     client = APIClient()
-    response = client.post(LOGIN, {'email': user.email, 'password': 'Pass1234'}, format='json')
+    response = sign_in_admin(client, user) if user.role == 'ADMIN' else client.post(LOGIN, {'email': user.email, 'password': 'Pass1234'}, format='json')
     client.credentials(HTTP_AUTHORIZATION=f'Bearer {response.json()["data"]["token"]}')
     return client
 

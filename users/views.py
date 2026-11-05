@@ -17,9 +17,10 @@ from core.utils import api_error, api_success, body_field
 from core.validators import validate_new_password
 from logs.security import record_security_event
 
+from . import mfa, mfa_challenge
 from .cookie_utils import REFRESH_COOKIE, clear_refresh_cookie, set_refresh_cookie
 from .email_verification_views import _send_verification_email
-from .models import UserSession
+from .models import Role, UserSession
 from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
 from .sessions import IDLE_MESSAGE, SessionEnded, end_all_but, reissue, revoke, rotate, start_session
 from .signin import finish_sign_in, too_many_attempts
@@ -81,6 +82,11 @@ class LoginView(APIView):
                 return api_error(message, 401)
             return api_error('Please check what you entered and try again.', 422, errors)
         user = serializer.validated_data['user']
+        if user.role == Role.ADMIN:
+            # An admin is not signed in by a password. Nothing is cleared yet either: the failure count is cleared only
+            # when a code is accepted, or someone with the password could keep guessing codes, a few at a time.
+            step = 'code' if mfa.is_enabled(user) else 'setup'
+            return api_success({'mfa': {'step': step, 'challenge': mfa_challenge.issue(user, step)}}, 'One more step to sign in.')
         lockout.clear(email)
         return finish_sign_in(request, user, mfa_verified=False)
 

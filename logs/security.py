@@ -20,6 +20,10 @@ KINDS = {
     'session_revoked': 'Device signed out',
     'session_reused': 'Old sign in cookie used again',
     'session_idle': 'Sign in ended for sitting idle',
+    'mfa_enrolled': 'Authenticator app turned on',
+    'mfa_ok': 'Signed in with a code',
+    'mfa_failed': 'Wrong code at sign in',
+    'mfa_recovery_used': 'Signed in with a recovery code',
     'permission_denied': 'Refused for the role',
     'throttled': 'Slowed down',
 }

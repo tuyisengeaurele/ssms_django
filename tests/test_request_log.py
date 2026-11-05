@@ -9,6 +9,7 @@ from rest_framework.test import APIClient
 
 from logs.models import JobLog, RequestLog, SecurityEvent
 from tests.factories import FarmFactory, UserFactory
+from tests.mfa_helpers import sign_in_admin
 
 pytestmark = pytest.mark.django_db
 
@@ -128,7 +129,7 @@ def test_a_failing_log_never_breaks_the_request(everything):
 def test_the_user_of_a_token_is_known_by_the_time_the_row_is_written(everything):
     user = UserFactory(role='ADMIN')
     client = APIClient()
-    response = client.post('/api/auth/login', {'email': user.email, 'password': 'Pass1234'}, format='json')
+    response = sign_in_admin(client, user)
     client.credentials(HTTP_AUTHORIZATION=f'Bearer {response.json()["data"]["token"]}')
     RequestLog.objects.all().delete()
     client.get('/api/auth/me')

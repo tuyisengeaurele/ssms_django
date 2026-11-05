@@ -6,6 +6,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from tests.factories import UserFactory
+from tests.mfa_helpers import sign_in_admin
 from users.models import UserSession
 
 pytestmark = pytest.mark.django_db
@@ -19,7 +20,10 @@ SESSIONS = '/api/auth/sessions'
 
 def browser(user, **extra):
     client = APIClient()
-    response = client.post(LOGIN, {'email': user.email, 'password': 'Pass1234', **extra}, format='json')
+    if user.role == 'ADMIN':
+        response = sign_in_admin(client, user, **extra)
+    else:
+        response = client.post(LOGIN, {'email': user.email, 'password': 'Pass1234', **extra}, format='json')
     assert response.status_code == 200, response.content
     client.credentials(HTTP_AUTHORIZATION=f'Bearer {response.json()["data"]["token"]}')
     return client
