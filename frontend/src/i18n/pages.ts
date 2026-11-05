@@ -1456,6 +1456,78 @@ export const pageTranslations = {
     "Le serveur se réveille. Cela peut prendre environ une minute. Nous continuons d’essayer.",
     "Seriveri iri maze gukanguka. Bishobora gufata nk’umunota umwe. Turakomeza kugerageza.",
   ),
+
+  // The second step of an admin sign in. French and Kinyarwanda are drafts for native review.
+  adMfaCodeTitle: k("Enter your code", "Saisissez votre code", "Andika kode yawe"),
+  adMfaCodeHint: k(
+    "Open your authenticator app and type the 6 digit code for SSMS.",
+    "Ouvrez votre application d’authentification et saisissez le code à 6 chiffres pour SSMS.",
+    "Fungura porogaramu yawe yemeza umwirondoro, wandike kode y’imibare 6 ya SSMS.",
+  ),
+  adMfaCodeLabel: k("6 digit code", "Code à 6 chiffres", "Kode y’imibare 6"),
+  adMfaRecoveryLabel: k("Recovery code", "Code de récupération", "Kode yo kugarura"),
+  adMfaVerify: k("Verify", "Vérifier", "Emeza"),
+  adMfaVerifying: k("Checking", "Vérification", "Turimo gusuzuma"),
+  adMfaUseRecovery: k("Use a recovery code", "Utiliser un code de récupération", "Koresha kode yo kugarura"),
+  adMfaUseApp: k("Use the app code instead", "Utiliser le code de l’application", "Koresha kode ya porogaramu"),
+  adMfaWrongCode: k(
+    "That code isn't right. Check it and try again.",
+    "Ce code n’est pas correct. Vérifiez-le et réessayez.",
+    "Iyo kode ntabwo ari yo. Ongera urebe, wongere ugerageze.",
+  ),
+  adMfaExpired: k(
+    "That sign in took too long. Please start again.",
+    "Cette connexion a pris trop de temps. Veuillez recommencer.",
+    "Kwinjira byatwaye igihe kinini. Ongera utangire.",
+  ),
+  adMfaSetupTitle: k("Protect your account", "Protégez votre compte", "Rinda konti yawe"),
+  adMfaSetupHint: k(
+    "Admin accounts need a code from an authenticator app. This takes about two minutes.",
+    "Les comptes administrateur demandent un code d’une application d’authentification. Cela prend environ deux minutes.",
+    "Konti z’ubuyobozi zisaba kode ya porogaramu yemeza umwirondoro. Bifata nk’iminota ibiri.",
+  ),
+  adMfaStep1Title: k("Install an app", "Installez une application", "Shyiramo porogaramu"),
+  adMfaStep1Hint: k(
+    "Use Google Authenticator, Microsoft Authenticator or any app that makes 6 digit codes.",
+    "Utilisez Google Authenticator, Microsoft Authenticator ou toute application qui génère des codes à 6 chiffres.",
+    "Koresha Google Authenticator, Microsoft Authenticator cyangwa indi porogaramu itanga kode y’imibare 6.",
+  ),
+  adMfaStep2Title: k("Scan the code", "Scannez le code", "Sikana kode"),
+  adMfaStep2Hint: k(
+    "Scan this square with the app. If you cannot scan it, type this key into the app.",
+    "Scannez ce carré avec l’application. Si vous ne pouvez pas, saisissez cette clé dans l’application.",
+    "Sikanisha iki kare na porogaramu. Niba bidashoboka, andika uyu mubare w’ibanga muri porogaramu.",
+  ),
+  adMfaQrLabel: k("QR code for the authenticator app", "Code QR pour l’application d’authentification", "QR code ya porogaramu yemeza umwirondoro"),
+  adMfaManualKey: k("Key to type", "Clé à saisir", "Umubare w’ibanga wo kwandika"),
+  adMfaStep3Title: k("Type the code", "Saisissez le code", "Andika kode"),
+  adMfaStep3Hint: k(
+    "Type the 6 digit code the app shows now.",
+    "Saisissez le code à 6 chiffres affiché par l’application.",
+    "Andika kode y’imibare 6 igaragara muri porogaramu.",
+  ),
+  adMfaClockHint: k(
+    "If the code is refused, turn on automatic date and time on your phone.",
+    "Si le code est refusé, activez la date et l’heure automatiques sur votre téléphone.",
+    "Niba kode yangwa, shyira ku buryo bwikora itariki n’isaha kuri telefone yawe.",
+  ),
+  adMfaConfirm: k("Turn on", "Activer", "Tangira"),
+  adMfaStep4Title: k("Save your recovery codes", "Enregistrez vos codes de récupération", "Bika kode zawe zo kugarura"),
+  adMfaCodesHint: k(
+    "If you lose your phone, each of these codes lets you in once. They are shown only now. Keep them somewhere safe.",
+    "Si vous perdez votre téléphone, chacun de ces codes vous laisse entrer une fois. Ils ne sont affichés que maintenant. Gardez-les en lieu sûr.",
+    "Nutakaza telefone, buri kode muri izi igufasha kwinjira rimwe. Zigaragara ubu gusa. Zibike ahantu hizewe.",
+  ),
+  adMfaCopy: k("Copy", "Copier", "Kopera"),
+  adMfaCopied: k("Copied", "Copié", "Byakoperewe"),
+  adMfaDownload: k("Download", "Télécharger", "Manura"),
+  adMfaSavedTick: k("I saved these codes", "J’ai enregistré ces codes", "Nabitse izi kode"),
+  adMfaContinue: k("Continue", "Continuer", "Komeza"),
+  adMfaStartError: k(
+    "We could not start the set-up. Please sign in again.",
+    "Nous n’avons pas pu démarrer la configuration. Veuillez vous reconnecter.",
+    "Ntitwashoboye gutangira iyi mikorere. Ongera winjire.",
+  ),
 } satisfies Record<string, Entry>;
 
 export type PageKey = keyof typeof pageTranslations;
