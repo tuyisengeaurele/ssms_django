@@ -107,6 +107,12 @@ def test_the_start_script_takes_its_worker_count_from_the_host():
     assert env_of(render_services()['ssms-api'])['WEB_CONCURRENCY']['value'] == '1'
 
 
+def test_both_services_run_in_europe_next_to_the_database():
+    # Django makes many small queries per request, so an ocean between the API and Supabase would slow every page.
+    for service in render_services().values():
+        assert service['region'] == 'frankfurt'
+
+
 def test_the_signing_keys_are_set_by_hand_so_the_github_jobs_share_them():
     # A key Render generated would differ from the one in the GitHub secrets, and the jobs would disagree with the API.
     api = env_of(render_services()['ssms-api'])

@@ -17,7 +17,7 @@ Secrets (database address, passwords, keys) are typed into the Render, GitHub an
 
 ## 1. Supabase (the database)
 
-1. Create a project. Pick the region closest to the Render region (`oregon` is US West).
+1. Create a project. Pick a European region. Render runs in Frankfurt, so keep the database in Europe too: an ocean between them slows every page.
 2. Choose a database password made of letters and digits only. Special characters must be URL encoded inside the address and cause confusing failures. Save it in a password manager.
 3. Press **Connect** and copy the **Session pooler** string. Use the pooler, not the "Direct connection": the direct address is IPv6 only on the free plan and Render cannot reach it. Do not use Transaction mode (port 6543): Django needs persistent connections.
 4. It looks like `postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`. Put your password in and add `?sslmode=require` at the end. This one string is `DATABASE_URL` everywhere.
