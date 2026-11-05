@@ -113,6 +113,14 @@ def test_both_services_run_in_europe_next_to_the_database():
         assert service['region'] == 'frankfurt'
 
 
+def test_the_signing_keys_are_set_by_hand_so_the_github_jobs_share_them():
+    # A key Render generated would differ from the one in the GitHub secrets, and the jobs would disagree with the API.
+    api = env_of(render_services()['ssms-api'])
+    for key in ('SECRET_KEY', 'JWT_SECRET'):
+        assert api[key].get('sync') is False
+        assert 'generateValue' not in api[key] and 'value' not in api[key]
+
+
 def test_both_services_pin_the_python_version_they_were_tested_with():
     for service in render_services().values():
         assert env_of(service)['PYTHON_VERSION']['value'].count('.') == 2

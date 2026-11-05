@@ -46,7 +46,7 @@ After saving, run **Frequent jobs** by hand from the Actions tab (**Run workflow
 
 1. Merge the deploy branch to `master` first, because Render reads `render.yaml` from the branch you pick.
 2. Render dashboard, **New**, **Blueprint**, pick this repository. Render lists `ssms-api` and `ssms-ai` and asks for the values marked "sync: false".
-3. For `ssms-api`: `DATABASE_URL`, `EMAIL_HOST_PASSWORD`, `AI_SERVICE_SECRET`, and `SENTRY_DSN` if you have one.
+3. For `ssms-api`: `DATABASE_URL`, `SECRET_KEY` and `JWT_SECRET` (the same values as the GitHub secrets), `EMAIL_HOST_PASSWORD`, `AI_SERVICE_SECRET`, and `SENTRY_DSN` if you have one.
 4. For `ssms-ai`: the same `AI_SERVICE_SECRET`, `MODEL_URL`, `MODEL_SHA256`.
 5. Check the real address of each service on its page. If it is not exactly `ssms-api.onrender.com` and `ssms-ai.onrender.com`, change these together: `ALLOWED_HOSTS`, `HEALTH_API_URL` and `AI_SERVICE_URL` in `render.yaml`, the `/api` rewrite and `connect-src` in `frontend/vercel.json`, and the GitHub secrets.
 6. Watch the `ssms-api` log. It runs `migrate` against Supabase, then starts.
