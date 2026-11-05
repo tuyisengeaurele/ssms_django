@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios';
+import { setWaiting, shouldWakeRetry, WAKE_DEADLINE_MS, wakeDelayMs } from './wake';
 import { clearLegacyStorage, endedNotice, forgetSession, getAccessToken, leaveNotice, refreshAccessToken, serverRefusedTheSession } from './session';
 
 const api = axios.create({
@@ -25,10 +26,30 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    setWaiting(false);
+    return res;
+  },
   async (err) => {
-    const originalConfig = err.config as (AxiosRequestConfig & { _retry?: boolean }) | undefined;
+    const originalConfig = err.config as (AxiosRequestConfig & { _retry?: boolean; _wakeStartedAt?: number; _wakeTry?: number }) | undefined;
+
+    // A sleeping free server: try again, up to a deadline, and let the page say so. Never for a write.
+    if (originalConfig && shouldWakeRetry(err)) {
+      const started = originalConfig._wakeStartedAt ?? Date.now();
+      if (Date.now() - started >= WAKE_DEADLINE_MS) {
+        setWaiting(false);
+        return Promise.reject(err);
+      }
+      originalConfig._wakeStartedAt = started;
+      const attempt = originalConfig._wakeTry ?? 0;
+      originalConfig._wakeTry = attempt + 1;
+      setWaiting(true);
+      await sleep(wakeDelayMs(attempt));
+      return api(originalConfig);
+    }
 
     // Only attempt refresh on 401 for non-auth endpoints (avoid refresh loop)
     if (

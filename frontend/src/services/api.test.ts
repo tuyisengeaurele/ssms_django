@@ -1,7 +1,8 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import api, { endSession } from './api';
 import { getAccessToken, hasSessionHint, rememberSession, setAccessToken } from './session';
+import { isWaiting, setWaiting } from './wake';
 
 const post = vi.spyOn(axios, 'post');
 
@@ -166,5 +167,109 @@ describe('When the session cannot be renewed', () => {
     expect(hasSessionHint()).toBe(false);
     expect(localStorage.getItem('ssms_token')).toBeNull();
     expect(localStorage.getItem('ssms_user')).toBeNull();
+  });
+});
+
+describe('While the free server wakes up', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    setWaiting(false);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const okAnswer = (config: InternalAxiosRequestConfig) => ({ data: { ok: true }, status: 200, statusText: 'OK', headers: {}, config });
+  const noAnswer = (config: InternalAxiosRequestConfig) => new AxiosError('Network Error', 'ERR_NETWORK', config);
+  const withStatus = (config: InternalAxiosRequestConfig, status: number) =>
+    new AxiosError('failed', 'ERR_BAD_RESPONSE', config, undefined, { status, data: {}, statusText: '', headers: {}, config });
+
+  it('tries a read again until the server answers, and says so while it waits', async () => {
+    let calls = 0;
+    const adapter = async (config: InternalAxiosRequestConfig) => {
+      calls += 1;
+      if (calls <= 2) throw noAnswer(config);
+      return okAnswer(config);
+    };
+    const result = api.request({ url: '/farms', adapter });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(isWaiting()).toBe(true);
+    await vi.advanceTimersByTimeAsync(2000);
+    await vi.advanceTimersByTimeAsync(3000);
+    expect((await result).data).toEqual({ ok: true });
+    expect(calls).toBe(3);
+    expect(isWaiting()).toBe(false);
+  });
+
+  it.each([502, 503, 504])('treats a %i as a server that is still waking up', async (status) => {
+    let calls = 0;
+    const adapter = async (config: InternalAxiosRequestConfig) => {
+      calls += 1;
+      if (calls === 1) throw withStatus(config, status);
+      return okAnswer(config);
+    };
+    const result = api.request({ url: '/alerts', adapter });
+    await vi.advanceTimersByTimeAsync(2000);
+    expect((await result).data).toEqual({ ok: true });
+    expect(calls).toBe(2);
+  });
+
+  it('tries a sign in again, because nothing was saved by it', async () => {
+    let calls = 0;
+    const adapter = async (config: InternalAxiosRequestConfig) => {
+      calls += 1;
+      if (calls === 1) throw withStatus(config, 503);
+      return okAnswer(config);
+    };
+    const result = api.request({ url: '/auth/login', method: 'post', adapter });
+    await vi.advanceTimersByTimeAsync(2000);
+    expect((await result).data).toEqual({ ok: true });
+    expect(calls).toBe(2);
+  });
+
+  it('never repeats a write, because it could be saved twice', async () => {
+    let calls = 0;
+    const adapter = async (config: InternalAxiosRequestConfig) => {
+      calls += 1;
+      throw noAnswer(config);
+    };
+    await expect(api.request({ url: '/farms', method: 'post', adapter })).rejects.toBeInstanceOf(AxiosError);
+    expect(calls).toBe(1);
+    expect(isWaiting()).toBe(false);
+  });
+
+  it('gives up after about 90 seconds with the usual error, and stops saying it is waiting', async () => {
+    let calls = 0;
+    const adapter = async (config: InternalAxiosRequestConfig) => {
+      calls += 1;
+      throw noAnswer(config);
+    };
+    const settled = api.request({ url: '/farms', adapter }).then(() => 'answered', (error) => error);
+    await vi.advanceTimersByTimeAsync(120_000);
+    expect(await settled).toBeInstanceOf(AxiosError);
+    expect(calls).toBeGreaterThan(3);
+    expect(calls).toBeLessThan(20);
+    expect(isWaiting()).toBe(false);
+  });
+
+  it.each([500, 404, 429])('does not wait on a %i, which is a real answer', async (status) => {
+    let calls = 0;
+    const adapter = async (config: InternalAxiosRequestConfig) => {
+      calls += 1;
+      throw withStatus(config, status);
+    };
+    await expect(api.request({ url: '/farms', adapter })).rejects.toBeInstanceOf(AxiosError);
+    expect(calls).toBe(1);
+    expect(isWaiting()).toBe(false);
+  });
+
+  it('does not repeat a request the page cancelled', async () => {
+    let calls = 0;
+    const adapter = async (config: InternalAxiosRequestConfig) => {
+      calls += 1;
+      throw new AxiosError('canceled', 'ERR_CANCELED', config);
+    };
+    await expect(api.request({ url: '/farms', adapter })).rejects.toBeInstanceOf(AxiosError);
+    expect(calls).toBe(1);
   });
 });

@@ -1450,6 +1450,12 @@ export const pageTranslations = {
   hpCountOne: k("{n} record", "{n} relevé", "Inyandiko {n}"),
   drHistoryCountOne: k("{n} check shown", "{n} contrôle affiché", "Isuzuma {n} ryerekanwe"),
   hvSearchShort: k("Search records", "Rechercher", "Shakisha"),
+
+  wakeBanner: k(
+    "The server is waking up. This can take about a minute. We will keep trying.",
+    "Le serveur se réveille. Cela peut prendre environ une minute. Nous continuons d’essayer.",
+    "Seriveri iri maze gukanguka. Bishobora gufata nk’umunota umwe. Turakomeza kugerageza.",
+  ),
 } satisfies Record<string, Entry>;
 
 export type PageKey = keyof typeof pageTranslations;
