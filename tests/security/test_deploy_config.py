@@ -107,6 +107,12 @@ def test_the_start_script_takes_its_worker_count_from_the_host():
     assert env_of(render_services()['ssms-api'])['WEB_CONCURRENCY']['value'] == '1'
 
 
+def test_both_services_run_in_europe_next_to_the_database():
+    # Django makes many small queries per request, so an ocean between the API and Supabase would slow every page.
+    for service in render_services().values():
+        assert service['region'] == 'frankfurt'
+
+
 def test_both_services_pin_the_python_version_they_were_tested_with():
     for service in render_services().values():
         assert env_of(service)['PYTHON_VERSION']['value'].count('.') == 2
