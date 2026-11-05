@@ -1,5 +1,22 @@
 # Changelog
 
+## System health with history, uptime and test buttons
+
+### Checked
+- Backend and frontend suites (numbers in the pull request). New tests cover uptime with hand built rows and gaps, each new check, the command, the history API, every test button with the outside services faked, the throttle and the audit entry, and the Health page with its refresh timer and three languages.
+- In a real browser as a throwaway admin (deleted, and the rows it wrote removed from the dev database): ten cards, the trend line and the status row, uptime figures, the note, and a phone width with one column and no sideways scroll. I pressed every test button for real: the database write and the device intake worked, the email test went out, photo storage and the disease check failed here for local reasons and said so in words.
+- **Not checked:** the outside monitor and the health cron on a real host, the website and web API checks against real addresses, French and Kinyarwanda on screen (the Kinyarwanda is a draft), and the storage test against your real Cloudinary account over time.
+- Pressing the email test on my throwaway admin sent a real message through the SMTP account in `.env` to an address that does not exist (`example.invalid`), so a bounce notice may reach that mailbox.
+- Pressing the storage test uploaded 1 pixel to your Cloudinary account, under `ssms/health-test`. An unsigned upload cannot be deleted from here. Delete the folder in the Cloudinary dashboard if you like.
+
+### What changed
+- **History.** `run_health_checks` (every 5 minutes, in the new `ssms-health-check` cron in `render.yaml`) writes one row per service. 30 days, pruned by `prune_logs`. Migration `logs.0002`.
+- **Ten services,** up from six: web API, database, disease check, email, error monitoring, photo storage, sensors, scheduled jobs (a nightly command finished in the last 26 hours), the live alert stream (opened with a ticket, first line read) and the website (a HEAD request). A check that breaks is a problem for its own service and never stops the others. The live alert stream now says it is connected as its first line.
+- **Uptime** over 24 hours, 7 and 30 days, from the rows. No rows means unknown, never down, and a service that is not set up is counted neither way. Each figure says how many checks it is built from. `GET /api/admin/health/history`.
+- **Test buttons** for email (to the admin who pressed it), photo storage, the disease check, a database write (rolled back) and the device intake (a throwaway farm, room and device, rolled back, no alert). `POST /api/admin/health/tests/<name>`: admins only, 5 a minute, written in the audit log, answers in a plain code the screen puts into words. Nothing touches a farmer's data.
+- **Health tab.** A card per service: status in words, the answer time over the last 24 hours as a line (or a row of checks, with the same facts in words), uptime figures, a Run test button and its result. It refreshes by itself every minute while the page is on screen.
+- Settings: `HEALTH_API_URL`, `HEALTH_LOG_KEEP_DAYS`, `SCHEDULE_STALE_HOURS`. The deploy checklist now asks for an outside monitor on `/api/health`.
+
 ## Four logs and a reference on every answer
 
 ### Checked
