@@ -6,7 +6,7 @@ Work through this top to bottom for every deploy, including a rehearsal on a tes
 
 ## 1. Decide before you start
 
-- **One site or two?** The refresh cookie is `SameSite=Lax`. A browser only sends it when the website and the API are the same site. `app.example.rw` and `api.example.rw` are one site. `ssms.vercel.app` and `ssms-api.onrender.com` are two, and everyone would be signed out every 15 minutes. The site answers this with the `/api` forward in `frontend/vercel.json`: the browser only talks to the Vercel address.
+- **One site or two?** The refresh cookie is `SameSite=Lax`. A browser only sends it when the website and the API are the same site. `app.example.rw` and `api.example.rw` are one site. `ssms.vercel.app` and your Render API address are two, and everyone would be signed out every 15 minutes. The site answers this with the `/api` forward in `frontend/vercel.json`: the browser only talks to the Vercel address.
 - **Real data or demo data?** A test site gets demo data only (`seed_demo`). Real farmer data never goes to a test site.
 
 ## 2. Settings on the API host
@@ -68,7 +68,7 @@ These are written down so nobody is surprised. Each is on the backlog.
 
 - Farmers have no idle limit unless they tick "This is a shared computer" at sign in (30 minutes). Admins have 15 minutes and supervisors 30. `SESSION_IDLE_FARMER_MINUTES` sets a limit for every farmer.
 - No second factor for admin accounts.
-- The Content Security Policy in `frontend/vercel.json` is report only. Switch the header name to `Content-Security-Policy` after the real domain is set and the browser console is clean on the deployed site for every role. The API address in `connect-src` is `ssms-api.onrender.com` from `render.yaml`: change both together, or drop it if the host proxies `/api` so the site only talks to itself. Map tiles, the bot check, error reports and photo uploads were not exercised against the policy.
+- The Content Security Policy in `frontend/vercel.json` is report only. Switch the header name to `Content-Security-Policy` after the real domain is set and the browser console is clean on the deployed site for every role. The API address in `connect-src` is the `ALLOWED_HOSTS` value in `render.yaml`: change both together, or drop it if the host proxies `/api` so the site only talks to itself. Map tiles, the bot check, error reports and photo uploads were not exercised against the policy.
 - The sensor simulation workflow in `.github/workflows` writes simulated readings into whatever database its secrets point at. It runs only when someone presses the button. Never press it on a database with real farm data.
 
 ## 6. If it goes wrong

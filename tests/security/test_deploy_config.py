@@ -164,8 +164,24 @@ def test_the_job_workflows_take_every_secret_from_github_and_write_none():
         assert 'concurrency:' in text
 
 
+def api_host():
+    return env_of(render_services()['ssms-api'])['ALLOWED_HOSTS']['value']
+
+
 def test_the_website_host_sends_api_calls_to_the_api_service_before_the_page_fallback():
     import json
     rewrites = json.loads((ROOT / 'frontend' / 'vercel.json').read_text(encoding='utf-8'))['rewrites']
-    assert rewrites[0] == {'source': '/api/:path*', 'destination': 'https://ssms-api.onrender.com/api/:path*'}
+    assert rewrites[0] == {'source': '/api/:path*', 'destination': f'https://{api_host()}/api/:path*'}
     assert rewrites[-1]['destination'] == '/index.html'
+
+
+def test_the_api_is_named_by_one_address_everywhere():
+    api = env_of(render_services()['ssms-api'])
+    assert api['HEALTH_API_URL']['value'] == f'https://{api_host()}'
+
+
+def test_the_api_address_is_ours_and_not_the_bare_name_somebody_else_holds():
+    # Render gave ssms-api to another account, so ours carries a suffix. Pointing at the bare name would send
+    # every API call, sign in included, to a stranger.
+    assert api_host() != 'ssms-api.onrender.com'
+    assert api_host().startswith('ssms-api-') and api_host().endswith('.onrender.com')
