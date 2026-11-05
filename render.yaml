@@ -33,7 +33,7 @@ services:
 
       # ── Django core ──────────────────────────────────────────────────────────
       - key: SECRET_KEY
-        generateValue: true
+        sync: false    # the same value as the GitHub secret of this name
 
       - key: DEBUG
         value: false
@@ -50,7 +50,7 @@ services:
 
       # ── JWT ─────────────────────────────────────────────────────────────────
       - key: JWT_SECRET
-        generateValue: true
+        sync: false    # the same value as the GitHub secret of this name
 
       # Two hops sit in front of the API: Vercel forwards the call and Render's load balancer receives it.
       # Without this every visitor shares one address and one rate limit.
