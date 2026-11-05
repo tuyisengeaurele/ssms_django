@@ -1,10 +1,12 @@
 # Deploy checklist
 
+The step by step setup for Vercel, Render, Supabase and GitHub is in [deploy-runbook.md](deploy-runbook.md). This list is what to confirm on every deploy.
+
 Work through this top to bottom for every deploy, including a rehearsal on a test site. Tick nothing you have not seen with your own eyes.
 
 ## 1. Decide before you start
 
-- **One site or two?** The refresh cookie is `SameSite=Lax`. A browser only sends it when the website and the API are the same site. `app.example.rw` and `api.example.rw` are one site. `ssms.vercel.app` and `ssms-api.onrender.com` are two, and everyone would be signed out every 15 minutes. Fix it with a shared domain, or by making the host proxy `/api` so the browser only talks to one address.
+- **One site or two?** The refresh cookie is `SameSite=Lax`. A browser only sends it when the website and the API are the same site. `app.example.rw` and `api.example.rw` are one site. `ssms.vercel.app` and `ssms-api.onrender.com` are two, and everyone would be signed out every 15 minutes. The site answers this with the `/api` forward in `frontend/vercel.json`: the browser only talks to the Vercel address.
 - **Real data or demo data?** A test site gets demo data only (`seed_demo`). Real farmer data never goes to a test site.
 
 ## 2. Settings on the API host
@@ -16,15 +18,15 @@ Work through this top to bottom for every deploy, including a rehearsal on a tes
 | `DATABASE_URL` | the host's database, password rotated |
 | `ALLOWED_HOSTS` | the API's own address |
 | `CORS_ALLOWED_ORIGINS`, `FRONTEND_URL` | the website address, https |
-| `TRUSTED_PROXY_COUNT` | `1` behind one host proxy, otherwise every visitor shares one address |
+| `TRUSTED_PROXY_COUNT` | `2` with the Vercel forward and Render in front (one proxy, `1`). Wrong values make every visitor share one address, so read the address in the audit log |
 | `AI_SERVICE_URL`, `AI_SERVICE_SECRET` | same secret on both services |
 | `SENTRY_DSN` | set, so errors reach someone |
 | `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | set, or switch the backend to console on purpose |
-| `HEALTH_API_URL` | the API's own public address, so the health check can ask it from outside. Set it on the web service and on the health cron |
+| `HEALTH_API_URL` | the API's own public address, so the health check can ask it from outside. Set it on the web service and as a GitHub secret |
 | `LOG_LEVEL` | `INFO` (default). Logs are one JSON line each, with the request reference |
 | `REQUEST_LOG_SAMPLE_RATE` | `0.05` (default): every failed request is logged, and this share of the good ones |
 
-Scheduled jobs: `prune_logs` nightly (the nightly cron in `render.yaml` runs it), `mark_offline_devices` every few minutes, and `run_health_checks` with `check_log_bursts` every 5 minutes (the `ssms-health-check` cron in `render.yaml`). A scheduler that stopped shows in the System page, Logs, Jobs and devices: each command writes when it starts and ends.
+Scheduled jobs run from GitHub Actions, not Render: `jobs-frequent.yml` every 5 minutes (`run_health_checks --skip aiService`, `check_log_bursts`, `mark_offline_devices`) and `jobs-nightly.yml` at 02:00 UTC (`cleanup_sensor_readings`, `prune_sessions`, `prune_logs`). GitHub may start a run a few minutes late, and emails the repository owner when a run fails. A scheduler that stopped shows in the System page, Logs, Jobs and devices: each command writes when it starts and ends.
 
 `start.sh` runs migrations, creates the cache table for the rate limits and starts the API under ASGI. Read its first lines of output in the host's log.
 
@@ -67,7 +69,7 @@ These are written down so nobody is surprised. Each is on the backlog.
 - Farmers have no idle limit unless they tick "This is a shared computer" at sign in (30 minutes). Admins have 15 minutes and supervisors 30. `SESSION_IDLE_FARMER_MINUTES` sets a limit for every farmer.
 - No second factor for admin accounts.
 - The Content Security Policy in `frontend/vercel.json` is report only. Switch the header name to `Content-Security-Policy` after the real domain is set and the browser console is clean on the deployed site for every role. The API address in `connect-src` is `ssms-api.onrender.com` from `render.yaml`: change both together, or drop it if the host proxies `/api` so the site only talks to itself. Map tiles, the bot check, error reports and photo uploads were not exercised against the policy.
-- The daily sensor simulation workflow in `.github/workflows` writes simulated readings into whatever database its secrets point at. Disable it for a live site.
+- The sensor simulation workflow in `.github/workflows` writes simulated readings into whatever database its secrets point at. It runs only when someone presses the button. Never press it on a database with real farm data.
 
 ## 6. If it goes wrong
 
