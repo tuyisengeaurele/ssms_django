@@ -83,3 +83,6 @@ backups/
 
 # Test environment for the AI service
 .venv/
+
+# Access tokens for the load test open real accounts. Never commit them.
+load_tokens.json
