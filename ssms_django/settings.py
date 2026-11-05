@@ -94,9 +94,19 @@ _DATABASE_URL = config('DATABASE_URL', default='')
 # Connections are closed at the end of each request. The API runs under ASGI, where every request has its own
 # thread, so a connection kept for reuse is never reused and nothing closes it. They pile up until the host
 # refuses more (Supabase's session pooler allows 15).
+#
+# On a host, a small pool shares a few connections between requests, so each request does not pay for a new one.
+# min_size is 1 because management commands and the GitHub jobs load these settings too, and Django's default of 4
+# would open four connections for every command. One API copy takes at most DB_POOL_MAX, and a deploy briefly runs
+# two copies, which stays well under the limit of 15. The local branch below is not pooled.
 if _DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.parse(_DATABASE_URL, conn_max_age=0)
+    }
+    DATABASES['default'].setdefault('OPTIONS', {})['pool'] = {
+        'min_size': 1,
+        'max_size': config('DB_POOL_MAX', default=4, cast=int),
+        'timeout': 10,
     }
 else:
     DATABASES = {
