@@ -1,5 +1,4 @@
 import logging
-import math
 
 from django.contrib.auth import authenticate
 from rest_framework.exceptions import ValidationError as DRFValidationError
@@ -23,6 +22,7 @@ from .email_verification_views import _send_verification_email
 from .models import UserSession
 from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
 from .sessions import IDLE_MESSAGE, SessionEnded, end_all_but, reissue, revoke, rotate, start_session
+from .signin import finish_sign_in, too_many_attempts
 
 logger = logging.getLogger(__name__)
 
@@ -65,10 +65,7 @@ class LoginView(APIView):
 
         wait = lockout.is_locked(email) if email else 0
         if wait:
-            minutes = max(1, math.ceil(wait / 60))
-            unit = 'minute' if minutes == 1 else 'minutes'
-            record_security_event('lockout', request, detail=email)
-            return api_error(f'Too many attempts. Please try again in {minutes} {unit}.', 429)
+            return too_many_attempts(request, email, wait)
 
         serializer = LoginSerializer(data=request.data, context={'request': request})
         if not serializer.is_valid():
@@ -85,17 +82,7 @@ class LoginView(APIView):
             return api_error('Please check what you entered and try again.', 422, errors)
         user = serializer.validated_data['user']
         lockout.clear(email)
-        # Only a real tick counts. Text such as "yes" or a number is not one.
-        shared = request.data.get('shared_device', request.data.get('sharedDevice')) is True
-        session, access, refresh = start_session(request, user, request.data.get('device'), shared)
-        record_security_event('login_ok', request, user=user, detail=session.device_label)
-        log_action(request, 'LOGIN', 'User', user.pk, f'Login: {user.email}', actor=user)
-        response = api_success(
-            {'user': UserSerializer(user).data, 'token': access},
-            'Logged in successfully.',
-        )
-        set_refresh_cookie(response, refresh)
-        return response
+        return finish_sign_in(request, user, mfa_verified=False)
 
 
 class ProfileView(APIView):
