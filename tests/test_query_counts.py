@@ -31,6 +31,7 @@ CASES = [
     ('SUPERVISOR', '/api/farms', 2),
     ('SUPERVISOR', '/api/batches/active', 2),
     ('ADMIN', '/api/farms', 2),
+    ('ADMIN', '/api/admin/users', 2),
     ('ADMIN', '/api/cooperatives', 1),
     ('SUPERVISOR', '/api/team/farmers', 2),
 ]
