@@ -2,6 +2,10 @@ import { useEffect, useState, FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authService } from '../../services/auth.service';
 import { collectDeviceHints } from '../../services/clientHints';
+import MfaCodeStep from '../../components/auth/MfaCodeStep';
+import MfaSetup from '../../components/auth/MfaSetup';
+import type { SignInDetails } from '../../services/mfa.service';
+import { isMfaRequired, type MfaRequired, type User } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
@@ -50,6 +54,9 @@ export default function LoginPage() {
   }, []);
 
   const [shared, setShared] = useState(false);
+  // An admin's password is only the first step. This holds the next step and what the sign in needs to carry over.
+  const [second, setSecond] = useState<MfaRequired['mfa'] | null>(null);
+  const [carried, setCarried] = useState<SignInDetails>({});
 
   const forgetUnverified = () => {
     setUnverified(false);
@@ -70,6 +77,20 @@ export default function LoginPage() {
     }
   };
 
+  const finishSignIn = (user: User, token: string) => {
+    login(user, token);
+    // Coming back from an invitation link, the person returns to it. Only that kind of address is followed.
+    const next = params.get('next') ?? '';
+    const path = /^\/join\/[A-Za-z0-9_-]+$/.test(next) ? next : homePathFor(user.role);
+    navigate(path, { replace: true });
+  };
+
+  /** The challenge is gone. Back to the password step, with what was typed still there, and the reason. */
+  const backToPassword = (message: string) => {
+    setSecond(null);
+    setError(message);
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
@@ -79,12 +100,13 @@ export default function LoginPage() {
       // The browser may say which phone this is. A sign in never waits long for it, and never fails because of it.
       const device = await collectDeviceHints().catch(() => ({ installed: false }));
       const res = await authService.login({ email, password, device, sharedDevice: shared });
-      const { user, token } = res.data.data;
-      login(user, token);
-      // Coming back from an invitation link, the person returns to it. Only that kind of address is followed.
-      const next = params.get('next') ?? '';
-      const path = /^\/join\/[A-Za-z0-9_-]+$/.test(next) ? next : homePathFor(user.role);
-      navigate(path, { replace: true });
+      const data = res.data.data;
+      if (isMfaRequired(data)) {
+        setCarried({ device, sharedDevice: shared });
+        setSecond(data.mfa);
+        return;
+      }
+      finishSignIn(data.user, data.token);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || '';
       if (msg === 'email_not_verified') {
@@ -96,6 +118,19 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  if (second) {
+    const setup = second.step === 'setup';
+    return (
+      <AuthShell title={t(setup ? 'adMfaSetupTitle' : 'adMfaCodeTitle')} subtitle={setup ? undefined : t('adMfaCodeHint')}>
+        {setup ? (
+          <MfaSetup challenge={second.challenge} {...carried} onSignedIn={finishSignIn} onExpired={backToPassword} />
+        ) : (
+          <MfaCodeStep challenge={second.challenge} {...carried} onSignedIn={finishSignIn} onExpired={backToPassword} />
+        )}
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell title={t('loginWelcome')} subtitle={t('loginSubtitle')}>

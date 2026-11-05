@@ -17,6 +17,9 @@ const api = vi.hoisted(() => ({
 }));
 
 vi.mock('../../services/auth.service', () => ({ authService: api }));
+const mfa = vi.hoisted(() => ({ verify: vi.fn(), setupStart: vi.fn(), setupConfirm: vi.fn() }));
+vi.mock('../../services/mfa.service', () => ({ mfaService: mfa }));
+vi.mock('qrcode.react', () => ({ QRCodeSVG: ({ value }: { value: string }) => <svg data-testid="qr" data-value={value} /> }));
 const hints = vi.hoisted(() => ({ collectDeviceHints: vi.fn() }));
 vi.mock('../../services/clientHints', () => hints);
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ login }) }));
@@ -48,9 +51,9 @@ function renderAt(path: string, page: JSX.Element, route: string) {
   );
 }
 
-function apiError(message: string) {
+function apiError(message: string, more: object = {}) {
   return new AxiosError('failed', '400', undefined, undefined, {
-    data: { message },
+    data: { message, ...more },
     status: 400,
     statusText: 'Bad Request',
     headers: {},
@@ -91,6 +94,92 @@ describe('Login page', () => {
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/supervisor'));
     expect(api.login).toHaveBeenCalledWith({ email: 'a@b.rw', password: 'Secret123', device: { installed: false }, sharedDevice: false });
     expect(login).toHaveBeenCalledWith({ role: 'SUPERVISOR' }, 'abc');
+  });
+
+  describe('an admin, whose password is only the first step', () => {
+    const ADMIN = { id: 'u1', email: 'boss@example.rw', role: 'ADMIN' };
+
+    const passwordStep = async (step: 'code' | 'setup') => {
+      api.login.mockResolvedValue({ data: { data: { mfa: { step, challenge: 'chal-1' } } } });
+      open();
+      fill('Email address', 'boss@example.rw');
+      fill('Password', 'Secret123');
+      fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    };
+
+    it('is asked for a code and is not signed in yet', async () => {
+      await passwordStep('code');
+      expect(await screen.findByLabelText('6 digit code')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: 'Enter your code' })).toBeInTheDocument();
+      expect(login).not.toHaveBeenCalled();
+    });
+
+    it('is signed in with the code and lands on the admin dashboard', async () => {
+      mfa.verify.mockResolvedValue({ data: { data: { user: ADMIN, token: 'jwt.token' } } });
+      await passwordStep('code');
+      fireEvent.change(await screen.findByLabelText('6 digit code'), { target: { value: '123456' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
+      await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/admin'));
+      expect(login).toHaveBeenCalledWith(ADMIN, 'jwt.token');
+      expect(mfa.verify).toHaveBeenCalledWith({ challenge: 'chal-1', code: '123456', device: { installed: false }, sharedDevice: false });
+    });
+
+    it('keeps the shared computer tick for the second step', async () => {
+      mfa.verify.mockResolvedValue({ data: { data: { user: ADMIN, token: 't' } } });
+      api.login.mockResolvedValue({ data: { data: { mfa: { step: 'code', challenge: 'chal-1' } } } });
+      open();
+      fill('Email address', 'boss@example.rw');
+      fill('Password', 'Secret123');
+      fireEvent.click(screen.getByRole('checkbox', { name: /shared computer/i }));
+      fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+      fireEvent.change(await screen.findByLabelText('6 digit code'), { target: { value: '123456' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
+      await waitFor(() => expect(mfa.verify).toHaveBeenCalled());
+      expect(mfa.verify).toHaveBeenCalledWith(expect.objectContaining({ sharedDevice: true }));
+    });
+
+    it('is shown the set-up when the authenticator app is not on yet', async () => {
+      mfa.setupStart.mockResolvedValue({ data: { data: { secret: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567', otpauthUri: 'otpauth://totp/SSMS:x' } } });
+      await passwordStep('setup');
+      expect(await screen.findByRole('heading', { level: 1, name: 'Protect your account' })).toBeInTheDocument();
+      expect((await screen.findByTestId('qr')).getAttribute('data-value')).toBe('otpauth://totp/SSMS:x');
+      expect(mfa.setupStart).toHaveBeenCalledWith('chal-1');
+      expect(login).not.toHaveBeenCalled();
+    });
+
+    it('goes back to the password step, with what was typed, when the sign in took too long', async () => {
+      mfa.verify.mockRejectedValue(apiError('That sign in took too long.', { reason: 'challenge' }));
+      await passwordStep('code');
+      fireEvent.change(await screen.findByLabelText('6 digit code'), { target: { value: '123456' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
+      expect(await screen.findByRole('alert')).toHaveTextContent('That sign in took too long. Please start again.');
+      expect(screen.getByLabelText('Email address')).toHaveValue('boss@example.rw');
+      expect(screen.getByLabelText('Password')).toHaveValue('Secret123');
+      expect(login).not.toHaveBeenCalled();
+    });
+
+    it('comes back to an invitation link after the code, as after a password', async () => {
+      mfa.verify.mockResolvedValue({ data: { data: { user: { ...ADMIN, role: 'FARMER' }, token: 't' } } });
+      api.login.mockResolvedValue({ data: { data: { mfa: { step: 'code', challenge: 'chal-1' } } } });
+      renderAt('/login?next=/join/abc123', <LoginPage />, '/login');
+      fill('Email address', 'boss@example.rw');
+      fill('Password', 'Secret123');
+      fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+      fireEvent.change(await screen.findByLabelText('6 digit code'), { target: { value: '123456' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
+      await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/join/abc123'));
+    });
+
+    it('is asked for the code in French when the person chose French', async () => {
+      localStorage.setItem('ssms_locale', 'fr');
+      api.login.mockResolvedValue({ data: { data: { mfa: { step: 'code', challenge: 'chal-1' } } } });
+      open();
+      fill('Adresse e-mail', 'boss@example.rw');
+      fill('Mot de passe', 'Secret123');
+      fireEvent.click(screen.getByRole('button', { name: 'Se connecter' }));
+      expect(await screen.findByLabelText('Code à 6 chiffres')).toBeInTheDocument();
+    });
   });
 
   it('offers a tick for a shared computer, off until the person turns it on', () => {
