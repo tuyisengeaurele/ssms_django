@@ -42,7 +42,16 @@ export function forgetSession() {
   }
 }
 
-export type EndedNotice = 'session_ended' | 'session_idle';
+/**
+ * Only a refusal ends a sign in. No answer, or a 5xx from a host that is waking up or restarting, says nothing
+ * about the session, so the person keeps it and tries again.
+ */
+export function serverRefusedTheSession(error: unknown): boolean {
+  const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+  return status === 401 || status === 403;
+}
+
+export type EndedNotice ='session_ended' | 'session_idle';
 
 /** Why a sign in could not be renewed, from the server's answer. Sitting idle gets its own, kinder, note. */
 export function endedNotice(error: unknown): EndedNotice {

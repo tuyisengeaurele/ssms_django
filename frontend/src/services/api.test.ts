@@ -129,6 +129,14 @@ describe('When the access token has run out', () => {
     expect(sessionStorage.getItem('ssms_notice')).toBe('session_idle');
   });
 
+  it.each([500, 502, 503, 504])('keeps the session when the renewal got a %i, because a host that is waking or restarting says nothing about it', async (status) => {
+    rememberSession();
+    post.mockRejectedValue(new AxiosError('bad gateway', 'ERR_BAD_RESPONSE', undefined, undefined, { status, data: {}, statusText: '', headers: {}, config: {} as InternalAxiosRequestConfig }));
+    await expect(api.request({ url: '/farms', adapter: answersWith401ThenOk([]) })).rejects.toBeInstanceOf(AxiosError);
+    expect(hasSessionHint()).toBe(true);
+    expect(sessionStorage.getItem('ssms_notice')).toBeNull();
+  });
+
   it('keeps the session when the renewal got no answer at all, because that says nothing about it', async () => {
     rememberSession();
     post.mockRejectedValue(new AxiosError('Network Error', 'ERR_NETWORK'));
