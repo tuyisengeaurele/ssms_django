@@ -24,6 +24,8 @@ KINDS = {
     'mfa_ok': 'Signed in with a code',
     'mfa_failed': 'Wrong code at sign in',
     'mfa_recovery_used': 'Signed in with a recovery code',
+    'mfa_recovery_regenerated': 'New recovery codes made',
+    'mfa_reset': 'Authenticator app reset',
     'permission_denied': 'Refused for the role',
     'throttled': 'Slowed down',
 }

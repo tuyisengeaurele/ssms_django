@@ -9,37 +9,18 @@ import pytest
 from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.test import APIClient
-from rest_framework_simplejwt.tokens import AccessToken
 
 from core import lockout
 from core.mfa_guard import require_recent_mfa
 from logs.models import SecurityEvent
 from tests.factories import UserFactory
-from tests.mfa_helpers import PASSWORD, enable_factor, sign_in_admin, totp
+from tests.mfa_helpers import PASSWORD, client_with, enable_factor, session_for, sign_in_admin, totp
 from users.models import SecondFactor, UserSession
 
 pytestmark = pytest.mark.django_db
 
 ME = '/api/auth/me'
 STEP_UP = '/api/auth/mfa/step-up'
-
-
-def session_for(user, verified_minutes_ago=None):
-    now = timezone.now()
-    verified = None if verified_minutes_ago is None else now - timedelta(minutes=verified_minutes_ago)
-    return UserSession.objects.create(
-        user=user, last_used_at=now, last_activity_at=now, expires_at=UserSession.ends_at(now), mfa_verified_at=verified,
-    )
-
-
-def client_with(user, session=None):
-    """A client holding a real access token. `session` None makes a token from before sessions existed (no `sid`)."""
-    token = AccessToken.for_user(user)
-    if session is not None:
-        token['sid'] = session.id
-    client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
-    return client
 
 
 # ── the second lock ─────────────────────────────────────────────────────────────────────────

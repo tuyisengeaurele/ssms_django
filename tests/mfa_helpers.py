@@ -1,11 +1,14 @@
 """Shared by tests that need an admin signed in. An admin signs in with a password and then a code, so a test does both."""
 import time
+from datetime import timedelta
 
 import pyotp
 from django.utils import timezone
+from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import AccessToken
 
 from users import mfa
-from users.models import SecondFactor
+from users.models import SecondFactor, UserSession
 
 PASSWORD = 'Pass1234'   # what UserFactory gives every user
 
@@ -35,3 +38,22 @@ def sign_in_admin(client, user, secret=None, **body):
     first = client.post('/api/auth/login', {'email': user.email, 'password': PASSWORD}, format='json')
     challenge = first.json()['data']['mfa']['challenge']
     return client.post('/api/auth/mfa/verify', {'challenge': challenge, 'code': totp(secret), **body}, format='json')
+
+
+def session_for(user, verified_minutes_ago=None):
+    """A live session. `verified_minutes_ago` None means a code was never checked in it."""
+    now = timezone.now()
+    verified = None if verified_minutes_ago is None else now - timedelta(minutes=verified_minutes_ago)
+    return UserSession.objects.create(
+        user=user, last_used_at=now, last_activity_at=now, expires_at=UserSession.ends_at(now), mfa_verified_at=verified,
+    )
+
+
+def client_with(user, session=None):
+    """A client holding a real access token. `session` None makes a token from before sessions existed (no `sid`)."""
+    token = AccessToken.for_user(user)
+    if session is not None:
+        token['sid'] = session.id
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
+    return client

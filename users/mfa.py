@@ -117,3 +117,14 @@ def reset(user) -> None:
     with transaction.atomic():
         SecondFactor.objects.filter(user=user).delete()
         RecoveryCode.objects.filter(user=user).delete()
+
+
+def reset_and_sign_out(user) -> int:
+    """Reset the second factor and sign every device of the person out. Returns how many sessions it ended.
+
+    An admin whose app is gone cannot keep a session, because the API refuses an admin session that did not pass a code,
+    and their next sign in leads to set-up.
+    """
+    from .sessions import end_all_but
+    reset(user)
+    return end_all_but(user, None, 'mfa_reset')

@@ -39,6 +39,7 @@ REFUSES_ALLOWED_ROLE = {
     ('TeamFarmerListView', 'get'): 'a supervisor with no cooperative',
     ('TeamFarmerDetailView', 'delete'): 'a supervisor with no cooperative',
     ('AlertCommentDetailView', 'delete'): 'only the author or an admin may take a comment away',
+    ('AdminMfaResetView', 'post'): 'an admin whose sign in has no recent code from the authenticator app is asked for one first',
 }
 
 
