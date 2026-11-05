@@ -189,7 +189,7 @@ export default function SupervisorDashboard() {
         <Panel
           title={`${t('svBatchesTitle')} (${batches.length})`}
           flush
-          actions={<Link to="/farms" className="btn btn-ghost btn-sm">{t('svViewFarms')}<Icon name="forward" size={14} /></Link>}
+          actions={<Link to="/batches/compare" className="btn btn-ghost btn-sm">{t('ptCompare')}<Icon name="forward" size={14} /></Link>}
         >
           {batches.length === 0 ? (
             <EmptyState icon={<Icon name="batches" size={22} />} title={t('svNoBatches')} />
