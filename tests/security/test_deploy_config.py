@@ -257,3 +257,36 @@ def test_the_frequent_jobs_ping_the_api_only_in_the_working_window():
     _, commands = workflow('jobs-frequent.yml')
     assert '--awake-hours-utc 4-18' in commands
     assert 'check_log_bursts' in commands and 'mark_offline_devices' in commands
+
+
+# ── a deploy restarts the service, so only changes that reach it should start one ───────────
+
+def redeploys(service, changed):
+    """Mimics Render's rule: a changed file starts a deploy if it matches `paths` (when given) and not `ignoredPaths`."""
+    from fnmatch import fnmatch
+    rules = service.get('buildFilter', {})
+    paths, ignored = rules.get('paths'), rules.get('ignoredPaths', [])
+    if paths and not any(fnmatch(changed, p) for p in paths):
+        return False
+    return not any(fnmatch(changed, p) for p in ignored)
+
+
+def test_the_api_is_not_redeployed_for_a_website_docs_test_or_workflow_change():
+    # Each restart briefly runs two copies of the API against a small database pool, so a change that cannot affect it
+    # should not cause one.
+    api = render_services()['ssms-api']
+    for path in ('frontend/src/index.css', 'docs/deploy-runbook.md', 'tests/test_x.py', '.github/workflows/jobs-frequent.yml',
+                 'scripts/load_test.py', 'CHANGELOG.md', 'ai_service/main.py'):
+        assert not redeploys(api, path), path
+
+
+def test_the_api_is_redeployed_for_code_dependencies_and_the_manifest():
+    api = render_services()['ssms-api']
+    for path in ('users/models.py', 'ssms_django/settings.py', 'requirements.txt', 'start.sh', 'render.yaml'):
+        assert redeploys(api, path), path
+
+
+def test_the_disease_service_is_redeployed_only_for_its_own_folder():
+    ai = render_services()['ssms-ai']
+    assert redeploys(ai, 'ai_service/main.py')
+    assert not redeploys(ai, 'users/models.py')
