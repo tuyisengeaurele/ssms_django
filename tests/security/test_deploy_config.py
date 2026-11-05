@@ -51,9 +51,10 @@ def test_the_warning_reaches_the_deploy_check():
 
 # ── the Render manifest ─────────────────────────────────────────────────────────────────────
 
-def test_the_api_service_trusts_the_one_proxy_in_front_of_it():
+def test_the_api_service_trusts_the_two_proxies_in_front_of_it():
+    # The website host forwards /api to Render, so the caller passes through two hops before the API sees it.
     api = env_of(render_services()['ssms-api'])
-    assert api['TRUSTED_PROXY_COUNT']['value'] == '1'
+    assert api['TRUSTED_PROXY_COUNT']['value'] == '2'
 
 
 def test_the_api_service_has_the_shared_secret_for_the_disease_check_service():
@@ -74,5 +75,78 @@ def test_the_api_service_starts_with_the_start_script():
     assert render_services()['ssms-api']['startCommand'].strip() == 'bash start.sh'
 
 
-def test_the_nightly_job_also_prunes_old_sessions():
-    assert 'prune_sessions' in render_services()['ssms-sensor-cleanup']['startCommand']
+# ── Render runs the two web services; the database and the scheduled jobs live elsewhere ──
+
+def test_render_runs_only_the_api_and_the_disease_check_service():
+    services = render_services()
+    assert set(services) == {'ssms-api', 'ssms-ai'}
+    assert all(service['type'] == 'web' for service in services.values())
+
+
+def test_the_database_is_not_on_render_and_its_address_is_set_by_hand():
+    manifest = (ROOT / 'render.yaml').read_text(encoding='utf-8')
+    assert 'fromDatabase' not in manifest and 'pserv' not in manifest
+    url = env_of(render_services()['ssms-api'])['DATABASE_URL']
+    assert url.get('sync') is False and 'value' not in url
+
+
+def test_the_disease_check_service_has_the_same_shared_secret_to_set_by_hand():
+    secret = env_of(render_services()['ssms-ai'])['AI_SERVICE_SECRET']
+    assert secret.get('sync') is False and 'value' not in secret
+
+
+def test_the_disease_check_service_checks_the_model_it_downloads():
+    ai = render_services()['ssms-ai']
+    assert env_of(ai)['MODEL_SHA256'].get('sync') is False
+    assert 'MODEL_URL' in ai['buildCommand'] or 'MODEL_URL' in env_of(ai)
+
+
+def test_the_start_script_takes_its_worker_count_from_the_host():
+    # The free plan has 512 MB, which two workers can fill. The manifest sets one.
+    assert 'WEB_CONCURRENCY' in (ROOT / 'start.sh').read_text(encoding='utf-8')
+    assert env_of(render_services()['ssms-api'])['WEB_CONCURRENCY']['value'] == '1'
+
+
+def test_both_services_pin_the_python_version_they_were_tested_with():
+    for service in render_services().values():
+        assert env_of(service)['PYTHON_VERSION']['value'].count('.') == 2
+
+
+# ── the scheduled jobs run from GitHub ──────────────────────────────────────────────────────
+
+def workflow(name):
+    flow = yaml.safe_load((ROOT / '.github' / 'workflows' / name).read_text(encoding='utf-8'))
+    flow['triggers'] = flow.pop(True, None) or flow.get('on')
+    steps = [step.get('run', '') for job in flow['jobs'].values() for step in job['steps']]
+    return flow, '\n'.join(steps)
+
+
+def test_the_frequent_jobs_run_every_five_minutes_and_leave_the_disease_service_asleep():
+    flow, commands = workflow('jobs-frequent.yml')
+    assert flow['triggers']['schedule'] == [{'cron': '*/5 * * * *'}]
+    assert 'workflow_dispatch' in flow['triggers']
+    for name in ('run_health_checks', 'check_log_bursts', 'mark_offline_devices'):
+        assert name in commands
+    assert '--skip aiService' in commands
+
+
+def test_the_nightly_jobs_clean_readings_sessions_and_logs():
+    flow, commands = workflow('jobs-nightly.yml')
+    assert len(flow['triggers']['schedule']) == 1 and 'workflow_dispatch' in flow['triggers']
+    for name in ('cleanup_sensor_readings --days 90', 'prune_sessions --days 30', 'prune_logs'):
+        assert name in commands
+
+
+def test_the_job_workflows_take_every_secret_from_github_and_write_none():
+    for name in ('jobs-frequent.yml', 'jobs-nightly.yml'):
+        text = (ROOT / '.github' / 'workflows' / name).read_text(encoding='utf-8')
+        assert 'secrets.DATABASE_URL' in text and 'DEBUG: "false"' in text
+        assert 'postgres://' not in text and 'postgresql://' not in text
+        assert 'concurrency:' in text
+
+
+def test_the_website_host_sends_api_calls_to_the_api_service_before_the_page_fallback():
+    import json
+    rewrites = json.loads((ROOT / 'frontend' / 'vercel.json').read_text(encoding='utf-8'))['rewrites']
+    assert rewrites[0] == {'source': '/api/:path*', 'destination': 'https://ssms-api.onrender.com/api/:path*'}
+    assert rewrites[-1]['destination'] == '/index.html'
