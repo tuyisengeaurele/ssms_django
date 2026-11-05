@@ -1,5 +1,13 @@
 # Changelog
 
+## Compare batches from Farm monitoring
+
+Admins and supervisors had no way to the batch comparison: the Batches page, which holds its button, is in the farmer menu only. The Active batches panel on Farm monitoring (the supervisor's Dashboard) now ends with "Compare batches" in place of "View farms", which duplicated the Farms menu item. Batches stays out of the admin and supervisor menus on purpose.
+
+### Checked
+- Frontend tests: the link goes to `/batches/compare` and the old link is gone. `tsc` and ESLint clean.
+- **Not checked:** the page in a real browser (a one link change), and the farmer's own route to the comparison, which is unchanged.
+
 ## Four logs and a reference on every answer
 
 ### Checked

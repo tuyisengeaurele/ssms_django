@@ -158,6 +158,13 @@ describe('Supervisor dashboard page', () => {
     expect(within(row).getByRole('link', { name: /Open/ })).toHaveAttribute('href', '/batches/b1');
   });
 
+  it('offers to compare batches from the active batches panel, in place of the link to the farms', async () => {
+    open();
+    const panel = (await screen.findByRole('heading', { name: 'Active batches (2)' })).closest('section') as HTMLElement;
+    expect(within(panel).getByRole('link', { name: /Compare batches/ })).toHaveAttribute('href', '/batches/compare');
+    expect(within(panel).queryByRole('link', { name: /View farms/ })).not.toBeInTheDocument();
+  });
+
   it('lists recent alerts with plain times', async () => {
     open();
     const alerts = await screen.findByRole('list', { name: 'Recent alerts' });
