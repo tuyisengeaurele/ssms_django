@@ -1,4 +1,5 @@
 import pytest
+from cryptography.fernet import Fernet
 from django.core.cache import cache
 from rest_framework.test import APIClient
 
@@ -23,6 +24,8 @@ def _quiet_settings(request, settings):
         rest['DEFAULT_THROTTLE_CLASSES'] = []
     settings.REST_FRAMEWORK = rest
     settings.EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+    # A new key for every test, made here and never written down, so no key sits in the repository.
+    settings.MFA_ENCRYPTION_KEY = Fernet.generate_key().decode()
     # Good answers are not sampled into the request log, so one test cannot change another's counts. Failures still are.
     settings.REQUEST_LOG_SAMPLE_RATE = 0.0
     # A cheap hasher first, so building a dozen users stays fast. The real hashers stay in the list,

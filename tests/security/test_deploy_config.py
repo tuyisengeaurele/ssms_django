@@ -290,3 +290,70 @@ def test_the_disease_service_is_redeployed_only_for_its_own_folder():
     ai = render_services()['ssms-ai']
     assert redeploys(ai, 'ai_service/main.py')
     assert not redeploys(ai, 'users/models.py')
+
+
+# ── the key that protects second factor secrets ─────────────────────────────────────────────
+
+def test_a_live_site_with_no_encryption_key_fails_the_deploy_check():
+    from cryptography.fernet import Fernet
+
+    from ssms_django.checks import check_mfa_key
+    with override_settings(DEBUG=False, MFA_ENCRYPTION_KEY=''):
+        assert [item.id for item in check_mfa_key(app_configs=None)] == ['ssms.E001']
+    with override_settings(DEBUG=False, MFA_ENCRYPTION_KEY='not-a-key'):
+        assert [item.id for item in check_mfa_key(app_configs=None)] == ['ssms.E001']
+    with override_settings(DEBUG=False, MFA_ENCRYPTION_KEY=Fernet.generate_key().decode()):
+        assert check_mfa_key(app_configs=None) == []
+
+
+def test_a_laptop_needs_no_encryption_key():
+    from ssms_django.checks import check_mfa_key
+    with override_settings(DEBUG=True, MFA_ENCRYPTION_KEY=''):
+        assert check_mfa_key(app_configs=None) == []
+
+
+def test_the_deploy_check_stops_a_live_site_without_the_key_and_passes_with_it():
+    from cryptography.fernet import Fernet
+    command = [sys.executable, 'manage.py', 'check', '--deploy', '--fail-level', 'ERROR']
+    without = subprocess.run(command, cwd=ROOT, env=production_env(MFA_ENCRYPTION_KEY=''), capture_output=True, text=True, timeout=120)
+    assert without.returncode != 0 and 'ssms.E001' in without.stdout + without.stderr
+    key = Fernet.generate_key().decode()
+    with_key = subprocess.run(command, cwd=ROOT, env=production_env(MFA_ENCRYPTION_KEY=key), capture_output=True, text=True, timeout=120)
+    assert with_key.returncode == 0, with_key.stderr[-600:]
+
+
+def test_a_laptop_with_no_key_still_gets_a_working_one_for_development():
+    from tests.security.test_headers_and_deploy import run_python
+    code = (
+        "import os, django;"
+        "os.environ['DJANGO_SETTINGS_MODULE']='ssms_django.settings';"
+        "django.setup();"
+        "from django.conf import settings as s;"
+        "from cryptography.fernet import Fernet;"
+        "Fernet(s.MFA_ENCRYPTION_KEY);"
+        "print('ok')"
+    )
+    env = production_env(DEBUG='True', MFA_ENCRYPTION_KEY='')
+    assert run_python(code, env) == 'ok'
+
+
+def test_the_encryption_key_is_set_by_hand_on_render():
+    key = env_of(render_services()['ssms-api'])['MFA_ENCRYPTION_KEY']
+    assert key.get('sync') is False and 'value' not in key and 'generateValue' not in key
+
+
+def test_the_start_script_checks_the_deploy_before_it_migrates():
+    # A missing key must stop a new copy before it replaces the running one.
+    text = (ROOT / 'start.sh').read_text(encoding='utf-8')
+    assert 'check --deploy --fail-level ERROR' in text
+    assert text.index('check --deploy --fail-level ERROR') < text.index('python manage.py migrate')
+
+
+def test_the_second_factor_packages_are_pinned():
+    text = (ROOT / 'requirements.txt').read_text(encoding='utf-8').lower()
+    assert 'pyotp==' in text and 'cryptography==' in text
+
+
+def test_second_factor_attempts_have_their_own_rate_limit():
+    from django.conf import settings
+    assert settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['mfa'] == '10/minute'

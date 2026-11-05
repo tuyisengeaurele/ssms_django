@@ -3,6 +3,8 @@
 # Every step is safe to repeat: migrate and createcachetable skip what already exists.
 set -e
 
+# A missing MFA_ENCRYPTION_KEY stops the deploy here, so the copy that is running keeps serving.
+python manage.py check --deploy --fail-level ERROR
 python manage.py migrate --noinput
 python manage.py createcachetable
 python manage.py collectstatic --noinput
