@@ -1,14 +1,19 @@
 """GET /api/admin/health: whether SSMS is working. Admin only. It reads and reports, and changes nothing."""
+import time
 from datetime import timedelta
 
 from django.db.models import Count
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
+from audit_log.utils import log_action
 from core.health import run_checks
+from core.health_tests import TESTS
 from core.permissions import RolePermission
-from core.utils import api_success
+from core.throttles import HealthTestRateThrottle
+from core.utils import api_error, api_success
 from logs.models import HealthCheckResult
 from logs.uptime import uptime_from_counts
 
@@ -25,6 +30,33 @@ class SystemHealthView(APIView):
 
     def get(self, request):
         return api_success(run_checks())
+
+
+class SystemHealthTestView(APIView):
+    """POST /api/admin/health/tests/<name>: press one test button. Admins only, 5 a minute, and written in the audit log.
+
+    The answer is a plain code the screen puts into words. It never carries an address, a key or the text of an error.
+    """
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'system_health'
+    actions = {'post': 'test'}
+    throttle_classes = [UserRateThrottle, HealthTestRateThrottle]
+
+    def post(self, request, name):
+        test = TESTS.get(name)
+        if test is None:
+            return api_error("We couldn't find that test.", 404)
+        started = time.perf_counter()
+        result = test(request.user)
+        milliseconds = int((time.perf_counter() - started) * 1000)
+        log_action(
+            request, 'OTHER', 'HealthTest', name, f'Ran the {name} test: {result["outcome"]}',
+            outcome='success' if result['ok'] else 'failure',
+        )
+        return api_success({
+            'name': name, 'ok': result['ok'], 'outcome': result['outcome'],
+            'milliseconds': milliseconds, 'ran_at': timezone.now(),
+        })
 
 
 class SystemHealthHistoryView(APIView):

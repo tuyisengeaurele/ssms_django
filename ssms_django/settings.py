@@ -178,6 +178,7 @@ REST_FRAMEWORK = {
         'device': '30/minute',   # readings per device key
         'invitation': '20/minute',
         'sessions': '30/minute',   # signed in devices: list and sign out
+        'health_test': '5/minute',   # the test buttons on the Health tab
         'report': '20/minute',   # PDF reports, per person
         'export': '10/minute',   # CSV and PDF exports of a list, per person
         'detection': '20/minute',   # photo checks, per person
