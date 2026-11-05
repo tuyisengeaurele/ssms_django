@@ -23,6 +23,7 @@ class UserManager(BaseUserManager):
 
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields['role'] = Role.ADMIN
+        extra_fields.setdefault('is_email_verified', True)
         return self.create_user(email, password, **extra_fields)
 
 
