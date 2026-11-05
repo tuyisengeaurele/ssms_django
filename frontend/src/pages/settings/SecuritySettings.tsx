@@ -1,17 +1,20 @@
 import { FormEvent, useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 import { useApiError } from '../../hooks/useApiError';
 import { authService } from '../../services/auth.service';
 import { setAccessToken } from '../../services/session';
 import Panel from '../../components/ui/Panel';
 import SignedInDevices from '../shared/SignedInDevices';
+import MfaSettings from './MfaSettings';
 
 /** The password, and the places the account is signed in. */
 export default function SecuritySettings() {
   const { success } = useToast();
   const { getErrorMessage } = useApiError();
   const { t } = useLanguage();
+  const { user } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [current, setCurrent] = useState('');
@@ -86,6 +89,8 @@ export default function SecuritySettings() {
           </form>
         ) : null}
       </Panel>
+
+      {user?.role === 'ADMIN' ? <MfaSettings /> : null}
 
       <SignedInDevices />
     </div>

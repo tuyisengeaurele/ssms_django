@@ -7,6 +7,11 @@ import { setReducedMotion } from '../../test/setup';
 
 const api = vi.hoisted(() => ({ changePassword: vi.fn() }));
 vi.mock('../../services/auth.service', () => ({ authService: api }));
+const who = vi.hoisted(() => ({ role: 'FARMER' }));
+vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', role: who.role } }) }));
+vi.mock('../../services/mfa.service', () => ({
+  mfaService: { status: vi.fn().mockResolvedValue({ data: { data: { enabled: true, enabledAt: '2026-11-05T10:00:00Z', recoveryCodesLeft: 8 } } }) },
+}));
 vi.mock('../../services/sessions.service', () => ({
   sessionsService: { list: vi.fn().mockResolvedValue({ data: { data: [] } }) },
 }));
@@ -31,6 +36,7 @@ beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
   setReducedMotion(true);
+  who.role = 'FARMER';
   api.changePassword.mockResolvedValue({ data: { data: { token: 'fresh-jwt' } } });
 });
 
@@ -66,5 +72,18 @@ describe('Security settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByLabelText('Current password')).not.toBeInTheDocument();
     expect(api.changePassword).not.toHaveBeenCalled();
+  });
+
+  it('shows an admin the authenticator app next to the password', async () => {
+    who.role = 'ADMIN';
+    open();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Authenticator app' })).toBeInTheDocument();
+  });
+
+  it.each(['FARMER', 'SUPERVISOR'])('does not show a %s the authenticator app', async (role) => {
+    who.role = role;
+    open();
+    await screen.findByRole('heading', { level: 2, name: 'Signed in devices' });
+    expect(screen.queryByRole('heading', { name: 'Authenticator app' })).not.toBeInTheDocument();
   });
 });

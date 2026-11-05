@@ -1528,6 +1528,59 @@ export const pageTranslations = {
     "Nous n’avons pas pu démarrer la configuration. Veuillez vous reconnecter.",
     "Ntitwashoboye gutangira iyi mikorere. Ongera winjire.",
   ),
+
+  // Looking after the authenticator app in Settings, asking for a fresh code, and resetting another admin's app.
+  adMfaPanelTitle: k("Authenticator app", "Application d’authentification", "Porogaramu yemeza umwirondoro"),
+  adMfaPanelNote: k(
+    "Admin sign in needs a code from this app.",
+    "La connexion administrateur demande un code de cette application.",
+    "Kwinjira k’ubuyobozi bisaba kode ya porogaramu.",
+  ),
+  adMfaOn: k("On", "Activée", "Irakora"),
+  adMfaOff: k("Off", "Désactivée", "Ntirakora"),
+  adMfaOnSince: k("On since {date}", "Activée depuis le {date}", "Irakora kuva {date}"),
+  adMfaCodesLeft: k("{n} recovery codes left", "{n} codes de récupération restants", "Kode zo kugarura zisigaye: {n}"),
+  adMfaCodesLeftOne: k("1 recovery code left", "1 code de récupération restant", "Kode 1 yo kugarura isigaye"),
+  adMfaStatusError: k(
+    "We could not read the authenticator app status.",
+    "Nous n’avons pas pu lire l’état de l’application d’authentification.",
+    "Ntitwashoboye gusoma uko porogaramu yemeza umwirondoro ihagaze.",
+  ),
+  adMfaNewCodes: k("New recovery codes", "Nouveaux codes de récupération", "Kode nshya zo kugarura"),
+  adMfaNewCodesTitle: k("Replace your recovery codes", "Remplacez vos codes de récupération", "Simbuza kode zawe zo kugarura"),
+  adMfaNewCodesBody: k(
+    "The old recovery codes stop working. Enter a code from your authenticator app to continue.",
+    "Les anciens codes de récupération ne fonctionneront plus. Saisissez un code de votre application d’authentification pour continuer.",
+    "Kode zo kugarura za kera ntizizongera gukora. Andika kode ya porogaramu yawe kugira ngo ukomeze.",
+  ),
+  adMfaNewCodesDone: k("Your new recovery codes", "Vos nouveaux codes de récupération", "Kode zawe nshya zo kugarura"),
+  adMfaDone: k("Done", "Terminé", "Byarangiye"),
+  adMfaStepUpTitle: k("Confirm with a code", "Confirmez avec un code", "Emeza ukoresheje kode"),
+  adMfaStepUpBody: k(
+    "This is a sensitive action. Enter the 6 digit code from your authenticator app.",
+    "Cette action est sensible. Saisissez le code à 6 chiffres de votre application d’authentification.",
+    "Iki ni igikorwa gikomeye. Andika kode y’imibare 6 ya porogaramu yawe.",
+  ),
+  adMfaStepUpConfirm: k("Confirm", "Confirmer", "Emeza"),
+  adMfaResetAction: k("Reset authenticator", "Réinitialiser l’authentificateur", "Subiza porogaramu yemeza umwirondoro"),
+  adMfaResetFor: k(
+    "Reset the authenticator app of {name}",
+    "Réinitialiser l’application d’authentification de {name}",
+    "Subiza porogaramu yemeza umwirondoro ya {name}",
+  ),
+  adMfaResetTitle: k("Reset authenticator app", "Réinitialiser l’application d’authentification", "Subiza porogaramu yemeza umwirondoro"),
+  adMfaResetBody: k(
+    "{name} ({email}) will be signed out everywhere and will set up the authenticator app again at their next sign in. Use this when they lost their phone and their recovery codes.",
+    "{name} ({email}) sera déconnecté(e) partout et devra configurer à nouveau l’application d’authentification à la prochaine connexion. À utiliser lorsque le téléphone et les codes de récupération sont perdus.",
+    "{name} ({email}) azasohorwa hose kandi azongera gushyiraho porogaramu yemeza umwirondoro igihe azinjirira. Koresha ibi iyo yatakaje telefone ye n’amakode yo kugarura.",
+  ),
+  adMfaResetConfirm: k("Reset", "Réinitialiser", "Subiza"),
+  adMfaResetBusy: k("Resetting", "Réinitialisation", "Turimo gusubiza"),
+  adMfaResetDone: k(
+    "{name} will set up the authenticator app again at their next sign in.",
+    "{name} configurera à nouveau l’application d’authentification à sa prochaine connexion.",
+    "{name} azongera gushyiraho porogaramu yemeza umwirondoro igihe azinjirira.",
+  ),
 } satisfies Record<string, Entry>;
 
 export type PageKey = keyof typeof pageTranslations;

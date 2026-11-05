@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
@@ -24,6 +25,8 @@ const api = vi.hoisted(() => ({
 }));
 
 vi.mock('../../services/admin.service', () => ({ adminService: api }));
+const mfa = vi.hoisted(() => ({ resetFor: vi.fn(), stepUp: vi.fn() }));
+vi.mock('../../services/mfa.service', () => ({ mfaService: mfa }));
 vi.mock('../../services/cooperative.service', () => ({ cooperativeService: { getAll: api.getCoops } }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', role: 'ADMIN' } }) }));
 
@@ -277,5 +280,73 @@ describe('Users page', () => {
     const { container } = open();
     await screen.findByText('Bruce Ishimwe');
     expect(container.querySelector('[style*="gradient"], .stat-card, .stat-card-icon')).toBeNull();
+  });
+
+  describe("Resetting another admin's authenticator app", () => {
+    const another = { id: 'a2', name: 'Second Admin', email: 'second@ssms.com', role: 'ADMIN', isActive: true };
+    const gone = { id: 'a3', name: 'Old Admin', email: 'old@ssms.com', role: 'ADMIN', isActive: false };
+    const refusedWith = (status: number, data: object) =>
+      new AxiosError('failed', 'ERR_BAD_REQUEST', undefined, undefined, {
+        status, data, statusText: '', headers: {}, config: {} as InternalAxiosRequestConfig,
+      });
+    const resetButton = (row: HTMLElement) => within(row).queryByRole('button', { name: /Reset the authenticator app of/ });
+
+    beforeEach(() => {
+      api.getUsers.mockResolvedValue({ data: { data: [...people, another, gone].map(withBase) } });
+    });
+
+    it('is offered on another active admin and nowhere else', async () => {
+      open();
+      expect(within(await rowOf('Second Admin')).getByRole('button', { name: 'Reset the authenticator app of Second Admin' })).toHaveTextContent('Reset authenticator');
+      expect(resetButton(await rowOf('Auris Tuyisenge'))).toBeNull();
+      expect(resetButton(await rowOf('Coop Supervisor'))).toBeNull();
+      expect(resetButton(await rowOf('Bruce Ishimwe'))).toBeNull();
+      fireEvent.click(screen.getByRole('tab', { name: /Deleted/ }));
+      expect(resetButton(await rowOf('Old Admin'))).toBeNull();
+    });
+
+    it('asks first, says who and what happens, and does nothing on Cancel', async () => {
+      open();
+      fireEvent.click(await within(await rowOf('Second Admin')).findByRole('button', { name: /Reset the authenticator app of/ }));
+      const dialog = await screen.findByRole('dialog', { name: 'Reset authenticator app' });
+      expect(dialog).toHaveTextContent('Second Admin (second@ssms.com) will be signed out everywhere');
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(mfa.resetFor).not.toHaveBeenCalled();
+    });
+
+    it('resets after the confirmation and says so', async () => {
+      mfa.resetFor.mockResolvedValue({ data: { data: null } });
+      open();
+      fireEvent.click(await within(await rowOf('Second Admin')).findByRole('button', { name: /Reset the authenticator app of/ }));
+      const dialog = await screen.findByRole('dialog', { name: 'Reset authenticator app' });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Reset' }));
+      await waitFor(() => expect(mfa.resetFor).toHaveBeenCalledWith('a2'));
+      expect(await screen.findByText('Second Admin will set up the authenticator app again at their next sign in.', {}, { timeout: 5000 })).toBeInTheDocument();
+    });
+
+    it('asks for a fresh code when the server wants one, then resets', async () => {
+      mfa.resetFor
+        .mockRejectedValueOnce(refusedWith(403, { code: 'mfa_recent_required' }))
+        .mockResolvedValueOnce({ data: { data: null } });
+      mfa.stepUp.mockResolvedValue({ data: { data: null } });
+      open();
+      fireEvent.click(await within(await rowOf('Second Admin')).findByRole('button', { name: /Reset the authenticator app of/ }));
+      fireEvent.click(within(await screen.findByRole('dialog', { name: 'Reset authenticator app' })).getByRole('button', { name: 'Reset' }));
+      const prompt = await screen.findByRole('dialog', { name: 'Confirm with a code' });
+      fireEvent.change(within(prompt).getByLabelText('6 digit code'), { target: { value: '123456' } });
+      fireEvent.click(within(prompt).getByRole('button', { name: 'Confirm' }));
+      await waitFor(() => expect(mfa.resetFor).toHaveBeenCalledTimes(2));
+      expect(mfa.stepUp).toHaveBeenCalledWith('123456');
+      expect(await screen.findByText('Second Admin will set up the authenticator app again at their next sign in.', {}, { timeout: 5000 })).toBeInTheDocument();
+    });
+
+    it('shows what the server said when there is nothing to reset', async () => {
+      mfa.resetFor.mockRejectedValue(refusedWith(404, { message: "We couldn't find an authenticator app to reset for that person." }));
+      open();
+      fireEvent.click(await within(await rowOf('Second Admin')).findByRole('button', { name: /Reset the authenticator app of/ }));
+      fireEvent.click(within(await screen.findByRole('dialog', { name: 'Reset authenticator app' })).getByRole('button', { name: 'Reset' }));
+      expect(await screen.findByText("We couldn't find an authenticator app to reset for that person.", {}, { timeout: 5000 })).toBeInTheDocument();
+    });
   });
 });

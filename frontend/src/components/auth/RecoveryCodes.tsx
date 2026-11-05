@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 
-/** The recovery codes of an admin, shown once, with a way to copy them and to keep them in a file. */
-export default function RecoveryCodes({ codes }: { codes: string[] }) {
+/**
+ * The recovery codes of an admin, shown once, with a way to copy them and to keep them in a file.
+ * `public` is for the sign in pages (styled in landing/auth/auth.css), `app` for the signed in app (styles/components.css).
+ */
+export default function RecoveryCodes({ codes, variant = 'public' }: { codes: string[]; variant?: 'public' | 'app' }) {
   const { t } = useLanguage();
+  const app = variant === 'app';
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -28,20 +32,20 @@ export default function RecoveryCodes({ codes }: { codes: string[] }) {
   };
 
   return (
-    <div className="l-mfa__codes">
-      <ul className="l-mfa__codelist">
+    <div className={app ? 'mfa-codes' : 'l-mfa__codes'}>
+      <ul className={app ? 'mfa-codes__list' : 'l-mfa__codelist'}>
         {codes.map((code) => (
           <li key={code}>{code}</li>
         ))}
       </ul>
-      <div className="l-mfa__actions">
-        <button type="button" className="l-auth__ghost" onClick={copy}>
+      <div className={app ? 'mfa-codes__actions' : 'l-mfa__actions'}>
+        <button type="button" className={app ? 'btn btn-secondary btn-sm' : 'l-auth__ghost'} onClick={copy}>
           {t('adMfaCopy')}
         </button>
-        <button type="button" className="l-auth__ghost" onClick={download}>
+        <button type="button" className={app ? 'btn btn-secondary btn-sm' : 'l-auth__ghost'} onClick={download}>
           {t('adMfaDownload')}
         </button>
-        <span role="status" className="l-mfa__copied">
+        <span role="status" className={app ? 'mfa-codes__copied' : 'l-mfa__copied'}>
           {copied ? t('adMfaCopied') : ''}
         </span>
       </div>
