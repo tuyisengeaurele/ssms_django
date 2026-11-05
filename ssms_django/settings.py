@@ -20,6 +20,12 @@ _railway_domain = config('RAILWAY_PUBLIC_DOMAIN', default='')
 if _railway_domain and _railway_domain not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(_railway_domain)
 
+# Render sets RENDER_EXTERNAL_HOSTNAME to the service's public host. It carries a random suffix when the
+# service name is already taken, so the address cannot be written in render.yaml ahead of time.
+_render_host = config('RENDER_EXTERNAL_HOSTNAME', default='')
+if _render_host and _render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_render_host)
+
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.auth',
