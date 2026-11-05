@@ -91,13 +91,12 @@ WSGI_APPLICATION = 'ssms_django.wsgi.application'
 # Fall back to individual env vars for local development.
 _DATABASE_URL = config('DATABASE_URL', default='')
 
+# Connections are closed at the end of each request. The API runs under ASGI, where every request has its own
+# thread, so a connection kept for reuse is never reused and nothing closes it. They pile up until the host
+# refuses more (Supabase's session pooler allows 15).
 if _DATABASE_URL:
     DATABASES = {
-        'default': dj_database_url.parse(
-            _DATABASE_URL,
-            conn_max_age=60,          # persistent connections — reduces connection churn
-            conn_health_checks=True,  # drop stale connections automatically
-        )
+        'default': dj_database_url.parse(_DATABASE_URL, conn_max_age=0)
     }
 else:
     DATABASES = {
@@ -108,7 +107,7 @@ else:
             'PASSWORD': config('DB_PASSWORD', default=''),
             'HOST':     config('DB_HOST', default='localhost'),
             'PORT':     config('DB_PORT', default='5432'),
-            'CONN_MAX_AGE': 60,
+            'CONN_MAX_AGE': 0,
         }
     }
 
