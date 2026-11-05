@@ -95,6 +95,27 @@ def test_the_command_writes_one_row_per_service():
     assert {'web', 'database', 'aiService', 'email', 'errorMonitoring', 'imageStorage', 'sensors', 'jobs', 'alertStream', 'website'} == set(services)
 
 
+def test_a_service_can_be_left_out_of_a_run(capsys):
+    # A scheduled run on a free host must not wake the disease check service, which would use up the free hours.
+    call_command('run_health_checks', '--skip', 'aiService', '--skip', 'web')
+    services = set(HealthCheckResult.objects.values_list('service', flat=True))
+    assert 'aiService' not in services and 'web' not in services
+    assert 'database' in services
+
+
+def test_a_service_left_out_is_not_asked_at_all():
+    with mock.patch('core.health.httpx.get') as get:
+        call_command('run_health_checks', '--skip', 'aiService')
+    assert get.call_count == 0
+
+
+def test_an_unknown_service_name_is_refused_with_the_list():
+    from django.core.management.base import CommandError
+    with pytest.raises(CommandError) as problem:
+        call_command('run_health_checks', '--skip', 'toaster')
+    assert 'aiService' in str(problem.value)
+
+
 def test_a_row_keeps_the_status_the_time_taken_and_the_reason():
     with mock.patch('core.health.httpx.get', side_effect=httpx.TimeoutException('slow')):
         call_command('run_health_checks')
