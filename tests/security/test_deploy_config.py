@@ -180,6 +180,15 @@ def test_the_api_is_named_by_one_address_everywhere():
     assert api['HEALTH_API_URL']['value'] == f'https://{api_host()}'
 
 
+def test_the_website_is_named_by_one_address_and_it_is_ours():
+    # The bare ssms.vercel.app is another account's site. Ours is the Vercel project's own address.
+    api = env_of(render_services()['ssms-api'])
+    site = api['FRONTEND_URL']['value']
+    assert api['CORS_ALLOWED_ORIGINS']['value'] == site
+    assert site != 'https://ssms.vercel.app'
+    assert site == 'https://ssms-django.vercel.app'
+
+
 def test_the_api_address_is_ours_and_not_the_bare_name_somebody_else_holds():
     # Render gave ssms-api to another account, so ours carries a suffix. Pointing at the bare name would send
     # every API call, sign in included, to a stranger.
