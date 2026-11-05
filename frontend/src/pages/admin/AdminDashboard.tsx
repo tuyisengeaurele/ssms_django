@@ -75,10 +75,10 @@ export default function AdminDashboard() {
         </div>
       ) : (
         <div className="grid-4" style={{ marginBottom: 24 }}>
-          <StatTile icon="farms" label={t('adStatFarms')} value={farms.length} hint={`${farms.length} ${t('adStatFarmsHint')}`} />
-          <StatTile icon="batches" label={t('adStatBatches')} value={totalBatches} hint={t('adStatBatchesHint')} />
-          <StatTile icon="users" label={t('adStatFarmers')} value={uniqueFarmers} hint={t('adStatFarmersHint')} />
-          <StatTile icon="alerts" label={t('adStatAlerts')} value={unread ?? '-'} hint={t('adStatAlertsHint')} />
+          <StatTile label={t('adStatFarms')} value={farms.length} hint={`${farms.length} ${t('adStatFarmsHint')}`} />
+          <StatTile label={t('adStatBatches')} value={totalBatches} hint={t('adStatBatchesHint')} />
+          <StatTile label={t('adStatFarmers')} value={uniqueFarmers} hint={t('adStatFarmersHint')} />
+          <StatTile label={t('adStatAlerts')} value={unread ?? '-'} hint={t('adStatAlertsHint')} />
         </div>
       )}
 

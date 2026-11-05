@@ -163,10 +163,10 @@ export default function SupervisorDashboard() {
       )}
 
       <div className="grid-4" style={{ marginBottom: 24 }}>
-        <StatTile icon="farms" label={t('svStatFarms')} value={farms.length} />
-        <StatTile icon="batches" label={t('svStatBatches')} value={batches.length} hint={t('svHintRunning')} />
-        <StatTile icon="alerts" label={t('svStatAlerts')} value={unread} hint={unread > 0 ? t('svHintAlertsOn') : t('svHintAlertsOff')} />
-        <StatTile icon="detections" label={t('svStatChecks')} value={checks} hint={t('svHintChecks')} />
+        <StatTile label={t('svStatFarms')} value={farms.length} />
+        <StatTile label={t('svStatBatches')} value={batches.length} hint={t('svHintRunning')} />
+        <StatTile label={t('svStatAlerts')} value={unread} hint={unread > 0 ? t('svHintAlertsOn') : t('svHintAlertsOff')} />
+        <StatTile label={t('svStatChecks')} value={checks} hint={t('svHintChecks')} />
       </div>
 
       <div style={{ marginBottom: 24 }}>

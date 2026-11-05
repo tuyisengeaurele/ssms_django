@@ -214,8 +214,8 @@ export default function CoopFarmersTab() {
           [0, 1].map((i) => <SkeletonStatCard key={i} />)
         ) : (
           <>
-            <StatTile label={t('tmStatFarmers')} value={farmers.length} icon="users" />
-            <StatTile label={t('tmStatPending')} value={pending} icon="messages" />
+            <StatTile label={t('tmStatFarmers')} value={farmers.length} />
+            <StatTile label={t('tmStatPending')} value={pending} />
           </>
         )}
       </div>
