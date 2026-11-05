@@ -5,7 +5,7 @@ from django.urls import include, path
 from contacts.urls import admin_urlpatterns as contacts_admin_urlpatterns
 from core.utils import health_check
 from logs.views import LogsView
-from reports.health_views import SystemHealthView
+from reports.health_views import SystemHealthHistoryView, SystemHealthTestView, SystemHealthView
 from sensors.urls import device_urlpatterns
 
 handler404 = 'core.utils.not_found'
@@ -34,6 +34,8 @@ urlpatterns = [
     path('api/admin/logs/<str:stream>', LogsView.as_view()),    # GET the audit, security, requests or jobs log (admin only)
     path('api/admin/reports',   include('reports.urls')),    # GET /api/admin/reports   (admin only)
     path('api/admin/health', SystemHealthView.as_view()),     # GET /api/admin/health (admin only)
+    path('api/admin/health/history', SystemHealthHistoryView.as_view()),   # GET the results and uptime (admin only)
+    path('api/admin/health/tests/<str:name>', SystemHealthTestView.as_view()),   # POST one test button (admin only)
     path('api/reports/cooperative', include('reports.coop_urls')),   # GET /api/reports/cooperative (supervisor, admin)
 ]
 

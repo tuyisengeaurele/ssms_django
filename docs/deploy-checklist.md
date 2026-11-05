@@ -20,14 +20,18 @@ Work through this top to bottom for every deploy, including a rehearsal on a tes
 | `AI_SERVICE_URL`, `AI_SERVICE_SECRET` | same secret on both services |
 | `SENTRY_DSN` | set, so errors reach someone |
 | `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | set, or switch the backend to console on purpose |
+| `HEALTH_API_URL` | the API's own public address, so the health check can ask it from outside. Set it on the web service and on the health cron |
 | `LOG_LEVEL` | `INFO` (default). Logs are one JSON line each, with the request reference |
 | `REQUEST_LOG_SAMPLE_RATE` | `0.05` (default): every failed request is logged, and this share of the good ones |
 
-Scheduled jobs: `prune_logs` nightly (the nightly cron in `render.yaml` runs it), `mark_offline_devices` every few minutes and `check_log_bursts` every 5 minutes. A scheduler that stopped shows in the System page, Logs, Jobs and devices: each command writes when it starts and ends.
+Scheduled jobs: `prune_logs` nightly (the nightly cron in `render.yaml` runs it), `mark_offline_devices` every few minutes, and `run_health_checks` with `check_log_bursts` every 5 minutes (the `ssms-health-check` cron in `render.yaml`). A scheduler that stopped shows in the System page, Logs, Jobs and devices: each command writes when it starts and ends.
 
 `start.sh` runs migrations, creates the cache table for the rate limits and starts the API under ASGI. Read its first lines of output in the host's log.
 
 ## 3. Rehearse against the running site
+
+- **Outside monitor.** The API cannot report its own downtime, and neither can the health cron if the platform is down. Point a free outside monitor (UptimeRobot or similar) at `https://<api>/api/health` every 5 minutes, with an email to the owner. The System page shows the uptime the cron measured, and this monitor is the second opinion.
+- On the System page, Health tab, press every test button once: email, photo storage, disease check, database write, device intake. Each says in plain words what happened.
 
 ```bash
 python manage.py check --deploy

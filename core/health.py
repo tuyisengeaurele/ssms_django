@@ -7,10 +7,15 @@ Two kinds of check sit side by side:
 
 "Not set up" is not a problem. A local machine is meant to print its emails and keep its errors to itself.
 """
+import asyncio
+import logging
 import time
+from datetime import timedelta
 from datetime import timezone as dt_timezone
+from urllib.parse import urlparse
 
 import httpx
+from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.db import connection
 from django.db.models import Max
@@ -18,10 +23,16 @@ from django.utils import timezone
 
 from alerts.models import AlertLog, AlertType
 from contacts.models import ContactMessage
+from logs.models import JobLog
 from sensors.devices import effective_status, offline_after
 from sensors.models import IoTDevice, SensorReading
 
 AI_TIMEOUT = 3.0
+WEBSITE_TIMEOUT = 3.0
+STREAM_WAIT_SECONDS = 3.0
+# The commands the scheduler runs every night. One of them finishing lately says the scheduler is alive.
+NIGHTLY_COMMANDS = ('cleanup_sensor_readings', 'prune_sessions', 'prune_logs')
+logger = logging.getLogger(__name__)
 OK, PROBLEM, NOT_SET_UP = 'ok', 'problem', 'notSetUp'
 
 
@@ -106,9 +117,105 @@ def what_is_waiting() -> dict:
     }
 
 
+def _is_local(url: str) -> bool:
+    host = (urlparse(url).hostname or '').lower()
+    return host in ('', 'localhost', '127.0.0.1', '::1', '0.0.0.0') or host.endswith('.localhost')
+
+
+def check_website() -> dict:
+    """The website answers a HEAD request. A local machine has no public website, so there it is not set up."""
+    url = settings.FRONTEND_URL
+    if not url or _is_local(url):
+        return {'key': 'website', 'status': NOT_SET_UP, 'values': {}}
+    started = time.perf_counter()
+    try:
+        answer = httpx.head(url, timeout=WEBSITE_TIMEOUT, follow_redirects=True)
+    except httpx.TimeoutException:
+        return {'key': 'website', 'status': PROBLEM, 'values': {'reason': 'timeout'}}
+    except Exception:
+        return {'key': 'website', 'status': PROBLEM, 'values': {'reason': 'unreachable'}}
+    if answer.status_code >= 400:
+        return {'key': 'website', 'status': PROBLEM, 'values': {'reason': 'badAnswer'}}
+    return {'key': 'website', 'status': OK, 'values': {'ms': _milliseconds(started)}}
+
+
+def check_web() -> dict:
+    """The API answers on its own public address. It cannot report its own downtime, so this runs from outside."""
+    base = settings.HEALTH_API_URL.rstrip('/')
+    if not base:
+        return {'key': 'web', 'status': NOT_SET_UP, 'values': {}}
+    started = time.perf_counter()
+    try:
+        answer = httpx.get(f'{base}/api/health', timeout=WEBSITE_TIMEOUT)
+    except httpx.TimeoutException:
+        return {'key': 'web', 'status': PROBLEM, 'values': {'reason': 'timeout'}}
+    except Exception:
+        return {'key': 'web', 'status': PROBLEM, 'values': {'reason': 'unreachable'}}
+    if answer.status_code != 200:
+        return {'key': 'web', 'status': PROBLEM, 'values': {'reason': 'badAnswer'}}
+    return {'key': 'web', 'status': OK, 'values': {'ms': _milliseconds(started)}}
+
+
+def check_jobs(now) -> dict:
+    """A nightly command finished lately. Not set up until one has ever run, so a local machine is not a problem."""
+    latest = JobLog.objects.filter(kind='command_finished', subject__in=NIGHTLY_COMMANDS).order_by('-created_at').first()
+    if latest is None:
+        return {'key': 'jobs', 'status': NOT_SET_UP, 'values': {}}
+    hours = int((now - latest.created_at).total_seconds() // 3600)
+    stale = now - latest.created_at > timedelta(hours=settings.SCHEDULE_STALE_HOURS)
+    return {'key': 'jobs', 'status': PROBLEM if stale else OK, 'values': {'hours': hours}}
+
+
+async def _read_the_first_line_of_the_stream(admin):
+    """Open the live alert stream with a ticket, like a browser does, and read what it says first."""
+    from asgiref.sync import sync_to_async
+    from django.test import RequestFactory
+
+    from alerts.sse_view import alert_stream
+    from alerts.tickets import issue_ticket
+
+    ticket = await sync_to_async(issue_ticket)(admin)
+    response = await alert_stream(RequestFactory().get('/api/alerts/stream', {'ticket': ticket}))
+    if response.status_code != 200:
+        raise ValueError('the stream refused a ticket')
+    lines = response.__aiter__()
+    return await asyncio.wait_for(lines.__anext__(), STREAM_WAIT_SECONDS)
+
+
+def _first_line_of_the_stream(admin):
+    return async_to_sync(_read_the_first_line_of_the_stream)(admin)
+
+
+def check_alert_stream() -> dict:
+    from users.models import User
+    admin = User.objects.filter(role='ADMIN', is_active=True).first()
+    if admin is None:
+        return {'key': 'alertStream', 'status': NOT_SET_UP, 'values': {}}
+    started = time.perf_counter()
+    try:
+        _first_line_of_the_stream(admin)
+    except Exception:
+        return {'key': 'alertStream', 'status': PROBLEM, 'values': {'reason': 'noAnswer'}}
+    return {'key': 'alertStream', 'status': OK, 'values': {'ms': _milliseconds(started)}}
+
+
+def _safely(key: str, check) -> dict:
+    """A check that breaks is a problem for its own service and never stops the others."""
+    try:
+        return check()
+    except Exception:
+        logger.exception('The %s health check broke', key)
+        return {'key': key, 'status': PROBLEM, 'values': {'reason': 'error'}}
+
+
 def run_checks() -> dict:
     now = timezone.now()
-    checks = [check_database(), check_ai_service(), check_email(), check_error_monitoring(), check_image_storage(), check_sensors(now)]
+    checks = [
+        _safely('web', check_web), _safely('database', check_database), _safely('aiService', check_ai_service),
+        _safely('email', check_email), _safely('errorMonitoring', check_error_monitoring),
+        _safely('imageStorage', check_image_storage), _safely('sensors', lambda: check_sensors(now)),
+        _safely('jobs', lambda: check_jobs(now)), _safely('alertStream', check_alert_stream), _safely('website', check_website),
+    ]
     return {
         'checked_at': now.isoformat(),
         'overall': PROBLEM if any(c['status'] == PROBLEM for c in checks) else OK,

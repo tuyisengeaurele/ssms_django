@@ -45,6 +45,10 @@ class DetectionRateThrottle(UserRateThrottle):
     scope = 'detection'   # a photo check calls the AI service, 20 a minute per person
 
 
+class HealthTestRateThrottle(UserRateThrottle):
+    scope = 'health_test'   # a test button really calls a service, 5 a minute per person
+
+
 class SessionsRateThrottle(UserRateThrottle):
     scope = 'sessions'   # a person looking at, renaming or signing out their devices, 30 a minute
 

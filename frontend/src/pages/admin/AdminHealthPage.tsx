@@ -1,39 +1,56 @@
-import { useEffect, useState } from 'react';
-import { healthService, HealthCheck, HealthReport, HealthStatus } from '../../services/health.service';
+import { useCallback, useEffect, useState } from 'react';
+import { healthService, HealthCheck, HealthHistory, HealthReport } from '../../services/health.service';
 import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
 import SectionHeader from '../../components/ui/SectionHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
+import HealthCard from './HealthCard';
 
 const TITLES: Record<HealthCheck['key'], string> = {
-  database: 'hlDatabase', aiService: 'hlAi', email: 'hlEmail', errorMonitoring: 'hlErrors', imageStorage: 'hlImages', sensors: 'hlSensors',
-};
-const STATUS_WORDS: Record<HealthStatus, { text: string; badge: string }> = {
-  ok: { text: 'hlOk', badge: 'badge-green' },
-  problem: { text: 'hlProblem', badge: 'badge-red' },
-  notSetUp: { text: 'hlNotSetUp', badge: 'badge-gray' },
+  web: 'hlWeb', database: 'hlDatabase', aiService: 'hlAi', email: 'hlEmail', errorMonitoring: 'hlErrors',
+  imageStorage: 'hlImages', sensors: 'hlSensors', jobs: 'hlJobs', alertStream: 'hlStream', website: 'hlWebsite',
 };
 const AI_PROBLEMS = { timeout: 'hlAiTimeout', unreachable: 'hlAiUnreachable', badAnswer: 'hlAiBad' } as const;
+const WEB_PROBLEMS = { timeout: 'hlWebTimeout', unreachable: 'hlWebUnreachable', badAnswer: 'hlWebBad' } as const;
+const WEBSITE_PROBLEMS = { timeout: 'hlWebsiteTimeout', unreachable: 'hlWebsiteUnreachable', badAnswer: 'hlWebsiteBad' } as const;
 
-/** What an admin needs to know to tell whether SSMS is working, asked live each time the page opens. */
+/** The page asks again this often while it is open on screen. */
+const REFRESH_MS = 60_000;
+
+/** What an admin needs to know to tell whether SSMS is working: live answers, the last day and the uptime. */
 export default function AdminHealthPage() {
   const { t, locale } = useLanguage();
   const [report, setReport] = useState<HealthReport | null>(null);
+  const [history, setHistory] = useState<HealthHistory | null>(null);
   const [checking, setChecking] = useState(true);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
-  useEffect(() => {
+  /** Ask for the live answer and for the history. The history is a bonus: without it the cards still show the live answer. */
+  const load = useCallback((quiet: boolean) => {
     let live = true;
-    setChecking(true);
-    setFailed(false);
+    if (!quiet) {
+      setChecking(true);
+      setFailed(false);
+    }
+    healthService.history().then((res) => live && setHistory(res.data.data)).catch(() => {});
     healthService.get()
       .then((res) => live && setReport(res.data.data))
-      .catch(() => live && setFailed(true))
-      .finally(() => live && setChecking(false));
+      .catch(() => live && !quiet && setFailed(true))
+      .finally(() => live && !quiet && setChecking(false));
     return () => { live = false; };
-  }, [attempt]);
+  }, []);
+
+  useEffect(() => load(false), [load, attempt]);
+
+  // It also asks again by itself, but only while somebody can see the page, so a forgotten tab costs nothing.
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') load(true);
+    }, REFRESH_MS);
+    return () => window.clearInterval(timer);
+  }, [load]);
 
   const when = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -46,9 +63,11 @@ export default function AdminHealthPage() {
   /** The sentence that says what a check found. Never more than the server reported. */
   const message = ({ key, status, values: v }: HealthCheck): string => {
     const set = status === 'ok';
+    const reason = v.reason === 'timeout' || v.reason === 'badAnswer' ? v.reason : 'unreachable';
     switch (key) {
+      case 'web': return set ? fill(t('hlWebOk'), { ms: v.ms ?? 0 }) : status === 'notSetUp' ? t('hlWebNo') : t(WEB_PROBLEMS[reason]);
       case 'database': return set ? fill(t('hlDbOk'), { ms: v.ms ?? 0 }) : t('hlDbBad');
-      case 'aiService': return set ? fill(t('hlAiOk'), { ms: v.ms ?? 0 }) : t(AI_PROBLEMS[v.reason ?? 'unreachable']);
+      case 'aiService': return set ? fill(t('hlAiOk'), { ms: v.ms ?? 0 }) : t(AI_PROBLEMS[v.reason === 'timeout' || v.reason === 'badAnswer' ? v.reason : 'unreachable']);
       case 'email': return t(set ? 'hlEmailOk' : 'hlEmailNo');
       case 'errorMonitoring': return t(set ? 'hlErrOk' : 'hlErrNo');
       case 'imageStorage': return t(set ? 'hlImgOk' : 'hlImgNo');
@@ -58,6 +77,12 @@ export default function AdminHealthPage() {
         if (v.silentMinutes == null) return `${counts} ${t('hlSenNever')}`;
         return `${counts} ${fill(t(set ? 'hlSenLast' : 'hlSenSilent'), { ago: span(v.silentMinutes) })}`;
       }
+      case 'jobs':
+        if (status === 'notSetUp') return t('hlJobsNo');
+        return fill(t(set ? 'hlJobsOk' : 'hlJobsStale'), { ago: span((v.hours ?? 0) * 60) });
+      case 'alertStream': return set ? fill(t('hlStreamOk'), { ms: v.ms ?? 0 }) : t(status === 'notSetUp' ? 'hlStreamNo' : 'hlStreamBad');
+      case 'website': return set ? fill(t('hlWebsiteOk'), { ms: v.ms ?? 0 }) : status === 'notSetUp' ? t('hlWebsiteNo') : t(WEBSITE_PROBLEMS[reason]);
+      default: return '';
     }
   };
 
@@ -87,19 +112,13 @@ export default function AdminHealthPage() {
             <span className="health-when">{fill(t('hlCheckedAt'), { when: when.format(new Date(report.checkedAt)) })}</span>
           </div>
 
-          <Panel title={t('hlChecks')} note={t('hlNote')} flush>
-            <ul className="health-list">
-              {report.checks.map((c) => (
-                <li key={c.key}>
-                  <div className="health-row">
-                    <h3 className="health-title">{t(TITLES[c.key])}</h3>
-                    <span className={`badge ${STATUS_WORDS[c.status].badge}`}>{t(STATUS_WORDS[c.status].text)}</span>
-                  </div>
-                  <p className="health-message">{message(c)}</p>
-                </li>
-              ))}
-            </ul>
-          </Panel>
+          <p className="health-note">{t('hlNote')}</p>
+
+          <ul className="health-grid" aria-label={t('hlChecks')}>
+            {report.checks.map((c) => (
+              <HealthCard key={c.key} check={c} title={t(TITLES[c.key])} message={message(c)} history={history?.services[c.key]} />
+            ))}
+          </ul>
 
           <Panel title={t('hlWaiting')}>
             <dl className="health-numbers">

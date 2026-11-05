@@ -87,7 +87,9 @@ def test_asking_changes_nothing_and_is_not_audited(auth_client, admin):
 def test_the_report_says_when_it_was_made_and_lists_every_check(auth_client, admin):
     report = health(auth_client(admin))
     assert report['checkedAt']
-    assert [c['key'] for c in report['checks']] == ['database', 'aiService', 'email', 'errorMonitoring', 'imageStorage', 'sensors']
+    assert [c['key'] for c in report['checks']] == [
+        'web', 'database', 'aiService', 'email', 'errorMonitoring', 'imageStorage', 'sensors', 'jobs', 'alertStream', 'website',
+    ]
     assert all(c['status'] in ('ok', 'problem', 'notSetUp') for c in report['checks'])
 
 

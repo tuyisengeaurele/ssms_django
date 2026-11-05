@@ -121,6 +121,54 @@ services:
       - key: AI_SERVICE_URL
         value: "https://your-ai-service.onrender.com"
 
+  # ── Health check cron job ─────────────────────────────────────────────────
+  # Asks every service how it is every 5 minutes and writes the results the System page shows as history and uptime.
+  # It cannot report its own API being down, so an outside monitor should ping /api/health too (see the deploy checklist).
+  - type: cron
+    name: ssms-health-check
+    env: python
+    region: oregon
+    plan: free
+    schedule: "*/5 * * * *"    # every 5 minutes
+    buildCommand: "./build.sh"
+    startCommand: "python manage.py run_health_checks && python manage.py check_log_bursts"
+
+    envVars:
+      - key: SECRET_KEY
+        fromService:
+          name: ssms-api
+          type: web
+          property: SECRET_KEY
+      - key: DEBUG
+        value: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ssms-db
+          property: connectionString
+      - key: JWT_SECRET
+        fromService:
+          name: ssms-api
+          type: web
+          property: JWT_SECRET
+      - key: EMAIL_HOST_USER
+        value: "smartsericulturerw@gmail.com"
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        value: "SSMS <smartsericulturerw@gmail.com>"
+      - key: FRONTEND_URL
+        value: "https://ssms.vercel.app"
+      - key: CLOUDINARY_CLOUD_NAME
+        value: "dsmpn69ux"
+      - key: CLOUDINARY_UPLOAD_PRESET
+        value: "ssms_images"
+      - key: AI_SERVICE_URL
+        value: "https://your-ai-service.onrender.com"
+      - key: AI_SERVICE_SECRET
+        sync: false
+      - key: HEALTH_API_URL
+        value: "https://ssms-api.onrender.com"   # the API's own public address, so it can be asked from outside
+
   # ── PostgreSQL database ────────────────────────────────────────────────────
   - type: pserv
     name: ssms-db

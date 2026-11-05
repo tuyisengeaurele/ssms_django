@@ -61,7 +61,7 @@ PERMISSIONS: dict[str, dict[str, frozenset]] = {
     'locations': {'read': ALL, 'locate': ALL},
     'cooperative_reports': {'read': STAFF},
     'reports': {'read': ADMIN_ONLY},
-    'system_health': {'read': ADMIN_ONLY},
+    'system_health': {'read': ADMIN_ONLY, 'test': ADMIN_ONLY},
     'audit_log': {'read': ADMIN_ONLY},
     'logs': {'read': ADMIN_ONLY},
     'contacts': {'read': ADMIN_ONLY, 'update': ADMIN_ONLY, 'create': ADMIN_ONLY, 'delete': ADMIN_ONLY},

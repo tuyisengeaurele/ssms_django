@@ -13,6 +13,8 @@ interface TimeSeriesProps {
   data: DayCount[];
   color: string;
   height?: number;
+  /** How an x value is written on the axis. The default cuts the year off a date. */
+  formatTick?: (day: string) => string;
 }
 
 function Hover({ active, payload, label, unit }: { active?: boolean; payload?: Array<{ value: number }>; label?: string; unit: string }) {
@@ -26,13 +28,13 @@ function Hover({ active, payload, label, unit }: { active?: boolean; payload?: A
 }
 
 /** One line with a faint wash under it. A hidden table carries the same numbers for screen readers. */
-export default function TimeSeries({ label, unit, data, color, height = 210 }: TimeSeriesProps) {
+export default function TimeSeries({ label, unit, data, color, height = 210, formatTick = (d) => d.slice(5) }: TimeSeriesProps) {
   return (
     <div className="timeseries" role="img" aria-label={label}>
       <ResponsiveContainer width="100%" height={height}>
         <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -18 }}>
           <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
-          <XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--chart-axis)' }} tickFormatter={(d: string) => d.slice(5)} minTickGap={24} />
+          <XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--chart-axis)' }} tickFormatter={formatTick} minTickGap={24} />
           <YAxis tickLine={false} axisLine={false} allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--chart-axis)' }} />
           <Tooltip cursor={{ stroke: 'var(--chart-cursor)' }} content={<Hover unit={unit} />} />
           <Area type="monotone" dataKey="count" stroke={color} strokeWidth={2} fill={color} fillOpacity={0.1} dot={false} activeDot={{ r: 5, stroke: 'var(--surface)', strokeWidth: 2, fill: color }} />

@@ -1,4 +1,4 @@
-"""Three of the four log streams. The fourth, who changed what, is `audit_log.AuditLog`.
+"""Three of the four log streams, and the memory of the system health checks. The fourth, who changed what, is `audit_log.AuditLog`.
 
 * SecurityEvent: sign ins, lockouts, password changes, new devices, ended sessions, refusals and slow downs. Kept 12 months.
 * RequestLog: every failed request and a sample of the good ones. Kept 14 days. Never a body, a header or a query.
@@ -40,6 +40,20 @@ class RequestLog(models.Model):
 
     class Meta:
         ordering = ['-created_at', '-id']
+
+
+class HealthCheckResult(models.Model):
+    """One answer of one service to one check, written every few minutes by `run_health_checks`. Kept 30 days."""
+    service = models.CharField(max_length=30)
+    status = models.CharField(max_length=10)
+    milliseconds = models.PositiveIntegerField(null=True, blank=True)
+    # A short word such as timeout or unreachable. Never an address and never a secret.
+    reason = models.CharField(max_length=40, blank=True)
+    checked_at = models.DateTimeField(db_index=True)
+
+    class Meta:
+        ordering = ['-checked_at', '-id']
+        indexes = [models.Index(fields=['service', 'checked_at'], name='health_service_time')]
 
 
 class JobLog(models.Model):
