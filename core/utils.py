@@ -22,7 +22,7 @@ def api_error(message='Error', status_code=status.HTTP_400_BAD_REQUEST, errors=N
 
 def _failure_code(exc) -> str:
     """The code an authentication class gave. The token library keeps it in a dict, Django REST framework on the text."""
-    detail = exc.detail
+    detail = getattr(exc, 'detail', None)   # a plain Django 404 has none
     code = detail.get('code') if isinstance(detail, dict) else getattr(detail, 'code', '')
     return str(code or '')
 
@@ -39,6 +39,8 @@ def _friendly_message(exc, status_code, data):
         return 'This account has been deleted. Please contact the SSMS team.'
     if isinstance(exc, NotAuthenticated):
         return 'Please sign in to continue.'
+    if status_code == 403 and _failure_code(exc) == 'mfa_recent_required':
+        return 'Please confirm with a code from your authenticator app.'
     if status_code == 401:
         return 'Your session has ended. Please sign in again.'
     if status_code == 403:
@@ -56,7 +58,8 @@ def _friendly_message(exc, status_code, data):
 
 def _note_refusal(exc, context, status_code):
     """A refusal for the role, or a slow down, goes in the security log. Only the method and the route pattern, never the query."""
-    kind = 'throttled' if isinstance(exc, Throttled) else 'permission_denied' if status_code == 403 else None
+    asking_for_a_code = status_code == 403 and _failure_code(exc) == 'mfa_recent_required'   # not a refusal for the role
+    kind = 'throttled' if isinstance(exc, Throttled) else 'permission_denied' if status_code == 403 and not asking_for_a_code else None
     request = context.get('request')
     if kind and request is not None:
         from logs.security import record_security_event
@@ -82,6 +85,8 @@ def custom_exception_handler(exc, context):
     _note_refusal(exc, context, status_code)
     if isinstance(exc, AuthenticationFailed) and _failure_code(exc) == 'session_idle':
         response.data['code'] = 'session_idle'
+    if _failure_code(exc) in ('mfa_required', 'mfa_recent_required'):
+        response.data['code'] = _failure_code(exc)
     if isinstance(exc, Throttled) and exc.wait:
         response.data['retryAfter'] = int(math.ceil(exc.wait))
     if errors:

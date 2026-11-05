@@ -144,7 +144,8 @@ def test_a_renewal_inside_the_limit_still_works_and_is_not_activity():
 
 def test_a_token_from_before_sessions_existed_is_not_judged_by_idleness(settings):
     from rest_framework_simplejwt.tokens import AccessToken
-    admin = UserFactory(role='ADMIN')
+    # A supervisor: an admin's token with no session is refused on purpose now (tests/test_mfa_enforcement.py).
+    supervisor = UserFactory(role='SUPERVISOR')
     client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION=f'Bearer {AccessToken.for_user(admin)}')
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {AccessToken.for_user(supervisor)}')
     assert client.get(ME).status_code == 200

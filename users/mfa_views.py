@@ -8,17 +8,18 @@ Nothing here writes a code, a secret, a challenge or a recovery code to a log, a
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 
 from audit_log.utils import log_action
 from core import lockout
+from core.permissions import RolePermission
 from core.throttles import MfaRateThrottle
 from core.utils import api_error, api_success
 from logs.security import record_security_event
 
 from . import mfa, mfa_challenge
-from .models import Role, SecondFactor
+from .models import Role, SecondFactor, UserSession
 from .signin import finish_sign_in, too_many_attempts
 
 User = get_user_model()
@@ -136,3 +137,30 @@ class MfaSetupConfirmView(_MfaView):
         record_security_event('mfa_enrolled', request, user=user)
         log_action(request, 'UPDATE', 'User', user.pk, 'Turned on the second factor', actor=user)
         return finish_sign_in(request, user, mfa_verified=True, extra={'recovery_codes': codes})
+
+
+class MfaStepUpView(APIView):
+    """An admin proves they still hold the phone before something sensitive, without signing in again."""
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'second_factor'
+    actions = {'post': 'step_up'}
+
+    def post(self, request):
+        """POST /api/auth/mfa/step-up: a good app code makes this sign in recent for core.mfa_guard. Recovery codes are not accepted here."""
+        user = request.user
+        wait = lockout.is_locked(user.email)
+        if wait:
+            return too_many_attempts(request, user.email, wait)
+        factor = SecondFactor.objects.filter(user=user, enabled_at__isnull=False).first()
+        if factor is None:
+            return api_error('Set up the authenticator app first.', 400)
+        if not mfa.check_code(factor, request.data.get('code')):
+            lockout.record_failure(user.email)
+            record_security_event('mfa_failed', request, user=user, detail='Asked again before a sensitive action')
+            log_action(request, 'OTHER', 'User', user.pk, 'Wrong second factor code', outcome='failure')
+            wait = lockout.is_locked(user.email)
+            return too_many_attempts(request, user.email, wait) if wait else api_error(WRONG_CODE, 422)
+        lockout.clear(user.email)
+        UserSession.objects.filter(pk=request.session_id).update(mfa_verified_at=timezone.now())
+        record_security_event('mfa_ok', request, user=user, detail='Asked again before a sensitive action')
+        return api_success(None, 'Thank you. That code is right.')

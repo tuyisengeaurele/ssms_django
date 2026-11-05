@@ -65,6 +65,9 @@ PERMISSIONS: dict[str, dict[str, frozenset]] = {
     'audit_log': {'read': ADMIN_ONLY},
     'logs': {'read': ADMIN_ONLY},
     'contacts': {'read': ADMIN_ONLY, 'update': ADMIN_ONLY, 'create': ADMIN_ONLY, 'delete': ADMIN_ONLY},
+    # An admin's authenticator app: its status, new recovery codes, a fresh code before something sensitive, and
+    # resetting another admin's.
+    'second_factor': {'read': ADMIN_ONLY, 'create': ADMIN_ONLY, 'step_up': ADMIN_ONLY, 'reset': ADMIN_ONLY},
     'admin_users': {
         'read': ADMIN_ONLY, 'create': ADMIN_ONLY, 'update': ADMIN_ONLY, 'delete': ADMIN_ONLY, 'restore': ADMIN_ONLY,
     },
