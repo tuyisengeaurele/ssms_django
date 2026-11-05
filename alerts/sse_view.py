@@ -38,6 +38,8 @@ def _payload(alert) -> dict:
 
 
 async def _events(user):
+    # The first thing a client hears says the stream is open. A proxy also stops holding the response back at once.
+    yield ': connected\n\n'
     since = timezone.now() - timedelta(hours=24)
     started = last_ping = time.monotonic()
 

@@ -205,6 +205,11 @@ REQUEST_LOG_SAMPLE_RATE = config('REQUEST_LOG_SAMPLE_RATE', default=0.05, cast=f
 REQUEST_LOG_KEEP_DAYS = config('REQUEST_LOG_KEEP_DAYS', default=14, cast=int)
 SECURITY_LOG_KEEP_DAYS = config('SECURITY_LOG_KEEP_DAYS', default=365, cast=int)
 JOB_LOG_KEEP_DAYS = config('JOB_LOG_KEEP_DAYS', default=90, cast=int)
+HEALTH_LOG_KEEP_DAYS = config('HEALTH_LOG_KEEP_DAYS', default=30, cast=int)
+# The public address of the API itself, so the health check can ask it from outside. Empty on a local machine.
+HEALTH_API_URL = config('HEALTH_API_URL', default='')
+# A nightly command that has not finished for this long means the scheduler has stopped.
+SCHEDULE_STALE_HOURS = config('SCHEDULE_STALE_HOURS', default=26, cast=int)
 # `check_log_bursts` mails the admins when this many failures come within LOG_BURST_MINUTES, then stays quiet for a while.
 LOG_BURST_MINUTES = config('LOG_BURST_MINUTES', default=5, cast=int)
 LOG_BURST_SERVER_ERRORS = config('LOG_BURST_SERVER_ERRORS', default=10, cast=int)
