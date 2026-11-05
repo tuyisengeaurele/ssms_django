@@ -88,6 +88,7 @@ python scripts/check_content.py --all
 - Four streams, all under System, Logs: audit (who changed what), security (sign ins, refusals), requests (failures and a sample) and jobs (mail, devices, commands).
 - Never log a body, a header, a query or a token. The request log keeps the route pattern, never the address that was typed. Pass `changes=` to `log_action` for what a field was and became: `build_changes` hides anything that looks like a secret.
 - A new scheduled command extends `logs.jobs.LoggedCommand`, so its runs show up.
+- A new service for the Health tab is a check in `core/health.py` (named in `run_checks` and in `reports/health_views.SERVICES`), and a test button in `core/health_tests.py` if it can be tried safely. A test button never touches a farmer's data and never writes to anyone but the admin who pressed it.
 
 ## Interface
 
