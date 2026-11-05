@@ -1,5 +1,25 @@
 # Changelog
 
+## Admin second factor: a code from an authenticator app
+
+Every admin signs in with a password and then a 6 digit code. The first time, they set up the app. Supervisors and farmers sign in as before. The steps to deploy it are in `docs/deploy-runbook.md`, section 9.
+
+### Checked
+- Backend and frontend suites, `ruff`, `tsc`, `eslint` and `pip-audit` pass. New tests cover the key and its deploy check, the models and codes (drift of one step, replay, bad input), the challenge, the sign in and set-up endpoints, enforcement, step-up, new recovery codes, resetting another admin and the command, the three screens, the Settings panel, the code prompt and the Users page action, all with the tests written first.
+- Rehearsed end to end on a scratch database against a running API, with real codes made from the secret (27 checks): set-up, sign in with a code, a wrong code, a code used twice, a recovery code used once, step-up, new recovery codes, resetting another admin (their token stopped working at once and their next sign in went to set-up), a farmer unaffected, the rate limit on the code endpoints, and all six new security event kinds in the log. I searched the server log for 34 secrets, codes, challenges and recovery codes and found none.
+- In a real browser against that API: set-up with the QR code, the key and the recovery codes (nothing was remembered as signed in until Continue), the code step with a wrong and a right code, the Settings panel, new recovery codes, and the Users page reset, where the server refused it (403), took a fresh code (200), and reset it (200). The codes list reads at 16.3 to 1 in light and 14.9 to 1 in dark. No sideways scroll at 375 px.
+- **Not checked:** a phone app scanning the QR code (the codes were made from the key shown on screen), Render and Supabase, the email to a reset admin (the console backend was used), a screen reader, and French and Kinyarwanda on screen (both are drafts). In the browser pane used here the page got no animation frames, so a closed dialog stayed in the page as a transparent layer. The existing delete dialog did the same, so it is the pane and not this change, but it was not confirmed in a normal browser.
+
+### What changed
+- **Sign in.** A correct admin password gives a challenge (5 minutes, one use, dies after 5 wrong codes) and no session. The code, or the first time set-up, turns it into a session. Wrong codes count toward the same 5 wrong, 15 minute lockout as passwords, and for an admin the password step no longer clears that count.
+- **Enforced in the API.** An admin session that never passed a code, or a token with no session, is refused with 401 `mfa_required`. An admin who was signed in before this ships, or a supervisor made an admin, signs in again.
+- **Secrets.** Stored encrypted with `MFA_ENCRYPTION_KEY`. Recovery codes (8, one use each) are stored as HMACs. A code cannot be used twice. A deploy without the key stops at `ssms.E001` before the running copy is replaced.
+- **Step-up.** `POST /api/auth/mfa/step-up` and `require_recent_mfa` ask for a fresh code before something sensitive. The website prompts for it and tries the action again once.
+- **Looking after it.** Settings, Security shows the status and makes new recovery codes. Another admin can reset someone's app from Users. `manage.py reset_admin_mfa` is the last resort.
+- **Writes down.** Six new security events and audit entries for set-up, new codes and resets. Nothing secret goes in any of them.
+- **Tests that signed an admin in** with one step now do both steps through `tests/mfa_helpers.py`. `jwt_client` gives an admin a verified session.
+- Draft text: the French and Kinyarwanda on the new screens need a native review.
+
 ## Pilot capacity: about 50 people at once on the free plans
 
 ### Checked

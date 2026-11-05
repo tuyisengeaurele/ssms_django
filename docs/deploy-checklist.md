@@ -20,6 +20,7 @@ Work through this top to bottom for every deploy, including a rehearsal on a tes
 | `CORS_ALLOWED_ORIGINS`, `FRONTEND_URL` | the website address, https |
 | `TRUSTED_PROXY_COUNT` | `2` with the Vercel forward and Render in front (one proxy, `1`). Wrong values make every visitor share one address, so read the address in the audit log |
 | `AI_SERVICE_URL`, `AI_SERVICE_SECRET` | same secret on both services |
+| `MFA_ENCRYPTION_KEY` | a Fernet key made by hand and kept in a password manager (runbook section 9). Without it `start.sh` stops the deploy before the running copy is replaced |
 | `SENTRY_DSN` | set, so errors reach someone |
 | `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | set, or switch the backend to console on purpose |
 | `HEALTH_API_URL` | the API's own public address, so the health check can ask it from outside. Set it on the web service and as a GitHub secret |
@@ -42,7 +43,9 @@ cd frontend && npm audit --omit=dev
 python scripts/smoke_deploy.py https://api.example.rw --site https://app.example.rw --probe-limits
 ```
 
-The smoke script needs `SMOKE_EMAIL` and `SMOKE_PASSWORD` in the environment for the sign in checks. Use a throwaway account on a test site. It rotates and revokes that account's sign in.
+The smoke script needs `SMOKE_EMAIL` and `SMOKE_PASSWORD` in the environment for the sign in checks. Use a throwaway farmer account on a test site (an admin account also needs a code, which the script cannot type). It rotates and revokes that account's sign in.
+
+Sign in as an admin by hand once: password, then the code (or set-up the first time). Check Settings, Security shows the app as On, and that the Logs tab shows the sign in as "Signed in with a code".
 
 Then, from outside:
 

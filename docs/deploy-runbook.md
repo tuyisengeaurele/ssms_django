@@ -87,7 +87,42 @@ Meant for about 50 people at once on the free plans, between 06:00 and 20:00 in 
   
   The script only reads, but the 50 throwaway accounts exist in the live database until you remove them. If many requests fail, send the printed summary. If there are no failures and the 95th percentile is high, the free CPU is the limit, which is the signal to look at a paid plan or another host.
 
-## 9. If something fails
+## 9. Admin second factor
+
+Every admin signs in with a password and then a 6 digit code from an authenticator app (Google Authenticator, Microsoft Authenticator or similar). The first sign in after this ships goes through set-up: install the app, scan the QR code, type a code, and keep the 8 recovery codes. Supervisors and farmers sign in as before.
+
+**Before the first deploy that has it**
+
+1. Make a key and keep a copy in a password manager. Losing it makes every stored secret unreadable, and the way out is the reset command below.
+
+   ```bash
+   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+   ```
+
+2. In Render, `ssms-api`, Environment, add `MFA_ENCRYPTION_KEY` with that value and save. Do not put it in GitHub: the scheduled jobs do not need it.
+3. Then merge. If the key is missing, the deploy stops at `check --deploy` (`ssms.E001`) before the running copy is replaced, so the site stays up. Set the key and deploy again.
+
+**After the deploy**
+
+- Any admin who was signed in is signed out once. Sign in, set up the app, and save the recovery codes somewhere that is not the phone.
+- Settings, Security shows whether the app is on and how many recovery codes are left, and makes new ones (it asks for a current code, and the old codes stop working).
+- A code that is refused for a person who typed it right usually means the phone clock is off. Turn on automatic date and time.
+
+**Losing the phone**
+
+1. Use a recovery code at the code step ("Use a recovery code"). Each works once.
+2. No recovery codes? Another admin opens Users and presses "Reset authenticator" on your row. It asks them for their own code, signs you out everywhere, and sends you an email. You set up the app again at your next sign in. An admin cannot reset themselves.
+3. No other admin? The last resort is from your own terminal, as for `createsuperuser`. Type the database address at the prompt, run the command with your email, clear the address and close the terminal:
+
+   ```powershell
+   $env:DATABASE_URL = Read-Host "DATABASE_URL"
+   venv\Scripts\python manage.py reset_admin_mfa you@example.rw
+   Remove-Item Env:DATABASE_URL
+   ```
+
+Never paste the key, a recovery code or the database address into a chat or a screenshot.
+
+## 10. If something fails
 
 | What you see | Likely cause | Fix |
 |---|---|---|
@@ -103,4 +138,7 @@ Meant for about 50 people at once on the free plans, between 06:00 and 20:00 in 
 | `ssms-ai` restarts, log says killed | out of memory on the 512 MB free plan | move `ssms-ai` to a paid plan, or convert the model to a smaller format |
 | Health tab: disease check "unreachable" | the free service is asleep | open `/health` of `ssms-ai` once, it wakes in about a minute |
 | GitHub job red | a missing secret | the log names the setting; add the secret and run it again |
+| Deploy stops at `ssms.E001` | `MFA_ENCRYPTION_KEY` is missing or is not a valid key | make a key (section 9), set it on `ssms-api`, deploy again. The running site stays up meanwhile |
+| An admin is sent back to sign in and asked for a code | the session never passed a code (signed in before this shipped, or just promoted to admin) | sign in again. It asks for the code, or for set-up |
+| An admin's code is always refused | the phone clock is off, or the key was changed after the app was set up | turn on automatic time. After a key change, run `reset_admin_mfa` and set up again |
 | Render says the month's free hours are used up | two always-awake services exceed 750 hours | let `ssms-ai` sleep (it does when idle) and keep only the API awake |
