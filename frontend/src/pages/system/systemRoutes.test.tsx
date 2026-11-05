@@ -11,7 +11,9 @@ vi.mock('../../context/AuthContext', () => ({
 }));
 
 const api = vi.hoisted(() => ({ health: vi.fn(), audit: vi.fn(), summary: vi.fn() }));
-vi.mock('../../services/health.service', () => ({ healthService: { get: api.health } }));
+vi.mock('../../services/health.service', () => ({
+  healthService: { get: api.health, history: vi.fn().mockResolvedValue({ data: { data: { services: {} } } }), runTest: vi.fn() },
+}));
 vi.mock('../../services/admin.service', () => ({
   auditLogService: { getList: api.audit, exportCsv: vi.fn(), exportPdf: vi.fn() },
   reportService: { getSummary: api.summary, exportCsv: vi.fn(), exportPdf: vi.fn() },
