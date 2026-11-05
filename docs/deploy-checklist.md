@@ -6,7 +6,7 @@ Work through this top to bottom for every deploy, including a rehearsal on a tes
 
 ## 1. Decide before you start
 
-- **One site or two?** The refresh cookie is `SameSite=Lax`. A browser only sends it when the website and the API are the same site. `app.example.rw` and `api.example.rw` are one site. `ssms.vercel.app` and your Render API address are two, and everyone would be signed out every 15 minutes. The site answers this with the `/api` forward in `frontend/vercel.json`: the browser only talks to the Vercel address.
+- **One site or two?** The refresh cookie is `SameSite=Lax`. A browser only sends it when the website and the API are the same site. `app.example.rw` and `api.example.rw` are one site. `ssms-django.vercel.app` and your Render API address are two, and everyone would be signed out every 15 minutes. The site answers this with the `/api` forward in `frontend/vercel.json`: the browser only talks to the Vercel address.
 - **Real data or demo data?** A test site gets demo data only (`seed_demo`). Real farmer data never goes to a test site.
 
 ## 2. Settings on the API host

@@ -59,10 +59,10 @@ services:
 
       # ── Website ──────────────────────────────────────────────────────────────
       - key: CORS_ALLOWED_ORIGINS
-        value: "https://ssms.vercel.app"
+        value: "https://ssms-django.vercel.app"
 
       - key: FRONTEND_URL
-        value: "https://ssms.vercel.app"
+        value: "https://ssms-django.vercel.app"
 
       # The API's own public address, so the Health tab can ask it from outside.
       - key: HEALTH_API_URL

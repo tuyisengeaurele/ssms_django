@@ -55,7 +55,7 @@ After saving, run **Frequent jobs** by hand from the Actions tab (**Run workflow
 
 1. Do not set `VITE_API_BASE_URL` in Vercel. When it is missing the site calls `/api`, which Vercel forwards.
 2. Redeploy after the merge so the `/api` rewrite is live.
-3. Check that `FRONTEND_URL` and `CORS_ALLOWED_ORIGINS` on Render are the real Vercel address.
+3. Check that `FRONTEND_URL` and `CORS_ALLOWED_ORIGINS` on Render are the real Vercel address, as the project's **Domains** page shows it. A short name such as `ssms.vercel.app` is probably another account's site: ours is `ssms-django.vercel.app`.
 
 ## 6. Check it works
 
