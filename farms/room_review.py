@@ -9,8 +9,9 @@ from decimal import Decimal
 from django.db.models import F, Q
 from django.utils import timezone
 
+from cooperatives.reviewers import reviewers_of
 from core.access import scope_rooms
-from users.models import Role, User
+from users.models import Role
 
 from .models import RearingRoom
 
@@ -101,12 +102,7 @@ def decide(room: RearingRoom, reviewer, decision: str, note: str = '') -> Rearin
 
 def reviewers_for(room: RearingRoom) -> list:
     """Who is asked about a room: the active supervisors of the owner's cooperative, else every active admin."""
-    owner = room.farm.owner
-    if owner.cooperative_id:
-        supervisors = list(User.objects.filter(role=Role.SUPERVISOR, cooperative_id=owner.cooperative_id, is_active=True))
-        if supervisors:
-            return supervisors
-    return list(User.objects.filter(role=Role.ADMIN, is_active=True))
+    return reviewers_of(room.farm.owner)
 
 
 def waiting_for(user, cooperative_id: str | None = None):
