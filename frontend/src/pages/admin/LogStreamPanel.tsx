@@ -16,6 +16,7 @@ type Row = SecurityRow | RequestRow | JobRow;
 const SECURITY_KINDS = [
   'login_ok', 'login_failed', 'lockout', 'password_changed', 'reset_requested', 'new_device',
   'session_revoked', 'session_reused', 'session_idle', 'permission_denied', 'throttled',
+  'support_requested', 'support_allowed', 'support_rejected', 'support_started', 'support_ended', 'support_expired', 'support_refused',
 ];
 const JOB_KINDS = ['email_failed', 'device_rejected', 'device_offline', 'command_started', 'command_finished', 'command_failed'];
 const STATUS_CLASSES = ['2xx', '3xx', '4xx', '5xx'];

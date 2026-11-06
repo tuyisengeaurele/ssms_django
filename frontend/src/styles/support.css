@@ -1,0 +1,87 @@
+/* Support access: the banner that stays on screen for the whole visit, and the choices in the ask form. */
+
+.support-banner {
+  position: sticky;
+  top: 0;
+  z-index: 101;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 14px;
+  padding: 8px clamp(16px, 3vw, 44px);
+  background: var(--ink);
+  color: var(--bg);
+  font: 500 0.9rem/1.4 var(--font-ui);
+  text-align: center;
+}
+
+/* The top bar is sticky too. When a banner comes right before it, the bar sits under the banner. */
+.support-banner + .app-topbar {
+  top: var(--support-banner-height, 0px);
+}
+
+.support-banner-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.support-banner-btn {
+  padding: 3px 14px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.support-banner-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.support-banner-btn:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.support-banner-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.support-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+}
+
+.support-choices legend {
+  padding: 0;
+  margin-bottom: 6px;
+}
+
+.support-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.support-counter {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-2);
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+.support-waiting-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}

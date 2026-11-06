@@ -10,6 +10,8 @@ import TopBar from './TopBar';
 import BottomNav from './BottomNav';
 import QuickSearch from './QuickSearch';
 import IdleWarningModal from './IdleWarningModal';
+import ActingBanner from '../support/ActingBanner';
+import SupportResume from '../support/SupportResume';
 import { useAuth } from '../../context/AuthContext';
 import { alertService } from '../../services/alert.service';
 import { endSession } from '../../services/api';
@@ -109,6 +111,9 @@ export default function DashboardLayout() {
       />
 
       <main className={`app-main ${rail ? 'sidebar-collapsed' : ''}`}>
+        {/* Right before the top bar, so the bar can sit under it (see support.css). */}
+        <ActingBanner />
+        <SupportResume />
         <TopBar onMenuToggle={toggleMenu} onSearch={() => setSearchOpen(true)} alertCount={alertCount} />
 
         <AnimatePresence mode="wait">

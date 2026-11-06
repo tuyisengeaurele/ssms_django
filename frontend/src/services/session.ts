@@ -25,6 +25,8 @@ export const setActing = (value: boolean) => {
 
 // The visit ended, or its token ran out. The page goes back to the admin.
 const supportEndedListeners = new Set<() => void>();
+// Remembered until the admin's page has said so, because the page that shows the note appears after this runs.
+let supportEndedUnseen = false;
 export function onSupportEnded(listener: () => void): () => void {
   supportEndedListeners.add(listener);
   return () => {
@@ -32,7 +34,14 @@ export function onSupportEnded(listener: () => void): () => void {
   };
 }
 export function notifySupportEnded() {
+  supportEndedUnseen = true;
   supportEndedListeners.forEach((listener) => listener());
+}
+/** True once after a visit was ended by the server or by its time running out. */
+export function takeSupportEnded(): boolean {
+  const unseen = supportEndedUnseen;
+  supportEndedUnseen = false;
+  return unseen;
 }
 
 // A flag, not a secret. It says a sign in may still be alive, so a page does not ask for a new token for a visitor
