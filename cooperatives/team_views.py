@@ -11,6 +11,7 @@ from audit_log.utils import log_action
 from core.permissions import RolePermission
 from core.throttles import InvitationRateThrottle
 from core.utils import api_error, api_success
+from farms import room_review
 from users.models import User
 
 from . import invitations
@@ -125,6 +126,39 @@ class TeamFarmerListView(APIView):
             {'id': f.pk, 'name': f.name, 'email': f.email, 'joined_at': f.created_at, 'farm_count': f.farm_count}
             for f in farmers
         ])
+
+
+class TeamRoomListView(APIView):
+    """GET /api/team/rooms, the rooms that wait for a decision: new rooms and changes of size.
+
+    A supervisor sees their cooperative's. An admin sees all, and may name one with `cooperativeId`.
+    """
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'team'
+
+    def get(self, request):
+        user = request.user
+        cooperative_id = None
+        if user.role == 'SUPERVISOR':
+            if not user.cooperative_id:
+                return api_error('You are not part of a cooperative yet.', 403)
+        else:
+            cooperative_id = request.query_params.get('cooperativeId') or None
+        rows = [
+            {
+                'id': r.pk,
+                'name': r.name,
+                'kind': 'new' if r.approval_status == r.Approval.PENDING else 'size',
+                'approval_status': r.approval_status,
+                'area_m2': r.area_m2,
+                'pending_area_m2': r.pending_area_m2,
+                'created_at': r.created_at,
+                'farm': {'id': r.farm_id, 'name': r.farm.name},
+                'owner': {'name': r.farm.owner.name, 'email': r.farm.owner.email},
+            }
+            for r in room_review.waiting_for(user, cooperative_id)
+        ]
+        return api_success({'rooms': rows, 'count': len(rows)})
 
 
 class TeamFarmerDetailView(APIView):

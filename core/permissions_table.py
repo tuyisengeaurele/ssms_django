@@ -34,6 +34,8 @@ PERMISSIONS: dict[str, dict[str, frozenset]] = {
     },
     'rooms': {
         'read': ALL, 'create': FARMER_OR_ADMIN, 'update': FARMER_OR_ADMIN, 'delete': FARMER_OR_ADMIN,
+        # Deciding on a farmer's new room or a change of its size. Which rooms a supervisor may decide on is `core.access`.
+        'review': STAFF,
     },
     'batches': {
         'read': ALL, 'create': FARMER_OR_ADMIN, 'update': FARMER_OR_ADMIN, 'delete': FARMER_OR_ADMIN,

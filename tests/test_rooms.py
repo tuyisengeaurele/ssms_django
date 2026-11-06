@@ -27,7 +27,7 @@ def room_url(farm):
 
 
 def add_room(client, farm, name='Room A', **body):
-    return client.post(room_url(farm), {'name': name, **body}, format='json')
+    return client.post(room_url(farm), {'name': name, 'areaM2': 12, **body}, format='json')
 
 
 def make_room(farm, name='Room A', **kw):

@@ -65,7 +65,7 @@ def delete_farm(client, farm, **_):
 
 
 def add_room(client, farm, **_):
-    return client.post(f'/api/farms/{farm.pk}/rooms', {'name': 'Room Z'}, format='json')
+    return client.post(f'/api/farms/{farm.pk}/rooms', {'name': 'Room Z', 'areaM2': 12}, format='json')
 
 
 def edit_room(client, farm, **_):
