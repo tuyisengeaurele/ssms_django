@@ -215,6 +215,7 @@ REST_FRAMEWORK = {
         'export': '10/minute',   # CSV and PDF exports of a list, per person
         'detection': '20/minute',   # photo checks, per person
         'lot': '30/minute',   # strangers opening the page behind a lot's QR code
+        'support': '5/hour',   # an admin asking to look at somebody's account
     },
 }
 

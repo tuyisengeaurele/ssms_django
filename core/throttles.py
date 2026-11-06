@@ -75,6 +75,10 @@ class SessionsRateThrottle(UserRateThrottle):
     scope = 'sessions'   # a person looking at, renaming or signing out their devices, 30 a minute
 
 
+class SupportRequestThrottle(UserRateThrottle):
+    scope = 'support'   # an admin asking to look at somebody's account, 5 an hour
+
+
 class DeviceKeyThrottle(SimpleRateThrottle):
     """30 readings a minute for each device key. A device that sends no key is counted by its address."""
     scope = 'device'

@@ -21,6 +21,7 @@ FARMER_OR_ADMIN = frozenset({FARMER, ADMIN})
 STAFF = frozenset({SUPERVISOR, ADMIN})
 ADMIN_ONLY = frozenset({ADMIN})
 FARMER_ONLY = frozenset({FARMER})
+NON_ADMIN = frozenset({FARMER, SUPERVISOR})
 
 PERMISSIONS: dict[str, dict[str, frozenset]] = {
     # The person's own account and sign ins. Everyone, and only their own.
@@ -68,6 +69,12 @@ PERMISSIONS: dict[str, dict[str, frozenset]] = {
     # An admin's authenticator app: its status, new recovery codes, a fresh code before something sensitive, and
     # resetting another admin's.
     'second_factor': {'read': ADMIN_ONLY, 'create': ADMIN_ONLY, 'step_up': ADMIN_ONLY, 'reset': ADMIN_ONLY},
+    # An admin asking to look at a farmer's or supervisor's account, and the person's side of it: the pending request,
+    # the answer, ending it, and the history of visits.
+    'support_access': {
+        'request': ADMIN_ONLY, 'read': ADMIN_ONLY, 'cancel': ADMIN_ONLY, 'start': ADMIN_ONLY, 'token': ADMIN_ONLY,
+        'end': ADMIN_ONLY, 'pending': NON_ADMIN, 'respond': NON_ADMIN, 'end_own': NON_ADMIN, 'history': NON_ADMIN,
+    },
     'admin_users': {
         'read': ADMIN_ONLY, 'create': ADMIN_ONLY, 'update': ADMIN_ONLY, 'delete': ADMIN_ONLY, 'restore': ADMIN_ONLY,
     },

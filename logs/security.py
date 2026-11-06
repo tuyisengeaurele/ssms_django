@@ -26,6 +26,13 @@ KINDS = {
     'mfa_recovery_used': 'Signed in with a recovery code',
     'mfa_recovery_regenerated': 'New recovery codes made',
     'mfa_reset': 'Authenticator app reset',
+    'support_requested': 'Support access asked for',
+    'support_allowed': 'Support access allowed',
+    'support_rejected': 'Support access refused by the person',
+    'support_started': 'Support access started',
+    'support_ended': 'Support access ended',
+    'support_expired': 'Support access request ran out of time',
+    'support_refused': 'Action refused during support access',
     'permission_denied': 'Refused for the role',
     'throttled': 'Slowed down',
 }
