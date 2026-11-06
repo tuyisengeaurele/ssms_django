@@ -39,7 +39,9 @@ class RequestLogMiddleware:
         # A browser asks permission before a cross site call. A good answer to that says nothing.
         if request.method == 'OPTIONS' and not failed:
             return
-        if not failed and random.random() >= settings.REQUEST_LOG_SAMPLE_RATE:
+        # Every request of a support visit is kept, so what an admin looked at can always be found.
+        support_id = getattr(request, 'support_access_id', '')
+        if not failed and not support_id and random.random() >= settings.REQUEST_LOG_SAMPLE_RATE:
             return
         user = getattr(request, 'user', None)
         known = user is not None and getattr(user, 'is_authenticated', False)
@@ -54,4 +56,5 @@ class RequestLogMiddleware:
             user_id=user.pk if known else None,
             role=user.role if known else '',
             ip_address=get_client_ip(request),
+            support_access_id=support_id,
         )

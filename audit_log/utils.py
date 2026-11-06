@@ -32,7 +32,12 @@ def log_action(request, action: str, resource: str, resource_id='', detail='', a
     Pass changes= (from audit_log.changes.build_changes) to record what each field was and became.
     A failure is logged and swallowed, so auditing never breaks the request it describes.
     """
-    user       = actor or getattr(request, 'user', None)
+    acting     = getattr(request, 'acting_admin', None) if actor is None else None
+    if acting is not None:
+        # An admin acting as a person. The entry is the admin's, made on behalf of the person whose account it is.
+        owner  = getattr(request, 'user', None)
+        detail = f'{detail} (support access {request.support.id})'
+    user       = actor or acting or getattr(request, 'user', None)
     is_auth    = user and getattr(user, 'is_authenticated', False) and not getattr(user, 'is_anonymous', True)
     on_behalf = ''
     if owner is not None and getattr(owner, 'email', '') and (not is_auth or owner.pk != user.pk):

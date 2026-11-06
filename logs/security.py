@@ -43,7 +43,12 @@ def record_security_event(kind: str, request, user=None, detail: str = '') -> No
     try:
         if kind not in KINDS:
             raise ValueError(f'unknown security event kind: {kind}')
-        who = user or getattr(request, 'user', None)
+        acting = getattr(request, 'acting_admin', None) if user is None else None
+        if acting is not None:
+            # An admin acting as a person. The event is the admin's, and says whose account it was.
+            person = getattr(request, 'user', None)
+            detail = f'as {getattr(person, "email", "")}: {detail}'
+        who = user or acting or getattr(request, 'user', None)
         known = who is not None and getattr(who, 'is_authenticated', False)
         SecurityEvent.objects.create(
             kind=kind,
