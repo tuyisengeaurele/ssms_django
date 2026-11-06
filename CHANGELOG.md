@@ -1,5 +1,38 @@
 # Changelog
 
+## Allowance
+
+Every farmer now has a fixed number of egg boxes they may take per round, set by the cooperative and changed only by a request or a reduction, with a history of every change. This is step 2 of the egg supply design (`docs/superpowers/specs/2026-11-06-egg-supply-design.md`, local only). The plan is `docs/superpowers/plans/2026-11-06-allowance.md` (local only). The branch `feature/allowance` is cut from `feature/room-approval` (the capacity hint reads approved room sizes) and, like it, is not merged before the Decisions inbox exists.
+
+### What it does
+- The cooperative has a default amount for a new farmer. An admin edits it on the cooperative's Details tab. The invitation can carry another amount (0 to 100), which the supervisor types in the invite dialog.
+- A farmer sees "Your allowance" on the dashboard: the amount, where it came from, the last change in words, and one button, "Ask for a different amount". The dialog says why it refuses before sending (not a whole number from 0 to 100, the same amount, a reason under 10 or over 500 characters).
+- A supervisor of the farmer's cooperative (or an admin, when there is none) approves the amount asked, approves another amount, or declines with a reason. The farmer is emailed each time. One request waits at a time and the farmer can withdraw it.
+- A supervisor can lower an allowance with a reason from the Farmers tab, and never raise one. An admin may set any amount through the API.
+- Every change is a line of history (start, amendment, reduction) with who and why. The supervisors are emailed when a request arrives, and the farmer when a decision or a direct change is made.
+
+### How it is built
+- **One module changes the amount.** `supply/allowance.py` holds `current`, `set_start`, `lower`, `set_as_admin`, `ask`, `withdraw`, `decide`, `for_farmers`. A decision is one conditional UPDATE, so two supervisors deciding the same request cannot both win. The second gets 409 and no second email.
+- **No row means the default.** A farmer who joined before has no row and has the cooperative default. The first change writes the default into the history before the change. A row is valid only for the cooperative it was set in, so a farmer moved to another cooperative starts again.
+- **Capacity helper.** `supply/capacity.py` works out what a farmer's approved rooms can hold from the space one box needs. It answers "not known" until that number is set, and step 3 uses it for the request limit.
+- **Shared reviewers.** `cooperatives/reviewers.py` (`reviewers_of`) is the rule "supervisors of the cooperative, else every active admin", now used by room approval and the allowance.
+- **Wire format.** `GET /api/supply/allowance`, `POST /api/supply/allowance/requests`, `DELETE .../requests/<id>`, `GET .../requests` (staff), `POST .../requests/<id>/decision`, `PATCH /api/supply/allowance/farmers/<id>`, `GET` and `PATCH /api/supply/settings`. Refusals carry a `code`. A supervisor reaches only their cooperative, and what is outside it is "not found". The new write routes are refused in support access by default.
+- **Audit log.** Each request, withdrawal, decision, direct change and settings change.
+
+### Numbers to confirm
+- The default of 2 boxes is a first guess from the design example. Confirm it per cooperative.
+- "Space one box needs (m²)" is empty on purpose, until a sericulture officer gives the number. Nothing is worked out from room sizes while it is empty.
+
+### Not built
+- **The decision screen.** A supervisor decides requests through the API for now. The list and buttons come with the Decisions inbox (step 4), the same as the room review.
+- A Change dialog for an admin on one farmer (the admin has no farmers tab, and uses the API), the evidence panel, the nudges (step 5, the `suggestion` history kind is already declared), rounds and requests for eggs (step 3), and the other settings of the design (worms per box, pickup days, the two switches), which arrive with the step that uses them.
+
+### Checks
+- Backend 3003 tests, frontend 2082 tests, `ruff`, `tsc`, ESLint and `npm run build` clean.
+- A browser check on a scratch database: the card with the cooperative default, both refusals in the ask dialog, a request with markup in the reason shown as plain text, the other cooperative's supervisor seeing nothing and getting 404, the farmer getting 403, a different amount granted, the second decision getting 409, the card in English, French and Kinyarwanda with the change in words, the invite dialog refusing 101 and sending 4, a farmer joining by that link and showing as set (not default), "Starts with 4 boxes" on the invitation, Lower refusing a higher amount and lowering with a reason, and the history reading start, amendment, reduction. Not checked in the browser: the admin's settings block (an admin sign in needs the second factor, so it is covered by unit tests only), the emails in a mail app, and the decision screen (it does not exist yet). The browser pane was not drawing during the check, so a closing dialog stayed on screen, which is the pane and not the page.
+- The French and Kinyarwanda texts are drafts for native review.
+- Migrations: `supply.0001_initial`, `cooperatives.0003_invitation_starter_boxes`. They only add things. Run `python manage.py migrate` (the build does it).
+
 ## Room approval
 
 A farmer's new room, and a new size for an approved room, now wait for a supervisor to approve them. Only an approved room can hold a batch or a sensor. This is step 1 of the egg supply design (`docs/superpowers/specs/2026-11-06-egg-supply-design.md`, local only), which needs a trusted room size before it can work out an allowance. The plan is `docs/superpowers/plans/2026-11-06-room-approval.md` (local only).
