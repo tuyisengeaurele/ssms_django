@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import type { User } from '../../types';
@@ -80,10 +81,12 @@ describe('Ask for support access', () => {
 
   it('shows why it failed and stays open, so the reason is not lost', async () => {
     const { onSubmit, onClose } = open();
-    onSubmit.mockRejectedValue({ isAxiosError: true, response: { status: 409, data: { message: 'You already have an open support request.' } } });
+    onSubmit.mockRejectedValue(new AxiosError('no', 'ERR_BAD_REQUEST', undefined, undefined, {
+      status: 409, data: { message: 'You already have an open support request.' }, statusText: '', headers: {}, config: {} as InternalAxiosRequestConfig,
+    }));
     fireEvent.change(reason(), { target: { value: GOOD } });
     fireEvent.click(send());
-    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent('You already have an open support request.');
     expect(reason().value).toBe(GOOD);
     expect(onClose).not.toHaveBeenCalled();
   });

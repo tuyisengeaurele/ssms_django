@@ -8,6 +8,7 @@ import { setAccessToken } from '../../services/session';
 import Panel from '../../components/ui/Panel';
 import SignedInDevices from '../shared/SignedInDevices';
 import MfaSettings from './MfaSettings';
+import SupportHistory from './SupportHistory';
 
 /** The password, and the places the account is signed in. */
 export default function SecuritySettings() {
@@ -91,6 +92,8 @@ export default function SecuritySettings() {
       </Panel>
 
       {user?.role === 'ADMIN' ? <MfaSettings /> : null}
+
+      {user && user.role !== 'ADMIN' ? <SupportHistory /> : null}
 
       <SignedInDevices />
     </div>
