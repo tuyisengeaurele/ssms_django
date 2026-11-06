@@ -11,7 +11,7 @@ from core.access import get_farm_or_404, get_room_or_404
 from core.permissions import RolePermission
 from core.utils import api_error, api_success
 
-from . import room_review
+from . import room_notify, room_review
 from .models import AREA_MAX, AREA_MIN, RearingRoom
 from .room_review import ReviewError
 
@@ -138,6 +138,8 @@ class FarmRoomListView(APIView):
             request, 'CREATE', 'Room', room.pk, f'Added room {room.name} to {farm.name} ({area} square metres, {room.approval_status})',
             owner=on_behalf_of(request, farm),
         )
+        if room.approval_status == RearingRoom.Approval.PENDING:
+            room_notify.tell_reviewers(room, room_notify.NEW)
         return api_success(_row(room), 'Room added.', 201)
 
 
@@ -165,7 +167,12 @@ class RoomDetailView(APIView):
         )
         area = serializer.validated_data.get('area_m2')
         if area is not None:
+            size_in_force = room.area_m2
             outcome = room_review.change_area(room, area, request.user)
+            if outcome == 'queued':
+                room_notify.tell_reviewers(room, room_notify.SIZE, old_size=size_in_force)
+            elif outcome == 'resubmitted':
+                room_notify.tell_reviewers(room, room_notify.NEW)
             if outcome in ('queued', 'resubmitted'):
                 log_action(
                     request, 'UPDATE', 'Room', room.pk, f'Asked to change the size of room {room.name} to {area} square metres',
@@ -208,4 +215,5 @@ class RoomReviewView(APIView):
         else:
             detail, message = f'Did not approve {what} {room.name}: {room.review_note}', 'Not approved.'
         log_action(request, 'UPDATE', 'Room', room.pk, detail, owner=on_behalf_of(request, room.farm))
+        room_notify.tell_owner(room, decision, size=about_size)
         return api_success(_row(room), message)
