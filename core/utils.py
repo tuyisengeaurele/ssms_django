@@ -13,10 +13,13 @@ def api_success(data=None, message='Success', status_code=status.HTTP_200_OK):
     return Response({'success': True, 'message': message, 'data': data}, status=status_code)
 
 
-def api_error(message='Error', status_code=status.HTTP_400_BAD_REQUEST, errors=None):
+def api_error(message='Error', status_code=status.HTTP_400_BAD_REQUEST, errors=None, code=None):
     body = {'success': False, 'message': message, 'reference': current_request_id()}
     if errors is not None:
         body['errors'] = errors
+    if code is not None:
+        # A short name the page can tell cases apart by, as it does for the second factor and support access.
+        body['code'] = code
     return Response(body, status=status_code)
 
 

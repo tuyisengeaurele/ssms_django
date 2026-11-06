@@ -17,6 +17,10 @@ from .models import RearingRoom
 Approval = RearingRoom.Approval
 TWO_PLACES = Decimal('0.01')
 
+# What a farmer is told when a room cannot hold a batch or a sensor yet. The page reads the code.
+NO_APPROVED_ROOM = 'Add a room and wait for your supervisor to approve it before you add a batch.'
+ROOM_NOT_APPROVED = 'That room has not been approved yet.'
+
 
 class ReviewError(Exception):
     """Something cannot be done. `message` is for the person, `code` for the page."""

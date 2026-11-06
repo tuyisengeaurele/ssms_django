@@ -15,6 +15,7 @@ from core.permissions import RolePermission
 from core.throttles import AnonRateThrottle, DeviceKeyThrottle
 from core.utils import api_error, api_success
 from farms.models import RearingRoom
+from farms.room_review import ROOM_NOT_APPROVED
 from logs.jobs import record_job
 
 from .devices import effective_status, record_device_reading, room_for_device
@@ -193,9 +194,12 @@ class IoTDeviceListView(APIView):
             room = next((r for r in rooms if r.pk == room_id), None)
             if room is None:
                 return api_error(CHOOSE_ROOM, 422, {'room_id': [CHOOSE_ROOM]})
+            if not room.usable:
+                return api_error(ROOM_NOT_APPROVED, 422, {'room_id': [ROOM_NOT_APPROVED]}, code='room_not_approved')
         else:
-            # A farm with one room has nothing to decide. Otherwise the device waits to be placed.
-            room = rooms[0] if len(rooms) == 1 else None
+            # A farm with one approved room has nothing to decide. Otherwise the device waits to be placed.
+            approved = [r for r in rooms if r.usable]
+            room = approved[0] if len(approved) == 1 else None
 
         device = IoTDevice.objects.create(
             name=name,
@@ -256,6 +260,8 @@ class IoTDeviceDetailView(APIView):
         room = RearingRoom.objects.filter(pk=request.data.get('room_id') or '', farm_id=device.farm_id, is_active=True).first()
         if room is None:
             return api_error(CHOOSE_ROOM, 422, {'room_id': [CHOOSE_ROOM]})
+        if not room.usable:
+            return api_error(ROOM_NOT_APPROVED, 422, {'room_id': [ROOM_NOT_APPROVED]}, code='room_not_approved')
         device.room = room
         device.save(update_fields=['room'])
         log_action(request, 'UPDATE', 'Device', device.pk, f'Moved device {device.name} to {room.name}')
