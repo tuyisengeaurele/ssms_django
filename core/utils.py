@@ -20,6 +20,10 @@ def api_error(message='Error', status_code=status.HTTP_400_BAD_REQUEST, errors=N
     return Response(body, status=status_code)
 
 
+# Codes of support access that the page needs, besides the second factor ones.
+SUPPORT_CODES = ('support_ended', 'support_view_only', 'support_blocked')
+
+
 def _failure_code(exc) -> str:
     """The code an authentication class gave. The token library keeps it in a dict, Django REST framework on the text."""
     detail = getattr(exc, 'detail', None)   # a plain Django 404 has none
@@ -41,6 +45,13 @@ def _friendly_message(exc, status_code, data):
         return 'Please sign in to continue.'
     if status_code == 403 and _failure_code(exc) == 'mfa_recent_required':
         return 'Please confirm with a code from your authenticator app.'
+    code = _failure_code(exc)
+    if code == 'support_ended':
+        return 'The support session has ended.'
+    if code == 'support_view_only':
+        return 'Support access can only look, not change.'
+    if code == 'support_blocked':
+        return 'Support access cannot do that.'
     if status_code == 401:
         return 'Your session has ended. Please sign in again.'
     if status_code == 403:
@@ -58,7 +69,8 @@ def _friendly_message(exc, status_code, data):
 
 def _note_refusal(exc, context, status_code):
     """A refusal for the role, or a slow down, goes in the security log. Only the method and the route pattern, never the query."""
-    asking_for_a_code = status_code == 403 and _failure_code(exc) == 'mfa_recent_required'   # not a refusal for the role
+    # Asking for a code, and the refusals of support access (which write their own event), are not a refusal for the role.
+    asking_for_a_code = status_code == 403 and _failure_code(exc) in ('mfa_recent_required', *SUPPORT_CODES)
     kind = 'throttled' if isinstance(exc, Throttled) else 'permission_denied' if status_code == 403 and not asking_for_a_code else None
     request = context.get('request')
     if kind and request is not None:
@@ -85,7 +97,7 @@ def custom_exception_handler(exc, context):
     _note_refusal(exc, context, status_code)
     if isinstance(exc, AuthenticationFailed) and _failure_code(exc) == 'session_idle':
         response.data['code'] = 'session_idle'
-    if _failure_code(exc) in ('mfa_required', 'mfa_recent_required'):
+    if _failure_code(exc) in ('mfa_required', 'mfa_recent_required', *SUPPORT_CODES):
         response.data['code'] = _failure_code(exc)
     if isinstance(exc, Throttled) and exc.wait:
         response.data['retryAfter'] = int(math.ceil(exc.wait))

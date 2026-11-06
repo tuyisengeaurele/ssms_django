@@ -26,7 +26,7 @@ NON_ADMIN = frozenset({FARMER, SUPERVISOR})
 PERMISSIONS: dict[str, dict[str, frozenset]] = {
     # The person's own account and sign ins. Everyone, and only their own.
     'account': {
-        'read': ALL, 'update': ALL, 'delete': ALL, 'ping': ALL, 'revoke_others': ALL,
+        'read': ALL, 'update': ALL, 'delete': ALL, 'ping': ALL, 'revoke_others': ALL, 'sessions': ALL,
     },
     'farms': {
         'read': ALL, 'create': FARMER_OR_ADMIN, 'update': FARMER_OR_ADMIN, 'delete': FARMER_OR_ADMIN,

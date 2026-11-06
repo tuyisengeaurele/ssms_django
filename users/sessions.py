@@ -183,6 +183,11 @@ def rotate(request, presented: str) -> tuple[UserSession, str, str]:
 
 def revoke(session: UserSession, reason: str) -> None:
     """End one device. The refresh tokens it holds go on the blacklist as a second lock."""
+    if session.support_access_id:
+        # A sign in made for support access is ended through the request, so its story stays in one place.
+        from support_access.services import end_support_access
+        end_support_access(session.support_access, 'person', reason)
+        return
     if session.revoked_at is None:
         session.revoked_at = _now()
         session.revoked_reason = reason
