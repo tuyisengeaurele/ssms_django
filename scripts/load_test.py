@@ -5,8 +5,10 @@
     python manage.py prepare_load_test --remove                                       (clean up afterwards)
 
 Each simulated person has their own account and token, because the API limits each person to 300 requests a minute.
-They read three pages (who am I, my farms, my alerts) with a pause of half a second to two seconds between requests,
-the way a person reads. The script first wakes the API if it is asleep, which can take a minute, and does not count that.
+Each person loads a page (who am I, my farms, my alerts together) and then reads for 8 to 20 seconds, so 50 people make
+about 11 requests a second. --stress makes each person ask every half second to two seconds instead, about 40 requests a
+second for 50 people, to find the ceiling. A real crowd is nearer the default. The script first wakes the API if it is
+asleep, which can take a minute, and does not count that.
 
 It passes when no request failed (a 429 counts as a failure) and 95 percent of requests took under two seconds.
 It exits with 1 when it does not, and 2 when it cannot start. It only reads: it changes nothing on the server.
@@ -26,7 +28,10 @@ from pathlib import Path
 import httpx
 
 PATHS = ['/api/auth/me', '/api/farms', '/api/alerts']
-PAUSE_SECONDS = (0.5, 2.0)
+THINK_SECONDS = (8.0, 20.0)    # a person reads a loaded page for this long
+PAUSE_SECONDS = THINK_SECONDS
+STRESS_SECONDS = (0.5, 2.0)    # --stress: a pause after every request
+EVIDENCE_HEADERS = ('server', 'via', 'x-render-routing', 'x-vercel-id', 'retry-after', 'content-type')
 LIMIT_SECONDS = 2.0
 WAKE_LIMIT_SECONDS = 150
 
@@ -37,6 +42,7 @@ class Sample:
     seconds: float
     ok: bool
     status: int | None = None   # the HTTP answer, or None when the connection broke
+    note: str = ''              # for an answer of 400 or more: which headers and what text came back
 
 
 @dataclass(frozen=True)
@@ -47,6 +53,7 @@ class Summary:
     p95: float
     slowest: float
     statuses: dict = field(default_factory=dict)   # how many requests got each answer, None for a broken connection
+    examples: dict = field(default_factory=dict)   # the first note of each refusal, to tell our API from a host in front
 
 
 def percentile(values: list[float], pct: float) -> float:
@@ -67,6 +74,8 @@ def summarise(samples: list[Sample]) -> Summary:
         p95=percentile(times, 95),
         slowest=max(times, default=0.0),
         statuses=dict(Counter(sample.status for sample in samples)),
+        examples={status: next(s.note for s in samples if s.status == status and s.note)
+                  for status in {s.status for s in samples if s.note}},
     )
 
 
@@ -74,28 +83,41 @@ def passed(summary: Summary, limit_seconds: float = LIMIT_SECONDS) -> bool:
     return summary.requests > 0 and summary.failures == 0 and summary.p95 < limit_seconds
 
 
-async def _one_person(client: httpx.AsyncClient, token: str, until: float, samples: list[Sample], pause: tuple[float, float]):
+def _note(answer: httpx.Response) -> str:
+    """Which headers and what text came back with a refusal. Our API answers in JSON with a reference, a host does not."""
+    headers = ', '.join(f'{name}={answer.headers[name]}' for name in EVIDENCE_HEADERS if name in answer.headers)
+    return f'{headers or "no identifying headers"}; body: {answer.text[:120]!r}'
+
+
+async def _one_person(client: httpx.AsyncClient, token: str, until: float, samples: list[Sample], pause: tuple[float, float], spread: bool = False):
+    """One person: load a page (three requests together), then read. With `spread`, pause after every request instead."""
     headers = {'Authorization': f'Bearer {token}'}
+    if not spread:
+        await asyncio.sleep(random.uniform(0, pause[1]))   # people do not all arrive in the same instant
     while time.monotonic() < until:
         for path in PATHS:
             started = time.monotonic()
-            status = None
+            status, note = None, ''
             try:
                 answer = await client.get(path, headers=headers)
                 status = answer.status_code
                 ok = status < 400
+                note = '' if ok else _note(answer)
             except httpx.HTTPError:
                 ok = False
-            samples.append(Sample(path, time.monotonic() - started, ok, status))
+            samples.append(Sample(path, time.monotonic() - started, ok, status, note))
+            if spread:
+                await asyncio.sleep(random.uniform(*pause))
+        if not spread:
             await asyncio.sleep(random.uniform(*pause))
 
 
-async def run(base: str, tokens: list[str], seconds: float, transport=None, pause: tuple[float, float] = PAUSE_SECONDS) -> list[Sample]:
+async def run(base: str, tokens: list[str], seconds: float, transport=None, pause: tuple[float, float] = PAUSE_SECONDS, spread: bool = False) -> list[Sample]:
     """Everyone reads at once for `seconds`. Returns one sample per request."""
     samples: list[Sample] = []
     async with httpx.AsyncClient(base_url=base, timeout=60, transport=transport) as client:
         until = time.monotonic() + seconds
-        await asyncio.gather(*(_one_person(client, token, until, samples, pause) for token in tokens))
+        await asyncio.gather(*(_one_person(client, token, until, samples, pause, spread) for token in tokens))
     return samples
 
 
@@ -138,6 +160,7 @@ def main(argv=None, transport=None, pause: tuple[float, float] = PAUSE_SECONDS) 
     parser.add_argument('--tokens-file', default='load_tokens.json', help='Made by manage.py prepare_load_test.')
     parser.add_argument('--minutes', type=float, default=3.0)
     parser.add_argument('--seconds', type=float, default=None, help='Overrides --minutes. Handy for a quick try.')
+    parser.add_argument('--stress', action='store_true', help='Each person asks every half second to two seconds, to find the ceiling.')
     args = parser.parse_args(argv)
 
     try:
@@ -158,13 +181,18 @@ def main(argv=None, transport=None, pause: tuple[float, float] = PAUSE_SECONDS) 
 
     seconds = args.seconds if args.seconds is not None else args.minutes * 60
     print(f'{len(tokens)} people reading {base} for {seconds:.0f} seconds...')
-    samples = asyncio.run(run(base, tokens, seconds, transport=transport, pause=pause))
+    if args.stress:
+        samples = asyncio.run(run(base, tokens, seconds, transport=transport, pause=STRESS_SECONDS if pause == PAUSE_SECONDS else pause, spread=True))
+    else:
+        samples = asyncio.run(run(base, tokens, seconds, transport=transport, pause=pause))
     summary = summarise(samples)
 
     print(f'{summary.requests} requests, {summary.failures} failed')
     print(f'median {summary.p50:.2f} s, 95th percentile {summary.p95:.2f} s, slowest {summary.slowest:.2f} s')
     answers = ', '.join(f'{"no answer" if status is None else status} x{count}' for status, count in sorted(summary.statuses.items(), key=lambda item: -item[1]))
     print(f'answers: {answers}')
+    for status, example in sorted(summary.examples.items()):
+        print(f'{status} looked like: {example}')
     for path in PATHS:
         mine = [sample for sample in samples if sample.path == path]
         if mine:

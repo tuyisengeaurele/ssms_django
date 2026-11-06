@@ -15,9 +15,9 @@ def good(request):
     return httpx.Response(200, json={'success': True, 'data': []})
 
 
-def run(handler, tokens=('a', 'b', 'c'), seconds=0.3):
+def run(handler, tokens=('a', 'b', 'c'), seconds=0.3, pause=QUICK):
     transport = httpx.MockTransport(handler)
-    return asyncio.run(load_test.run('http://test', list(tokens), seconds, transport=transport, pause=QUICK))
+    return asyncio.run(load_test.run('http://test', list(tokens), seconds, transport=transport, pause=pause))
 
 
 def test_percentile_picks_the_value_that_that_share_of_requests_stay_under():
@@ -143,3 +143,55 @@ def test_main_stops_before_the_run_when_this_address_is_already_rate_limited(tmp
     code = main(['http://test', '--tokens-file', write_tokens(tmp_path), '--seconds', '0.3'], handler=preflight_handler(429))
     assert code == 2
     assert 'minute' in capsys.readouterr().err
+
+
+def test_a_person_loads_a_page_then_reads_for_a_while_instead_of_asking_every_second():
+    import time
+    seen = []
+
+    def handler(request):
+        seen.append((time.monotonic(), request.url.path))
+        return good(request)
+
+    run(handler, tokens=['a'], seconds=1.6, pause=(0.3, 0.3))
+    gaps = [later[0] - earlier[0] for earlier, later in zip(seen, seen[1:])]
+    assert [path for _, path in seen[:3]] == load_test.PATHS      # one page view is the three requests together
+    assert gaps[0] < 0.2 and gaps[1] < 0.2                          # with no reading time between them
+    assert gaps[2] >= 0.25                                          # then the person reads before the next page
+
+
+def test_the_stress_pace_pauses_after_every_request_to_find_the_ceiling():
+    import time
+    seen = []
+
+    def handler(request):
+        seen.append(time.monotonic())
+        return good(request)
+
+    transport = httpx.MockTransport(handler)
+    asyncio.run(load_test.run('http://test', ['a'], 0.7, transport=transport, pause=(0.2, 0.2), spread=True))
+    gaps = [later - earlier for earlier, later in zip(seen, seen[1:])]
+    assert gaps and min(gaps) >= 0.15
+
+
+def test_an_example_of_each_refusal_shows_who_answered_so_a_host_is_told_from_our_api():
+    def handler(request):
+        if request.url.path == '/api/farms':
+            return httpx.Response(429, headers={'server': 'Vercel', 'x-vercel-id': 'fra1::abc'}, text='Too many requests from this address')
+        return good(request)
+
+    samples = run(handler)
+    example = summarise(samples).examples[429]
+    assert 'server=Vercel' in example and 'x-vercel-id=fra1::abc' in example and 'Too many requests' in example
+    assert 200 not in summarise(samples).examples
+
+
+def test_main_prints_one_example_of_each_refusal(tmp_path, capsys):
+    def handler(request):
+        if request.url.path == '/api/health':
+            return good(request)
+        return httpx.Response(503, headers={'server': 'cloudflare'}, text='Service Unavailable')
+
+    main(['http://test', '--tokens-file', write_tokens(tmp_path), '--seconds', '0.3'], handler=handler)
+    out = capsys.readouterr().out
+    assert '503 looked like: server=cloudflare' in out
