@@ -35,6 +35,8 @@ class CooperativeInvitation(models.Model):
     # When an address is named, only that address can use the link, and the link counts as proof of the address.
     email = models.EmailField(blank=True, default='')
     expires_at = models.DateTimeField(db_column='expiresAt')
+    # What the farmer may take per round. Empty means the cooperative's default when the invitation is used.
+    starter_boxes = models.PositiveIntegerField(null=True, blank=True, db_column='starterBoxes')
     accepted_by = models.ForeignKey(
         'users.User', on_delete=models.SET_NULL, null=True, blank=True, db_column='acceptedById', related_name='+',
     )

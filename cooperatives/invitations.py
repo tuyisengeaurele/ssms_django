@@ -8,6 +8,8 @@ from django.db import transaction
 from django.utils import timezone
 
 from core.mail import Email, send_email
+from supply import allowance as supply_allowance
+from supply.models import SupplySettings
 
 from .models import CooperativeInvitation
 
@@ -27,7 +29,7 @@ def link_for(token: str) -> str:
     return f'{settings.FRONTEND_URL}/join/{token}'
 
 
-def issue(cooperative, inviter, email: str = '') -> tuple[CooperativeInvitation, str]:
+def issue(cooperative, inviter, email: str = '', starter_boxes: int | None = None) -> tuple[CooperativeInvitation, str]:
     """Make an invitation. The token is returned once, and only its hash is kept."""
     token = secrets.token_urlsafe(32)
     invitation = CooperativeInvitation.objects.create(
@@ -36,6 +38,7 @@ def issue(cooperative, inviter, email: str = '') -> tuple[CooperativeInvitation,
         token_hash=hash_token(token),
         email=(email or '').strip().lower(),
         expires_at=timezone.now() + timedelta(days=VALID_DAYS),
+        starter_boxes=starter_boxes,
     )
     return invitation, token
 
@@ -65,6 +68,9 @@ def accept(invitation: CooperativeInvitation, user) -> None:
         fresh.accepted_by = user
         fresh.accepted_at = timezone.now()
         fresh.save(update_fields=['accepted_by', 'accepted_at'])
+        # The farmer starts with the amount the invitation names, or else the cooperative's default at this moment.
+        boxes = fresh.starter_boxes if fresh.starter_boxes is not None else SupplySettings.for_cooperative(fresh.cooperative).starter_boxes
+        supply_allowance.set_start(user, fresh.cooperative, boxes, by=fresh.invited_by)
 
 
 def send_invitation_email(invitation: CooperativeInvitation, token: str) -> None:

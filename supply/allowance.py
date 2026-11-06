@@ -28,7 +28,7 @@ class AllowanceError(Exception):
         self.code = code
 
 
-def _boxes(value) -> int:
+def valid_boxes(value) -> int:
     """A whole number from 0 to 100. A bool, a fraction and text are refused, because 2.5 boxes is not a thing."""
     ok = isinstance(value, int) and not isinstance(value, bool) and ALLOWANCE_MIN <= value <= ALLOWANCE_MAX
     if not ok:
@@ -60,9 +60,16 @@ def current(farmer) -> dict:
     return {'boxes': SupplySettings.for_cooperative(farmer.cooperative).starter_boxes, 'source': 'default', 'since': None}
 
 
+def for_farmers(farmers, cooperative) -> dict:
+    """`boxes` and `source` for many farmers of one cooperative, in two queries, for a list."""
+    default = SupplySettings.for_cooperative(cooperative).starter_boxes
+    rows = {r.farmer_id: r.boxes for r in Allowance.objects.filter(cooperative=cooperative, farmer__in=list(farmers))}
+    return {f.pk: ({'boxes': rows[f.pk], 'source': 'set'} if f.pk in rows else {'boxes': default, 'source': 'default'}) for f in farmers}
+
+
 def set_start(farmer, cooperative, boxes, by) -> Allowance:
     """Write the amount a farmer starts with. It replaces a row left over from another cooperative."""
-    boxes = _boxes(boxes)
+    boxes = valid_boxes(boxes)
     with transaction.atomic():
         row, _ = Allowance.objects.update_or_create(farmer=farmer, defaults={'cooperative': cooperative, 'boxes': boxes})
         AllowanceChange.objects.create(
@@ -95,7 +102,7 @@ def _write(farmer, boxes: int, kind: str, reason: str, by) -> Allowance:
 
 def lower(farmer, boxes, reason, by) -> Allowance:
     """A supervisor lowers an allowance, for example after an outbreak. Raising goes through a request."""
-    boxes, reason = _boxes(boxes), _reason(reason)
+    boxes, reason = valid_boxes(boxes), _reason(reason)
     with transaction.atomic():
         now = _materialise(farmer).boxes
         if boxes == now:
@@ -107,7 +114,7 @@ def lower(farmer, boxes, reason, by) -> Allowance:
 
 def set_as_admin(farmer, boxes, reason, by) -> Allowance:
     """An admin sets any amount. A higher one reads as an amendment and a lower one as a reduction."""
-    boxes, reason = _boxes(boxes), _reason(reason)
+    boxes, reason = valid_boxes(boxes), _reason(reason)
     with transaction.atomic():
         now = _materialise(farmer).boxes
         if boxes == now:
@@ -119,7 +126,7 @@ def ask(farmer, boxes, reason) -> AllowanceRequest:
     """A farmer asks for a different allowance. The amount in force is not written, only the request."""
     if not farmer.cooperative_id:
         raise AllowanceError(NOT_IN_COOPERATIVE, 409, 'not_in_cooperative')
-    boxes, reason = _boxes(boxes), _reason(reason)
+    boxes, reason = valid_boxes(boxes), _reason(reason)
     if boxes == current(farmer)['boxes']:
         raise AllowanceError('That is your current amount.', 422, 'same_amount')
     try:
@@ -144,7 +151,7 @@ def decide(request: AllowanceRequest, by, decision: str, boxes=None, note: str =
     note = str(note or '').strip()[:REASON_MAX]
     if decision == 'decline' and not note:
         raise AllowanceError('Please say why, so the farmer knows what to change.', 422, 'note_required')
-    granted = _boxes(request.boxes_asked if boxes is None else boxes) if decision == 'approve' else None
+    granted = valid_boxes(request.boxes_asked if boxes is None else boxes) if decision == 'approve' else None
 
     with transaction.atomic():
         status = Status.APPROVED if decision == 'approve' else Status.DECLINED
