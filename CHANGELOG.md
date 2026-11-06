@@ -1,5 +1,23 @@
 # Changelog
 
+## The service no longer restarts every 1000 requests, and the load test is realistic
+
+The second live load test (after the faster rate limits) got 878 good answers and 3484 failures: 429 x3192, 502 x263, 503 x29. The tokens were accepted this time. I reproduced part of it on a scratch database.
+
+### What was wrong
+- **A restart every 1000 requests.** `start.sh` passed `--limit-max-requests 1000` to uvicorn, written when it ran two workers and a supervisor replaced the one that exited. Render runs one worker (`WEB_CONCURRENCY=1`), and with one worker uvicorn has no supervisor, so the exit stops the service until Render restarts it. Locally the API stopped at exactly request 1000 and 999 requests got no answer. Under the old load test that was every 40 seconds. In normal use it is a minute of "The server is waking up" after every 1000 requests, which is a few hundred page loads.
+- **A load test that was a stress test.** Each person asked every half second to two seconds, about 40 requests a second for 50 people. A person loads a page and reads it. The API handles one request at a time per process, and a laptop tops out near 40 to 60 a second, so Render's free CPU could never have passed it.
+
+### What changed
+- `start.sh` only passes the restart flag when there is more than one worker. A test runs the real script with stand-ins for `python` and `uvicorn` and reads the arguments.
+- The load test default is now a page view (three requests together) and then 8 to 20 seconds of reading, with people arriving at different moments, about 11 requests a second for 50 people. `--stress` keeps the old pace to find the ceiling.
+- For each refusal the script prints one example: the headers that show who answered and the start of the body. This tells our API's 429 (JSON with a reference) from one made by Vercel or Render.
+
+### Checked
+- On a scratch database with the production start options: the old script took the API down at request 1000. With the new default, 50 people for 60 seconds: 609 requests, 0 failed, p95 0.23 s. That says nothing about Render's CPU.
+- **Not explained:** the 3192 429s. Locally 50 people got no 429 at all, and our rate limits cannot fire at about 50 requests a minute per person (the limit is 300). The next live run prints an example of the 429 and who sent it. The System page, Logs, Requests tab filtered to status 429 would show whether our API sent any.
+- **Not checked:** the live speed after this deploy.
+
 ## Faster requests: rate limits count in memory
 
 The first live load test on 2026-11-06 failed all 5064 requests, and the app felt slow. Two separate causes.
