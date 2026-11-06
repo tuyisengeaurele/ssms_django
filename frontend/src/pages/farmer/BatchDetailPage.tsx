@@ -5,6 +5,7 @@ import { batchService } from '../../services/batch.service';
 import { detectionService } from '../../services/detection.service';
 import { alertService } from '../../services/alert.service';
 import { roomService } from '../../services/room.service';
+import { usableRooms } from '../../utils/rooms';
 import { sensorService, type SeriesPoint, type StageRange } from '../../services/sensor.service';
 import { Batch, BatchStage, DiseaseDetection, MortalityEntry, QuantityUnit, Room } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -103,7 +104,7 @@ export default function BatchDetailPage() {
   const farmId = batch?.farmId;
   useEffect(() => {
     if (!farmId) return;
-    roomService.getByFarm(farmId).then((r) => setFarmRooms(r.data.data)).catch(() => {});
+    roomService.getByFarm(farmId).then((r) => setFarmRooms(usableRooms(r.data.data))).catch(() => {});
   }, [farmId]);
 
   useEffect(() => {

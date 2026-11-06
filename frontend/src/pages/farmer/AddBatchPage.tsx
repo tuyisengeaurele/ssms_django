@@ -2,6 +2,7 @@ import { useEffect, useState, FormEvent } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { batchService } from '../../services/batch.service';
 import { roomService } from '../../services/room.service';
+import { usableRooms } from '../../utils/rooms';
 import type { Room } from '../../types';
 import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
@@ -27,11 +28,13 @@ export default function AddBatchPage() {
     if (!farmId) return;
     roomService.getByFarm(farmId)
       .then((r) => {
-        setRooms(r.data.data);
-        // With one room there is nothing to decide. With several the farmer chooses.
-        if (r.data.data.length === 1) setRoomId(r.data.data[0].id);
+        // Only approved rooms count. With one there is nothing to decide, with several the farmer chooses.
+        const usable = usableRooms(r.data.data);
+        setRooms(usable);
+        if (usable.length === 1) setRoomId(usable[0].id);
       })
-      .catch(() => setRooms([]));
+      // Without the list the server still checks the room, and says so if there is none.
+      .catch(() => setRooms(null));
   }, [farmId]);
 
   const change = (field: 'expectedHarvestDate' | 'notes' | 'breed' | 'quantity' | 'unit') => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -88,7 +91,7 @@ export default function AddBatchPage() {
               <span id="batch-harvest-hint" className="form-hint">{t('abHarvestHint')}</span>
             </div>
 
-            {rooms && rooms.length === 0 && <p className="form-hint form-hint--gap">{t('abRoomMake')}</p>}
+            {rooms && rooms.length === 0 && <p className="alert alert-info" role="status">{t('roomApNoRoom')}</p>}
             {rooms && rooms.length > 0 && (
               <div className="form-group">
                 <label className="form-label" htmlFor="batch-room">{t('abRoom')}</label>
@@ -125,7 +128,7 @@ export default function AddBatchPage() {
             </div>
 
             <div className="profile-actions">
-              <button type="submit" className="btn btn-primary" disabled={loading}>
+              <button type="submit" className="btn btn-primary" disabled={loading || rooms?.length === 0}>
                 {loading ? <><span className="spinner" />{t('abCreating')}</> : t('abCreate')}
               </button>
               <Link to={`/farms/${farmId}`} className="btn btn-ghost">{t('btnCancel')}</Link>

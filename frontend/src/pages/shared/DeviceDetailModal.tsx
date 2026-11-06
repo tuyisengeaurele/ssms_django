@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { deviceService } from '../../services/device.service';
 import { roomService } from '../../services/room.service';
+import { usableRooms } from '../../utils/rooms';
 import { IoTDevice, Room } from '../../types';
 import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
@@ -54,7 +55,7 @@ export default function DeviceDetailModal({ device, canManage, onClose, onRemove
 
   useEffect(() => {
     if (!canManage || !device.farmId) return;
-    roomService.getByFarm(device.farmId).then((r) => setFarmRooms(r.data.data)).catch(() => setFarmRooms([]));
+    roomService.getByFarm(device.farmId).then((r) => setFarmRooms(usableRooms(r.data.data))).catch(() => setFarmRooms([]));
   }, [canManage, device.farmId]);
 
   useEffect(() => {

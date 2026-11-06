@@ -9,7 +9,7 @@ const auth = vi.hoisted(() => ({ role: 'FARMER' }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', role: auth.role } }) }));
 
 const api = vi.hoisted(() => ({
-  getById: vi.fn(), update: vi.fn(), remove: vi.fn(), batches: vi.fn(), devices: vi.fn(), deviceById: vi.fn(), deviceCreate: vi.fn(), deviceRemove: vi.fn(), deviceMove: vi.fn(), allFarms: vi.fn(), rooms: vi.fn(), download: vi.fn(),
+  getById: vi.fn(), update: vi.fn(), remove: vi.fn(), batches: vi.fn(), devices: vi.fn(), deviceById: vi.fn(), deviceCreate: vi.fn(), deviceRemove: vi.fn(), deviceMove: vi.fn(), allFarms: vi.fn(), rooms: vi.fn(), roomCreate: vi.fn(), roomUpdate: vi.fn(), download: vi.fn(),
 }));
 vi.mock('../../services/farm.service', () => ({ farmService: { getById: api.getById, update: api.update, delete: api.remove, getAll: api.allFarms, downloadSummary: api.download } }));
 vi.mock('../../services/batch.service', () => ({ batchService: { getByFarm: api.batches } }));
@@ -26,7 +26,7 @@ const TREE: Record<string, { code: string; name: string }[]> = {
 vi.mock('../../services/location.service', () => ({
   locationService: { getPlaces: (parent?: string) => Promise.resolve({ data: { data: TREE[parent ?? ''] ?? [] } }), locate: vi.fn() },
 }));
-vi.mock('../../services/room.service', () => ({ roomService: { getByFarm: api.rooms, create: vi.fn(), update: vi.fn(), remove: vi.fn() } }));
+vi.mock('../../services/room.service', () => ({ roomService: { getByFarm: api.rooms, create: api.roomCreate, update: api.roomUpdate, remove: vi.fn() } }));
 
 import FarmDetailPage from './FarmDetailPage';
 
@@ -35,7 +35,7 @@ const batch = (i: number, stage: string, checks: number) => ({
   id: `b${i}-abcdefg${i}`, farmId: 'f1', stage, startDate: '2026-05-01T00:00:00Z', expectedHarvestDate: '2026-06-01T00:00:00Z', isActive: true, createdAt: '', updatedAt: '', counts: { diseaseDetections: checks },
 });
 const room = (id: string, name: string, over: object = {}) => ({
-  id, name, notes: '', batchCount: 0, batches: [], devices: [], latestReading: null, createdAt: '2026-05-01T00:00:00Z', ...over,
+  id, name, notes: '', batchCount: 0, batches: [], devices: [], latestReading: null, approvalStatus: 'approved', reviewNote: '', areaM2: 12, pendingAreaM2: null, createdAt: '2026-05-01T00:00:00Z', ...over,
 });
 const device = (id: string, status: string, over: object = {}) => ({
   id, name: `Sensor ${id}`, deviceKey: `key-${id}`, farmId: 'f1', farmName: "Serge's farm", batchId: null, room: { id: 'r1', name: 'Rearing house 1' }, location: 'Room A', status,
@@ -193,6 +193,68 @@ describe('Farm details page', () => {
       api.rooms.mockResolvedValue({ data: { data: [room('r1', 'Rearing house 1', { devices: [{ id: 'd1', name: 'Sensor d1', status: 'offline', lastSeen: null }] })] } });
       open();
       expect(within(await roomItem('Rearing house 1')).getByText('No reading yet.')).toBeInTheDocument();
+    });
+
+    it('shows where each room stands with the supervisor, in words', async () => {
+      api.rooms.mockResolvedValue({ data: { data: [
+        room('r1', 'Waiting house', { approvalStatus: 'pending' }),
+        room('r2', 'Turned down', { approvalStatus: 'rejected', reviewNote: 'Too small', areaM2: 3 }),
+        room('r3', 'Cocoon room', { pendingAreaM2: 20 }),
+      ] } });
+      open();
+      expect(within(await roomItem('Waiting house')).getByText('Waiting for your supervisor')).toBeInTheDocument();
+      expect(within(await roomItem('Turned down')).getByText('Not approved: Too small')).toBeInTheDocument();
+      const approved = await roomItem('Cocoon room');
+      expect(within(approved).getByText('Approved')).toBeInTheDocument();
+      expect(within(approved).getByText('Size change waiting')).toBeInTheDocument();
+      expect(within(approved).getByText('12 m² now, 20 m² asked')).toBeInTheDocument();
+    });
+
+    it('shows the size of a room', async () => {
+      open();
+      expect(within(await roomItem('Rearing house 2')).getByText('12 m²')).toBeInTheDocument();
+    });
+
+    describe('the room form', () => {
+      const openAdd = async () => {
+        open();
+        fireEvent.click(await screen.findByRole('button', { name: 'Add room' }));
+        return screen.findByRole('dialog', { name: 'Add a room' });
+      };
+      const fillIn = (dialog: HTMLElement, name: string, area: string) => {
+        fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: name } });
+        fireEvent.change(within(dialog).getByLabelText(/^Size in square metres/), { target: { value: area } });
+      };
+
+      it('asks for the size, says the supervisor will check the room, and sends the size', async () => {
+        api.roomCreate.mockResolvedValue({ data: { data: room('r9', 'North house', { approvalStatus: 'pending' }) } });
+        const dialog = await openAdd();
+        expect(within(dialog).getByLabelText(/^Size in square metres/)).toBeRequired();
+        expect(within(dialog).getByText('Your supervisor will check this room. It can hold batches and sensors once it is approved.')).toBeInTheDocument();
+        fillIn(dialog, 'North house', '14.5');
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+        await waitFor(() => expect(api.roomCreate).toHaveBeenCalledWith('f1', { name: 'North house', notes: undefined, areaM2: 14.5 }));
+        expect(await roomItem('North house')).toBeInTheDocument();
+      });
+
+      it.each(['', '0', '0.5', '5001', 'abc'])('refuses the size "%s" on the form', async (area) => {
+        const dialog = await openAdd();
+        fillIn(dialog, 'North house', area);
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+        expect(await within(dialog).findByRole('alert')).toHaveTextContent('Please enter a size between 1 and 5000 square metres.');
+        expect(api.roomCreate).not.toHaveBeenCalled();
+      });
+
+      it('fills in the current size when a room is edited and sends the new one', async () => {
+        api.roomUpdate.mockResolvedValue({ data: { data: room('r2', 'Rearing house 2', { pendingAreaM2: 20 }) } });
+        open();
+        fireEvent.click(await screen.findByRole('button', { name: /^Edit Rearing house 2/ }));
+        const dialog = await screen.findByRole('dialog', { name: 'Edit room' });
+        expect(within(dialog).getByLabelText(/^Size in square metres/)).toHaveValue(12);
+        fireEvent.change(within(dialog).getByLabelText(/^Size in square metres/), { target: { value: '20' } });
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+        await waitFor(() => expect(api.roomUpdate).toHaveBeenCalledWith('r2', { name: 'Rearing house 2', notes: undefined, areaM2: 20 }));
+      });
     });
 
     it('reloads the rooms after a sensor is moved, so each room shows its own sensors', async () => {

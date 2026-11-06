@@ -61,7 +61,9 @@ afterEach(() => {
 });
 
 // Rooms by farm: f1 and f9 have two, f2 has one and the rest have none.
-const room = (id: string, name: string) => ({ id, name, notes: '', batchCount: 0, batches: [], devices: [], latestReading: null, createdAt: '2026-05-01T00:00:00Z' });
+const room = (id: string, name: string, approvalStatus = 'approved') => ({
+  id, name, notes: '', batchCount: 0, batches: [], devices: [], latestReading: null, approvalStatus, reviewNote: '', areaM2: 12, pendingAreaM2: null, createdAt: '2026-05-01T00:00:00Z',
+});
 const ROOMS: Record<string, ReturnType<typeof room>[]> = {
   f1: [room('r1', 'Rearing house 1'), room('r2', 'Rearing house 2')],
   f2: [room('r5', 'Only room')],
@@ -186,6 +188,15 @@ describe('Devices page', () => {
       await waitFor(() => expect(api.create).toHaveBeenCalledWith(expect.objectContaining({ farmId: 'f2', roomId: 'r5' })));
     });
 
+    it('lists only approved rooms, and takes the only approved one without asking', async () => {
+      api.rooms.mockImplementation(() => Promise.resolve({ data: { data: [room('r8', 'Shed A'), room('r9', 'Shed B', 'pending'), room('r10', 'Shed C', 'rejected')] } }));
+      const dialog = await openAdd();
+      fireEvent.change(within(dialog).getByLabelText(/^Farm/), { target: { value: 'f9' } });
+      const select = await within(dialog).findByLabelText(/^Room/);
+      expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['Choose a room', 'Shed A']);
+      await waitFor(() => expect(select).toHaveValue('r8'));
+    });
+
     it('says what to do when the farm has no room yet, and still registers the device', async () => {
       const dialog = await openAdd();
       fireEvent.change(within(dialog).getByLabelText(/^Device name/), { target: { value: 'New sensor' } });
@@ -246,6 +257,14 @@ describe('Devices page', () => {
       const dialog = await openDetails('SHT31-Gad');
       const select = await within(dialog).findByLabelText('Move to another room');
       expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['Choose a room', 'Only room']);
+    });
+
+    it('offers only approved rooms to move a device to', async () => {
+      api.rooms.mockImplementation(() => Promise.resolve({ data: { data: [room('r1', 'Rearing house 1'), room('r2', 'Rearing house 2'), room('r3', 'Waiting', 'pending')] } }));
+      open();
+      const dialog = await openDetails();
+      const select = await within(dialog).findByLabelText('Move to another room');
+      expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['Choose a room', 'Rearing house 2']);
     });
 
     it('keeps the move button off until a room is chosen', async () => {
