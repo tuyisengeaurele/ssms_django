@@ -86,3 +86,6 @@ backups/
 
 # Access tokens for the load test open real accounts. Never commit them.
 load_tokens.json
+
+# Left by build.sh when the database and static files are already set up
+.setup_done
