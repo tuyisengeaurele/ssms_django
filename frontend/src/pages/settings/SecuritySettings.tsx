@@ -8,13 +8,14 @@ import { setAccessToken } from '../../services/session';
 import Panel from '../../components/ui/Panel';
 import SignedInDevices from '../shared/SignedInDevices';
 import MfaSettings from './MfaSettings';
+import SupportHistory from './SupportHistory';
 
 /** The password, and the places the account is signed in. */
 export default function SecuritySettings() {
   const { success } = useToast();
   const { getErrorMessage } = useApiError();
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, acting } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [current, setCurrent] = useState('');
@@ -91,6 +92,9 @@ export default function SecuritySettings() {
       </Panel>
 
       {user?.role === 'ADMIN' ? <MfaSettings /> : null}
+
+      {/* Not while an admin acts as the person: the server refuses the list to them, and it is the person's to read. */}
+      {user && user.role !== 'ADMIN' && !acting ? <SupportHistory /> : null}
 
       <SignedInDevices />
     </div>

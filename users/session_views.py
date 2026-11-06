@@ -31,7 +31,8 @@ def _row(session: UserSession, current_id) -> dict:
 
 
 def _alive(user):
-    return UserSession.objects.filter(user=user, revoked_at__isnull=True, expires_at__gt=timezone.now())
+    # A sign in made for support access is not one of the person's devices.
+    return UserSession.objects.filter(user=user, revoked_at__isnull=True, expires_at__gt=timezone.now(), support_access__isnull=True)
 
 
 class _SessionView(APIView):
@@ -64,6 +65,7 @@ class SessionPingView(_SessionView):
 
 class SessionListView(_SessionView):
     """GET /api/auth/sessions: the live devices, the most recently used first."""
+    actions = {'get': 'sessions'}
 
     def get(self, request):
         found = _alive(request.user).order_by('-last_used_at')[:LIST_LIMIT]

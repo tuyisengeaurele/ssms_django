@@ -1,6 +1,9 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { setWaiting, shouldWakeRetry, WAKE_DEADLINE_MS, wakeDelayMs } from './wake';
-import { clearLegacyStorage, endedNotice, forgetSession, getAccessToken, leaveNotice, refreshAccessToken, serverRefusedTheSession } from './session';
+import {
+  clearLegacyStorage, endedNotice, forgetSession, getAccessToken, isActing, leaveNotice, notifySupportEnded, refreshAccessToken,
+  serverRefusedTheSession,
+} from './session';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
@@ -52,6 +55,13 @@ api.interceptors.response.use(
       setWaiting(true);
       await sleep(wakeDelayMs(attempt));
       return api(originalConfig);
+    }
+
+    // An admin acting as a person holds a token that cannot be renewed. The refresh cookie is the admin's, and using it
+    // would send the person's request as the admin. So a 401 here, whatever the reason, is the end of the visit.
+    if (err.response?.status === 401 && (isActing() || (err.response?.data as { code?: string } | undefined)?.code === 'support_ended')) {
+      notifySupportEnded();
+      return Promise.reject(err);
     }
 
     // An admin session that never passed a code cannot be renewed into one. Sign in again, which asks for the code.

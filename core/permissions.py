@@ -6,6 +6,14 @@ from .permissions_table import may
 DEFAULT_ACTIONS = {'get': 'read', 'post': 'create', 'put': 'update', 'patch': 'update', 'delete': 'delete'}
 
 
+def action_for(view, method: str) -> str | None:
+    """The action a method means on a view: the one the view names in `actions`, else what the method obviously means."""
+    method = method.lower()
+    if method in ('head', 'options'):
+        method = 'get'
+    return (getattr(view, 'actions', None) or {}).get(method) or DEFAULT_ACTIONS.get(method)
+
+
 class RolePermission(BasePermission):
     """Lets a request through when the table in `core.permissions_table` allows the caller's role.
 
@@ -25,5 +33,4 @@ class RolePermission(BasePermission):
         # A method the view does not have is answered "not allowed" (405) by the framework after this check.
         if not hasattr(view, method):
             return True
-        action = (getattr(view, 'actions', None) or {}).get(method) or DEFAULT_ACTIONS.get(method)
-        return may(user.role, getattr(view, 'resource', None), action)
+        return may(user.role, getattr(view, 'resource', None), action_for(view, method))

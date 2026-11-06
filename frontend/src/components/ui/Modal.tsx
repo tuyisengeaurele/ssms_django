@@ -15,23 +15,25 @@ interface ModalProps {
   role?: 'dialog' | 'alertdialog';
   /** A selector for what gets the focus first. Without it the first field, or else the first control, does. */
   initialFocus?: string;
+  /** False for a question that needs an answer: no close button, and Escape or a click outside do nothing. */
+  dismissible?: boolean;
 }
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-export default function Modal({ open, onClose, title, children, maxWidth = 480, footer, role = 'dialog', initialFocus }: ModalProps) {
+export default function Modal({ open, onClose, title, children, maxWidth = 480, footer, role = 'dialog', initialFocus, dismissible = true }: ModalProps) {
   const titleId = useId();
   const boxRef = useRef<HTMLDivElement>(null);
 
   // Close on ESC
   useEffect(() => {
-    if (!open) return;
+    if (!open || !dismissible) return;
     function handler(e: globalThis.KeyboardEvent) {
       if (e.key === 'Escape') onClose();
     }
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [open, onClose]);
+  }, [open, onClose, dismissible]);
 
   // Lock body scroll
   useEffect(() => {
@@ -78,7 +80,7 @@ export default function Modal({ open, onClose, title, children, maxWidth = 480, 
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={settle}
-          onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+          onClick={(e) => { if (dismissible && e.target === e.currentTarget) onClose(); }}
         >
           <motion.div
             ref={boxRef}
@@ -96,9 +98,11 @@ export default function Modal({ open, onClose, title, children, maxWidth = 480, 
           >
             <div className="modal-header">
               <h2 id={titleId} className="modal-title">{title}</h2>
-              <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
-                <Icon name="close" size={16} />
-              </button>
+              {dismissible && (
+                <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
+                  <Icon name="close" size={16} />
+                </button>
+              )}
             </div>
 
             <div className="modal-body">{children}</div>

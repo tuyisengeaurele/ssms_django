@@ -36,6 +36,7 @@ urlpatterns = [
     path('api/admin/health', SystemHealthView.as_view()),     # GET /api/admin/health (admin only)
     path('api/admin/health/history', SystemHealthHistoryView.as_view()),   # GET the results and uptime (admin only)
     path('api/admin/health/tests/<str:name>', SystemHealthTestView.as_view()),   # POST one test button (admin only)
+    path('api/support-access', include('support_access.urls')),      # an admin asking to look at an account, with consent
     path('api/reports/cooperative', include('reports.coop_urls')),   # GET /api/reports/cooperative (supervisor, admin)
 ]
 

@@ -26,6 +26,13 @@ KINDS = {
     'mfa_recovery_used': 'Signed in with a recovery code',
     'mfa_recovery_regenerated': 'New recovery codes made',
     'mfa_reset': 'Authenticator app reset',
+    'support_requested': 'Support access asked for',
+    'support_allowed': 'Support access allowed',
+    'support_rejected': 'Support access refused by the person',
+    'support_started': 'Support access started',
+    'support_ended': 'Support access ended',
+    'support_expired': 'Support access request ran out of time',
+    'support_refused': 'Action refused during support access',
     'permission_denied': 'Refused for the role',
     'throttled': 'Slowed down',
 }
@@ -36,7 +43,12 @@ def record_security_event(kind: str, request, user=None, detail: str = '') -> No
     try:
         if kind not in KINDS:
             raise ValueError(f'unknown security event kind: {kind}')
-        who = user or getattr(request, 'user', None)
+        acting = getattr(request, 'acting_admin', None) if user is None else None
+        if acting is not None:
+            # An admin acting as a person. The event is the admin's, and says whose account it was.
+            person = getattr(request, 'user', None)
+            detail = f'as {getattr(person, "email", "")}: {detail}'
+        who = user or acting or getattr(request, 'user', None)
         known = who is not None and getattr(who, 'is_authenticated', False)
         SecurityEvent.objects.create(
             kind=kind,

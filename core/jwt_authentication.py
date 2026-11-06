@@ -1,17 +1,33 @@
 from datetime import timedelta
 
+from django.urls import Resolver404, resolve
 from django.utils import timezone
+from rest_framework.exceptions import PermissionDenied
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.settings import api_settings
 
+from core.permissions import action_for
+from core.support_rules import VIEW_ONLY, decide
+from logs.security import record_security_event
+from support_access import services as support
+from support_access.models import SupportAccess
 from users.models import Role, UserSession
 from users.sessions import IDLE_MESSAGE, idle_limit
 
 # Using the site moves the idle clock, but it is written at most this often, so a busy page costs one write a minute.
 TOUCH_EVERY = timedelta(seconds=60)
 
+# Requests the page makes by itself, whether or not anybody is there. They do not move the idle clock, or a tab left open
+# on a shared computer would never sign out. The idle limit still applies to them, so they cannot revive a stale sign in.
+BACKGROUND_PATHS = frozenset({'/api/support-access/for-me/pending'})
+
 MFA_MESSAGE = 'Please sign in again and enter the code from your authenticator app.'
+SUPPORT_ENDED_MESSAGE = 'The support session has ended.'
+
+
+def _support_ended():
+    return AuthenticationFailed(SUPPORT_ENDED_MESSAGE, code='support_ended')
 
 
 class ActiveUserJWTAuthentication(JWTAuthentication):
@@ -46,6 +62,69 @@ class ActiveUserJWTAuthentication(JWTAuthentication):
             pk=token.payload['sid'], user_id=token.payload.get(api_settings.USER_ID_CLAIM),
         ).first()
 
+    def _support_problem(self, session, access, now):
+        """Why a support visit may not go on, as (who ended it, why), or None when it may."""
+        admin = access.admin
+        admin_session = access.admin_session
+        if session.revoked_at is not None or access.status != SupportAccess.Status.ACTIVE:
+            return 'system', 'not_active'
+        if now >= access.ends_at or now >= session.expires_at:
+            return 'time', 'time_up'
+        if admin is None or not admin.is_active or admin.role != Role.ADMIN:
+            return 'system', 'admin_gone'
+        # The admin's own sign in must still be alive. Sitting idle does not count: they are working in the person's view.
+        if admin_session is None or admin_session.revoked_at is not None or now >= admin_session.expires_at:
+            return 'system', 'admin_signed_out'
+        if not session.user.is_active or session.user.role not in support.TARGET_ROLES:
+            return 'system', 'person_changed'
+        return None
+
+    def _act_as_person(self, request, token):
+        """A token made by support access. Everything is read from the rows, and the claims only point at them.
+
+        The session is read together with the person, the request and the admin, so this is still one query.
+        """
+        session = None
+        if request.session_id:
+            session = UserSession.objects.select_related(
+                'user', 'support_access', 'support_access__admin', 'support_access__admin_session',
+            ).filter(pk=request.session_id, user_id=token.payload.get(api_settings.USER_ID_CLAIM)).first()
+        access = session.support_access if session is not None else None
+        if access is None or str(token.payload.get('act')) != str(access.admin_id):
+            raise _support_ended()
+
+        problem = self._support_problem(session, access, timezone.now())
+        if problem:
+            support.end_support_access(access, *problem)
+            raise _support_ended()
+
+        request.acting_admin = access.admin
+        request.support = access
+        # The request log reads the Django request, not the REST framework one.
+        request._request.support_access_id = access.id
+        self._allowed_to_act(request, access)
+        return session.user, token
+
+    def _allowed_to_act(self, request, access):
+        """Refuse what an admin acting as the person may not do. The rules live in core/support_rules.py."""
+        try:
+            view_class = getattr(resolve(request.path_info).func, 'view_class', None)
+        except Resolver404:
+            view_class = None
+        resource = getattr(view_class, 'resource', None)
+        action = action_for(view_class, request.method) if view_class is not None else None
+        refusal = decide(resource, action, request.method, access.granted_mode)
+        if refusal is None:
+            return
+        # The user is passed in, because asking the request for it would start this authentication again.
+        record_security_event(
+            'support_refused', request, user=access.admin,
+            detail=f'as {access.person_email}: {request.method} {resource}.{action}',
+        )
+        raise PermissionDenied(
+            'Support access can only look, not change.' if refusal == VIEW_ONLY else 'Support access cannot do that.', code=refusal,
+        )
+
     def authenticate(self, request):
         # Same steps as simplejwt's authenticate, except that the person is read together with the session. Two
         # separate lookups cost two round trips to the database on every request, and the round trip is most of the time.
@@ -55,8 +134,13 @@ class ActiveUserJWTAuthentication(JWTAuthentication):
             return None
         token = self.get_validated_token(raw_token)
         request.session_id = token.payload.get('sid')
+        if 'act' in token.payload:
+            return self._act_as_person(request, token)
 
         session = self._session_with_user(token) if request.session_id else None
+        if session is not None and session.support_access_id is not None:
+            # A sign in made for support access, shown without the claim that says so. Only support access may use it.
+            raise _support_ended()
         # A token with no session id is from before sessions existed. A session id with no session is refused below.
         user = self._must_be_active(session.user) if session is not None else self.get_user(token)
 
@@ -72,6 +156,6 @@ class ActiveUserJWTAuthentication(JWTAuthentication):
             limit = idle_limit(user, session.is_shared_device)
             if limit is not None and now - session.last_activity_at > limit:
                 raise AuthenticationFailed(IDLE_MESSAGE, code='session_idle')
-            if now - session.last_activity_at >= TOUCH_EVERY:
+            if now - session.last_activity_at >= TOUCH_EVERY and request.path_info not in BACKGROUND_PATHS:
                 UserSession.objects.filter(pk=request.session_id, last_activity_at__lt=now - TOUCH_EVERY).update(last_activity_at=now)
         return user, token

@@ -7,10 +7,15 @@ import { setReducedMotion } from '../../test/setup';
 
 const api = vi.hoisted(() => ({ changePassword: vi.fn() }));
 vi.mock('../../services/auth.service', () => ({ authService: api }));
-const who = vi.hoisted(() => ({ role: 'FARMER' }));
-vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', role: who.role } }) }));
+const who = vi.hoisted(() => ({ role: 'FARMER', acting: false }));
+vi.mock('../../context/AuthContext', () => ({
+  useAuth: () => ({ user: { id: 'me', role: who.role }, acting: who.acting ? { id: 's1' } : null }),
+}));
 vi.mock('../../services/mfa.service', () => ({
   mfaService: { status: vi.fn().mockResolvedValue({ data: { data: { enabled: true, enabledAt: '2026-11-05T10:00:00Z', recoveryCodesLeft: 8 } } }) },
+}));
+vi.mock('../../services/support.service', () => ({
+  supportService: { history: vi.fn().mockResolvedValue({ data: { data: [] } }) },
 }));
 vi.mock('../../services/sessions.service', () => ({
   sessionsService: { list: vi.fn().mockResolvedValue({ data: { data: [] } }) },
@@ -38,6 +43,31 @@ beforeEach(() => {
   setReducedMotion(true);
   who.role = 'FARMER';
   api.changePassword.mockResolvedValue({ data: { data: { token: 'fresh-jwt' } } });
+});
+
+describe('Security settings, SSMS support visits', () => {
+  it.each(['FARMER', 'SUPERVISOR'])('lists the visits of SSMS support for a %s', async (role) => {
+    who.role = role;
+    open();
+    expect(await screen.findByRole('heading', { level: 2, name: 'SSMS support visits' })).toBeInTheDocument();
+    expect(await screen.findByText('No one from SSMS support has asked to view your account.')).toBeInTheDocument();
+  });
+
+  it('does not show the list while an admin acts as the person, because the server refuses it to them', async () => {
+    who.role = 'FARMER';
+    who.acting = true;
+    open();
+    await screen.findByRole('heading', { level: 2, name: 'Signed in devices' });
+    expect(screen.queryByRole('heading', { name: 'SSMS support visits' })).not.toBeInTheDocument();
+    who.acting = false;
+  });
+
+  it('does not show the list to an admin, who is never the one asked', async () => {
+    who.role = 'ADMIN';
+    open();
+    await screen.findByRole('heading', { level: 2, name: 'Signed in devices' });
+    expect(screen.queryByRole('heading', { name: 'SSMS support visits' })).not.toBeInTheDocument();
+  });
 });
 
 describe('Security settings', () => {

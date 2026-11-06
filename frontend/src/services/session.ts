@@ -13,6 +13,44 @@ export const setAccessToken = (token: string | null) => {
   accessToken = token;
 };
 
+/**
+ * While an admin acts as a person the page holds the person's support token in `accessToken`. The refresh cookie still
+ * belongs to the admin, so nothing may renew a token with it then, or the person's request would go out as the admin.
+ */
+let acting = false;
+export const isActing = () => acting;
+export const setActing = (value: boolean) => {
+  acting = value;
+};
+
+// Visits the admin has just ended and the server has not answered yet. The strip that offers an open visit after a reload
+// must not offer one of these, or it would show a visit that is already over.
+const endingNow = new Set<string>();
+export const markEnding = (id: string) => { endingNow.add(id); };
+export const doneEnding = (id: string) => { endingNow.delete(id); };
+export const isEnding = (id: string) => endingNow.has(id);
+
+// The visit ended, or its token ran out. The page goes back to the admin.
+const supportEndedListeners = new Set<() => void>();
+// Remembered until the admin's page has said so, because the page that shows the note appears after this runs.
+let supportEndedUnseen = false;
+export function onSupportEnded(listener: () => void): () => void {
+  supportEndedListeners.add(listener);
+  return () => {
+    supportEndedListeners.delete(listener);
+  };
+}
+export function notifySupportEnded() {
+  supportEndedUnseen = true;
+  supportEndedListeners.forEach((listener) => listener());
+}
+/** True once after a visit was ended by the server or by its time running out. */
+export function takeSupportEnded(): boolean {
+  const unseen = supportEndedUnseen;
+  supportEndedUnseen = false;
+  return unseen;
+}
+
 // A flag, not a secret. It says a sign in may still be alive, so a page does not ask for a new token for a visitor
 // who never signed in. The browser may refuse storage, and nothing should break when it does.
 const HINT_KEY = 'ssms_session';

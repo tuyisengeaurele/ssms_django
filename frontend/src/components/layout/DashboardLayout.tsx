@@ -10,6 +10,11 @@ import TopBar from './TopBar';
 import BottomNav from './BottomNav';
 import QuickSearch from './QuickSearch';
 import IdleWarningModal from './IdleWarningModal';
+import ActingBanner from '../support/ActingBanner';
+import SupportActiveBanner from '../support/SupportActiveBanner';
+import SupportRequestModal from '../support/SupportRequestModal';
+import SupportResume from '../support/SupportResume';
+import { useSupportWatch } from '../../hooks/useSupportWatch';
 import { useAuth } from '../../context/AuthContext';
 import { alertService } from '../../services/alert.service';
 import { endSession } from '../../services/api';
@@ -46,7 +51,7 @@ export default function DashboardLayout() {
   useCrampedTables();
 
   // The server decides when a sign in that nobody uses ends, and tells the page the limit. This only warns first.
-  const { logout } = useAuth();
+  const { logout, user, acting } = useAuth();
   const [idleLimit, setIdleLimit] = useState<number | null>(null);
   useEffect(() => {
     let live = true;
@@ -64,6 +69,11 @@ export default function DashboardLayout() {
     Promise.race([told, patience]).then(() => endSession('idle'));
   }, []);
   const idle = useIdleTimeout({ limitSeconds: idleLimit, onExpire: signOutIdle, onPing: ping });
+
+  // A farmer or supervisor may be asked to let SSMS support look at their account. An admin is never the person asked,
+  // and an admin acting as somebody is not asked on their behalf.
+  const askable = !acting && (user?.role === 'FARMER' || user?.role === 'SUPERVISOR');
+  const support = useSupportWatch(askable);
 
   useEffect(() => {
     alertService.getAll(true)
@@ -109,11 +119,15 @@ export default function DashboardLayout() {
       />
 
       <main className={`app-main ${rail ? 'sidebar-collapsed' : ''}`}>
+        {/* Right before the top bar, so the bar can sit under it (see support.css). */}
+        <ActingBanner />
+        <SupportResume />
+        <SupportActiveBanner active={support.active} onEnded={support.refresh} />
         <TopBar onMenuToggle={toggleMenu} onSearch={() => setSearchOpen(true)} alertCount={alertCount} />
 
         <AnimatePresence mode="wait">
           <motion.div
-            key={location.pathname}
+            key={`${location.pathname}:${user?.id ?? ''}`}
             className="app-content"
             variants={pageVariants}
             initial="initial"
@@ -128,6 +142,7 @@ export default function DashboardLayout() {
       <BottomNav alertCount={alertCount} onMore={() => setMobileOpen(true)} />
       <QuickSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
       <IdleWarningModal open={idle.warning} secondsLeft={idle.secondsLeft} onStay={idle.stay} onSignOut={logout} />
+      <SupportRequestModal request={support.request} onAnswered={support.refresh} />
     </div>
   );
 }

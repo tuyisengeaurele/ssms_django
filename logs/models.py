@@ -36,6 +36,8 @@ class RequestLog(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
     role = models.CharField(max_length=20, blank=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
+    # The support access this request was made under, so every request of a visit can be found. Empty otherwise.
+    support_access_id = models.CharField(max_length=36, blank=True, default='', db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:

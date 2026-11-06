@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { adminService, CreateUserPayload } from '../../services/admin.service';
 import { cooperativeService } from '../../services/cooperative.service';
-import { User, Role, Cooperative } from '../../types';
+import { User, Role, Cooperative, SupportMinutes, SupportMode } from '../../types';
+import { supportService } from '../../services/support.service';
+import SupportAskModal from '../../components/support/SupportAskModal';
+import SupportWaitingModal from '../../components/support/SupportWaitingModal';
 import { useApiError } from '../../hooks/useApiError';
 import { needsRecentCode, useStepUp } from '../../hooks/useStepUp';
 import { mfaService } from '../../services/mfa.service';
@@ -59,6 +62,17 @@ export default function AdminUsersPage() {
   const [resetting, setResetting] = useState(false);
   const { run: runWithCode, modal: codeModal } = useStepUp();
   const [restoring, setRestoring] = useState(false);
+  // Support access: the form for the person being asked, then the window that waits for their answer.
+  const [askSupport, setAskSupport] = useState<User | null>(null);
+  const [waitingFor, setWaitingFor] = useState<{ id: string; name: string } | null>(null);
+
+  const sendSupportRequest = async (data: { reason: string; minutes: SupportMinutes; mode: SupportMode }) => {
+    if (!askSupport) return;
+    const person = askSupport;
+    const res = await runWithCode(() => supportService.request({ personId: person.id, ...data }));
+    setAskSupport(null);
+    setWaitingFor({ id: res.data.data.id, name: person.name });
+  };
 
   useEffect(() => {
     Promise.all([adminService.getUsers(), cooperativeService.getAll()])
@@ -297,6 +311,14 @@ export default function AdminUsersPage() {
 
       {codeModal}
 
+      <SupportAskModal open={!!askSupport} person={askSupport} onClose={() => setAskSupport(null)} onSubmit={sendSupportRequest} />
+      <SupportWaitingModal
+        open={!!waitingFor}
+        accessId={waitingFor?.id ?? null}
+        personName={waitingFor?.name ?? ''}
+        onClose={() => setWaitingFor(null)}
+      />
+
       <Modal
         open={!!confirmRestore}
         onClose={() => setConfirmRestore(null)}
@@ -454,6 +476,11 @@ export default function AdminUsersPage() {
                               <button className="btn btn-ghost btn-xs" aria-label={fill(t('usEditFor'), { name: u.name })} onClick={() => openEdit(u)}>
                                 {t('usEdit')}
                               </button>
+                              {u.role !== 'ADMIN' && (
+                                <button className="btn btn-ghost btn-xs" aria-label={fill(t('adSupportActionFor'), { name: u.name })} onClick={() => setAskSupport(u)}>
+                                  {t('adSupportAction')}
+                                </button>
+                              )}
                               {u.role === 'ADMIN' && (
                                 <button className="btn btn-ghost btn-xs" aria-label={fill(t('adMfaResetFor'), { name: u.name })} onClick={() => setConfirmReset(u)}>
                                   {t('adMfaResetAction')}
