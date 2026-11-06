@@ -35,6 +35,55 @@ export interface User {
   updatedAt: string;
 }
 
+/** An admin looking at a farmer's or supervisor's account with their consent. See support_access/. */
+export type SupportMode = 'view' | 'edit';
+export type SupportStatus = 'requested' | 'approved' | 'active' | 'ended' | 'rejected' | 'expired' | 'cancelled';
+export type SupportMinutes = 15 | 30 | 60;
+
+/** The request as the admin sees it. */
+export interface SupportAdminRow {
+  id: string;
+  status: SupportStatus;
+  reason: string;
+  minutes: number;
+  requestedMode: SupportMode;
+  /** Empty until the person answers. */
+  grantedMode: SupportMode | '';
+  person: { id: string; name: string };
+  requestedAt: string;
+  decidedAt: string | null;
+  startedAt: string | null;
+  endsAt: string | null;
+  endedBy: string;
+  endedReason: string;
+}
+
+/** The same request as the person sees it. */
+export interface SupportPersonRow {
+  id: string;
+  status: SupportStatus;
+  reason: string;
+  minutes: number;
+  requestedMode: SupportMode;
+  grantedMode: SupportMode | '';
+  admin: { name: string };
+  requestedAt: string;
+  /** When the question stops waiting for an answer. */
+  expiresAt: string;
+  startedAt: string | null;
+  endsAt: string | null;
+  endedBy: string;
+  endedReason: string;
+}
+
+/** What the page holds while an admin acts as a person. */
+export interface ActingInfo {
+  id: string;
+  person: User;
+  mode: SupportMode;
+  endsAt: string;
+}
+
 /** One place the account is signed in. See users/session_views.py. */
 export interface SignedInDevice {
   id: string;

@@ -13,6 +13,28 @@ export const setAccessToken = (token: string | null) => {
   accessToken = token;
 };
 
+/**
+ * While an admin acts as a person the page holds the person's support token in `accessToken`. The refresh cookie still
+ * belongs to the admin, so nothing may renew a token with it then, or the person's request would go out as the admin.
+ */
+let acting = false;
+export const isActing = () => acting;
+export const setActing = (value: boolean) => {
+  acting = value;
+};
+
+// The visit ended, or its token ran out. The page goes back to the admin.
+const supportEndedListeners = new Set<() => void>();
+export function onSupportEnded(listener: () => void): () => void {
+  supportEndedListeners.add(listener);
+  return () => {
+    supportEndedListeners.delete(listener);
+  };
+}
+export function notifySupportEnded() {
+  supportEndedListeners.forEach((listener) => listener());
+}
+
 // A flag, not a secret. It says a sign in may still be alive, so a page does not ask for a new token for a visitor
 // who never signed in. The browser may refuse storage, and nothing should break when it does.
 const HINT_KEY = 'ssms_session';
