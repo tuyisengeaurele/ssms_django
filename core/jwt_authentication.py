@@ -1,10 +1,15 @@
 from datetime import timedelta
 
+from django.urls import Resolver404, resolve
 from django.utils import timezone
+from rest_framework.exceptions import PermissionDenied
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.settings import api_settings
 
+from core.permissions import action_for
+from core.support_rules import VIEW_ONLY, decide
+from logs.security import record_security_event
 from support_access import services as support
 from support_access.models import SupportAccess
 from users.models import Role, UserSession
@@ -93,7 +98,28 @@ class ActiveUserJWTAuthentication(JWTAuthentication):
         request.support = access
         # The request log reads the Django request, not the REST framework one.
         request._request.support_access_id = access.id
+        self._allowed_to_act(request, access)
         return session.user, token
+
+    def _allowed_to_act(self, request, access):
+        """Refuse what an admin acting as the person may not do. The rules live in core/support_rules.py."""
+        try:
+            view_class = getattr(resolve(request.path_info).func, 'view_class', None)
+        except Resolver404:
+            view_class = None
+        resource = getattr(view_class, 'resource', None)
+        action = action_for(view_class, request.method) if view_class is not None else None
+        refusal = decide(resource, action, request.method, access.granted_mode)
+        if refusal is None:
+            return
+        # The user is passed in, because asking the request for it would start this authentication again.
+        record_security_event(
+            'support_refused', request, user=access.admin,
+            detail=f'as {access.person_email}: {request.method} {resource}.{action}',
+        )
+        raise PermissionDenied(
+            'Support access can only look, not change.' if refusal == VIEW_ONLY else 'Support access cannot do that.', code=refusal,
+        )
 
     def authenticate(self, request):
         # Same steps as simplejwt's authenticate, except that the person is read together with the session. Two
