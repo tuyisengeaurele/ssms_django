@@ -25,7 +25,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const toast = useCallback((message: string, type: ToastType = 'info', action?: ToastAction) => {
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2);
     setShown(true);
-    setToasts(prev => [...prev, { id, message, type, action }]);
+    // Several requests on one page can fail for the same reason at the same moment. One toast says it.
+    setToasts(prev => (prev.some(t => t.message === message && t.type === type) ? prev : [...prev, { id, message, type, action }]));
     setTimeout(() => dismiss(id), action ? 7000 : 4000);
   }, [dismiss]);
 
