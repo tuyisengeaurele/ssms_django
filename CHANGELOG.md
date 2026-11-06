@@ -1,8 +1,33 @@
 # Changelog
 
+## Decisions inbox
+
+One screen where a supervisor or an admin decides what waits for them. It is the screen that room approval and the allowance were missing, so the three branches (`feature/room-approval`, `feature/allowance`, `feature/decisions-inbox`) now form one stack that can be merged. The plan is `docs/superpowers/plans/2026-11-06-decisions-inbox.md` (local only). It was built before step 3 of the egg supply design (rounds and requests), against the order in the design, because rooms and allowance could not ship without it. Step 3 adds egg requests to the same screen.
+
+### What it does
+- A "Decisions" item in the menu, right under the dashboard, with the number that wait. The supervisor and admin dashboards carry a line "{n} decisions wait for you". Neither shows when nothing waits.
+- The page lists new rooms, room size changes and allowance requests together, the one waiting longest first, with filters and counts.
+- A room is approved at once or rejected with a reason. A request is approved at the amount asked, approved at another amount (with an optional note), or declined with a reason. The farmer is told each time.
+- "See details" on a request shows the evidence: the farmer's history of amounts, and their rooms with each size and what it can hold.
+- When another supervisor decided first, the page says so and refreshes. The reviewer emails now open this page.
+
+### How it is built
+- **Two small endpoints.** `GET /api/team/decisions` counts rooms and requests for the caller, and `GET /api/supply/allowance/farmers/<id>` gives the evidence. Both are scoped as the other team routes are: a supervisor reaches their own cooperative, an admin all, a farmer neither. `supply/allowance.py` gained `waiting_requests`, which the request list and the count share.
+- **One page over existing endpoints.** The list, the room review and the request decision were built with the two earlier branches. The count in the menu is taken as the page changes and when the page decides something (`ssms:decisions`).
+- Everything a farmer typed is plain text. Reasons are required to refuse, and checked before they are sent.
+
+### Not built
+A filter by cooperative for admins, bulk approval, a history of past decisions, and push or SMS notices. Egg requests join the screen in step 3, and the nudges in step 5.
+
+### Checks
+- Backend 3020 tests, frontend 2122 tests, `ruff`, `tsc`, ESLint and `npm run build` clean.
+- A browser check on a scratch database with a farmer and two supervisors: the dashboard line and the menu badge, the page with its filters, a room approved, a room rejected with a reason, a request approved at another amount (an amount of 101 refused first), a request declined with a reason, a stale click answered with "Someone decided this already." with the list and badge refreshed, the empty state, the other cooperative's count at zero and a farmer refused, and the page in English, French and Kinyarwanda. It found one defect, an empty "History" heading for a farmer still on the default amount, fixed with a test first. Not checked in the browser: an admin's view (an admin sign in needs the second factor, so it is covered by unit tests), the emails in a mail app, and keyboard use of the new dialogs beyond what the shared dialog already does.
+- The French and Kinyarwanda texts are drafts for native review.
+- No migration.
+
 ## Allowance
 
-Every farmer now has a fixed number of egg boxes they may take per round, set by the cooperative and changed only by a request or a reduction, with a history of every change. This is step 2 of the egg supply design (`docs/superpowers/specs/2026-11-06-egg-supply-design.md`, local only). The plan is `docs/superpowers/plans/2026-11-06-allowance.md` (local only). The branch `feature/allowance` is cut from `feature/room-approval` (the capacity hint reads approved room sizes) and, like it, is not merged before the Decisions inbox exists.
+Every farmer now has a fixed number of egg boxes they may take per round, set by the cooperative and changed only by a request or a reduction, with a history of every change. This is step 2 of the egg supply design (`docs/superpowers/specs/2026-11-06-egg-supply-design.md`, local only). The plan is `docs/superpowers/plans/2026-11-06-allowance.md` (local only). The branch `feature/allowance` is cut from `feature/room-approval` (the capacity hint reads approved room sizes). The Decisions inbox (the next entry up) gives it, and room approval, their screen.
 
 ### What it does
 - The cooperative has a default amount for a new farmer. An admin edits it on the cooperative's Details tab. The invitation can carry another amount (0 to 100), which the supervisor types in the invite dialog.
@@ -24,8 +49,7 @@ Every farmer now has a fixed number of egg boxes they may take per round, set by
 - "Space one box needs (m²)" is empty on purpose, until a sericulture officer gives the number. Nothing is worked out from room sizes while it is empty.
 
 ### Not built
-- **The decision screen.** A supervisor decides requests through the API for now. The list and buttons come with the Decisions inbox (step 4), the same as the room review.
-- A Change dialog for an admin on one farmer (the admin has no farmers tab, and uses the API), the evidence panel, the nudges (step 5, the `suggestion` history kind is already declared), rounds and requests for eggs (step 3), and the other settings of the design (worms per box, pickup days, the two switches), which arrive with the step that uses them.
+- A Change dialog for an admin on one farmer (the admin has no farmers tab, and uses the API), the nudges (step 5, the `suggestion` history kind is already declared), rounds and requests for eggs (step 3), and the other settings of the design (worms per box, pickup days, the two switches), which arrive with the step that uses them.
 
 ### Checks
 - Backend 3003 tests, frontend 2082 tests, `ruff`, `tsc`, ESLint and `npm run build` clean.
@@ -54,7 +78,6 @@ A farmer's new room, and a new size for an approved room, now wait for a supervi
 - **Audit log.** A room added, a size asked for, and each decision with its reason.
 
 ### Not built
-- **The reviewer's screen.** For now a supervisor can decide only through the API. The list and the decision buttons come with the Decisions inbox (step 4 of the design), and this branch is not merged before they exist. The email button goes to `/app` until then.
 - A review history page, bulk approval, and the use of the size for the egg allowance (step 2).
 
 ### Checks

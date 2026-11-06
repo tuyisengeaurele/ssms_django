@@ -198,7 +198,7 @@ A farmer's new room, and a change to the size of an approved room, waits for a s
 
 **Where the reviewer decides**
 
-Today only through the API (`POST /api/rooms/<id>/review`, `GET /api/team/rooms?status=pending`). The screen for it comes with the Decisions inbox, and this branch is not merged before that exists. The email button goes to `/app` until then.
+On the Decisions page (section 13), under the menu item "Decisions". The same actions are also in the API (`POST /api/rooms/<id>/review`, `GET /api/team/rooms?status=pending`). The email to a reviewer opens that page.
 
 **Where it is recorded**
 
@@ -232,7 +232,7 @@ Every farmer has a fixed number of egg boxes they may take per round. It is the 
 
 **What a supervisor can and cannot do today**
 
-The supervisor's screen for deciding requests comes with the Decisions inbox, so until then a request is decided through the API (`GET /api/supply/allowance/requests`, `POST /api/supply/allowance/requests/<id>/decision`). This branch is not merged before that screen exists. Lowering and inviting with an amount already have screens.
+A request is decided on the Decisions page (section 13): approve the amount asked, approve another amount, or decline with a reason, with the farmer's history and rooms beside it. Lowering an amount and inviting with an amount are on the Farmers tab. The same actions are also in the API (`GET /api/supply/allowance/requests`, `POST /api/supply/allowance/requests/<id>/decision`).
 
 **Numbers to confirm**
 
@@ -253,7 +253,38 @@ Audit log: each request, withdrawal, decision (with the reason or note), each di
 | "Nothing waits for a decision on that request" | another supervisor decided it first | refresh the list |
 | The capacity line is missing in the ask dialog | the space per box is not set | an admin sets it once known |
 
-## 13. If something fails
+## 13. Decisions
+
+One page where a supervisor, or an admin, decides what waits for them: new rooms, room size changes and allowance requests. Nothing here needs a setting or a key. It is in the menu as "Decisions", right under the dashboard, with the number that wait. The dashboards show "{n} decisions wait for you" and link to it. The emails to reviewers (a room waits, an allowance request waits) open this page.
+
+**Who sees what**
+
+- A supervisor sees the items of their own cooperative. An admin sees every cooperative's. A farmer has no such page and gets "no permission" from its endpoints.
+- A farmer with no supervisor in their cooperative, or in none, goes to every active admin, as before.
+
+**The page**
+
+- One list, the item waiting longest first. Filters: All, Rooms, Allowance, each with its count.
+- **A room** (new, or a new size): the farmer, the farm, the room and the size. "Approve" acts at once and tells the farmer. "Reject" asks for a reason, which the farmer reads, and the button stays off until one is typed.
+- **An allowance request**: the farmer, "Asks for 4 boxes, has 2 boxes" and their reason. "See details" shows the evidence: the farmer's history of amounts and their rooms with each size and what it can hold ("not known yet" until the space per box is set, "not approved yet" for a room that waits). Buttons: approve the amount asked, "Approve another amount" (0 to 100, with an optional note), and "Decline" (reason required).
+- After each decision the item leaves, a toast says what happened, and the menu count drops.
+- When another supervisor decided the same item first, the page says "Someone decided this already." and refreshes the list. Nothing is decided twice and no second email goes out.
+- Everything a farmer typed (names, reasons, notes) is shown as plain text.
+
+**Endpoints it uses**
+
+`GET /api/team/decisions` (the count: rooms, allowance, total), `GET /api/team/rooms?status=pending`, `POST /api/rooms/<id>/review`, `GET /api/supply/allowance/requests`, `POST /api/supply/allowance/requests/<id>/decision` and `GET /api/supply/allowance/farmers/<id>` (the evidence).
+
+**If something looks wrong**
+
+| What you see | Likely cause | What to do |
+|---|---|---|
+| "We could not load your decisions." | the API was asleep or one of the two lists failed | press "Try again" |
+| The count in the menu and the list differ | the count is taken as the page changes | open another page, or decide something, and it recounts |
+| An admin sees items of every cooperative | by design | the farmer's name and email tell whose they are |
+| No Decisions item in the menu | the person is a farmer | only supervisors and admins have it |
+
+## 14. If something fails
 
 | What you see | Likely cause | Fix |
 |---|---|---|
