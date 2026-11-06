@@ -1311,3 +1311,8 @@ tr.is-off td:last-child { opacity: 1; }
   margin: 0;
   font-size: 1rem;
 }
+
+/* The allowance card on the farmer's dashboard */
+.allowance-amount { font-family: var(--font-display); font-size: 2rem; line-height: 1.1; margin: 0 0 4px; }
+.allowance-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 14px; }
+.allowance-actions p { margin: 0; }

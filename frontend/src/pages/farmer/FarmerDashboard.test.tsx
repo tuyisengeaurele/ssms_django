@@ -8,7 +8,8 @@ import { setReducedMotion } from '../../test/setup';
 const auth = vi.hoisted(() => ({ user: { id: 'u', name: 'Serge Karenzi', role: 'FARMER' } as { id: string; name?: string; role: string } }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
 
-const api = vi.hoisted(() => ({ farms: vi.fn(), active: vi.fn(), chart: vi.fn(), alerts: vi.fn(), markRead: vi.fn(), thresholds: vi.fn() }));
+const api = vi.hoisted(() => ({ allowance: vi.fn(), farms: vi.fn(), active: vi.fn(), chart: vi.fn(), alerts: vi.fn(), markRead: vi.fn(), thresholds: vi.fn() }));
+vi.mock('../../services/supply.service', () => ({ supplyService: { getAllowance: api.allowance } }));
 vi.mock('../../services/farm.service', () => ({ farmService: { getAll: api.farms } }));
 vi.mock('../../services/alert.service', () => ({ alertService: { getAll: api.alerts, markRead: api.markRead, getThresholds: api.thresholds } }));
 vi.mock('../../services/sensor.service', () => ({
@@ -44,12 +45,29 @@ beforeEach(() => {
   vi.clearAllMocks();
   setReducedMotion(true);
   auth.user = { id: 'u', name: 'Serge Karenzi', role: 'FARMER' };
+  api.allowance.mockResolvedValue({ data: { data: { boxes: 2, source: 'default', since: null, history: [], openRequest: null, capacityBoxes: null, starterBoxes: 2 } } });
   api.farms.mockResolvedValue({ data: { data: [{ id: 'f1', isActive: true }, { id: 'f2', isActive: true }] } });
   api.active.mockResolvedValue({ data: { data: [batch(1, 'LARVA'), batch(2, 'EGG')] } });
   api.thresholds.mockResolvedValue({ data: { data: [{ stage: 'LARVA', tempMin: 22, tempMax: 28, humMin: 70, humMax: 85 }] } });
   api.chart.mockResolvedValue({ data: { data: [{ hour: '08:00', avgTemp: 24, avgHumidity: 78 }, { hour: '09:00', avgTemp: 25, avgHumidity: 80 }] } });
   api.alerts.mockResolvedValue({
     data: { data: [{ id: 'a1', type: 'TEMPERATURE', message: 'Temperature too low: 21 C', isRead: false, createdAt: new Date(Date.now() - 600_000).toISOString(), batchId: 'b1' }] },
+  });
+});
+
+describe('Farmer dashboard, the allowance', () => {
+  it('shows the allowance card with the amount and the way to ask for another', async () => {
+    open();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Your allowance' })).toBeInTheDocument();
+    expect(screen.getByText('2 boxes')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ask for a different amount' })).toBeInTheDocument();
+  });
+
+  it('still shows the rest of the page when the allowance cannot be loaded', async () => {
+    api.allowance.mockRejectedValue(new Error('down'));
+    open();
+    expect(await screen.findByText('Active batches')).toBeInTheDocument();
+    expect(screen.queryByText('Your allowance')).not.toBeInTheDocument();
   });
 });
 
