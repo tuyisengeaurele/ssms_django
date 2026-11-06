@@ -261,6 +261,14 @@ describe('Decisions', () => {
       expect(api.evidence).toHaveBeenCalledTimes(1);
     });
 
+    it('says there are no changes yet instead of an empty history for a farmer still on the default', async () => {
+      api.evidence.mockResolvedValue({ data: { data: { ...evidence, source: 'default', since: null, history: [] } } });
+      open();
+      const ask = await item('Gad Anaclet');
+      fireEvent.click(within(ask).getByRole('button', { name: 'See details' }));
+      expect(await within(ask).findByText('No changes yet.')).toBeInTheDocument();
+    });
+
     it('says when what a room can hold is not known yet', async () => {
       api.evidence.mockResolvedValue({ data: { data: { ...evidence, rooms: [{ id: 'r9', name: 'Main house', approvalStatus: 'approved', areaM2: 20, pendingAreaM2: null, capacityBoxes: null }] } } });
       open();

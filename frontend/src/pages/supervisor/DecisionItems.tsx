@@ -87,6 +87,7 @@ function Evidence({ data }: { data: AllowanceEvidence }) {
   return (
     <div className="decision-evidence">
       <h3 className="decision-evidence-title">{t('dcsHistory')}</h3>
+      {data.history.length === 0 && <p className="cell-sub">{t('dcsNoHistory')}</p>}
       <ul>
         {data.history.map((line, i) => (
           <li key={`${line.at}-${i}`}>

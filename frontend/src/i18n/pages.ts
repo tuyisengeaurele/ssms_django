@@ -609,6 +609,7 @@ export const pageTranslations = {
   dcsDetailsHide: k("Hide details", "Masquer les détails", "Hisha ibisobanuro"),
   dcsDetailsFailed: k("We could not load the details.", "Nous n'avons pas pu charger les détails.", "Ntitwashoboye gukura ibisobanuro."),
   dcsHistory: k("History", "Historique", "Amateka"),
+  dcsNoHistory: k("No changes yet.", "Aucun changement pour le moment.", "Nta mpinduka ziraboneka."),
   dcsRooms: k("Rooms", "Salles", "Ibyumba"),
   dcsStarted: k("Started with {boxes}", "A commencé avec {boxes}", "Yatangiranye {boxes}"),
   dcsRoomLine: k("{name}: {size}, {tail}", "{name} : {size}, {tail}", "{name}: {size}, {tail}"),
