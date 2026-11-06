@@ -3,16 +3,19 @@
 A status change is one UPDATE that names the status it expects, so two callers racing for the same row cannot both win.
 Time limits are worked out when somebody reads the row (`settle`), so there is no job to keep running.
 """
+import logging
 from datetime import timedelta
 
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import AccessToken
 
+from logs.models import SecurityEvent
 from users.models import Role, UserSession
 
 from .models import MINUTES, MODES, REASON_MAX, REASON_MIN, REQUEST_WAIT, START_WINDOW, SupportAccess
 
+logger = logging.getLogger(__name__)
 Status = SupportAccess.Status
 
 # Who a visit may be for. Never an admin account.
@@ -34,6 +37,17 @@ def _now():
     return timezone.now()
 
 
+def _note(kind: str, access: SupportAccess, detail: str) -> None:
+    """Write a security event for a change that no request caused (time ran out, a person was deactivated).
+
+    Changes that a person or an admin asked for are written by the view that handled the request, with its reference.
+    """
+    try:
+        SecurityEvent.objects.create(kind=kind, user_id=access.admin_id, user_email=access.admin_email, detail=detail[:300])
+    except Exception:
+        logger.exception('Could not write the security event %s', kind)
+
+
 def _move(access: SupportAccess, expected, to, **fields) -> bool:
     """Change the status only if it still is `expected`. False means somebody else got there first."""
     changed = SupportAccess.objects.filter(pk=access.pk, status=expected).update(status=to, **fields)
@@ -53,9 +67,11 @@ def settle(access: SupportAccess) -> SupportAccess:
     """Apply the time limits to the row, and give it back as it now is."""
     now = _now()
     if access.status == Status.REQUESTED and now - access.requested_at >= REQUEST_WAIT:
-        _move(access, Status.REQUESTED, Status.EXPIRED)
+        if _move(access, Status.REQUESTED, Status.EXPIRED):
+            _note('support_expired', access, f'Nobody answered for {access.person_email}')
     elif access.status == Status.APPROVED and now - access.decided_at >= START_WINDOW:
-        _move(access, Status.APPROVED, Status.EXPIRED)
+        if _move(access, Status.APPROVED, Status.EXPIRED):
+            _note('support_expired', access, f'Allowed by {access.person_email} but never started')
     elif access.status == Status.ACTIVE and now >= access.ends_at:
         end_support_access(access, 'time', 'time_up')
     return access
@@ -189,4 +205,6 @@ def end_support_access(access: SupportAccess, by: str, reason: str) -> bool:
     # Always close the sign in, even when the row was already over, so none is left open by a half finished earlier call.
     UserSession.objects.filter(support_access_id=access.pk, revoked_at__isnull=True).update(revoked_at=now, revoked_reason='support')
     access.refresh_from_db()
+    if changed == 1 and by in ('time', 'system'):
+        _note('support_ended', access, f'Ended by {by} ({reason}), visit to {access.person_email}')
     return changed == 1

@@ -19,7 +19,7 @@ from logs.security import record_security_event
 from . import services
 from .models import SupportAccess
 from .notify import SUBJECT, request_email
-from .rows import admin_row
+from .rows import admin_row, person_row
 from .services import SupportError
 
 User = get_user_model()
@@ -158,3 +158,82 @@ class SupportEndView(_AdminView):
         if services.end_support_access(access, 'admin', 'admin_ended'):
             _record(request, 'support_ended', access, f'Ended by the admin, for {access.person_email}')
         return api_success(admin_row(access), 'Support access ended.')
+
+
+# ── The person's side ─────────────────────────────────────────────────────────
+
+HISTORY_LIMIT = 50
+
+
+class _PersonView(APIView):
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'support_access'
+
+    def found(self, request, pk):
+        """The caller's own request with its time limits applied, or None. Somebody else's is never revealed."""
+        access = SupportAccess.objects.filter(pk=pk, person=request.user).first()
+        return services.settle(access) if access else None
+
+
+class SupportPendingView(_PersonView):
+    """GET /api/support-access/for-me/pending: the question waiting for me, and the visit running on my account.
+
+    The page asks this every 30 seconds while it is visible. It says nothing about anybody else's requests.
+    """
+    actions = {'get': 'pending'}
+
+    def get(self, request):
+        rows = [services.settle(r) for r in SupportAccess.objects.filter(person=request.user, status__in=SupportAccess.OPEN)]
+        waiting = next((r for r in rows if r.status == SupportAccess.Status.REQUESTED), None)
+        running = next((r for r in rows if r.status == SupportAccess.Status.ACTIVE), None)
+        return api_success({
+            'request': person_row(waiting) if waiting else None,
+            'active': person_row(running) if running else None,
+        })
+
+
+class SupportRespondView(_PersonView):
+    """POST /api/support-access/for-me/<id>/respond with {decision: 'allow' | 'reject', allowEdit}."""
+    actions = {'post': 'respond'}
+
+    def post(self, request, pk):
+        decision = request.data.get('decision')
+        if decision not in ('allow', 'reject'):
+            return api_error('Please allow or reject the request.', 400)
+        access = self.found(request, pk)
+        if access is None:
+            return api_error(NOT_FOUND, 404)
+        try:
+            services.respond(access, request.user, allow=decision == 'allow', allow_edit=bool(request.data.get('allow_edit')))
+        except SupportError as error:
+            return _fail(error)
+        if decision == 'allow':
+            _record(request, 'support_allowed', access, f'Allowed {access.granted_mode} access for {access.admin_email}')
+        else:
+            _record(request, 'support_rejected', access, f'Refused access for {access.admin_email}')
+        return api_success(person_row(access), 'Answer saved.')
+
+
+class SupportEndOwnView(_PersonView):
+    """POST /api/support-access/for-me/<id>/end: the person stops a visit at once."""
+    actions = {'post': 'end_own'}
+
+    def post(self, request, pk):
+        access = self.found(request, pk)
+        if access is None:
+            return api_error(NOT_FOUND, 404)
+        if access.status != SupportAccess.Status.ACTIVE:
+            error = SupportError('That support session is not running.', 409, 'not_active')
+            return _fail(error)
+        if services.end_support_access(access, 'person', 'person_ended'):
+            _record(request, 'support_ended', access, f'Ended by the person, visit by {access.admin_email}')
+        return api_success(person_row(access), 'Support access ended.')
+
+
+class SupportHistoryView(_PersonView):
+    """GET /api/support-access/for-me/history: every request made about my account, newest first, with what became of it."""
+    actions = {'get': 'history'}
+
+    def get(self, request):
+        rows = [services.settle(r) for r in SupportAccess.objects.filter(person=request.user)[:HISTORY_LIMIT]]
+        return api_success([person_row(r) for r in rows])

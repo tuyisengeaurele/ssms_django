@@ -8,6 +8,7 @@ import pytest
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import AccessToken
 
+from logs.models import SecurityEvent
 from support_access import services
 from support_access.models import SupportAccess
 from support_access.services import SupportError
@@ -116,6 +117,31 @@ def test_a_visit_ends_when_its_time_is_up_and_its_sign_in_is_closed():
     access = services.settle(age(access, minutes=16))
     assert access.status == Status.ENDED and access.ended_by == 'time'
     assert UserSession.objects.get(support_access_id=access.pk).revoked_at is not None
+
+
+def test_a_lapsed_request_is_noted_once_in_the_security_events():
+    admin, person = admin_and_person()
+    access = age(ask(admin, person), minutes=6)
+    services.settle(access)
+    services.settle(access)
+    events = SecurityEvent.objects.filter(kind='support_expired')
+    assert events.count() == 1
+    assert events.get().user_id == admin.pk and person.email in events.get().detail
+
+
+def test_a_visit_that_ran_out_of_time_is_noted():
+    admin, person = admin_and_person()
+    _, access = acting(admin, person, minutes=15)
+    services.settle(age(access, minutes=16))
+    event = SecurityEvent.objects.get(kind='support_ended')
+    assert event.user_id == admin.pk and 'time' in event.detail
+
+
+def test_an_end_by_a_person_or_an_admin_is_left_to_the_view_that_asked_for_it():
+    admin, person = admin_and_person()
+    _, access = acting(admin, person)
+    services.end_support_access(access, 'person', 'person_ended')
+    assert not SecurityEvent.objects.filter(kind='support_ended').exists()
 
 
 # ── answering ─────────────────────────────────────────────────────────────────
