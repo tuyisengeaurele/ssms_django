@@ -61,6 +61,13 @@ PERMISSIONS: dict[str, dict[str, frozenset]] = {
     # A supervisor's own farmers and invitations, or the cooperative an admin names.
     'team': {'read': STAFF, 'create': STAFF, 'delete': STAFF},
     'invitations': {'accept': FARMER_ONLY},
+    # The egg allowance. A farmer reads their own card, asks and withdraws. Staff list the waiting requests, decide them
+    # and set an amount directly. Which farmers a supervisor may reach is the cooperative, checked in the view.
+    'allowance': {
+        'read': FARMER_ONLY, 'request': FARMER_ONLY, 'withdraw': FARMER_ONLY, 'review_list': STAFF, 'decide': STAFF, 'set': STAFF,
+    },
+    # The cooperative's egg supply settings. Staff read them, only an admin changes them.
+    'supply_settings': {'read': STAFF, 'update': ADMIN_ONLY},
     'locations': {'read': ALL, 'locate': ALL},
     'cooperative_reports': {'read': STAFF},
     'reports': {'read': ADMIN_ONLY},
