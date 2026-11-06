@@ -2,13 +2,12 @@ from django.conf import settings
 from django.http import HttpResponse, StreamingHttpResponse
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from core.csvsafe import safe_writer
 from core.pagination import StandardPagination
 from core.permissions import RolePermission
-from core.throttles import ExportRateThrottle
+from core.throttles import ExportRateThrottle, UserRateThrottle
 
 from .models import AuditLog
 from .pdf import audit_pdf

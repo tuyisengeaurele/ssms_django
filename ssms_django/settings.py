@@ -167,6 +167,13 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
         'LOCATION': 'django_cache',
     },
+    # Rate limit counters only (core/throttles.py). Memory is private to each process and is lost on a restart, which
+    # is fine for a request count and saves six database round trips on every request.
+    'throttle': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'ssms-throttle',
+        'OPTIONS': {'MAX_ENTRIES': 20000},
+    },
 }
 
 REST_FRAMEWORK = {
@@ -188,8 +195,8 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'core.utils.custom_exception_handler',
     # ── Rate limiting ──────────────────────────────────────────────────────────
     'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle',
+        'core.throttles.AnonRateThrottle',
+        'core.throttles.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': '60/minute',

@@ -18,7 +18,6 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from alerts.disease import raise_disease_alert
@@ -28,7 +27,7 @@ from core.csvsafe import safe_writer
 from core.pagination import StandardPagination
 from core.params import date_param, int_param
 from core.permissions import RolePermission
-from core.throttles import DetectionRateThrottle, ExportRateThrottle
+from core.throttles import DetectionRateThrottle, ExportRateThrottle, UserRateThrottle
 from core.utils import api_error, api_success
 
 from .models import DiseaseDetection

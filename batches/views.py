@@ -2,7 +2,6 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from alerts.models import AlertLog, AlertType
@@ -12,7 +11,7 @@ from core.access import get_batch_or_404, get_farm_or_404, scope_batches
 from core.doc_format import clean_lang
 from core.permissions import RolePermission
 from core.permissions_table import may
-from core.throttles import ReportRateThrottle
+from core.throttles import ReportRateThrottle, UserRateThrottle
 from core.utils import api_error, api_success
 from farms.models import RearingRoom
 

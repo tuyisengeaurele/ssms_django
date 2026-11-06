@@ -108,3 +108,38 @@ def test_main_says_what_to_do_when_the_tokens_file_is_missing(tmp_path, capsys):
     code = main(['http://test', '--tokens-file', str(tmp_path / 'nothing.json'), '--seconds', '0.3'])
     assert code == 2
     assert 'prepare_load_test' in capsys.readouterr().err
+
+
+def test_the_summary_counts_each_kind_of_answer_so_a_refusal_is_not_mistaken_for_a_slow_site():
+    samples = [Sample('/a', 0.1, False, 401)] * 3 + [Sample('/a', 0.1, True, 200), Sample('/a', 0.1, False, None)]
+    assert summarise(samples).statuses == {401: 3, 200: 1, None: 1}
+
+
+def test_a_run_prints_how_many_requests_got_each_answer(tmp_path, capsys):
+    def handler(request):
+        return good(request) if request.url.path == '/api/health' else httpx.Response(500)
+
+    main(['http://test', '--tokens-file', write_tokens(tmp_path), '--seconds', '0.3'], handler=handler)
+    assert 'answers: 500' in capsys.readouterr().out
+
+
+def preflight_handler(status):
+    def handler(request):
+        if request.url.path == '/api/health' or status == 200:
+            return good(request)
+        return httpx.Response(status)
+    return handler
+
+
+def test_main_stops_before_the_run_when_the_site_refuses_the_tokens(tmp_path, capsys):
+    code = main(['http://test', '--tokens-file', write_tokens(tmp_path), '--seconds', '0.3'], handler=preflight_handler(401))
+    captured = capsys.readouterr()
+    assert code == 2
+    assert 'JWT_SECRET' in captured.err
+    assert 'requests,' not in captured.out  # it never ran
+
+
+def test_main_stops_before_the_run_when_this_address_is_already_rate_limited(tmp_path, capsys):
+    code = main(['http://test', '--tokens-file', write_tokens(tmp_path), '--seconds', '0.3'], handler=preflight_handler(429))
+    assert code == 2
+    assert 'minute' in capsys.readouterr().err

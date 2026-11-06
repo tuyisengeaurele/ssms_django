@@ -1,6 +1,6 @@
 import pytest
 from cryptography.fernet import Fernet
-from django.core.cache import cache
+from django.core.cache import cache, caches
 from rest_framework.test import APIClient
 
 # DRF reads its throttle rates when this module is first imported. Importing it here, before any
@@ -10,6 +10,7 @@ import core.throttles  # noqa: F401
 
 def _clear_cache():
     # The cache lives in the database, so tests that have no database simply have nothing to clear.
+    caches['throttle'].clear()   # the rate limit counters live in memory, so one test must not spend another's allowance
     try:
         cache.clear()
     except (RuntimeError, AssertionError):  # pytest-django and SimpleTestCase refuse database access differently
