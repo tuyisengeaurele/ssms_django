@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { doneEnding, markEnding } from '../../services/session';
 import { supportService } from '../../services/support.service';
 import { fill } from '../../utils/fill';
 import SupportBanner from './SupportBanner';
@@ -29,12 +30,16 @@ export default function ActingBanner() {
   if (!acting) return null;
 
   const end = async () => {
-    // Go back to the admin first, so the call to the server goes out with the admin's own token.
+    // Go back to the admin first, so the call to the server goes out with the admin's own token. The mark keeps the
+    // strip that offers an open visit from offering this one while the server is still hearing about it.
+    markEnding(acting.id);
     stopActing();
     try {
       await supportService.end(acting.id);
     } catch {
       // The server ends the visit at its time limit anyway.
+    } finally {
+      doneEnding(acting.id);
     }
   };
 

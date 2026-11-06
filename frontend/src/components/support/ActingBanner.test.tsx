@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
+import { isEnding } from '../../services/session';
 import type { ActingInfo, User } from '../../types';
 
 const support = vi.hoisted(() => ({ end: vi.fn() }));
@@ -65,6 +66,17 @@ describe('The banner while an admin acts as a person', () => {
     expect(auth.stopActing).toHaveBeenCalledTimes(1);
     expect(support.end).toHaveBeenCalledWith('s1');
     expect(auth.stopActing.mock.invocationCallOrder[0]).toBeLessThan(support.end.mock.invocationCallOrder[0]);
+  });
+
+  it('marks the visit as ending before going back, so the admin is not offered it again while the server catches up', async () => {
+    let markedWhenLeaving: boolean | null = null;
+    auth.stopActing.mockImplementation(() => { markedWhenLeaving = isEnding('s1'); });
+    open();
+    fireEvent.click(screen.getByRole('button', { name: 'End' }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(markedWhenLeaving).toBe(true);
+    // Once the server has answered the mark is gone, so a later visit with the same id could be offered.
+    expect(isEnding('s1')).toBe(false);
   });
 
   it('still goes back to the admin when the server cannot be reached', async () => {

@@ -15,7 +15,7 @@ export default function SecuritySettings() {
   const { success } = useToast();
   const { getErrorMessage } = useApiError();
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, acting } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [current, setCurrent] = useState('');
@@ -93,7 +93,8 @@ export default function SecuritySettings() {
 
       {user?.role === 'ADMIN' ? <MfaSettings /> : null}
 
-      {user && user.role !== 'ADMIN' ? <SupportHistory /> : null}
+      {/* Not while an admin acts as the person: the server refuses the list to them, and it is the person's to read. */}
+      {user && user.role !== 'ADMIN' && !acting ? <SupportHistory /> : null}
 
       <SignedInDevices />
     </div>

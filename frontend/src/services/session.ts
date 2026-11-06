@@ -23,6 +23,13 @@ export const setActing = (value: boolean) => {
   acting = value;
 };
 
+// Visits the admin has just ended and the server has not answered yet. The strip that offers an open visit after a reload
+// must not offer one of these, or it would show a visit that is already over.
+const endingNow = new Set<string>();
+export const markEnding = (id: string) => { endingNow.add(id); };
+export const doneEnding = (id: string) => { endingNow.delete(id); };
+export const isEnding = (id: string) => endingNow.has(id);
+
 // The visit ended, or its token ran out. The page goes back to the admin.
 const supportEndedListeners = new Set<() => void>();
 // Remembered until the admin's page has said so, because the page that shows the note appears after this runs.

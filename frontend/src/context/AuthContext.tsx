@@ -19,6 +19,11 @@ interface AuthContextValue {
   startActing: (token: string, info: Omit<ActingInfo, 'person'>) => Promise<void>;
   /** Go back to being the admin. */
   stopActing: () => void;
+  /**
+   * True for a moment after the person on screen changes (an admin starts or stops acting). The page they were on was
+   * meant for the other person, so a route guard sends them home instead of to "not allowed".
+   */
+  switching: boolean;
   /** Replace the user on screen, for example after the profile is edited. */
   updateUser: (user: User) => void;
   /** Read the user again from /api/auth/me. */
@@ -27,6 +32,9 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+/** How long after an admin starts or stops acting a page meant for the other person is sent home, not to "not allowed". */
+const SWITCH_MS = 1500;
 
 /**
  * After a page reload there is no access token in memory. If a sign in may still be alive, ask for a new token with
@@ -62,6 +70,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const [acting, setActingInfo] = useState<ActingInfo | null>(null);
+  const [switching, setSwitching] = useState(false);
+  // True for a moment, not just one render: the router moves to the new page in a transition, and the guard looks again
+  // in between. A second look must still send the person home.
+  useEffect(() => {
+    if (!switching) return undefined;
+    const timer = window.setTimeout(() => setSwitching(false), SWITCH_MS);
+    return () => window.clearTimeout(timer);
+  }, [switching]);
   // The admin, held aside while they act as somebody else. Memory only, like the access token.
   const held = useRef<{ user: User; token: string | null } | null>(null);
   const userNow = useRef<User | null>(null);
@@ -79,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     held.current = null;
     setAccessToken(admin.token);
     setActing(false);
+    setSwitching(true);
     setUser(admin.user);
     setActingInfo(null);
   }, []);
@@ -90,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setActing(true);
     try {
       const res = await api.get<{ data: User }>('/auth/me');
+      setSwitching(true);
       setUser(res.data.data);
       setActingInfo({ ...info, person: res.data.data });
     } catch (error) {
@@ -129,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [updateUser]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, acting, startActing, stopActing, updateUser, refreshUser, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, acting, startActing, stopActing, switching, updateUser, refreshUser, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

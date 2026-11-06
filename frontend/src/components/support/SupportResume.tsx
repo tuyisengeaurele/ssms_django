@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { supportService } from '../../services/support.service';
-import { takeSupportEnded } from '../../services/session';
+import { isEnding, takeSupportEnded } from '../../services/session';
 import type { SupportAdminRow } from '../../types';
 import { fill } from '../../utils/fill';
 import { minutesLeft } from './ActingBanner';
@@ -36,7 +36,7 @@ export default function SupportResume() {
     supportService.mine()
       .then((res) => {
         const found = res.data.data.open;
-        if (live) setOpen(found && found.status === 'active' ? found : null);
+        if (live) setOpen(found && found.status === 'active' && !isEnding(found.id) ? found : null);
       })
       .catch(() => {
         // Nothing to offer when the server cannot be reached.

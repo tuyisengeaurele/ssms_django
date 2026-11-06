@@ -1,4 +1,5 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { useEffect } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
@@ -88,6 +89,40 @@ describe('The layout during support access', () => {
     await settle();
     expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
     expect(support.mine).not.toHaveBeenCalled();
+  });
+});
+
+describe('The layout when the person on screen changes', () => {
+  // A page that counts how many times it was drawn from scratch.
+  let mounts = 0;
+  function Page() {
+    useEffect(() => { mounts += 1; }, []);
+    return <p>Page body</p>;
+  }
+  const tree = () => (
+    <MemoryRouter initialEntries={['/x']}>
+      <LanguageProvider>
+        <ToastProvider>
+          <Routes>
+            <Route element={<DashboardLayout />}>
+              <Route path="/x" element={<Page />} />
+            </Route>
+          </Routes>
+        </ToastProvider>
+      </LanguageProvider>
+    </MemoryRouter>
+  );
+
+  it('draws the page again from scratch, so nothing of the other person stays on screen', async () => {
+    mounts = 0;
+    const view = render(tree());
+    await settle();
+    expect(mounts).toBe(1);
+    auth.user = aline as never;
+    auth.acting = { id: 's1', person: aline, mode: 'view', endsAt: new Date(Date.now() + 24 * 60_000).toISOString() };
+    view.rerender(tree());
+    // The old page leaves with its exit animation, and then the new one is drawn.
+    await waitFor(() => expect(mounts).toBe(2));
   });
 });
 

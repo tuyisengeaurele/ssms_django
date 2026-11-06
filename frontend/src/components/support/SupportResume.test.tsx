@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import { ToastProvider } from '../../context/ToastContext';
-import { notifySupportEnded, takeSupportEnded } from '../../services/session';
+import { doneEnding, markEnding, notifySupportEnded, takeSupportEnded } from '../../services/session';
 import type { ActingInfo, SupportAdminRow } from '../../types';
 
 const support = vi.hoisted(() => ({ mine: vi.fn(), token: vi.fn(), end: vi.fn() }));
@@ -97,6 +97,16 @@ describe('A visit that is still open after a reload', () => {
     open();
     await settle();
     expect(support.mine).not.toHaveBeenCalled();
+  });
+
+  it('does not offer a visit that the admin has just ended, while the server is still hearing about it', async () => {
+    markEnding('a1');
+    mine(row());
+    open();
+    await settle();
+    expect(support.mine).toHaveBeenCalled();
+    expect(screen.queryByText(/open support session/)).not.toBeInTheDocument();
+    doneEnding('a1');
   });
 
   it('says so, once, when a visit has just ended, and asks the server nothing then', async () => {

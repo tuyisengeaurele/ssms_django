@@ -127,7 +127,7 @@ export default function DashboardLayout() {
 
         <AnimatePresence mode="wait">
           <motion.div
-            key={location.pathname}
+            key={`${location.pathname}:${user?.id ?? ''}`}
             className="app-content"
             variants={pageVariants}
             initial="initial"
