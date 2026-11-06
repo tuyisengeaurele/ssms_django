@@ -14,13 +14,15 @@ An admin can now look at a farmer's or supervisor's account to help, but only af
 - **The token names the person.** While acting, `request.user` is the person, so every role check and record scope applies unchanged. The token also carries `act` (the admin). Authority comes from the database rows (`SupportAccess` and a `UserSession` linked to it), never from the token alone. Authentication is still one query.
 - **Default deny for writes.** `core/support_rules.py` is checked in the authentication step, before any view. View only refuses every write. Edit mode allows 19 listed writes and never a delete. Anything unknown is refused. `tests/test_support_rules.py` keeps the reviewed list and walks every route.
 - **Logging names the real admin.** Audit entries are the admin's, "on behalf of" the person. Security events say "as <person>". Every request of a visit is kept in the request log with the support access id.
+- **The 30 second check does not keep a sign in alive.** Any request moves the idle clock, but this one is made by the page, so `core/jwt_authentication.py` leaves it out of the clock (`BACKGROUND_PATHS`). The idle limit still applies to it, so it cannot revive a stale sign in. Without this a tab left open on a shared computer would never have signed out.
 - **The website.** The acting state lives in memory. While acting, any 401 ends the visit and never refreshes with the admin's cookie (which would send the person's request as the admin). Logging out while acting signs the admin out. The person's page asks every 30 seconds, only while the tab is visible. The shared Modal got an optional `dismissible` flag for a question that needs an answer, and the question starts with the focus on Reject.
 
 ### Not built
 The emergency path that skips consent (dropped by the owner), recording the screen, chat, approving from an email, deleting in edit mode, and the live alert stream during a visit.
 
 ### Checks
-- Backend 2753 tests, frontend 1998 tests, `tsc` and ESLint clean.
+- Backend 2756 tests, frontend 2008 tests, `tsc` and ESLint clean.
+- A browser check of the whole flow on a scratch database (ask, answer with and without the changes box, start, continue after a reload, end from each side, the history) found five defects that unit tests missed. All are fixed with a test first: Start landed on "You can't open this page"; the strip offered a visit that was already over; the person's visits list showed a red error to the acting admin; the page kept the other person's data after a switch; and four identical error toasts piled up (identical toasts now show once).
 - The French and Kinyarwanda texts are drafts for native review, as for the second factor.
 - Migrations: `support_access.0001`, `users.0011`, `logs.0003`. They only add things. Run `python manage.py migrate` (the build now does it).
 

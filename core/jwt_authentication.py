@@ -18,6 +18,10 @@ from users.sessions import IDLE_MESSAGE, idle_limit
 # Using the site moves the idle clock, but it is written at most this often, so a busy page costs one write a minute.
 TOUCH_EVERY = timedelta(seconds=60)
 
+# Requests the page makes by itself, whether or not anybody is there. They do not move the idle clock, or a tab left open
+# on a shared computer would never sign out. The idle limit still applies to them, so they cannot revive a stale sign in.
+BACKGROUND_PATHS = frozenset({'/api/support-access/for-me/pending'})
+
 MFA_MESSAGE = 'Please sign in again and enter the code from your authenticator app.'
 SUPPORT_ENDED_MESSAGE = 'The support session has ended.'
 
@@ -152,6 +156,6 @@ class ActiveUserJWTAuthentication(JWTAuthentication):
             limit = idle_limit(user, session.is_shared_device)
             if limit is not None and now - session.last_activity_at > limit:
                 raise AuthenticationFailed(IDLE_MESSAGE, code='session_idle')
-            if now - session.last_activity_at >= TOUCH_EVERY:
+            if now - session.last_activity_at >= TOUCH_EVERY and request.path_info not in BACKGROUND_PATHS:
                 UserSession.objects.filter(pk=request.session_id, last_activity_at__lt=now - TOUCH_EVERY).update(last_activity_at=now)
         return user, token
