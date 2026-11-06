@@ -1,4 +1,5 @@
 import { configure, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { AxiosError } from 'axios';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setReducedMotion } from '../../test/setup';
 
@@ -6,7 +7,8 @@ vi.mock('../../context/AuthContext', () => ({
   useAuth: () => ({ user: { id: 'me', name: 'Auris', role: 'ADMIN' }, isAuthenticated: true, isLoading: false }),
 }));
 
-const api = vi.hoisted(() => ({ getById: vi.fn(), update: vi.fn(), remove: vi.fn(), getAll: vi.fn(), getDeleted: vi.fn() }));
+const api = vi.hoisted(() => ({ getById: vi.fn(), update: vi.fn(), remove: vi.fn(), getAll: vi.fn(), getDeleted: vi.fn(), settings: vi.fn(), saveSettings: vi.fn() }));
+vi.mock('../../services/supply.service', () => ({ supplyService: { getSettings: api.settings, updateSettings: api.saveSettings } }));
 vi.mock('../../services/cooperative.service', () => ({
   cooperativeService: { getById: api.getById, update: api.update, delete: api.remove, getAll: api.getAll, getDeleted: api.getDeleted },
 }));
@@ -29,6 +31,7 @@ beforeEach(() => {
   api.getById.mockResolvedValue({ data: { data: detail() } });
   api.getAll.mockResolvedValue({ data: { data: [] } });
   api.getDeleted.mockResolvedValue({ data: { data: [] } });
+  api.settings.mockResolvedValue({ data: { data: { starterBoxes: 2, m2PerBox: null } } });
 });
 
 const ready = () => screen.findByRole('heading', { level: 2, name: 'About this cooperative' });
@@ -106,5 +109,82 @@ describe('The details of a cooperative', () => {
     localStorage.setItem('ssms_locale', 'fr');
     renderCoop(PATH);
     expect(await screen.findByRole('heading', { level: 2, name: 'À propos de cette coopérative' })).toBeInTheDocument();
+  });
+
+  describe('the egg supply settings', () => {
+    const settingsReady = () => screen.findByRole('heading', { level: 2, name: 'Egg supply settings' });
+    const field = (name: string | RegExp) => screen.getByLabelText(name) as HTMLInputElement;
+    const save = () => fireEvent.click(screen.getByRole('button', { name: 'Save settings' }));
+
+    it('asks for the settings of this cooperative and shows them', async () => {
+      api.settings.mockResolvedValue({ data: { data: { starterBoxes: 3, m2PerBox: 4.5 } } });
+      renderCoop(PATH);
+      await settingsReady();
+      expect(api.settings).toHaveBeenCalledWith('c1');
+      expect(field('Default boxes for a new farmer')).toHaveValue(3);
+      expect(field('Space one box needs (m²)')).toHaveValue(4.5);
+    });
+
+    it('leaves the space per box empty and says to ask a sericulture officer while it is not known', async () => {
+      renderCoop(PATH);
+      await settingsReady();
+      expect(field('Space one box needs (m²)')).toHaveValue(null);
+      expect(screen.getByText('Not known yet? Leave it empty and ask a sericulture officer.')).toBeInTheDocument();
+    });
+
+    it('saves both numbers for this cooperative', async () => {
+      api.saveSettings.mockResolvedValue({ data: { data: { starterBoxes: 3, m2PerBox: 4 } } });
+      renderCoop(PATH);
+      await settingsReady();
+      fireEvent.change(field('Default boxes for a new farmer'), { target: { value: '3' } });
+      fireEvent.change(field('Space one box needs (m²)'), { target: { value: '4' } });
+      save();
+      await waitFor(() => expect(api.saveSettings).toHaveBeenCalledWith({ cooperativeId: 'c1', starterBoxes: 3, m2PerBox: 4 }));
+      expect(await screen.findByText('Settings saved.', {}, { timeout: 5000 })).toBeInTheDocument();
+    });
+
+    it('saves an empty space per box as not known', async () => {
+      api.settings.mockResolvedValue({ data: { data: { starterBoxes: 2, m2PerBox: 4 } } });
+      api.saveSettings.mockResolvedValue({ data: { data: { starterBoxes: 2, m2PerBox: null } } });
+      renderCoop(PATH);
+      await settingsReady();
+      fireEvent.change(field('Space one box needs (m²)'), { target: { value: '' } });
+      save();
+      await waitFor(() => expect(api.saveSettings).toHaveBeenCalledWith({ cooperativeId: 'c1', starterBoxes: 2, m2PerBox: null }));
+    });
+
+    it.each([['101'], ['-1'], ['2.5'], ['']])('refuses %s as the default boxes before sending', async (value) => {
+      renderCoop(PATH);
+      await settingsReady();
+      fireEvent.change(field('Default boxes for a new farmer'), { target: { value } });
+      save();
+      expect(await screen.findByText('Please enter a whole number of boxes from 0 to 100.')).toBeInTheDocument();
+      expect(api.saveSettings).not.toHaveBeenCalled();
+    });
+
+    it.each([['0'], ['-3'], ['1001'], ['2.555']])('refuses %s as the space per box before sending', async (value) => {
+      renderCoop(PATH);
+      await settingsReady();
+      fireEvent.change(field('Space one box needs (m²)'), { target: { value } });
+      save();
+      expect(await screen.findByText('Please enter a number above 0 and up to 1000, with at most two decimals, or leave it empty.')).toBeInTheDocument();
+      expect(api.saveSettings).not.toHaveBeenCalled();
+    });
+
+    it('shows the answer of the server when saving is refused', async () => {
+      api.saveSettings.mockRejectedValue(new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, { status: 403, data: { message: "You don't have permission to do that." } } as never));
+      renderCoop(PATH);
+      await settingsReady();
+      save();
+      expect(await screen.findByText("You don't have permission to do that.")).toBeInTheDocument();
+    });
+
+    it('leaves the section out, and the rest of the page working, when the settings cannot be loaded', async () => {
+      api.settings.mockRejectedValue(new Error('down'));
+      renderCoop(PATH);
+      await ready();
+      await waitFor(() => expect(api.settings).toHaveBeenCalled());
+      expect(screen.queryByRole('heading', { level: 2, name: 'Egg supply settings' })).not.toBeInTheDocument();
+    });
   });
 });

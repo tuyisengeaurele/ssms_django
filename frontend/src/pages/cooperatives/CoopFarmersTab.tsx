@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { teamService, TeamFarmer, TeamInvitation } from '../../services/team.service';
+import { supplyService } from '../../services/supply.service';
+import { boxesText } from '../../utils/boxes';
 import { useApiError } from '../../hooks/useApiError';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -42,6 +44,16 @@ export default function CoopFarmersTab() {
   const [created, setCreated] = useState<TeamInvitation | null>(null);
   const [inviteError, setInviteError] = useState('');
   const [creating, setCreating] = useState(false);
+  // What a new farmer starts with. The cooperative's default is offered, and an empty field leaves the choice to the server.
+  const [starterDefault, setStarterDefault] = useState<number | null>(null);
+  const [starter, setStarter] = useState('');
+
+  // Lowering a farmer's allowance.
+  const [toLower, setToLower] = useState<TeamFarmer | null>(null);
+  const [lowerBoxes, setLowerBoxes] = useState('');
+  const [lowerReason, setLowerReason] = useState('');
+  const [lowerError, setLowerError] = useState('');
+  const [lowering, setLowering] = useState(false);
 
   useEffect(() => {
     Promise.all([teamService.getFarmers(), teamService.getInvitations()])
@@ -54,6 +66,11 @@ export default function CoopFarmersTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    // Without the default the field starts empty and the invitation still works.
+    supplyService.getSettings().then((r) => setStarterDefault(r.data.data.starterBoxes)).catch(() => {});
+  }, []);
+
   const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
   const pending = invitations.filter((i) => i.status === 'pending').length;
 
@@ -61,14 +78,21 @@ export default function CoopFarmersTab() {
     setEmail('');
     setCreated(null);
     setInviteError('');
+    setStarter(starterDefault != null ? String(starterDefault) : '');
     setInviting(true);
   };
 
   const createInvite = async () => {
+    const typed = starter.trim();
+    const boxes = typed === '' ? undefined : Number(typed);
+    if (boxes !== undefined && (!Number.isInteger(boxes) || boxes < 0 || boxes > 100)) {
+      setInviteError(t('alwNeedBoxes'));
+      return;
+    }
     setInviteError('');
     setCreating(true);
     try {
-      const res = await teamService.createInvitation(email.trim() || undefined);
+      const res = await teamService.createInvitation({ ...(email.trim() ? { email: email.trim() } : {}), ...(boxes !== undefined ? { starterBoxes: boxes } : {}) });
       const made = res.data.data;
       setCreated(made);
       // The list never holds the link itself.
@@ -94,6 +118,34 @@ export default function CoopFarmersTab() {
   const shareText = created?.link
     ? fill(t('tmShareText'), { inviter: user?.name ?? '', coop: user?.cooperativeName ?? '', link: created.link })
     : '';
+
+  const openLower = (farmer: TeamFarmer) => {
+    setLowerBoxes('');
+    setLowerReason('');
+    setLowerError('');
+    setToLower(farmer);
+  };
+
+  const lowerAllowance = async () => {
+    if (!toLower) return;
+    const now = toLower.allowance.boxes;
+    const asked = lowerBoxes.trim() === '' ? NaN : Number(lowerBoxes);
+    const reason = lowerReason.trim();
+    if (!Number.isInteger(asked) || asked < 0 || asked >= now) return setLowerError(fill(t('alwNeedLower'), { n: now }));
+    if (reason.length < 10 || reason.length > 500) return setLowerError(t('alwNeedReason'));
+    setLowerError('');
+    setLowering(true);
+    try {
+      await supplyService.setForFarmer(toLower.id, { boxes: asked, reason });
+      setFarmers((prev) => prev.map((f) => (f.id === toLower.id ? { ...f, allowance: { boxes: asked, source: 'set' } } : f)));
+      success(fill(t('alwLoweredToast'), { name: toLower.name }));
+      setToLower(null);
+    } catch (e) {
+      setLowerError(getErrorMessage(e));
+    } finally {
+      setLowering(false);
+    }
+  };
 
   const removeFarmer = async () => {
     if (!toRemove) return;
@@ -139,6 +191,36 @@ export default function CoopFarmersTab() {
         }
       >
         <p className="modal-text">{toRemove ? fill(t('tmRemoveBody'), { name: toRemove.name }) : ''}</p>
+      </Modal>
+
+      <Modal
+        open={!!toLower}
+        onClose={() => setToLower(null)}
+        title={toLower ? fill(t('alwLowerFor'), { name: toLower.name }) : ''}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setToLower(null)}>{t('btnCancel')}</button>
+            <button className="btn btn-primary" onClick={lowerAllowance} disabled={lowering}>
+              {lowering ? <span className="spinner" aria-hidden="true" /> : null}
+              {t('alwLowerYes')}
+            </button>
+          </>
+        }
+      >
+        {lowerError && <div className="alert alert-error" role="alert">{lowerError}</div>}
+        {toLower && (
+          <>
+            <p className="modal-text">{fill(t('alwLowerBody'), { boxes: boxesText(t, toLower.allowance.boxes) })}</p>
+            <div className="form-group">
+              <label className="form-label" htmlFor="lower-boxes">{t('alwFieldNewBoxes')}</label>
+              <input id="lower-boxes" type="number" inputMode="numeric" className="form-input" min={0} max={toLower.allowance.boxes - 1} step={1} value={lowerBoxes} onChange={(e) => setLowerBoxes(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="lower-reason">{fill(t('alwFieldLowerReason'), { name: toLower.name })}</label>
+              <textarea id="lower-reason" className="form-textarea" rows={3} maxLength={500} value={lowerReason} onChange={(e) => setLowerReason(e.target.value)} />
+            </div>
+          </>
+        )}
       </Modal>
 
       <Modal
@@ -194,11 +276,18 @@ export default function CoopFarmersTab() {
             </div>
           </>
         ) : (
+          <>
+          <div className="form-group">
+            <label className="form-label" htmlFor="invite-starter">{t('alwFieldBoxes')}</label>
+            <input id="invite-starter" type="number" inputMode="numeric" className="form-input" min={0} max={100} step={1} value={starter} onChange={(e) => setStarter(e.target.value)} aria-describedby="invite-starter-hint" />
+            <span id="invite-starter-hint" className="form-hint">{t('alwStarterHint')}</span>
+          </div>
           <div className="form-group">
             <label className="form-label" htmlFor="invite-email">{t('tmInviteEmail')} <span className="form-optional">({t('abNotesOptional')})</span></label>
             <input id="invite-email" type="email" className="form-input" value={email} autoComplete="off" onChange={(e) => setEmail(e.target.value)} aria-describedby="invite-email-hint" />
             <span id="invite-email-hint" className="form-hint">{t('tmInviteEmailHint')}</span>
           </div>
+          </>
         )}
       </Modal>
 
@@ -237,6 +326,7 @@ export default function CoopFarmersTab() {
                 <thead>
                   <tr>
                     <th>{t('tmColName')}</th>
+                    <th>{t('alwColAllowance')}</th>
                     <th>{t('tmColFarms')}</th>
                     <th>{t('tmColJoined')}</th>
                     <th><span className="sr-only">{t('thActions')}</span></th>
@@ -254,10 +344,21 @@ export default function CoopFarmersTab() {
                           </div>
                         </div>
                       </td>
+                      <td data-label={t('alwColAllowance')}>
+                        <div className="cell-stack">
+                          <span>{boxesText(t, f.allowance.boxes)}</span>
+                          {f.allowance.source === 'default' && <span className="cell-sub">{t('alwColDefault')}</span>}
+                        </div>
+                      </td>
                       <td data-label={t('tmColFarms')}>{f.farmCount}</td>
                       <td data-label={t('tmColJoined')} className="cell-muted cell-nowrap">{date.format(new Date(f.joinedAt))}</td>
                       <td data-label="">
                         <div className="table-actions">
+                          {f.allowance.boxes > 0 && (
+                            <button className="btn btn-ghost btn-xs" aria-label={fill(t('alwLowerFor'), { name: f.name })} onClick={() => openLower(f)}>
+                              {t('alwLowerShort')}
+                            </button>
+                          )}
                           <button
                             className="btn btn-ghost btn-xs btn-quiet-danger"
                             aria-label={fill(t('tmRemoveFor'), { name: f.name })}
@@ -299,6 +400,7 @@ export default function CoopFarmersTab() {
                         <div className="cell-stack">
                           <span className="cell-strong">{i.email || t('tmLinkOnly')}</span>
                           {i.acceptedByName && <span className="cell-sub">{i.acceptedByName}</span>}
+                          {i.starterBoxes != null && <span className="cell-sub">{fill(t('alwStarterFor'), { boxes: boxesText(t, i.starterBoxes) })}</span>}
                         </div>
                       </td>
                       <td data-label={t('tmColStatus')}>

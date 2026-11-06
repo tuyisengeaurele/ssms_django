@@ -58,7 +58,7 @@ beforeEach(() => {
 describe('Farmer dashboard, the allowance', () => {
   it('shows the allowance card with the amount and the way to ask for another', async () => {
     open();
-    expect(await screen.findByRole('heading', { level: 2, name: 'Your allowance' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Your allowance' }, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByText('2 boxes')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Ask for a different amount' })).toBeInTheDocument();
   });

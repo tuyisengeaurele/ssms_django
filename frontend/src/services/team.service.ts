@@ -7,6 +7,8 @@ export interface TeamFarmer {
   email: string;
   joinedAt: string;
   farmCount: number;
+  /** What the farmer may take per round. `default` means nothing was set yet and the cooperative's default applies. */
+  allowance: { boxes: number; source: 'set' | 'default' };
 }
 
 export type InvitationStatus = 'pending' | 'accepted' | 'expired' | 'revoked';
@@ -20,6 +22,8 @@ export interface TeamInvitation {
   expiresAt: string;
   invitedByName: string;
   acceptedByName: string;
+  /** The amount the farmer starts with, or null when the cooperative's default applies. */
+  starterBoxes: number | null;
   /** Only in the answer to creating it. The server never shows it again. */
   link?: string;
 }
@@ -33,8 +37,8 @@ export const teamService = {
 
   getInvitations: () => api.get<ApiResponse<TeamInvitation[]>>('/team/invitations'),
 
-  createInvitation: (email?: string) =>
-    api.post<ApiResponse<TeamInvitation>>('/team/invitations', email ? { email } : {}),
+  createInvitation: (data: { email?: string; starterBoxes?: number }) =>
+    api.post<ApiResponse<TeamInvitation>>('/team/invitations', data),
 
   revokeInvitation: (id: string) => api.delete<ApiResponse<null>>(`/team/invitations/${id}`),
 };
