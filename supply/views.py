@@ -14,7 +14,7 @@ from core.permissions import RolePermission
 from core.utils import api_error, api_success
 from users.models import User
 
-from . import allowance
+from . import allowance, notify
 from .capacity import farmer_capacity_boxes
 from .models import AllowanceChange, AllowanceRequest, SupplySettings
 
@@ -106,6 +106,7 @@ class AllowanceRequestListView(APIView):
         except allowance.AllowanceError as error:
             return _fail(error)
         log_action(request, 'CREATE', 'AllowanceRequest', row.pk, f'Asked for {row.boxes_asked} boxes: {row.reason}')
+        notify.tell_reviewers(row)
         return api_success({'id': row.pk, 'boxes_asked': row.boxes_asked, 'status': row.status}, 'Request sent.', 201)
 
 
@@ -147,6 +148,7 @@ class AllowanceDecisionView(APIView):
         else:
             detail = f'Declined the request of {row.farmer.name} for {decided.boxes_asked} boxes: {decided.decision_note}'
         log_action(request, 'UPDATE', 'AllowanceRequest', decided.pk, detail)
+        notify.tell_farmer(decided)
         return api_success({'id': decided.pk, 'status': decided.status, 'boxes_granted': decided.boxes_granted}, 'Decided.')
 
 
@@ -171,7 +173,9 @@ class AllowanceFarmerView(APIView):
         except allowance.AllowanceError as error:
             return _fail(error)
         verb = 'Lowered' if row.boxes < before else 'Raised'
-        log_action(request, 'UPDATE', 'Allowance', row.pk, f'{verb} the allowance of {farmer.name} from {before} to {row.boxes} boxes: {request.data.get("reason")}')
+        reason = str(request.data.get('reason') or '').strip()
+        log_action(request, 'UPDATE', 'Allowance', row.pk, f'{verb} the allowance of {farmer.name} from {before} to {row.boxes} boxes: {reason}')
+        notify.tell_farmer_of_change(farmer, before, row.boxes, reason, user)
         return api_success({'boxes': row.boxes}, 'Allowance changed.')
 
 
