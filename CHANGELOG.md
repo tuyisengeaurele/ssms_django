@@ -1,5 +1,23 @@
 # Changelog
 
+## Faster requests: rate limits count in memory
+
+The first live load test on 2026-11-06 failed all 5064 requests, and the app felt slow. Two separate causes.
+
+### What was wrong
+- **Slow requests.** Every request made six database round trips just to count itself against the rate limit (read, count, savepoint, check, write, release), because the counters lived in the database cache on Supabase. `/api/auth/me` asked 1 question for its data and 6 for the limit. `/api/farms` asked 4 and 6. That is more than half of all the database trips, and a write on every request.
+- **The failed load test.** The tokens are signed with the `JWT_SECRET` in the terminal that runs `prepare_load_test`, and the live API only accepts its own. The runbook did not say so. Every request was refused with a 401, and refused requests count against the per address limit for visitors with no token, so the owner's own browser got "Too many requests" on the same address. The script showed 5064 failures and no reason.
+
+### What changed
+- Rate limit counters now live in memory (`core/throttles.py`, cache alias `throttle`). A rate limited request asks the database nothing about the limit. A test fails if any view goes back to a database counter. Sign in lockout, code challenges, stream tickets and the log burst job stay in the database cache because they must survive a restart or be shared with another process.
+- The cost: each API process counts for itself, and a restart starts the counts again. The API runs one process, so the limits are exact today. Read the comment in `core/throttles.py` before adding processes.
+- The load test script now asks once with the first token before it starts. A 401 stops it with the reason (the `JWT_SECRET` mismatch), and a 429 stops it with a note to wait. A run also prints how many requests got each answer, so a refusal is no longer mistaken for a slow site.
+- Runbook section 8 says to set `JWT_SECRET` in the terminal too.
+
+### Checked
+- Throw-away tests, written first: no database query for the limit, every view's throttle uses the memory cache (a walk over all views), the limit still refuses the request over it, and the script's new stop and tally. The full suites are in the pull request.
+- **Not checked:** the speed on the live site. Run the load test again after the deploy, and compare the page timings.
+
 ## Admin second factor: a code from an authenticator app
 
 Every admin signs in with a password and then a 6 digit code. The first time, they set up the app. Supervisors and farmers sign in as before. The steps to deploy it are in `docs/deploy-runbook.md`, section 9.

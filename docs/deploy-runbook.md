@@ -79,13 +79,14 @@ Meant for about 50 people at once on the free plans, between 06:00 and 20:00 in 
 - **The first visit after the API slept** takes about a minute. The website shows "The server is waking up" and tries again by itself for up to 90 seconds. Only reads and sign in are repeated, never a save.
 - **Database pool.** The API shares 1 to 4 database connections (`DB_POOL_MAX`, default 4). Supabase's session pooler allows 15 at once, and a deploy briefly runs two copies of the API, so 4 each stays under the limit with room for the GitHub jobs and your own terminal. If you raise `DB_POOL_MAX`, keep twice its value plus 4 under 15.
 - **Fewer restarts.** `render.yaml` has a build filter, so a change that only touches `frontend/`, `docs/`, `tests/`, `scripts/`, `.github/`, `ai_service/` or a markdown file does not redeploy the API. If a docs only merge still starts a deploy, the filter patterns need adjusting for Render.
+- **Rate limits count in memory.** Each API process keeps its own counts (`core/throttles.py`), because counting in the database cost six round trips to Supabase on every request. With one process (`WEB_CONCURRENCY=1`) the limits are exact. With more, each process allows the full rate, and a restart starts the counts again. Sign in lockout and code challenges stay in the database.
 - **Load test.** It proves the site holds about 50 people reading at once. Run it with the API awake, in working hours, and nobody else using the site.
-  1. In your own terminal set `DATABASE_URL` as for `createsuperuser`, then run `python manage.py prepare_load_test --users 50 --tokens-file load_tokens.json`.
+  1. In your own terminal set `DATABASE_URL` as for `createsuperuser`, and set `JWT_SECRET` to the same value as on Render (the tokens are signed with it, and the API refuses any other signature). Then run `python manage.py prepare_load_test --users 50 --tokens-file load_tokens.json`.
   2. Right away (the tokens last 15 minutes): `python scripts/load_test.py https://<vercel address> --tokens-file load_tokens.json --minutes 3`.
   3. Pass means no failed request (a 429 counts as one) and a 95th percentile under 2 seconds. It prints each page's numbers.
   4. Clean up: delete `load_tokens.json`, then `python manage.py prepare_load_test --remove`, then close the terminal.
   
-  The script only reads, but the 50 throwaway accounts exist in the live database until you remove them. If many requests fail, send the printed summary. If there are no failures and the 95th percentile is high, the free CPU is the limit, which is the signal to look at a paid plan or another host.
+  The script only reads, but the 50 throwaway accounts exist in the live database until you remove them. The script stops at once with the reason if the site refuses the tokens (401, a wrong `JWT_SECRET`) or the address is rate limited (429). It also prints how many requests got each answer. If many requests fail, send the printed summary. If there are no failures and the 95th percentile is high, the free CPU is the limit, which is the signal to look at a paid plan or another host.
 
 ## 9. Admin second factor
 

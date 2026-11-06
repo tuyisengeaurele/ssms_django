@@ -10,7 +10,8 @@ farmer with one farm and two batches, so the pages it reads have data. They have
 JWT_ACCESS_MINUTES (15 by default), so make them just before the run. The tokens file is a secret: it opens those
 accounts. Delete it after the run, and run --remove to delete the accounts and what they own.
 
-Run it with DATABASE_URL set in your own terminal, then close the terminal, as for createsuperuser. Running it twice
+Run it with DATABASE_URL and the live JWT_SECRET set in your own terminal, then close the terminal, as for createsuperuser.
+The tokens are signed with JWT_SECRET, and the API refuses a token signed with any other value. Running it twice
 does not make the accounts twice.
 """
 import json
