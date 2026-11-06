@@ -7,6 +7,7 @@ from rest_framework.test import APIClient, APIRequestFactory
 from logs.models import SecurityEvent
 from logs.security import KINDS, record_security_event
 from tests.factories import UserFactory
+from tests.mfa_helpers import sign_in_admin
 from users.models import UserSession
 
 pytestmark = pytest.mark.django_db
@@ -28,7 +29,10 @@ def last():
 def sign_in(user, agent=CHROME, password='Pass1234'):
     client = APIClient()
     client.defaults['HTTP_USER_AGENT'] = agent
-    response = client.post(LOGIN, {'email': user.email, 'password': password}, format='json')
+    if user.role == 'ADMIN' and password == 'Pass1234':
+        response = sign_in_admin(client, user)   # a password, then a code
+    else:
+        response = client.post(LOGIN, {'email': user.email, 'password': password}, format='json')
     return client, response
 
 

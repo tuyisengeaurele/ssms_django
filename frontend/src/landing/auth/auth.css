@@ -669,3 +669,125 @@
     animation-duration: 1.6s;
   }
 }
+
+/* ── The second step of an admin sign in ─────────────────────────────────────────────────── */
+
+.landing .l-mfa__intro {
+  margin: 0 0 18px;
+  color: var(--l-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.landing .l-mfa__steps {
+  display: grid;
+  gap: 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: mfa-step;
+}
+
+.landing .l-mfa__steps > li {
+  display: grid;
+  gap: 8px;
+  counter-increment: mfa-step;
+}
+
+.landing .l-mfa__steps h2,
+.landing .l-mfa__done h2 {
+  margin: 0;
+  font: 650 1.02rem var(--l-font-ui);
+  color: var(--l-ink);
+}
+
+.landing .l-mfa__steps h2::before {
+  content: counter(mfa-step) '. ';
+}
+
+.landing .l-mfa__steps p,
+.landing .l-mfa__done p {
+  margin: 0;
+  color: #33443b;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.landing .l-mfa__qr {
+  justify-self: start;
+  padding: 12px;
+  border: 1px solid var(--l-hairline);
+  border-radius: 14px;
+  background: #fff;
+  line-height: 0;
+}
+
+.landing .l-mfa__keylabel {
+  margin-top: 4px;
+  color: var(--l-muted);
+  font-size: 0.8rem;
+}
+
+.landing .l-mfa__key {
+  padding: 10px 12px;
+  border: 1px solid var(--l-hairline);
+  border-radius: 10px;
+  background: var(--l-ivory);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.landing .l-mfa__hint {
+  margin: -6px 0 14px;
+  color: var(--l-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.landing .l-mfa__done {
+  display: grid;
+  gap: 14px;
+}
+
+.landing .l-mfa__codes {
+  display: grid;
+  gap: 12px;
+}
+
+.landing .l-mfa__codelist {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--l-hairline);
+  border-radius: 14px;
+  background: var(--l-ivory);
+  list-style: none;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+}
+
+.landing .l-mfa__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* The shared button style is full width and tall. Here two short buttons sit side by side. */
+.landing .l-mfa__actions .l-auth__ghost {
+  width: auto;
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 0.9rem;
+}
+
+.landing .l-mfa__copied {
+  color: var(--l-leaf);
+  font-size: 0.85rem;
+}

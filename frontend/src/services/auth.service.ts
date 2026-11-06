@@ -1,5 +1,5 @@
 import api from './api';
-import { ApiResponse, AuthResponse, User } from '../types';
+import { ApiResponse, AuthResponse, MfaRequired, User } from '../types';
 import type { DeviceHints } from './clientHints';
 
 export interface RegisterResponse { user: User }
@@ -9,7 +9,7 @@ export const authService = {
     api.post<ApiResponse<RegisterResponse>>('/auth/register', data),
 
   login: (data: { email: string; password: string; device?: DeviceHints; sharedDevice?: boolean }) =>
-    api.post<ApiResponse<AuthResponse>>('/auth/login', data),
+    api.post<ApiResponse<AuthResponse | MfaRequired>>('/auth/login', data),
 
   verifyEmail: (data: { uid: string; token: string }) =>
     api.post<ApiResponse<null>>('/auth/verify-email', data),

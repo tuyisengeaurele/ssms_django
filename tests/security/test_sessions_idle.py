@@ -9,6 +9,7 @@ from rest_framework.test import APIClient
 
 from audit_log.models import AuditLog
 from tests.factories import UserFactory
+from tests.mfa_helpers import sign_in_admin
 from users.models import UserSession
 
 pytestmark = pytest.mark.django_db
@@ -20,7 +21,8 @@ ME = '/api/auth/me'
 
 def sign_in(user):
     client = APIClient()
-    response = client.post(LOGIN, {'email': user.email, 'password': 'Pass1234'}, format='json')
+    # An admin signs in with a password and then a code.
+    response = sign_in_admin(client, user) if user.role == 'ADMIN' else client.post(LOGIN, {'email': user.email, 'password': 'Pass1234'}, format='json')
     assert response.status_code == 200
     client.credentials(HTTP_AUTHORIZATION=f'Bearer {response.json()["data"]["token"]}')
     return client
@@ -119,7 +121,7 @@ def test_the_limit_can_be_changed_in_settings(settings):
 def test_an_idle_session_cannot_be_renewed_and_the_audit_log_says_why():
     admin = UserFactory(role='ADMIN')
     browser = APIClient()
-    browser.post(LOGIN, {'email': admin.email, 'password': 'Pass1234'}, format='json')
+    sign_in_admin(browser, admin)
     idle_for(admin, minutes=16)
     response = browser.post(REFRESH)
     assert response.status_code == 401
@@ -132,7 +134,7 @@ def test_an_idle_session_cannot_be_renewed_and_the_audit_log_says_why():
 def test_a_renewal_inside_the_limit_still_works_and_is_not_activity():
     admin = UserFactory(role='ADMIN')
     browser = APIClient()
-    browser.post(LOGIN, {'email': admin.email, 'password': 'Pass1234'}, format='json')
+    sign_in_admin(browser, admin)
     idle_for(admin, minutes=10)
     marked = activity_of(admin)
     assert browser.post(REFRESH).status_code == 200
@@ -142,7 +144,8 @@ def test_a_renewal_inside_the_limit_still_works_and_is_not_activity():
 
 def test_a_token_from_before_sessions_existed_is_not_judged_by_idleness(settings):
     from rest_framework_simplejwt.tokens import AccessToken
-    admin = UserFactory(role='ADMIN')
+    # A supervisor: an admin's token with no session is refused on purpose now (tests/test_mfa_enforcement.py).
+    supervisor = UserFactory(role='SUPERVISOR')
     client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION=f'Bearer {AccessToken.for_user(admin)}')
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {AccessToken.for_user(supervisor)}')
     assert client.get(ME).status_code == 200

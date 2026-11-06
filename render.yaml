@@ -103,6 +103,11 @@ services:
       - key: AI_SERVICE_SECRET
         sync: false    # the same value goes into ssms-ai
 
+      # Encrypts admin second factor secrets. Made by hand with Fernet.generate_key(), kept in a password manager.
+      # Without it the deploy check stops the deploy before the running copy is replaced.
+      - key: MFA_ENCRYPTION_KEY
+        sync: false
+
       # ── Sentry (optional) ────────────────────────────────────────────────────
       - key: SENTRY_DSN
         sync: false

@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from cryptography.fernet import Fernet
 
 from core.config import parse_list
 from tests.factories import UserFactory
@@ -21,6 +22,8 @@ def production_env(**extra):
         'SECRET_KEY': secrets.token_urlsafe(64),
         'SECURE_SSL_REDIRECT': 'True',
         'TRUSTED_PROXY_COUNT': '1',
+        # A live site now has this too. A new key each time, never written down.
+        'MFA_ENCRYPTION_KEY': Fernet.generate_key().decode(),
     })
     env.update(extra)
     return env

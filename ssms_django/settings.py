@@ -12,6 +12,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
+
+# Encrypts the secrets of the admin second factor in the database. On a live site it is set by hand (a Fernet key) and the
+# deploy check refuses to continue without it. On a laptop a key is derived from SECRET_KEY so nothing has to be set up.
+MFA_ENCRYPTION_KEY = config('MFA_ENCRYPTION_KEY', default='')
+if DEBUG and not MFA_ENCRYPTION_KEY:
+    import base64
+    import hashlib
+    MFA_ENCRYPTION_KEY = base64.urlsafe_b64encode(hashlib.sha256(SECRET_KEY.encode()).digest()).decode()
 ALLOWED_HOSTS = parse_list(config('ALLOWED_HOSTS', default='localhost,127.0.0.1'))
 
 # Railway injects RAILWAY_PUBLIC_DOMAIN — add it automatically so the
@@ -194,6 +202,7 @@ REST_FRAMEWORK = {
         'invitation': '20/minute',
         'sessions': '30/minute',   # signed in devices: list and sign out
         'health_test': '5/minute',   # the test buttons on the Health tab
+        'mfa': '10/minute',   # second factor codes and set-up, per address
         'report': '20/minute',   # PDF reports, per person
         'export': '10/minute',   # CSV and PDF exports of a list, per person
         'detection': '20/minute',   # photo checks, per person

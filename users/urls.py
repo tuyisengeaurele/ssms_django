@@ -1,6 +1,14 @@
 from django.urls import path
 
 from .email_verification_views import ResendVerificationView, VerifyEmailView
+from .mfa_views import (
+    MfaRecoveryCodesView,
+    MfaSetupConfirmView,
+    MfaSetupStartView,
+    MfaStatusView,
+    MfaStepUpView,
+    MfaVerifyView,
+)
 from .password_reset_views import PasswordResetConfirmView, PasswordResetRequestView
 from .session_views import SessionDetailView, SessionListView, SessionPingView, SessionRevokeOthersView
 from .views import ChangePasswordView, CookieTokenRefreshView, LoginView, LogoutView, ProfileView, RegisterView
@@ -9,6 +17,12 @@ urlpatterns = [
     path('register',          RegisterView.as_view(),         name='auth_register'),
     path('login',             LoginView.as_view(),            name='auth_login'),
     path('logout',            LogoutView.as_view(),           name='auth_logout'),
+    path('mfa',               MfaStatusView.as_view(),        name='auth_mfa_status'),
+    path('mfa/recovery-codes', MfaRecoveryCodesView.as_view(), name='auth_mfa_recovery_codes'),
+    path('mfa/verify',        MfaVerifyView.as_view(),        name='auth_mfa_verify'),
+    path('mfa/step-up',       MfaStepUpView.as_view(),        name='auth_mfa_step_up'),
+    path('mfa/setup/start',   MfaSetupStartView.as_view(),    name='auth_mfa_setup_start'),
+    path('mfa/setup/confirm', MfaSetupConfirmView.as_view(),  name='auth_mfa_setup_confirm'),
     path('me',                ProfileView.as_view(),          name='auth_me'),
     path('change-password',   ChangePasswordView.as_view(),   name='auth_change_password'),
     path('session/ping',            SessionPingView.as_view(),         name='auth_session_ping'),

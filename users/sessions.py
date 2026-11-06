@@ -77,8 +77,11 @@ def _remember(session: UserSession, jti: str) -> None:
     session.tokens = [*session.tokens, {'jti': jti, 'used_at': None}][-REMEMBERED_TOKENS:]
 
 
-def start_session(request, user, hints=None, shared: bool = False) -> tuple[UserSession, str, str]:
-    """Sign a device in. Returns the session, the access token and the refresh token."""
+def start_session(request, user, hints=None, shared: bool = False, mfa_verified: bool = False) -> tuple[UserSession, str, str]:
+    """Sign a device in. Returns the session, the access token and the refresh token.
+
+    `mfa_verified` is true when the person just gave a good code from the authenticator app.
+    """
     now = _now()
     info = describe_device(_agent(request), hints)
     earlier = UserSession.objects.filter(user=user)
@@ -88,6 +91,7 @@ def start_session(request, user, hints=None, shared: bool = False) -> tuple[User
     session = UserSession.objects.create(
         user=user, device_label=info.label, browser=info.browser, os=info.os, is_installed_app=info.is_installed_app,
         is_shared_device=shared, user_agent=_agent(request), last_used_at=now, last_activity_at=now, expires_at=UserSession.ends_at(now),
+        mfa_verified_at=now if mfa_verified else None,
     )
     refresh = _issue(session)
     _remember(session, refresh['jti'])

@@ -4,11 +4,13 @@ from django.utils import timezone
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 
-from users.models import UserSession
+from users.models import Role, UserSession
 from users.sessions import IDLE_MESSAGE, idle_limit
 
 # Using the site moves the idle clock, but it is written at most this often, so a busy page costs one write a minute.
 TOUCH_EVERY = timedelta(seconds=60)
+
+MFA_MESSAGE = 'Please sign in again and enter the code from your authenticator app.'
 
 
 class ActiveUserJWTAuthentication(JWTAuthentication):
@@ -20,6 +22,9 @@ class ActiveUserJWTAuthentication(JWTAuthentication):
 
     A token whose sign in has been ended (signed out, revoked, expired) is refused at once, not when the token
     runs out. Tokens made before sessions existed carry no session id and are accepted until they expire.
+
+    An admin is held to more: the session must have passed a code from the authenticator app (`mfa_verified_at`), and
+    a token with no session id is refused. So no other path can give an admin a working session.
     """
 
     def get_user(self, validated_token):
@@ -37,14 +42,19 @@ class ActiveUserJWTAuthentication(JWTAuthentication):
             return None
         _, token = result
         request.session_id = token.payload.get('sid')
+        is_admin = result[0].role == Role.ADMIN
+        if is_admin and not request.session_id:
+            raise AuthenticationFailed(MFA_MESSAGE, code='mfa_required')
         if request.session_id:
             # One indexed lookup on the primary key.
             state = UserSession.objects.filter(pk=request.session_id).values_list(
-                'revoked_at', 'expires_at', 'last_activity_at', 'is_shared_device',
+                'revoked_at', 'expires_at', 'last_activity_at', 'is_shared_device', 'mfa_verified_at',
             ).first()
             now = timezone.now()
             if state is None or state[0] is not None or now >= state[1]:
                 raise AuthenticationFailed('Your session has ended. Please sign in again.', code='session_revoked')
+            if is_admin and state[4] is None:
+                raise AuthenticationFailed(MFA_MESSAGE, code='mfa_required')
             limit = idle_limit(result[0], state[3])
             if limit is not None and now - state[2] > limit:
                 raise AuthenticationFailed(IDLE_MESSAGE, code='session_idle')

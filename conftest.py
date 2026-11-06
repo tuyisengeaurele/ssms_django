@@ -1,4 +1,5 @@
 import pytest
+from cryptography.fernet import Fernet
 from django.core.cache import cache
 from rest_framework.test import APIClient
 
@@ -23,6 +24,8 @@ def _quiet_settings(request, settings):
         rest['DEFAULT_THROTTLE_CLASSES'] = []
     settings.REST_FRAMEWORK = rest
     settings.EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+    # A new key for every test, made here and never written down, so no key sits in the repository.
+    settings.MFA_ENCRYPTION_KEY = Fernet.generate_key().decode()
     # Good answers are not sampled into the request log, so one test cannot change another's counts. Failures still are.
     settings.REQUEST_LOG_SAMPLE_RATE = 0.0
     # A cheap hasher first, so building a dozen users stays fast. The real hashers stay in the list,
@@ -55,13 +58,24 @@ def jwt_client():
     """jwt_client(user) signs in with a real access token, the way a browser does.
 
     force_authenticate skips the check that rejects deactivated users, so tests about
-    inactive accounts need a real token.
+    inactive accounts need a real token. An admin gets a real session that passed a code, because the API
+    refuses an admin session that did not.
     """
+    from django.utils import timezone
     from rest_framework_simplejwt.tokens import AccessToken
 
+    from users.models import UserSession
+
     def make(user):
+        token = AccessToken.for_user(user)
+        if user.role == 'ADMIN':
+            now = timezone.now()
+            session = UserSession.objects.create(
+                user=user, last_used_at=now, last_activity_at=now, expires_at=UserSession.ends_at(now), mfa_verified_at=now,
+            )
+            token['sid'] = session.id
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION=f'Bearer {AccessToken.for_user(user)}')
+        client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
         return client
 
     return make

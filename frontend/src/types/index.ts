@@ -335,6 +335,22 @@ export interface AuthResponse {
   token: string;
 }
 
+/** What an admin gets for a correct password: not a sign in yet, but the next step and the challenge that goes with it. */
+export interface MfaRequired {
+  mfa: { step: 'code' | 'setup'; challenge: string };
+}
+
+export function isMfaRequired(data: AuthResponse | MfaRequired): data is MfaRequired {
+  return 'mfa' in data;
+}
+
+/** An admin's authenticator app. Nothing secret is in it. See users/mfa_views.py. */
+export interface MfaStatus {
+  enabled: boolean;
+  enabledAt: string | null;
+  recoveryCodesLeft: number;
+}
+
 /** One batch of the side by side comparison, from GET /api/batches/compare. */
 export interface BatchComparison {
   id: string;

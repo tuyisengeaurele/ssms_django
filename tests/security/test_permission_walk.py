@@ -22,6 +22,8 @@ DEFAULT_ACTIONS = {'get': 'read', 'post': 'create', 'put': 'update', 'patch': 'u
 # Open to anyone on purpose. Each one was read and is in this list, so a new open view has to be added here by hand.
 PUBLIC = {
     'RegisterView', 'LoginView', 'LogoutView', 'CookieTokenRefreshView',
+    # An admin's second step, open because the caller holds a challenge from a correct password and no session yet.
+    'MfaVerifyView', 'MfaSetupStartView', 'MfaSetupConfirmView',
     'PasswordResetRequestView', 'PasswordResetConfirmView', 'VerifyEmailView', 'ResendVerificationView',
     'ContactCreateView', 'PublicLotView', 'InvitationDetailView', 'DeviceIngestView',
 }
@@ -37,6 +39,7 @@ REFUSES_ALLOWED_ROLE = {
     ('TeamFarmerListView', 'get'): 'a supervisor with no cooperative',
     ('TeamFarmerDetailView', 'delete'): 'a supervisor with no cooperative',
     ('AlertCommentDetailView', 'delete'): 'only the author or an admin may take a comment away',
+    ('AdminMfaResetView', 'post'): 'an admin whose sign in has no recent code from the authenticator app is asked for one first',
 }
 
 

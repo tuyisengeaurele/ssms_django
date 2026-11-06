@@ -3,6 +3,8 @@ import { adminService, CreateUserPayload } from '../../services/admin.service';
 import { cooperativeService } from '../../services/cooperative.service';
 import { User, Role, Cooperative } from '../../types';
 import { useApiError } from '../../hooks/useApiError';
+import { needsRecentCode, useStepUp } from '../../hooks/useStepUp';
+import { mfaService } from '../../services/mfa.service';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
@@ -52,6 +54,10 @@ export default function AdminUsersPage() {
   const [confirmDelete, setConfirmDelete] = useState<User | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [confirmRestore, setConfirmRestore] = useState<User | null>(null);
+  // Another admin whose authenticator app is about to be reset. The server wants a fresh code from this admin for it.
+  const [confirmReset, setConfirmReset] = useState<User | null>(null);
+  const [resetting, setResetting] = useState(false);
+  const { run: runWithCode, modal: codeModal } = useStepUp();
   const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
@@ -139,6 +145,23 @@ export default function AdminUsersPage() {
     } finally {
       setRestoring(false);
       setConfirmRestore(null);
+    }
+  };
+
+  const handleReset = async () => {
+    if (!confirmReset) return;
+    const target = confirmReset;
+    setResetting(true);
+    // The confirmation closes first, so a request for a code is the only dialog on screen.
+    setConfirmReset(null);
+    try {
+      await runWithCode(() => mfaService.resetFor(target.id));
+      success(fill(t('adMfaResetDone'), { name: target.name }));
+    } catch (e) {
+      // Cancelling the request for a code is a choice, not a failure.
+      if (!needsRecentCode(e)) showError(getErrorMessage(e));
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -253,6 +276,26 @@ export default function AdminUsersPage() {
           {confirmDelete ? fill(t('usDeleteBody'), { name: confirmDelete.name, email: confirmDelete.email }) : ''}
         </p>
       </Modal>
+
+      <Modal
+        open={!!confirmReset}
+        onClose={() => setConfirmReset(null)}
+        title={t('adMfaResetTitle')}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setConfirmReset(null)}>{t('btnCancel')}</button>
+            <button className="btn btn-danger" onClick={handleReset} disabled={resetting}>
+              {resetting ? <><span className="spinner" />{t('adMfaResetBusy')}</> : t('adMfaResetConfirm')}
+            </button>
+          </>
+        }
+      >
+        <p className="modal-text">
+          {confirmReset ? fill(t('adMfaResetBody'), { name: confirmReset.name, email: confirmReset.email }) : ''}
+        </p>
+      </Modal>
+
+      {codeModal}
 
       <Modal
         open={!!confirmRestore}
@@ -411,6 +454,11 @@ export default function AdminUsersPage() {
                               <button className="btn btn-ghost btn-xs" aria-label={fill(t('usEditFor'), { name: u.name })} onClick={() => openEdit(u)}>
                                 {t('usEdit')}
                               </button>
+                              {u.role === 'ADMIN' && (
+                                <button className="btn btn-ghost btn-xs" aria-label={fill(t('adMfaResetFor'), { name: u.name })} onClick={() => setConfirmReset(u)}>
+                                  {t('adMfaResetAction')}
+                                </button>
+                              )}
                               <button className="btn btn-ghost btn-xs btn-quiet-danger" aria-label={`${t('usDelete')} ${u.name}`} onClick={() => setConfirmDelete(u)}>
                                 {t('usDelete')}
                               </button>

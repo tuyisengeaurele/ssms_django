@@ -147,6 +147,41 @@ describe('When the access token has run out', () => {
   });
 });
 
+describe('The second step of an admin sign in', () => {
+  const refused = (config: InternalAxiosRequestConfig, body: object) =>
+    new AxiosError('no', 'ERR_BAD_REQUEST', config, undefined, { status: 401, data: body, statusText: '', headers: {}, config });
+
+  it('ends the session at once, without a refresh, when the server says a code is missing', async () => {
+    rememberSession();
+    const adapter = async (config: InternalAxiosRequestConfig) => {
+      throw refused(config, { code: 'mfa_required' });
+    };
+    await expect(api.request({ url: '/farms', adapter })).rejects.toBeInstanceOf(AxiosError);
+    expect(post).not.toHaveBeenCalled();
+    expect(getAccessToken()).toBeNull();
+    expect(hasSessionHint()).toBe(false);
+    expect(sessionStorage.getItem('ssms_notice')).toBe('session_ended');
+  });
+
+  it.each(['/auth/mfa/verify', '/auth/mfa/setup/start', '/auth/mfa/setup/confirm'])('does not try to renew the session when %s is refused', async (url) => {
+    rememberSession();
+    let calls = 0;
+    const adapter = async (config: InternalAxiosRequestConfig) => {
+      calls += 1;
+      throw refused(config, { reason: 'challenge' });
+    };
+    await expect(api.request({ url, method: 'post', adapter })).rejects.toBeInstanceOf(AxiosError);
+    expect(calls).toBe(1);
+    expect(post).not.toHaveBeenCalled();
+    expect(hasSessionHint()).toBe(true);
+  });
+
+  it.each(['/auth/mfa/verify', '/auth/mfa/setup/start', '/auth/mfa/setup/confirm'])('does not send the token to %s', async (url) => {
+    const headers = await sentHeaders(url, 'post');
+    expect(headers.Authorization).toBeUndefined();
+  });
+});
+
 describe('When the session cannot be renewed', () => {
   it('leaves a note for the login page', () => {
     endSession();

@@ -16,6 +16,9 @@ const PUBLIC_PATHS = [
   '/auth/resend-verification',
   '/auth/verify-email',
   '/auth/token/refresh',
+  // The second step of an admin sign in is proved by a challenge, not a token.
+  '/auth/mfa/verify',
+  '/auth/mfa/setup',
   '/lots/',
 ];
 
@@ -51,12 +54,20 @@ api.interceptors.response.use(
       return api(originalConfig);
     }
 
+    // An admin session that never passed a code cannot be renewed into one. Sign in again, which asks for the code.
+    if (err.response?.status === 401 && (err.response?.data as { code?: string } | undefined)?.code === 'mfa_required') {
+      endSession('ended');
+      return Promise.reject(err);
+    }
+
     // Only attempt refresh on 401 for non-auth endpoints (avoid refresh loop)
     if (
       originalConfig &&
       err.response?.status === 401 &&
       !originalConfig._retry &&
       !originalConfig.url?.includes('/auth/login') &&
+      !originalConfig.url?.includes('/auth/mfa/verify') &&
+      !originalConfig.url?.includes('/auth/mfa/setup') &&
       !originalConfig.url?.includes('/auth/token/refresh') &&
       !originalConfig.url?.includes('/auth/logout')
     ) {

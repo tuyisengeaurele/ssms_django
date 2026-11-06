@@ -1247,3 +1247,65 @@ tr.is-off td:last-child { opacity: 1; }
   body:has(.lot-print-sheet) .lot-scan,
   body:has(.lot-print-sheet) .lot-print-caption { color: #000; }
 }
+
+/* ── Recovery codes inside the signed in app (Settings, Security) ─────────────────────────── */
+.mfa-codes {
+  display: grid;
+  gap: 12px;
+}
+
+.mfa-codes__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  background: var(--ivory);
+  color: var(--text);
+  list-style: none;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+}
+
+.mfa-codes__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.mfa-codes__copied {
+  color: var(--primary);
+  font-size: 0.85rem;
+}
+
+.mfa-status {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.mfa-status p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.mfa-status .mfa-status__state {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.mfa-fresh {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.mfa-fresh h3 {
+  margin: 0;
+  font-size: 1rem;
+}
