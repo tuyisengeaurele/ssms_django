@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.utils import timezone
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.settings import api_settings
 
 from users.models import Role, UserSession
 from users.sessions import IDLE_MESSAGE, idle_limit
@@ -28,7 +29,10 @@ class ActiveUserJWTAuthentication(JWTAuthentication):
     """
 
     def get_user(self, validated_token):
-        user = super().get_user(validated_token)
+        return self._must_be_active(super().get_user(validated_token))
+
+    @staticmethod
+    def _must_be_active(user):
         if not user.is_active:
             raise AuthenticationFailed(
                 'This account has been deleted. Contact the SSMS team.',
@@ -36,28 +40,38 @@ class ActiveUserJWTAuthentication(JWTAuthentication):
             )
         return user
 
+    def _session_with_user(self, token):
+        """The sign in and the person it belongs to, in one joined query. None when there is no such sign in."""
+        return UserSession.objects.select_related('user').filter(
+            pk=token.payload['sid'], user_id=token.payload.get(api_settings.USER_ID_CLAIM),
+        ).first()
+
     def authenticate(self, request):
-        result = super().authenticate(request)
-        if result is None:
+        # Same steps as simplejwt's authenticate, except that the person is read together with the session. Two
+        # separate lookups cost two round trips to the database on every request, and the round trip is most of the time.
+        header = self.get_header(request)
+        raw_token = self.get_raw_token(header) if header is not None else None
+        if raw_token is None:
             return None
-        _, token = result
+        token = self.get_validated_token(raw_token)
         request.session_id = token.payload.get('sid')
-        is_admin = result[0].role == Role.ADMIN
+
+        session = self._session_with_user(token) if request.session_id else None
+        # A token with no session id is from before sessions existed. A session id with no session is refused below.
+        user = self._must_be_active(session.user) if session is not None else self.get_user(token)
+
+        is_admin = user.role == Role.ADMIN
         if is_admin and not request.session_id:
             raise AuthenticationFailed(MFA_MESSAGE, code='mfa_required')
         if request.session_id:
-            # One indexed lookup on the primary key.
-            state = UserSession.objects.filter(pk=request.session_id).values_list(
-                'revoked_at', 'expires_at', 'last_activity_at', 'is_shared_device', 'mfa_verified_at',
-            ).first()
             now = timezone.now()
-            if state is None or state[0] is not None or now >= state[1]:
+            if session is None or session.revoked_at is not None or now >= session.expires_at:
                 raise AuthenticationFailed('Your session has ended. Please sign in again.', code='session_revoked')
-            if is_admin and state[4] is None:
+            if is_admin and session.mfa_verified_at is None:
                 raise AuthenticationFailed(MFA_MESSAGE, code='mfa_required')
-            limit = idle_limit(result[0], state[3])
-            if limit is not None and now - state[2] > limit:
+            limit = idle_limit(user, session.is_shared_device)
+            if limit is not None and now - session.last_activity_at > limit:
                 raise AuthenticationFailed(IDLE_MESSAGE, code='session_idle')
-            if now - state[2] >= TOUCH_EVERY:
+            if now - session.last_activity_at >= TOUCH_EVERY:
                 UserSession.objects.filter(pk=request.session_id, last_activity_at__lt=now - TOUCH_EVERY).update(last_activity_at=now)
-        return result
+        return user, token

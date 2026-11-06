@@ -50,7 +50,8 @@ jobs:
         run: pip install -r requirements.txt
 
       # The API is pinged only from 04:00 to 18:00 UTC, which is 06:00 to 20:00 in Rwanda. At night it sleeps, which keeps
-      # Render's 750 free hours a month for all the services.
+      # Render's 750 free hours a month for all the services. GitHub starts scheduled runs late or not at all (4 runs in
+      # 20 hours was seen), so this ping cannot keep the API awake. An outside pinger does that, see the runbook.
       - name: Check the services
         run: python manage.py run_health_checks --skip aiService --awake-hours-utc 4-18
 
