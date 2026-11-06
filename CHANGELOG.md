@@ -1,5 +1,23 @@
 # Changelog
 
+## Faster requests, a quicker wake, and why the API still slept
+
+After the load test passed (1686 requests, none failed, 95th percentile 1.08 s) the API sat on Render's "application loading" page for more than five minutes after a wake, and it had been asleep during working hours.
+
+### What was wrong
+- **The pinger was GitHub's schedule.** `jobs-frequent.yml` is set to run every 5 minutes, but GitHub started only 4 runs in 20 hours (17:35, 22:48, 02:52, 09:58 UTC). Render sleeps a free service after 15 minutes of silence, so the API slept in working hours. The earlier "keep it awake" fix depended on a scheduler that does not keep time.
+- **Every wake ran the whole setup again.** A woken service runs the start command again. `start.sh` ran `check --deploy`, `migrate`, `createcachetable` and `collectstatic` first, four Python processes that each load Django and open their own database connection, on a CPU that is a fraction of a laptop's. `build.sh` only installed packages.
+- **Two lookups on every request.** The token names the person and the sign in. The API read the person, then the session, two round trips before the view ran.
+
+### What changed
+- `build.sh` now runs the four setup steps once per deploy and leaves `.setup_done`. `start.sh` skips them when the marker is there and only starts uvicorn. Without the marker (a host whose build cannot reach the database) `start.sh` does them as before. A failing build leaves the running copy in place. Tests run the real scripts with stand-ins for `python`, `pip` and `uvicorn`.
+- Authentication reads the person and the session in one joined query (`core/jwt_authentication.py`). A page now costs 1 to 4 queries: `/api/auth/me` 1, `/api/alerts` 2, `/api/farms` 4. A test pins the one query and the refusals (ended session, missing session, deactivated person, token from before sessions).
+- Runbook: a reliable keep-awake needs an outside pinger (cron-job.org or UptimeRobot, a GET of `/api/health` every 5 minutes, 06:00 to 20:00 Rwanda), a row for the stuck wake page, and how to confirm the quick wake from the log.
+
+### What I could not prove
+- The size of the wake saving. After the deploy, wake the API and read its log: there should be no `migrate` lines before uvicorn starts. Time the wake and write the number in the runbook.
+- The cause of the five minute stall. The Supabase check showed only 2 pooler connections and the API answered by itself later. The runbook row covers the most likely cause (pooler slots).
+
 ## The service no longer restarts every 1000 requests, and the load test is realistic
 
 The second live load test (after the faster rate limits) got 878 good answers and 3484 failures: 429 x3192, 502 x263, 503 x29. The tokens were accepted this time. I reproduced part of it on a scratch database.

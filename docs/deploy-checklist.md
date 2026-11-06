@@ -29,7 +29,7 @@ Work through this top to bottom for every deploy, including a rehearsal on a tes
 
 Scheduled jobs run from GitHub Actions, not Render: `jobs-frequent.yml` every 5 minutes (`run_health_checks --skip aiService`, `check_log_bursts`, `mark_offline_devices`) and `jobs-nightly.yml` at 02:00 UTC (`cleanup_sensor_readings`, `prune_sessions`, `prune_logs`). GitHub may start a run a few minutes late, and emails the repository owner when a run fails. A scheduler that stopped shows in the System page, Logs, Jobs and devices: each command writes when it starts and ends.
 
-`start.sh` runs migrations, creates the cache table for the rate limits and starts the API under ASGI. Read its first lines of output in the host's log.
+`build.sh` runs the deploy check, the migrations, the cache table for the sign in lockout and the static files once per deploy, and leaves `.setup_done`. `start.sh` then only starts the API under ASGI, so a wake from sleep is fast. Without the marker (a host whose build cannot reach the database) `start.sh` does those steps itself. Read the build log for the setup and the start log for uvicorn.
 
 ## 3. Rehearse against the running site
 
