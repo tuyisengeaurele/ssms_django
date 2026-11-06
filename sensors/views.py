@@ -5,7 +5,6 @@ from django.db.models import Avg
 from django.db.models.functions import TruncHour
 from django.utils import timezone
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
 from alerts.utils import check_room_alerts
@@ -13,7 +12,7 @@ from audit_log.utils import log_action
 from core.access import get_batch_or_404, get_farm_or_404, scope_by_farm, scope_readings
 from core.params import int_param
 from core.permissions import RolePermission
-from core.throttles import DeviceKeyThrottle
+from core.throttles import AnonRateThrottle, DeviceKeyThrottle
 from core.utils import api_error, api_success
 from farms.models import RearingRoom
 from logs.jobs import record_job

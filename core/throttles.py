@@ -1,6 +1,24 @@
 import hashlib
 
-from rest_framework.throttling import AnonRateThrottle, SimpleRateThrottle, UserRateThrottle
+from django.core.cache import caches
+from rest_framework.throttling import AnonRateThrottle as _AnonRateThrottle
+from rest_framework.throttling import SimpleRateThrottle
+from rest_framework.throttling import UserRateThrottle as _UserRateThrottle
+
+# Rate limit counters live in memory, not in the database cache. In the database every request cost six round trips to
+# Supabase (read, count, savepoint, check, write, release). The cost of memory is that each API process counts for
+# itself and a restart starts the counts again. The API runs one process (WEB_CONCURRENCY=1), so the limits are exact
+# today. With more processes each one allows the full rate, so raise nothing without reading this. Sign in lockout,
+# code challenges and stream tickets are different: they must survive a restart, so they stay in the database cache.
+THROTTLE_CACHE = caches['throttle']
+
+
+class AnonRateThrottle(_AnonRateThrottle):
+    cache = THROTTLE_CACHE
+
+
+class UserRateThrottle(_UserRateThrottle):
+    cache = THROTTLE_CACHE
 
 
 class LoginRateThrottle(AnonRateThrottle):
@@ -60,6 +78,7 @@ class SessionsRateThrottle(UserRateThrottle):
 class DeviceKeyThrottle(SimpleRateThrottle):
     """30 readings a minute for each device key. A device that sends no key is counted by its address."""
     scope = 'device'
+    cache = THROTTLE_CACHE
 
     def get_cache_key(self, request, view):
         key = request.headers.get('X-Device-Key', '').strip()

@@ -3,7 +3,6 @@ from datetime import timedelta
 from django.http import StreamingHttpResponse
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from audit_log.models import AuditLog
@@ -11,7 +10,7 @@ from audit_log.utils import log_action
 from core.csvsafe import safe_writer
 from core.pagination import StandardPagination
 from core.permissions import RolePermission
-from core.throttles import ExportRateThrottle
+from core.throttles import ExportRateThrottle, UserRateThrottle
 from core.utils import api_error
 
 from .streams import STREAMS

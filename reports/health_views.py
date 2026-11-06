@@ -5,14 +5,13 @@ from datetime import timedelta
 from django.db.models import Count
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from audit_log.utils import log_action
 from core.health import run_checks
 from core.health_tests import TESTS
 from core.permissions import RolePermission
-from core.throttles import HealthTestRateThrottle
+from core.throttles import HealthTestRateThrottle, UserRateThrottle
 from core.utils import api_error, api_success
 from logs.models import HealthCheckResult
 from logs.uptime import uptime_from_counts

@@ -11,14 +11,13 @@ from django.db.models.functions import TruncDay
 from django.http import HttpResponse, StreamingHttpResponse
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from audit_log.models import AuditLog
 from batches.models import Batch
 from core.csvsafe import safe_writer
 from core.permissions import RolePermission
-from core.throttles import ExportRateThrottle
+from core.throttles import ExportRateThrottle, UserRateThrottle
 from core.utils import api_success
 from farms.models import Farm
 from harvest.models import HarvestRecord

@@ -2,7 +2,6 @@ from django.db.models import Prefetch
 from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from audit_log.changes import build_changes, snapshot
@@ -13,7 +12,7 @@ from core.access import get_farm_or_404, scope_farms
 from core.doc_format import clean_lang
 from core.pagination import StandardPagination
 from core.permissions import RolePermission
-from core.throttles import ReportRateThrottle
+from core.throttles import ReportRateThrottle, UserRateThrottle
 from core.utils import api_error, api_success
 
 from .models import Farm
