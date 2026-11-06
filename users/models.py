@@ -94,6 +94,11 @@ class UserSession(models.Model):
     # When a code from the authenticator app was last checked in this sign in. Empty means never: an admin session
     # without it is refused. Actions that want a recent code compare it with the clock.
     mfa_verified_at = models.DateTimeField(null=True, blank=True, db_column='mfaVerifiedAt')
+    # Set only on a sign in made for support access. It belongs to the person, but it is not one of their devices.
+    support_access = models.ForeignKey(
+        'support_access.SupportAccess', null=True, blank=True, on_delete=models.SET_NULL, related_name='support_sessions',
+        db_column='supportAccessId',
+    )
 
     class Meta:
         db_table = 'user_sessions'
