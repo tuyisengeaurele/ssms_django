@@ -12,10 +12,11 @@ from audit_log.utils import log_action
 from cooperatives.team_views import team_cooperative
 from core.permissions import RolePermission
 from core.utils import api_error, api_success
+from farms.models import RearingRoom
 from users.models import User
 
 from . import allowance, notify
-from .capacity import farmer_capacity_boxes
+from .capacity import farmer_capacity_boxes, room_capacity_boxes
 from .models import AllowanceChange, AllowanceRequest, SupplySettings
 
 HISTORY_LENGTH = 20
@@ -80,13 +81,9 @@ class AllowanceRequestListView(APIView):
 
     def get(self, request):
         user = request.user
-        waiting = AllowanceRequest.objects.filter(status=AllowanceRequest.Status.REQUESTED).select_related('farmer')
-        if user.role == 'SUPERVISOR':
-            if not user.cooperative_id:
-                return api_error('You are not part of a cooperative yet.', 403)
-            waiting = waiting.filter(cooperative_id=user.cooperative_id)
-        elif request.query_params.get('cooperativeId'):
-            waiting = waiting.filter(cooperative_id=request.query_params['cooperativeId'])
+        if user.role == 'SUPERVISOR' and not user.cooperative_id:
+            return api_error('You are not part of a cooperative yet.', 403)
+        waiting = allowance.waiting_requests(user, request.query_params.get('cooperativeId') or None)
         rows = [
             {
                 'id': r.pk,
@@ -96,7 +93,7 @@ class AllowanceRequestListView(APIView):
                 'created_at': r.created_at,
                 'farmer': {'id': r.farmer_id, 'name': r.farmer.name, 'email': r.farmer.email},
             }
-            for r in waiting.order_by('created_at')
+            for r in waiting
         ]
         return api_success({'requests': rows, 'count': len(rows)})
 
@@ -156,14 +153,38 @@ class AllowanceFarmerView(APIView):
     """PATCH /api/supply/allowance/farmers/<id> {boxes, reason}. A supervisor lowers, an admin sets any amount."""
     permission_classes = [IsAuthenticated, RolePermission]
     resource = 'allowance'
-    actions = {'patch': 'set'}
+    actions = {'get': 'farmer_read', 'patch': 'set'}
 
-    def patch(self, request, pk):
-        user = request.user
+    @staticmethod
+    def _farmer(user, pk):
         farmers = User.objects.filter(pk=pk, role='FARMER', is_active=True)
         if user.role == 'SUPERVISOR':
             farmers = farmers.filter(cooperative_id=user.cooperative_id) if user.cooperative_id else farmers.none()
-        farmer = farmers.first()
+        return farmers.first()
+
+    def get(self, request, pk):
+        """The evidence behind a request: the farmer's card, and their rooms with what each can hold."""
+        farmer = self._farmer(request.user, pk)
+        if farmer is None:
+            return api_error("We couldn't find that farmer.", 404)
+        m2_per_box = SupplySettings.for_cooperative(farmer.cooperative).m2_per_box if farmer.cooperative_id else None
+        rooms = RearingRoom.objects.filter(farm__owner=farmer, farm__is_active=True, is_active=True).order_by('created_at')
+        return api_success({
+            **_card(farmer),
+            'farmer': {'id': farmer.pk, 'name': farmer.name, 'email': farmer.email},
+            'rooms': [
+                {
+                    'id': r.pk, 'name': r.name, 'approval_status': r.approval_status, 'area_m2': r.area_m2, 'pending_area_m2': r.pending_area_m2,
+                    # A room that is not approved holds nothing yet.
+                    'capacity_boxes': room_capacity_boxes(r.area_m2, m2_per_box) if r.usable else None,
+                }
+                for r in rooms
+            ],
+        })
+
+    def patch(self, request, pk):
+        user = request.user
+        farmer = self._farmer(user, pk)
         if farmer is None:
             return api_error("We couldn't find that farmer.", 404)
         before = allowance.current(farmer)['boxes']
