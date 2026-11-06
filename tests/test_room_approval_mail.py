@@ -143,6 +143,14 @@ def test_a_decision_on_a_size_change_says_so(auth_client, world, sent):
     assert '20' in email.plain()
 
 
+def test_a_second_decision_on_the_same_room_sends_no_second_mail(auth_client, world, sent):
+    _, first, second, farmer, farm = world
+    room = room_of(farm, approval_status=Approval.PENDING)
+    assert auth_client(first).post(f'/api/rooms/{room.pk}/review', {'decision': 'approve'}, format='json').status_code == 200
+    assert auth_client(second).post(f'/api/rooms/{room.pk}/review', {'decision': 'reject', 'note': 'No'}, format='json').status_code == 409
+    assert [to for _, to, _ in sent] == [[farmer.email]]
+
+
 def test_a_note_with_markup_is_plain_text_in_the_mail(auth_client, world, sent):
     _, first, _, _, farm = world
     room = room_of(farm, approval_status=Approval.PENDING)

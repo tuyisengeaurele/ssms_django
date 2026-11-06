@@ -172,7 +172,47 @@ The time is up; either side ends it; the person signs out everywhere or changes 
 | Asking says you already have an open request | an earlier request is still waiting, allowed or running | withdraw or end it |
 | The person never sees the question | the tab is hidden, or they have not opened the app | the email went to them at once. The question waits 5 minutes |
 
-## 11. If something fails
+## 11. Room approval
+
+A farmer's new room, and a change to the size of an approved room, waits for a supervisor to approve it. Only an approved room can hold a batch or a sensor. Nothing here needs a setting or a key.
+
+**Who is asked**
+
+- The active supervisors of the farmer's cooperative. Each gets an email of their own, with the farmer, the farm, the room and the size, and one button.
+- A farmer whose cooperative has no active supervisor, or who is in no cooperative, goes to every active admin. The email says so.
+- A room added by an admin is approved at once and tells nobody. A supervisor reaches only the rooms of their own cooperative. A room outside it is "not found".
+
+**What each state can and cannot do**
+
+| State | Batches | Sensors | What the farmer can do |
+|---|---|---|---|
+| Waiting | no | no | change the size (it stays waiting), rename |
+| Approved | yes | yes | ask for a new size |
+| Approved, size change waiting | yes, with the old size | yes | withdraw by entering the old size again |
+| Not approved | no | no | enter a new size, which sends the room again |
+
+- A new batch needs an approved room. A farm with none is told "Add a room and wait for your supervisor to approve it before you add a batch." The room "Room 1" is no longer made for a first batch.
+- Rooms that existed before this change stay approved. Their size is empty until someone enters it, and a farmer's first size for such a room waits for a decision like any other.
+- A rejection needs a reason, and the farmer reads it. A decision is final once made. Two reviewers deciding the same room at the same moment cannot both win; the second gets "Nothing waits for a decision on that room."
+- The size is 1 to 5000 square metres, up to two decimals.
+
+**Where the reviewer decides**
+
+Today only through the API (`POST /api/rooms/<id>/review`, `GET /api/team/rooms?status=pending`). The screen for it comes with the Decisions inbox, and this branch is not merged before that exists. The email button goes to `/app` until then.
+
+**Where it is recorded**
+
+Audit log: the room added, a size asked for, and each decision with its reason.
+
+**If something looks wrong**
+
+| What you see | Likely cause | What to do |
+|---|---|---|
+| A farmer cannot add a batch | no approved room | a reviewer approves one |
+| Nobody got the email | the mail server was down (the request still worked) | see Logs, Jobs, `email_failed`; the room shows in the API list |
+| A supervisor sees nothing | the farmer is in another cooperative | an admin reviews it |
+
+## 12. If something fails
 
 | What you see | Likely cause | Fix |
 |---|---|---|
