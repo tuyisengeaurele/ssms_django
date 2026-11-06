@@ -1,5 +1,29 @@
 # Changelog
 
+## Support access with consent
+
+An admin can now look at a farmer's or supervisor's account to help, but only after that person says yes. Plan item 10. The design note is `docs/superpowers/specs/2026-11-06-support-access-design.md` (local only).
+
+### What it does
+- The admin asks from the Users page with a reason (10 to 300 characters), a length (15, 30 or 60 minutes) and a mode (view only, or ask to make changes as well). It needs a fresh code from the authenticator app, to ask and again to start.
+- The person gets a question on their screen and one email (no link that approves). They allow or reject, and tick the box if they also let the admin make changes. The request lapses after 5 minutes. An allowed request must be started within 10 minutes.
+- While the visit runs, both sides see a bar on every page. Either side can end it at once. It also ends when the time is up, when the person signs out everywhere or changes their password, when the person is deactivated or becomes an admin, and when the admin signs out, is deactivated or is demoted.
+- The person has a list of every request about their account, with the outcome and the reason, in Settings, Security.
+
+### How it is built
+- **The token names the person.** While acting, `request.user` is the person, so every role check and record scope applies unchanged. The token also carries `act` (the admin). Authority comes from the database rows (`SupportAccess` and a `UserSession` linked to it), never from the token alone. Authentication is still one query.
+- **Default deny for writes.** `core/support_rules.py` is checked in the authentication step, before any view. View only refuses every write. Edit mode allows 19 listed writes and never a delete. Anything unknown is refused. `tests/test_support_rules.py` keeps the reviewed list and walks every route.
+- **Logging names the real admin.** Audit entries are the admin's, "on behalf of" the person. Security events say "as <person>". Every request of a visit is kept in the request log with the support access id.
+- **The website.** The acting state lives in memory. While acting, any 401 ends the visit and never refreshes with the admin's cookie (which would send the person's request as the admin). Logging out while acting signs the admin out. The person's page asks every 30 seconds, only while the tab is visible. The shared Modal got an optional `dismissible` flag for a question that needs an answer, and the question starts with the focus on Reject.
+
+### Not built
+The emergency path that skips consent (dropped by the owner), recording the screen, chat, approving from an email, deleting in edit mode, and the live alert stream during a visit.
+
+### Checks
+- Backend 2753 tests, frontend 1998 tests, `tsc` and ESLint clean.
+- The French and Kinyarwanda texts are drafts for native review, as for the second factor.
+- Migrations: `support_access.0001`, `users.0011`, `logs.0003`. They only add things. Run `python manage.py migrate` (the build now does it).
+
 ## Faster requests, a quicker wake, and why the API still slept
 
 After the load test passed (1686 requests, none failed, 95th percentile 1.08 s) the API sat on Render's "application loading" page for more than five minutes after a wake, and it had been asleep during working hours.

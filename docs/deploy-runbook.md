@@ -124,7 +124,55 @@ Every admin signs in with a password and then a 6 digit code from an authenticat
 
 Never paste the key, a recovery code or the database address into a chat or a screenshot.
 
-## 10. If something fails
+## 10. Support access with consent
+
+An admin can look at a farmer's or supervisor's account to help, but only after that person says yes, only for 15, 30 or 60 minutes, and the person can end it at any moment. Nothing here needs a setting or a key.
+
+**How an admin asks**
+
+1. Users page, the row of the farmer or supervisor, "Support access".
+2. Write the reason (10 to 300 characters) and choose the length. Choose "Ask to make changes as well" only if you need to change something. **The person reads the reason.**
+3. Give a code from your authenticator app when it asks. Starting a visit asks for a fresh code again if the first is older than 10 minutes.
+4. Wait. The person has 5 minutes. The window shows when they allow or refuse. Press Start within 10 minutes of the answer.
+5. While you are in, a bar at the top says whose account you are looking at, in which mode and how long is left. "End" stops it at once. If the page reloads, the bar offers "Continue" or "End".
+
+**What the person sees**
+
+- A question on their screen ("SSMS support wants to view your account") with your name, the reason and the length, and one email at the moment you ask (with no button that approves). Allow or Reject. Changes are allowed only if you asked for them and they tick the box.
+- A bar for the whole visit with "End now".
+- Settings, Security, "SSMS support visits": every request about their account, with its outcome and the reason, including the ones they refused or that ran out of time.
+- The page of a farmer or supervisor asks every 30 seconds, and only while the tab is visible. A tab left open and hidden overnight does not keep the free server awake.
+
+**What you can and cannot do**
+
+- You act as the person, so you see and reach only what they can.
+- View only: everything is read, nothing is changed.
+- With changes allowed: create and edit farms, rooms, batches, mortality records, harvest records, devices, sensor readings, photo checks and alerts. **Nothing can be deleted**, and a harvest lot link cannot be shared.
+- Never, in either mode: the password, email, role or account, signed in devices, invitations, second factor, the live alert stream, and every admin page.
+- A new endpoint is refused until someone adds it to `core/support_rules.py`. `tests/test_support_rules.py` keeps the reviewed list of 19 allowed writes and fails when the code list changes.
+
+**It ends when**
+
+The time is up; either side ends it; the person signs out everywhere or changes their password; the person is deactivated or becomes an admin; or you sign out, are deactivated or are demoted.
+
+**Where it is recorded**
+
+- Logs, Security: `support_requested`, `support_allowed`, `support_rejected`, `support_started`, `support_ended`, `support_expired` and `support_refused` (an action that was blocked).
+- Audit log: the change is under **your** name, "on behalf of" the person, with "(support access <id>)".
+- Logs, Requests: every request of a visit is kept (the usual 5 percent sampling does not apply) and carries the support access id.
+- Never a token or a code.
+
+**If something looks wrong**
+
+| What you see | Likely cause | What to do |
+|---|---|---|
+| "The support session has ended" in the middle of work | time is up, the person ended it, or your own sign in ended | ask again if you still need it |
+| "Support access can only look, not change" | view only was allowed | ask again with "make changes" |
+| "Support access cannot do that" | the action is not on the reviewed list | not a bug, see `core/support_rules.py` |
+| Asking says you already have an open request | an earlier request is still waiting, allowed or running | withdraw or end it |
+| The person never sees the question | the tab is hidden, or they have not opened the app | the email went to them at once. The question waits 5 minutes |
+
+## 11. If something fails
 
 | What you see | Likely cause | Fix |
 |---|---|---|
