@@ -23,6 +23,7 @@ const ROUTES: Array<[RegExp, PageInfo]> = [
   [/^\/admin\/system(\/(health|logs|activity))?$/, { titleKey: 'ptSystem', sectionKey: ADMIN }],
   [/^\/farmer$/, { titleKey: 'ptFarmer', sectionKey: FARMING }],
   [/^\/supervisor$/, { titleKey: 'ptSupervisor', sectionKey: FARMING }],
+  [/^\/decisions$/, { titleKey: 'ptDecisions', sectionKey: FARMING }],
   [/^\/supervisor\/cooperative(\/(farms|farmers))?$/, { titleKey: 'ptMyCooperative', sectionKey: FARMING }],
   [/^\/farms$/, { titleKey: 'ptFarms', sectionKey: FARMING }],
   [/^\/farms\/new$/, { titleKey: 'ptFarmNew', sectionKey: FARMING }],

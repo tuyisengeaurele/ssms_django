@@ -37,6 +37,26 @@ export interface WaitingAllowanceRequest {
   farmer: { id: string; name: string; email: string };
 }
 
+/** What a supervisor looks at before deciding about a request: the farmer's card and their rooms. */
+export interface AllowanceEvidence extends Allowance {
+  farmer: { id: string; name: string; email: string };
+  rooms: {
+    id: string;
+    name: string;
+    approvalStatus: 'approved' | 'pending' | 'rejected';
+    areaM2: number | null;
+    pendingAreaM2: number | null;
+    /** Null for a room that is not approved, or while the space per box is not known. */
+    capacityBoxes: number | null;
+  }[];
+}
+
+export interface DecisionCount {
+  count: number;
+  rooms: number;
+  allowance: number;
+}
+
 export interface SupplySettings {
   starterBoxes: number;
   /** Room space one box of eggs needs, in square metres. Null until a sericulture officer says. */
@@ -61,6 +81,9 @@ export const supplyService = {
   /** A supervisor lowers an amount, an admin sets any. A reason is required. */
   setForFarmer: (farmerId: string, data: { boxes: number; reason: string }) =>
     api.patch<ApiResponse<{ boxes: number }>>(`/supply/allowance/farmers/${farmerId}`, data),
+
+  /** The farmer's card and rooms, for a supervisor or admin who is deciding about their request. */
+  getFarmerAllowance: (farmerId: string) => api.get<ApiResponse<AllowanceEvidence>>(`/supply/allowance/farmers/${farmerId}`),
 
   getSettings: (cooperativeId?: string) =>
     api.get<ApiResponse<SupplySettings>>('/supply/settings', { params: cooperativeId ? { cooperativeId } : undefined }),
