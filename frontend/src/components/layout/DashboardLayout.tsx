@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
+import { useDecisionCount } from '../../hooks/useDecisionCount';
 import TopBar from './TopBar';
 import BottomNav from './BottomNav';
 import QuickSearch from './QuickSearch';
@@ -81,6 +82,9 @@ export default function DashboardLayout() {
       .catch(() => {});
   }, [location.pathname]);
 
+  // Only a supervisor or an admin has decisions to make. The count is taken again as the page changes.
+  const decisionCount = useDecisionCount(user?.role === 'SUPERVISOR' || user?.role === 'ADMIN', location.pathname);
+
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   // Ctrl K or Cmd K opens quick search from anywhere, a text field included. Shift and Alt keep their browser meanings.
@@ -116,6 +120,7 @@ export default function DashboardLayout() {
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
         alertCount={alertCount}
+        decisionCount={decisionCount}
       />
 
       <main className={`app-main ${rail ? 'sidebar-collapsed' : ''}`}>

@@ -6,6 +6,7 @@ import { farmService } from '../../services/farm.service';
 import { Farm } from '../../types';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon, type IconName } from '../../components/ui/Icon';
+import DecisionsCard from '../../components/supply/DecisionsCard';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonStatCard } from '../../components/ui/SkeletonLoader';
@@ -61,6 +62,8 @@ export default function AdminDashboard() {
           </>
         }
       />
+
+      <DecisionsCard />
 
       {failed && (
         <div className="alert alert-error" role="alert">

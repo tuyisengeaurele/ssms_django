@@ -9,7 +9,8 @@ import { setReducedMotion } from '../../test/setup';
 const auth = vi.hoisted(() => ({ user: { id: 'u', role: 'ADMIN', cooperativeId: null as string | null, cooperativeName: null as string | null } }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
 
-const api = vi.hoisted(() => ({ farms: vi.fn(), risk: vi.fn(), alerts: vi.fn(), chart: vi.fn(), active: vi.fn(), recent: vi.fn(), ticketUrl: vi.fn() }));
+const api = vi.hoisted(() => ({ decisions: vi.fn(), farms: vi.fn(), risk: vi.fn(), alerts: vi.fn(), chart: vi.fn(), active: vi.fn(), recent: vi.fn(), ticketUrl: vi.fn() }));
+vi.mock('../../services/supply.service', () => ({ supplyService: { decisionCount: api.decisions } }));
 vi.mock('../../services/farm.service', () => ({ farmService: { getAll: api.farms, getRisk: api.risk } }));
 vi.mock('../../services/alert.service', () => ({ alertService: { getAll: api.alerts }, getAlertStreamUrl: api.ticketUrl }));
 vi.mock('../../services/sensor.service', () => ({
@@ -59,6 +60,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   setReducedMotion(true);
   auth.user = { id: 'u', role: 'ADMIN', cooperativeId: null, cooperativeName: null };
+  api.decisions.mockResolvedValue({ data: { data: { count: 1, rooms: 1, allowance: 0 } } });
   api.farms.mockResolvedValue({ data: { data: [{ id: 'f1' }, { id: 'f2' }, { id: 'f3' }] } });
   api.risk.mockResolvedValue({
     data: { data: [{ id: 'f1', name: 'Hill Farm', ownerName: 'Serge', location: 'Gatsibo', level: 'HIGH', score: 5, diseaseAlerts: 1, openAirAlerts: 0, offlineDevices: 0, activeBatches: 1 }] },
@@ -250,5 +252,12 @@ describe('Live alerts', () => {
     open();
     expect(await screen.findByText('Total farms')).toBeInTheDocument();
     expect(FakeEventSource.instances).toHaveLength(0);
+  });
+});
+
+describe('Supervisor dashboard, decisions', () => {
+  it('says how many decisions wait, in the singular for one, and links to them', async () => {
+    open();
+    expect(await screen.findByRole('link', { name: '1 decision waits for you' })).toHaveAttribute('href', '/decisions');
   });
 });

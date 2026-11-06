@@ -85,6 +85,9 @@ export const supplyService = {
   /** The farmer's card and rooms, for a supervisor or admin who is deciding about their request. */
   getFarmerAllowance: (farmerId: string) => api.get<ApiResponse<AllowanceEvidence>>(`/supply/allowance/farmers/${farmerId}`),
 
+  /** How many things wait for the caller's decision. The route is the team's, because a supervisor's team is the scope. */
+  decisionCount: (params?: { cooperativeId?: string }) => api.get<ApiResponse<DecisionCount>>('/team/decisions', { params }),
+
   getSettings: (cooperativeId?: string) =>
     api.get<ApiResponse<SupplySettings>>('/supply/settings', { params: cooperativeId ? { cooperativeId } : undefined }),
 

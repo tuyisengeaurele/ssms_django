@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { Role } from '../../types';
+import { fill } from '../../utils/fill';
 import { Icon, type IconName } from '../ui/Icon';
 import Modal from '../ui/Modal';
 
@@ -11,6 +12,8 @@ interface NavItem {
   label: string;
   icon: IconName;
   badge?: number;
+  /** What a screen reader says about the badge. Without it the badge counts unread alerts. */
+  badgeLabel?: string;
 }
 
 interface NavGroup {
@@ -25,14 +28,15 @@ export const ROLE_LABEL_KEY: Record<Role, string> = {
 };
 
 /** The menu of each kind of person, then a last group with Settings, which every kind of person has. */
-export function getNavGroups(role: Role | undefined, alertCount: number, t: (k: string) => string): NavGroup[] {
-  const groups = pageGroups(role, alertCount, t);
+export function getNavGroups(role: Role | undefined, alertCount: number, t: (k: string) => string, decisionCount = 0): NavGroup[] {
+  const groups = pageGroups(role, alertCount, t, decisionCount);
   if (groups.length === 0) return groups;
   return [...groups, { label: t('ptSectionAccount'), items: [{ to: '/settings', label: t('ptSettings'), icon: 'settings' }] }];
 }
 
-function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) => string): NavGroup[] {
+function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) => string, decisionCount: number): NavGroup[] {
   const alerts: NavItem = { to: '/alerts', label: t('ptAlerts'), icon: 'alerts', badge: alertCount };
+  const decisions: NavItem = { to: '/decisions', label: t('ptDecisions'), icon: 'inbox', badge: decisionCount, badgeLabel: fill(t('dcsBadge'), { n: decisionCount > 99 ? '99+' : decisionCount }) };
 
   if (role === 'FARMER') {
     return [
@@ -62,6 +66,7 @@ function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) =
         label: t('navGroupOverview'),
         items: [
           { to: '/supervisor', label: t('ptSupervisor'), icon: 'overview' },
+          decisions,
           { to: '/supervisor/cooperative', label: t('ptMyCooperative'), icon: 'cooperatives' },
         ],
       },
@@ -84,6 +89,7 @@ function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) =
         label: t('navGroupOverview'),
         items: [
           { to: '/admin', label: t('navDashboard'), icon: 'adminDashboard' },
+          decisions,
           { to: '/supervisor', label: t('ptFarmMonitoring'), icon: 'overview' },
         ],
       },
@@ -116,13 +122,15 @@ interface SidebarProps {
   mobileOpen: boolean;
   onMobileClose: () => void;
   alertCount?: number;
+  /** How many decisions wait for a supervisor or an admin. */
+  decisionCount?: number;
 }
 
-export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCount = 0 }: SidebarProps) {
+export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCount = 0, decisionCount = 0 }: SidebarProps) {
   const { user, logout } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const groups = getNavGroups(user?.role, alertCount, t);
+  const groups = getNavGroups(user?.role, alertCount, t, decisionCount);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handleLogout = () => {
@@ -175,7 +183,7 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
                   <Icon name={item.icon} className="sidebar-item-icon" />
                   <span className="sidebar-item-label">{item.label}</span>
                   {item.badge != null && item.badge > 0 && (
-                    <span className="sidebar-badge" aria-label={`${item.badge > 99 ? '99+' : item.badge} unread`}>
+                    <span className="sidebar-badge" aria-label={item.badgeLabel ?? `${item.badge > 99 ? '99+' : item.badge} unread`}>
                       {item.badge > 99 ? '99+' : item.badge}
                     </span>
                   )}

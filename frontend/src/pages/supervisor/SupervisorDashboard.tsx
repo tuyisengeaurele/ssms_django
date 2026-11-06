@@ -12,6 +12,7 @@ import { fill } from '../../utils/fill';
 import { timeAgo } from '../../utils/timeAgo';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
+import DecisionsCard from '../../components/supply/DecisionsCard';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import RangeChart from '../../components/ui/RangeChart';
@@ -154,6 +155,8 @@ export default function SupervisorDashboard() {
           </>
         }
       />
+
+      <DecisionsCard />
 
       {user?.role === 'SUPERVISOR' && !user.cooperativeId && (
         <div className="alert alert-warning" role="note">
