@@ -12,6 +12,7 @@ from core.permissions import RolePermission
 from core.throttles import InvitationRateThrottle
 from core.utils import api_error, api_success
 from farms import room_review
+from supply import allowance as supply_allowance
 from users.models import User
 
 from . import invitations
@@ -45,6 +46,7 @@ def _row(invitation: CooperativeInvitation) -> dict:
         'status': invitation.status,
         'created_at': invitation.created_at,
         'expires_at': invitation.expires_at,
+        'starter_boxes': invitation.starter_boxes,
         'invited_by_name': invitation.invited_by.name if invitation.invited_by else '',
         'accepted_by_name': invitation.accepted_by.name if invitation.accepted_by else '',
     }
@@ -73,7 +75,18 @@ class TeamInvitationListView(APIView):
             except ValidationError:
                 return api_error('Please enter a valid email address.', 422, {'email': ['Please enter a valid email address.']})
 
-        invitation, token = invitations.issue(coop, request.user, email)
+        starter = request.data.get('starter_boxes', request.data.get('starterBoxes'))
+        if starter in (None, ''):
+            starter = None
+        else:
+            try:
+                starter = supply_allowance.valid_boxes(starter)
+            except supply_allowance.AllowanceError as error:
+                response = api_error(error.message, error.status, {'starter_boxes': [error.message]})
+                response.data['code'] = error.code
+                return response
+
+        invitation, token = invitations.issue(coop, request.user, email, starter)
         log_action(request, 'CREATE', 'Invitation', invitation.pk, f'Invited a farmer to {coop.name}')
 
         message = 'Invitation created.'
@@ -122,8 +135,10 @@ class TeamFarmerListView(APIView):
             .annotate(farm_count=Count('farms', filter=Q(farms__is_active=True)))
             .order_by('name')
         )
+        farmers = list(farmers)
+        amounts = supply_allowance.for_farmers(farmers, coop)
         return api_success([
-            {'id': f.pk, 'name': f.name, 'email': f.email, 'joined_at': f.created_at, 'farm_count': f.farm_count}
+            {'id': f.pk, 'name': f.name, 'email': f.email, 'joined_at': f.created_at, 'farm_count': f.farm_count, 'allowance': amounts[f.pk]}
             for f in farmers
         ])
 

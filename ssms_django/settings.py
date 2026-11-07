@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'logs',
     'reports',
     'support_access',
+    'supply',
 ]
 
 # ── Password reset token TTL (1 hour) ─────────────────────────────────────────

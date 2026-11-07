@@ -9,6 +9,7 @@ import Modal from '../../components/ui/Modal';
 import Panel from '../../components/ui/Panel';
 import { useCoop } from './coopContext';
 import CooperativeFormModal from './CooperativeFormModal';
+import CoopSupplySettings from './CoopSupplySettings';
 
 /** Where the cooperative is and what it is for, and the way for an admin to change it or delete it. */
 export default function CoopDetailsTab() {
@@ -41,6 +42,7 @@ export default function CoopDetailsTab() {
   };
 
   return (
+    <div className="stack-24">
     <Panel
       title={t('cpAbout')}
       actions={
@@ -81,5 +83,7 @@ export default function CoopDetailsTab() {
         <p className="modal-text">{fill(t('coDeleteBody'), { name: detail.name })}</p>
       </Modal>
     </Panel>
+    <CoopSupplySettings cooperativeId={detail.id} />
+    </div>
   );
 }

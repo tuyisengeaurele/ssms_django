@@ -87,6 +87,20 @@ def cooperative_report_expectation():
     return table
 
 
+def allowance_ask_expectation():
+    """A farmer in a cooperative may ask (201), a farmer with none is told so (409), and staff are refused."""
+    table = expect({'farmer_owner', 'farmer_peer', 'farmer_foreign'}, role_denied=[*SUPERVISORS, 'admin'], allowed_code=201)
+    table['farmer_no_coop'] = 409
+    return table
+
+
+def staff_with_coop_expectation():
+    """Supervisors and admins get it, farmers are refused, and a supervisor with no cooperative is told so (403)."""
+    table = expect({'supervisor_a', 'supervisor_b', 'admin'}, role_denied=FARMERS)
+    table['supervisor_no_coop'] = 403
+    return table
+
+
 ROWS = [
     # ── reading something that hangs off a batch or farm ──────────────────────────────────────
     reading_row('batch detail', lambda w: f'/api/batches/{w.batch.pk}'),
@@ -245,6 +259,21 @@ ROWS = [
     Row('system health', 'GET', lambda w: '/api/admin/health', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
     Row('create a cooperative', 'POST', lambda w: '/api/cooperatives',
         expect({'admin'}, role_denied=STAFF_ONLY_DENIED, allowed_code=201), body=lambda w: {'name': 'Brand new'}),
+
+    # ── the egg allowance ─────────────────────────────────────────────────────────────────────
+    Row('read your allowance card', 'GET', lambda w: '/api/supply/allowance', expect(set(FARMERS), role_denied=[*SUPERVISORS, 'admin'])),
+    Row('ask for a different allowance', 'POST', lambda w: '/api/supply/allowance/requests', allowance_ask_expectation(),
+        body=lambda w: {'boxesAsked': 5, 'reason': 'I built a second house'}),
+    Row('list the waiting allowance requests', 'GET', lambda w: '/api/supply/allowance/requests', staff_with_coop_expectation()),
+    Row('withdraw an unknown allowance request', 'DELETE', lambda w: '/api/supply/allowance/requests/nope',
+        expect(NOBODY, role_denied=[*SUPERVISORS, 'admin'])),
+    Row('decide an unknown allowance request', 'POST', lambda w: '/api/supply/allowance/requests/nope/decision',
+        expect(NOBODY, role_denied=FARMERS), body=lambda w: {'decision': 'approve'}),
+    Row('lower the allowance of a farmer', 'PATCH', lambda w: f'/api/supply/allowance/farmers/{w.users["farmer_owner"].pk}',
+        expect({'supervisor_a', 'admin'}, role_denied=FARMERS), body=lambda w: {'boxes': 1, 'reason': 'Outbreak last month'}),
+    Row('read the supply settings', 'GET', lambda w: f'/api/supply/settings?cooperativeId={w.coop_a.pk}', staff_with_coop_expectation()),
+    Row('change the supply settings', 'PATCH', lambda w: '/api/supply/settings',
+        expect({'admin'}, role_denied=STAFF_ONLY_DENIED), body=lambda w: {'cooperativeId': w.coop_a.pk, 'starterBoxes': 3}),
 ]
 
 

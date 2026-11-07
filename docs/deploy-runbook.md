@@ -212,7 +212,48 @@ Audit log: the room added, a size asked for, and each decision with its reason.
 | Nobody got the email | the mail server was down (the request still worked) | see Logs, Jobs, `email_failed`; the room shows in the API list |
 | A supervisor sees nothing | the farmer is in another cooperative | an admin reviews it |
 
-## 12. If something fails
+## 12. Allowance
+
+Every farmer has a fixed number of egg boxes they may take per round. It is the base for the egg supply (rounds and requests come in the next steps). Nothing here needs a key. Two numbers need your attention (see "Numbers to confirm").
+
+**Who sets what**
+
+- **The cooperative default.** New farmers start with it unless the invitation says another amount. It starts at 2 boxes. An admin changes it on the cooperative's page, Details tab, "Egg supply settings". Changing it never moves an allowance that was already written.
+- **The starter amount of one farmer.** The supervisor types it in the invite dialog ("Boxes per round", 0 to 100, filled with the default). Leave it empty to use the cooperative default. It is written when the farmer joins, with the supervisor as the one who set it.
+- **A farmer who joined before this feature** has no row. They have the cooperative default, and the Farmers tab says "Cooperative default" under their amount. The first change writes the default into their history first, so the history always starts with what they really had.
+
+**How an allowance changes**
+
+- A farmer asks for a different amount with a reason (10 to 500 characters), from the Dashboard, "Your allowance" card. One request waits at a time, and the farmer can withdraw it.
+- A supervisor of the farmer's cooperative (or an admin, when there is none) approves the amount asked, approves another amount, or declines with a reason. The farmer is emailed each time, and the mail names the amount granted.
+- A supervisor can also **lower** an amount directly, with a reason, from the Farmers tab ("Lower"). A supervisor can never raise one. An admin may set any amount through the API.
+- Every change is a line in the farmer's history (start, amendment, reduction) with who made it and why. The card shows the last change in words.
+- An allowance counts only in the cooperative it was set in. A farmer taken out of one cooperative and invited to another starts again with the new cooperative's amount.
+
+**What a supervisor can and cannot do today**
+
+The supervisor's screen for deciding requests comes with the Decisions inbox, so until then a request is decided through the API (`GET /api/supply/allowance/requests`, `POST /api/supply/allowance/requests/<id>/decision`). This branch is not merged before that screen exists. Lowering and inviting with an amount already have screens.
+
+**Numbers to confirm**
+
+- The cooperative default of 2 boxes is a first guess taken from the design example. Confirm it, or change it per cooperative.
+- "Space one box needs (m²)" is empty on purpose. It stays empty until a sericulture officer gives the number. While it is empty, the amount-request dialog does not say what the farmer's rooms can hold, and nothing is worked out from room sizes.
+
+**Where it is recorded**
+
+Audit log: each request, withdrawal, decision (with the reason or note), each direct change, and each settings change. The history of one farmer is on their own card.
+
+**If something looks wrong**
+
+| What you see | Likely cause | What to do |
+|---|---|---|
+| A farmer has no "Your allowance" card | they are in no cooperative, or the page could not load it | add them to a cooperative (invitation) |
+| "You already have a request waiting" | an earlier request is still open | withdraw it, or decide it |
+| A supervisor cannot raise an amount | by design | the farmer asks, or an admin sets it |
+| "Nothing waits for a decision on that request" | another supervisor decided it first | refresh the list |
+| The capacity line is missing in the ask dialog | the space per box is not set | an admin sets it once known |
+
+## 13. If something fails
 
 | What you see | Likely cause | Fix |
 |---|---|---|
