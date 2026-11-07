@@ -86,6 +86,20 @@ def tell_farmer(row) -> None:
     _send(subject, farmer.email, email)
 
 
+def tell_farmer_of_suggestion(farmer, old_boxes: int, new_boxes: int, lot_code: str, by) -> None:
+    """A supervisor approved an earned allowance. A friendly note, not a form."""
+    subject = 'Your allowance was raised'
+    email = Email(
+        heading=subject,
+        reason='You received this because your allowance was raised after a finished lot.',
+        greeting=f'Hello {farmer.name},',
+        intro=(f'Well done on your last lot. {by.name} raised your allowance.',),
+        facts=(('Before', _boxes(old_boxes)), ('Now', _boxes(new_boxes)), ('Lot', lot_code)),
+        button=('Open SSMS', _link()),
+    )
+    _send(subject, farmer.email, email)
+
+
 def tell_farmer_of_change(farmer, old_boxes: int, new_boxes: int, reason: str, by) -> None:
     """A supervisor or an admin changed the amount directly."""
     subject = 'Your allowance was lowered' if new_boxes < old_boxes else 'Your allowance was raised'

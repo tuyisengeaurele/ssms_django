@@ -1,5 +1,32 @@
 # Changelog
 
+## Getting started list and earned allowances
+
+A new farmer now sees what to do next, and a farmer who finishes a good lot can earn one more box. This is step 5 of the egg supply design (`docs/superpowers/specs/2026-11-06-egg-supply-design.md`, local only). The plan is `docs/superpowers/plans/2026-11-07-onboarding-and-nudges.md` (local only). The branch `feature/onboarding-and-nudges` is cut from master, after the supply rounds were merged.
+
+### What it does
+- **A farmer** sees "Getting started" on the dashboard (also on the first-run page): join a cooperative, add a farm, add a room and get it approved, get eggs. The first step not done is marked Next (or Waiting, when someone else has to act, with their names), the rest Later. A rejected room shows the reason and what to change. A farmer who was not given eggs is told so, with the reason. The list goes away once the farmer has eggs or a running batch.
+- **A supervisor** sees an "earned allowance" in the Decisions inbox under Allowance: "{name} has earned more. Finished lot {code}. Suggested allowance: {n} boxes (now {m})." "Approve" raises the allowance by one box, writes the allowance history and emails the farmer once. "Not now" closes it and tells nobody.
+
+### How it is built
+- **The checklist** is one function, `supply/onboarding.py`, behind `GET /api/supply/onboarding`. It returns states and the facts to word them, and the page words them in English, French and Kinyarwanda.
+- **The rule for an earned allowance** is written at the top of `supply/nudges.py`: the farmer is still in the cooperative that ran the round, used all of their allowance, the lot has no open disease alert, no allowance request waits, there is no suggestion for the lot yet, and one more box stays under 100 and within what their rooms hold when that is known. The step is one box.
+- **It never blocks a harvest.** The check runs after the harvest is saved, and an error is logged and dropped.
+- **Deciding is safe against two people at once**: a conditional UPDATE, so one wins and the other gets a 409. An approval whose allowance has moved since, or whose farmer has left the cooperative, is closed as no longer applicable.
+- **Models.** `AllowanceSuggestion` (one per lot, held by the database), migration `supply.0003`. The decisions count gains `nudges`.
+
+### Numbers to confirm
+- The default allowance of 2 boxes and the empty space per box are kept, by the owner's decision of 2026-11-07, until real data arrives. The rule uses no mortality, because that needs the worms per box that a sericulture officer must give.
+- The French and Kinyarwanda texts are drafts for native review.
+
+### Not built
+- A larger step than one box, a score or a record of past lots, and a reminder email to a supervisor who leaves a suggestion waiting.
+- A screen to see the suggestions that were dismissed.
+
+### Checks
+- Backend 3461 tests, frontend 2242 tests, `ruff`, `tsc`, ESLint and `npm run build` clean.
+- A browser check on a scratch database with a supervisor, two farmers, a new farmer with nothing and the other cooperative's supervisor: the new farmer's list at each step (join, farm, room waiting for the supervisor by name, room not approved with the reason, room approved, round open, request approved with day and place, done), then a lot harvested by a farmer who had used all of her allowance, the suggestion showing in the Decisions inbox with the right text in English, French and Kinyarwanda, "Approve" raising the allowance from 2 to 3 with the history line and one email, "Not now" leaving the allowance at 2 and sending nothing, and the other cooperative's supervisor seeing no suggestion. It found no defect. Not checked in the browser: the email in a mail app, an admin's view (an admin sign in needs the second factor), and the checklist with a screen reader. A room that was not approved now links back to its farm page, added after the check with a test first.
+
 ## Supply rounds and egg requests
 
 The cooperative hands out eggs in scheduled rounds. A farmer asks inside what their allowance and rooms allow, the supervisor confirms a fair split, and a batch is made, with a lot code, when the farmer confirms the eggs arrived. This is step 3 of the egg supply design (`docs/superpowers/specs/2026-11-06-egg-supply-design.md`, local only). The plan is `docs/superpowers/plans/2026-11-07-supply-rounds.md` (local only). The branch `feature/supply-rounds` is cut from `feature/decisions-inbox`, so four branches now form one stack.

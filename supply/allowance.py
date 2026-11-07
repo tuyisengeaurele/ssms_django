@@ -135,6 +135,11 @@ def waiting_requests(user, cooperative_id=None):
     return waiting.order_by('created_at')
 
 
+def apply_suggestion(farmer, boxes, reason, by) -> Allowance:
+    """Raise an allowance because the supervisor approved an earned one. It is written as a `suggestion` in the history."""
+    return _write(farmer, valid_boxes(boxes), Kind.SUGGESTION, _reason(reason), by)
+
+
 def ask(farmer, boxes, reason) -> AllowanceRequest:
     """A farmer asks for a different allowance. The amount in force is not written, only the request."""
     if not farmer.cooperative_id:

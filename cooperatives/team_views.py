@@ -13,6 +13,7 @@ from core.throttles import InvitationRateThrottle
 from core.utils import api_error, api_success
 from farms import room_review
 from supply import allowance as supply_allowance
+from supply import nudges as supply_nudges
 from supply.rounds import rounds_to_split
 from users.models import User
 
@@ -196,7 +197,8 @@ class TeamDecisionsView(APIView):
         rooms = room_review.waiting_for(user, cooperative_id).count()
         requests = supply_allowance.waiting_requests(user, cooperative_id).count()
         to_split = rounds_to_split(user, cooperative_id).count()
-        return api_success({'count': rooms + requests + to_split, 'rooms': rooms, 'allowance': requests, 'rounds': to_split})
+        earned = supply_nudges.waiting(user, cooperative_id).count()
+        return api_success({'count': rooms + requests + to_split + earned, 'rooms': rooms, 'allowance': requests, 'rounds': to_split, 'nudges': earned})
 
 
 class TeamFarmerDetailView(APIView):

@@ -15,9 +15,9 @@ from core.utils import api_error, api_success
 from farms.models import RearingRoom
 from users.models import User
 
-from . import allowance, notify
+from . import allowance, notify, nudges, onboarding
 from .capacity import farmer_capacity_boxes, room_capacity_boxes
-from .models import AllowanceChange, AllowanceRequest, SupplySettings
+from .models import AllowanceChange, AllowanceRequest, AllowanceSuggestion, SupplySettings
 
 HISTORY_LENGTH = 20
 M2_PER_BOX_MAX = Decimal('1000')
@@ -71,6 +71,65 @@ class AllowanceView(APIView):
 
     def get(self, request):
         return api_success(_card(request.user))
+
+
+class OnboardingView(APIView):
+    """GET /api/supply/onboarding, the getting started checklist of the farmer."""
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'onboarding'
+
+    def get(self, request):
+        return api_success(onboarding.steps(request.user))
+
+
+class SuggestionListView(APIView):
+    """GET /api/supply/suggestions, the earned allowances that wait for a decision (staff)."""
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'suggestions'
+
+    def get(self, request):
+        user = request.user
+        if user.role == 'SUPERVISOR' and not user.cooperative_id:
+            return api_error('You are not part of a cooperative yet.', 403)
+        found = nudges.waiting(user, request.query_params.get('cooperativeId') or None)
+        rows = [
+            {
+                'id': s.pk, 'current_boxes': s.old_boxes, 'suggested_boxes': s.suggested_boxes, 'created_at': s.created_at,
+                'farmer': {'id': s.farmer_id, 'name': s.farmer.name, 'email': s.farmer.email},
+                'batch': {'id': s.batch_id, 'lot_code': s.batch.lot_code, 'harvested_at': s.created_at},
+            }
+            for s in found
+        ]
+        return api_success({'suggestions': rows, 'count': len(rows)})
+
+
+class SuggestionDecisionView(APIView):
+    """POST /api/supply/suggestions/<id>/decision {decision: 'approve' | 'dismiss'}."""
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'suggestions'
+    actions = {'post': 'decide'}
+
+    def post(self, request, pk):
+        # Any suggestion of the cooperative, decided or not, so a second tap says "already decided" and not "not found".
+        scope = AllowanceSuggestion.objects.select_related('farmer', 'batch').filter(pk=pk)
+        if request.user.role == 'SUPERVISOR':
+            scope = scope.filter(cooperative_id=request.user.cooperative_id) if request.user.cooperative_id else scope.none()
+        found = scope.first()
+        if found is None:
+            return api_error('We could not find that suggestion.', 404)
+        decision = request.data.get('decision')
+        try:
+            decided = nudges.decide(found, request.user, decision)
+        except allowance.AllowanceError as error:
+            return _fail(error)
+        who = found.farmer.name
+        if decision == 'approve':
+            detail = f'Approved the earned allowance of {who}: {decided.old_boxes} to {decided.suggested_boxes} boxes (lot {found.batch.lot_code})'
+            notify.tell_farmer_of_suggestion(found.farmer, decided.old_boxes, decided.suggested_boxes, found.batch.lot_code, request.user)
+        else:
+            detail = f'Dismissed the earned allowance of {who} (lot {found.batch.lot_code})'
+        log_action(request, 'UPDATE', 'AllowanceSuggestion', decided.pk, detail)
+        return api_success({'id': decided.pk, 'status': decided.status}, 'Decided.')
 
 
 class AllowanceRequestListView(APIView):
