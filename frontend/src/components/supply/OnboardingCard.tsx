@@ -34,7 +34,11 @@ export default function OnboardingCard() {
         ? <Link to={`/farms/${farm.detail.farmId}`} className="link">{t('onbRoomLink')}</Link>
         : t('onbNeedFarm');
       case 'room:waiting': return fill(t('onbRoomWaiting'), { names: names(d.waitingFor) });
-      case 'room:rejected': return d.note ? fill(t('onbRoomRejected'), { note: d.note }) : t('onbRoomRejectedNoNote');
+      case 'room:rejected': {
+        const why = d.note ? fill(t('onbRoomRejected'), { note: d.note }) : t('onbRoomRejectedNoNote');
+        if (!farm?.detail.farmId) return why;
+        return <>{why} <Link to={`/farms/${farm.detail.farmId}`} className="link">{t('onbRoomOpenFarm')}</Link></>;
+      }
       case 'eggs:no_round': return t('onbEggsNoRound');
       case 'eggs:needs_room': return fill(t('onbEggsNeedsRoom'), { round: d.roundName ?? '' });
       case 'eggs:ready': return fill(t('onbEggsReady'), { round: d.roundName ?? '' });

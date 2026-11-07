@@ -792,6 +792,7 @@ export const pageTranslations = {
   onbNeedFarm: k("Add your farm first.", "Ajoutez d'abord votre ferme.", "Banza wongeremo urugo rwawe."),
   onbRoomWaiting: k("Waiting for {names} to approve it.", "En attente de l'approbation de {names}.", "Utegereje ko {names} akemeza."),
   onbRoomRejected: k("Not approved: {note}. Change the size and send it again.", "Non approuvée : {note}. Modifiez la surface et renvoyez-la.", "Ntikemewe: {note}. Hindura ubuso hanyuma ukongere ukohereze."),
+  onbRoomOpenFarm: k("Open your farm", "Ouvrir votre ferme", "Fungura urugo rwawe"),
   onbRoomRejectedNoNote: k("Not approved. Change the size and send it again.", "Non approuvée. Modifiez la surface et renvoyez-la.", "Ntikemewe. Hindura ubuso hanyuma ukongere ukohereze."),
   onbEggsNoRound: k("Waiting for your supervisor to open a supply round.", "En attente que votre superviseur ouvre un tour d'approvisionnement.", "Utegereje ko umugenzuzi wawe afungura icyiciro cy'itangwa."),
   onbEggsNeedsRoom: k("{round} is open. You need an approved room to ask.", "{round} est ouvert. Il vous faut une salle approuvée pour demander.", "{round} kirafunguye. Ukeneye icyumba cyemejwe kugira ngo usabe."),

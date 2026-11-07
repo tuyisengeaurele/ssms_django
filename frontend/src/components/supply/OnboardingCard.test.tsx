@@ -90,6 +90,13 @@ describe('OnboardingCard', () => {
     expect(container.querySelector('b')).toBeNull();
   });
 
+  it('links a room that was not approved back to its farm page, so the size can be changed', async () => {
+    answer(steps({ farm: { key: 'farm', state: 'done', detail: { farmId: 'f1' } }, room: { key: 'room', state: 'rejected', detail: { note: 'Too small' } } }));
+    show();
+    const li = await item('Add a room and get it approved');
+    expect(within(li).getByRole('link', { name: 'Open your farm' })).toHaveAttribute('href', '/farms/f1');
+  });
+
   it('says a room was not approved even when no reason was given', async () => {
     answer(steps({ room: { key: 'room', state: 'rejected', detail: { note: '' } } }));
     show();
