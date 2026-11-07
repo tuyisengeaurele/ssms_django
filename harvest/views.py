@@ -111,6 +111,9 @@ class HarvestListCreateView(APIView):
             quality_grade=vd['quality_grade'],
             notes=vd.get('notes') or None,
         )
+        # A lot from a supply round that is finished in good order may have earned a higher allowance. This never fails the harvest.
+        from supply import nudges
+        nudges.consider(batch)
         # Re-fetch with select_related so farm_name / farm_id resolve without extra queries
         record = HarvestRecord.objects.select_related('batch__farm').get(pk=record.pk)
         log_action(request, 'CREATE', 'HarvestRecord', record.pk, f'Logged harvest {record.cocoon_weight_kg} kg for batch {batch_id}', owner=on_behalf_of(request, batch.farm))

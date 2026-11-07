@@ -47,11 +47,11 @@ def test_the_count_adds_new_rooms_size_changes_and_requests(auth_client, supervi
     room(farmer, 'Settled')
     allowance.ask(farmer, 4, 'I built a second house')
     data = auth_client(supervisor).get(COUNT).json()['data']
-    assert data == {'count': 3, 'rooms': 2, 'allowance': 1, 'rounds': 0}
+    assert data == {'count': 3, 'rooms': 2, 'allowance': 1, 'rounds': 0, 'nudges': 0}
 
 
 def test_a_calm_cooperative_counts_zero(auth_client, supervisor):
-    assert auth_client(supervisor).get(COUNT).json()['data'] == {'count': 0, 'rooms': 0, 'allowance': 0, 'rounds': 0}
+    assert auth_client(supervisor).get(COUNT).json()['data'] == {'count': 0, 'rooms': 0, 'allowance': 0, 'rounds': 0, 'nudges': 0}
 
 
 def test_other_cooperatives_are_not_counted(auth_client, supervisor, outsider, farmer):
@@ -75,8 +75,8 @@ def test_an_admin_counts_everything_and_may_narrow_to_one_cooperative(auth_clien
     far = UserFactory(role='FARMER', cooperative=outsider.cooperative)
     allowance.ask(far, 5, 'I built a second house')
     client = auth_client(UserFactory(role='ADMIN'))
-    assert client.get(COUNT).json()['data'] == {'count': 2, 'rooms': 1, 'allowance': 1, 'rounds': 0}
-    assert client.get(f'{COUNT}?cooperativeId={coop.pk}').json()['data'] == {'count': 1, 'rooms': 1, 'allowance': 0, 'rounds': 0}
+    assert client.get(COUNT).json()['data'] == {'count': 2, 'rooms': 1, 'allowance': 1, 'rounds': 0, 'nudges': 0}
+    assert client.get(f'{COUNT}?cooperativeId={coop.pk}').json()['data'] == {'count': 1, 'rooms': 1, 'allowance': 0, 'rounds': 0, 'nudges': 0}
 
 
 def test_a_farmer_cannot_read_the_count_and_a_supervisor_with_no_cooperative_is_told_so(auth_client, farmer):

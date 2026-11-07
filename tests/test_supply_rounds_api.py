@@ -359,9 +359,9 @@ def test_the_count_of_decisions_includes_a_round_to_split(auth_client, superviso
     client = auth_client(supervisor)
     round_id = open_round(client)
     ask(auth_client(farmer), round_id, room, 1)
-    assert client.get(COUNT).json()['data'] == {'count': 0, 'rooms': 0, 'allowance': 0, 'rounds': 0}
+    assert client.get(COUNT).json()['data'] == {'count': 0, 'rooms': 0, 'allowance': 0, 'rounds': 0, 'nudges': 0}
     act(client, round_id, 'close')
-    assert client.get(COUNT).json()['data'] == {'count': 1, 'rooms': 0, 'allowance': 0, 'rounds': 1}
+    assert client.get(COUNT).json()['data'] == {'count': 1, 'rooms': 0, 'allowance': 0, 'rounds': 1, 'nudges': 0}
     assert auth_client(outsider).get(COUNT).json()['data']['rounds'] == 0
     close_and_confirm(client, round_id)
     assert client.get(COUNT).json()['data']['count'] == 0

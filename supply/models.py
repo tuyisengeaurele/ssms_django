@@ -104,6 +104,33 @@ class AllowanceRequest(models.Model):
         ]
 
 
+class AllowanceSuggestion(models.Model):
+    """One more box, suggested to the supervisor because a farmer finished a lot from a supply round in good order."""
+
+    class Status(models.TextChoices):
+        PENDING = 'pending'
+        APPROVED = 'approved'
+        DISMISSED = 'dismissed'
+        # The allowance moved after the suggestion was made, so it no longer applies.
+        STALE = 'stale'
+
+    id = models.CharField(primary_key=True, max_length=36, default=_generate_id, editable=False)
+    farmer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, db_column='farmerId', related_name='allowance_suggestions')
+    cooperative = models.ForeignKey('cooperatives.Cooperative', on_delete=models.CASCADE, db_column='cooperativeId', related_name='+')
+    # One suggestion per lot, so recording a harvest twice cannot make two.
+    batch = models.OneToOneField('batches.Batch', on_delete=models.CASCADE, db_column='batchId', related_name='allowance_suggestion')
+    old_boxes = models.PositiveIntegerField(db_column='oldBoxes')
+    suggested_boxes = models.PositiveIntegerField(db_column='suggestedBoxes')
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    decided_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, db_column='decidedById', related_name='+')
+    decided_at = models.DateTimeField(db_column='decidedAt', null=True, blank=True)
+    created_at = models.DateTimeField(db_column='createdAt', auto_now_add=True)
+
+    class Meta:
+        db_table = 'supply_allowance_suggestions'
+        ordering = ['created_at']
+
+
 class SupplyRound(models.Model):
     """A scheduled supply of eggs: how many boxes there are, until when farmers may ask, and where and when they are handed over."""
 
