@@ -8,6 +8,7 @@ import secrets
 from datetime import date, datetime, time
 
 from django.db import IntegrityError, transaction
+from django.db.models import Exists, OuterRef, Q
 from django.utils import timezone
 
 from batches.models import Batch
@@ -338,3 +339,18 @@ def farmers_of(round: SupplyRound):
     """Every active farmer of the round's cooperative, for telling them a round opened."""
     return User.objects.filter(cooperative_id=round.cooperative_id, role='FARMER', is_active=True)
 
+
+
+def staff_rounds(user, cooperative_id=None):
+    """The rounds a supervisor or admin may reach: a supervisor's own cooperative, an admin's all or the one named."""
+    found = SupplyRound.objects.all()
+    if user.role == 'SUPERVISOR':
+        return found.filter(cooperative_id=user.cooperative_id) if user.cooperative_id else found.none()
+    return found.filter(cooperative_id=cooperative_id) if cooperative_id else found
+
+
+def rounds_to_split(user, cooperative_id=None):
+    """The rounds whose requests are closed and still wait for the supervisor's split."""
+    waiting = EggRequest.objects.filter(round=OuterRef('pk'), status=Req.SUBMITTED)
+    closed = Q(status=Status.CLOSED) | Q(status=Status.OPEN, request_deadline__lte=timezone.now())
+    return staff_rounds(user, cooperative_id).filter(closed).filter(Exists(waiting))

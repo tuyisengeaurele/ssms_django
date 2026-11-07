@@ -101,6 +101,22 @@ def staff_with_coop_expectation():
     return table
 
 
+def round_body():
+    return {
+        'name': 'Round', 'stockBoxes': 5, 'requestDeadline': (timezone.now() + timedelta(days=3)).isoformat(),
+        'deliveryDate': (timezone.now() + timedelta(days=7)).date().isoformat(), 'deliveryPlace': 'Store',
+        'expectedHarvestDate': (timezone.now() + timedelta(days=40)).date().isoformat(),
+    }
+
+
+def round_create_expectation():
+    """A supervisor makes one for their own cooperative (201), an admin must name the cooperative (422), farmers are refused."""
+    table = expect({'supervisor_a', 'supervisor_b'}, role_denied=FARMERS, allowed_code=201)
+    table['admin'] = 422
+    table['supervisor_no_coop'] = 403
+    return table
+
+
 ROWS = [
     # ── reading something that hangs off a batch or farm ──────────────────────────────────────
     reading_row('batch detail', lambda w: f'/api/batches/{w.batch.pk}'),
@@ -274,6 +290,16 @@ ROWS = [
     Row('count what waits for a decision', 'GET', lambda w: '/api/team/decisions', staff_with_coop_expectation()),
     Row('read the evidence behind an allowance request', 'GET', lambda w: f'/api/supply/allowance/farmers/{w.users["farmer_owner"].pk}',
         expect({'supervisor_a', 'admin'}, role_denied=FARMERS)),
+    Row('read the current supply round', 'GET', lambda w: '/api/supply/rounds/current', expect(set(FARMERS), role_denied=[*SUPERVISORS, 'admin'])),
+    Row('list the supply rounds', 'GET', lambda w: '/api/supply/rounds', staff_with_coop_expectation()),
+    Row('make a supply round', 'POST', lambda w: '/api/supply/rounds', round_create_expectation(), body=lambda w: round_body()),
+    Row('read an unknown supply round', 'GET', lambda w: '/api/supply/rounds/nope', expect(NOBODY, role_denied=FARMERS)),
+    Row('ask for eggs in an unknown round', 'POST', lambda w: '/api/supply/rounds/nope/requests', expect(NOBODY, role_denied=[*SUPERVISORS, 'admin']),
+        body=lambda w: {'roomId': w.room_1.pk, 'boxes': 1}),
+    Row('cancel an unknown egg request', 'DELETE', lambda w: '/api/supply/requests/nope', expect(NOBODY, role_denied=[*SUPERVISORS, 'admin'])),
+    Row('record the receipt of an unknown egg request', 'POST', lambda w: '/api/supply/requests/nope/receipt', expect(NOBODY),
+        body=lambda w: {'boxes': 1, 'condition': 'good'}),
+    Row('mark an unknown egg request not collected', 'POST', lambda w: '/api/supply/requests/nope/not-collected', expect(NOBODY, role_denied=FARMERS)),
     Row('read the supply settings', 'GET', lambda w: f'/api/supply/settings?cooperativeId={w.coop_a.pk}', staff_with_coop_expectation()),
     Row('change the supply settings', 'PATCH', lambda w: '/api/supply/settings',
         expect({'admin'}, role_denied=STAFF_ONLY_DENIED), body=lambda w: {'cooperativeId': w.coop_a.pk, 'starterBoxes': 3}),
