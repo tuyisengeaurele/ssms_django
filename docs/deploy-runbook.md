@@ -284,7 +284,63 @@ One page where a supervisor, or an admin, decides what waits for them: new rooms
 | An admin sees items of every cooperative | by design | the farmer's name and email tell whose they are |
 | No Decisions item in the menu | the person is a farmer | only supervisors and admins have it |
 
-## 14. If something fails
+## 14. Supply rounds
+
+The cooperative hands eggs to its farmers in scheduled rounds. A farmer asks inside what their allowance and rooms allow, the supervisor confirms a fair split, and a batch is made, with a lot code, when the eggs arrive. Nothing here needs a key. Two numbers still need a sericulture officer (see "Numbers to confirm").
+
+**The flow**
+
+1. **Make a round** (Supply, "New round"): a name, the boxes in the round, the day and hour requests close, the delivery day and place, and the expected harvest date. The expected harvest is typed by the supervisor and given to every batch the round makes, because a cycle length is not ours to guess. A new round is a draft and nobody sees it.
+2. **Open it.** Every active farmer of the cooperative gets one email, and the round gets its lot code (for example `L2611-4E42`). While it is open it can still be changed.
+3. **Farmers ask** on their dashboard ("Egg supply", "Request eggs"). One request per farmer per round, in one of their approved rooms, with a note if they wish. The dialog says what they can ask for and why before they send.
+4. **The requests close**, by the deadline or when the supervisor presses "Close requests". The round then shows in the Decisions inbox as a round to split.
+5. **The split.** The page proposes a split and the supervisor may change any number. "Confirm split" tells every farmer who asked: approved, partly approved, on the waiting list, or not approved with the reason.
+6. **Eggs are handed out.** The farmer, on their dashboard, or the supervisor for them (on the round's page, "Record receipt"), says how many boxes arrived and whether they were good or damaged. That makes the batch: in the room the farmer asked for, at the egg stage, in boxes, with the round's lot code and expected harvest date. A farmer who never collects is marked "Not collected" by hand.
+7. **Done.** When every promise is received or marked not collected, the round is done.
+
+**What a farmer may ask for**
+
+The smallest of three numbers: their allowance, the free space of the room, and the boxes in the round.
+- The room's space is its approved size divided by the space one box needs, minus the boxes already in it (batches still running, counted in boxes, and eggs promised and not yet received). A room that waits, was rejected or was deleted has none. With "one open batch per room" on (the default), a room with a batch that is not harvested has none either, so a farmer asks again only when the batch in that room is harvested.
+- While the space one box needs is not set, no room cap is applied and the dialog says "The size of your room is not counted yet."
+- When no room has space the card says so and offers no button.
+
+**How the split is worked out**
+
+Nobody gets more than they asked for, their allowance or their room can take. If there is enough stock everyone gets what they can take. If not, the stock is shared in proportion to what each can take, in whole boxes: the boxes left over go to the largest remainders, and ties go to the earlier request. The same input always gives the same split. The total can never pass the stock. Whoever gets nothing is on the waiting list, in request order, or declined if the supervisor writes a reason.
+
+**Pausing and cancelling**
+
+- **Pause** (for an outbreak): requests stay, and nothing is handed out until the round is resumed.
+- **Cancel** needs a reason the farmers read. Requests that were still waiting for eggs are cancelled and their farmers are emailed. Eggs already received stay, and their batches stay.
+- A farmer may cancel their own request until the eggs are received. A request made while the round was paused still counts.
+
+**Who sees what**
+
+A supervisor manages the rounds of their cooperative, and an admin may read and manage any. A farmer sees the round of their own cooperative and only their own request. Everything outside is "not found". An admin makes a round through the API (the Supply page names no cooperative); supervisors have the button.
+
+**Numbers to confirm**
+
+- The space one box needs (cooperative page, Details tab, "Egg supply settings") is empty until a sericulture officer says. It is also the first thing to check when a farmer asks why a room "has no space".
+- "One open batch per room" is on for every cooperative. It has no screen yet, so turning it off is a change in the database (`supply_settings.oneOpenBatchPerRoom`).
+
+**Where it is recorded**
+
+Audit log: each round made, changed, opened, closed, paused, resumed and cancelled (with the reason), each request and cancellation, the confirmed split (the total), each receipt (with "for {farmer}" when a supervisor recorded it), and each not collected.
+
+**If something looks wrong**
+
+| What you see | Likely cause | What to do |
+|---|---|---|
+| A farmer sees no round | it is still a draft, or it belongs to another cooperative | open it |
+| "None of your rooms has space for eggs now." | the room is not approved, or holds a batch, or is full | approve the room, or wait for the batch to be harvested |
+| "The deadline for this round has passed." | the request came after the deadline | change the deadline of an open round, or open a new round |
+| "This round was already confirmed." | another supervisor confirmed first | refresh the page |
+| "This round is paused, so nothing is handed out now." | the round is paused | resume it |
+| "These eggs were already recorded as received." | the farmer and the supervisor both tapped | nothing to do, one batch was made |
+| A confirmed round never becomes done | a promise is neither received nor marked not collected | mark it, or record the receipt |
+
+## 15. If something fails
 
 | What you see | Likely cause | Fix |
 |---|---|---|

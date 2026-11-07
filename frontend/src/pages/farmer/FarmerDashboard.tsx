@@ -22,6 +22,7 @@ import StatTile from '../../components/ui/StatTile';
 import { attentionFor } from '../../utils/attention';
 import type { StageRange } from '../../services/sensor.service';
 import AllowanceCard from '../../components/supply/AllowanceCard';
+import SupplyRoundCard from '../../components/supply/SupplyRoundCard';
 import TodayCard from './TodayCard';
 
 export default function FarmerDashboard() {
@@ -141,6 +142,8 @@ export default function FarmerDashboard() {
         {batches.length > 0 && <TodayCard items={attentionFor(batches, ranges)} />}
 
         <AllowanceCard />
+
+        <SupplyRoundCard />
 
         <div className="grid-3">
           <StatTile

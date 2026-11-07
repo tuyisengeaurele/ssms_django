@@ -4,16 +4,19 @@ import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { roomService, WaitingRoom } from '../../services/room.service';
-import { supplyService, WaitingAllowanceRequest } from '../../services/supply.service';
+import { SupplyRound, supplyService, WaitingAllowanceRequest } from '../../services/supply.service';
 import { fill } from '../../utils/fill';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
 import PageHeader from '../../components/ui/PageHeader';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
-import { RequestItem, RoomItem } from './DecisionItems';
+import { RequestItem, RoomItem, RoundItem } from './DecisionItems';
 
-type Filter = 'all' | 'rooms' | 'allowance';
-type Item = { kind: 'room'; at: string; id: string; room: WaitingRoom } | { kind: 'request'; at: string; id: string; request: WaitingAllowanceRequest };
+type Filter = 'all' | 'rooms' | 'allowance' | 'rounds';
+type Item =
+  | { kind: 'room'; at: string; id: string; room: WaitingRoom }
+  | { kind: 'request'; at: string; id: string; request: WaitingAllowanceRequest }
+  | { kind: 'round'; at: string; id: string; round: SupplyRound };
 
 /** Tells the menu and the dashboard to count again. */
 const RECOUNT = 'ssms:decisions';
@@ -26,14 +29,19 @@ export default function DecisionsPage() {
 
   const [rooms, setRooms] = useState<WaitingRoom[]>([]);
   const [requests, setRequests] = useState<WaitingAllowanceRequest[]>([]);
+  const [toSplit, setToSplit] = useState<SupplyRound[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
   const [filter, setFilter] = useState<Filter>('all');
 
   const load = useCallback(() => {
-    return Promise.all([roomService.waiting(), supplyService.waiting()])
-      .then(([r, q]) => {
+    // The list of rounds is extra: without it the rooms and requests still show.
+    const rounds = supplyService.listRounds().catch(() => ({ data: { data: { rounds: [] as SupplyRound[] } } }));
+    return Promise.all([roomService.waiting(), supplyService.waiting(), rounds])
+      .then(([r, q, rs]) => {
         setRooms(r.data.data.rooms);
         setRequests(q.data.data.requests);
+        // A round to split is one that has closed with requests in it and was not confirmed yet.
+        setToSplit(rs.data.data.rounds.filter((x) => x.status === 'closed' && (x.requestCount ?? 0) > 0));
         setStatus('ready');
       })
       .catch(() => setStatus((current) => (current === 'ready' ? 'ready' : 'failed')));
@@ -45,10 +53,12 @@ export default function DecisionsPage() {
     () => [
       ...rooms.map((room): Item => ({ kind: 'room', at: room.createdAt, id: `r-${room.id}`, room })),
       ...requests.map((request): Item => ({ kind: 'request', at: request.createdAt, id: `q-${request.id}`, request })),
+      ...toSplit.map((round): Item => ({ kind: 'round', at: round.requestDeadline, id: `s-${round.id}`, round })),
     ].sort((a, b) => a.at.localeCompare(b.at)),
-    [rooms, requests],
+    [rooms, requests, toSplit],
   );
-  const shown = items.filter((i) => filter === 'all' || (filter === 'rooms' ? i.kind === 'room' : i.kind === 'request'));
+  const KIND: Record<Exclude<Filter, 'all'>, Item['kind']> = { rooms: 'room', allowance: 'request', rounds: 'round' };
+  const shown = items.filter((i) => filter === 'all' || i.kind === KIND[filter]);
 
   /**
    * Runs one decision. When it worked the item leaves, a toast says so and the menu recounts. When someone else decided
@@ -100,6 +110,7 @@ export default function DecisionsPage() {
     { key: 'all', label: t('dcsFilterAll'), n: items.length },
     { key: 'rooms', label: t('dcsFilterRooms'), n: rooms.length },
     { key: 'allowance', label: t('dcsFilterAllowance'), n: requests.length },
+    ...(toSplit.length > 0 ? [{ key: 'rounds' as Filter, label: t('dcsFilterRounds'), n: toSplit.length }] : []),
   ];
 
   return (
@@ -126,9 +137,11 @@ export default function DecisionsPage() {
             ))}
           </div>
           <ul className="decision-list">
-            {shown.map((i) => (i.kind === 'room'
-              ? <RoomItem key={i.id} room={i.room} actions={roomActions(i.room)} />
-              : <RequestItem key={i.id} request={i.request} actions={requestActions(i.request)} />))}
+            {shown.map((i) => {
+              if (i.kind === 'room') return <RoomItem key={i.id} room={i.room} actions={roomActions(i.room)} />;
+              if (i.kind === 'round') return <RoundItem key={i.id} round={i.round} />;
+              return <RequestItem key={i.id} request={i.request} actions={requestActions(i.request)} />;
+            })}
           </ul>
         </>
       )}

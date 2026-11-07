@@ -33,6 +33,8 @@ class Batch(models.Model):
     quantity_unit = models.CharField(max_length=10, db_column='quantityUnit', choices=QuantityUnit.choices, default=QuantityUnit.BOXES)
     # The room it is in now. Empty for a batch that was never placed, or that was deleted.
     room = models.ForeignKey('farms.RearingRoom', null=True, blank=True, on_delete=models.SET_NULL, db_column='roomId', related_name='batches')
+    # The lot of eggs it came from, when it came from a supply round. Empty for a batch the farmer started by hand.
+    lot_code = models.CharField(max_length=40, blank=True, default='', db_column='lotCode')
     is_active = models.BooleanField(db_column='isActive', default=True)
     created_at = models.DateTimeField(db_column='createdAt', auto_now_add=True)
     updated_at = models.DateTimeField(db_column='updatedAt', auto_now=True)

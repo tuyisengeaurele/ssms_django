@@ -21,6 +21,8 @@ const VerifyEmailPage = lazy(() => import('./pages/auth/VerifyEmailPage'));
 const FarmerDashboard = lazy(() => import('./pages/farmer/FarmerDashboard'));
 const SupervisorDashboard = lazy(() => import('./pages/supervisor/SupervisorDashboard'));
 const DecisionsPage = lazy(() => import('./pages/supervisor/DecisionsPage'));
+const SupplyRoundsPage = lazy(() => import('./pages/supervisor/SupplyRoundsPage'));
+const SupplyRoundPage = lazy(() => import('./pages/supervisor/SupplyRoundPage'));
 const JoinPage = lazy(() => import('./pages/auth/JoinPage'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const FarmsPage = lazy(() => import('./pages/farmer/FarmsPage'));
@@ -94,6 +96,8 @@ export default function App() {
               <Route element={<ProtectedRoute allowedRoles={['SUPERVISOR', 'ADMIN']} />}>
                 <Route path="/supervisor" element={<SupervisorDashboard />} />
                 <Route path="/decisions" element={<DecisionsPage />} />
+                <Route path="/supply" element={<SupplyRoundsPage />} />
+                <Route path="/supply/:id" element={<SupplyRoundPage />} />
               </Route>
 
               {/* Cooperatives: the admin's list and pages, the supervisor's own, and the old addresses */}

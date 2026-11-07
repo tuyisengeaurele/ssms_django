@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { WaitingRoom } from '../../services/room.service';
-import { AllowanceEvidence, WaitingAllowanceRequest, supplyService } from '../../services/supply.service';
+import { AllowanceEvidence, SupplyRound, WaitingAllowanceRequest, supplyService } from '../../services/supply.service';
 import { boxesText } from '../../utils/boxes';
 import { fill } from '../../utils/fill';
 import Avatar from '../../components/ui/Avatar';
@@ -102,6 +103,26 @@ function Evidence({ data }: { data: AllowanceEvidence }) {
       <h3 className="decision-evidence-title">{t('dcsRooms')}</h3>
       {data.rooms.length === 0 ? <p className="cell-sub">{t('dcsNoRooms')}</p> : <ul>{data.rooms.map((r) => <li key={r.id}>{roomLine(t, r)}</li>)}</ul>}
     </div>
+  );
+}
+
+/** A supply round whose requests are closed, waiting for the supervisor to split the eggs. The work is on the round's page. */
+export function RoundItem({ round }: { round: SupplyRound }) {
+  const { t } = useLanguage();
+  const n = round.requestCount ?? 0;
+  return (
+    <li className="decision">
+      <div className="cell-stack">
+        <span className="cell-strong">{round.name}</span>
+      </div>
+      <div className="decision-body">
+        <span className="badge badge-gray">{t('dcsKindRound')}</span>
+        <p className="decision-title">{n === 1 ? fill(t('dcsRoundToSplitOne'), { name: round.name }) : fill(t('dcsRoundToSplit'), { name: round.name, n })}</p>
+      </div>
+      <div className="decision-actions">
+        <Link to={`/supply/${round.id}`} className="btn btn-primary btn-sm">{t('dcsOpenRound')}</Link>
+      </div>
+    </li>
   );
 }
 

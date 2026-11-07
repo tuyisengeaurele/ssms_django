@@ -1330,3 +1330,13 @@ tr.is-off td:last-child { opacity: 1; }
   .decision { grid-template-columns: 1fr; }
   .decision-actions { justify-content: flex-start; }
 }
+
+/* The egg supply card: a short timeline of one request */
+.supply-steps { list-style: none; margin: 12px 0 0; padding: 0 0 0 14px; border-left: 2px solid var(--border-light); display: grid; gap: 6px; }
+.supply-steps li { margin: 0; }
+.supply-steps li[aria-current="step"] { font-weight: 600; }
+
+/* The supply round page: the split table and its running total */
+.decision-total { margin: 12px 0 8px; font-weight: 600; }
+.form-input--narrow { max-width: 6rem; }
+.form-error { color: var(--tone-red); margin: 0 0 10px; }

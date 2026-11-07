@@ -66,6 +66,12 @@ PERMISSIONS: dict[str, dict[str, frozenset]] = {
     'allowance': {
         'read': FARMER_ONLY, 'request': FARMER_ONLY, 'withdraw': FARMER_ONLY, 'review_list': STAFF, 'decide': STAFF, 'set': STAFF, 'farmer_read': STAFF,
     },
+    # Supply rounds: the supervisor makes and runs them, a farmer asks inside one and confirms what arrived. Which round a
+    # person may reach is the cooperative, checked in the view.
+    'rounds': {
+        'read_current': FARMER_ONLY, 'request': FARMER_ONLY, 'cancel': FARMER_ONLY, 'receive': ALL,
+        'read': STAFF, 'create': STAFF, 'update': STAFF, 'action': STAFF, 'proposal': STAFF, 'confirm': STAFF, 'not_collected': STAFF,
+    },
     # The cooperative's egg supply settings. Staff read them, only an admin changes them.
     'supply_settings': {'read': STAFF, 'update': ADMIN_ONLY},
     'locations': {'read': ALL, 'locate': ALL},

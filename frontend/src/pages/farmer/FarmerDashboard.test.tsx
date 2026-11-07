@@ -8,8 +8,8 @@ import { setReducedMotion } from '../../test/setup';
 const auth = vi.hoisted(() => ({ user: { id: 'u', name: 'Serge Karenzi', role: 'FARMER' } as { id: string; name?: string; role: string } }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
 
-const api = vi.hoisted(() => ({ allowance: vi.fn(), farms: vi.fn(), active: vi.fn(), chart: vi.fn(), alerts: vi.fn(), markRead: vi.fn(), thresholds: vi.fn() }));
-vi.mock('../../services/supply.service', () => ({ supplyService: { getAllowance: api.allowance } }));
+const api = vi.hoisted(() => ({ currentRound: vi.fn(), allowance: vi.fn(), farms: vi.fn(), active: vi.fn(), chart: vi.fn(), alerts: vi.fn(), markRead: vi.fn(), thresholds: vi.fn() }));
+vi.mock('../../services/supply.service', () => ({ supplyService: { getAllowance: api.allowance, currentRound: api.currentRound } }));
 vi.mock('../../services/farm.service', () => ({ farmService: { getAll: api.farms } }));
 vi.mock('../../services/alert.service', () => ({ alertService: { getAll: api.alerts, markRead: api.markRead, getThresholds: api.thresholds } }));
 vi.mock('../../services/sensor.service', () => ({
@@ -45,6 +45,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   setReducedMotion(true);
   auth.user = { id: 'u', name: 'Serge Karenzi', role: 'FARMER' };
+  api.currentRound.mockResolvedValue({ data: { data: { round: null, myRequest: null, rooms: [] } } });
   api.allowance.mockResolvedValue({ data: { data: { boxes: 2, source: 'default', since: null, history: [], openRequest: null, capacityBoxes: null, starterBoxes: 2 } } });
   api.farms.mockResolvedValue({ data: { data: [{ id: 'f1', isActive: true }, { id: 'f2', isActive: true }] } });
   api.active.mockResolvedValue({ data: { data: [batch(1, 'LARVA'), batch(2, 'EGG')] } });
