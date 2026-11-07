@@ -98,8 +98,8 @@ describe('the page behind a QR code', () => {
 
   it('puts the farm in the browser tab title', async () => {
     open();
-    await screen.findByRole('heading', { level: 1 });
-    expect(document.title).toBe('Lot from Hillside Farm | SSMS');
+    // The title is set after the lot has loaded, and a heading can already be on screen before that, so wait for the title.
+    await waitFor(() => expect(document.title).toBe('Lot from Hillside Farm | SSMS'));
   });
 
   it('takes the search tag off again when the page closes', async () => {
