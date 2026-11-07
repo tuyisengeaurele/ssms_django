@@ -90,6 +90,8 @@ export default function SupplyRoundCard() {
     }
   };
 
+  // A request that can only fail is not offered. A room with no space says so instead.
+  const canAsk = rooms.some((r) => r.limit > 0);
   const promised = myRequest && (myRequest.status === 'approved' || myRequest.status === 'part_approved');
   const canReceive = promised && round.status === 'allocated' && !round.paused;
 
@@ -109,10 +111,12 @@ export default function SupplyRoundCard() {
         <p role="status">{t('rndClosed')}</p>
       ) : rooms.length === 0 ? (
         <p role="status">{t('rndNeedRoom')}</p>
+      ) : !canAsk ? (
+        <p role="status">{t('rndNoSpace')}</p>
       ) : null}
 
       <div className="allowance-actions">
-        {!myRequest && round.status === 'open' && rooms.length > 0 && (
+        {!myRequest && round.status === 'open' && canAsk && (
           <button className="btn btn-primary btn-sm" onClick={() => setAsking(true)}>{t('rndRequest')}</button>
         )}
         {canReceive && <button className="btn btn-primary btn-sm" onClick={() => setReceiving(true)}>{t('rndConfirm')}</button>}

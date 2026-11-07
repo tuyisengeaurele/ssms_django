@@ -69,6 +69,20 @@ describe('SupplyRoundCard', () => {
     expect(screen.queryByRole('button', { name: 'Request eggs' })).not.toBeInTheDocument();
   });
 
+  it('says no room has space, instead of offering a request that cannot work, when every limit is zero', async () => {
+    answer({ round: round(), rooms: [room({ limit: 0, roomFree: 0, binding: 'room' })] });
+    show();
+    expect(await screen.findByText('None of your rooms has space for eggs now.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Request eggs' })).not.toBeInTheDocument();
+  });
+
+  it('still offers the request when at least one room has space', async () => {
+    answer({ round: round(), rooms: [room({ limit: 0, roomFree: 0, binding: 'room' }), room({ id: 'room2', name: 'Room B' })] });
+    show();
+    expect(await screen.findByRole('button', { name: 'Request eggs' })).toBeInTheDocument();
+    expect(screen.queryByText('None of your rooms has space for eggs now.')).not.toBeInTheDocument();
+  });
+
   it('says requests are closed once the round is closed', async () => {
     answer({ round: round({ status: 'closed' }) });
     show();

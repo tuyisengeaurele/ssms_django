@@ -639,6 +639,7 @@ export const pageTranslations = {
   rndHandover: k("Handed over on {date} at {place}", "Remise le {date} à {place}", "Bizatangwa ku wa {date} kuri {place}"),
   rndRequest: k("Request eggs", "Demander des œufs", "Saba amagi"),
   rndNeedRoom: k("You need an approved room to ask for eggs.", "Il vous faut une salle approuvée pour demander des œufs.", "Ukeneye icyumba cyemejwe kugira ngo usabe amagi."),
+  rndNoSpace: k("None of your rooms has space for eggs now.", "Aucune de vos salles n'a de place pour des œufs pour le moment.", "Nta cyumba cyawe gifite umwanya w'amagi ubu."),
   rndClosed: k("Requests are closed for this round.", "Les demandes sont closes pour ce tour.", "Ubusabe bwarafunzwe kuri iki cyiciro."),
   rndSent: k("Request sent. Your supervisor will decide.", "Demande envoyée. Votre superviseur décidera.", "Ubusabe bwoherejwe. Umugenzuzi wawe azafata icyemezo."),
   rndCancelled: k("Request cancelled.", "Demande annulée.", "Ubusabe bwahagaritswe."),
