@@ -176,6 +176,27 @@ class TeamRoomListView(APIView):
         return api_success({'rooms': rows, 'count': len(rows)})
 
 
+class TeamDecisionsView(APIView):
+    """GET /api/team/decisions, how many things wait for this person: rooms and allowance requests.
+
+    A supervisor counts their cooperative's. An admin counts all, and may name one with `cooperativeId`.
+    """
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'team'
+
+    def get(self, request):
+        user = request.user
+        cooperative_id = None
+        if user.role == 'SUPERVISOR':
+            if not user.cooperative_id:
+                return api_error('You are not part of a cooperative yet.', 403)
+        else:
+            cooperative_id = request.query_params.get('cooperativeId') or None
+        rooms = room_review.waiting_for(user, cooperative_id).count()
+        requests = supply_allowance.waiting_requests(user, cooperative_id).count()
+        return api_success({'count': rooms + requests, 'rooms': rooms, 'allowance': requests})
+
+
 class TeamFarmerDetailView(APIView):
     """DELETE takes a farmer out of the cooperative. Their account and farms stay."""
     permission_classes = [IsAuthenticated, RolePermission]

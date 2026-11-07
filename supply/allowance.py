@@ -122,6 +122,19 @@ def set_as_admin(farmer, boxes, reason, by) -> Allowance:
         return _write(farmer, boxes, Kind.AMENDMENT if boxes > now else Kind.REDUCTION, reason, by)
 
 
+def waiting_requests(user, cooperative_id=None):
+    """The requests this person may decide, oldest first. A supervisor reaches their own cooperative, an admin all of them
+    or the one named."""
+    waiting = AllowanceRequest.objects.filter(status=Status.REQUESTED).select_related('farmer')
+    if user.role == 'SUPERVISOR':
+        if not user.cooperative_id:
+            return waiting.none()
+        waiting = waiting.filter(cooperative_id=user.cooperative_id)
+    elif cooperative_id:
+        waiting = waiting.filter(cooperative_id=cooperative_id)
+    return waiting.order_by('created_at')
+
+
 def ask(farmer, boxes, reason) -> AllowanceRequest:
     """A farmer asks for a different allowance. The amount in force is not written, only the request."""
     if not farmer.cooperative_id:

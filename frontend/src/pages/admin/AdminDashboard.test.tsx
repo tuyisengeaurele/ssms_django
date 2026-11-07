@@ -12,6 +12,8 @@ const farms = vi.hoisted(() => [
 
 const getFarms = vi.hoisted(() => vi.fn());
 const getAlerts = vi.hoisted(() => vi.fn());
+const getDecisions = vi.hoisted(() => vi.fn());
+vi.mock('../../services/supply.service', () => ({ supplyService: { decisionCount: getDecisions } }));
 vi.mock('../../services/farm.service', () => ({ farmService: { getAll: getFarms } }));
 vi.mock('../../services/alert.service', () => ({ alertService: { getAll: getAlerts } }));
 
@@ -32,6 +34,21 @@ beforeEach(() => {
   setReducedMotion(true);
   getFarms.mockResolvedValue({ data: { data: farms } });
   getAlerts.mockResolvedValue({ data: { data: [{ id: 'a1' }, { id: 'a2' }, { id: 'a3' }] } });
+  getDecisions.mockResolvedValue({ data: { data: { count: 2, rooms: 1, allowance: 1 } } });
+});
+
+describe('Admin dashboard, decisions', () => {
+  it('says how many decisions wait and links to them', async () => {
+    open();
+    expect(await screen.findByRole('link', { name: '2 decisions wait for you' })).toHaveAttribute('href', '/decisions');
+  });
+
+  it('shows no card when nothing waits', async () => {
+    getDecisions.mockResolvedValue({ data: { data: { count: 0, rooms: 0, allowance: 0 } } });
+    open();
+    await waitFor(() => expect(getDecisions).toHaveBeenCalled());
+    expect(screen.queryByRole('link', { name: /decisions? waits? for you/ })).not.toBeInTheDocument();
+  });
 });
 
 describe('Admin dashboard', () => {

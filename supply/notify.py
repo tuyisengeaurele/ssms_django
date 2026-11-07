@@ -20,8 +20,8 @@ def _boxes(n) -> str:
     return '1 box' if n == 1 else f'{n} boxes'
 
 
-def _link() -> str:
-    return f'{settings.FRONTEND_URL.rstrip("/")}/app'
+def _link(page: str = 'app') -> str:
+    return f'{settings.FRONTEND_URL.rstrip("/")}/{page}'
 
 
 def _send(subject: str, to: str, email: Email) -> None:
@@ -55,7 +55,7 @@ def tell_reviewers(row) -> None:
             greeting=f'Hello {reviewer.name},',
             intro=tuple(intro),
             facts=facts,
-            button=('Open SSMS', _link()),
+            button=('Open SSMS', _link('decisions')),
         )
         _send(subject, reviewer.email, email)
 

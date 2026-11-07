@@ -36,8 +36,8 @@ beforeEach(() => {
   auth.value = { user: { name: 'Auris Tuyisenge', role: 'ADMIN', email: 'auris@ssms.com' }, logout: vi.fn() };
 });
 
-const sidebar = (path = '/admin', alertCount = 0) =>
-  renderAt(path, <Sidebar collapsed={false} mobileOpen={false} onMobileClose={() => {}} alertCount={alertCount} />);
+const sidebar = (path = '/admin', alertCount = 0, decisionCount = 0) =>
+  renderAt(path, <Sidebar collapsed={false} mobileOpen={false} onMobileClose={() => {}} alertCount={alertCount} decisionCount={decisionCount} />);
 
 describe('Sidebar for an administrator', () => {
   it('groups the menu under plain headings', () => {
@@ -52,7 +52,7 @@ describe('Sidebar for an administrator', () => {
     const nav = screen.getByRole('navigation', { name: 'Main menu' });
     const names = within(nav).getAllByRole('link').map((a) => a.textContent?.replace(/\d+$/, '').trim());
     expect(names).toEqual([
-      'Dashboard', 'Farm monitoring',
+      'Dashboard', 'Decisions', 'Farm monitoring',
       'Farms', 'Harvests', 'Disease checks', 'Devices', 'Alerts',
       'Users', 'Cooperatives', 'Messages', 'System',
       'Settings',
@@ -111,10 +111,10 @@ describe('Sidebar for an administrator', () => {
 });
 
 describe('The admin menu after the cleanup', () => {
-  it('has 11 pages and Settings, down from 15', () => {
+  it('has 12 pages and Settings, the Decisions page included', () => {
     sidebar();
     const nav = screen.getByRole('navigation', { name: 'Main menu' });
-    expect(within(nav).getAllByRole('link')).toHaveLength(12);
+    expect(within(nav).getAllByRole('link')).toHaveLength(13);
   });
 
   it('shows the all-farms view as Farm monitoring, at the address the supervisor dashboard has', () => {
@@ -142,6 +142,38 @@ describe('The admin menu after the cleanup', () => {
     sidebar();
     const group = screen.getByRole('group', { name: 'Administration' });
     expect(within(group).getAllByRole('link').map((a) => a.textContent)).toEqual(['Users', 'Cooperatives', 'Messages', 'System']);
+  });
+});
+
+describe('The Decisions item', () => {
+  it.each(['SUPERVISOR', 'ADMIN'])('is in the %s menu right under the dashboard and goes to the Decisions page', (role) => {
+    auth.value = { user: { name: 'Someone', role, email: 'a@x.rw' }, logout: vi.fn() };
+    sidebar('/supervisor');
+    const nav = screen.getByRole('navigation', { name: 'Main menu' });
+    const names = within(nav).getAllByRole('link').map((a) => a.getAttribute('aria-label'));
+    expect(names.indexOf('Decisions')).toBe(names.indexOf('Dashboard') + 1);
+    expect(screen.getByRole('link', { name: 'Decisions' })).toHaveAttribute('href', '/decisions');
+  });
+
+  it('is not in a farmer menu', () => {
+    auth.value = { user: { name: 'Farmer', role: 'FARMER', email: 'f@x.rw' }, logout: vi.fn() };
+    sidebar('/farmer');
+    expect(screen.queryByRole('link', { name: 'Decisions' })).not.toBeInTheDocument();
+  });
+
+  it('shows how many wait, in words for a screen reader, and nothing at zero', () => {
+    auth.value = { user: { name: 'Sup', role: 'SUPERVISOR', email: 's@x.rw' }, logout: vi.fn() };
+    const first = sidebar('/supervisor', 0, 3);
+    expect(screen.getByLabelText('3 waiting')).toHaveTextContent('3');
+    first.unmount();
+    sidebar('/supervisor', 0, 0);
+    expect(screen.queryByLabelText(/waiting/)).not.toBeInTheDocument();
+  });
+
+  it('caps a long count at 99+', () => {
+    auth.value = { user: { name: 'Sup', role: 'SUPERVISOR', email: 's@x.rw' }, logout: vi.fn() };
+    sidebar('/supervisor', 0, 120);
+    expect(screen.getByLabelText('99+ waiting')).toHaveTextContent('99+');
   });
 });
 

@@ -26,8 +26,8 @@ def _size(value) -> str:
     return text.rstrip('0').rstrip('.') if '.' in text else text
 
 
-def _link() -> str:
-    return f'{settings.FRONTEND_URL.rstrip("/")}/app'
+def _link(page: str = 'app') -> str:
+    return f'{settings.FRONTEND_URL.rstrip("/")}/{page}'
 
 
 def _send(subject: str, to: str, email: Email) -> None:
@@ -67,7 +67,7 @@ def tell_reviewers(room, kind: str, old_size=None) -> None:
             greeting=f'Hello {reviewer.name},',
             intro=tuple(intro),
             facts=tuple(facts),
-            button=('Open SSMS', _link()),
+            button=('Open SSMS', _link('decisions')),
             closing=('The farmer cannot add a batch to this room until it is approved.',) if not asked else (),
         )
         _send(subject, reviewer.email, email)
