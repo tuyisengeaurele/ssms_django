@@ -52,7 +52,7 @@ describe('Sidebar for an administrator', () => {
     const nav = screen.getByRole('navigation', { name: 'Main menu' });
     const names = within(nav).getAllByRole('link').map((a) => a.textContent?.replace(/\d+$/, '').trim());
     expect(names).toEqual([
-      'Dashboard', 'Decisions', 'Farm monitoring',
+      'Dashboard', 'Decisions', 'Supply', 'Farm monitoring',
       'Farms', 'Harvests', 'Disease checks', 'Devices', 'Alerts',
       'Users', 'Cooperatives', 'Messages', 'System',
       'Settings',
@@ -111,10 +111,10 @@ describe('Sidebar for an administrator', () => {
 });
 
 describe('The admin menu after the cleanup', () => {
-  it('has 12 pages and Settings, the Decisions page included', () => {
+  it('has 13 pages and Settings, the Decisions and Supply pages included', () => {
     sidebar();
     const nav = screen.getByRole('navigation', { name: 'Main menu' });
-    expect(within(nav).getAllByRole('link')).toHaveLength(13);
+    expect(within(nav).getAllByRole('link')).toHaveLength(14);
   });
 
   it('shows the all-farms view as Farm monitoring, at the address the supervisor dashboard has', () => {
@@ -153,6 +153,18 @@ describe('The Decisions item', () => {
     const names = within(nav).getAllByRole('link').map((a) => a.getAttribute('aria-label'));
     expect(names.indexOf('Decisions')).toBe(names.indexOf('Dashboard') + 1);
     expect(screen.getByRole('link', { name: 'Decisions' })).toHaveAttribute('href', '/decisions');
+  });
+
+  it.each(['SUPERVISOR', 'ADMIN'])('has a Supply item next to it in the %s menu', (role) => {
+    auth.value = { user: { name: 'Someone', role, email: 'a@x.rw' }, logout: vi.fn() };
+    sidebar('/supervisor');
+    expect(screen.getByRole('link', { name: 'Supply' })).toHaveAttribute('href', '/supply');
+  });
+
+  it('has no Supply item in a farmer menu', () => {
+    auth.value = { user: { name: 'Farmer', role: 'FARMER', email: 'f@x.rw' }, logout: vi.fn() };
+    sidebar('/farmer');
+    expect(screen.queryByRole('link', { name: 'Supply' })).not.toBeInTheDocument();
   });
 
   it('is not in a farmer menu', () => {

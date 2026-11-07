@@ -9,11 +9,11 @@ import { setReducedMotion } from '../../test/setup';
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'sup', name: 'Claire Uwimana', role: 'SUPERVISOR' } }) }));
 
 const api = vi.hoisted(() => ({
-  rooms: vi.fn(), review: vi.fn(), requests: vi.fn(), decide: vi.fn(), evidence: vi.fn(),
+  rooms: vi.fn(), review: vi.fn(), requests: vi.fn(), decide: vi.fn(), evidence: vi.fn(), rounds: vi.fn(),
 }));
 vi.mock('../../services/room.service', () => ({ roomService: { waiting: api.rooms, review: api.review } }));
 vi.mock('../../services/supply.service', () => ({
-  supplyService: { waiting: api.requests, decide: api.decide, getFarmerAllowance: api.evidence },
+  supplyService: { waiting: api.requests, decide: api.decide, getFarmerAllowance: api.evidence, listRounds: api.rounds },
 }));
 
 import DecisionsPage from './DecisionsPage';
@@ -71,6 +71,58 @@ beforeEach(() => {
   setReducedMotion(true);
   listed([newRoom, sizeChange], [request]);
   api.evidence.mockResolvedValue({ data: { data: evidence } });
+  api.rounds.mockResolvedValue({ data: { data: { rounds: [] } } });
+});
+
+const aRound = (over: object = {}) => ({
+  id: 'r1', name: 'November round', stockBoxes: 10, requestDeadline: '2026-11-03T12:00:00Z', deliveryDate: '2026-11-14', deliveryPlace: 'Store',
+  expectedHarvestDate: '2026-12-20', lotCode: 'L2611-AB12', status: 'closed', paused: false, createdAt: '2026-11-01T10:00:00Z', allocatedAt: null, requestCount: 3, approvedBoxes: 0, ...over,
+});
+
+describe('Decisions, supply rounds', () => {
+  it('shows a closed round with requests, how many wait, and a way to open it', async () => {
+    api.rounds.mockResolvedValue({ data: { data: { rounds: [aRound()] } } });
+    open();
+    const li = (await screen.findByText('November round')).closest('li') as HTMLElement;
+    expect(within(li).getByText('November round is closed. 3 requests wait for the split.')).toBeInTheDocument();
+    expect(within(li).getByRole('link', { name: 'Open round' })).toHaveAttribute('href', '/supply/r1');
+  });
+
+  it('says it in the singular for one request', async () => {
+    api.rounds.mockResolvedValue({ data: { data: { rounds: [aRound({ requestCount: 1 })] } } });
+    open();
+    expect(await screen.findByText('November round is closed. 1 request waits for the split.')).toBeInTheDocument();
+  });
+
+  it('leaves out rounds that are open, finished or without requests', async () => {
+    api.rounds.mockResolvedValue({ data: { data: { rounds: [aRound({ id: 'a', name: 'Open one', status: 'open' }), aRound({ id: 'b', name: 'Empty one', requestCount: 0 }), aRound({ id: 'c', name: 'Done one', status: 'done' })] } } });
+    open();
+    await screen.findByText('Gad Anaclet');
+    for (const name of ['Open one', 'Empty one', 'Done one']) expect(screen.queryByText(name)).not.toBeInTheDocument();
+  });
+
+  it('counts and filters the supply items', async () => {
+    api.rounds.mockResolvedValue({ data: { data: { rounds: [aRound()] } } });
+    open();
+    await screen.findByText('Gad Anaclet');
+    expect(screen.getByRole('button', { name: 'All (4)' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Supply (1)' }));
+    expect(screen.getByText('November round')).toBeInTheDocument();
+    expect(screen.queryByText('Gad Anaclet')).not.toBeInTheDocument();
+  });
+
+  it('still shows the rest when the rounds cannot be loaded', async () => {
+    api.rounds.mockRejectedValue(new Error('down'));
+    open();
+    expect(await screen.findByText('Gad Anaclet')).toBeInTheDocument();
+  });
+
+  it('shows a round name as plain text', async () => {
+    api.rounds.mockResolvedValue({ data: { data: { rounds: [aRound({ name: '<b>Big</b> round' })] } } });
+    const { container } = open();
+    expect(await screen.findByText('<b>Big</b> round')).toBeInTheDocument();
+    expect(container.querySelector('b')).toBeNull();
+  });
 });
 
 describe('Decisions', () => {

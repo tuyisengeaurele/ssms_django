@@ -10,7 +10,7 @@ interface Props {
 }
 
 /** A refusal needs a reason, because the farmer reads it and needs to know what to change. */
-export function NoteDialog({ title, sendLabel, farmerName, onSend, onClose }: Props & { title: string; sendLabel: string; farmerName: string }) {
+export function NoteDialog({ title, sendLabel, farmerName, label, onSend, onClose }: Props & { title: string; sendLabel: string; farmerName: string; label?: string }) {
   const { t } = useLanguage();
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
@@ -44,7 +44,7 @@ export function NoteDialog({ title, sendLabel, farmerName, onSend, onClose }: Pr
     >
       {error && <div className="alert alert-error" role="alert">{error}</div>}
       <div className="form-group">
-        <label className="form-label" htmlFor="decision-note">{fill(t('alwFieldLowerReason'), { name: farmerName })}</label>
+        <label className="form-label" htmlFor="decision-note">{label ?? fill(t('alwFieldLowerReason'), { name: farmerName })}</label>
         <textarea id="decision-note" className="form-textarea" rows={3} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} />
       </div>
     </Modal>

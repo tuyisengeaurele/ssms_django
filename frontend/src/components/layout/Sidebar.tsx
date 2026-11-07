@@ -36,6 +36,7 @@ export function getNavGroups(role: Role | undefined, alertCount: number, t: (k: 
 
 function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) => string, decisionCount: number): NavGroup[] {
   const alerts: NavItem = { to: '/alerts', label: t('ptAlerts'), icon: 'alerts', badge: alertCount };
+  const supply: NavItem = { to: '/supply', label: t('ptSupply'), icon: 'batches' };
   const decisions: NavItem = { to: '/decisions', label: t('ptDecisions'), icon: 'inbox', badge: decisionCount, badgeLabel: fill(t('dcsBadge'), { n: decisionCount > 99 ? '99+' : decisionCount }) };
 
   if (role === 'FARMER') {
@@ -67,6 +68,7 @@ function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) =
         items: [
           { to: '/supervisor', label: t('ptSupervisor'), icon: 'overview' },
           decisions,
+          supply,
           { to: '/supervisor/cooperative', label: t('ptMyCooperative'), icon: 'cooperatives' },
         ],
       },
@@ -90,6 +92,7 @@ function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) =
         items: [
           { to: '/admin', label: t('navDashboard'), icon: 'adminDashboard' },
           decisions,
+          supply,
           { to: '/supervisor', label: t('ptFarmMonitoring'), icon: 'overview' },
         ],
       },
