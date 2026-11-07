@@ -24,6 +24,10 @@ import StageBadge from '../../components/ui/StageBadge';
 import AddDeviceModal from '../shared/AddDeviceModal';
 import DeviceDetailModal from '../shared/DeviceDetailModal';
 import DeviceStatusBadge from '../shared/DeviceStatusBadge';
+import RoomStatusChip from '../../components/rooms/RoomStatusChip';
+
+const ROOM_AREA_MIN = 1;
+const ROOM_AREA_MAX = 5000;
 
 export default function FarmDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -42,7 +46,7 @@ export default function FarmDetailPage() {
 
   // Rooms: one dialog for adding and editing, and a question before deleting.
   const [roomDialog, setRoomDialog] = useState<{ room: Room | null } | null>(null);
-  const [roomForm, setRoomForm] = useState({ name: '', notes: '' });
+  const [roomForm, setRoomForm] = useState({ name: '', notes: '', area: '' });
   const [roomError, setRoomError] = useState('');
   const [savingRoom, setSavingRoom] = useState(false);
   const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
@@ -126,7 +130,7 @@ export default function FarmDetailPage() {
   };
 
   const openRoomDialog = (room: Room | null) => {
-    setRoomForm({ name: room?.name ?? '', notes: room?.notes ?? '' });
+    setRoomForm({ name: room?.name ?? '', notes: room?.notes ?? '', area: room?.areaM2 != null ? String(room.areaM2) : '' });
     setRoomError('');
     setRoomDialog({ room });
   };
@@ -138,10 +142,16 @@ export default function FarmDetailPage() {
       setRoomError(t('rmNameNeed'));
       return;
     }
+    // The server checks this too. Saying it here saves a farmer a round trip for a slip of the finger.
+    const area = roomForm.area.trim() === '' ? NaN : Number(roomForm.area);
+    if (!Number.isFinite(area) || area < ROOM_AREA_MIN || area > ROOM_AREA_MAX) {
+      setRoomError(t('roomApAreaNeed'));
+      return;
+    }
     setRoomError('');
     setSavingRoom(true);
     try {
-      const data = { name, notes: roomForm.notes.trim() || undefined };
+      const data = { name, notes: roomForm.notes.trim() || undefined, areaM2: area };
       if (roomDialog.room) {
         const res = await roomService.update(roomDialog.room.id, data);
         setRooms((prev) => prev.map((r) => (r.id === res.data.data.id ? res.data.data : r)));
@@ -272,6 +282,12 @@ export default function FarmDetailPage() {
             onChange={(e) => setRoomForm((f) => ({ ...f, name: e.target.value }))} />
         </div>
         <div className="form-group">
+          <label className="form-label" htmlFor="room-area">{t('roomApAreaLabel')} <span className="required" aria-hidden="true">*</span></label>
+          <input id="room-area" type="number" inputMode="decimal" className="form-input" min={ROOM_AREA_MIN} max={ROOM_AREA_MAX} step="0.01" required
+            value={roomForm.area} aria-describedby="room-area-hint" onChange={(e) => setRoomForm((f) => ({ ...f, area: e.target.value }))} />
+          <span id="room-area-hint" className="form-hint">{t('roomApAreaHint')}</span>
+        </div>
+        <div className="form-group">
           <label className="form-label" htmlFor="room-notes">{t('rmNotes')} <span className="form-optional">({t('abNotesOptional')})</span></label>
           <textarea id="room-notes" className="form-textarea" rows={2} maxLength={500} value={roomForm.notes}
             onChange={(e) => setRoomForm((f) => ({ ...f, notes: e.target.value }))} />
@@ -363,6 +379,14 @@ export default function FarmDetailPage() {
                 <li key={room.id}>
                   <div className="room-main">
                     <span className="cell-strong">{room.name}</span>
+                    <span className="room-status"><RoomStatusChip room={room} /></span>
+                    {room.areaM2 != null && (
+                      <span className="cell-sub">
+                        {room.pendingAreaM2 != null
+                          ? fill(t('roomApSizeAsked'), { old: room.areaM2, new: room.pendingAreaM2 })
+                          : fill(t('roomApSize'), { n: room.areaM2 })}
+                      </span>
+                    )}
                     {room.notes && <span className="cell-sub">{room.notes}</span>}
                     {room.batches.length === 0 ? (
                       <span className="cell-sub">{t('rmEmpty')}</span>

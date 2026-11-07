@@ -7,6 +7,7 @@ from django.utils import timezone
 from audit_log.models import AuditLog
 from batches.models import Batch, BatchRoomStay
 from farms.models import RearingRoom
+from farms.room_review import NO_APPROVED_ROOM
 from tests.factories import BatchFactory, CooperativeFactory, FarmFactory, UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -27,7 +28,7 @@ def room_url(farm):
 
 
 def add_room(client, farm, name='Room A', **body):
-    return client.post(room_url(farm), {'name': name, **body}, format='json')
+    return client.post(room_url(farm), {'name': name, 'areaM2': 12, **body}, format='json')
 
 
 def make_room(farm, name='Room A', **kw):
@@ -199,14 +200,13 @@ def test_the_rooms_of_a_deleted_farm_are_gone_with_it(auth_client, owner):
 
 # ── a new batch always gets a room ──────────────────────────────────────────
 
-def test_a_batch_on_a_farm_without_rooms_gets_room_1_made_for_it(auth_client, owner, farm):
+def test_a_batch_on_a_farm_without_an_approved_room_is_refused_and_no_room_is_made(auth_client, owner, farm):
     response = create_batch(auth_client(owner), farm)
-    assert response.status_code == 201
-    room = RearingRoom.objects.get()
-    assert (room.farm_id, room.name) == (farm.pk, 'Room 1')
-    batch = Batch.objects.get()
-    assert batch.room_id == room.pk
-    assert response.json()['data']['room'] == {'id': room.pk, 'name': 'Room 1'}
+    assert response.status_code == 422
+    assert response.json()['code'] == 'no_approved_room'
+    assert response.json()['message'] == NO_APPROVED_ROOM
+    assert RearingRoom.objects.count() == 0
+    assert Batch.objects.count() == 0
 
 
 def test_with_one_room_the_batch_goes_there_without_being_asked(auth_client, owner, farm):
@@ -247,6 +247,7 @@ def test_a_deleted_room_is_refused(auth_client, owner, farm):
 
 
 def test_a_new_batch_starts_a_stay_in_its_room(auth_client, owner, farm):
+    make_room(farm, 'Rearing house')
     create_batch(auth_client(owner), farm)
     stay = BatchRoomStay.objects.get()
     batch = Batch.objects.get()

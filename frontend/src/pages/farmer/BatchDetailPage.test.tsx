@@ -75,8 +75,8 @@ beforeEach(() => {
   api.detections.mockResolvedValue({ data: { data: detections } });
   api.mortality.mockResolvedValue({ data: { data: [] } });
   api.rooms.mockResolvedValue({ data: { data: [
-    { id: 'r1', name: 'Rearing house 1', notes: '', batchCount: 1, batches: [], createdAt: '' },
-    { id: 'r2', name: 'Cocoon room', notes: '', batchCount: 0, batches: [], createdAt: '' },
+    { id: 'r1', name: 'Rearing house 1', notes: '', batchCount: 1, batches: [], approvalStatus: 'approved', reviewNote: '', areaM2: 12, pendingAreaM2: null, createdAt: '' },
+    { id: 'r2', name: 'Cocoon room', notes: '', batchCount: 0, batches: [], approvalStatus: 'approved', reviewNote: '', areaM2: 12, pendingAreaM2: null, createdAt: '' },
   ] } });
   api.series.mockResolvedValue({ data: { data: [
     { timestamp: '2026-10-01T09:00:00Z', temperature: 30.2, humidity: 78, count: 4 },
@@ -482,6 +482,21 @@ describe('The room of a batch', () => {
     expect(await screen.findByText('Batch moved.', {}, { timeout: 5000 })).toBeInTheDocument();
   });
 
+  it('offers only approved rooms to move to', async () => {
+    api.rooms.mockResolvedValue({ data: { data: [
+      { id: 'r1', name: 'Rearing house 1', notes: '', batchCount: 1, batches: [], approvalStatus: 'approved', reviewNote: '', areaM2: 12, pendingAreaM2: null, createdAt: '' },
+      { id: 'r2', name: 'Cocoon room', notes: '', batchCount: 0, batches: [], approvalStatus: 'approved', reviewNote: '', areaM2: 12, pendingAreaM2: null, createdAt: '' },
+      { id: 'r3', name: 'Waiting room', notes: '', batchCount: 0, batches: [], approvalStatus: 'pending', reviewNote: '', areaM2: 12, pendingAreaM2: null, createdAt: '' },
+      { id: 'r4', name: 'Turned down', notes: '', batchCount: 0, batches: [], approvalStatus: 'rejected', reviewNote: 'Too small', areaM2: 3, pendingAreaM2: null, createdAt: '' },
+    ] } });
+    api.getById.mockResolvedValue({ data: { data: inRoom() } });
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Move to another room' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Move to another room' });
+    const choice = within(dialog).getByLabelText('New room') as HTMLSelectElement;
+    expect(within(choice).getAllByRole('option').map((o) => o.textContent)).toEqual(['Choose a room', 'Cocoon room']);
+  });
+
   it('shows the answer in the dialog when the move is refused', async () => {
     api.getById.mockResolvedValue({ data: { data: inRoom() } });
     api.moveRoom.mockRejectedValue(new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, { status: 422, data: { message: "Please choose one of this farm's rooms." } } as never));
@@ -494,7 +509,7 @@ describe('The room of a batch', () => {
   });
 
   it('offers no move when the farm has no other room', async () => {
-    api.rooms.mockResolvedValue({ data: { data: [{ id: 'r1', name: 'Rearing house 1', notes: '', batchCount: 1, batches: [], createdAt: '' }] } });
+    api.rooms.mockResolvedValue({ data: { data: [{ id: 'r1', name: 'Rearing house 1', notes: '', batchCount: 1, batches: [], approvalStatus: 'approved', reviewNote: '', areaM2: 12, pendingAreaM2: null, createdAt: '' }] } });
     api.getById.mockResolvedValue({ data: { data: inRoom() } });
     open();
     await screen.findByText('Rearing house 1');

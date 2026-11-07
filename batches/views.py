@@ -14,6 +14,7 @@ from core.permissions_table import may
 from core.throttles import ReportRateThrottle, UserRateThrottle
 from core.utils import api_error, api_success
 from farms.models import RearingRoom
+from farms.room_review import NO_APPROVED_ROOM, ROOM_NOT_APPROVED
 
 from .compare import BadChoice, compare_batches, parse_ids
 from .models import Batch
@@ -36,18 +37,22 @@ NOT_THIS_FARMS_ROOM = "Please choose one of this farm's rooms."
 def _room_for_new_batch(farm, room_id):
     """The room a new batch goes in. (room, error response).
 
-    A farm with no rooms gets "Room 1" made for it, a farm with one room uses it, and a farm with several needs a choice.
+    Only an approved room may hold a batch. A farm with one approved room uses it, a farm with several needs a choice,
+    and a farm with none is told to add one and wait for it to be approved ("Room 1" is no longer made for it).
     """
     rooms = list(RearingRoom.objects.filter(farm=farm, is_active=True))
     if room_id:
         chosen = next((r for r in rooms if r.pk == room_id), None)
         if chosen is None:
             return None, api_error(NOT_THIS_FARMS_ROOM, 422, {'room_id': [NOT_THIS_FARMS_ROOM]})
+        if not chosen.usable:
+            return None, api_error(ROOM_NOT_APPROVED, 422, {'room_id': [ROOM_NOT_APPROVED]}, code='room_not_approved')
         return chosen, None
-    if not rooms:
-        return RearingRoom.objects.create(farm=farm, name='Room 1'), None
-    if len(rooms) == 1:
-        return rooms[0], None
+    approved = [r for r in rooms if r.usable]
+    if not approved:
+        return None, api_error(NO_APPROVED_ROOM, 422, {'room_id': [NO_APPROVED_ROOM]}, code='no_approved_room')
+    if len(approved) == 1:
+        return approved[0], None
     return None, api_error(CHOOSE_ROOM, 422, {'room_id': [CHOOSE_ROOM]})
 
 
@@ -161,6 +166,8 @@ class BatchRoomView(APIView):
         room = RearingRoom.objects.filter(pk=request.data.get('room_id') or '', farm=batch.farm, is_active=True).first()
         if room is None:
             return api_error(NOT_THIS_FARMS_ROOM, 422, {'room_id': [NOT_THIS_FARMS_ROOM]})
+        if not room.usable:
+            return api_error(ROOM_NOT_APPROVED, 422, {'room_id': [ROOM_NOT_APPROVED]}, code='room_not_approved')
         if batch.room_id != room.pk:
             place_batch(batch, room)
             log_action(request, 'UPDATE', 'Batch', batch.pk, f'Moved batch {batch.pk} to {room.name}', owner=on_behalf_of(request, batch.farm))

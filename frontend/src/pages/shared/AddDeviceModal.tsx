@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { deviceService } from '../../services/device.service';
 import { roomService } from '../../services/room.service';
+import { usableRooms } from '../../utils/rooms';
 import { Farm, IoTDevice, Room } from '../../types';
 import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
@@ -31,9 +32,10 @@ export default function AddDeviceModal({ farms, defaultFarmId = '', onClose, onC
     roomService.getByFarm(form.farmId)
       .then((r) => {
         if (!current) return;
-        setRooms(r.data.data);
-        // A farm with one room has nowhere else to put the sensor.
-        setForm((f) => ({ ...f, roomId: r.data.data.length === 1 ? r.data.data[0].id : '' }));
+        // Only an approved room can hold a sensor. A farm with one has nowhere else to put it.
+        const usable = usableRooms(r.data.data);
+        setRooms(usable);
+        setForm((f) => ({ ...f, roomId: usable.length === 1 ? usable[0].id : '' }));
       })
       // Without the list the sensor is still registered, and can be moved into a room later.
       .catch(() => { if (current) setRooms(null); });

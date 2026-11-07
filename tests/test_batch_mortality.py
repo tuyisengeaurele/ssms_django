@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from audit_log.models import AuditLog
 from batches.models import Batch, MortalityRecord
+from farms.models import RearingRoom
 from tests.factories import BatchFactory, CooperativeFactory, FarmFactory, UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -172,8 +173,14 @@ def create(client, farm, **body):
     return client.post('/api/batches', payload, format='json')
 
 
-def test_a_batch_is_created_with_breed_and_quantity(auth_client, owner):
+def farm_with_room(owner):
     farm = FarmFactory(owner=owner)
+    RearingRoom.objects.create(farm=farm, name='Room 1')
+    return farm
+
+
+def test_a_batch_is_created_with_breed_and_quantity(auth_client, owner):
+    farm = farm_with_room(owner)
     response = create(auth_client(owner), farm, breed='Bivoltine hybrid', quantity=3, quantityUnit='BOXES')
     assert response.status_code == 201
     batch = Batch.objects.get()
@@ -183,7 +190,7 @@ def test_a_batch_is_created_with_breed_and_quantity(auth_client, owner):
 
 
 def test_breed_and_quantity_are_optional(auth_client, owner):
-    response = create(auth_client(owner), FarmFactory(owner=owner))
+    response = create(auth_client(owner), farm_with_room(owner))
     assert response.status_code == 201
     batch = Batch.objects.get()
     assert (batch.breed, batch.quantity, batch.quantity_unit) == ('', None, 'BOXES')

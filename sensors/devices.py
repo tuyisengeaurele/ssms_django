@@ -39,7 +39,7 @@ def room_for_device(device: IoTDevice):
     """
     if device.room_id:
         return device.room if device.room.is_active else None
-    rooms = list(RearingRoom.objects.filter(farm_id=device.farm_id, is_active=True)[:2])
+    rooms = list(RearingRoom.objects.filter(farm_id=device.farm_id, is_active=True, approval_status=RearingRoom.Approval.APPROVED)[:2])
     return rooms[0] if len(rooms) == 1 else None
 
 

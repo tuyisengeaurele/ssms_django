@@ -1055,6 +1055,8 @@ tr.is-off td:last-child { opacity: 1; }
 .room-list li + li { border-top: 1px solid var(--border-light); }
 .room-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .room-batches { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 2px; font-size: 0.9rem; }
+.room-status { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 2px 0; }
+.room-status:empty { display: none; }
 .room-sensors { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 6px; font-size: 0.9rem; }
 .room-sensor { display: inline-flex; align-items: center; gap: 8px; }
 .disease-about { margin: 0 0 12px; }

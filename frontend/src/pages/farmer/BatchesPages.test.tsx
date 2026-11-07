@@ -151,13 +151,30 @@ describe('New batch page', () => {
     expect(await screen.findByText('Batch created. It starts at the egg stage.')).toBeInTheDocument();
   });
 
-  const room = (id: string, name: string) => ({ id, name, notes: '', batchCount: 0, batches: [], createdAt: '' });
+  const room = (id: string, name: string, approvalStatus = 'approved') => ({ id, name, notes: '', batchCount: 0, batches: [], approvalStatus, reviewNote: '', areaM2: 12, pendingAreaM2: null, createdAt: '' });
 
-  it('says a first room will be made when the farm has none', async () => {
+  it('blocks the batch with a clear message when the farm has no room', async () => {
     open();
-    expect(await screen.findByText('A room named Room 1 will be made for this batch.')).toBeInTheDocument();
+    expect(await screen.findByText('Add a room and wait for your supervisor to approve it before you add a batch.')).toBeInTheDocument();
     expect(screen.queryByLabelText(/^Room/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create batch' })).toBeDisabled();
     expect(api.rooms).toHaveBeenCalledWith('f1');
+  });
+
+  it('gives the same message when the only room still waits for approval', async () => {
+    api.rooms.mockResolvedValue({ data: { data: [room('r1', 'Rearing house 1', 'pending'), room('r2', 'Old room', 'rejected')] } });
+    open();
+    expect(await screen.findByText('Add a room and wait for your supervisor to approve it before you add a batch.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create batch' })).toBeDisabled();
+  });
+
+  it('lists only approved rooms, and uses the only approved one without asking', async () => {
+    api.rooms.mockResolvedValue({ data: { data: [room('r1', 'Rearing house 1', 'pending'), room('r2', 'Cocoon room')] } });
+    open();
+    const choice = (await screen.findByLabelText('Room')) as HTMLSelectElement;
+    expect(within(choice).getAllByRole('option').map((o) => o.textContent)).toEqual(['Cocoon room']);
+    expect(choice.value).toBe('r2');
+    expect(screen.getByRole('button', { name: 'Create batch' })).toBeEnabled();
   });
 
   it('puts the batch in the only room the farm has, and shows which', async () => {

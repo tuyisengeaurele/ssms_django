@@ -157,6 +157,8 @@ export interface Farm {
 
 export type QuantityUnit = 'BOXES' | 'WORMS';
 
+export type RoomApproval = 'approved' | 'pending' | 'rejected';
+
 /** A room (or rearing house) on a farm. Every batch in it shares its air. */
 export interface Room {
   id: string;
@@ -164,6 +166,14 @@ export interface Room {
   notes: string;
   batchCount: number;
   batches: { id: string; stage: BatchStage }[];
+  /** A farmer's room waits for a reviewer. Only an approved room can hold a batch or a sensor. */
+  approvalStatus: RoomApproval;
+  /** Why a reviewer decided as they did. Empty when they gave no reason. */
+  reviewNote: string;
+  /** The size in force, in square metres. Null for a room made before sizes existed. */
+  areaM2: number | null;
+  /** A new size that waits for a decision. The size in force stays until it is approved. */
+  pendingAreaM2: number | null;
   /** The sensors in this room. Their readings are the room's readings. */
   devices: { id: string; name: string; status: DeviceStatus; lastSeen: string | null }[];
   /** The newest reading of any sensor in the room, or null when nothing has been measured yet. */

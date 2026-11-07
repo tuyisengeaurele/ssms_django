@@ -4,6 +4,7 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 
+from farms.models import RearingRoom
 from tests.factories import BatchFactory, CooperativeFactory, FarmFactory, HarvestRecordFactory, UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -14,9 +15,16 @@ def owner():
     return UserFactory(role='FARMER', cooperative=CooperativeFactory())
 
 
+def farm_with_room(owner):
+    # A batch needs an approved room to go in, so a farm that starts batches has one.
+    farm = FarmFactory(owner=owner)
+    RearingRoom.objects.create(farm=farm, name='Room 1')
+    return farm
+
+
 @pytest.fixture
 def farm(owner):
-    return FarmFactory(owner=owner)
+    return farm_with_room(owner)
 
 
 def make_batch(client, farm):
@@ -45,7 +53,7 @@ def test_the_second_batch_is_not(auth_client, owner, farm):
 def test_a_batch_on_another_farm_of_the_same_farmer_is_not_the_first(auth_client, owner, farm):
     client = auth_client(owner)
     make_batch(client, farm)
-    assert make_batch(client, FarmFactory(owner=owner)).json()['data']['milestone'] is None
+    assert make_batch(client, farm_with_room(owner)).json()['data']['milestone'] is None
 
 
 def test_a_deleted_first_batch_still_counts_so_the_message_is_not_repeated(auth_client, owner, farm):
@@ -58,7 +66,7 @@ def test_a_deleted_first_batch_still_counts_so_the_message_is_not_repeated(auth_
 def test_each_farmer_has_a_first_of_their_own(auth_client, owner, farm):
     make_batch(auth_client(owner), farm)
     other = UserFactory(role='FARMER')
-    assert make_batch(auth_client(other), FarmFactory(owner=other)).json()['data']['milestone'] == 'FIRST_BATCH'
+    assert make_batch(auth_client(other), farm_with_room(other)).json()['data']['milestone'] == 'FIRST_BATCH'
 
 
 def test_an_admin_starting_a_batch_for_a_farmer_gets_no_message_and_the_farmer_has_a_batch_already(auth_client, owner, farm):

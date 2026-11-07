@@ -1,5 +1,35 @@
 # Changelog
 
+## Room approval
+
+A farmer's new room, and a new size for an approved room, now wait for a supervisor to approve them. Only an approved room can hold a batch or a sensor. This is step 1 of the egg supply design (`docs/superpowers/specs/2026-11-06-egg-supply-design.md`, local only), which needs a trusted room size before it can work out an allowance. The plan is `docs/superpowers/plans/2026-11-06-room-approval.md` (local only).
+
+### What it does
+- A room has a size in square metres (1 to 5000). The farmer enters it when adding the room. A new room waits, and the farm page says so in words.
+- The supervisors of the farmer's cooperative each get an email with the farmer, the farm, the room and the size. A farmer with no supervisor, or in no cooperative, goes to every active admin, and the email says so. A room added by an admin is approved at once.
+- A supervisor approves, or rejects with a reason the farmer reads. A farmer whose room was rejected enters a new size to send it again.
+- Changing the size of an approved room waits too. The room stays usable at the old size until the new one is approved.
+- A farm with no approved room cannot start a batch. The form says "Add a room and wait for your supervisor to approve it before you add a batch." and the save button is off. The room "Room 1" is no longer made for a first batch.
+- Batch and sensor room choices list approved rooms only, on the batch form, the move room dialog, the add device dialog and the device details.
+- The farmer gets an email for each decision, with the reason when there is one.
+
+### How it is built
+- **One module changes the state.** `farms/room_review.py` holds `open_new`, `change_area`, `decide`, `reviewers_for` and `waiting_for`. A decision is one conditional UPDATE, so two reviewers deciding the same room cannot both win. The second gets 409 and no second email goes out.
+- **Wire format.** `POST /api/rooms/<id>/review` (`decision`, `note`), `GET /api/team/rooms?status=pending`. A supervisor reaches only the rooms of their own cooperative. A room outside it is "not found". Refusals carry a `code` (`no_approved_room`, `room_not_approved`, `note_required`, `nothing_to_review`) so the page can tell them apart.
+- **Existing rooms stay approved.** The migration gives them `approved`, with no size. Their first size waits for a decision like any other.
+- **Mail never fails the request.** `farms/room_notify.py` sends one mail per person and logs a failure. The decision is already saved and the person sees it in the app.
+- **Audit log.** A room added, a size asked for, and each decision with its reason.
+
+### Not built
+- **The reviewer's screen.** For now a supervisor can decide only through the API. The list and the decision buttons come with the Decisions inbox (step 4 of the design), and this branch is not merged before they exist. The email button goes to `/app` until then.
+- A review history page, bulk approval, and the use of the size for the egg allowance (step 2).
+
+### Checks
+- Backend 2857 tests, frontend 2027 tests, `tsc`, ESLint and `npm run build` clean. One frontend title test (`PublicLotPage`) failed once under full suite load and passes alone and on the previous commit.
+- A browser check on a scratch database, as a farmer, with the supervisors driven through the API: the empty rooms panel, the batch form blocked with the message, a size of 5001 refused, a new room waiting with its size, a supervisor of another cooperative seeing nothing and getting 404 on a decision, the farmer getting 403, a rejection without a reason refused, a rejection with a reason shown on the card, a resubmission, an approval that opens the batch form with the room chosen, a size change that keeps the old size in force and then goes through, a second decision refused with 409, the texts in English, French and Kinyarwanda, and the add room dialog by keyboard. Not checked in the browser: the add device and move room choices (unit tests only), the email in a real mail app, and the reviewer's side of the screen (it does not exist yet).
+- The French and Kinyarwanda texts are drafts for native review.
+- Migration: `farms.0005_room_approval`. It only adds things. Run `python manage.py migrate` (the build does it).
+
 ## Support access with consent
 
 An admin can now look at a farmer's or supervisor's account to help, but only after that person says yes. Plan item 10. The design note is `docs/superpowers/specs/2026-11-06-support-access-design.md` (local only).
