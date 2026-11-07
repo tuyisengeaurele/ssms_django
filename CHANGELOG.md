@@ -1,5 +1,36 @@
 # Changelog
 
+## Supply rounds and egg requests
+
+The cooperative hands out eggs in scheduled rounds. A farmer asks inside what their allowance and rooms allow, the supervisor confirms a fair split, and a batch is made, with a lot code, when the farmer confirms the eggs arrived. This is step 3 of the egg supply design (`docs/superpowers/specs/2026-11-06-egg-supply-design.md`, local only). The plan is `docs/superpowers/plans/2026-11-07-supply-rounds.md` (local only). The branch `feature/supply-rounds` is cut from `feature/decisions-inbox`, so four branches now form one stack.
+
+### What it does
+- **A supervisor** makes a round (name, boxes, request deadline, delivery day and place, expected harvest), opens it (every farmer is emailed and the round gets a lot code), closes the requests, edits the proposed split with a live total against the stock, confirms it, records receipts for farmers, marks eggs not collected, pauses and cancels (with a reason). The Supply page and a "Supply" menu item are new, and a closed round with requests shows in the Decisions inbox.
+- **A farmer** sees "Egg supply" on the dashboard: the round, the deadline, the delivery day and place, and their request as a short timeline in plain words. They request eggs (the dialog says what they can ask for and why, before sending), cancel, and confirm receipt with the quantity and the condition.
+- **The batch** is made only when the eggs are received: in the room asked for, at the egg stage, in boxes, with the round's lot code and expected harvest date. Approval is a promise, receipt is the fact.
+- Everyone who needs to know is emailed once: farmers when a round opens, requesters when the split is confirmed or the round is cancelled, and a farmer when a supervisor records their receipt.
+
+### How it is built
+- **Two pure functions** do the arithmetic. `request_limit` is the smallest of the allowance, the room's free space and the stock. `propose_split` shares a short stock in proportion, in whole boxes by the largest remainder, ties to the earlier request, never passing the stock or what anyone asked or can take. Both have property tests.
+- **One module changes the state.** `supply/rounds.py` holds every rule. Anything two people could do at once (confirm, receive, cancel) is one conditional UPDATE, so one wins and the other gets a clear 409. Receipt makes exactly one batch.
+- **Scope.** A supervisor reaches only their cooperative's rounds, a farmer only their own request, and the rest is "not found". The new write routes are refused in support access by default.
+- **Models.** `SupplyRound`, `EggRequest` (one active request per farmer per round, held by the database), `Batch.lot_code`, and `SupplySettings.one_open_batch_per_room` (on by default).
+- **The decisions count** now includes rounds to split.
+
+### Numbers to confirm
+The space one box needs stays empty until a sericulture officer gives it. While it is empty, no room cap is applied and the dialog says so. "One open batch per room" is on for every cooperative and has no screen yet.
+
+### Not built
+- The automatic return of uncollected eggs after a number of days (marked by hand for now), and the priority for a good record (it needs the worms per box that a sericulture officer must give).
+- A screen to switch "one open batch per room" off, and a Supply page that lets an admin name a cooperative to make a round (an admin uses the API).
+- Young worm (chawki) rounds, SMS, and the calendar.
+
+### Checks
+- Backend 3404 tests, frontend 2214 tests, `ruff`, `tsc`, ESLint and `npm run build` clean. One frontend test (`PublicLotPage` title) failed under full suite load and passes alone, as it did before.
+- A browser check on a scratch database with a supervisor, two farmers and the other cooperative's supervisor: making a round (three refusals first), opening it (lot code shown), requests with the over-limit refusal, the other cooperative getting 404, closing, the proposed split (4 of 3 boxes refused, more than asked refused), confirming, a receipt recorded for one farmer (damaged), the batch made (egg stage, the right room, the lot code, the round's harvest date), the other farmer confirming receipt (3 refused, 2 accepted), the round becoming done, a second round cancelled with a reason, and the farmer and supervisor screens in English, French and Kinyarwanda. It found one defect: a farmer whose rooms had no space was still offered "Request eggs", which could only fail. The card now says "None of your rooms has space for eggs now.", fixed with a test first. Not checked in the browser: the emails in a mail app, an admin's view (an admin sign in needs the second factor), and keyboard use of the new dialogs beyond what the shared dialog already does.
+- The French and Kinyarwanda texts are drafts for native review.
+- Migrations: `supply.0002_rounds_and_requests`, `batches.0005_batch_lot_code`. They only add things. Run `python manage.py migrate` (the build does it).
+
 ## Decisions inbox
 
 One screen where a supervisor or an admin decides what waits for them. It is the screen that room approval and the allowance were missing, so the three branches (`feature/room-approval`, `feature/allowance`, `feature/decisions-inbox`) now form one stack that can be merged. The plan is `docs/superpowers/plans/2026-11-06-decisions-inbox.md` (local only). It was built before step 3 of the egg supply design (rounds and requests), against the order in the design, because rooms and allowance could not ship without it. Step 3 adds egg requests to the same screen.
