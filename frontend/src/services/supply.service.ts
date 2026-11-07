@@ -144,6 +144,29 @@ export interface RoundFacts {
   expectedHarvestDate: string;
 }
 
+export type OnboardingState = string;
+
+/** One step of a new farmer's getting started list. The page words each state, and `detail` holds what the words need. */
+export interface OnboardingStep {
+  key: 'cooperative' | 'farm' | 'room' | 'eggs';
+  state: OnboardingState;
+  detail: {
+    farmId?: string;
+    waitingFor?: string[];
+    note?: string;
+    roundName?: string;
+    boxes?: number;
+    deliveryDate?: string;
+    deliveryPlace?: string;
+  };
+}
+
+export interface Onboarding {
+  /** True when the farmer is past every step, so the list is not shown. */
+  complete: boolean;
+  steps: OnboardingStep[];
+}
+
 export interface SupplySettings {
   starterBoxes: number;
   /** Room space one box of eggs needs, in square metres. Null until a sericulture officer says. */
@@ -203,6 +226,8 @@ export const supplyService = {
     api.post<ApiResponse<{ round: SupplyRound; total: number }>>(`/supply/rounds/${id}/confirm`, { items }),
 
   notCollected: (requestId: string) => api.post<ApiResponse<{ id: string; status: string }>>(`/supply/requests/${requestId}/not-collected`),
+
+  onboarding: () => api.get<ApiResponse<Onboarding>>('/supply/onboarding'),
 
   getSettings: (cooperativeId?: string) =>
     api.get<ApiResponse<SupplySettings>>('/supply/settings', { params: cooperativeId ? { cooperativeId } : undefined }),

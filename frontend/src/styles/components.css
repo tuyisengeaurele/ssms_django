@@ -1120,6 +1120,17 @@ tr.is-off td:last-child { opacity: 1; }
 .first-run-steps { margin: 0 0 20px; padding-left: 22px; color: var(--text); line-height: 1.6; }
 .first-run-steps li + li { margin-top: 8px; }
 
+/* ── Getting started list (farmer dashboard) ──────────────────────────────── */
+.onboarding-steps { list-style: none; margin: 0; padding: 0; }
+.onboarding-steps > li { display: grid; grid-template-columns: 84px 1fr; gap: 12px; align-items: start; padding: 12px 0; border-top: 1px solid var(--border-light); }
+.onboarding-steps > li:first-child { border-top: 0; }
+.onboarding-mark { display: inline-block; padding: 2px 8px; border: 1px solid var(--border-light); border-radius: 999px; color: var(--text-muted); font-size: 0.78rem; font-weight: 600; text-align: center; }
+.onboarding-steps > li[data-mark='done'] .onboarding-mark { color: var(--primary); border-color: currentColor; }
+.onboarding-steps > li[data-mark='next'] .onboarding-mark,
+.onboarding-steps > li[data-mark='waiting'] .onboarding-mark { background: var(--primary-fill); border-color: var(--primary-fill); color: var(--on-fill); }
+.onboarding-steps > li[data-mark='later'] { opacity: 0.85; }
+@media (max-width: 480px) { .onboarding-steps > li { grid-template-columns: 1fr; gap: 4px; } }
+
 /* ── Farm risk ranking (supervisor dashboard) ─────────────────────────────── */
 .risk-list { list-style: none; margin: 0; padding: 0; }
 .risk-list > li { display: grid; gap: 6px; padding: 14px 20px; border-top: 1px solid var(--border-light); }
