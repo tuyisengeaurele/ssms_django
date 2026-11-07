@@ -15,7 +15,7 @@ from core.utils import api_error, api_success
 from farms.models import RearingRoom
 from users.models import User
 
-from . import allowance, notify
+from . import allowance, notify, onboarding
 from .capacity import farmer_capacity_boxes, room_capacity_boxes
 from .models import AllowanceChange, AllowanceRequest, SupplySettings
 
@@ -71,6 +71,15 @@ class AllowanceView(APIView):
 
     def get(self, request):
         return api_success(_card(request.user))
+
+
+class OnboardingView(APIView):
+    """GET /api/supply/onboarding, the getting started checklist of the farmer."""
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'onboarding'
+
+    def get(self, request):
+        return api_success(onboarding.steps(request.user))
 
 
 class AllowanceRequestListView(APIView):

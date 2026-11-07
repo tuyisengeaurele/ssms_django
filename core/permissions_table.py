@@ -72,6 +72,8 @@ PERMISSIONS: dict[str, dict[str, frozenset]] = {
         'read_current': FARMER_ONLY, 'request': FARMER_ONLY, 'cancel': FARMER_ONLY, 'receive': ALL,
         'read': STAFF, 'create': STAFF, 'update': STAFF, 'action': STAFF, 'proposal': STAFF, 'confirm': STAFF, 'not_collected': STAFF,
     },
+    # A new farmer's getting started checklist, worked out from their own records.
+    'onboarding': {'read': FARMER_ONLY},
     # The cooperative's egg supply settings. Staff read them, only an admin changes them.
     'supply_settings': {'read': STAFF, 'update': ADMIN_ONLY},
     'locations': {'read': ALL, 'locate': ALL},
