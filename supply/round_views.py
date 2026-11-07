@@ -15,7 +15,7 @@ from core.permissions import RolePermission
 from core.utils import api_error, api_success
 from farms.models import RearingRoom
 
-from . import rounds
+from . import round_notify, rounds
 from .limits import request_limit
 from .models import EggRequest, SupplyRound
 from .rounds import staff_rounds as _staff_rounds
@@ -133,6 +133,7 @@ class RoundActionView(APIView):
         if found is None:
             return api_error('We could not find that round.', 404)
         name = request.data.get('action')
+        affected = []
         try:
             if name == 'open':
                 done, detail = rounds.open_round(found, request.user), f'Opened the supply round {found.name} (lot {found.lot_code})'
@@ -141,7 +142,7 @@ class RoundActionView(APIView):
             elif name == 'cancel':
                 note = request.data.get('note') or ''
                 done, detail = None, f'Cancelled the supply round {found.name}: {str(note).strip()}'
-                rounds.cancel_round(found, request.user, note)
+                affected = rounds.cancel_round(found, request.user, note)
                 done = SupplyRound.objects.get(pk=found.pk)
             elif name in ('pause', 'resume'):
                 done, detail = rounds.set_paused(found, name == 'pause'), f'{"Paused" if name == "pause" else "Resumed"} the supply round {found.name}'
@@ -150,6 +151,10 @@ class RoundActionView(APIView):
         except rounds.RoundError as error:
             return _fail(error)
         log_action(request, 'UPDATE', 'SupplyRound', found.pk, detail)
+        if name == 'open':
+            round_notify.tell_farmers_round_open(done)
+        elif name == 'cancel':
+            round_notify.tell_cancelled(done, affected, str(request.data.get('note') or '').strip())
         return api_success(_round_row(done), 'Done.')
 
 
@@ -190,6 +195,8 @@ class RoundConfirmView(APIView):
         decided = list(done.requests.exclude(status__in=[Req.CANCELLED]).select_related('farmer', 'decided_by'))
         total = sum(q.boxes_approved or 0 for q in decided)
         log_action(request, 'UPDATE', 'SupplyRound', done.pk, f'Confirmed the split of {done.name}: {total} of {done.stock_boxes} boxes for {len(decided)} requests')
+        for q in decided:
+            round_notify.tell_decision(q, done)
         return api_success({'round': _round_row(done), 'total': total}, 'Split confirmed.')
 
 
@@ -305,4 +312,6 @@ class EggRequestReceiptView(APIView):
         found.refresh_from_db()
         who = '' if user.pk == found.farmer_id else f' for {found.farmer.name}'
         log_action(request, 'UPDATE', 'EggRequest', found.pk, f'Received {found.boxes_received} boxes of lot {found.round.lot_code}{who} ({found.condition})')
+        if user.pk != found.farmer_id:
+            round_notify.tell_received_for(found, user)
         return api_success({'id': found.pk, 'status': found.status, 'boxes_received': found.boxes_received, 'batch_id': batch.pk}, 'Eggs received.', 201)
