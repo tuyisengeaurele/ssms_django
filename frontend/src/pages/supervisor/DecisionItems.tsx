@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { WaitingRoom } from '../../services/room.service';
-import { AllowanceEvidence, SupplyRound, WaitingAllowanceRequest, supplyService } from '../../services/supply.service';
+import { AllowanceEvidence, EarnedAllowance, SupplyRound, WaitingAllowanceRequest, supplyService } from '../../services/supply.service';
 import { boxesText } from '../../utils/boxes';
 import { fill } from '../../utils/fill';
 import Avatar from '../../components/ui/Avatar';
@@ -18,6 +18,11 @@ export interface RequestActions {
   approve: () => Promise<void>;
   approveAmount: (boxes: number, note: string) => Promise<string | null>;
   decline: (note: string) => Promise<string | null>;
+}
+
+export interface EarnedActions {
+  approve: () => Promise<void>;
+  dismiss: () => Promise<void>;
 }
 
 function Person({ name, email }: { name: string; email: string }) {
@@ -103,6 +108,33 @@ function Evidence({ data }: { data: AllowanceEvidence }) {
       <h3 className="decision-evidence-title">{t('dcsRooms')}</h3>
       {data.rooms.length === 0 ? <p className="cell-sub">{t('dcsNoRooms')}</p> : <ul>{data.rooms.map((r) => <li key={r.id}>{roomLine(t, r)}</li>)}</ul>}
     </div>
+  );
+}
+
+/** A farmer who finished a lot in good order and may have earned one more box. One click either way, no form. */
+export function EarnedItem({ earned, actions }: { earned: EarnedAllowance; actions: EarnedActions }) {
+  const { t } = useLanguage();
+  const [busy, setBusy] = useState(false);
+  const run = async (action: () => Promise<void>) => {
+    setBusy(true);
+    await action();
+    setBusy(false);
+  };
+  return (
+    <li className="decision">
+      <Person name={earned.farmer.name} email={earned.farmer.email} />
+      <div className="decision-body">
+        <span className="badge badge-gray">{t('dcsKindAllowance')}</span>
+        <p className="decision-title">{fill(t('dcsNudgeTitle'), { name: earned.farmer.name })}</p>
+        <p className="cell-sub cell-sub--wrap">
+          {fill(t('dcsNudgeBody'), { code: earned.batch.lotCode, suggested: boxesText(t, earned.suggestedBoxes), current: earned.currentBoxes })}
+        </p>
+      </div>
+      <div className="decision-actions">
+        <button className="btn btn-primary btn-sm" onClick={() => run(actions.approve)} disabled={busy}>{t('dcsApprove')}</button>
+        <button className="btn btn-secondary btn-sm" onClick={() => run(actions.dismiss)} disabled={busy}>{t('dcsNudgeNotNow')}</button>
+      </div>
+    </li>
   );
 }
 

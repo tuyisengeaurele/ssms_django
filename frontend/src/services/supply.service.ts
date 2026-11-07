@@ -37,6 +37,16 @@ export interface WaitingAllowanceRequest {
   farmer: { id: string; name: string; email: string };
 }
 
+/** One more box, suggested because a farmer finished a lot from a supply round in good order. */
+export interface EarnedAllowance {
+  id: string;
+  currentBoxes: number;
+  suggestedBoxes: number;
+  createdAt: string;
+  farmer: { id: string; name: string; email: string };
+  batch: { id: string; lotCode: string; harvestedAt: string };
+}
+
 /** What a supervisor looks at before deciding about a request: the farmer's card and their rooms. */
 export interface AllowanceEvidence extends Allowance {
   farmer: { id: string; name: string; email: string };
@@ -57,6 +67,8 @@ export interface DecisionCount {
   allowance: number;
   /** Rounds whose requests are closed and wait for the split. */
   rounds: number;
+  /** Earned allowances that wait for a yes or a no. */
+  nudges: number;
 }
 
 export type RoundStatus = 'draft' | 'open' | 'closed' | 'allocated' | 'done' | 'cancelled';
@@ -184,6 +196,13 @@ export const supplyService = {
   /** The requests that wait for the caller's decision, oldest first. An admin may narrow to one cooperative. */
   waiting: (params?: { cooperativeId?: string }) =>
     api.get<ApiResponse<{ requests: WaitingAllowanceRequest[]; count: number }>>('/supply/allowance/requests', { params }),
+
+  /** The earned allowances that wait for the caller, oldest first. */
+  suggestions: (params?: { cooperativeId?: string }) =>
+    api.get<ApiResponse<{ suggestions: EarnedAllowance[]; count: number }>>('/supply/suggestions', { params }),
+
+  decideSuggestion: (id: string, decision: 'approve' | 'dismiss') =>
+    api.post<ApiResponse<{ id: string; status: string }>>(`/supply/suggestions/${id}/decision`, { decision }),
 
   decide: (id: string, data: { decision: 'approve' | 'decline'; boxes?: number; note?: string }) =>
     api.post<ApiResponse<{ id: string; status: string; boxesGranted: number | null }>>(`/supply/allowance/requests/${id}/decision`, data),
