@@ -1330,3 +1330,8 @@ tr.is-off td:last-child { opacity: 1; }
   .decision { grid-template-columns: 1fr; }
   .decision-actions { justify-content: flex-start; }
 }
+
+/* The egg supply card: a short timeline of one request */
+.supply-steps { list-style: none; margin: 12px 0 0; padding: 0 0 0 14px; border-left: 2px solid var(--border-light); display: grid; gap: 6px; }
+.supply-steps li { margin: 0; }
+.supply-steps li[aria-current="step"] { font-weight: 600; }

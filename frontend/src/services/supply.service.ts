@@ -55,6 +55,93 @@ export interface DecisionCount {
   count: number;
   rooms: number;
   allowance: number;
+  /** Rounds whose requests are closed and wait for the split. */
+  rounds: number;
+}
+
+export type RoundStatus = 'draft' | 'open' | 'closed' | 'allocated' | 'done' | 'cancelled';
+
+/** A scheduled supply of eggs. */
+export interface SupplyRound {
+  id: string;
+  name: string;
+  stockBoxes: number;
+  requestDeadline: string;
+  deliveryDate: string;
+  deliveryPlace: string;
+  expectedHarvestDate: string;
+  lotCode: string | null;
+  /** An open round past its deadline already reads as closed. */
+  status: RoundStatus;
+  paused: boolean;
+  createdAt: string;
+  allocatedAt: string | null;
+  requestCount?: number;
+  approvedBoxes?: number;
+}
+
+export type EggRequestStatus = 'submitted' | 'approved' | 'part_approved' | 'waitlisted' | 'declined' | 'received' | 'not_collected' | 'cancelled';
+
+/** A farmer's ask inside a round. */
+export interface EggRequestRow {
+  id: string;
+  status: EggRequestStatus;
+  boxesAsked: number;
+  note: string;
+  boxesApproved: number | null;
+  decisionNote: string;
+  boxesReceived: number | null;
+  condition: '' | 'good' | 'damaged';
+  receivedAt: string | null;
+  batchId: string | null;
+  createdAt: string;
+  farmer: { id: string; name: string; email: string };
+  room: { id: string; name: string };
+  farm: { id: string; name: string };
+}
+
+/** What a farmer may ask for with one room, and which bound sets it. */
+export interface RoomLimit {
+  id: string;
+  name: string;
+  farmName: string;
+  limit: number;
+  allowance: number;
+  /** Null while the space one box needs is not set, or the room has no size. */
+  roomFree: number | null;
+  stock: number;
+  binding: 'allowance' | 'room' | 'stock';
+}
+
+export interface CurrentRound {
+  round: SupplyRound | null;
+  myRequest: EggRequestRow | null;
+  rooms: RoomLimit[];
+}
+
+/** One line of the split the system proposes, which the supervisor may edit. */
+export interface SplitRow {
+  id: string;
+  farmer: { id: string; name: string; email: string };
+  room: { id: string; name: string };
+  asked: number;
+  allowance: number;
+  roomFree: number | null;
+  ceiling: number;
+  proposed: number;
+  note: string;
+  createdAt: string;
+}
+
+export interface RoundFacts {
+  name: string;
+  stockBoxes: number;
+  /** An ISO date and time. */
+  requestDeadline: string;
+  /** A date, YYYY-MM-DD. */
+  deliveryDate: string;
+  deliveryPlace: string;
+  expectedHarvestDate: string;
 }
 
 export interface SupplySettings {
@@ -87,6 +174,35 @@ export const supplyService = {
 
   /** How many things wait for the caller's decision. The route is the team's, because a supervisor's team is the scope. */
   decisionCount: (params?: { cooperativeId?: string }) => api.get<ApiResponse<DecisionCount>>('/team/decisions', { params }),
+
+  currentRound: () => api.get<ApiResponse<CurrentRound>>('/supply/rounds/current'),
+
+  requestEggs: (roundId: string, data: { roomId: string; boxes: number; note?: string }) =>
+    api.post<ApiResponse<{ id: string; boxesAsked: number; status: string }>>(`/supply/rounds/${roundId}/requests`, data),
+
+  cancelRequest: (id: string) => api.delete<ApiResponse<null>>(`/supply/requests/${id}`),
+
+  /** The farmer, or a supervisor for them, says how many boxes arrived and in what state. This starts the batch. */
+  receive: (id: string, data: { boxes: number; condition: 'good' | 'damaged' }) =>
+    api.post<ApiResponse<{ id: string; status: string; boxesReceived: number; batchId: string }>>(`/supply/requests/${id}/receipt`, data),
+
+  listRounds: (params?: { cooperativeId?: string }) => api.get<ApiResponse<{ rounds: SupplyRound[] }>>('/supply/rounds', { params }),
+
+  createRound: (data: RoundFacts & { cooperativeId?: string }) => api.post<ApiResponse<SupplyRound>>('/supply/rounds', data),
+
+  getRound: (id: string) => api.get<ApiResponse<{ round: SupplyRound; requests: EggRequestRow[] }>>(`/supply/rounds/${id}`),
+
+  updateRound: (id: string, data: Partial<RoundFacts>) => api.patch<ApiResponse<SupplyRound>>(`/supply/rounds/${id}`, data),
+
+  roundAction: (id: string, data: { action: 'open' | 'close' | 'cancel' | 'pause' | 'resume'; note?: string }) =>
+    api.post<ApiResponse<SupplyRound>>(`/supply/rounds/${id}/action`, data),
+
+  roundProposal: (id: string) => api.get<ApiResponse<{ requests: SplitRow[]; stock: number; total: number }>>(`/supply/rounds/${id}/proposal`),
+
+  confirmRound: (id: string, items: { id: string; boxes: number; declineNote?: string }[]) =>
+    api.post<ApiResponse<{ round: SupplyRound; total: number }>>(`/supply/rounds/${id}/confirm`, { items }),
+
+  notCollected: (requestId: string) => api.post<ApiResponse<{ id: string; status: string }>>(`/supply/requests/${requestId}/not-collected`),
 
   getSettings: (cooperativeId?: string) =>
     api.get<ApiResponse<SupplySettings>>('/supply/settings', { params: cooperativeId ? { cooperativeId } : undefined }),
