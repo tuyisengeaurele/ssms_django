@@ -36,8 +36,8 @@ describe('QuickActions', () => {
   it('offers an admin the places they run', () => {
     open('ADMIN');
     expect(summary()).toEqual([
-      ['Users', '/admin/users'], ['Cooperatives', '/admin/cooperatives'], ['Messages', '/admin/contacts'],
-      ['System', '/admin/system'], ['Disease checks', '/detections/reports'], ['Farm monitoring', '/supervisor'],
+      ['Users', '/admin/users'], ['Cooperatives', '/admin/cooperatives'], ['Messages', '/admin/contacts'], ['System', '/admin/system'],
+      ['Alerts', '/alerts'], ['Audit log', '/admin/system/logs'], ['Disease checks', '/detections/reports'], ['Farm monitoring', '/supervisor'],
     ]);
   });
 

@@ -44,13 +44,15 @@ const ACTIONS: Record<Role, Action[]> = {
     { to: '/admin/cooperatives', label: 'ptCooperatives', icon: 'cooperatives' },
     { to: '/admin/contacts', label: 'ptMessages', icon: 'messages' },
     { to: '/admin/system', label: 'ptSystem', icon: 'systemReport' },
+    { to: '/alerts', label: 'ptAlerts', icon: 'alerts', count: 'alerts' },
+    { to: '/admin/system/logs', label: 'ptAudit', icon: 'audit' },
     { to: '/detections/reports', label: 'ptDetectionReports', icon: 'detections' },
     { to: '/supervisor', label: 'ptFarmMonitoring', icon: 'farms' },
   ],
 };
 
 /**
- * The places a person goes most, one tap from their dashboard. Six per role, in the order that matters to them, each
+ * The places a person goes most, one tap from their dashboard. Six to eight per role, in the order that matters to them, each
  * named with the same word as the sidebar. A number appears only for what is waiting, and it is part of the link's name.
  */
 export default function QuickActions({ role, counts = {} }: { role: Role; counts?: Partial<Record<Count, number>> }) {

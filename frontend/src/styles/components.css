@@ -525,27 +525,6 @@ td .cell-muted { color: var(--text-muted); }
 .cell-trim { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .panel-loading { display: grid; place-items: center; padding: 48px; color: var(--text-muted); }
 
-/* A list of links with a line icon, a title and one sentence */
-.action-list { margin: 0; padding: 0; list-style: none; }
-.action-list li + li { border-top: 1px solid var(--border-light); }
-
-.action-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 24px;
-  transition: background-color 0.25s var(--ease-out);
-}
-
-.action-row:hover { background: var(--row-hover); }
-.action-row-icon { flex-shrink: 0; color: var(--primary); }
-
-.action-row-text { display: flex; flex: 1; flex-direction: column; min-width: 0; gap: 2px; }
-.action-row-title { color: var(--ink); font-weight: 600; font-size: 0.95rem; }
-.action-row-hint { color: var(--text-muted); font-size: 0.84rem; }
-.action-row-go { flex-shrink: 0; color: var(--text-faint); transition: transform 0.3s var(--ease-out), color 0.3s var(--ease-out); }
-.action-row:hover .action-row-go { color: var(--ink); transform: translateX(3px); }
-
 .admin-split { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; }
 @media (max-width: 960px) { .admin-split { grid-template-columns: minmax(0, 1fr); } }
 

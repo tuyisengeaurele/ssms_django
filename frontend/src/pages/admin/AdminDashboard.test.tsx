@@ -13,7 +13,9 @@ const farms = vi.hoisted(() => [
 const getFarms = vi.hoisted(() => vi.fn());
 const getAlerts = vi.hoisted(() => vi.fn());
 const getDecisions = vi.hoisted(() => vi.fn());
+const getEvents = vi.hoisted(() => vi.fn());
 vi.mock('../../services/supply.service', () => ({ supplyService: { decisionCount: getDecisions } }));
+vi.mock('../../services/calendar.service', () => ({ calendarService: { events: getEvents } }));
 vi.mock('../../services/farm.service', () => ({ farmService: { getAll: getFarms } }));
 vi.mock('../../services/alert.service', () => ({ alertService: { getAll: getAlerts } }));
 
@@ -34,6 +36,7 @@ beforeEach(() => {
   setReducedMotion(true);
   getFarms.mockResolvedValue({ data: { data: farms } });
   getAlerts.mockResolvedValue({ data: { data: [{ id: 'a1' }, { id: 'a2' }, { id: 'a3' }] } });
+  getEvents.mockResolvedValue({ data: { data: { events: [], from: '', to: '', truncated: false } } });
   getDecisions.mockResolvedValue({ data: { data: { count: 2, rooms: 1, allowance: 1 } } });
 });
 
@@ -52,9 +55,11 @@ describe('Admin dashboard, decisions', () => {
 });
 
 describe('Admin dashboard', () => {
-  it('has one title, a subtitle and two main actions', async () => {
+  it('has one title and offers each place once, as a quick action', async () => {
     open();
     expect(screen.getByRole('heading', { level: 1, name: 'Admin Dashboard' })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Users' })).toHaveLength(1);
+    expect(screen.getAllByRole('link', { name: 'Farm monitoring' })).toHaveLength(1);
     expect(screen.getByRole('link', { name: 'Users' })).toHaveAttribute('href', '/admin/users');
     expect(screen.getByRole('link', { name: 'Farm monitoring' })).toHaveAttribute('href', '/supervisor');
     await waitFor(() => expect(getFarms).toHaveBeenCalled());
@@ -85,12 +90,28 @@ describe('Admin dashboard', () => {
     expect(screen.getByRole('link', { name: "Serge's farm" })).toHaveAttribute('href', '/farms/f2');
   });
 
-  it('offers quick actions as a list of links', async () => {
+  it('offers quick actions as a list of links, with the unread alerts counted', async () => {
     open();
     await screen.findByText('Total farms');
-    const list = screen.getByRole('list', { name: 'Quick actions' });
-    const links = within(list).getAllByRole('link').map((a) => a.getAttribute('href'));
-    expect(links).toEqual(['/admin/users', '/detections/reports', '/supervisor', '/farms/new', '/alerts', '/admin/system/logs']);
+    const nav = screen.getByRole('navigation', { name: 'Quick actions' });
+    const links = within(nav).getAllByRole('link').map((a) => a.getAttribute('href'));
+    expect(links).toEqual(['/admin/users', '/admin/cooperatives', '/admin/contacts', '/admin/system', '/alerts', '/admin/system/logs', '/detections/reports', '/supervisor']);
+    expect(await within(nav).findByRole('link', { name: /Alerts.*3/ })).toBeInTheDocument();
+  });
+
+  it('puts the calendar in a rail beside the numbers and the farm list', async () => {
+    const { container } = open();
+    await screen.findByText('Total farms');
+    expect(container.querySelector('.dash-main')!.contains(screen.getByText('Total farms'))).toBe(true);
+    expect(container.querySelector('.dash-rail')!.contains(screen.getByRole('region', { name: 'Calendar' }))).toBe(true);
+  });
+
+  it('still shows the numbers and the farms when the calendar cannot load', async () => {
+    getEvents.mockRejectedValue(new Error('down'));
+    open();
+    expect(await screen.findByText('We could not load the calendar.')).toBeInTheDocument();
+    expect(screen.getByText('Total farms')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: "Serge's farm" })).toBeInTheDocument();
   });
 
   it('says so, kindly, when there are no farms', async () => {
