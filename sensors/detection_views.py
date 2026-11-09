@@ -249,6 +249,8 @@ class DetectionHistoryView(APIView):
                     'batch_id': d.batch_id,
                     'farm_name': d.batch.farm.name if d.batch and d.batch.farm else ',',
                     'farm_id': d.batch.farm_id if d.batch else None,
+                    # So a disease leads to the other batches of the same lot of eggs. Empty for a batch started by hand.
+                    'lot_code': d.batch.lot_code if d.batch else '',
                     'notes': d.notes,
                     'is_correct': d.is_correct,
                     'actual_result': d.actual_result,

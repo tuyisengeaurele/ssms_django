@@ -28,7 +28,7 @@ class BatchListSerializer(serializers.ModelSerializer):
         model = Batch
         fields = [
             'id', 'farm_id', 'stage', 'start_date', 'expected_harvest_date',
-            'notes', 'breed', 'quantity', 'quantity_unit', 'room', 'is_active', 'created_at', 'updated_at', 'counts',
+            'notes', 'breed', 'quantity', 'quantity_unit', 'lot_code', 'room', 'is_active', 'created_at', 'updated_at', 'counts',
         ]
 
     def get_counts(self, obj):
@@ -61,7 +61,7 @@ class BatchDetailSerializer(serializers.ModelSerializer):
         model = Batch
         fields = [
             'id', 'farm_id', 'stage', 'start_date', 'expected_harvest_date',
-            'notes', 'breed', 'quantity', 'quantity_unit', 'room', 'room_stays', 'is_active', 'created_at', 'updated_at',
+            'notes', 'breed', 'quantity', 'quantity_unit', 'lot_code', 'room', 'room_stays', 'is_active', 'created_at', 'updated_at',
             'farm', 'disease_detections', 'sensor_readings', 'alert_logs', 'mortality_total',
         ]
 
