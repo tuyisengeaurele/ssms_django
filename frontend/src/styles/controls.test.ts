@@ -25,7 +25,20 @@ const rule = (selector: string) => {
   return found ? found[0] : '';
 };
 
-const motion = block(components, '@media (prefers-reduced-motion: no-preference)');
+/** Every block that starts at `header`. A stylesheet may keep its motion in more than one place. */
+function allBlocks(source: string, header: string): string[] {
+  const found: string[] = [];
+  let from = 0;
+  for (;;) {
+    const text = block(source.slice(from), header);
+    if (!text) return found;
+    found.push(text);
+    from += source.slice(from).indexOf(text) + text.length;
+  }
+}
+
+const motionBlocks = allBlocks(components, '@media (prefers-reduced-motion: no-preference)');
+const motion = motionBlocks.join('\n');
 
 describe('buttons', () => {
   const variants = ['.btn-primary', '.btn-secondary', '.btn-ghost', '.btn-danger', '.btn-outline-primary'];
@@ -40,7 +53,7 @@ describe('buttons', () => {
 
   it('presses in a little, and only for people who have not asked for less motion', () => {
     expect(motion).toMatch(/\.btn:active:not\(:disabled\)\s*\{[^}]*transform:\s*scale\(0\.98\)/);
-    expect(components.replace(motion, '')).not.toMatch(/\.btn:active[^{]*\{[^}]*transform/);
+    expect(motionBlocks.reduce((rest, text) => rest.replace(text, ''), components)).not.toMatch(/\.btn:active[^{]*\{[^}]*transform/);
   });
 
   it('draws the danger button from tokens, so it reads in both themes', () => {

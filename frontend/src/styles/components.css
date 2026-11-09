@@ -40,9 +40,9 @@
 .table-container,
 .chart-card {
   background: var(--surface);
-  border: 1px solid var(--border-light);
+  border: 0;
   border-radius: 20px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--elev-raised);
 }
 
 .card { padding: 24px; }
@@ -50,12 +50,15 @@
 
 .card-hover {
   cursor: pointer;
-  transition: box-shadow 0.4s var(--ease-out), border-color 0.4s var(--ease-out);
+  transition: box-shadow var(--duration-slow) var(--ease-out), transform var(--duration-normal) var(--ease-out);
 }
 
-.card-hover:hover {
-  border-color: var(--border);
-  box-shadow: var(--shadow-md);
+/* Only a card that can be clicked reacts to the pointer. */
+.card-hover:hover { box-shadow: var(--elev-floating); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .card-hover:hover { transform: translateY(-1px); }
+  .card-hover:active { transform: translateY(0); }
 }
 
 .panel,
@@ -76,7 +79,7 @@
 
 .panel-title,
 .table-header > p:first-child {
-  font: 500 1.15rem var(--font-display);
+  font: 500 var(--text-lg) / var(--leading-snug) var(--font-display);
   letter-spacing: -0.01em;
   color: var(--ink);
 }
@@ -98,16 +101,14 @@
   gap: 4px;
   padding: 20px 22px 18px;
   background: var(--surface);
-  border: 1px solid var(--border-light);
+  border: 0;
   border-radius: 20px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--elev-raised);
   overflow: hidden;
 }
 
 .stat-tile-label {
-  font: 600 0.7rem var(--font-ui);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font: 500 var(--text-sm) / var(--leading-snug) var(--font-ui);
   color: var(--text-muted);
 }
 
@@ -363,10 +364,9 @@ th {
   border-bottom: 1px solid var(--border-light);
   background: transparent;
   color: var(--text-muted);
-  font: 600 0.68rem var(--font-ui);
-  letter-spacing: 0.14em;
+  font: 500 var(--text-xs) / var(--leading-snug) var(--font-ui);
+  letter-spacing: 0.02em;
   text-align: left;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -375,6 +375,7 @@ td {
   border-bottom: 1px solid var(--border-light);
   color: var(--text-2);
   font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
   vertical-align: middle;
 }
 
@@ -387,7 +388,7 @@ td .cell-muted { color: var(--text-muted); }
 
 /* On a laptop the card is narrower than the table wants to be, so the cells give up some padding first. */
 @media (max-width: 1280px) {
-  th { padding: 12px 14px; letter-spacing: 0.1em; }
+  th { padding: 12px 14px; }
   td { padding: 12px 14px; }
 }
 
