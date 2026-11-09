@@ -87,11 +87,14 @@ All responses follow the envelope: `{ "success": bool, "message": str, "data": a
 
 ## Demo Accounts
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@ssms.rw | Admin@1234 |
-| Supervisor | supervisor@ssms.rw | Farmer@1234 |
-| Farmer | farmer@ssms.rw | Farmer@1234 |
+There are no fixed demo logins. Build the demo data with a command and it prints the sign in details once:
+
+```bash
+python manage.py seed_demo            # a month of data, a strong random password is printed at the end
+python manage.py seed_demo --reset    # throw the demo data away and build it again
+```
+
+It makes one supervisor (`supervisor@demo.ssms.rw`) and three farmers (`farmer1@demo.ssms.rw` to `farmer3@demo.ssms.rw`) in a demo cooperative. Only those rows are touched. There is no demo admin: make your own with `python manage.py createsuperuser`.
 
 ## Roles & Permissions
 
