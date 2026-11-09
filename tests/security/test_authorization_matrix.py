@@ -294,6 +294,7 @@ ROWS = [
     Row('list the earned allowances', 'GET', lambda w: '/api/supply/suggestions', staff_with_coop_expectation()),
     Row('decide an unknown earned allowance', 'POST', lambda w: '/api/supply/suggestions/nope/decision', expect(NOBODY, role_denied=FARMERS),
         body=lambda w: {'decision': 'approve'}),
+    Row('read the farm calendar', 'GET', lambda w: '/api/calendar', expect(set(ACTORS) - {'anonymous', 'inactive_farmer'})),
     Row('trace an unknown lot of eggs', 'GET', lambda w: '/api/supply/lots/L0000-ZZZZ', expect(NOBODY, role_denied=FARMERS)),
     Row('read the current supply round', 'GET', lambda w: '/api/supply/rounds/current', expect(set(FARMERS), role_denied=[*SUPERVISORS, 'admin'])),
     Row('list the supply rounds', 'GET', lambda w: '/api/supply/rounds', staff_with_coop_expectation()),

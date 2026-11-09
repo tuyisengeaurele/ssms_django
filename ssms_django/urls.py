@@ -3,6 +3,7 @@ from django.conf.urls.static import static
 from django.urls import include, path
 
 from contacts.urls import admin_urlpatterns as contacts_admin_urlpatterns
+from core.farm_calendar import CalendarView
 from core.utils import health_check
 from logs.views import LogsView
 from reports.health_views import SystemHealthHistoryView, SystemHealthTestView, SystemHealthView
@@ -13,6 +14,7 @@ handler500 = 'core.utils.server_error'
 
 urlpatterns = [
     path('api/health', health_check),
+    path('api/calendar', CalendarView.as_view()),   # GET the dated events of the farms a person may see
     path('api/auth/', include('users.urls')),          # /api/auth/register, /api/auth/login, /api/auth/me
     path('api/farms', include('farms.urls')),          # /api/farms, /api/farms/<id>
     path('api/batches', include('batches.urls')),      # /api/batches, /api/batches/<id>, ...
