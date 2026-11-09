@@ -438,7 +438,44 @@ A supervisor sees the batches of their own cooperative's farmers, an admin sees 
 | A batch shows "Not checked" although the farmer says they checked | the photo was not a clear silkworm, so the check was not kept | ask for a new photo |
 | The page says "We could not load this lot." | the API was asleep or unreachable | press Try again |
 
-## 18. If something fails
+## 18. API documentation
+
+The API describes itself in OpenAPI, and a Swagger page shows it. Nothing here needs a key and nothing is stored.
+
+**Where**
+
+- `/api/docs/` is the Swagger page. On the live site it is `https://ssms-django.vercel.app/api/docs/` (Vercel passes `/api` to Render).
+- `/api/schema/` is the OpenAPI JSON, for Postman, Insomnia or a client generator.
+- `python manage.py spectacular --file openapi.yaml` writes a YAML file.
+
+**What each route shows**
+
+What it does (from the view's own docstring), whether it needs a sign in (a lock), **who may call it** (Farmer, Supervisor, Admin, read from `core/permissions_table.py`, the table the server enforces), and the answers it can give. An error answer is listed only when it can happen: 401 on a signed in route, 403 when some role is refused, 404 when the path names a record, 422 on a write, 429 always. Every answer uses the same envelope, described once.
+
+The request and response bodies of individual routes are not listed, because the views build them as plain dictionaries. The description of a route holds the field names where the code says them.
+
+**To try a route**
+
+Press Authorize, paste the access token from `POST /api/auth/login` (the answer's `data.token`) and use "Try it out". An admin's token needs the second factor first. The page does not store the token.
+
+**Safety**
+
+- The page loads Swagger from files served by the API itself, so it needs no outside host. It has its own security policy with a script nonce that changes on every response, and the rest of the API keeps the strict `default-src 'none'`.
+- The schema holds no example values, so no credentials. A test checks that.
+- Only two files can be fetched under `/api/docs/assets/` (a fixed list). Anything else is 404.
+- The docs are open to anyone, like the route list in the README. To switch them off, set `API_DOCS_ENABLED=false` on Render. All three addresses then answer 404.
+
+**If something looks wrong**
+
+| What you see | Likely cause | What to do |
+|---|---|---|
+| `/api/docs/` is a blank page | the browser blocked the script, or a proxy removed the policy header | open the console. The page needs `script-src` with its nonce |
+| 404 on `/api/docs/` | `API_DOCS_ENABLED=false` | set it to true and redeploy |
+| "Try it out" answers 401 | no token, or it ended after 15 minutes | sign in again and paste a new token |
+| A new route is missing from the page | the page keeps the schema for the life of the process | restart or redeploy. A test fails if a route is not described |
+| `manage.py spectacular` prints warnings | a new view the generator cannot read | `tests/test_api_schema.py` fails on any warning. Fix the view |
+
+## 19. If something fails
 
 | What you see | Likely cause | Fix |
 |---|---|---|
