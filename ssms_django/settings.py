@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',   # JWT blacklist on logout
+    'drf_spectacular',   # the OpenAPI description of the API
     'corsheaders',
     'users',
     'cooperatives',
@@ -195,6 +196,7 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.MultiPartParser',
     ),
     'EXCEPTION_HANDLER': 'core.utils.custom_exception_handler',
+    'DEFAULT_SCHEMA_CLASS': 'core.api_schema.SsmsAutoSchema',
     # ── Rate limiting ──────────────────────────────────────────────────────────
     'DEFAULT_THROTTLE_CLASSES': [
         'core.throttles.AnonRateThrottle',
@@ -218,6 +220,34 @@ REST_FRAMEWORK = {
         'lot': '30/minute',   # strangers opening the page behind a lot's QR code
         'support': '5/hour',   # an admin asking to look at somebody's account
     },
+}
+
+# ── API documentation ─────────────────────────────────────────────────────────
+# The schema and the Swagger page at /api/schema/ and /api/docs/. Switch them off with API_DOCS_ENABLED=false.
+API_DOCS_ENABLED = config('API_DOCS_ENABLED', default=True, cast=bool)
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Smart Sericulture Management System API',
+    'VERSION': '1.0.0',
+    'DESCRIPTION': (
+        'The API behind the Smart Sericulture Management System.\n\n'
+        '**Answers.** Every answer is JSON in one envelope. A success is `{success: true, message, data}`. A refusal is '
+        '`{success: false, message, reference, errors?, code?}`: `reference` is a short code to quote to the team and `code` '
+        'tells cases apart. Field names are camelCase on the wire.\n\n'
+        '**Signing in.** `POST /api/auth/login` returns an access token. Send it as `Authorization: Bearer <token>`. '
+        'Access tokens are short, and a refresh cookie renews them. An admin also gives a code from an authenticator app.\n\n'
+        '**Who may call what.** Each operation lists the roles allowed (Farmer, Supervisor, Admin), read from the same table the '
+        'server enforces. Which records a role reaches is separate: a farmer their own, a supervisor their cooperative. A record '
+        'outside that reach answers 404.\n\n'
+        '**Limits.** Requests are rate limited, and a refusal for that is 429.'
+    ),
+    'SCHEMA_PATH_PREFIX': '/api',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'POSTPROCESSING_HOOKS': [
+        'drf_spectacular.contrib.djangorestframework_camel_case.camelize_serializer_fields',
+        'core.api_schema.add_plain_routes',
+    ],
 }
 
 SIMPLE_JWT = {
