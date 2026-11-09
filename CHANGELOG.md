@@ -1,5 +1,24 @@
 # Changelog
 
+## Farm calendar feed
+
+The first half of the farm calendar: one read route that lists the dated events of the farms a person may see. The calendar panel and the rebuilt dashboards use it and come next. The plan is `docs/superpowers/plans/2026-11-09-calendar.md` (local only), from the design agreed in phase 9 of the security and supply plan.
+
+### What it does
+`GET /api/calendar?from=YYYY-MM-DD&to=YYYY-MM-DD` answers `{events, from, to, truncated}`. Each event has a date, a kind, whether it is expected, and the batch, farm and a small detail the page needs to word it. The kinds are: batch started, harvest expected, stage changed, disease check, harvest recorded, round deadline and round delivery. Nothing is predicted. The only future harvest date is the one a person typed when they made the batch, because how long a cycle takes is not ours to guess.
+
+### How it is built
+- `core/farm_calendar.py` builds the events from records that already exist, narrowed by `core.access` like every other list: a farmer sees their own batches, a supervisor their cooperative's, an admin everything. An archived batch is left out with its checks and harvests. A draft or cancelled round is left out, and a farmer sees a delivery only for a round they have an approved, part approved or received request in.
+- The window is at most 100 days, both end days included, and defaults to the current month. A bad window answers 422 with a reason, like every other bad parameter. At most 500 events are returned, earliest first, and `truncated` says so.
+- The number of queries stays flat as batches grow (a test holds it). Naive dates from an older database are handled.
+- One new permission row (`calendar`, all roles) and a row in the authorization matrix. No migration, no new model.
+
+### Not built
+The panel and the dashboards (next). Events a person adds themselves (cleaning, leaf buying). Reminders by email or SMS. Calendar subscription files.
+
+### Checks
+Backend 3510 tests, `ruff` clean. The frontend is untouched in this step.
+
 ## UI foundation: one product in light and dark
 
 First step of the interface renewal (`docs/superpowers/specs/2026-11-09-ui-renewal-design.md` and the plan `2026-11-09-ui-foundation.md`, local only). The owner asked for a premium, consistent app, the whole app page by page, refining the identity that exists. This step changes only the shared layer, so every page picks it up. Dashboards, the calendar and the pages follow as their own pull requests.
