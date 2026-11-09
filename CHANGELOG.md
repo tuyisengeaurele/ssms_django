@@ -1,5 +1,29 @@
 # Changelog
 
+## UI foundation: one product in light and dark
+
+First step of the interface renewal (`docs/superpowers/specs/2026-11-09-ui-renewal-design.md` and the plan `2026-11-09-ui-foundation.md`, local only). The owner asked for a premium, consistent app, the whole app page by page, refining the identity that exists. This step changes only the shared layer, so every page picks it up. Dashboards, the calendar and the pages follow as their own pull requests.
+
+### What changed
+- **The dark theme matches the light one.** Light is warm paper with a forest ink sidebar and gold. Dark was neutral black with a black sidebar, so the two felt like different products. Dark is now "forest night": near black, tinted to the same green family at a very low chroma, with the forest ink sidebar and the same gold. This replaces the neutral black of the earlier dark theme PR (#103) on purpose; going back is one block of tokens in `index.css`.
+- **Scales.** Tokens for a type scale (eight steps, 15 px body), a 4 px spacing scale (twelve steps) and three elevation levels (flat, raised, floating) with an edge highlight that differs per theme.
+- **Controls.** Buttons have hover, pressed and keyboard focus states, press in by 2 percent, and take their times from the duration tokens. The danger button is drawn from tokens so it reads in both themes. Form fields show the focus ring for the keyboard as well as the mouse and are at least 44 px tall.
+- **Hierarchy.** Cards, panels, tiles and chart cards separate by a hairline, a top edge of light and a soft shadow, the same everywhere. Only a card that can be clicked reacts to the pointer. Tile and column labels are sentence case, and tile values and table cells use tabular figures.
+- **Motion.** Content rises in when a page opens (a 6 px lift and a fade, the first eight items stepping by 40 ms) on every page that uses the content stack. It moves only opacity and position. The loading skeleton card now matches the real card, so nothing jumps.
+- All motion is inside `prefers-reduced-motion: no-preference`, so a person who asked for less sees none of it.
+
+### How it is guarded
+Five style test files (`themeTokens`, `scales`, `controls`, `hierarchy`, `entrance`) read the stylesheets: text pairs at 4.5 to 1 in both themes, the dark tint, the sidebar and gold parity, the scales, the states of every button variant, tokens instead of raw colours, motion only for people who allow it. They fail if a later change breaks the rules.
+
+### Numbers
+Frontend 2307 tests. `tsc`, ESLint and `npm run build` clean. No backend change.
+
+### Checks
+Looked at in the browser in the dark theme (supervisor and farmer dashboards, a phone width form page): tiles and cards read cleanly, the sidebar is forest ink, the entrance runs and ends fully visible. The light theme was looked at before the control and hierarchy steps and is covered by the contrast tests after them, but not looked at again on screen. Not checked: French and Kinyarwanda wording (no words changed), keyboard use of every control, tablet width.
+
+### Not yet
+The supervisor and admin dashboards still use raw grids with inline spacing, so they have no entrance motion until their redesign. Hover and press feel on tables rows, tabs and the shell, and the calendar, come in the next steps.
+
 ## Lot tracing
 
 A disease on one farm now leads to every other farm that got the same lot of eggs. This is step 6, the last step of the egg supply design (`docs/superpowers/specs/2026-11-06-egg-supply-design.md`, local only). The plan is `docs/superpowers/plans/2026-11-09-lot-tracing.md` (local only). The branch `feature/lot-tracing` is cut from master.
