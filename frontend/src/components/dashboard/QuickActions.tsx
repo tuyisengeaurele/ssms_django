@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { Icon, IconName } from '../ui/Icon';
 
-type Role = 'FARMER' | 'SUPERVISOR' | 'ADMIN';
+/** `ADMIN_MONITOR` is an admin looking at every farm, on the page a supervisor uses for their own. */
+type Role = 'FARMER' | 'SUPERVISOR' | 'ADMIN' | 'ADMIN_MONITOR';
 type Count = 'alerts' | 'decisions';
 
 interface Action {
@@ -29,6 +30,14 @@ const ACTIONS: Record<Role, Action[]> = {
     { to: '/alerts', label: 'ptAlerts', icon: 'alerts', count: 'alerts' },
     { to: '/detections/reports', label: 'ptDetectionReports', icon: 'detections' },
     { to: '/batches/compare', label: 'ptCompare', icon: 'overview' },
+  ],
+  ADMIN_MONITOR: [
+    { to: '/decisions', label: 'ptDecisions', icon: 'inbox' },
+    { to: '/supply', label: 'ptSupply', icon: 'leaf' },
+    { to: '/alerts', label: 'ptAlerts', icon: 'alerts', count: 'alerts' },
+    { to: '/detections/reports', label: 'ptDetectionReports', icon: 'detections' },
+    { to: '/batches/compare', label: 'ptCompare', icon: 'overview' },
+    { to: '/admin/cooperatives', label: 'ptCooperatives', icon: 'cooperatives' },
   ],
   ADMIN: [
     { to: '/admin/users', label: 'ptUsers', icon: 'users' },

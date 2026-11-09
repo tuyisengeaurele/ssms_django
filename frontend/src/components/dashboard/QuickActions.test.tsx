@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import QuickActions from './QuickActions';
 
-const open = (role: 'FARMER' | 'SUPERVISOR' | 'ADMIN', counts?: { alerts?: number; decisions?: number }) => render(
+const open = (role: 'FARMER' | 'SUPERVISOR' | 'ADMIN' | 'ADMIN_MONITOR', counts?: { alerts?: number; decisions?: number }) => render(
   <MemoryRouter><LanguageProvider><QuickActions role={role} counts={counts} /></LanguageProvider></MemoryRouter>,
 );
 const links = () => within(screen.getByRole('navigation', { name: 'Quick actions' })).getAllByRole('link');
@@ -39,6 +39,15 @@ describe('QuickActions', () => {
       ['Users', '/admin/users'], ['Cooperatives', '/admin/cooperatives'], ['Messages', '/admin/contacts'],
       ['System', '/admin/system'], ['Disease checks', '/detections/reports'], ['Farm monitoring', '/supervisor'],
     ]);
+  });
+
+  it('offers an admin looking at every farm what a supervisor has, with the cooperatives', () => {
+    open('ADMIN_MONITOR', { alerts: 4 });
+    expect(summary()).toEqual([
+      ['Decisions', '/decisions'], ['Supply', '/supply'], ['Alerts', '/alerts'],
+      ['Disease checks', '/detections/reports'], ['Compare batches', '/batches/compare'], ['Cooperatives', '/admin/cooperatives'],
+    ]);
+    expect(screen.getByRole('link', { name: /Alerts.*4/ })).toBeInTheDocument();
   });
 
   it('shows how many alerts and decisions wait, as text and in the name of the link', () => {

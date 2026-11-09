@@ -9,8 +9,9 @@ import { setReducedMotion } from '../../test/setup';
 const auth = vi.hoisted(() => ({ user: { id: 'u', role: 'ADMIN', cooperativeId: null as string | null, cooperativeName: null as string | null } }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
 
-const api = vi.hoisted(() => ({ decisions: vi.fn(), farms: vi.fn(), risk: vi.fn(), alerts: vi.fn(), chart: vi.fn(), active: vi.fn(), recent: vi.fn(), ticketUrl: vi.fn() }));
+const api = vi.hoisted(() => ({ decisions: vi.fn(), farms: vi.fn(), risk: vi.fn(), alerts: vi.fn(), chart: vi.fn(), active: vi.fn(), recent: vi.fn(), ticketUrl: vi.fn(), events: vi.fn() }));
 vi.mock('../../services/supply.service', () => ({ supplyService: { decisionCount: api.decisions } }));
+vi.mock('../../services/calendar.service', () => ({ calendarService: { events: api.events } }));
 vi.mock('../../services/farm.service', () => ({ farmService: { getAll: api.farms, getRisk: api.risk } }));
 vi.mock('../../services/alert.service', () => ({ alertService: { getAll: api.alerts }, getAlertStreamUrl: api.ticketUrl }));
 vi.mock('../../services/sensor.service', () => ({
@@ -60,6 +61,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   setReducedMotion(true);
   auth.user = { id: 'u', role: 'ADMIN', cooperativeId: null, cooperativeName: null };
+  api.events.mockResolvedValue({ data: { data: { events: [], from: '', to: '', truncated: false } } });
   api.decisions.mockResolvedValue({ data: { data: { count: 1, rooms: 1, allowance: 0 } } });
   api.farms.mockResolvedValue({ data: { data: [{ id: 'f1' }, { id: 'f2' }, { id: 'f3' }] } });
   api.risk.mockResolvedValue({
@@ -82,6 +84,46 @@ beforeEach(() => {
 });
 
 const tile = (label: string) => screen.getAllByText(label).map((e) => e.closest('.stat-tile')).find(Boolean) as HTMLElement;
+
+describe('Supervisor dashboard, the layout', () => {
+  it('offers a supervisor their quick actions and an admin looking at every farm the monitoring ones', async () => {
+    auth.user = { id: 'u', role: 'SUPERVISOR', cooperativeId: 'c1', cooperativeName: 'Silk Coop' };
+    const first = open();
+    const supervisorNav = within(await screen.findByRole('navigation', { name: 'Quick actions' }));
+    expect(supervisorNav.getAllByRole('link').map((l) => l.getAttribute('href'))).toContain('/decisions');
+    expect(supervisorNav.queryByRole('link', { name: 'Users' })).not.toBeInTheDocument();
+    first.unmount();
+    auth.user = { id: 'u', role: 'ADMIN', cooperativeId: null, cooperativeName: null };
+    open();
+    const adminNav = within(await screen.findByRole('navigation', { name: 'Quick actions' }));
+    expect(adminNav.getByRole('link', { name: /Alerts/ })).toHaveAttribute('href', '/alerts');
+    expect(adminNav.getByRole('link', { name: 'Cooperatives' })).toHaveAttribute('href', '/admin/cooperatives');
+    expect(adminNav.queryByRole('link', { name: 'Users' })).not.toBeInTheDocument();
+  });
+
+  it('does not offer the same places again in the header', async () => {
+    open();
+    await screen.findByRole('navigation', { name: 'Quick actions' });
+    expect(screen.queryByRole('link', { name: /Full reports/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /^Alerts/ })).toHaveLength(1);
+  });
+
+  it('puts the calendar in a rail beside the data and links a round for staff', async () => {
+    api.events.mockResolvedValue({ data: { data: { events: [{ id: 'e1', date: new Date().toISOString().slice(0, 10), kind: 'round_deadline', expected: false, batchId: null, farmId: null, farmName: '', detail: { name: 'November round', roundId: 'r1' } }], from: '', to: '', truncated: false } } });
+    const { container } = open();
+    const agenda = within(await screen.findByTestId('agenda'));
+    expect(await agenda.findByRole('link', { name: /November round: requests close/ })).toHaveAttribute('href', '/supply/r1');
+    expect(container.querySelector('.dash-body > .dash-rail')!.contains(screen.getByRole('region', { name: 'Calendar' }))).toBe(true);
+    expect(container.querySelector('.dash-body > .dash-main')!.contains(await screen.findByText('Active batches'))).toBe(true);
+  });
+
+  it('still shows the rest when the calendar cannot load', async () => {
+    api.events.mockRejectedValue(new Error('down'));
+    open();
+    expect(await screen.findByText('We could not load the calendar.')).toBeInTheDocument();
+    expect(screen.getByText('Active batches')).toBeInTheDocument();
+  });
+});
 
 describe('Supervisor dashboard page', () => {
   it('has one title and says what it covers', async () => {
@@ -172,7 +214,7 @@ describe('Supervisor dashboard page', () => {
     const alerts = await screen.findByRole('list', { name: 'Recent alerts' });
     expect(within(alerts).getByText('Temperature too low: 21 C')).toBeInTheDocument();
     expect(within(alerts).getByText('10 minutes ago')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Alerts \(1\)/ })).toHaveAttribute('href', '/alerts');
+    expect(within(screen.getByRole('navigation', { name: 'Quick actions' })).getByRole('link', { name: /Alerts.*1/ })).toHaveAttribute('href', '/alerts');
   });
 
   it('shows disease checks with a plain percentage, not a progress bar', async () => {

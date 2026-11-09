@@ -61,6 +61,13 @@ describe('dashboard layout', () => {
   });
 });
 
+describe('the narrow main column', () => {
+  it('stacks two-up pairs beside the rail on a laptop, and lets them sit side by side on a wide screen', () => {
+    expect(css).toMatch(/@media \(min-width: 1100px\) and \(max-width: 1599px\)\s*\{[^@]*\.dash-main \.grid-2[^{]*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*;/);
+    expect(css).toMatch(/@media \(min-width: 1100px\) and \(max-width: 1599px\)\s*\{[^@]*\.dash-main \.split/);
+  });
+});
+
 describe('quick actions', () => {
   it('are cards laid out in as many columns as fit', () => {
     expect(rules('.qa-list')).toMatch(/grid-template-columns:\s*repeat\(auto-fill,\s*minmax\(/);
