@@ -15,7 +15,7 @@ from core.utils import api_error, api_success
 from farms.models import RearingRoom
 from users.models import User
 
-from . import allowance, notify, nudges, onboarding
+from . import allowance, notify, nudges, onboarding, tracing
 from .capacity import farmer_capacity_boxes, room_capacity_boxes
 from .models import AllowanceChange, AllowanceRequest, AllowanceSuggestion, SupplySettings
 
@@ -80,6 +80,19 @@ class OnboardingView(APIView):
 
     def get(self, request):
         return api_success(onboarding.steps(request.user))
+
+
+class LotTraceView(APIView):
+    """GET /api/supply/lots/<lot_code>, every batch that got the same lot of eggs, and how each is doing (staff)."""
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'lots'
+
+    def get(self, request, lot_code):
+        found = tracing.trace(request.user, lot_code)
+        # A lot of another cooperative and a lot that does not exist get the same answer.
+        if found is None:
+            return api_error('We could not find that lot.', 404)
+        return api_success(found)
 
 
 class SuggestionListView(APIView):

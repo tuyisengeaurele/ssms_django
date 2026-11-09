@@ -49,6 +49,36 @@ beforeEach(() => {
   api.farms.mockResolvedValue({ data: { data: [{ id: 'f1', name: "Serge's farm" }, { id: 'f2', name: "Gad's farm" }] } });
 });
 
+describe('Disease checks page, the lot', () => {
+  const withLot = () => api.history.mockResolvedValue({
+    data: { data: [{ ...history[1], lotCode: 'L2611-AB12' }, { ...history[0], lotCode: '' }] },
+  });
+
+  it.each(['SUPERVISOR', 'ADMIN'])('leads a %s from a check to the lot of its batch', async (role) => {
+    auth.role = role;
+    withLot();
+    open();
+    const link = await screen.findByRole('link', { name: 'Egg lot L2611-AB12' });
+    expect(link).toHaveAttribute('href', '/supply/lots/L2611-AB12');
+    expect(screen.getAllByRole('link', { name: /^Egg lot / })).toHaveLength(1);
+  });
+
+  it('does not show a farmer the lot, which would lead to other farmers', async () => {
+    auth.role = 'FARMER';
+    withLot();
+    open();
+    await screen.findByText("Gad's farm", { selector: 'a' });
+    expect(screen.queryByRole('link', { name: /^Egg lot / })).not.toBeInTheDocument();
+  });
+
+  it('encodes a lot code that needs it in the address', async () => {
+    auth.role = 'SUPERVISOR';
+    api.history.mockResolvedValue({ data: { data: [{ ...history[1], lotCode: 'L 26/1#' }] } });
+    open();
+    expect(await screen.findByRole('link', { name: 'Egg lot L 26/1#' })).toHaveAttribute('href', '/supply/lots/L%2026%2F1%23');
+  });
+});
+
 describe('Disease checks page', () => {
   it('has one title and the last month as the default dates', async () => {
     open();

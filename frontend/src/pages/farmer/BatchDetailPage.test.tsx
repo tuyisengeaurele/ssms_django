@@ -135,6 +135,30 @@ describe('Batch details page', () => {
     expect(link).toHaveAttribute('href', '/batches/b1-9sieo7cv/report');
   });
 
+  it.each(['SUPERVISOR', 'ADMIN'])('leads a %s from a batch to the other batches of its lot', async (role) => {
+    auth.role = role;
+    api.getById.mockResolvedValue({ data: { data: batch({ lotCode: 'L2611-AB12' }) } });
+    open();
+    const link = await screen.findByRole('link', { name: 'L2611-AB12' });
+    expect(link).toHaveAttribute('href', '/supply/lots/L2611-AB12');
+  });
+
+  it('shows a farmer the lot code of their own batch as text, with no way to the other farmers', async () => {
+    auth.role = 'FARMER';
+    api.getById.mockResolvedValue({ data: { data: batch({ lotCode: 'L2611-AB12' }) } });
+    open();
+    expect(await screen.findByText('L2611-AB12')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'L2611-AB12' })).not.toBeInTheDocument();
+  });
+
+  it('shows no lot for a batch the farmer started by hand', async () => {
+    auth.role = 'SUPERVISOR';
+    api.getById.mockResolvedValue({ data: { data: batch({ lotCode: '' }) } });
+    open();
+    await screen.findByText('Healthy eggs from the cooperative.');
+    expect(screen.queryByText('Egg lot')).not.toBeInTheDocument();
+  });
+
   it('shows the dates, the place and the notes', async () => {
     open();
     await screen.findByText('Healthy eggs from the cooperative.');

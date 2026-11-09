@@ -114,6 +114,8 @@ export interface DetectionHistoryItem {
   batchId: string;
   farmName: string;
   farmId: string;
+  /** The lot of eggs of the batch, so a disease can be followed to the other farms. Empty when started by hand. */
+  lotCode?: string;
   notes?: string;
 }
 

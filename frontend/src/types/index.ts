@@ -211,6 +211,8 @@ export interface Batch {
   /** What the batch started with, counted in `quantityUnit`. */
   quantity?: number | null;
   quantityUnit?: QuantityUnit;
+  /** The lot of eggs it came from, when it came from a supply round. Empty for a batch started by hand. */
+  lotCode?: string;
   /** The room it is in now, or null when it was never placed. */
   room?: { id: string; name: string } | null;
   /** Where it has been, newest first. */

@@ -126,6 +126,7 @@ export default function BatchDetailPage() {
   }, [id, hours]);
 
   const canEdit = user?.role === 'FARMER' || user?.role === 'ADMIN';
+  const isStaff = user?.role === 'SUPERVISOR' || user?.role === 'ADMIN';
 
   const advance = async (stage: BatchStage) => {
     if (!id) return;
@@ -556,6 +557,12 @@ export default function BatchDetailPage() {
                 <div>
                   <dt>{t('bdRoom')}</dt>
                   <dd>{batch.room.name}</dd>
+                </div>
+              )}
+              {batch.lotCode && (
+                <div>
+                  <dt>{t('trcLotWord')}</dt>
+                  <dd>{isStaff ? <Link to={`/supply/lots/${encodeURIComponent(batch.lotCode)}`} className="link">{batch.lotCode}</Link> : batch.lotCode}</dd>
                 </div>
               )}
               {batch.breed && (

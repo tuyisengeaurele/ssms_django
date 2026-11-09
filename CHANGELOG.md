@@ -1,5 +1,32 @@
 # Changelog
 
+## Lot tracing
+
+A disease on one farm now leads to every other farm that got the same lot of eggs. This is step 6, the last step of the egg supply design (`docs/superpowers/specs/2026-11-06-egg-supply-design.md`, local only). The plan is `docs/superpowers/plans/2026-11-09-lot-tracing.md` (local only). The branch `feature/lot-tracing` is cut from master.
+
+### What it does
+- **A supervisor or admin** opens an "Egg lot" page that lists every batch of the lot: the farmer, farm and room, the stage and quantity, how the batch is doing, and the last disease check with its date. Disease first, then batches nobody has checked, then healthy ones. Counts at the top: batches, farms, with disease, healthy, not checked.
+- **How to get there:** from a row on Disease checks, and from the lot code on a batch page. A farmer sees their own lot code as plain text and is never led to other farmers.
+- **"How it is doing"** comes from the latest check only, so a batch that recovered reads healthy. A batch nobody has checked reads "Not checked", never healthy. An open disease alert is marked.
+
+### How it is built
+- `supply/tracing.py` builds the trace and reaches only what `core.access.scope_batches` allows, so a supervisor sees their own cooperative. A lot of another cooperative and a lot that does not exist both answer 404 with the same message.
+- One read route, `GET /api/supply/lots/<lot_code>` (staff only), in the authorization matrix. It changes nothing, so support access is unaffected.
+- The batch payloads and each disease check row now carry `lotCode`.
+- No migration, no new model.
+
+### Numbers to confirm
+Nothing new. The French and Kinyarwanda texts are drafts for native review ("Egg lot" is a new term in all three languages).
+
+### Not built
+- An alert to supervisors when a disease appears on a lot that other farms share (the page is for looking, not for being told).
+- Tracing back from a harvest or a cocoon lot (the QR page), and a search box for lot codes.
+- Pausing a round from the lot page.
+
+### Checks
+- Backend 3481 tests, frontend 2262 tests (plus one page title test added after that full run, run with its neighbours, 303 passing), `ruff`, `tsc`, ESLint and `npm run build` clean.
+- A browser check on a scratch database with a supervisor, three farmers in one lot (one with Grasserie and an open alert, one healthy, one never checked) and the other cooperative's supervisor: the link from a disease check row, the lot page with the rows in the right order and each status in words, the link from a batch page, a farmer seeing the lot code as plain text with no link and being refused the lot address, the other cooperative's supervisor getting "We could not find that lot.", and English, French and Kinyarwanda. It found one defect: the lot page had no entry in the page title table, so the browser tab and top bar used the product name. It now reads "Egg lot", fixed with a test first. The count tiles showed 0 in the hidden browser pane because its animation frames do not run, which is an artifact of the pane. Not checked in a browser: keyboard use of the lot page, mobile width, and a screen reader.
+- Wording for the native review: "lot" is also the French word for a batch, and the Kinyarwanda "isarura" is already used for the harvest lot on the QR page. "Egg lot" may need a clearer term in both.
 ## Getting started list and earned allowances
 
 A new farmer now sees what to do next, and a farmer who finishes a good lot can earn one more box. This is step 5 of the egg supply design (`docs/superpowers/specs/2026-11-06-egg-supply-design.md`, local only). The plan is `docs/superpowers/plans/2026-11-07-onboarding-and-nudges.md` (local only). The branch `feature/onboarding-and-nudges` is cut from master, after the supply rounds were merged.
