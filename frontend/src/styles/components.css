@@ -1445,7 +1445,7 @@ a.cal-ev-link:focus-visible { outline: 2px solid var(--gold); outline-offset: 1p
 
 /* On a phone the agenda of the next 14 days is the calendar. On a wide screen the grid is, with the chosen day under it. */
 @media (max-width: 700px) {
-  .cal-grid-wrap, .cal-day-list { display: none; }
+  .cal-grid-wrap, .cal-day-list, .cal-nav { display: none; }
 }
 @media (min-width: 701px) {
   .cal-agenda { display: none; }

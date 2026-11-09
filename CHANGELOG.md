@@ -1,5 +1,30 @@
 # Changelog
 
+## Dashboards with a farm calendar and quick actions
+
+The farmer, supervisor and admin dashboards are rebuilt around what needs a person today, then where they go most, then the data, with the farm calendar beside it. This is steps 3 and 4 of the interface renewal (`docs/superpowers/specs/2026-11-09-ui-renewal-design.md`, plan `2026-11-09-dashboards.md`, local only). It uses the calendar feed from the previous step and the look from the foundation step.
+
+### What it does
+- **Farm calendar.** A month grid on wide screens with the events of the chosen day under it, and an agenda of the next 14 days on phones. Events are batches started, expected harvests (the date a person typed), stage changes, disease checks, recorded harvests, and for supply rounds the day requests close and the delivery day. Every event is also written as text, a day's name says how many events it holds, and the colours of the dots are never the only sign. The keyboard moves by day (left, right), by week (up, down), to the start and end of the week (Home, End) and by month (PageUp, PageDown), with one day in the tab order. Names are shown as plain text. Staff can open a round from its event, a farmer cannot.
+- **Quick actions.** Six to eight links per role, named with the same word as the sidebar, with the number of unread alerts where it matters. A farmer: farms, batches, disease checks, harvests, alerts, compare. A supervisor: decisions, supply, cooperative, alerts, disease checks, compare. An admin: users, cooperatives, messages, system, alerts, audit log, disease checks, farm monitoring. An admin looking at every farm on the supervisor page gets a monitoring set.
+- **Layout.** A strip of what needs attention, quick actions, then the data in the main column and the calendar in a rail from 1100 px wide (the rail stays in view as the page scrolls). On a phone it is one column with the calendar first. Beside the rail the main column is narrow, so side by side pairs stack until the screen is 1600 px wide.
+- **Nothing is shown twice.** The buttons that duplicated the quick actions in the page headers are gone. The farmer's header keeps only "New farm", and the admin's old "Quick actions" list panel and its styles are replaced by the shared component.
+- If the calendar cannot load, it says so with Try again and the rest of the page is unchanged. A farmer who has nothing yet still sees only the first steps.
+
+### How it is built
+`services/calendar.service.ts`, `components/calendar/FarmCalendar.tsx` with `calendarDays.ts` (whole days written like 2026-11-05, never moments, so a time zone cannot move an event), and `components/dashboard/QuickActions.tsx`. The window asked of the server is the whole grid plus today and the next 13 days when that fits in 100 days. An older answer never replaces a newer one when a person moves quickly between months. New words (prefix `cal` and `qaTitle`) are in English, French and Kinyarwanda (drafts for native review). Style guard tests (`calendar.test.ts`, `layout.test.ts`) keep the 44 px targets, the focus ring, token only colours and the phone and wide screen rules.
+
+### Numbers to confirm
+French and Kinyarwanda words are drafts. The week starts on Monday.
+
+### Not built
+Events a person adds themselves (cleaning, leaf buying), reminders, a month browser on phones (the agenda shows the next 14 days only), and the supervisor and admin "today" strips with trends. The rest of the pages follow in the next steps.
+
+### Checks
+- Frontend 2386 tests in the full run (plus one style guard added after it, run with its neighbours), `tsc`, ESLint and `npm run build` clean. The backend is unchanged in this step (the calendar feed was the previous one).
+- Browser check against a scratch database with demo data: the farmer dashboard in the light theme at 1280 px (the main column 758 px with the 340 px calendar rail beside it, 42 days with events on 8 of them, the agenda hidden, no sideways overflow), the keyboard on the real page (arrows, Home, End, PageUp and PageDown, with the focus following the chosen day), a day with an event showing its text and a link to the batch, the farmer dashboard on a phone at 390 px (quick actions in two columns, the agenda before the data, the grid hidden, no overflow), the supervisor dashboard in the dark theme, and English, French and Kinyarwanda. It found one thing: on a phone the month buttons were shown although the grid is hidden, so they are now hidden there, with a test first.
+- Not checked in a browser: the admin dashboard (an admin sign in needs the second factor, so it is covered by unit tests), tablet width, a screen reader, and French text length in every card. Dates in Kinyarwanda show in English, as they do across the app today.
+
 ## Farm calendar feed
 
 The first half of the farm calendar: one read route that lists the dated events of the farms a person may see. The calendar panel and the rebuilt dashboards use it and come next. The plan is `docs/superpowers/plans/2026-11-09-calendar.md` (local only), from the design agreed in phase 9 of the security and supply plan.

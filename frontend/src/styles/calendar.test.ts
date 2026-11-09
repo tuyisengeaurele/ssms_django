@@ -57,6 +57,10 @@ describe('calendar styles', () => {
     expect(css).toMatch(/@media \(min-width: 701px\)\s*\{[^@]*\.cal-agenda\s*\{[^}]*display:\s*none/);
   });
 
+  it('hides the month buttons on a phone, where the agenda is the calendar and they would change nothing', () => {
+    expect(css).toMatch(/@media \(max-width: 700px\)\s*\{[^@]*\.cal-nav[^{]*\{[^}]*display:\s*none/);
+  });
+
   it('lays the grid out in seven columns', () => {
     expect(rules('.cal-grid')).toMatch(/grid-template-columns:\s*repeat\(7,/);
   });
