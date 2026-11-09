@@ -60,30 +60,16 @@ npm run dev                     # http://localhost:5173
 
 ## API Reference
 
-Base URL: `http://localhost:8000/api`
+The API describes itself. Start the server and open:
 
-All responses follow the envelope: `{ "success": bool, "message": str, "data": any }`
+- **Swagger page:** `http://localhost:8000/api/docs/` (on the live site, `/api/docs/` on the website address)
+- **OpenAPI schema:** `http://localhost:8000/api/schema/` (JSON, for Postman, Insomnia or a client generator)
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/auth/register` | None | Register new user |
-| POST | `/auth/login` | None | Login, receive JWT |
-| GET | `/auth/me` | JWT | Current user profile |
-| GET | `/farms/` | JWT | List farms (role-filtered) |
-| POST | `/farms/` | JWT FARMER/ADMIN | Create farm |
-| GET | `/farms/<id>` | JWT | Farm detail + batches |
-| PATCH | `/farms/<id>` | JWT FARMER/ADMIN | Update farm |
-| DELETE | `/farms/<id>` | JWT FARMER/ADMIN | Soft delete farm |
-| POST | `/batches/` | JWT FARMER/ADMIN | Create batch |
-| GET | `/batches/farm/<farmId>` | JWT | Batches for a farm |
-| GET | `/batches/<id>` | JWT | Batch detail |
-| PATCH | `/batches/<id>/stage` | JWT FARMER/ADMIN | Advance lifecycle stage |
-| DELETE | `/batches/<id>` | JWT FARMER/ADMIN | Archive batch |
-| POST | `/sensors/` | JWT | Record sensor reading |
-| GET | `/sensors/batch/<batchId>` | JWT | Last 100 readings |
-| GET | `/alerts/batch/<batchId>` | JWT | Alerts for batch |
-| PATCH | `/alerts/<id>/read` | JWT | Mark alert as read |
-| GET | `/health/` | None | Health check |
+Every route is listed with what it does, who may call it (Farmer, Supervisor, Admin, read from the same table the server enforces), whether it needs a sign in, and which errors it can answer. Base URL: `http://localhost:8000/api`.
+
+All responses follow one envelope: `{ "success": bool, "message": str, "data": any }`. A refusal is `{ "success": false, "message": str, "reference": str, "errors"?: {}, "code"?: str }`. Field names are camelCase.
+
+To get a YAML file: `python manage.py spectacular --file openapi.yaml`. To switch the docs off: `API_DOCS_ENABLED=false`.
 
 ## Demo Accounts
 
