@@ -130,6 +130,9 @@
   --on-dark:      #FBF9F4;
   --primary-fill: #2D6A4F;
   --on-fill:      #FBF9F4;
+  --danger-fill:       #9B3526;
+  --danger-fill-hover: #7F2A1E;
+  --on-danger:         #FFFFFF;
 
   /* Messages, risk labels and the coloured words that name a state. */
   --danger-ink:   #9b3526;

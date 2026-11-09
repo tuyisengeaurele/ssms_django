@@ -143,27 +143,37 @@
   border-radius: 999px;
   font: 600 0.86rem/1.2 var(--font-ui);
   white-space: nowrap;
+  letter-spacing: -0.005em;
   transition:
-    background-color 0.3s var(--ease-out),
-    color 0.3s var(--ease-out),
-    border-color 0.3s var(--ease-out),
-    box-shadow 0.4s var(--ease-out);
+    background-color var(--duration-normal) var(--ease-out),
+    color var(--duration-normal) var(--ease-out),
+    border-color var(--duration-normal) var(--ease-out),
+    box-shadow var(--duration-slow) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
 }
 
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; box-shadow: none; }
 
 .btn-primary { background: var(--ink); color: var(--ivory); }
-.btn-primary:hover:not(:disabled) { background: var(--primary-fill); color: var(--on-fill); box-shadow: 0 10px 24px rgba(11, 31, 23, 0.22); }
+.btn-primary:hover:not(:disabled) { background: var(--primary-fill); color: var(--on-fill); box-shadow: var(--shadow-md); }
+.btn-primary:active:not(:disabled) { background: var(--brand-700); color: var(--on-fill); box-shadow: none; }
 
 .btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--border); }
-.btn-secondary:hover:not(:disabled) { border-color: var(--ink); background: var(--surface); }
+.btn-secondary:hover:not(:disabled) { border-color: var(--ink); background: var(--surface); box-shadow: var(--shadow-xs); }
+.btn-secondary:active:not(:disabled) { background: var(--tint); box-shadow: none; }
 
 .btn-ghost { background: transparent; color: var(--text-2); }
 .btn-ghost:hover:not(:disabled) { background: var(--tint); color: var(--ink); }
 
-.btn-danger { background: #9b3526; color: #fff; }
-.btn-danger:hover:not(:disabled) { background: #7f2a1e; box-shadow: 0 10px 24px rgba(127, 42, 30, 0.25); }
+.btn-danger { background: var(--danger-fill); color: var(--on-danger); }
+.btn-danger:hover:not(:disabled) { background: var(--danger-fill-hover); box-shadow: var(--shadow-md); }
+.btn-danger:active:not(:disabled) { background: var(--danger-fill-hover); box-shadow: none; }
+
+/* Pressing a button moves it in a little. This is motion, so it is only for people who have not asked for less. */
+@media (prefers-reduced-motion: no-preference) {
+  .btn:active:not(:disabled) { transform: scale(0.98); }
+}
 
 .btn-outline-primary { background: transparent; color: var(--primary); border-color: var(--primary); }
 .btn-outline-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 8%, transparent); }
@@ -211,7 +221,11 @@
   color: var(--ink);
   font: 400 0.95rem var(--font-ui);
   outline: none;
-  transition: border-color 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out);
+  min-height: 44px;
+  transition:
+    border-color var(--duration-normal) var(--ease-out),
+    box-shadow var(--duration-normal) var(--ease-out),
+    background-color var(--duration-normal) var(--ease-out);
 }
 
 .form-select {
@@ -228,8 +242,11 @@
 
 .form-input:focus,
 .form-select:focus,
-.form-textarea:focus {
-  border-color: var(--brand-600);
+.form-textarea:focus,
+.form-input:focus-visible,
+.form-select:focus-visible,
+.form-textarea:focus-visible {
+  border-color: var(--primary);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 16%, transparent);
 }
 
