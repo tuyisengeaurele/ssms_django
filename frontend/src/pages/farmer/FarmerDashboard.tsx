@@ -21,6 +21,8 @@ import StageBadge from '../../components/ui/StageBadge';
 import StatTile from '../../components/ui/StatTile';
 import { attentionFor } from '../../utils/attention';
 import type { StageRange } from '../../services/sensor.service';
+import FarmCalendar from '../../components/calendar/FarmCalendar';
+import QuickActions from '../../components/dashboard/QuickActions';
 import AllowanceCard from '../../components/supply/AllowanceCard';
 import OnboardingCard from '../../components/supply/OnboardingCard';
 import SupplyRoundCard from '../../components/supply/SupplyRoundCard';
@@ -128,23 +130,21 @@ export default function FarmerDashboard() {
         title={title}
         showTitle
         actions={
-          <>
-            <Link to="/detections/reports" className="btn btn-secondary btn-sm">
-              <Icon name="systemReport" size={15} />
-              {t('fhReports')}
-            </Link>
-            <Link to="/farms/new" className="btn btn-secondary btn-sm">
-              <Icon name="add" size={15} />
-              {t('fhNewFarm')}
-            </Link>
-            <Link to="/farms" className="btn btn-primary btn-sm">{t('fhMyFarms')}</Link>
-          </>
+          // The places a farmer goes are the quick actions below. The header keeps the one thing that makes something new.
+          <Link to="/farms/new" className="btn btn-primary btn-sm">
+            <Icon name="add" size={15} />
+            {t('fhNewFarm')}
+          </Link>
         }
       />
 
       <div className="stack-24">
         {batches.length > 0 && <TodayCard items={attentionFor(batches, ranges)} />}
 
+        <QuickActions role="FARMER" counts={{ alerts: unread }} />
+
+        <div className="dash-body">
+        <div className="dash-main stagger">
         <OnboardingCard />
 
         <AllowanceCard />
@@ -250,6 +250,11 @@ export default function FarmerDashboard() {
               </ul>
             )}
           </Panel>
+        </div>
+        </div>
+        <aside className="dash-rail">
+          <div className="card"><FarmCalendar /></div>
+        </aside>
         </div>
       </div>
     </div>
