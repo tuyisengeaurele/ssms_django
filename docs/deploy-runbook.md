@@ -340,7 +340,69 @@ Audit log: each round made, changed, opened, closed, paused, resumed and cancell
 | "These eggs were already recorded as received." | the farmer and the supervisor both tapped | nothing to do, one batch was made |
 | A confirmed round never becomes done | a promise is neither received nor marked not collected | mark it, or record the receipt |
 
-## 15. If something fails
+## 15. Getting started
+
+A new farmer sees a "Getting started" list on their dashboard, with four steps in order: join a cooperative, add a farm, add a room and get it approved, get eggs. The first step that is not done is marked "Next" (or "Waiting" when only someone else can move it), the ones after it "Later". It tells the farmer what is next and who they are waiting for. Nothing here needs a key and nothing is emailed.
+
+**How each step is decided**
+
+| Step | Done when | Otherwise the farmer sees |
+|---|---|---|
+| Join your cooperative | the farmer belongs to a cooperative | "Ask your supervisor for an invitation link." |
+| Add your farm | the farmer has a farm | a link to the farm form |
+| Add a room and get it approved | a room of theirs is approved | a link to the farm page, or "Waiting for {names} to approve it." (the supervisors and admins who can decide), or the reason it was not approved and what to change |
+| Get your eggs | the farmer has received eggs, or has a running batch | the state of the round: none open, open and ready to request, open but no approved room, request waiting, approved (boxes, day and place), or not given this time with the reason |
+
+The list goes away by itself once the eggs step is done or the farmer has an active batch. If it cannot be loaded the dashboard shows without it.
+
+**If something looks wrong**
+
+| What you see | Likely cause | What to do |
+|---|---|---|
+| "Waiting for ... to approve it." for days | the room waits in the Decisions inbox | ask the supervisor to open Decisions |
+| The list never goes away | the farmer has no received eggs and no active batch | it is correct, they are not past every step yet |
+| "No eggs this time" | the request was on the waiting list or declined | the farmer asks again in the next round |
+
+## 16. Earned allowances
+
+When a farmer finishes a lot made from a supply round in good order, the system may suggest one more box. The suggestion waits in the supervisor's Decisions inbox, under Allowance, with two buttons: "Approve" and "Not now". The supervisor decides, the system never raises an allowance by itself.
+
+**The rule**
+
+A suggestion is made when a harvest is recorded, for a batch that came from a supply round, if all of these hold:
+
+1. The farmer is in the cooperative that ran the round, today.
+2. Their allowance is at least 1 box, and they received at least that many boxes (they used all of what they were allowed).
+3. The batch has no open disease alert.
+4. The farmer has no allowance request waiting.
+5. The batch has no suggestion yet (one per lot).
+6. One more box is still under the highest allowance (100), and, when the space one box needs is known, still within what their rooms can hold.
+
+The suggested amount is the current allowance plus one box. A larger step is for a supervisor to give with an amendment on the farmer's allowance card. Mortality is not used, because it needs the worms per box that a sericulture officer has to give.
+
+**What the supervisor can do**
+
+- **Approve** raises the allowance by one box, writes a line in the farmer's allowance history ("Finished lot {code} in good order"), and sends the farmer one friendly email. If the allowance changed since the suggestion was made, or the farmer left the cooperative, it is closed as no longer applicable and nothing changes.
+- **Not now** closes the suggestion and tells nobody. The same lot is not suggested again.
+- Two supervisors acting at once: one wins, the other sees "Someone decided this already."
+
+**Who sees what**
+
+A supervisor sees the suggestions of their cooperative, an admin sees all. Support access is read only.
+
+**Where it is recorded**
+
+Audit log: each approval and each "Not now", with the farmer and the lot. The allowance history holds the raised amount.
+
+**If something looks wrong**
+
+| What you see | Likely cause | What to do |
+|---|---|---|
+| No suggestion after a good lot | one of the six conditions above is not met, often because the farmer took fewer boxes than their allowance | nothing, or amend the allowance by hand |
+| "This farmer's allowance changed since, so this no longer applies." | the allowance was changed after the suggestion | nothing, the suggestion is closed |
+| The harvest worked but no suggestion was made | the check failed and was logged, the harvest is never blocked | read the API log for "earned allowance" |
+
+## 17. If something fails
 
 | What you see | Likely cause | Fix |
 |---|---|---|

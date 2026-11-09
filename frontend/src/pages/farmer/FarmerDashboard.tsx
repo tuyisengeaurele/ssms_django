@@ -22,6 +22,7 @@ import StatTile from '../../components/ui/StatTile';
 import { attentionFor } from '../../utils/attention';
 import type { StageRange } from '../../services/sensor.service';
 import AllowanceCard from '../../components/supply/AllowanceCard';
+import OnboardingCard from '../../components/supply/OnboardingCard';
 import SupplyRoundCard from '../../components/supply/SupplyRoundCard';
 import TodayCard from './TodayCard';
 
@@ -99,6 +100,8 @@ export default function FarmerDashboard() {
     return (
       <div>
         <PageHeader title={title} showTitle />
+        <div className="stack-24">
+        <OnboardingCard />
         <Panel title={t('fhFirstTitle')}>
           <p className="first-run-intro">{t('fhFirstIntro')}</p>
           <ol className="first-run-steps" aria-label={t('fhFirstSteps')}>
@@ -106,6 +109,7 @@ export default function FarmerDashboard() {
           </ol>
           <Link to="/farms/new" className="btn btn-primary">{t('fhFirstAction')}</Link>
         </Panel>
+        </div>
       </div>
     );
   }
@@ -140,6 +144,8 @@ export default function FarmerDashboard() {
 
       <div className="stack-24">
         {batches.length > 0 && <TodayCard items={attentionFor(batches, ranges)} />}
+
+        <OnboardingCard />
 
         <AllowanceCard />
 

@@ -8,8 +8,8 @@ import { setReducedMotion } from '../../test/setup';
 const auth = vi.hoisted(() => ({ user: { id: 'u', name: 'Serge Karenzi', role: 'FARMER' } as { id: string; name?: string; role: string } }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
 
-const api = vi.hoisted(() => ({ currentRound: vi.fn(), allowance: vi.fn(), farms: vi.fn(), active: vi.fn(), chart: vi.fn(), alerts: vi.fn(), markRead: vi.fn(), thresholds: vi.fn() }));
-vi.mock('../../services/supply.service', () => ({ supplyService: { getAllowance: api.allowance, currentRound: api.currentRound } }));
+const api = vi.hoisted(() => ({ onboarding: vi.fn(), currentRound: vi.fn(), allowance: vi.fn(), farms: vi.fn(), active: vi.fn(), chart: vi.fn(), alerts: vi.fn(), markRead: vi.fn(), thresholds: vi.fn() }));
+vi.mock('../../services/supply.service', () => ({ supplyService: { getAllowance: api.allowance, currentRound: api.currentRound, onboarding: api.onboarding } }));
 vi.mock('../../services/farm.service', () => ({ farmService: { getAll: api.farms } }));
 vi.mock('../../services/alert.service', () => ({ alertService: { getAll: api.alerts, markRead: api.markRead, getThresholds: api.thresholds } }));
 vi.mock('../../services/sensor.service', () => ({
@@ -45,6 +45,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   setReducedMotion(true);
   auth.user = { id: 'u', name: 'Serge Karenzi', role: 'FARMER' };
+  api.onboarding.mockResolvedValue({ data: { data: { complete: true, steps: [] } } });
   api.currentRound.mockResolvedValue({ data: { data: { round: null, myRequest: null, rooms: [] } } });
   api.allowance.mockResolvedValue({ data: { data: { boxes: 2, source: 'default', since: null, history: [], openRequest: null, capacityBoxes: null, starterBoxes: 2 } } });
   api.farms.mockResolvedValue({ data: { data: [{ id: 'f1', isActive: true }, { id: 'f2', isActive: true }] } });
@@ -69,6 +70,38 @@ describe('Farmer dashboard, the allowance', () => {
     open();
     expect(await screen.findByText('Active batches')).toBeInTheDocument();
     expect(screen.queryByText('Your allowance')).not.toBeInTheDocument();
+  });
+});
+
+describe('Farmer dashboard, getting started', () => {
+  const steps = [
+    { key: 'cooperative', state: 'done', detail: {} },
+    { key: 'farm', state: 'todo', detail: {} },
+    { key: 'room', state: 'todo', detail: {} },
+    { key: 'eggs', state: 'no_round', detail: {} },
+  ];
+
+  it('shows the getting started list to a farmer who is not past every step', async () => {
+    api.onboarding.mockResolvedValue({ data: { data: { complete: false, steps } } });
+    open();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Getting started' }, { timeout: 5000 })).toBeInTheDocument();
+  });
+
+  it('shows the list on the first-run page too, where a new farmer needs it most', async () => {
+    api.onboarding.mockResolvedValue({ data: { data: { complete: false, steps } } });
+    api.farms.mockResolvedValue({ data: { data: [] } });
+    api.active.mockResolvedValue({ data: { data: [] } });
+    api.chart.mockResolvedValue({ data: { data: [] } });
+    api.alerts.mockResolvedValue({ data: { data: [] } });
+    open();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Getting started' }, { timeout: 5000 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: "Let's get your first batch going" })).toBeInTheDocument();
+  });
+
+  it('leaves the list out once the farmer is past every step', async () => {
+    open();
+    await screen.findByText('Active batches');
+    expect(screen.queryByText('Getting started')).not.toBeInTheDocument();
   });
 });
 

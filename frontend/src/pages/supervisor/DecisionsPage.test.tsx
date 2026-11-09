@@ -9,11 +9,11 @@ import { setReducedMotion } from '../../test/setup';
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'sup', name: 'Claire Uwimana', role: 'SUPERVISOR' } }) }));
 
 const api = vi.hoisted(() => ({
-  rooms: vi.fn(), review: vi.fn(), requests: vi.fn(), decide: vi.fn(), evidence: vi.fn(), rounds: vi.fn(),
+  rooms: vi.fn(), review: vi.fn(), requests: vi.fn(), decide: vi.fn(), evidence: vi.fn(), rounds: vi.fn(), suggestions: vi.fn(), decideSuggestion: vi.fn(),
 }));
 vi.mock('../../services/room.service', () => ({ roomService: { waiting: api.rooms, review: api.review } }));
 vi.mock('../../services/supply.service', () => ({
-  supplyService: { waiting: api.requests, decide: api.decide, getFarmerAllowance: api.evidence, listRounds: api.rounds },
+  supplyService: { waiting: api.requests, decide: api.decide, getFarmerAllowance: api.evidence, listRounds: api.rounds, suggestions: api.suggestions, decideSuggestion: api.decideSuggestion },
 }));
 
 import DecisionsPage from './DecisionsPage';
@@ -72,11 +72,107 @@ beforeEach(() => {
   listed([newRoom, sizeChange], [request]);
   api.evidence.mockResolvedValue({ data: { data: evidence } });
   api.rounds.mockResolvedValue({ data: { data: { rounds: [] } } });
+  api.suggestions.mockResolvedValue({ data: { data: { suggestions: [], count: 0 } } });
 });
 
 const aRound = (over: object = {}) => ({
   id: 'r1', name: 'November round', stockBoxes: 10, requestDeadline: '2026-11-03T12:00:00Z', deliveryDate: '2026-11-14', deliveryPlace: 'Store',
   expectedHarvestDate: '2026-12-20', lotCode: 'L2611-AB12', status: 'closed', paused: false, createdAt: '2026-11-01T10:00:00Z', allocatedAt: null, requestCount: 3, approvedBoxes: 0, ...over,
+});
+
+const earned = (over: object = {}) => ({
+  id: 's1', currentBoxes: 2, suggestedBoxes: 3, createdAt: '2026-11-07T08:00:00Z',
+  farmer: { id: 'u7', name: 'Jean Mugabo', email: 'jean@example.rw' }, batch: { id: 'b7', lotCode: 'L2611-AB12', harvestedAt: '2026-11-07T08:00:00Z' }, ...over,
+});
+const withEarned = (...list: object[]) => api.suggestions.mockResolvedValue({ data: { data: { suggestions: list, count: list.length } } });
+const stale = () => new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, { status: 409, data: { message: 'changed', code: 'stale' } } as never);
+
+describe('Decisions, earned allowances', () => {
+  it('shows who earned more, which lot, and the amount suggested next to the current one', async () => {
+    withEarned(earned());
+    open();
+    const li = (await screen.findByText('Jean Mugabo has earned more')).closest('li') as HTMLElement;
+    expect(within(li).getByText('Finished lot L2611-AB12. Suggested allowance: 3 boxes (now 2).')).toBeInTheDocument();
+    expect(within(li).getByText('Allowance')).toBeInTheDocument();
+    expect(within(li).getByRole('button', { name: 'Approve' })).toBeInTheDocument();
+    expect(within(li).getByRole('button', { name: 'Not now' })).toBeInTheDocument();
+  });
+
+  it('is approved at once, leaves the list, says so, and tells the menu to recount', async () => {
+    withEarned(earned());
+    api.decideSuggestion.mockResolvedValue({ data: { data: {} } });
+    const recount = vi.fn();
+    window.addEventListener('ssms:decisions', recount);
+    open();
+    fireEvent.click(within((await screen.findByText('Jean Mugabo has earned more')).closest('li') as HTMLElement).getByRole('button', { name: 'Approve' }));
+    await waitFor(() => expect(api.decideSuggestion).toHaveBeenCalledWith('s1', 'approve'));
+    expect(await screen.findByText('Allowance raised. Jean Mugabo is told.', {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(screen.queryByText('Jean Mugabo has earned more')).not.toBeInTheDocument();
+    expect(recount).toHaveBeenCalled();
+    window.removeEventListener('ssms:decisions', recount);
+  });
+
+  it('is put aside with Not now, which tells nobody', async () => {
+    withEarned(earned());
+    api.decideSuggestion.mockResolvedValue({ data: { data: {} } });
+    open();
+    fireEvent.click(within((await screen.findByText('Jean Mugabo has earned more')).closest('li') as HTMLElement).getByRole('button', { name: 'Not now' }));
+    await waitFor(() => expect(api.decideSuggestion).toHaveBeenCalledWith('s1', 'dismiss'));
+    expect(await screen.findByText('Left as it is. Jean Mugabo is not told.', {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(screen.queryByText('Jean Mugabo has earned more')).not.toBeInTheDocument();
+  });
+
+  it('says someone decided it already, and refreshes the list', async () => {
+    withEarned(earned());
+    api.decideSuggestion.mockRejectedValue(conflict());
+    open();
+    fireEvent.click(within((await screen.findByText('Jean Mugabo has earned more')).closest('li') as HTMLElement).getByRole('button', { name: 'Approve' }));
+    expect(await screen.findByText('Someone decided this already.', {}, { timeout: 5000 })).toBeInTheDocument();
+    await waitFor(() => expect(api.suggestions).toHaveBeenCalledTimes(2));
+  });
+
+  it('says the allowance has changed since when the suggestion no longer applies, and refreshes the list', async () => {
+    withEarned(earned());
+    api.decideSuggestion.mockRejectedValue(stale());
+    open();
+    fireEvent.click(within((await screen.findByText('Jean Mugabo has earned more')).closest('li') as HTMLElement).getByRole('button', { name: 'Approve' }));
+    expect(await screen.findByText("This farmer's allowance changed since, so this no longer applies.", {}, { timeout: 5000 })).toBeInTheDocument();
+    await waitFor(() => expect(api.suggestions).toHaveBeenCalledTimes(2));
+  });
+
+  it('is counted with the allowance requests, and shown under that filter', async () => {
+    withEarned(earned());
+    open();
+    await screen.findByText('Jean Mugabo has earned more');
+    expect(screen.getByRole('button', { name: 'All (4)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Allowance (2)' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Allowance (2)' }));
+    expect(screen.getByText('Jean Mugabo has earned more')).toBeInTheDocument();
+    expect(screen.getByText('Gad Anaclet')).toBeInTheDocument();
+    expect(screen.queryByText('Aline Uwase')).not.toBeInTheDocument();
+  });
+
+  it('is enough on its own to fill the page', async () => {
+    listed([], []);
+    withEarned(earned());
+    open();
+    expect(await screen.findByText('Jean Mugabo has earned more')).toBeInTheDocument();
+    expect(screen.queryByText('Nothing waits for you.')).not.toBeInTheDocument();
+  });
+
+  it('still shows the rest when the suggestions cannot be loaded', async () => {
+    api.suggestions.mockRejectedValue(new Error('down'));
+    open();
+    expect(await screen.findByText('Gad Anaclet')).toBeInTheDocument();
+  });
+
+  it('shows a name and a lot code as plain text', async () => {
+    withEarned(earned({ farmer: { id: 'u7', name: '<b>Jean</b>', email: 'j@example.rw' }, batch: { id: 'b7', lotCode: '<i>L1</i>', harvestedAt: '' } }));
+    const { container } = open();
+    expect(await screen.findByText('<b>Jean</b> has earned more')).toBeInTheDocument();
+    expect(screen.getByText(/<i>L1<\/i>/)).toBeInTheDocument();
+    expect(container.querySelector('b, i')).toBeNull();
+  });
 });
 
 describe('Decisions, supply rounds', () => {
