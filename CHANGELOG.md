@@ -68,6 +68,34 @@ Looked at in the browser in the dark theme (supervisor and farmer dashboards, a 
 ### Not yet
 The supervisor and admin dashboards still use raw grids with inline spacing, so they have no entrance motion until their redesign. Hover and press feel on tables rows, tabs and the shell, and the calendar, come in the next steps.
 
+## API documentation
+
+The API now describes itself, and a Swagger page shows it. This is item F1 of the plan, rebuilt clean after the old Postman PR (#13) was closed over secrets. The plan is `docs/superpowers/plans/2026-11-09-api-docs.md` (local only). The branch `feature/api-docs` is cut from master.
+
+### What it does
+- `/api/docs/` is a Swagger page and `/api/schema/` is the OpenAPI JSON (for Postman, Insomnia or a client generator). `python manage.py spectacular --file openapi.yaml` writes a YAML file.
+- Each of the 130 or so routes shows what it does, whether it needs a sign in, **who may call it** (Farmer, Supervisor, Admin), and the answers it can give.
+- The README's route table, which listed 18 of about 150 routes, is replaced by a pointer to the docs.
+
+### How it is built
+- `drf-spectacular` builds the schema, and `core/api_schema.py` makes it honest about this code. Most views build their answers as plain dictionaries, so the generator could guess no request or response bodies (129 errors in a probe). The schema class documents what the code does know: the docstring as summary and description (the sentence for each method where a view does several things), the tag from the path, the bearer scheme (and no lock on public routes), one success envelope and one error envelope, and the roles read from `core/permissions_table.py`, the table the guard itself uses, so the docs cannot disagree with it.
+- An error answer is listed only when it can happen: 401 on a signed in route, 403 when some role is refused, 404 when the path names a record, 422 on a write, 429 always. `/api/health` and the alert stream are plain Django functions, so a hook adds them.
+- The page loads Swagger from files served by the API itself (`drf-spectacular-sidecar`), so it needs no outside host. It has its own policy with a script nonce that changes on every response, with no inline script allowed. Every other route keeps `default-src 'none'`. Only two files can be fetched under `/api/docs/assets/`.
+- `API_DOCS_ENABLED=false` switches all three addresses off (404). They are on by default.
+- Tests fail on any generator warning, on a route missing from the schema, on a summary that is a stub or shows a body shape, on an example value (so no credentials), and on a change to the policy.
+- No migration, no new model. Two packages added and pinned, `pip-audit` clean.
+
+### Not built
+- Request and response bodies of individual routes. The views build them as dictionaries, so the page lists the envelope and the field names that the description mentions. Adding serializers route by route would be a separate, larger piece of work.
+- A few summaries still read awkwardly (for example "Is a farmer asking for a different amount") because they come from the views' own sentences.
+- A rate limit on the three docs addresses (they are plain Django views, cached and cheap).
+
+### Checks
+- Backend 3508 tests in the full run (plus 3 added after it, run with their neighbours, 29 passing), `ruff` and `pip-audit` clean. The frontend is untouched.
+- A browser check against a scratch database: the page loads the CSS, script and schema from the API itself with no console error and nothing blocked; 161 operations in the list; an operation shows "Who may call this: Admin." and the answers 401, 403, 429 and 2XX; the Authorize dialog accepts a real token; "Try it out" on `/api/farms/risk` returned the success envelope with the bearer header in the curl line. `scripts/smoke_deploy.py` passes against it.
+- It found one thing: Swagger warned that an underscore in a deep link means a space and will stop working, so operation ids are now plain camelCase (for example `getSupplyLotsByLotCode`). In the browser pane Swagger's list only drew its first group until the pane was shown, which is the pane, not the docs.
+- Not checked: the page on a phone, keyboard use, and the live site (this is not deployed yet).
+
 ## Lot tracing
 
 A disease on one farm now leads to every other farm that got the same lot of eggs. This is step 6, the last step of the egg supply design (`docs/superpowers/specs/2026-11-06-egg-supply-design.md`, local only). The plan is `docs/superpowers/plans/2026-11-09-lot-tracing.md` (local only). The branch `feature/lot-tracing` is cut from master.

@@ -29,7 +29,9 @@ PUBLIC = {
 }
 
 # Views that are not classes, so they carry their own check. Named here so a new one is noticed.
-FUNCTION_VIEWS = {'health_check', 'alert_stream'}
+# schema_view, docs_view and asset_view are the API's own documentation: open to anyone on purpose (the routes are public
+# anyway) and switched off with API_DOCS_ENABLED. tests/test_api_docs.py covers them.
+FUNCTION_VIEWS = {'health_check', 'alert_stream', 'schema_view', 'docs_view', 'asset_view'}
 
 # Allowed by the table, then refused by the view for a reason about the record, not the role.
 REFUSES_ALLOWED_ROLE = {
