@@ -74,6 +74,8 @@ PERMISSIONS: dict[str, dict[str, frozenset]] = {
     },
     # Earned allowances that wait for a supervisor: read the list, approve or dismiss one.
     'suggestions': {'read': STAFF, 'decide': STAFF},
+    # Every batch that got the same lot of eggs, for a supervisor or admin to follow a disease through.
+    'lots': {'read': STAFF},
     # A new farmer's getting started checklist, worked out from their own records.
     'onboarding': {'read': FARMER_ONLY},
     # The cooperative's egg supply settings. Staff read them, only an admin changes them.

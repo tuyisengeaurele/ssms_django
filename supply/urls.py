@@ -18,6 +18,7 @@ from .views import (
     AllowanceRequestDetailView,
     AllowanceRequestListView,
     AllowanceView,
+    LotTraceView,
     OnboardingView,
     SuggestionDecisionView,
     SuggestionListView,
@@ -32,6 +33,7 @@ urlpatterns = [
     path('/allowance/farmers/<str:pk>', AllowanceFarmerView.as_view(), name='supply_allowance_farmer'),                     # PATCH (staff)
     path('/suggestions', SuggestionListView.as_view(), name='supply_suggestions'),                                          # GET (staff)
     path('/suggestions/<str:pk>/decision', SuggestionDecisionView.as_view(), name='supply_suggestion_decision'),            # POST (staff)
+    path('/lots/<str:lot_code>', LotTraceView.as_view(), name='supply_lot_trace'),                                          # GET (staff)
     path('/onboarding', OnboardingView.as_view(), name='supply_onboarding'),                                                 # GET (farmer)
     path('/settings', SupplySettingsView.as_view(), name='supply_settings'),
     path('/rounds', RoundListView.as_view(), name='supply_rounds'),                                                         # GET / POST (staff)
