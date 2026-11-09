@@ -188,6 +188,10 @@ export default function DetectionReportsPage() {
                           </td>
                           <td data-label={t('drColBatch')} className="cell-mono">
                             <Link to={`/batches/${d.batchId}`} className="link">#{d.batchId.slice(-8).toUpperCase()}</Link>
+                            {/* A farmer is not led to other farmers, so the lot is for staff. */}
+                            {!isFarmer && d.lotCode && (
+                              <div><Link to={`/supply/lots/${encodeURIComponent(d.lotCode)}`} className="link">{fill(t('trcTitle'), { code: d.lotCode })}</Link></div>
+                            )}
                           </td>
                           <td data-label={t('drColResult')}>
                             <span className="badge badge-stage" style={{ '--c': colorFor('result', d.result) } as CSSProperties}>{d.result}</span>

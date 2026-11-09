@@ -156,6 +156,32 @@ export interface RoundFacts {
   expectedHarvestDate: string;
 }
 
+/** How one batch of a lot is doing, from its latest disease check. A batch nobody has checked is not "healthy". */
+export type LotStatus = 'disease' | 'healthy' | 'not_checked';
+
+export interface LotTraceBatch {
+  id: string;
+  stage: string;
+  quantity: number | null;
+  quantityUnit: string;
+  startDate: string;
+  status: LotStatus;
+  farm: { id: string; name: string };
+  owner: { id: string; name: string; email: string };
+  room: { id: string; name: string } | null;
+  lastCheck: { result: string; at: string } | null;
+  /** A disease alert on the batch that nobody has closed. */
+  openAlert: boolean;
+}
+
+/** Every batch that got the same lot of eggs, the ones with a disease first. */
+export interface LotTrace {
+  lotCode: string;
+  round: { id: string; name: string; deliveryDate: string; status: string } | null;
+  summary: { batches: number; farms: number; disease: number; healthy: number; notChecked: number };
+  batches: LotTraceBatch[];
+}
+
 export type OnboardingState = string;
 
 /** One step of a new farmer's getting started list. The page words each state, and `detail` holds what the words need. */
@@ -245,6 +271,9 @@ export const supplyService = {
     api.post<ApiResponse<{ round: SupplyRound; total: number }>>(`/supply/rounds/${id}/confirm`, { items }),
 
   notCollected: (requestId: string) => api.post<ApiResponse<{ id: string; status: string }>>(`/supply/requests/${requestId}/not-collected`),
+
+  /** Staff only. 404 for a lot that does not exist and for one of another cooperative. */
+  lot: (code: string) => api.get<ApiResponse<LotTrace>>(`/supply/lots/${encodeURIComponent(code)}`),
 
   onboarding: () => api.get<ApiResponse<Onboarding>>('/supply/onboarding'),
 
