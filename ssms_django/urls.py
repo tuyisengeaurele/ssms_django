@@ -3,6 +3,7 @@ from django.conf.urls.static import static
 from django.urls import include, path
 
 from contacts.urls import admin_urlpatterns as contacts_admin_urlpatterns
+from core.api_docs import asset_view, docs_view, schema_view
 from core.utils import health_check
 from logs.views import LogsView
 from reports.health_views import SystemHealthHistoryView, SystemHealthTestView, SystemHealthView
@@ -13,6 +14,12 @@ handler500 = 'core.utils.server_error'
 
 urlpatterns = [
     path('api/health', health_check),
+    # The API's own documentation. Plain views, switched off with API_DOCS_ENABLED=false (they then answer 404).
+    path('api/schema/', schema_view),
+    path('api/schema', schema_view),
+    path('api/docs/', docs_view),
+    path('api/docs', docs_view),
+    path('api/docs/assets/<str:name>', asset_view),
     path('api/auth/', include('users.urls')),          # /api/auth/register, /api/auth/login, /api/auth/me
     path('api/farms', include('farms.urls')),          # /api/farms, /api/farms/<id>
     path('api/batches', include('batches.urls')),      # /api/batches, /api/batches/<id>, ...
