@@ -402,7 +402,43 @@ Audit log: each approval and each "Not now", with the farmer and the lot. The al
 | "This farmer's allowance changed since, so this no longer applies." | the allowance was changed after the suggestion | nothing, the suggestion is closed |
 | The harvest worked but no suggestion was made | the check failed and was logged, the harvest is never blocked | read the API log for "earned allowance" |
 
-## 17. If something fails
+## 17. Lot tracing
+
+Every batch made from a supply round carries the round's lot code (for example `L2611-4E42`). When a disease shows up on one farm, a supervisor or admin can see every farm that got the same lot of eggs and how each of those batches is doing. Nothing here changes data and nothing needs a key.
+
+**How to get to it**
+
+- From **Disease checks**: a row whose batch came from a round shows "Egg lot {code}". Farmers do not see this link.
+- From a **batch page**: the lot code is in the batch facts, and it is a link for supervisors and admins. A farmer sees their own lot code as plain text, with no way to other farmers.
+- Or open `/supply/lots/<code>` directly.
+
+**What the page shows**
+
+The round the lot came from (a link), five counts (batches, farms, with disease, healthy, not checked), and one row per batch: the farmer and farm, the room, the batch (a link) with its stage and quantity, how it is doing, and the last check with its date.
+
+**How "how it is doing" is decided**
+
+From the latest disease check of that batch only. A batch recovers when its newest check says Healthy.
+- **Disease found**: the latest check says Grasserie.
+- **Healthy**: the latest check says Healthy.
+- **Not checked**: no check yet. A batch nobody has checked is never shown as healthy.
+
+A batch with a disease alert that nobody has closed also carries an "Open alert" mark. The rows are in the order to look at them: disease first, then not checked, then healthy, the oldest batch first.
+
+**Who sees what**
+
+A supervisor sees the batches of their own cooperative's farmers, an admin sees all. A lot of another cooperative, and a lot that does not exist, give the same "We could not find that lot." Archived batches are left out, as everywhere else. A batch the farmer started by hand has no lot code, so it is in no lot.
+
+**If something looks wrong**
+
+| What you see | Likely cause | What to do |
+|---|---|---|
+| "We could not find that lot." for a code you were given | it belongs to another cooperative, or every batch of it was archived | sign in as that cooperative's supervisor, or an admin |
+| A disease check row has no lot link | the batch was started by hand, or you are signed in as a farmer | nothing, there is no lot to follow |
+| A batch shows "Not checked" although the farmer says they checked | the photo was not a clear silkworm, so the check was not kept | ask for a new photo |
+| The page says "We could not load this lot." | the API was asleep or unreachable | press Try again |
+
+## 18. If something fails
 
 | What you see | Likely cause | Fix |
 |---|---|---|
