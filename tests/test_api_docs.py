@@ -78,6 +78,11 @@ def test_all_three_are_not_found_when_the_docs_are_switched_off(api_client):
             assert api_client.get(path).status_code == 404, path
 
 
-def test_only_get_is_allowed(api_client):
+def test_head_works_like_get_for_a_monitor(api_client):
+    for path in (SCHEMA, DOCS, CSS):
+        assert api_client.head(path).status_code == 200, path
+
+
+def test_only_get_and_head_are_allowed(api_client):
     for path in (SCHEMA, DOCS, CSS):
         assert api_client.post(path, {}, format='json').status_code == 405, path

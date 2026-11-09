@@ -65,6 +65,15 @@ def test_the_summary_is_the_first_line_of_what_the_view_says_it_does(schema):
     assert op(schema, '/api/supply/lots/{lot_code}')['summary'].startswith('Every batch that got the same lot of eggs')
 
 
+def test_operation_ids_are_unique_and_plain_camel_case_so_deep_links_survive(schema):
+    ids = [o['operationId'] for _, _, o in operations(schema)]
+    assert len(ids) == len(set(ids))
+    for oid in ids:
+        assert re.fullmatch(r'[a-z][A-Za-z0-9]*', oid), oid
+    assert op(schema, '/api/supply/lots/{lot_code}')['operationId'] == 'getSupplyLotsByLotCode'
+    assert op(schema, '/api/health')['operationId'] == 'getHealth'
+
+
 def test_a_view_that_does_several_things_gets_the_sentence_for_each_method(schema):
     # "GET lists the entries, latest day first. POST adds one (the owner or an admin)."
     assert op(schema, '/api/batches/{id}/mortality', 'get')['summary'].startswith('Lists the entries')

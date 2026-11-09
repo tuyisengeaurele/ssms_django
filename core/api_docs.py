@@ -12,7 +12,7 @@ from pathlib import Path
 import drf_spectacular_sidecar
 from django.conf import settings
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_safe
 from drf_spectacular.generators import SchemaGenerator
 
 _DIST = Path(drf_spectacular_sidecar.__file__).parent / 'static' / 'drf_spectacular_sidecar' / 'swagger-ui-dist'
@@ -58,7 +58,7 @@ def _schema() -> dict:
     return SchemaGenerator().get_schema(request=None, public=True)
 
 
-@require_GET
+@require_safe
 def schema_view(request):
     _enabled()
     response = JsonResponse(_schema())
@@ -66,7 +66,7 @@ def schema_view(request):
     return response
 
 
-@require_GET
+@require_safe
 def docs_view(request):
     _enabled()
     nonce = secrets.token_urlsafe(16)
@@ -80,7 +80,7 @@ def docs_view(request):
     return response
 
 
-@require_GET
+@require_safe
 def asset_view(request, name):
     _enabled()
     content_type = ASSETS.get(name)

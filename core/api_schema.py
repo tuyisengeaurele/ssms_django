@@ -62,6 +62,22 @@ def roles_for(view, method: str) -> list[str] | None:
     return [role for role in ROLES if may(role, resource, action)]
 
 
+def operation_id(method: str, path: str) -> str:
+    """Method and path in camelCase, so two operations on one view (a list and one record) can never share a name.
+
+    Plain letters only: Swagger reads an underscore in a deep link as a space, which a later release drops.
+    """
+    words = [method.lower()]
+    for part in path.removeprefix('/api').split('/'):
+        if not part:
+            continue
+        if part.startswith('{'):
+            words += ['by', *re.split(r'[-_]', part[1:-1])]
+        else:
+            words += re.split(r'[-_]', part)
+    return words[0] + ''.join(w[:1].upper() + w[1:] for w in words[1:] if w)
+
+
 _METHODS = r'(?:GET|POST|PUT|PATCH|DELETE)'
 # "GET /api/x/<id>, every thing that ..." and "GET/POST /api/x" and "POST /api/x (staff)".
 _ROUTE_LEAD = re.compile(rf'^{_METHODS}(?:\s*[/,]\s*{_METHODS})*\s+\S*/api\S*\s*[,:\-]?\s*')
@@ -105,10 +121,7 @@ class SsmsAutoSchema(AutoSchema):
         return None if self._plain() else super()._get_serializer()
 
     def get_operation_id(self):
-        # Method and path, so two operations on one view (a list and one record) can never share a name.
-        parts = [p for p in re.split(r'[/]+', self.path.removeprefix('/api')) if p]
-        parts = [f'by_{p[1:-1]}' if p.startswith('{') else p for p in parts]
-        return re.sub(r'\W+', '_', '_'.join([self.method.lower(), *parts])).strip('_')
+        return operation_id(self.method, self.path)
 
     def get_tags(self):
         return [self._tokenize_path()[0]] if self._tokenize_path() else ['api']
@@ -169,7 +182,7 @@ def add_plain_routes(result, generator, request, public):
     """
     stream_roles = [role for role in ROLES if may(role, 'alerts', 'stream')]
     result['paths']['/api/health'] = {'get': {
-        'operationId': 'get_health',
+        'operationId': 'getHealth',
         'summary': 'Check that the API and its database are up',
         'description': (
             'Open to anyone. The hosting platform and the outside monitor call it. A 503 means the database cannot be '
@@ -183,7 +196,7 @@ def add_plain_routes(result, generator, request, public):
         },
     }}
     result['paths']['/api/alerts/stream'] = {'get': {
-        'operationId': 'get_alerts_stream',
+        'operationId': 'getAlertsStream',
         'summary': 'Stream new alerts as server-sent events',
         'description': (
             'Opens an event stream. It is not called with the bearer token: first `POST /api/alerts/stream-ticket` for a '
