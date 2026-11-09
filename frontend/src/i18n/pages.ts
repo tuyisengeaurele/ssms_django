@@ -827,6 +827,7 @@ export const pageTranslations = {
   trcNoCheck: k("No check yet", "Pas encore vérifié", "Nta suzuma riraba"),
   trcNotFound: k("We could not find that lot.", "Nous n'avons pas trouvé ce lot.", "Ntitwabashije kubona iri sarura."),
   trcLoadFailed: k("We could not load this lot.", "Nous n'avons pas pu charger ce lot.", "Ntitwabashije gufungura iri sarura."),
+  qaTitle: k("Quick actions", "Actions rapides", "Ibikorwa byihuse"),
   calTitle: k("Calendar", "Calendrier", "Kalendari"),
   calPrev: k("Previous month", "Mois précédent", "Ukwezi gushize"),
   calNext: k("Next month", "Mois suivant", "Ukwezi gukurikira"),
