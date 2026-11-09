@@ -177,15 +177,16 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --bg:          #0B0B0C;
-  --surface:     #141516;
-  --surface-2:   #1B1C1E;
-  --border:      #2E3033;
-  --border-light:#232426;
-  --text:        #EDEFEE;
-  --text-2:      #CFD3D1;
-  --text-muted:  #A3A8A6;
-  --text-faint:  #8C928F;
+  /* "Forest night": near black, tinted to the same green family as the light theme at a very low chroma. */
+  --bg:          #0A0E0C;
+  --surface:     #101612;
+  --surface-2:   #161D19;
+  --border:      #27312B;
+  --border-light:#1C241F;
+  --text:        #EBF0ED;
+  --text-2:      #CBD2CE;
+  --text-muted:  #A0A9A4;
+  --text-faint:  #8A948F;
 
   --primary:       #52B788;
   --primary-hover: #74C69D;
@@ -193,13 +194,13 @@
   --primary-ring:  rgba(82, 183, 136, 0.3);
 
   /* Ink is the strongest text colour and the fill of a solid button, ivory is what sits on it or an inset tile. */
-  --ink:   #EDEFEE;
-  --paper: #0B0B0C;
-  --ivory: #1A1B1D;
+  --ink:   #EBF0ED;
+  --paper: #0A0E0C;
+  --ivory: #161D19;
 
-  /* The sidebar is green in the light theme. In the dark theme it is black like the page. */
-  --sidebar-bg:      #080809;
-  --sidebar-surface: #141516;
+  /* The sidebar is forest ink in both themes, a touch darker in the dark one. */
+  --sidebar-bg:      #08120D;
+  --sidebar-surface: #101612;
 
   --success:       #4FBF8A;
   --success-bg:    #1B3326;
@@ -222,15 +223,15 @@
   --shadow-xl: 0 4px 8px rgba(0, 0, 0, 0.4), 0 32px 72px rgba(0, 0, 0, 0.6);
   --glow-danger: 0 0 0 3px rgba(240, 138, 118, 0.25);
 
-  --row-hover:        #1B1C1E;
+  --row-hover:        #151C18;
   --tint:             rgba(255, 255, 255, 0.07);
   --tint-2:           rgba(255, 255, 255, 0.14);
   --input-border:     rgba(255, 255, 255, 0.22);
   --input-border-hover: rgba(255, 255, 255, 0.4);
-  --placeholder:      #8E9491;
-  --skel-a:           #1B1C1E;
-  --skel-b:           #242527;
-  --caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23EDEFEE' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  --placeholder:      #8B948F;
+  --skel-a:           #151C18;
+  --skel-b:           #1E2722;
+  --caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23EBF0ED' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
 
   --danger-ink:   #F08A76;
   --danger-ink-2: #F6A595;
@@ -255,10 +256,10 @@
   --chart-3: #5FA8E0;
   --chart-4: #E27A62;
   --chart-5: #A98BD6;
-  --chart-quiet:  #929895;
-  --chart-grid:   #2A2C2F;
-  --chart-cursor: #4A4D52;
-  --chart-axis:   #A3A8A6;
+  --chart-quiet:  #8F9994;
+  --chart-grid:   #212A25;
+  --chart-cursor: #44504A;
+  --chart-axis:   #A0A9A4;
 }
 
 /* ── Base ───────────────────────────────────────────────────────────────────── */
