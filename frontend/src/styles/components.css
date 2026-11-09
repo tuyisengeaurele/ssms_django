@@ -858,10 +858,31 @@ tr.is-off td:last-child { opacity: 1; }
 
 .skeleton-card {
   background: var(--surface);
-  border: 1px solid var(--border-light);
+  border: 0;
   border-radius: 20px;
   padding: 24px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--elev-raised);
+}
+
+/* ── Entrance ──────────────────────────────────────────────────────────────── */
+/* Content rises in when a page opens: a short fade and a 6 px lift, one item after another, the first eight stepping by
+   40 ms. Only for people who have not asked for less motion. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .stagger > *,
+  .app-content .stack-24 > * { animation: rise var(--duration-slow) var(--ease-out) both; }
+  :is(.stagger, .app-content .stack-24) > :nth-child(2) { animation-delay: 40ms; }
+  :is(.stagger, .app-content .stack-24) > :nth-child(3) { animation-delay: 80ms; }
+  :is(.stagger, .app-content .stack-24) > :nth-child(4) { animation-delay: 120ms; }
+  :is(.stagger, .app-content .stack-24) > :nth-child(5) { animation-delay: 160ms; }
+  :is(.stagger, .app-content .stack-24) > :nth-child(6) { animation-delay: 200ms; }
+  :is(.stagger, .app-content .stack-24) > :nth-child(7) { animation-delay: 240ms; }
+  :is(.stagger, .app-content .stack-24) > :nth-child(8) { animation-delay: 280ms; }
+  :is(.stagger, .app-content .stack-24) > :nth-child(n + 9) { animation-delay: 320ms; }
 }
 
 /* ── Modal ─────────────────────────────────────────────────────────────────── */
