@@ -43,3 +43,23 @@ describe('tabs', () => {
     expect(rules('.tabs button')).toMatch(/var\(--text-(sm|base)\)/);
   });
 });
+
+// The settings tabs are links, one page each, and follow the same rules as the buttons above.
+describe('page tabs', () => {
+  it('scroll sideways, snap to a tab and hide the scrollbar', () => {
+    const row = rules('.tab-nav ul');
+    expect(row).toMatch(/overflow-x:\s*auto/);
+    expect(row).toMatch(/scroll-snap-type:\s*x proximity/);
+    expect(row).toMatch(/scrollbar-width:\s*none/);
+    expect(rules('.tab-nav ul::-webkit-scrollbar')).toMatch(/display:\s*none/);
+    expect(rules('.tab-link')).toMatch(/scroll-snap-align:\s*start/);
+  });
+
+  it('show keyboard focus on a tab', () => {
+    expect(rules('.tab-link:focus-visible')).toMatch(/outline:\s*2px solid/);
+  });
+
+  it('draw the tab labels from the type scale', () => {
+    expect(rules('.tab-link')).toMatch(/var\(--text-(sm|base)\)/);
+  });
+});
