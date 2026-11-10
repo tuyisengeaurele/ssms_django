@@ -556,6 +556,9 @@ td .cell-muted { color: var(--text-muted); }
 .cell-sub { overflow: hidden; color: var(--text-muted); font-size: 0.82rem; text-overflow: ellipsis; white-space: nowrap; }
 /* For a note that has to be read in full, such as the reasons a farm is at risk. */
 .cell-sub--wrap { overflow: visible; white-space: normal; text-overflow: clip; }
+@media (max-width: 640px) {
+  .cell-sub { overflow: visible; white-space: normal; overflow-wrap: anywhere; text-overflow: clip; }
+}
 .cell-nowrap { white-space: nowrap; }
 
 .cell-tag {
