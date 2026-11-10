@@ -35,6 +35,8 @@ describe('calendar styles', () => {
     expect(rules('.cal-day[data-today="true"]')).not.toBe('');
     expect(rules('.cal-day[data-selected="true"]')).not.toBe('');
     expect(rules('.cal-day[data-outside="true"]')).not.toBe('');
+    // The faint text colour is 3.7 to 1 on the light card, under AA for text this small. The muted one holds 5.9 to 1.
+    expect(rules('.cal-day[data-outside="true"]')).toMatch(/color:\s*var\(--text-muted\)/);
   });
 
   it('draws a dot for each kind of event from the chart tokens', () => {

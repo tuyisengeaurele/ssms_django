@@ -1415,7 +1415,7 @@ tr.is-off td:last-child { opacity: 1; }
 }
 .cal-day:hover { background: var(--tint); }
 .cal-day:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
-.cal-day[data-outside="true"] { color: var(--text-faint); }
+.cal-day[data-outside="true"] { color: var(--text-muted); }
 .cal-day[data-today="true"] { border-color: var(--border); }
 .cal-day[data-today="true"] .cal-num { color: var(--primary); font-weight: 700; }
 .cal-day[data-selected="true"] { background: var(--ink); color: var(--ivory); }
