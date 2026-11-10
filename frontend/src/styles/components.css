@@ -656,6 +656,7 @@ tr.is-off td:last-child { opacity: 1; }
 .filter-field { display: flex; flex-direction: column; gap: 6px; }
 .filter-field > span { color: var(--text-muted); font: 600 var(--text-xs) var(--font-ui); letter-spacing: 0.02em; }
 .filter-input { width: 200px; padding: 0.5rem 0.9rem; border-radius: 999px; font-size: 0.88rem; }
+.filters .search-box input, .filters .inline-select, .filters .filter-input { box-sizing: border-box; height: 40px; }
 .filter-buttons { display: flex; gap: 6px; margin-left: auto; }
 .panel-alert { margin: 20px 24px; }
 .cell-detail { max-width: 240px; color: var(--text-2); }

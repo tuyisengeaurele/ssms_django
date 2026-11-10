@@ -24,6 +24,20 @@ describe('badge rows', () => {
   });
 });
 
+describe('filter bars', () => {
+  // A search box, a select and two kinds of input each had their own padding, so they came out at four heights and
+  // did not line up.
+  it('give the search box, the selects and the inputs one height', () => {
+    const heights = ['.filters .search-box input', '.filters .inline-select', '.filters .filter-input'].map((selector) => {
+      const rule = rules(selector);
+      expect(rule, selector).toMatch(/box-sizing:\s*border-box/);
+      return /height:\s*(\d+)px/.exec(rule)?.[1];
+    });
+    expect(new Set(heights).size).toBe(1);
+    expect(Number(heights[0])).toBeGreaterThanOrEqual(40);
+  });
+});
+
 describe('a row of five tiles in a stack', () => {
   it('adds no margin of its own under the row', () => {
     expect(rules('.stack-24 > .grid-5')).toMatch(/margin-bottom:\s*0/);
