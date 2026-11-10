@@ -17,6 +17,15 @@ describe('QuickActions', () => {
     expect(within(nav).getAllByRole('listitem').length).toBe(within(nav).getAllByRole('link').length);
   });
 
+  it('says how many actions it holds, so the grid can split them evenly (4 and 4, not 7 and 1)', () => {
+    for (const role of ['FARMER', 'SUPERVISOR', 'ADMIN', 'ADMIN_MONITOR'] as const) {
+      const view = open(role);
+      const list = screen.getByRole('navigation', { name: 'Quick actions' }).querySelector('ul') as HTMLElement;
+      expect(list).toHaveAttribute('data-count', String(links().length));
+      view.unmount();
+    }
+  });
+
   it('offers a farmer the places they use most, in order', () => {
     open('FARMER');
     expect(summary()).toEqual([

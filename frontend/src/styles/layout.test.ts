@@ -73,6 +73,15 @@ describe('quick actions', () => {
     expect(rules('.qa-list')).toMatch(/grid-template-columns:\s*repeat\(auto-fill,\s*minmax\(/);
   });
 
+  it('split seven or eight actions into four columns on a wide screen, so none is left alone on a second row', () => {
+    expect(css).toMatch(/@media \(min-width: 900px\)\s*\{[^@]*\.qa-list\[data-count="7"\],\s*\.qa-list\[data-count="8"\]\s*\{[^}]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/);
+  });
+
+  it('never break a word in the middle to fit a narrow card', () => {
+    expect(rules('.qa-label')).not.toMatch(/overflow-wrap:\s*anywhere/);
+    expect(rules('.qa-label')).toMatch(/overflow-wrap:\s*break-word/);
+  });
+
   it('are at least 44 px tall, raised, and float on hover', () => {
     expect(rules('.qa-card')).toMatch(/min-height:\s*(4[4-9]|5\d)px/);
     expect(rules('.qa-card')).toContain('var(--elev-raised)');

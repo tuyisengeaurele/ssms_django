@@ -1475,6 +1475,10 @@ a.cal-ev-link:focus-visible { outline: 2px solid var(--gold); outline-offset: 1p
 }
 
 .qa-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); list-style: none; }
+/* Seven or eight cards split into two even rows, never seven and one */
+@media (min-width: 900px) {
+  .qa-list[data-count="7"], .qa-list[data-count="8"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
 .qa-card {
   display: flex;
   align-items: center;
@@ -1491,7 +1495,7 @@ a.cal-ev-link:focus-visible { outline: 2px solid var(--gold); outline-offset: 1p
 .qa-card:hover { box-shadow: var(--elev-floating); }
 .qa-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .qa-icon { display: grid; flex: none; place-items: center; width: 32px; height: 32px; border-radius: var(--radius-md); background: var(--tint); color: var(--primary); }
-.qa-label { min-width: 0; overflow-wrap: anywhere; }
+.qa-label { min-width: 0; overflow-wrap: break-word; }
 .qa-count { margin-left: auto; min-width: 22px; padding: 1px 7px; border-radius: var(--radius-sm); background: var(--ink); color: var(--ivory); font-size: var(--text-xs); font-variant-numeric: tabular-nums; text-align: center; }
 
 @media (prefers-reduced-motion: no-preference) {

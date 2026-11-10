@@ -57,10 +57,11 @@ const ACTIONS: Record<Role, Action[]> = {
  */
 export default function QuickActions({ role, counts = {} }: { role: Role; counts?: Partial<Record<Count, number>> }) {
   const { t } = useLanguage();
+  const actions = ACTIONS[role];
   return (
     <nav className="qa" aria-label={t('qaTitle')}>
-      <ul className="qa-list">
-        {ACTIONS[role].map((action) => {
+      <ul className="qa-list" data-count={actions.length}>
+        {actions.map((action) => {
           const n = action.count ? counts[action.count] ?? 0 : 0;
           return (
             <li key={action.to + action.label}>
