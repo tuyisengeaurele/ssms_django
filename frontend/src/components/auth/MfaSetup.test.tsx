@@ -66,6 +66,16 @@ describe('MfaSetup', () => {
     expect(mfa.setupStart).toHaveBeenCalledWith('chal-2');
   });
 
+  it('takes the code in six boxes and keeps Turn on off until all six are typed', async () => {
+    open();
+    await screen.findByTestId('qr');
+    expect(document.querySelectorAll('.code-input__box')).toHaveLength(6);
+    const confirm = screen.getByRole('button', { name: 'Turn on' });
+    expect(confirm).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('6 digit code'), { target: { value: '123456' } });
+    expect(confirm).toBeEnabled();
+  });
+
   it('says what to do when the code is refused: turn on automatic time', async () => {
     open();
     expect(await screen.findByText(/automatic date and time/)).toBeInTheDocument();

@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useId, useState } from 'react';
 import axios from 'axios';
 import { useLanguage } from '../../context/LanguageContext';
 import { useApiError } from '../../hooks/useApiError';
+import CodeInput from '../ui/CodeInput';
 import Modal from '../ui/Modal';
 import { plain } from './mfaErrors';
 
@@ -54,7 +55,7 @@ export default function CodeModal({ open, title, body, confirmLabel, onSubmit, o
       footer={
         <>
           <button type="button" className="btn btn-secondary" onClick={onCancel}>{t('btnCancel')}</button>
-          <button type="submit" form={formId} className="btn btn-primary" disabled={busy || !code.trim()}>
+          <button type="submit" form={formId} className="btn btn-primary" disabled={busy || code.length < 6}>
             {busy ? <><span className="spinner" />{t('adMfaVerifying')}</> : confirmLabel}
           </button>
         </>
@@ -65,13 +66,11 @@ export default function CodeModal({ open, title, body, confirmLabel, onSubmit, o
         {error ? <div className="alert alert-error" role="alert">{error}</div> : null}
         <div className="form-group">
           <label className="form-label" htmlFor={`${formId}-code`}>{t('adMfaCodeLabel')}</label>
-          <input
+          <CodeInput
             id={`${formId}-code`}
-            className="form-input"
             value={code}
-            onChange={(e) => setCode(e.target.value)}
-            inputMode="numeric"
-            autoComplete="one-time-code"
+            invalid={Boolean(error)}
+            onChange={(next) => { setCode(next); setError(''); }}
             required
           />
         </div>
