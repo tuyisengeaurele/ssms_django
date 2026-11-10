@@ -81,6 +81,15 @@ describe('quick actions', () => {
     expect(css).toMatch(/@media \(min-width: 1100px\)\s*\{[^@]*\.qa-list\[data-count="6"\]\s*\{[^}]*grid-template-columns:\s*repeat\(6,\s*minmax\(0,\s*1fr\)\)/);
   });
 
+  it('carry a waiting count on the corner of the card, so a long word keeps the whole width of its card', () => {
+    expect(rules('.qa-card')).toMatch(/position:\s*relative/);
+    const count = rules('.qa-count');
+    expect(count).toMatch(/position:\s*absolute/);
+    expect(count).toMatch(/top:\s*-?\d+px/);
+    expect(count).toMatch(/right:\s*-?\d+px/);
+    expect(count).not.toMatch(/margin-left:\s*auto/);
+  });
+
   it('never break a word in the middle to fit a narrow card', () => {
     expect(rules('.qa-label')).not.toMatch(/overflow-wrap:\s*anywhere/);
     expect(rules('.qa-label')).toMatch(/overflow-wrap:\s*break-word/);
