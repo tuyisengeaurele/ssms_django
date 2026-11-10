@@ -26,7 +26,8 @@ const PUBLIC_PATHS = [
 ];
 
 api.interceptors.request.use((config) => {
-  const isPublic = PUBLIC_PATHS.some((path) => config.url?.includes(path));
+  // From the start of the address: a private address can have "/lots/" inside it (the staff lot trace, /supply/lots/...).
+  const isPublic = PUBLIC_PATHS.some((path) => config.url?.startsWith(path));
   const token = getAccessToken();
   if (token && !isPublic) config.headers.Authorization = `Bearer ${token}`;
   return config;
