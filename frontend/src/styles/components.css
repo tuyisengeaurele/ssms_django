@@ -616,11 +616,14 @@ tr.is-off td:last-child { opacity: 1; }
 .coop-farmers-actions { margin-bottom: 20px; }
 
 /* Tabs and the message list */
-.tabs { display: flex; gap: 4px; padding: 0 20px; border-bottom: 1px solid var(--border-light); overflow-x: auto; }
-.tabs button { position: relative; padding: 12px 14px 14px; border: 0; background: none; color: var(--text-muted); font: 500 0.9rem var(--font-ui); white-space: nowrap; }
+.tabs { display: flex; gap: 4px; padding: 0 20px; border-bottom: 1px solid var(--border-light); overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { position: relative; padding: 12px 14px 14px; border: 0; background: none; color: var(--text-muted); font: 500 var(--text-base) var(--font-ui); white-space: nowrap; scroll-snap-align: start; transition: color var(--duration-normal) var(--ease-out); }
 .tabs button:hover { color: var(--ink); }
+.tabs button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; border-radius: var(--radius-md); }
 .tabs button.is-on { color: var(--ink); font-weight: 600; }
-.tabs button.is-on::after { content: ''; position: absolute; inset: auto 14px 0; height: 2px; border-radius: 2px; background: var(--ink); }
+.tabs button::after { content: ''; position: absolute; inset: auto 14px 0; height: 2px; border-radius: 2px; background: var(--ink); transform: scaleX(0); transition: transform var(--duration-normal) var(--ease-out); }
+.tabs button.is-on::after { transform: scaleX(1); }
 
 .inbox { margin: 0; padding: 0; list-style: none; }
 .inbox li + li { border-top: 1px solid var(--border-light); }
