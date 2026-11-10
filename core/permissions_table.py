@@ -72,6 +72,8 @@ PERMISSIONS: dict[str, dict[str, frozenset]] = {
         'read_current': FARMER_ONLY, 'request': FARMER_ONLY, 'cancel': FARMER_ONLY, 'receive': ALL,
         'read': STAFF, 'create': STAFF, 'update': STAFF, 'action': STAFF, 'proposal': STAFF, 'confirm': STAFF, 'not_collected': STAFF,
     },
+    # The dated events of the farms a person may see. Which farms is `core.access`.
+    'calendar': {'read': ALL},
     # Earned allowances that wait for a supervisor: read the list, approve or dismiss one.
     'suggestions': {'read': STAFF, 'decide': STAFF},
     # Every batch that got the same lot of eggs, for a supervisor or admin to follow a disease through.

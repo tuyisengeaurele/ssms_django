@@ -475,7 +475,42 @@ Press Authorize, paste the access token from `POST /api/auth/login` (the answer'
 | A new route is missing from the page | the page keeps the schema for the life of the process | restart or redeploy. A test fails if a route is not described |
 | `manage.py spectacular` prints warnings | a new view the generator cannot read | `tests/test_api_schema.py` fails on any warning. Fix the view |
 
-## 19. If something fails
+## 19. Farm calendar
+
+The calendar lists the dated events of the farms a person may see. This section covers the feed (`GET /api/calendar`). The calendar panel on the dashboards uses it. Nothing here needs a key and nothing is stored: every event is worked out from records that already exist.
+
+**What it lists**
+
+| Event | Comes from | Marked expected |
+|---|---|---|
+| Batch started | the batch's start date | no |
+| Expected harvest | the expected harvest date typed when the batch was made, for a batch with no harvest record yet | yes |
+| Stage changed | a stage change alert (the stage is read from its sentence, else left out) | no |
+| Disease check | each saved disease check, with its result | no |
+| Harvest recorded | each harvest record | no |
+| Round deadline | the day requests close in a supply round (open, closed, allocated or done) | no |
+| Round delivery | the delivery day. A supervisor sees every live round. A farmer sees it only for a round they have an approved, part approved or received request in | no |
+
+Nothing is predicted. How long a cycle takes is not ours to guess, so the only future harvest date is the one a person typed.
+
+**Who sees what**
+
+A farmer sees their own batches, a supervisor the batches of their cooperative's farmers and the rounds of their cooperative, an admin everything. A draft or cancelled round is not shown. An archived batch is left out together with its checks and harvests.
+
+**The window**
+
+`?from=YYYY-MM-DD&to=YYYY-MM-DD`, both days included, at most 100 days. Without either it is the current month. Only one of them, an end before the start, or a longer window is refused with 422 and a reason. At most 500 events are returned, earliest first, and `truncated: true` says there were more. Days are UTC days.
+
+**If something looks wrong**
+
+| What you see | Likely cause | What to do |
+|---|---|---|
+| A batch has no expected harvest on the calendar | it already has a harvest record, or it is archived | nothing, that is on purpose |
+| A farmer does not see a delivery | their request is not approved yet, or it was declined or put on the waiting list | approve it in the round |
+| A stage change has no stage name | the alert's sentence has no stage in it | nothing, the event still shows |
+| 422 on the calendar | the window is longer than 100 days or one end is missing | ask for a shorter window |
+
+## 20. If something fails
 
 | What you see | Likely cause | Fix |
 |---|---|---|
