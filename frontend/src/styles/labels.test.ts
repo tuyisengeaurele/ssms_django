@@ -8,7 +8,7 @@ import { contrastRatio } from '../landing/contrast';
 // state. The group label of the sidebar is the faintest text on a dark ground, so its contrast is held at AA.
 
 const read = (name: string) => readFileSync(join(__dirname, name), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-const sheets = (['../index.css', 'components.css', 'shell.css', 'toast.css', 'support.css'] as const).map((name) => [name, read(name)] as const);
+const sheets = (['../index.css', 'components.css', 'shell.css', 'toast.css', 'support.css', '../components/ui/codeInput.css'] as const).map((name) => [name, read(name)] as const);
 const shell = read('shell.css');
 const index = read('../index.css');
 

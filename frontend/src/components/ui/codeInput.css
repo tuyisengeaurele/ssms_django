@@ -1,0 +1,55 @@
+/* One time code: a box for each digit, drawn under one real field */
+.code-input {
+  --ci-ink: var(--ink);
+  --ci-bg: var(--surface);
+  --ci-border: var(--border);
+  --ci-border-hover: var(--text-faint);
+  --ci-focus: var(--gold);
+  /* gold on white is under 3 to 1, so the active edge is ink and gold is only the soft ring */
+  --ci-edge: var(--ink);
+  --ci-danger: var(--danger-ink);
+  --ci-font: var(--font-ui);
+  position: relative;
+}
+.code-input__boxes { display: flex; gap: 8px; }
+.code-input__box {
+  display: grid;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 56px;
+  place-items: center;
+  border: 1px solid var(--ci-border);
+  border-radius: 14px;
+  background: var(--ci-bg);
+  color: var(--ci-ink);
+  font: 600 1.5rem/1 var(--ci-font);
+  font-variant-numeric: tabular-nums;
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out);
+}
+.code-input__box--split { margin-left: 8px; }
+.code-input:hover .code-input__box { border-color: var(--ci-border-hover); }
+.code-input__box[data-filled] { border-color: var(--ci-ink); }
+.code-input__box[data-active] { border-color: var(--ci-edge); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ci-focus) 28%, transparent); }
+.code-input[data-invalid="true"] .code-input__box { border-color: var(--ci-danger); }
+.code-input[data-invalid="true"] .code-input__box[data-active] { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ci-danger) 24%, transparent); }
+.code-input__caret { width: 2px; height: 26px; border-radius: 2px; background: var(--ci-focus); }
+@media (prefers-reduced-motion: no-preference) {
+  .code-input__caret { animation: code-caret 1.1s steps(1) infinite; }
+}
+@keyframes code-caret { 50% { opacity: 0; } }
+/* The field covers the boxes, so a tap anywhere on them types. Its text and cursor are drawn by the boxes instead. */
+.code-input__field {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  /* 16px stops phones from zooming the page on focus */
+  font-size: 16px;
+}
+.code-input__field::selection { background: transparent; }

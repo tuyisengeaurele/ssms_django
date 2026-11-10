@@ -193,11 +193,6 @@
   font-weight: 600;
 }
 
-.landing .l-auth__actions {
-  display: grid;
-  gap: 10px;
-}
-
 .landing .l-auth__foot {
   display: flex;
   justify-content: center;
@@ -301,6 +296,31 @@
   font-size: 0.8rem;
 }
 
+/* The real field of the code boxes lies over them, so it must not take the look of an ordinary field */
+.landing .l-field .code-input__field,
+.landing .l-field .code-input__field:hover,
+.landing .l-field .code-input__field:focus {
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: transparent;
+  caret-color: transparent;
+}
+
+/* The one time code boxes wear the sign in colours, whatever theme the app is set to */
+.landing .code-input {
+  --ci-ink: var(--l-ink);
+  --ci-bg: var(--l-ivory);
+  --ci-border: rgba(11, 31, 23, 0.18);
+  --ci-border-hover: rgba(11, 31, 23, 0.34);
+  --ci-focus: var(--l-leaf);
+  --ci-edge: var(--l-leaf);
+  --ci-danger: #8a2c20;
+  --ci-font: var(--l-font-ui);
+}
+
 /* Inline links */
 .landing .l-auth__link {
   color: var(--l-leaf);
@@ -379,6 +399,35 @@
 .landing .l-auth__ghost:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+/* A main button with a second choice under it: the group keeps them apart, and the second choice is quiet */
+.landing .l-auth__actions .l-auth__submit {
+  margin-top: 0;
+}
+
+.landing .l-auth__textbtn {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  background: none;
+  color: var(--l-leaf);
+  font: 600 0.95rem var(--l-font-ui);
+  text-decoration: underline;
+  text-decoration-color: rgba(45, 106, 79, 0.35);
+  text-underline-offset: 4px;
+  cursor: pointer;
+  transition: text-decoration-color 0.2s var(--l-ease);
+}
+
+.landing .l-auth__textbtn:hover {
+  text-decoration-color: currentColor;
+}
+
+.landing .l-auth__textbtn:focus-visible {
+  outline: 2px solid var(--l-leaf);
+  outline-offset: 2px;
+  border-radius: 8px;
 }
 
 .landing .l-auth__spinner {
