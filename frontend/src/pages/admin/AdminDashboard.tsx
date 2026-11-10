@@ -5,21 +5,14 @@ import { alertService } from '../../services/alert.service';
 import { farmService } from '../../services/farm.service';
 import { Farm } from '../../types';
 import EmptyState from '../../components/ui/EmptyState';
-import { Icon, type IconName } from '../../components/ui/Icon';
+import { Icon } from '../../components/ui/Icon';
+import FarmCalendar from '../../components/calendar/FarmCalendar';
+import QuickActions from '../../components/dashboard/QuickActions';
 import DecisionsCard from '../../components/supply/DecisionsCard';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonStatCard } from '../../components/ui/SkeletonLoader';
 import StatTile from '../../components/ui/StatTile';
-
-const QUICK_ACTIONS: Array<{ to: string; icon: IconName; label: string; hint: string }> = [
-  { to: '/admin/users', icon: 'users', label: 'ptUsers', hint: 'adQaUsers' },
-  { to: '/detections/reports', icon: 'detections', label: 'ptDetectionReports', hint: 'adQaDetections' },
-  { to: '/supervisor', icon: 'overview', label: 'ptFarmMonitoring', hint: 'adQaOverview' },
-  { to: '/farms/new', icon: 'farms', label: 'adAddFarm', hint: 'adQaAddFarm' },
-  { to: '/alerts', icon: 'alerts', label: 'ptAlerts', hint: 'adQaAlerts' },
-  { to: '/admin/system/logs', icon: 'audit', label: 'ptAudit', hint: 'adQaAudit' },
-];
 
 export default function AdminDashboard() {
   const { t } = useLanguage();
@@ -47,22 +40,9 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <PageHeader
-        title={t('adminTitle')}
-        actions={
-          <>
-            <Link to="/admin/users" className="btn btn-secondary btn-sm">
-              <Icon name="users" size={15} />
-              {t('ptUsers')}
-            </Link>
-            <Link to="/supervisor" className="btn btn-primary btn-sm">
-              <Icon name="overview" size={15} />
-              {t('ptFarmMonitoring')}
-            </Link>
-          </>
-        }
-      />
+      <PageHeader title={t('adminTitle')} />
 
+      <div className="stack-24">
       <DecisionsCard />
 
       {failed && (
@@ -72,36 +52,22 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      <QuickActions role="ADMIN" counts={{ alerts: unread ?? 0 }} />
+
+      <div className="dash-body">
+      <div className="dash-main stagger">
       {loading ? (
-        <div className="grid-4" style={{ marginBottom: 24 }}>
+        <div className="grid-4">
           {[0, 1, 2, 3].map((i) => <SkeletonStatCard key={i} />)}
         </div>
       ) : (
-        <div className="grid-4" style={{ marginBottom: 24 }}>
+        <div className="grid-4">
           <StatTile label={t('adStatFarms')} value={farms.length} hint={`${farms.length} ${t('adStatFarmsHint')}`} />
           <StatTile label={t('adStatBatches')} value={totalBatches} hint={t('adStatBatchesHint')} />
           <StatTile label={t('adStatFarmers')} value={uniqueFarmers} hint={t('adStatFarmersHint')} />
           <StatTile label={t('adStatAlerts')} value={unread ?? '-'} hint={t('adStatAlertsHint')} />
         </div>
       )}
-
-      <div className="grid-2 admin-split">
-        <Panel title={t('adQuickActions')} flush>
-          <ul className="action-list" aria-label={t('adQuickActions')}>
-            {QUICK_ACTIONS.map((a) => (
-              <li key={a.to}>
-                <Link to={a.to} className="action-row">
-                  <Icon name={a.icon} size={20} className="action-row-icon" />
-                  <span className="action-row-text">
-                    <span className="action-row-title">{t(a.label)}</span>
-                    <span className="action-row-hint">{t(a.hint)}</span>
-                  </span>
-                  <Icon name="next" size={16} className="action-row-go" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Panel>
 
         <Panel
           title={`${t('adFarmRegistry')} (${farms.length})`}
@@ -147,6 +113,11 @@ export default function AdminDashboard() {
             </div>
           )}
         </Panel>
+      </div>
+      <aside className="dash-rail">
+        <div className="card"><FarmCalendar staff /></div>
+      </aside>
+      </div>
       </div>
     </div>
   );

@@ -8,8 +8,9 @@ import { setReducedMotion } from '../../test/setup';
 const auth = vi.hoisted(() => ({ user: { id: 'u', name: 'Serge Karenzi', role: 'FARMER' } as { id: string; name?: string; role: string } }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
 
-const api = vi.hoisted(() => ({ onboarding: vi.fn(), currentRound: vi.fn(), allowance: vi.fn(), farms: vi.fn(), active: vi.fn(), chart: vi.fn(), alerts: vi.fn(), markRead: vi.fn(), thresholds: vi.fn() }));
+const api = vi.hoisted(() => ({ onboarding: vi.fn(), events: vi.fn(), currentRound: vi.fn(), allowance: vi.fn(), farms: vi.fn(), active: vi.fn(), chart: vi.fn(), alerts: vi.fn(), markRead: vi.fn(), thresholds: vi.fn() }));
 vi.mock('../../services/supply.service', () => ({ supplyService: { getAllowance: api.allowance, currentRound: api.currentRound, onboarding: api.onboarding } }));
+vi.mock('../../services/calendar.service', () => ({ calendarService: { events: api.events } }));
 vi.mock('../../services/farm.service', () => ({ farmService: { getAll: api.farms } }));
 vi.mock('../../services/alert.service', () => ({ alertService: { getAll: api.alerts, markRead: api.markRead, getThresholds: api.thresholds } }));
 vi.mock('../../services/sensor.service', () => ({
@@ -45,6 +46,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   setReducedMotion(true);
   auth.user = { id: 'u', name: 'Serge Karenzi', role: 'FARMER' };
+  api.events.mockResolvedValue({ data: { data: { events: [], from: '', to: '', truncated: false } } });
   api.onboarding.mockResolvedValue({ data: { data: { complete: true, steps: [] } } });
   api.currentRound.mockResolvedValue({ data: { data: { round: null, myRequest: null, rooms: [] } } });
   api.allowance.mockResolvedValue({ data: { data: { boxes: 2, source: 'default', since: null, history: [], openRequest: null, capacityBoxes: null, starterBoxes: 2 } } });
@@ -70,6 +72,47 @@ describe('Farmer dashboard, the allowance', () => {
     open();
     expect(await screen.findByText('Active batches')).toBeInTheDocument();
     expect(screen.queryByText('Your allowance')).not.toBeInTheDocument();
+  });
+});
+
+describe('Farmer dashboard, the layout', () => {
+  it('shows quick actions with the number of unread alerts, and the calendar in a rail next to the data', async () => {
+    const { container } = open();
+    await screen.findByText('Active batches');
+    expect(within(screen.getByRole('navigation', { name: 'Quick actions' })).getByRole('link', { name: /Alerts.*1/ })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Calendar' })).toBeInTheDocument();
+    const body = container.querySelector('.dash-body')!;
+    expect(body.querySelector('.dash-main')).not.toBeNull();
+    expect(body.querySelector('.dash-rail')).not.toBeNull();
+    expect(body.querySelector('.dash-main')!.contains(screen.getByText('Active batches'))).toBe(true);
+    expect(body.querySelector('.dash-rail')!.contains(screen.getByRole('region', { name: 'Calendar' }))).toBe(true);
+  });
+
+  it('asks the calendar for the farmer, who gets no link to a supply round', async () => {
+    api.events.mockResolvedValue({ data: { data: { events: [{ id: 'e1', date: new Date().toISOString().slice(0, 10), kind: 'round_deadline', expected: false, batchId: null, farmId: null, farmName: '', detail: { name: 'November round', roundId: 'r1' } }], from: '', to: '', truncated: false } } });
+    open();
+    const agenda = await screen.findByTestId('agenda');
+    expect(await within(agenda).findByText(/November round: requests close/)).toBeInTheDocument();
+    expect(within(agenda).queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('still shows everything else when the calendar cannot load', async () => {
+    api.events.mockRejectedValue(new Error('down'));
+    open();
+    expect(await screen.findByText('We could not load the calendar.')).toBeInTheDocument();
+    expect(screen.getByText('Active batches')).toBeInTheDocument();
+    expect(screen.getByText('Temperature too low: 21 C')).toBeInTheDocument();
+  });
+
+  it('does not show the calendar to a farmer who has nothing yet, only the first steps', async () => {
+    api.farms.mockResolvedValue({ data: { data: [] } });
+    api.active.mockResolvedValue({ data: { data: [] } });
+    api.chart.mockResolvedValue({ data: { data: [] } });
+    api.alerts.mockResolvedValue({ data: { data: [] } });
+    open();
+    await screen.findByRole('heading', { level: 2, name: "Let's get your first batch going" });
+    expect(screen.queryByRole('region', { name: 'Calendar' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Quick actions' })).not.toBeInTheDocument();
   });
 });
 
@@ -287,12 +330,16 @@ describe('Farmer dashboard', () => {
     expect(tile('Unread alerts')).toHaveTextContent('All clear');
   });
 
-  it('links to the reports, a new farm and the farm list', async () => {
+  it('keeps the one action that makes something new in the header, and the places in the quick actions', async () => {
     open();
     await screen.findByRole('link', { name: /New farm/ });
-    expect(screen.getByRole('link', { name: 'Disease reports' })).toHaveAttribute('href', '/detections/reports');
     expect(screen.getByRole('link', { name: 'New farm' })).toHaveAttribute('href', '/farms/new');
-    expect(screen.getByRole('link', { name: 'My farms' })).toHaveAttribute('href', '/farms');
+    const quick = within(screen.getByRole('navigation', { name: 'Quick actions' }));
+    expect(quick.getByRole('link', { name: 'Disease checks' })).toHaveAttribute('href', '/detections/reports');
+    expect(quick.getByRole('link', { name: 'Farms' })).toHaveAttribute('href', '/farms');
+    // Nothing is offered twice: the places moved out of the header.
+    expect(screen.queryByRole('link', { name: 'My farms' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Disease reports' })).not.toBeInTheDocument();
   });
 
   it('drops the gradient cards, letter chips, short time forms and old colours', async () => {

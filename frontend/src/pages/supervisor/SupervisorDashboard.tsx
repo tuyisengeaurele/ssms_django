@@ -10,6 +10,8 @@ import { Farm, AlertLog } from '../../types';
 import { colorFor } from '../../utils/chartColors';
 import { fill } from '../../utils/fill';
 import { timeAgo } from '../../utils/timeAgo';
+import FarmCalendar from '../../components/calendar/FarmCalendar';
+import QuickActions from '../../components/dashboard/QuickActions';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
 import DecisionsCard from '../../components/supply/DecisionsCard';
@@ -140,22 +142,9 @@ export default function SupervisorDashboard() {
       <PageHeader
         title={title}
         subtitle={subtitle}
-        actions={
-          <>
-            <Link to="/detections/reports" className="btn btn-secondary btn-sm">
-              <Icon name="detections" size={15} />
-              {t('svFullReports')}
-            </Link>
-            {unread > 0 && (
-              <Link to="/alerts" className="btn btn-primary btn-sm">
-                <Icon name="alerts" size={15} />
-                {fill(t('svAlertsLink'), { n: unread })}
-              </Link>
-            )}
-          </>
-        }
       />
 
+      <div className="stack-24">
       <DecisionsCard />
 
       {user?.role === 'SUPERVISOR' && !user.cooperativeId && (
@@ -165,18 +154,20 @@ export default function SupervisorDashboard() {
         </div>
       )}
 
-      <div className="grid-4" style={{ marginBottom: 24 }}>
+      <QuickActions role={user?.role === 'ADMIN' ? 'ADMIN_MONITOR' : 'SUPERVISOR'} counts={{ alerts: unread }} />
+
+      <div className="dash-body">
+      <div className="dash-main stagger">
+      <div className="grid-4">
         <StatTile label={t('svStatFarms')} value={farms.length} />
         <StatTile label={t('svStatBatches')} value={batches.length} hint={t('svHintRunning')} />
         <StatTile label={t('svStatAlerts')} value={unread} hint={unread > 0 ? t('svHintAlertsOn') : t('svHintAlertsOff')} />
         <StatTile label={t('svStatChecks')} value={checks} hint={t('svHintChecks')} />
       </div>
 
-      <div style={{ marginBottom: 24 }}>
-        <FarmRiskPanel />
-      </div>
+      <FarmRiskPanel />
 
-      <div className="grid-2" style={{ marginBottom: 24 }}>
+      <div className="grid-2">
         {charts.map((c) => (
           <Panel key={c.key} title={c.label} note={c.range}>
             {chart.length === 0 ? (
@@ -188,7 +179,7 @@ export default function SupervisorDashboard() {
         ))}
       </div>
 
-      <div className="grid-2 admin-split" style={{ marginBottom: 24 }}>
+      <div className="grid-2 admin-split">
         <Panel
           title={`${t('svBatchesTitle')} (${batches.length})`}
           flush
@@ -284,6 +275,12 @@ export default function SupervisorDashboard() {
           </div>
         )}
       </Panel>
+      </div>
+      <aside className="dash-rail">
+        <div className="card"><FarmCalendar staff /></div>
+      </aside>
+      </div>
+      </div>
     </div>
   );
 }
