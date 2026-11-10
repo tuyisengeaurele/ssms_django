@@ -17,6 +17,7 @@ import { Icon } from '../../components/ui/Icon';
 import PageHeader from '../../components/ui/PageHeader';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import { dateFormat } from '../../utils/dateFormat';
+import { resultLabel } from '../../utils/resultLabel';
 
 // The usual range, for when the server cannot give the one for a stage.
 const USUAL_RANGE = { tempMin: 22, tempMax: 28, humMin: 70, humMax: 85 };
@@ -249,7 +250,7 @@ export default function BatchReportPage() {
               </thead>
               <tbody>
                 {checkRows.map((c) => (
-                  <tr key={c.id}><td>{day(c.detectedAt)}</td><td>{c.result}</td><td>{Math.round(c.confidence * 100)} %</td></tr>
+                  <tr key={c.id}><td>{day(c.detectedAt)}</td><td>{resultLabel(t, c.result)}</td><td>{Math.round(c.confidence * 100)} %</td></tr>
                 ))}
               </tbody>
             </table>

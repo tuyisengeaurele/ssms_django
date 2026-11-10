@@ -6,6 +6,7 @@ import { stageLabel } from '../../utils/constants';
 import { fill } from '../../utils/fill';
 import { addDays, addMonths, fetchWindow, gridDays, localIsoDay, weekdayIndex } from './calendarDays';
 import { dateFormat } from '../../utils/dateFormat';
+import { resultLabel } from '../../utils/resultLabel';
 
 /** The date of a whole day written like 2026-11-05, as a local date to format. */
 const asDate = (iso: string) => {
@@ -75,7 +76,7 @@ export default function FarmCalendar({ staff = false }: { staff?: boolean }) {
       case 'harvest_expected': return t('calEvExpected');
       case 'harvest_recorded': return t('calEvHarvest');
       case 'stage_changed': return d.stage ? fill(t('calEvStageTo'), { stage: stageLabel(t, d.stage) }) : t('calEvStage');
-      case 'disease_check': return fill(t('calEvCheck'), { result: d.result ?? '' });
+      case 'disease_check': return fill(t('calEvCheck'), { result: resultLabel(t, d.result ?? '') });
       case 'round_deadline': return fill(t('calEvDeadline'), { name: d.name ?? '' });
       case 'round_delivery': return fill(t('calEvDelivery'), { name: d.name ?? '', place: d.place ?? '' });
     }

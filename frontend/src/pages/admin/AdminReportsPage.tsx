@@ -14,6 +14,7 @@ import Panel from '../../components/ui/Panel';
 import StatTile from '../../components/ui/StatTile';
 import TimeSeries from '../../components/ui/TimeSeries';
 import { dateFormat } from '../../utils/dateFormat';
+import { resultLabel } from '../../utils/resultLabel';
 
 const ACTION_LABEL: Record<string, string> = {
   CREATE: 'auCreate', UPDATE: 'auUpdate', DELETE: 'auDelete', LOGIN: 'auLogin', LOGOUT: 'auLogout', OTHER: 'auOther',
@@ -142,7 +143,7 @@ export default function AdminReportsPage() {
           ) : (
             <BarList
               label={t('reportDetectionResults')}
-              rows={detections.byResult.map((r) => ({ key: r.result, label: r.result, value: r.count, color: colorFor('result', r.result) }))}
+              rows={detections.byResult.map((r) => ({ key: r.result, label: resultLabel(t, r.result), value: r.count, color: colorFor('result', r.result) }))}
             />
           )}
         </Panel>

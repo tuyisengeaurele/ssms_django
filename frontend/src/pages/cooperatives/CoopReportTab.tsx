@@ -5,6 +5,7 @@ import { fill } from '../../utils/fill';
 import Panel from '../../components/ui/Panel';
 import StatTile from '../../components/ui/StatTile';
 import { CoopPeriodBar, CoopReportGate } from './CoopReportGate';
+import { resultLabel } from '../../utils/resultLabel';
 
 const GRADES = ['A', 'B', 'C'];
 const trim = (value: number, places = 2) => parseFloat(value.toFixed(places));
@@ -50,7 +51,7 @@ export default function CoopReportTab() {
                     <p className="report-line">{fill(t(checks.total === 1 ? 'brChecksSummaryOne' : 'brChecksSummary'), { n: checks.total, p: checks.found })}</p>
                     <table className="report-table">
                       <thead><tr><th>{t('brColResult')}</th><th>{t('crColCount')}</th></tr></thead>
-                      <tbody>{checks.byResult.map((r) => <tr key={r.result}><td>{r.result}</td><td>{number.format(r.count)}</td></tr>)}</tbody>
+                      <tbody>{checks.byResult.map((r) => <tr key={r.result}><td>{resultLabel(t, r.result)}</td><td>{number.format(r.count)}</td></tr>)}</tbody>
                     </table>
                   </>
                 )}

@@ -23,6 +23,7 @@ import StageBadge from '../../components/ui/StageBadge';
 import StatTile from '../../components/ui/StatTile';
 import FarmRiskPanel from './FarmRiskPanel';
 import { dateFormat } from '../../utils/dateFormat';
+import { resultLabel } from '../../utils/resultLabel';
 
 export default function SupervisorDashboard() {
   const { user } = useAuth();
@@ -263,7 +264,7 @@ export default function SupervisorDashboard() {
                   <tr key={d.id} className="tbody-row">
                     <td className="cell-lead cell-strong">{d.farmName ?? '-'}</td>
                     <td data-label={t('svColResult')}>
-                      <span className="badge badge-stage" style={{ '--c': colorFor('result', d.result) } as React.CSSProperties}>{d.result}</span>
+                      <span className="badge badge-stage" style={{ '--c': colorFor('result', d.result) } as React.CSSProperties}>{resultLabel(t, d.result)}</span>
                     </td>
                     <td data-label={t('svColConfidence')} className="cell-strong">{Math.round(d.confidence * 100)}%</td>
                     <td data-label={t('svColDate')} className="cell-muted cell-nowrap">
