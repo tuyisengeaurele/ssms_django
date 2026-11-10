@@ -4,7 +4,10 @@ import { useApiError } from '../../hooks/useApiError';
 import { AuthAlert, AuthButton, AuthField } from '../../landing/auth/AuthShell';
 import { mfaService, type SignInDetails } from '../../services/mfa.service';
 import type { User } from '../../types';
+import CodeInput from '../ui/CodeInput';
 import { mfaFailure, plain } from './mfaErrors';
+
+const CODE_LENGTH = 6;
 
 interface Props extends SignInDetails {
   challenge: string;
@@ -63,24 +66,29 @@ export default function MfaCodeStep({ challenge, device, sharedDevice, onSignedI
             autoFocus
           />
         ) : (
-          <AuthField
-            id="mfa-code"
-            label={t('adMfaCodeLabel')}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            required
-            autoFocus
-          />
+          <div className="l-field">
+            <div className="l-field__row">
+              <label htmlFor="mfa-code">{t('adMfaCodeLabel')}</label>
+            </div>
+            <CodeInput
+              id="mfa-code"
+              value={value}
+              invalid={Boolean(error)}
+              onChange={(next) => { setValue(next); setError(''); }}
+              required
+              autoFocus
+            />
+          </div>
         )}
-        <AuthButton loading={loading} loadingLabel={t('adMfaVerifying')}>
-          {t('adMfaVerify')}
-        </AuthButton>
+        <div className="l-auth__actions">
+          <AuthButton loading={loading} loadingLabel={t('adMfaVerifying')} disabled={!recovery && value.length < CODE_LENGTH}>
+            {t('adMfaVerify')}
+          </AuthButton>
+          <button type="button" className="l-auth__textbtn" onClick={switchKind}>
+            {recovery ? t('adMfaUseApp') : t('adMfaUseRecovery')}
+          </button>
+        </div>
       </form>
-      <button type="button" className="l-auth__ghost" onClick={switchKind}>
-        {recovery ? t('adMfaUseApp') : t('adMfaUseRecovery')}
-      </button>
     </>
   );
 }

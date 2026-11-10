@@ -1,5 +1,11 @@
 # Changelog
 
+## A modern code screen for the second step
+
+The admin's code screen now shows the 6 digit code as six rounded boxes, in two groups of three, with a ring and a blinking cursor on the next box. The same boxes are used when an admin sets up the authenticator and in the in-app prompt that asks for a code before a sensitive action. A new `CodeInput` component draws them over one real field, so pasting, the code from a message, autofill and screen readers work as for any field. It keeps digits only (a pasted "123 456" is tidied), stops at six, turns the boxes red after a wrong code and clears that mark as soon as the person types again.
+
+The buttons under the field were stuck together. Verify and the second choice are now a group with a gap, and the second choice ("Use a recovery code") is a quiet text button rather than a second big pill. Verify stays off until six digits are typed. Reduced motion is respected (no blinking cursor). The sign in pages keep their own colours whatever theme the app is set to. A dead duplicate `.l-auth__actions` rule was removed. Guards in `styles/codeInput.test.ts`; no backend change and no new words.
+
 ## Tab rows that scroll cleanly
 
 A small addition to the shell slice. A row of tabs can be wider than a phone (the stage tabs on the batches page, the status tabs on devices, the settings tabs). It now scrolls sideways without a scrollbar and snaps to a tab. Each tab shows a gold focus ring for keyboard use, takes its size from the type scale, and the line under the chosen tab slides in instead of appearing. CSS only, with a guard in `styles/tabs.test.ts`.

@@ -1,7 +1,8 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useLanguage } from '../../context/LanguageContext';
-import { AuthAlert, AuthButton, AuthField } from '../../landing/auth/AuthShell';
+import { AuthAlert, AuthButton } from '../../landing/auth/AuthShell';
+import CodeInput from '../ui/CodeInput';
 import { mfaService, type SetupStart, type SignInDetails } from '../../services/mfa.service';
 import type { User } from '../../types';
 import { mfaFailure, plain } from './mfaErrors';
@@ -106,17 +107,20 @@ export default function MfaSetup({ challenge, device, sharedDevice, onSignedIn, 
               <h2>{t('adMfaStep3Title')}</h2>
               <p>{t('adMfaStep3Hint')}</p>
               <form onSubmit={handleConfirm}>
-                <AuthField
-                  id="mfa-setup-code"
-                  label={t('adMfaCodeLabel')}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  required
-                />
+                <div className="l-field">
+                  <div className="l-field__row">
+                    <label htmlFor="mfa-setup-code">{t('adMfaCodeLabel')}</label>
+                  </div>
+                  <CodeInput
+                    id="mfa-setup-code"
+                    value={code}
+                    invalid={Boolean(error)}
+                    onChange={(next) => { setCode(next); setError(''); }}
+                    required
+                  />
+                </div>
                 <p className="l-mfa__hint">{t('adMfaClockHint')}</p>
-                <AuthButton loading={loading} loadingLabel={t('adMfaVerifying')}>
+                <AuthButton loading={loading} loadingLabel={t('adMfaVerifying')} disabled={code.length < 6}>
                   {t('adMfaConfirm')}
                 </AuthButton>
               </form>

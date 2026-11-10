@@ -86,6 +86,20 @@ describe('useStepUp', () => {
     expect(outcome()).toHaveTextContent('');
   });
 
+  it('takes the code in six boxes, keeps Confirm off until six digits are typed, and marks the boxes when the code is wrong', async () => {
+    const action = vi.fn().mockRejectedValueOnce(needsCode());
+    mfa.stepUp.mockRejectedValue(refused(422, { message: "That code isn't right." }));
+    open(action);
+    press();
+    const field = await screen.findByLabelText('6 digit code');
+    expect(document.querySelectorAll('.code-input__box')).toHaveLength(6);
+    expect(screen.getByRole('button', { name: 'Confirm' })).toBeDisabled();
+    fireEvent.change(field, { target: { value: '000000' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    await screen.findByRole('alert');
+    expect(document.querySelector('.code-input')).toHaveAttribute('data-invalid', 'true');
+  });
+
   it('hands the original error back when the person cancels, without running the action again', async () => {
     const action = vi.fn().mockRejectedValue(needsCode());
     open(action);

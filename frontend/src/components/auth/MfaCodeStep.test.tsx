@@ -47,6 +47,41 @@ describe('MfaCodeStep', () => {
     expect(field).toHaveAttribute('autocomplete', 'one-time-code');
   });
 
+  it('shows the code as six boxes, one for each digit', () => {
+    open();
+    type('6 digit code', '4821');
+    expect(Array.from(document.querySelectorAll('.code-input__box')).map((box) => box.textContent)).toEqual(['4', '8', '2', '1', '', '']);
+  });
+
+  it('keeps Verify and the recovery choice apart, in one group, with the recovery choice as the quiet one', () => {
+    open();
+    const verify = screen.getByRole('button', { name: 'Verify' });
+    const other = screen.getByRole('button', { name: 'Use a recovery code' });
+    expect(other.parentElement).toBe(verify.parentElement);
+    expect(verify.parentElement).toHaveClass('l-auth__actions');
+    expect(other).toHaveClass('l-auth__textbtn');
+    expect(other).not.toHaveClass('l-auth__ghost');
+  });
+
+  it('marks the boxes when the code was wrong, and takes the mark away when the person types again', async () => {
+    mfa.verify.mockRejectedValue(fail(401, { message: "That code isn't right. Please try again." }));
+    open();
+    type('6 digit code', '000000');
+    submit();
+    await screen.findByRole('alert');
+    expect(document.querySelector('.code-input')).toHaveAttribute('data-invalid', 'true');
+    type('6 digit code', '00000');
+    expect(document.querySelector('.code-input')).not.toHaveAttribute('data-invalid');
+  });
+
+  it('cannot be sent until all six digits are typed', () => {
+    open();
+    type('6 digit code', '123');
+    expect(screen.getByRole('button', { name: 'Verify' })).toBeDisabled();
+    type('6 digit code', '123456');
+    expect(screen.getByRole('button', { name: 'Verify' })).toBeEnabled();
+  });
+
   it('sends the code with the challenge, the device and the shared computer tick, then signs in', async () => {
     mfa.verify.mockResolvedValue({ data: { data: { user: USER, token: 'jwt.token' } } });
     const { onSignedIn } = open();
