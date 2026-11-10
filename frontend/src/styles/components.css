@@ -547,6 +547,11 @@ td .cell-muted { color: var(--text-muted); }
 .inline-select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 .cell-stack { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+/* How long is left under a date: a quiet line that says it in words, and is amber or red only when it matters. */
+.cell-hint { display: block; margin-top: 2px; color: var(--text-muted); font-size: var(--text-xs); }
+.cell-hint[data-kind="late"] { color: var(--danger-ink); }
+.cell-hint[data-kind="today"], .cell-hint[data-kind="tomorrow"] { color: var(--tone-yellow); }
+
 .cell-sub { overflow: hidden; color: var(--text-muted); font-size: 0.82rem; text-overflow: ellipsis; white-space: nowrap; }
 /* For a note that has to be read in full, such as the reasons a farm is at risk. */
 .cell-sub--wrap { overflow: visible; white-space: normal; text-overflow: clip; }

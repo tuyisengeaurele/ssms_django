@@ -1,5 +1,9 @@
 # Changelog
 
+## Batches list: how long is left
+
+A small addition to the shell slice. The batches list shows the date a harvest is expected, and now also how long is left, so a farmer sees at a glance which batch is next. Under the date it says "15 days left", "Due tomorrow", "Due today", "1 day overdue" or "3 days overdue". A batch already at the harvest stage shows nothing, because its stage says it. The hint is plain text (amber when due today or tomorrow, red when overdue, never colour alone), counted in whole days on the person's own calendar, and available in English, French and Kinyarwanda (drafts). New helper `utils/harvestHint.ts`, with tests, and a style guard for the hint. No backend change.
+
 ## Shell polish: quiet labels and a pressed state on every control
 
 Step 2 of the interface renewal. It finishes the rules the foundation set, for the sidebar, the top bar, the bottom bar and every small label in the app.

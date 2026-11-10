@@ -5,6 +5,7 @@ import { useToast } from '../../context/ToastContext';
 import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
+import { harvestHint } from '../../utils/harvestHint';
 import { stageLabel, STAGE_ORDER } from '../../utils/constants';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
@@ -112,7 +113,18 @@ export default function BatchesPage() {
                     <td data-label={t('btColFarm')} className="cell-strong">{b.farm?.name ?? '-'}</td>
                     <td data-label={t('btColStage')}><StageBadge stage={b.stage} /></td>
                     <td data-label={t('btColStarted')} className="cell-muted cell-nowrap">{date.format(new Date(b.startDate))}</td>
-                    <td data-label={t('btColHarvest')} className="cell-muted cell-nowrap">{date.format(new Date(b.expectedHarvestDate))}</td>
+                    <td data-label={t('btColHarvest')} className="cell-muted cell-nowrap">
+                      {date.format(new Date(b.expectedHarvestDate))}
+                      {(() => {
+                        const hint = harvestHint(b.expectedHarvestDate, b.stage);
+                        if (!hint) return null;
+                        const words = hint.kind === 'left' ? fill(t('btLeft'), { n: hint.days })
+                          : hint.kind === 'tomorrow' ? t('btTomorrow')
+                          : hint.kind === 'today' ? t('btToday')
+                          : hint.days === 1 ? t('btLateOne') : fill(t('btLate'), { n: hint.days });
+                        return <span className="cell-hint" data-kind={hint.kind}>{words}</span>;
+                      })()}
+                    </td>
                     <td data-label="">
                       <div className="table-actions">
                         <Link to={`/batches/${b.id}`} className="btn btn-ghost btn-xs" aria-label={`${t('btDetails')} ${b.farm?.name ?? ''}`}>{t('btDetails')}</Link>
