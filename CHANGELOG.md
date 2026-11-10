@@ -1,5 +1,11 @@
 # Changelog
 
+## Tab rows that scroll cleanly
+
+A small addition to the shell slice. A row of tabs can be wider than a phone (the stage tabs on the batches page, the status tabs on devices, the settings tabs). It now scrolls sideways without a scrollbar and snaps to a tab. Each tab shows a gold focus ring for keyboard use, takes its size from the type scale, and the line under the chosen tab slides in instead of appearing. CSS only, with a guard in `styles/tabs.test.ts`.
+
+I also walked every screen at phone width for the farmer, supervisor, admin, settings, sign-in and public pages. None overflowed the page, none had text under 11 px outside the landing page's miniature report, none had an unnamed control and each had one heading.
+
 ## Batches list: how long is left
 
 A small addition to the shell slice. The batches list shows the date a harvest is expected, and now also how long is left, so a farmer sees at a glance which batch is next. Under the date it says "15 days left", "Due tomorrow", "Due today", "1 day overdue" or "3 days overdue". A batch already at the harvest stage shows nothing, because its stage says it. The hint is plain text (amber when due today or tomorrow, red when overdue, never colour alone), counted in whole days on the person's own calendar, and available in English, French and Kinyarwanda (drafts). New helper `utils/harvestHint.ts`, with tests, and a style guard for the hint. No backend change.
