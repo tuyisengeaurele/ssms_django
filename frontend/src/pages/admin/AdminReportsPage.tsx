@@ -13,6 +13,8 @@ import SectionHeader from '../../components/ui/SectionHeader';
 import Panel from '../../components/ui/Panel';
 import StatTile from '../../components/ui/StatTile';
 import TimeSeries from '../../components/ui/TimeSeries';
+import { dateFormat } from '../../utils/dateFormat';
+import { resultLabel } from '../../utils/resultLabel';
 
 const ACTION_LABEL: Record<string, string> = {
   CREATE: 'auCreate', UPDATE: 'auUpdate', DELETE: 'auDelete', LOGIN: 'auLogin', LOGOUT: 'auLogout', OTHER: 'auOther',
@@ -76,7 +78,7 @@ export default function AdminReportsPage() {
 
   const { users, farms, batches, harvests, detections, audit, topFarmers } = data;
   const farmers = users.byRole.find((r) => r.role === 'FARMER')?.count ?? 0;
-  const generated = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(data.generatedAt));
+  const generated = dateFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(data.generatedAt));
 
   return (
     <div className="print-page">
@@ -141,7 +143,7 @@ export default function AdminReportsPage() {
           ) : (
             <BarList
               label={t('reportDetectionResults')}
-              rows={detections.byResult.map((r) => ({ key: r.result, label: r.result, value: r.count, color: colorFor('result', r.result) }))}
+              rows={detections.byResult.map((r) => ({ key: r.result, label: resultLabel(t, r.result), value: r.count, color: colorFor('result', r.result) }))}
             />
           )}
         </Panel>

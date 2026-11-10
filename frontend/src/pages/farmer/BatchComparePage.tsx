@@ -15,6 +15,7 @@ import { ActiveBatch, batchSupervisorService } from '../../services/sensor.servi
 import type { BatchComparison } from '../../types';
 import { bestIndexes, curveRows } from '../../utils/compare';
 import { fill } from '../../utils/fill';
+import { dateFormat } from '../../utils/dateFormat';
 
 const FEWEST = 2;
 const MOST = 4;
@@ -39,7 +40,7 @@ function Picker() {
   const [batches, setBatches] = useState<ActiveBatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [chosen, setChosen] = useState<string[]>([]);
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const date = dateFormat(locale, { dateStyle: 'medium' });
 
   useEffect(() => {
     batchSupervisorService.getActive()
@@ -199,7 +200,7 @@ function Result({ ids }: { ids: string[] }) {
 
   const { batches } = state;
   const num = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 });
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const date = dateFormat(locale, { dateStyle: 'medium' });
   const perUnit = (unit: 'BOXES' | 'WORMS') => batches.map((b) => (b.harvest.yieldPerUnit?.unit === unit ? b.harvest.yieldPerUnit.kg : null));
   const startedWith = (b: BatchComparison) => {
     if (!b.quantity) return null;

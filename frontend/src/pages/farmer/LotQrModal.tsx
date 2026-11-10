@@ -7,6 +7,7 @@ import { useApiError } from '../../hooks/useApiError';
 import { lotService } from '../../services/lot.service';
 import type { HarvestRecord } from '../../types';
 import { fill } from '../../utils/fill';
+import { dateFormat } from '../../utils/dateFormat';
 
 interface LotQrModalProps {
   record: HarvestRecord | null;
@@ -77,7 +78,7 @@ export default function LotQrModal({ record, onClose, onChange }: LotQrModalProp
 
   if (!record) return null;
   const link = token ? linkFor(token) : '';
-  const day = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(record.harvestedAt));
+  const day = dateFormat(locale, { dateStyle: 'medium' }).format(new Date(record.harvestedAt));
   const kg = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(Number(record.cocoonWeightKg));
 
   const create = async () => {

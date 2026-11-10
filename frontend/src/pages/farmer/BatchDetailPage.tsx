@@ -25,6 +25,8 @@ import Panel from '../../components/ui/Panel';
 import RangeChart from '../../components/ui/RangeChart';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import StageStepper from './StageStepper';
+import { dateFormat } from '../../utils/dateFormat';
+import { resultLabel } from '../../utils/resultLabel';
 
 // Used when the server cannot give the range of a stage, the same range it falls back to.
 const USUAL_RANGE = { tempMin: 22, tempMax: 28, humMin: 70, humMax: 85 };
@@ -287,8 +289,8 @@ export default function BatchDetailPage() {
     );
   }
 
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
-  const clock = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const date = dateFormat(locale, { dateStyle: 'medium' });
+  const clock = dateFormat(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const readings = batch.sensorReadings ?? [];
   const alerts = batch.alertLogs ?? [];
   const unread = alerts.filter((a) => !a.isRead).length;
@@ -741,7 +743,7 @@ export default function BatchDetailPage() {
                     <tr key={d.id} className="tbody-row">
                       <td className="cell-lead cell-muted cell-nowrap">{clock.format(new Date(d.detectedAt))}</td>
                       <td data-label={t('bdColResult')}>
-                        <span className="badge badge-stage" style={{ '--c': colorFor('result', d.result) } as CSSProperties}>{d.result}</span>
+                        <span className="badge badge-stage" style={{ '--c': colorFor('result', d.result) } as CSSProperties}>{resultLabel(t, d.result)}</span>
                       </td>
                       <td data-label={t('bdColConfidence')} className="cell-nowrap">{Math.round(d.confidence * 100)}%</td>
                       <td data-label={t('bdColNotes')} className="cell-muted">{d.notes ?? '-'}</td>

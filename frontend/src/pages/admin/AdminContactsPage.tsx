@@ -11,6 +11,7 @@ import Modal from '../../components/ui/Modal';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
+import { dateFormat } from '../../utils/dateFormat';
 
 type Filter = 'all' | 'unread' | 'read' | 'unanswered' | 'answered';
 
@@ -81,7 +82,7 @@ export default function AdminContactsPage() {
   const unreadCount = messages.filter((m) => !m.isRead).length;
   const readCount = messages.length - unreadCount;
   const answeredCount = messages.filter((m) => !!m.repliedAt).length;
-  const when = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+  const when = dateFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
   const query = search.trim().toLowerCase();
 
   const visible = messages.filter((m) => {

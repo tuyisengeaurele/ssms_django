@@ -7,6 +7,7 @@ import { authService } from '../../services/auth.service';
 import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
 import { initialsOf } from '../../components/ui/Avatar';
 import Panel from '../../components/ui/Panel';
+import { dateFormat } from '../../utils/dateFormat';
 
 /** Who the person is, and the one thing they can change about it: their name. */
 export default function AccountSettings() {
@@ -29,7 +30,7 @@ export default function AccountSettings() {
   }, [user?.name]);
 
   const joined = user?.createdAt
-    ? new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(user.createdAt))
+    ? dateFormat(locale, { dateStyle: 'medium' }).format(new Date(user.createdAt))
     : '-';
 
   const handleSave = async (e: FormEvent) => {

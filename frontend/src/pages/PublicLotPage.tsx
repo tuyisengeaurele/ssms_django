@@ -11,6 +11,7 @@ import { lotService } from '../services/lot.service';
 import type { PublicLot } from '../types';
 import { fill } from '../utils/fill';
 import { useDocumentTitle } from '../utils/pageTitle';
+import { dateFormat } from '../utils/dateFormat';
 
 type State = { lot: PublicLot } | 'loading' | 'gone' | 'failed';
 
@@ -48,7 +49,7 @@ export default function PublicLotPage() {
   const lot = typeof state === 'object' ? state.lot : null;
   useDocumentTitle(lot ? fill(t('lotPageTitle'), { farm: lot.farmName }) : t('lotInvalid'));
 
-  const day = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const day = dateFormat(locale, { dateStyle: 'medium' });
   const number = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 });
   // A date without a time of day, so it is read as that day wherever the buyer is.
   const dateOf = (iso: string) => day.format(new Date(`${iso}T12:00:00`));

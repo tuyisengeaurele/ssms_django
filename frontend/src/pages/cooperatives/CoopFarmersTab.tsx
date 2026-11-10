@@ -14,6 +14,7 @@ import Modal from '../../components/ui/Modal';
 import Panel from '../../components/ui/Panel';
 import { SkeletonStatCard, SkeletonTable } from '../../components/ui/SkeletonLoader';
 import StatTile from '../../components/ui/StatTile';
+import { dateFormat } from '../../utils/dateFormat';
 
 const STATUS_KEY = {
   pending: 'tmStPending',
@@ -71,7 +72,7 @@ export default function CoopFarmersTab() {
     supplyService.getSettings().then((r) => setStarterDefault(r.data.data.starterBoxes)).catch(() => {});
   }, []);
 
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const date = dateFormat(locale, { dateStyle: 'medium' });
   const pending = invitations.filter((i) => i.status === 'pending').length;
 
   const openInvite = () => {

@@ -16,6 +16,8 @@ import { useDocumentTitle } from '../../utils/pageTitle';
 import { Icon } from '../../components/ui/Icon';
 import PageHeader from '../../components/ui/PageHeader';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
+import { dateFormat } from '../../utils/dateFormat';
+import { resultLabel } from '../../utils/resultLabel';
 
 // The usual range, for when the server cannot give the one for a stage.
 const USUAL_RANGE = { tempMin: 22, tempMax: 28, humMin: 70, humMax: 85 };
@@ -110,7 +112,7 @@ export default function BatchReportPage() {
     );
   }
 
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const date = dateFormat(locale, { dateStyle: 'medium' });
   const number = new Intl.NumberFormat(locale);
   const day = (iso: string) => date.format(new Date(iso));
   const dayOnly = (ymd: string) => date.format(new Date(`${ymd}T00:00:00`));
@@ -248,7 +250,7 @@ export default function BatchReportPage() {
               </thead>
               <tbody>
                 {checkRows.map((c) => (
-                  <tr key={c.id}><td>{day(c.detectedAt)}</td><td>{c.result}</td><td>{Math.round(c.confidence * 100)} %</td></tr>
+                  <tr key={c.id}><td>{day(c.detectedAt)}</td><td>{resultLabel(t, c.result)}</td><td>{Math.round(c.confidence * 100)} %</td></tr>
                 ))}
               </tbody>
             </table>

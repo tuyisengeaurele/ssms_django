@@ -13,6 +13,7 @@ import { timeAgo } from '../../utils/timeAgo';
 import { Icon } from '../../components/ui/Icon';
 import Modal from '../../components/ui/Modal';
 import DeviceStatusBadge from './DeviceStatusBadge';
+import { dateFormat } from '../../utils/dateFormat';
 
 const TEMP_COLOR = colorFor('stage', 'COCOON');
 const HUM_COLOR = colorFor('stage', 'PUPA');
@@ -67,7 +68,7 @@ export default function DeviceDetailModal({ device, canManage, onClose, onRemove
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [device.id]);
 
-  const time = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
+  const time = dateFormat(locale, { hour: '2-digit', minute: '2-digit' });
   const readings = (detail?.recentReadings ?? [])
     .slice()
     .reverse()

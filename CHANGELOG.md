@@ -1,5 +1,22 @@
 # Changelog
 
+## Kinyarwanda dates, and the rest of the screen review
+
+The second half of the screen review: French and Kinyarwanda on the farmer and admin screens, and a contrast check of the farmer, supervisor and admin screens in the light and the dark theme (all three roles pass AA, apart from the one fix below).
+
+### Dates in Kinyarwanda
+Browsers have no Kinyarwanda date data, so every date in Kinyarwanda showed English months ("Nov 25, 2026"), and the calendar showed "Mon Tue Wed". A new `dateFormat(locale, options)` writes Kinyarwanda month and weekday names, in the order people write them (day, month, year, a 24 hour clock): "25 Ugu 2026", "Ugushyingo 2026", "Kuwa gatatu 25 Ugushyingo 2026", and the calendar header "Mbe Kab Gtu Kan Gnu Gnd Cyu". English and French are still the browser's own formatter, unchanged. All 45 places that wrote a date now go through it, and a test fails if a screen calls the browser's formatter directly. The Kinyarwanda names are my drafts for a native reader to review, like the rest of the Kinyarwanda texts.
+
+### Fixed
+- **"Healthy" in a check result** is now said in the language of the screen ("Sains", "Bizima") in the tables, the lot page, the calendar and the reports. A disease keeps the name the model gives it (Grasserie).
+- **The count on a quick action** sits on the corner of the card, so a long word such as "Ibiburaniswa" keeps the whole width of its card and is no longer cut in two.
+- **The small line under a name in a table** wraps on a phone. A cut "Dernière mesure: 25.5 °C, 75 ..." hid the number it was there to show.
+- **The top bar title** wraps to two lines instead of an ellipsis ("Tableau de bord de l'administration" on a phone).
+- **The days of other months in the calendar** have AA contrast (3.7 to 1 before).
+
+### How it is guarded
+`utils/dateFormat.test.ts` and `dateFormatUse.test.ts`, `utils/resultLabel.test.ts`, and style guards in `styles/layout.test.ts`, `phoneText.test.ts`, `labels.test.ts` and `calendar.test.ts`. No backend change.
+
 ## A look at every screen, in a real browser
 
 A pass over the farmer, supervisor, admin, sign in and public screens at desktop and phone width, in the light and dark themes and in French and Kinyarwanda. It found one real bug and a handful of rough edges, all fixed here.

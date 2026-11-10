@@ -19,6 +19,7 @@ import { NoteDialog } from './DecisionDialogs';
 import { ConfirmDialog } from './RoundDialogs';
 import RoundFormModal from './RoundFormModal';
 import SplitTable from './SplitTable';
+import { dateFormat } from '../../utils/dateFormat';
 
 type Dialog = 'edit' | 'open' | 'close' | 'cancel' | 'confirm' | { notCollected: EggRequestRow } | { receipt: EggRequestRow } | null;
 
@@ -66,8 +67,8 @@ export default function SupplyRoundPage() {
   });
   const overStock = round ? total > round.stockBoxes : false;
 
-  const day = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
-  const moment = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+  const day = dateFormat(locale, { dateStyle: 'medium' });
+  const moment = dateFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
 
   /**
    * Runs one action. When it worked a toast says so and the page reloads. When someone else was first the page says so and

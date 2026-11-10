@@ -16,6 +16,7 @@ import Pagination from '../../components/ui/Pagination';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import StatTile from '../../components/ui/StatTile';
+import { dateFormat } from '../../utils/dateFormat';
 
 const GRADES: QualityGrade[] = ['A', 'B', 'C'];
 
@@ -96,7 +97,7 @@ export default function HarvestsPage() {
     }
   };
 
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const date = dateFormat(locale, { dateStyle: 'medium' });
   const batchName = (id: string) => fill(t('bdTitle'), { id: id.slice(-8).toUpperCase() });
 
   const total = stats?.recordCount ?? 0;

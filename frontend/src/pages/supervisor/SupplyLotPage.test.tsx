@@ -38,6 +38,7 @@ const open = (code = 'L2611-AB12') => render(
 const rowOf = async (name: string) => (await screen.findByText(name)).closest('tr') as HTMLElement;
 
 beforeEach(() => {
+  localStorage.clear();
   vi.clearAllMocks();
   setReducedMotion(true);
   answer(lot());
@@ -81,6 +82,15 @@ describe('Lot page', () => {
     expect(within(first).getByText('Hillside')).toBeInTheDocument();
     expect(within(first).getByText('Main house')).toBeInTheDocument();
     expect(within(first).getByText('2 boxes')).toBeInTheDocument();
+  });
+
+  it('says what the last check found in the language of the screen, and keeps a disease name as it is', async () => {
+    localStorage.setItem('ssms_locale', 'fr');
+    open();
+    const sick = await rowOf('Aline Uwase');
+    const fine = await rowOf('Gad Anaclet');
+    expect(within(fine).getByText(/^Sains,/)).toBeInTheDocument();
+    expect(within(sick).getByText(/^Grasserie,/)).toBeInTheDocument();
   });
 
   it('puts the five counts in one row on a wide screen, not three and then two', async () => {

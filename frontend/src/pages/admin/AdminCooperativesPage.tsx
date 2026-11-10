@@ -13,6 +13,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import CooperativeFormModal from '../cooperatives/CooperativeFormModal';
+import { dateFormat } from '../../utils/dateFormat';
 
 /**
  * The cooperatives, active and deleted. A cooperative opens as its own page with its report, farms, members and details,
@@ -64,7 +65,7 @@ export default function AdminCooperativesPage() {
   const filtered = shownCoops.filter((c) => !query || c.name.toLowerCase().includes(query) || (c.location ?? '').toLowerCase().includes(query));
   const totalMembers = coops.reduce((sum, c) => sum + c.memberCount, 0);
   const totalFarms = coops.reduce((sum, c) => sum + c.farmCount, 0);
-  const created = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const created = dateFormat(locale, { dateStyle: 'medium' });
   const showAll = tab === 'active' && !query && coops.length > 0;
 
   return (

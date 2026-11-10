@@ -5,6 +5,7 @@ import { useApiError } from '../../hooks/useApiError';
 import { supportService } from '../../services/support.service';
 import type { SupportPersonRow } from '../../types';
 import { fill } from '../../utils/fill';
+import { dateFormat } from '../../utils/dateFormat';
 
 /** Every time SSMS support asked to look at this person's account, and what became of it. */
 export default function SupportHistory() {
@@ -23,7 +24,7 @@ export default function SupportHistory() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const when = (iso: string) => new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
+  const when = (iso: string) => dateFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
   const mode = (row: SupportPersonRow) => (row.grantedMode === 'edit' ? t('supportModeEdit') : t('supportModeView'));
   const outcome = (row: SupportPersonRow) => {
     switch (row.status) {

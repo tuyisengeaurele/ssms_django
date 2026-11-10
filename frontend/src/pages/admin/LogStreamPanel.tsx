@@ -10,6 +10,7 @@ import Pagination from '../../components/ui/Pagination';
 import Panel from '../../components/ui/Panel';
 import SectionHeader from '../../components/ui/SectionHeader';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
+import { dateFormat } from '../../utils/dateFormat';
 
 type Row = SecurityRow | RequestRow | JobRow;
 
@@ -77,7 +78,7 @@ export default function LogStreamPanel({ stream }: Props) {
     }
   };
 
-  const when = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+  const when = dateFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
   const kindWord = (kind: string) => {
     const key = `lgKind_${kind}`;
     const word = t(key);

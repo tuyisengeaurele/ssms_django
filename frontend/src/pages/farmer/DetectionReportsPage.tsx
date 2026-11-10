@@ -18,6 +18,8 @@ import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import StatTile from '../../components/ui/StatTile';
+import { dateFormat } from '../../utils/dateFormat';
+import { resultLabel } from '../../utils/resultLabel';
 
 interface Filters {
   farmId: string;
@@ -87,7 +89,7 @@ export default function DetectionReportsPage() {
   };
 
   const healthy = history.filter((h) => h.result === 'Healthy').length;
-  const when = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+  const when = dateFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
   const found = [...stats].sort((a, b) => b.count - a.count);
 
   return (
@@ -157,7 +159,7 @@ export default function DetectionReportsPage() {
               ) : (
                 <BarList
                   label={t('drFound')}
-                  rows={found.map((s) => ({ key: s.result, label: s.result, value: s.count, color: colorFor('result', s.result) }))}
+                  rows={found.map((s) => ({ key: s.result, label: resultLabel(t, s.result), value: s.count, color: colorFor('result', s.result) }))}
                 />
               )}
             </Panel>
@@ -194,7 +196,7 @@ export default function DetectionReportsPage() {
                             )}
                           </td>
                           <td data-label={t('drColResult')}>
-                            <span className="badge badge-stage" style={{ '--c': colorFor('result', d.result) } as CSSProperties}>{d.result}</span>
+                            <span className="badge badge-stage" style={{ '--c': colorFor('result', d.result) } as CSSProperties}>{resultLabel(t, d.result)}</span>
                           </td>
                           <td data-label={t('drColSure')} className="cell-nowrap">{Math.round(d.confidence * 100)}%</td>
                           <td data-label={t('drColWhen')} className="cell-muted cell-nowrap">{when.format(new Date(d.detectedAt))}</td>

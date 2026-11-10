@@ -13,6 +13,8 @@ import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import StatTile from '../../components/ui/StatTile';
+import { dateFormat } from '../../utils/dateFormat';
+import { resultLabel } from '../../utils/resultLabel';
 
 type Status = 'loading' | 'ready' | 'missing' | 'failed';
 
@@ -53,7 +55,7 @@ export default function SupplyLotPage() {
     );
   }
 
-  const day = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const day = dateFormat(locale, { dateStyle: 'medium' });
   const s = lot.summary;
   const quantity = (b: LotTraceBatch) => (b.quantityUnit === 'BOXES' ? boxesText(t, b.quantity as number) : String(b.quantity));
 
@@ -114,7 +116,7 @@ export default function SupplyLotPage() {
                       </div>
                     </td>
                     <td data-label={t('trcColLastCheck')} className="cell-muted">
-                      {b.lastCheck ? fill(t('trcLastCheck'), { result: b.lastCheck.result, date: day.format(new Date(b.lastCheck.at)) }) : t('trcNoCheck')}
+                      {b.lastCheck ? fill(t('trcLastCheck'), { result: resultLabel(t, b.lastCheck.result), date: day.format(new Date(b.lastCheck.at)) }) : t('trcNoCheck')}
                     </td>
                   </tr>
                 ))}

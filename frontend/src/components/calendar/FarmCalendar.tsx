@@ -5,6 +5,8 @@ import { CalendarEvent, calendarService } from '../../services/calendar.service'
 import { stageLabel } from '../../utils/constants';
 import { fill } from '../../utils/fill';
 import { addDays, addMonths, fetchWindow, gridDays, localIsoDay, weekdayIndex } from './calendarDays';
+import { dateFormat } from '../../utils/dateFormat';
+import { resultLabel } from '../../utils/resultLabel';
 
 /** The date of a whole day written like 2026-11-05, as a local date to format. */
 const asDate = (iso: string) => {
@@ -60,10 +62,10 @@ export default function FarmCalendar({ staff = false }: { staff?: boolean }) {
     return map;
   }, [events]);
 
-  const full = new Intl.DateTimeFormat(locale, { dateStyle: 'full' });
-  const short = new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-  const monthTitle = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(new Date(year, month - 1, 1));
-  const weekdays = Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(asDate(addDays('2026-11-02', i))));
+  const full = dateFormat(locale, { dateStyle: 'full' });
+  const short = dateFormat(locale, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  const monthTitle = dateFormat(locale, { month: 'long', year: 'numeric' }).format(new Date(year, month - 1, 1));
+  const weekdays = Array.from({ length: 7 }, (_, i) => dateFormat(locale, { weekday: 'short' }).format(asDate(addDays('2026-11-02', i))));
 
   const countText = (n: number) => (n === 0 ? t('calNoEvents') : n === 1 ? t('calOneEvent') : fill(t('calManyEvents'), { n }));
 
@@ -74,7 +76,7 @@ export default function FarmCalendar({ staff = false }: { staff?: boolean }) {
       case 'harvest_expected': return t('calEvExpected');
       case 'harvest_recorded': return t('calEvHarvest');
       case 'stage_changed': return d.stage ? fill(t('calEvStageTo'), { stage: stageLabel(t, d.stage) }) : t('calEvStage');
-      case 'disease_check': return fill(t('calEvCheck'), { result: d.result ?? '' });
+      case 'disease_check': return fill(t('calEvCheck'), { result: resultLabel(t, d.result ?? '') });
       case 'round_deadline': return fill(t('calEvDeadline'), { name: d.name ?? '' });
       case 'round_delivery': return fill(t('calEvDelivery'), { name: d.name ?? '', place: d.place ?? '' });
     }

@@ -27,6 +27,7 @@ import AllowanceCard from '../../components/supply/AllowanceCard';
 import OnboardingCard from '../../components/supply/OnboardingCard';
 import SupplyRoundCard from '../../components/supply/SupplyRoundCard';
 import TodayCard from './TodayCard';
+import { dateFormat } from '../../utils/dateFormat';
 
 export default function FarmerDashboard() {
   const { user } = useAuth();
@@ -116,7 +117,7 @@ export default function FarmerDashboard() {
     );
   }
 
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const date = dateFormat(locale, { dateStyle: 'medium' });
   const farmsWithBatches = new Set(batches.map((b) => b.farmId)).size;
 
   const charts = [
