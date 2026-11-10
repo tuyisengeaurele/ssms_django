@@ -53,6 +53,17 @@ describe('the bottom bar', () => {
   });
 });
 
+describe('the top bar title', () => {
+  // "Tableau de bord de l'administration" is 36 characters, and on a phone an ellipsis hid the name of the page.
+  const title = shell.match(/\.topbar-page\s*\{[^}]*\}/)![0];
+
+  it('wraps onto a second line before it is ever cut with an ellipsis', () => {
+    expect(title).not.toMatch(/text-overflow:\s*ellipsis/);
+    expect(title).not.toMatch(/white-space:\s*nowrap/);
+    expect(title).toMatch(/-webkit-line-clamp:\s*2/);
+  });
+});
+
 describe('the shell', () => {
   const declarations = (css: string) => css.split('\n').filter((l) => /^\s*transition\s*:/.test(l) && !/transition:\s*none/.test(l));
 

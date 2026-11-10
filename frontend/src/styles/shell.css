@@ -317,11 +317,13 @@
 }
 
 .topbar-page {
+  display: -webkit-box;
   overflow: hidden;
   font: 600 1rem var(--font-ui);
   color: var(--ink);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
 }
 
 .topbar-spacer {
