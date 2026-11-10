@@ -101,11 +101,48 @@ describe('theme tokens', () => {
 describe('the dark theme', () => {
   const channels = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 
-  it('is neutral black on the page, the cards, the sidebar and the inset tiles, with no green cast', () => {
-    for (const name of ['--bg', '--surface', '--surface-2', '--ivory', '--sidebar-bg', '--border']) {
+  // The light theme is tinted toward forest green (paper, ink, the sidebar). The dark theme shares that hue family at a
+  // very low chroma, so it still reads as black, and a person moving between the two sees one product.
+  const SURFACES = ['--bg', '--surface', '--surface-2', '--ivory', '--border', '--border-light', '--row-hover', '--skel-a', '--skel-b', '--chart-grid'];
+
+  it('is near black, tinted to the same green family as the light theme, on every surface', () => {
+    for (const name of SURFACES) {
       const [r, g, b] = channels(resolve(dark, name));
-      expect(Math.max(r, g, b) - Math.min(r, g, b), `${name} is not neutral`).toBeLessThanOrEqual(6);
+      expect(g, `${name} leans green`).toBeGreaterThanOrEqual(Math.max(r, b));
+      expect(Math.max(r, g, b) - Math.min(r, g, b), `${name} is too colourful for a dark theme`).toBeLessThanOrEqual(14);
     }
+    const [r, g, b] = channels(resolve(dark, '--bg'));
+    expect(g - Math.min(r, b), 'the page has a visible tint').toBeGreaterThanOrEqual(3);
+  });
+
+  it('reads as black, not green: the tint never goes past a fifth of the brightness', () => {
+    for (const name of ['--bg', '--surface', '--surface-2']) {
+      const [r, g, b] = channels(resolve(dark, name));
+      expect(g - Math.min(r, b), name).toBeLessThanOrEqual(Math.max(g, 8) * 0.5);
+    }
+  });
+
+  it('has the same forest ink sidebar as the light theme, a touch darker', () => {
+    for (const tokens of [light, dark]) {
+      const [r, g, b] = channels(resolve(tokens, '--sidebar-bg'));
+      expect(g, 'sidebar leans green').toBeGreaterThan(Math.max(r, b));
+    }
+    const lightSide = channels(resolve(light, '--sidebar-bg'));
+    const darkSide = channels(resolve(dark, '--sidebar-bg'));
+    expect(darkSide[1]).toBeLessThan(lightSide[1]);
+  });
+
+  it('uses the same gold highlight in both themes, and it stands out on the dark cards', () => {
+    // On the light cards gold is a decoration and never carries text, so only the dark theme is held to a ratio.
+    expect(resolve(dark, '--gold')).toBe(resolve(light, '--gold'));
+    expect(ratio(dark, '--gold', '--surface')).toBeGreaterThanOrEqual(3);
+  });
+
+  it('redefines every surface, shadow, tint, skeleton and chart token the light theme defines', () => {
+    const own = block("[data-theme='dark']");
+    const names = Object.keys(light).filter((n) => /^--(bg|surface|surface-2|border|border-light|text|text-2|text-muted|text-faint|primary|primary-hover|primary-light|primary-ring|shadow(-[a-z]+)?|row-hover|tint(-2)?|input-border(-hover)?|placeholder|skel-[ab]|caret|chart-[a-z0-9]+|sidebar-(bg|surface))$/.test(n));
+    expect(names.length).toBeGreaterThan(25);
+    expect(names.filter((n) => own[n] === undefined)).toEqual([]);
   });
 
   it('puts the page below the cards, and the cards below the inset tiles', () => {
