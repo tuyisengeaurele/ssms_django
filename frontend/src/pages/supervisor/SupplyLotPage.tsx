@@ -55,7 +55,7 @@ export default function SupplyLotPage() {
 
   const day = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
   const s = lot.summary;
-  const quantity = (b: LotTraceBatch) => (b.quantity == null ? '-' : b.quantityUnit === 'BOXES' ? boxesText(t, b.quantity) : String(b.quantity));
+  const quantity = (b: LotTraceBatch) => (b.quantityUnit === 'BOXES' ? boxesText(t, b.quantity as number) : String(b.quantity));
 
   return (
     <div>
@@ -68,7 +68,7 @@ export default function SupplyLotPage() {
           </p>
         )}
 
-        <div className="grid-3">
+        <div className="grid-5">
           <StatTile label={t('trcStatBatches')} value={s.batches} />
           <StatTile label={t('trcStatFarms')} value={s.farms} />
           <StatTile label={t('trcStatDisease')} value={s.disease} />
@@ -105,11 +105,13 @@ export default function SupplyLotPage() {
                     <td data-label={t('trcColBatch')} className="cell-mono">
                       <Link to={`/batches/${b.id}`} className="link">#{b.id.slice(-8).toUpperCase()}</Link>
                       <div className="cell-sub">{stageLabel(t, b.stage)}</div>
-                      <div className="cell-sub">{quantity(b)}</div>
+                      {b.quantity != null && <div className="cell-sub">{quantity(b)}</div>}
                     </td>
                     <td data-label={t('trcColStatus')}>
-                      <span className={`badge ${BADGE[b.status].badge}`}>{t(BADGE[b.status].word)}</span>
-                      {b.openAlert && <span className="badge badge-yellow">{t('trcOpenAlert')}</span>}
+                      <div className="badge-row">
+                        <span className={`badge ${BADGE[b.status].badge}`}>{t(BADGE[b.status].word)}</span>
+                        {b.openAlert && <span className="badge badge-yellow">{t('trcOpenAlert')}</span>}
+                      </div>
                     </td>
                     <td data-label={t('trcColLastCheck')} className="cell-muted">
                       {b.lastCheck ? fill(t('trcLastCheck'), { result: b.lastCheck.result, date: day.format(new Date(b.lastCheck.at)) }) : t('trcNoCheck')}

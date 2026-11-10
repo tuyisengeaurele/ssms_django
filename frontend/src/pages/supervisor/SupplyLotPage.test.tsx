@@ -83,6 +83,32 @@ describe('Lot page', () => {
     expect(within(first).getByText('2 boxes')).toBeInTheDocument();
   });
 
+  it('puts the five counts in one row on a wide screen, not three and then two', async () => {
+    open();
+    await screen.findByText('Aline Uwase');
+    const tiles = document.querySelectorAll('.stat-tile');
+    expect(tiles).toHaveLength(5);
+    expect(tiles[0].parentElement).toHaveClass('grid-5');
+  });
+
+  it('keeps the disease badge and the open alert badge in one row, so they do not run together', async () => {
+    open();
+    const first = await rowOf('Aline Uwase');
+    const disease = within(first).getByText('Disease found');
+    const alert = within(first).getByText('Open alert');
+    expect(disease.parentElement).toHaveClass('badge-row');
+    expect(alert.parentElement).toBe(disease.parentElement);
+  });
+
+  it('says nothing about quantity for a batch with no quantity, instead of a lone dash', async () => {
+    answer(lot({ batches: [row({ quantity: null, quantityUnit: null })] }));
+    open();
+    const only = await rowOf('Aline Uwase');
+    const cell = only.querySelector('td.cell-mono') as HTMLElement;
+    expect(within(cell).queryByText('-')).not.toBeInTheDocument();
+    expect(cell.querySelectorAll('.cell-sub')).toHaveLength(1);
+  });
+
   it('says in words how each batch is doing, never by colour alone', async () => {
     open();
     expect(within(await rowOf('Aline Uwase')).getByText('Disease found')).toBeInTheDocument();
