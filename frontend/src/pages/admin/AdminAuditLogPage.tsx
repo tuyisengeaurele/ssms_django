@@ -10,6 +10,7 @@ import SectionHeader from '../../components/ui/SectionHeader';
 import Pagination from '../../components/ui/Pagination';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
+import { dateFormat } from '../../utils/dateFormat';
 
 const ACTIONS = ['CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'OTHER'] as const;
 
@@ -88,7 +89,7 @@ export default function AdminAuditLogPage() {
     }
   };
 
-  const when = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+  const when = dateFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
 
   return (
     <div>

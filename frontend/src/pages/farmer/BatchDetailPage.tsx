@@ -25,6 +25,7 @@ import Panel from '../../components/ui/Panel';
 import RangeChart from '../../components/ui/RangeChart';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import StageStepper from './StageStepper';
+import { dateFormat } from '../../utils/dateFormat';
 
 // Used when the server cannot give the range of a stage, the same range it falls back to.
 const USUAL_RANGE = { tempMin: 22, tempMax: 28, humMin: 70, humMax: 85 };
@@ -287,8 +288,8 @@ export default function BatchDetailPage() {
     );
   }
 
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
-  const clock = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const date = dateFormat(locale, { dateStyle: 'medium' });
+  const clock = dateFormat(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const readings = batch.sensorReadings ?? [];
   const alerts = batch.alertLogs ?? [];
   const unread = alerts.filter((a) => !a.isRead).length;

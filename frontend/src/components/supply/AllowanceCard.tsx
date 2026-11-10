@@ -7,6 +7,7 @@ import { boxesText } from '../../utils/boxes';
 import { fill } from '../../utils/fill';
 import Panel from '../ui/Panel';
 import AllowanceRequestModal from './AllowanceRequestModal';
+import { dateFormat } from '../../utils/dateFormat';
 
 /** What a farmer may take per round, where it came from, and the one thing they can do about it. */
 export default function AllowanceCard() {
@@ -25,7 +26,7 @@ export default function AllowanceCard() {
 
   if (!allowance || allowance.source === 'none') return null;
 
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const date = dateFormat(locale, { dateStyle: 'medium' });
   const last = allowance.history.find((line) => line.kind !== 'start');
   const lastText = last
     ? fill(t(last.kind === 'reduction' ? 'alwLowered' : 'alwChanged'), {

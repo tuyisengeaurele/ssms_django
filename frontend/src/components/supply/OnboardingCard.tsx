@@ -6,6 +6,7 @@ import { boxesText } from '../../utils/boxes';
 import { fill } from '../../utils/fill';
 import Panel from '../ui/Panel';
 import { localDay } from './SupplyRoundCard';
+import { dateFormat } from '../../utils/dateFormat';
 
 type Mark = 'done' | 'next' | 'waiting' | 'later';
 
@@ -22,7 +23,7 @@ export default function OnboardingCard() {
   if (!data || data.complete) return null;
 
   const names = (list?: string[]) => new Intl.ListFormat(locale, { type: 'conjunction' }).format(list ?? []);
-  const day = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const day = dateFormat(locale, { dateStyle: 'medium' });
   const farm = data.steps.find((s) => s.key === 'farm');
 
   const body = (step: OnboardingStep) => {

@@ -6,6 +6,7 @@ import SectionHeader from '../../components/ui/SectionHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import HealthCard from './HealthCard';
+import { dateFormat } from '../../utils/dateFormat';
 
 const TITLES: Record<HealthCheck['key'], string> = {
   web: 'hlWeb', database: 'hlDatabase', aiService: 'hlAi', email: 'hlEmail', errorMonitoring: 'hlErrors',
@@ -52,7 +53,7 @@ export default function AdminHealthPage() {
     return () => window.clearInterval(timer);
   }, [load]);
 
-  const when = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+  const when = dateFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
 
   /** "2 min", "5 hr" or "3 days": the largest unit that is at least one. */
   const span = (minutes: number) => {

@@ -25,6 +25,7 @@ import AddDeviceModal from '../shared/AddDeviceModal';
 import DeviceDetailModal from '../shared/DeviceDetailModal';
 import DeviceStatusBadge from '../shared/DeviceStatusBadge';
 import RoomStatusChip from '../../components/rooms/RoomStatusChip';
+import { dateFormat } from '../../utils/dateFormat';
 
 const ROOM_AREA_MIN = 1;
 const ROOM_AREA_MAX = 5000;
@@ -219,7 +220,7 @@ export default function FarmDetailPage() {
   }
 
   const online = devices.filter((d) => d.status === 'online').length;
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const date = dateFormat(locale, { dateStyle: 'medium' });
 
   return (
     <div>

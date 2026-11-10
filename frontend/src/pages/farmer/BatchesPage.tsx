@@ -13,6 +13,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import StageBadge from '../../components/ui/StageBadge';
+import { dateFormat } from '../../utils/dateFormat';
 
 type Tab = 'ALL' | (typeof STAGE_ORDER)[number];
 
@@ -37,7 +38,7 @@ export default function BatchesPage() {
   const query = search.trim().toLowerCase();
   const inStage = (stage: Tab) => (stage === 'ALL' ? batches : batches.filter((b) => b.stage === stage));
   const visible = inStage(tab).filter((b) => !query || (b.farm?.name ?? '').toLowerCase().includes(query));
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const date = dateFormat(locale, { dateStyle: 'medium' });
 
   const tabs: Array<{ id: Tab; label: string }> = [
     { id: 'ALL', label: t('btTabAll') },

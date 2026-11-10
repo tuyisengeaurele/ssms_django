@@ -10,6 +10,7 @@ import Panel from '../../components/ui/Panel';
 import { useCoop } from './coopContext';
 import CooperativeFormModal from './CooperativeFormModal';
 import CoopSupplySettings from './CoopSupplySettings';
+import { dateFormat } from '../../utils/dateFormat';
 
 /** Where the cooperative is and what it is for, and the way for an admin to change it or delete it. */
 export default function CoopDetailsTab() {
@@ -25,7 +26,7 @@ export default function CoopDetailsTab() {
 
   if (!detail) return <p className="panel-loading"><span className="spinner" /></p>;
 
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const date = dateFormat(locale, { dateStyle: 'medium' });
 
   const remove = async () => {
     setDeleting(true);

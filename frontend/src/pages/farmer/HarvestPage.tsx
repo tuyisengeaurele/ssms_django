@@ -19,6 +19,7 @@ import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import StatTile from '../../components/ui/StatTile';
 import LotQrModal from './LotQrModal';
+import { dateFormat } from '../../utils/dateFormat';
 
 const GRADES: QualityGrade[] = ['A', 'B', 'C'];
 // A harvest is logged once the cocoons are made. The server holds the same rule.
@@ -125,8 +126,8 @@ export default function HarvestPage() {
     );
   }
 
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
-  const dayLabel = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' });
+  const date = dateFormat(locale, { dateStyle: 'medium' });
+  const dayLabel = dateFormat(locale, { month: 'short', day: 'numeric' });
 
   const totalKg = records.reduce((sum, r) => sum + num(r.cocoonWeightKg), 0);
   const totalSilk = records.reduce((sum, r) => sum + num(r.silkYieldG), 0);

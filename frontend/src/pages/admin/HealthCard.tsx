@@ -3,6 +3,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { HealthCheck, HealthStatus, HealthTestName, healthService, HealthTestResult, ServiceHistory, Uptime } from '../../services/health.service';
 import { fill } from '../../utils/fill';
 import TimeSeries from '../../components/ui/TimeSeries';
+import { dateFormat } from '../../utils/dateFormat';
 
 const STATUS_WORDS: Record<HealthStatus, { text: string; badge: string }> = {
   ok: { text: 'hlOk', badge: 'badge-green' },
@@ -38,8 +39,8 @@ export default function HealthCard({ check, title, message, history }: Props) {
   const points = history?.points ?? [];
   const timed = points.some((p) => p.ms !== null);
 
-  const clock = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
-  const stamp = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+  const clock = dateFormat(locale, { hour: '2-digit', minute: '2-digit' });
+  const stamp = dateFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
 
   const run = async () => {
     if (!test) return;

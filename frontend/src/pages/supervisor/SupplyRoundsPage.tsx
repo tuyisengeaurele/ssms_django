@@ -10,6 +10,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import RoundFormModal from './RoundFormModal';
+import { dateFormat } from '../../utils/dateFormat';
 
 const TONE: Record<string, string> = { draft: 'badge-gray', open: 'badge-green', closed: 'badge-yellow', allocated: 'badge-blue', done: 'badge-gray', cancelled: 'badge-red' };
 
@@ -27,7 +28,7 @@ export default function SupplyRoundsPage() {
   }, []);
   useEffect(load, [load]);
 
-  const day = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const day = dateFormat(locale, { dateStyle: 'medium' });
   // An admin names no cooperative on this page, so only a supervisor makes a round here.
   const canMake = user?.role === 'SUPERVISOR';
 

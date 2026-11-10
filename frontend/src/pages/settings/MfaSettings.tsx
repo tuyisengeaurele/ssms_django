@@ -6,6 +6,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { mfaService } from '../../services/mfa.service';
 import type { MfaStatus } from '../../types';
 import { fill } from '../../utils/fill';
+import { dateFormat } from '../../utils/dateFormat';
 
 /** An admin's authenticator app: is it on, how many recovery codes are left, and a way to make new ones. */
 export default function MfaSettings() {
@@ -33,7 +34,7 @@ export default function MfaSettings() {
     setAsking(false);
   };
 
-  const since = status?.enabledAt ? new Date(status.enabledAt).toLocaleDateString(locale, { dateStyle: 'medium' }) : '';
+  const since = status?.enabledAt ? dateFormat(locale, { dateStyle: 'medium' }).format(new Date(status.enabledAt)) : '';
 
   return (
     <>

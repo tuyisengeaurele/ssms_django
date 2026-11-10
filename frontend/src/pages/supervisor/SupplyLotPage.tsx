@@ -13,6 +13,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import StatTile from '../../components/ui/StatTile';
+import { dateFormat } from '../../utils/dateFormat';
 
 type Status = 'loading' | 'ready' | 'missing' | 'failed';
 
@@ -53,7 +54,7 @@ export default function SupplyLotPage() {
     );
   }
 
-  const day = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const day = dateFormat(locale, { dateStyle: 'medium' });
   const s = lot.summary;
   const quantity = (b: LotTraceBatch) => (b.quantityUnit === 'BOXES' ? boxesText(t, b.quantity as number) : String(b.quantity));
 

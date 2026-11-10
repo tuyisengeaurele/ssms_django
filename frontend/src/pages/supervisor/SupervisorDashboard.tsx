@@ -22,6 +22,7 @@ import { SkeletonStatCard } from '../../components/ui/SkeletonLoader';
 import StageBadge from '../../components/ui/StageBadge';
 import StatTile from '../../components/ui/StatTile';
 import FarmRiskPanel from './FarmRiskPanel';
+import { dateFormat } from '../../utils/dateFormat';
 
 export default function SupervisorDashboard() {
   const { user } = useAuth();
@@ -266,7 +267,7 @@ export default function SupervisorDashboard() {
                     </td>
                     <td data-label={t('svColConfidence')} className="cell-strong">{Math.round(d.confidence * 100)}%</td>
                     <td data-label={t('svColDate')} className="cell-muted cell-nowrap">
-                      {new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(d.detectedAt))}
+                      {dateFormat(locale, { dateStyle: 'medium' }).format(new Date(d.detectedAt))}
                     </td>
                   </tr>
                 ))}

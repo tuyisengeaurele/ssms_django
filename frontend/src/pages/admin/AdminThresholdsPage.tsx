@@ -8,6 +8,7 @@ import { fill } from '../../utils/fill';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
+import { dateFormat } from '../../utils/dateFormat';
 
 /** What a stage needs when nobody has chosen otherwise. It is also what the server starts with. */
 const USUAL = { tempMin: 22, tempMax: 28, humMin: 70, humMax: 85 };
@@ -80,7 +81,7 @@ export default function AdminThresholdsPage({ embedded = false }: { embedded?: b
     }
   };
 
-  const when = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+  const when = dateFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
 
   return (
     <div>

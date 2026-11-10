@@ -18,6 +18,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import StatTile from '../../components/ui/StatTile';
+import { dateFormat } from '../../utils/dateFormat';
 
 interface Filters {
   farmId: string;
@@ -87,7 +88,7 @@ export default function DetectionReportsPage() {
   };
 
   const healthy = history.filter((h) => h.result === 'Healthy').length;
-  const when = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+  const when = dateFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
   const found = [...stats].sort((a, b) => b.count - a.count);
 
   return (

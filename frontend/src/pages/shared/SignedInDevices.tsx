@@ -7,6 +7,7 @@ import { SignedInDevice } from '../../types';
 import { fill } from '../../utils/fill';
 import Modal from '../../components/ui/Modal';
 import Panel from '../../components/ui/Panel';
+import { dateFormat } from '../../utils/dateFormat';
 
 /** The places the account is signed in: see them, sign one out, or sign out all but this one. */
 export default function SignedInDevices() {
@@ -33,7 +34,7 @@ export default function SignedInDevices() {
     load();
   }, [load]);
 
-  const when = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+  const when = dateFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
   const others = devices?.filter((d) => !d.isCurrent) ?? [];
 
   const signOut = async () => {

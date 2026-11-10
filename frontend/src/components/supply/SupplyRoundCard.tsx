@@ -8,6 +8,7 @@ import { fill } from '../../utils/fill';
 import Panel from '../ui/Panel';
 import ConfirmReceiptModal from './ConfirmReceiptModal';
 import RequestEggsModal from './RequestEggsModal';
+import { dateFormat } from '../../utils/dateFormat';
 
 /** A day sent as YYYY-MM-DD, read as that day wherever the person is, not shifted by the time zone. */
 export function localDay(value: string): Date {
@@ -73,7 +74,7 @@ export default function SupplyRoundCard() {
   if (!current?.round) return null;
   const { round, myRequest, rooms } = current;
 
-  const day = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const day = dateFormat(locale, { dateStyle: 'medium' });
   const deliveredText = fill(t('rndOnTheWay'), { date: day.format(localDay(round.deliveryDate)), place: round.deliveryPlace });
 
   const cancel = async () => {
