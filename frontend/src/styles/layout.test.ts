@@ -77,6 +77,10 @@ describe('quick actions', () => {
     expect(css).toMatch(/@media \(min-width: 900px\)\s*\{[^@]*\.qa-list\[data-count="7"\],\s*\.qa-list\[data-count="8"\]\s*\{[^}]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/);
   });
 
+  it('fill the whole row when there are six, instead of leaving a blank column at the end', () => {
+    expect(css).toMatch(/@media \(min-width: 1100px\)\s*\{[^@]*\.qa-list\[data-count="6"\]\s*\{[^}]*grid-template-columns:\s*repeat\(6,\s*minmax\(0,\s*1fr\)\)/);
+  });
+
   it('never break a word in the middle to fit a narrow card', () => {
     expect(rules('.qa-label')).not.toMatch(/overflow-wrap:\s*anywhere/);
     expect(rules('.qa-label')).toMatch(/overflow-wrap:\s*break-word/);
