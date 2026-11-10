@@ -65,6 +65,19 @@ describe('API client', () => {
     const headers = await sentHeaders(url, 'post');
     expect(headers.Authorization).toBeUndefined();
   });
+
+  // The public lot page lives at /lots/<token>. The staff lot trace has /lots/ inside its address as well, and it is
+  // private: without the token the first try always failed and only the refresh path rescued it (and a support session,
+  // which cannot refresh, was refused outright).
+  it.each(['/supply/lots/L2611-0691', '/supply/lots/L2611-0691?x=1'])('sends the token to %s, which only has /lots/ inside it', async (url) => {
+    const headers = await sentHeaders(url);
+    expect(headers.Authorization).toBe('Bearer held.in.memory');
+  });
+
+  it('still keeps the token from the public lot page when it is asked with a query', async () => {
+    const headers = await sentHeaders('/lots/abc123tokenXYZ?print=1');
+    expect(headers.Authorization).toBeUndefined();
+  });
 });
 
 describe('When the access token has run out', () => {

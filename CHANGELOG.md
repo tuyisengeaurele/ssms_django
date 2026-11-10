@@ -1,5 +1,23 @@
 # Changelog
 
+## A look at every screen, in a real browser
+
+A pass over the farmer, supervisor, admin, sign in and public screens at desktop and phone width, in the light and dark themes and in French and Kinyarwanda. It found one real bug and a handful of rough edges, all fixed here.
+
+### Fixed
+- **The staff lot trace sent no token on its first try.** The client kept the sign in token from any address with `/lots/` in it, because the public QR page lives at `/lots/<token>`. The staff page `/supply/lots/<code>` has the same piece in its address, so its first request always got a 401 and only worked after a token refresh. A support session, which cannot refresh, was refused outright. Public addresses are now matched from the start of the address.
+- **The egg lot page:** the five counts sit in one row (not three and two), the "Disease found" and "Open alert" badges have a gap between them, and a batch with no quantity no longer shows a lone dash.
+- **The admin quick actions** split into two even rows of four (not seven and one), and a word is never broken in the middle ("Cooperative / s"). Six actions fill their row on a wide screen.
+- **Filter bars** (logs, for example): the search box, the select and the inputs share one height and line up.
+- **Stat tiles stay two across on a phone**, and an odd last tile runs across the row, so three or four counts no longer push the content far down the screen.
+- **A dead public lot link** is laid out like the 404 page, centred, with a Go home button.
+
+### Looked at and left alone
+French and Kinyarwanda showed no clipped or overflowing text on the supervisor screens at either width. The raw stage names in server-written alert texts ("updated to HARVEST") stay as they are, because those texts are English only.
+
+### How it is guarded
+A test for the client's token rule in `services/api.test.ts`, and style guards in `styles/layout.test.ts`, `badgeRow.test.ts` and `phoneTiles.test.ts`.
+
 ## A modern code screen for the second step
 
 The admin's code screen now shows the 6 digit code as six rounded boxes, in two groups of three, with a ring and a blinking cursor on the next box. The same boxes are used when an admin sets up the authenticator and in the in-app prompt that asks for a code before a sensitive action. A new `CodeInput` component draws them over one real field, so pasting, the code from a message, autofill and screen readers work as for any field. It keeps digits only (a pasted "123 456" is tidied), stops at six, turns the boxes red after a wrong code and clears that mark as soon as the person types again.

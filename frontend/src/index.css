@@ -458,4 +458,7 @@ img { max-width: 100%; }
 
 @media (max-width: 420px) {
   .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  /* Counts stay two across, and a last one that would sit alone runs across the row */
+  .grid-3:has(> .stat-tile), .grid-4:has(> .stat-tile) { grid-template-columns: 1fr 1fr; }
+  .grid-3:has(> .stat-tile) > .stat-tile:last-child:nth-child(odd), .grid-4:has(> .stat-tile) > .stat-tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
 }

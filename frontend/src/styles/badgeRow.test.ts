@@ -1,0 +1,45 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+// Two badges in one cell sit in a row with a gap (so "Disease found" and "Open alert" are two things, not one word),
+// and a row of five tiles inside a stacked page takes its spacing from the stack, not from a second margin.
+
+const css = readFileSync(join(__dirname, 'components.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+
+function rules(selector: string): string {
+  const out: string[] = [];
+  for (const match of css.matchAll(/(^|\n)\s*([^{}@\n][^{}]*)\{([^}]*)\}/g)) {
+    if (match[2].split(',').some((s) => s.trim() === selector)) out.push(match[0]);
+  }
+  return out.join('\n');
+}
+
+describe('badge rows', () => {
+  it('lay badges out in a wrapping row with a gap', () => {
+    const row = rules('.badge-row');
+    expect(row).toMatch(/display:\s*flex/);
+    expect(row).toMatch(/flex-wrap:\s*wrap/);
+    expect(Number(/gap:\s*(\d+)px/.exec(row)?.[1] ?? 0)).toBeGreaterThanOrEqual(6);
+  });
+});
+
+describe('filter bars', () => {
+  // A search box, a select and two kinds of input each had their own padding, so they came out at four heights and
+  // did not line up.
+  it('give the search box, the selects and the inputs one height', () => {
+    const heights = ['.filters .search-box input', '.filters .inline-select', '.filters .filter-input'].map((selector) => {
+      const rule = rules(selector);
+      expect(rule, selector).toMatch(/box-sizing:\s*border-box/);
+      return /height:\s*(\d+)px/.exec(rule)?.[1];
+    });
+    expect(new Set(heights).size).toBe(1);
+    expect(Number(heights[0])).toBeGreaterThanOrEqual(40);
+  });
+});
+
+describe('a row of five tiles in a stack', () => {
+  it('adds no margin of its own under the row', () => {
+    expect(rules('.stack-24 > .grid-5')).toMatch(/margin-bottom:\s*0/);
+  });
+});
