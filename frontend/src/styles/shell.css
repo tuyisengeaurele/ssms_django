@@ -80,10 +80,10 @@
 
 .sidebar-section-label {
   padding: 0 12px 8px;
-  font: 600 0.66rem var(--font-ui);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(246, 243, 236, 0.4);
+  font: 600 var(--text-xs) var(--font-ui);
+  letter-spacing: 0.02em;
+ 
+  color: rgba(246, 243, 236, 0.62);
   white-space: nowrap;
 }
 
@@ -97,7 +97,7 @@
   color: rgba(246, 243, 236, 0.72);
   font: 500 0.9rem var(--font-ui);
   white-space: nowrap;
-  transition: background-color 0.25s var(--ease-out), color 0.25s var(--ease-out);
+  transition: background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), transform var(--duration-fast) var(--ease-out);
 }
 
 .sidebar-item:hover {
@@ -125,7 +125,7 @@
 .sidebar-item-icon {
   flex-shrink: 0;
   opacity: 0.85;
-  transition: color 0.25s var(--ease-out), opacity 0.25s var(--ease-out);
+  transition: color var(--duration-normal) var(--ease-out), opacity var(--duration-normal) var(--ease-out);
 }
 
 .sidebar-item.active .sidebar-item-icon {
@@ -189,7 +189,7 @@
   position: absolute;
   top: 3px;
   right: 8px;
-  font-size: 0.66rem;
+  font-size: var(--text-xs);
 }
 
 .app-sidebar.collapsed .sidebar-item[data-tip]::after {
@@ -209,7 +209,7 @@
   opacity: 0;
   pointer-events: none;
   transform: translate(-4px, -50%);
-  transition: opacity 0.15s var(--ease-out), transform 0.15s var(--ease-out);
+  transition: opacity var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
 }
 
 .app-sidebar.collapsed .sidebar-item[data-tip]:hover::after,
@@ -292,7 +292,7 @@
   border-radius: 12px;
   background: none;
   color: var(--text-2);
-  transition: background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out);
+  transition: background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), transform var(--duration-fast) var(--ease-out);
 }
 
 .topbar-toggle:hover,
@@ -310,9 +310,9 @@
 }
 
 .topbar-section {
-  font: 600 0.66rem var(--font-ui);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font: 600 var(--text-xs) var(--font-ui);
+  letter-spacing: 0.02em;
+ 
   color: var(--text-muted);
 }
 
@@ -346,7 +346,7 @@
   height: 9px;
   border: 2px solid var(--paper);
   border-radius: 50%;
-  background: #b4412f;
+  background: var(--danger-fill);
 }
 
 .topbar-user {
@@ -360,7 +360,7 @@
   color: inherit;
   text-align: left;
   text-decoration: none;
-  transition: background-color var(--duration-normal) var(--ease-out);
+  transition: background-color var(--duration-normal) var(--ease-out), transform var(--duration-fast) var(--ease-out);
 }
 
 .topbar-user:hover {
@@ -624,8 +624,9 @@ a.topbar-note:hover {
     border-radius: 12px;
     background: none;
     color: var(--text-muted);
-    font: 600 0.66rem var(--font-ui);
+    font: 600 var(--text-xs) var(--font-ui);
     cursor: pointer;
+    transition: color var(--duration-normal) var(--ease-out), transform var(--duration-fast) var(--ease-out);
   }
 
   .bottom-nav-item.active {
@@ -648,14 +649,18 @@ a.topbar-note:hover {
     top: -4px;
     right: -12px;
     color: var(--danger, #8a2c20);
-    font: 700 0.62rem var(--font-ui);
+    font: 700 var(--text-xs) var(--font-ui);
   }
 
   .bottom-nav-label {
+    display: -webkit-box;
     overflow: hidden;
     max-width: 100%;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+    text-align: center;
   }
 
   /* Leave room so the last thing on a page is not hidden behind the bar */
@@ -848,9 +853,9 @@ a.topbar-note:hover {
 
 .qs-kind {
   flex-shrink: 0;
-  font: 600 0.68rem var(--font-ui);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font: 600 var(--text-xs) var(--font-ui);
+  letter-spacing: 0.02em;
+ 
   color: var(--text-muted);
 }
 
@@ -905,4 +910,14 @@ a.topbar-note:hover {
   .app-topbar {
     padding-top: env(safe-area-inset-top, 0);
   }
+}
+
+/* ── Pressed ───────────────────────────────────────────────────────────────── */
+.sidebar-item:active { background: var(--sidebar-active-bg); }
+.topbar-toggle:active, .topbar-icon-btn:active, .topbar-user:active { background: var(--tint-2); }
+.bottom-nav-item:active { color: var(--ink); }
+
+/* Pressing a control of the shell moves it in a little. Only for people who have not asked for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .sidebar-item:active, .topbar-toggle:active, .topbar-icon-btn:active, .topbar-user:active, .bottom-nav-item:active { transform: scale(0.98); }
 }

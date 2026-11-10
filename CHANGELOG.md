@@ -1,5 +1,37 @@
 # Changelog
 
+## Tab rows that scroll cleanly
+
+A small addition to the shell slice. A row of tabs can be wider than a phone (the stage tabs on the batches page, the status tabs on devices, the settings tabs). It now scrolls sideways without a scrollbar and snaps to a tab. Each tab shows a gold focus ring for keyboard use, takes its size from the type scale, and the line under the chosen tab slides in instead of appearing. CSS only, with a guard in `styles/tabs.test.ts`.
+
+I also walked every screen at phone width for the farmer, supervisor, admin, settings, sign-in and public pages. None overflowed the page, none had text under 11 px outside the landing page's miniature report, none had an unnamed control and each had one heading.
+
+## Batches list: how long is left
+
+A small addition to the shell slice. The batches list shows the date a harvest is expected, and now also how long is left, so a farmer sees at a glance which batch is next. Under the date it says "15 days left", "Due tomorrow", "Due today", "1 day overdue" or "3 days overdue". A batch already at the harvest stage shows nothing, because its stage says it. The hint is plain text (amber when due today or tomorrow, red when overdue, never colour alone), counted in whole days on the person's own calendar, and available in English, French and Kinyarwanda (drafts). New helper `utils/harvestHint.ts`, with tests, and a style guard for the hint. No backend change.
+
+## Shell polish: quiet labels and a pressed state on every control
+
+Step 2 of the interface renewal. It finishes the rules the foundation set, for the sidebar, the top bar, the bottom bar and every small label in the app.
+
+### What changed
+- **Sentence case everywhere.** No label in the app is set in capitals any more: the sidebar groups ("Overview", "Farming", "Monitoring", "Account"), the top bar's section line, the quick search kinds, facts, sub-headings, filter fields, comparison groups and the evidence heading. Labels that were tracked out to 0.12 to 0.18 em are now tracked at 0.02 em.
+- **Nothing under 11 px.** Text that was 10.5 px is now 12 px (the type scale's smallest step).
+- **The sidebar group label is readable.** It was 40 percent white on forest ink, which is under the AA ratio for small text. It is 62 percent now, and a test holds it at 4.5 to 1.
+- **Every transition in the shell takes its time from the duration tokens**, with no literal times left in the app stylesheets.
+- **Pressed states.** The sidebar items, the top bar buttons, the profile button and the bottom bar items press in by 2 percent (only for people who have not asked for less motion) and show a pressed colour.
+- **The bottom bar wraps a long name onto a second line** ("Disease checks") instead of cutting it with an ellipsis.
+- The new message dot on the bell uses the danger token instead of a hand written colour.
+
+### How it is guarded
+`styles/labels.test.ts` fails if any app stylesheet sets capitals, tracks a label wider than 0.1 em, sets text under 11 px or uses a literal transition time, if the sidebar group label drops under 4.5 to 1, if a shell control loses its pressed state, or if the bottom bar goes back to cutting a name with an ellipsis.
+
+### Not changed
+No words, no layout and no behaviour. CSS only.
+
+### Checks
+Style and layout tests (312) pass. Looked at in the browser: the sidebar and top bar at 1700 px in the light theme, and the phone bottom bar at 390 px. The full frontend suite, `tsc`, ESLint and the build are run before the pull request.
+
 ## Dashboards with a farm calendar and quick actions
 
 The farmer, supervisor and admin dashboards are rebuilt around what needs a person today, then where they go most, then the data, with the farm calendar beside it. This is steps 3 and 4 of the interface renewal (`docs/superpowers/specs/2026-11-09-ui-renewal-design.md`, plan `2026-11-09-dashboards.md`, local only). It uses the calendar feed from the previous step and the look from the foundation step.

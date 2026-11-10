@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import { ToastProvider } from '../../context/ToastContext';
 import { setReducedMotion } from '../../test/setup';
@@ -102,6 +102,54 @@ describe('Batches page', () => {
     const { container } = open();
     await screen.findByText("Serge's farm");
     expect(container.innerHTML.toLowerCase()).not.toMatch(/btn-outline-primary|var\(--brand-600\)/);
+  });
+});
+
+describe('Batches page, how long is left', () => {
+  const open = () => wrap('/batches', '/batches', <BatchesPage />);
+  const dated = (i: number, stage: string, expected: string) => ({ ...batch(i, stage, `Farm ${i}`), expectedHarvestDate: expected });
+  const rowOf = async (farm: string) => (await screen.findByText(farm)).closest('tr') as HTMLElement;
+
+  beforeEach(() => {
+    // Only the clock is faked, so waiting for the page still works. It is 20 May 2026.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 4, 20, 15, 0));
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it('says how many days are left under the expected harvest date', async () => {
+    open();
+    await screen.findByText("Serge's farm");
+    expect(screen.getAllByText('12 days left')).toHaveLength(3);
+  });
+
+  it('says due today, due tomorrow and how many days late, in their own words', async () => {
+    api.active.mockResolvedValue({ data: { data: [
+      dated(1, 'LARVA', new Date(2026, 4, 20, 8).toISOString()),
+      dated(2, 'PUPA', new Date(2026, 4, 21, 8).toISOString()),
+      dated(3, 'COCOON', new Date(2026, 4, 19, 8).toISOString()),
+      dated(4, 'COCOON', new Date(2026, 4, 17, 8).toISOString()),
+    ] } });
+    open();
+    expect(within(await rowOf('Farm 1')).getByText('Due today')).toBeInTheDocument();
+    expect(within(await rowOf('Farm 2')).getByText('Due tomorrow')).toBeInTheDocument();
+    expect(within(await rowOf('Farm 3')).getByText('1 day overdue')).toBeInTheDocument();
+    expect(within(await rowOf('Farm 4')).getByText('3 days overdue')).toBeInTheDocument();
+  });
+
+  it('says nothing about time for a batch already at the harvest stage', async () => {
+    api.active.mockResolvedValue({ data: { data: [dated(1, 'HARVEST', new Date(2026, 4, 25).toISOString())] } });
+    open();
+    const row = within(await rowOf('Farm 1'));
+    expect(row.queryByText(/left|overdue|Due/)).not.toBeInTheDocument();
+  });
+
+  it('keeps the date itself, and shows the hint as text next to it', async () => {
+    api.active.mockResolvedValue({ data: { data: [dated(1, 'LARVA', new Date(2026, 5, 1, 8).toISOString())] } });
+    open();
+    const row = within(await rowOf('Farm 1'));
+    expect(row.getByText('Jun 1, 2026')).toBeInTheDocument();
+    expect(row.getByText('12 days left')).toBeInTheDocument();
   });
 });
 
