@@ -677,7 +677,7 @@ tr.is-off td:last-child { opacity: 1; }
 .grid-5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
 @media (max-width: 1180px) { .grid-5 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 720px) { .grid-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
-@media (max-width: 420px) { .grid-5 { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 420px) { .grid-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .grid-5 > .stat-tile:last-child:nth-child(odd) { grid-column: 1 / -1; } }
 .stack-24 > .grid-5 { margin-bottom: 0; }
 /* Badges that share a cell */
 .badge-row { display: flex; flex-wrap: wrap; gap: 6px; }
