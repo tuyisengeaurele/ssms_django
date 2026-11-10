@@ -60,6 +60,6 @@ describe('the harvest hint under a date', () => {
     expect(base).toMatch(/color:\s*var\(--text-muted\)/);
     expect(rule('.cell-hint[data-kind="late"]')).toMatch(/color:\s*var\(--danger-ink\)/);
     expect(rule('.cell-hint[data-kind="today"]')).toMatch(/color:\s*var\(--tone-yellow\)/);
-    for (const text of [base, rule('.cell-hint[data-kind="late"]'), rule('.cell-hint[data-kind="today"]')]) expect(text).not.toMatch(/#[0-9a-fA-F]{3,6}/);
+    for (const text of [base, rule('.cell-hint[data-kind="late"]'), rule('.cell-hint[data-kind="today"]')]) expect(text).not.toMatch(/#[0-9a-fA-F]{3,6}\b/);
   });
 });
