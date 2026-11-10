@@ -125,6 +125,14 @@ describe('a link that does not work', () => {
     expect(screen.getByText(/The farmer may have switched it off, or the lot was removed/)).toBeInTheDocument();
   });
 
+  it('is laid out like the other status pages, centred, and offers a way back to the site', async () => {
+    api.get.mockRejectedValue(Object.assign(new Error('nope'), { response: { status: 404 } }));
+    open();
+    const heading = await screen.findByRole('heading', { name: 'This link is no longer valid.' });
+    expect(heading.closest('.l-status__inner')).not.toBeNull();
+    expect(screen.getByRole('link', { name: 'Go home' })).toHaveAttribute('href', '/');
+  });
+
   it('does not say the link is dead when the server had a problem', async () => {
     api.get.mockRejectedValue(Object.assign(new Error('boom'), { response: { status: 500 } }));
     open();

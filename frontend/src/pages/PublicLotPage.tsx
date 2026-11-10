@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Footer } from '../landing/Footer';
 import { Nav } from '../landing/Nav';
+import { StatusLayout } from '../landing/StatusLayout';
 import '../landing/tokens.css';
 import '../landing/landing.css';
 import '../landing/lot.css';
@@ -66,6 +67,15 @@ export default function PublicLotPage() {
       ]
     : [];
 
+  // A link that does not work reads like the other status pages: centred, with a way back to the site.
+  if (state === 'gone') {
+    return (
+      <StatusLayout title={t('lotInvalid')} body={t('lotInvalidBody')}>
+        <Link to="/" className="l-btn">{t('lpGoHome')}</Link>
+      </StatusLayout>
+    );
+  }
+
   return (
     <div className="landing l-status l-lot">
       <a className="l-skip" href="#main">{t('lpSkip')}</a>
@@ -73,13 +83,6 @@ export default function PublicLotPage() {
       <main id="main" tabIndex={-1}>
         <div className="l-container l-lot__inner">
           {state === 'loading' && <p role="status">{t('jnLoading')}</p>}
-
-          {state === 'gone' && (
-            <>
-              <h1>{t('lotInvalid')}</h1>
-              <p className="l-status__body">{t('lotInvalidBody')}</p>
-            </>
-          )}
 
           {state === 'failed' && <p role="alert" className="l-status__body">{t('cmpErrorTryAgain')}</p>}
 
