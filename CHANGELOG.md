@@ -12,12 +12,14 @@ The farmer's daily path (add a farm, add a batch, check a photo for disease, log
 - **The batch code is in capitals on the farm page** (`#XCBPHXM3`), as on every other screen. It was lowercase in the batch table there.
 - **The camera button and the photo drop zone have their own icons**, a camera and a photo, and no longer borrow the microscope of the menu.
 - **The batch report** leaves room between the facts and the "Day 14 of 28" line.
+- **A device is described once on the farm page.** Each room showed its sensors' names, status and last reading, and the Devices list below showed the same devices again. A room now says "1 sensor" with its status ("Online", "Offline", "Needs attention", or "1 of 2 online" when they differ), and the words link down to the Devices list, which keeps the name, the readings, when it was last seen and the Details button.
+- **Dialogs keep their header and buttons in place and scroll only the body.** A tall dialog such as Edit farm used to scroll as a whole, so Save needed a scroll on a short screen. The box is now a column: the title and the buttons stay, the body scrolls with a soft shadow at the edge where more is hidden, and the scroll does not pass to the page behind. One change covers every dialog, because they already pass their buttons as a footer. On a phone the sheet is sized by the visible height (`dvh`) and keeps its buttons clear of the home bar. Printing the QR code is unchanged.
 
 ### Looked at and left alone
-The add farm and add batch forms, the disease check upload and result, the harvest records page and its dialog, the QR dialog, the report, the edit farm, add room and delete farm dialogs, and the phone layouts all held up. On a phone a dialog becomes a bottom sheet. Two things for a later decision: the farm page shows each device twice (under its room and in the Devices list), and a tall dialog such as Edit farm scrolls as a whole, so its buttons need a scroll on a short screen.
+The add farm and add batch forms, the disease check upload and result, the harvest records page and its dialog, the QR dialog, the report, the edit farm, add room and delete farm dialogs, and the phone layouts all held up. On a phone a dialog becomes a bottom sheet.
 
 ### How it is guarded
-`components/ui/ValidationMessages.test.tsx` and `appValidation.test.ts`, `components/ui/Pagination.test.tsx`, and new cases in the tests for the harvests page, the farm page, the disease check and the icons. No backend change.
+`components/ui/ValidationMessages.test.tsx` and `appValidation.test.ts`, `components/ui/Pagination.test.tsx`, `styles/modal.test.ts`, and new cases in the tests for the harvests page, the farm page, the disease check and the icons. No backend change.
 
 ## Kinyarwanda dates, and the rest of the screen review
 
