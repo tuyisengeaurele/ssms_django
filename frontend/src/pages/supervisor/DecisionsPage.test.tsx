@@ -409,6 +409,30 @@ describe('Decisions', () => {
       expect(api.evidence).toHaveBeenCalledTimes(1);
     });
 
+    it('opens the details on a row of their own, as wide as the card, with history and rooms side by side', async () => {
+      open();
+      const ask = await item('Gad Anaclet');
+      fireEvent.click(within(ask).getByRole('button', { name: 'See details' }));
+      await within(ask).findByText('Started with 3 boxes');
+      const more = ask.querySelector('.decision-more') as HTMLElement;
+      expect(more).not.toBeNull();
+      // a child of the card itself, so it can run under the words and the buttons, not inside the narrow column of the words
+      expect(more.parentElement).toBe(ask);
+      expect(ask.querySelector('.decision-body')?.contains(more)).toBe(false);
+      expect(more.querySelectorAll('section.decision-evidence-part')).toHaveLength(2);
+      expect(within(more.querySelectorAll('section')[0] as HTMLElement).getByText('Started with 3 boxes')).toBeInTheDocument();
+      expect(within(more.querySelectorAll('section')[1] as HTMLElement).getByText('Main house: 20 m², holds about 5 boxes')).toBeInTheDocument();
+    });
+
+    it('ties the button to the details it opens, for a screen reader', async () => {
+      open();
+      const ask = await item('Gad Anaclet');
+      const button = within(ask).getByRole('button', { name: 'See details' });
+      fireEvent.click(button);
+      const more = await waitFor(() => { const el = ask.querySelector('.decision-more'); if (!el) throw new Error('not yet'); return el; });
+      expect(button).toHaveAttribute('aria-controls', more.id);
+    });
+
     it('says there are no changes yet instead of an empty history for a farmer still on the default', async () => {
       api.evidence.mockResolvedValue({ data: { data: { ...evidence, source: 'default', since: null, history: [] } } });
       open();
