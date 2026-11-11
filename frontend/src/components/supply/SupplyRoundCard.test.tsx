@@ -268,6 +268,12 @@ describe('SupplyRoundCard', () => {
       expect(await screen.findByText('Eggs received. A batch was started in Room A.', {}, { timeout: 5000 })).toBeInTheDocument();
     });
 
+    it('names the two conditions with a capital letter in the choice, as a choice reads', async () => {
+      const dialog = await openReceipt();
+      const choices = within(within(dialog).getByLabelText('Condition')).getAllByRole('option').map((o) => o.textContent);
+      expect(choices).toEqual(['Good', 'Damaged']);
+    });
+
     it('sends a smaller quantity and a damaged condition when that is what arrived', async () => {
       api.receive.mockResolvedValue({ data: { data: { id: 'q1', batchId: 'b1' } } });
       const dialog = await openReceipt();
