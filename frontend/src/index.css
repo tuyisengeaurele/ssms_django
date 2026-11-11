@@ -309,6 +309,7 @@ img { max-width: 100%; }
 /* Layout, sidebar and top bar live in styles/shell.css */
 
 /* ── Grid ────────────────────────────────────────────────────────────────────── */
+input[type='checkbox'], input[type='radio'] { accent-color: var(--primary); }
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
