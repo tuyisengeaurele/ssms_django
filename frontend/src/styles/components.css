@@ -897,24 +897,46 @@ tr.is-off td:last-child { opacity: 1; }
 }
 
 .modal-box {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 480px;
-  max-height: 90vh;
-  padding: 28px;
-  overflow-y: auto;
+  /* dvh is the height that is really visible on a phone, with the browser's own bars taken off */
+  max-height: min(90vh, calc(100dvh - 32px));
+  padding: 0;
+  overflow: hidden;
   border-radius: 24px;
   background: var(--surface);
   box-shadow: var(--shadow-xl);
   outline: none;
 }
 
+/* Header and footer stay put. Only the body scrolls, so Save is never below the fold. */
 .modal-header {
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 18px;
+  padding: 26px 28px 14px;
 }
+
+.modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 4px 28px 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Soft shadows at the top and the bottom edge, drawn only while more is hidden there: no script. */
+  background:
+    linear-gradient(var(--surface) 30%, transparent) top / 100% 24px no-repeat local,
+    linear-gradient(transparent, var(--surface) 70%) bottom / 100% 24px no-repeat local,
+    radial-gradient(farthest-side at 50% 0, rgb(0 0 0 / 0.16), transparent) top / 100% 10px no-repeat scroll,
+    radial-gradient(farthest-side at 50% 100%, rgb(0 0 0 / 0.16), transparent) bottom / 100% 10px no-repeat scroll;
+  background-attachment: local, local, scroll, scroll;
+}
+
+.modal-box:not(:has(.modal-footer)) .modal-body { padding-bottom: 28px; }
 
 .modal-title {
   font: 450 1.5rem var(--font-display);
@@ -941,9 +963,11 @@ tr.is-off td:last-child { opacity: 1; }
 
 .modal-footer {
   display: flex;
+  flex: none;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 24px;
+  padding: 16px 28px 24px;
+  border-top: 1px solid var(--border-light);
 }
 
 /* ── Empty states ──────────────────────────────────────────────────────────── */
@@ -1006,7 +1030,11 @@ tr.is-off td:last-child { opacity: 1; }
   .panel-body { padding: 16px; }
   .page-actions { width: 100%; }
   .modal-overlay { align-items: flex-end; padding: 0; }
-  .modal-box { max-height: 92vh; padding: 24px 20px; border-radius: 24px 24px 0 0; }
+  .modal-box { max-height: min(92vh, 92dvh); padding: 0; border-radius: 24px 24px 0 0; }
+  .modal-header { padding: 20px 20px 12px; }
+  .modal-body { padding-right: 20px; padding-left: 20px; }
+  .modal-footer { padding: 14px 20px; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  .modal-box:not(:has(.modal-footer)) .modal-body { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
   .search-box { width: 100%; }
   .btn-sm { padding: 0.5rem 0.95rem; }
 }
@@ -1289,7 +1317,8 @@ tr.is-off td:last-child { opacity: 1; }
 @media print {
   body:has(.lot-print-sheet) > *:not(.modal-overlay) { display: none !important; }
   body:has(.lot-print-sheet) .modal-overlay { position: static; display: block; padding: 0; background: none; backdrop-filter: none; }
-  body:has(.lot-print-sheet) .modal-box { max-width: none !important; padding: 0; box-shadow: none; background: none; }
+  body:has(.lot-print-sheet) .modal-box { display: block; max-width: none !important; max-height: none; padding: 0; overflow: visible; box-shadow: none; background: none; }
+  body:has(.lot-print-sheet) .modal-body { padding: 0; overflow: visible; background: none; }
   body:has(.lot-print-sheet) .modal-header,
   body:has(.lot-print-sheet) .modal-footer,
   body:has(.lot-print-sheet) .lot-noprint { display: none !important; }
