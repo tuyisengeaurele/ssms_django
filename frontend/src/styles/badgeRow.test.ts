@@ -38,6 +38,13 @@ describe('filter bars', () => {
   });
 });
 
+describe('the batch report', () => {
+  // The sentence "Day 14 of 28..." sat right against the tiles above it.
+  it('leaves room between a block of facts and the line that follows it', () => {
+    expect(rules('.facts + .report-line')).toMatch(/margin-top:\s*(1[2-9]|2\d)px/);
+  });
+});
+
 describe('a row of five tiles in a stack', () => {
   it('adds no margin of its own under the row', () => {
     expect(rules('.stack-24 > .grid-5')).toMatch(/margin-bottom:\s*0/);

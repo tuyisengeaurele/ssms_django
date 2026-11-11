@@ -717,6 +717,7 @@ tr.is-off td:last-child { opacity: 1; }
 .report-section { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--border-light); break-inside: avoid; }
 .report-section h2 { margin: 0 0 8px; color: var(--ink); font: 450 1.2rem var(--font-display); }
 .report-line { margin: 0 0 4px; color: var(--text); line-height: 1.5; }
+.facts + .report-line { margin-top: 14px; }
 .report-list { margin: 0; padding-left: 18px; color: var(--text); line-height: 1.6; }
 .report-table { width: 100%; margin: 6px 0 4px; border-collapse: collapse; font-size: 0.9rem; }
 .report-table th, .report-table td { padding: 5px 10px 5px 0; border-bottom: 1px solid var(--border-light); text-align: left; vertical-align: top; }
