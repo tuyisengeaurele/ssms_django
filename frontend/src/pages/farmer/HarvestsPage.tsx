@@ -214,7 +214,7 @@ export default function HarvestsPage() {
               </div>
             )}
           </Panel>
-          {meta && (
+          {meta && meta.totalPages > 1 && (
             <div className="panel pager-panel">
               <Pagination meta={meta} onPage={setPage} />
             </div>
