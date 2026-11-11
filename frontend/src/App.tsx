@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import MotionProvider from './components/MotionProvider';
 import WakeBanner from './components/ui/WakeBanner';
+import ValidationMessages from './components/ui/ValidationMessages';
 import { cooperativeRoutes } from './pages/cooperatives/cooperativeRoutes';
 import { systemRoutes } from './pages/system/systemRoutes';
 import { settingsRoutes } from './pages/settings/settingsRoutes';
@@ -56,6 +57,7 @@ export default function App() {
     <MotionProvider>
     <LanguageProvider>
     <WakeBanner />
+    <ValidationMessages />
     <AuthProvider>
       <BrowserRouter>
         <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F6F3EC' }} />}>

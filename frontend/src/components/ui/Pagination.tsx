@@ -1,3 +1,5 @@
+import { useLanguage } from '../../context/LanguageContext';
+import { fill } from '../../utils/fill';
 import { Icon } from './Icon';
 
 interface PaginationMeta {
@@ -15,6 +17,7 @@ interface PaginationProps {
 }
 
 export default function Pagination({ meta, onPage }: PaginationProps) {
+  const { t } = useLanguage();
   if (meta.totalPages <= 1) return null;
 
   const { page, totalPages, totalItems, pageSize, hasNext, hasPrev } = meta;
@@ -34,13 +37,17 @@ export default function Pagination({ meta, onPage }: PaginationProps) {
   }
 
   return (
-    <nav className="pager" aria-label="Pages">
+    <nav className="pager" aria-label={t('pgNav')}>
       <span className="pager-count">
-        Showing <strong>{from} to {to}</strong> of <strong>{totalItems}</strong>
+        {t('pgShowing').split(/(\{range\}|\{total\})/).map((part, i) =>
+          part === '{range}' ? <strong key={i}>{fill(t('pgRange'), { from, to })}</strong>
+            : part === '{total}' ? <strong key={i}>{totalItems}</strong>
+            : part,
+        )}
       </span>
 
       <div className="pager-buttons">
-        <button type="button" className="pager-btn" onClick={() => hasPrev && onPage(page - 1)} disabled={!hasPrev} aria-label="Previous page">
+        <button type="button" className="pager-btn" onClick={() => hasPrev && onPage(page - 1)} disabled={!hasPrev} aria-label={t('pgPrev')}>
           <Icon name="back" size={15} />
         </button>
 
@@ -52,7 +59,7 @@ export default function Pagination({ meta, onPage }: PaginationProps) {
               key={p}
               type="button"
               className={`pager-btn${p === page ? ' is-current' : ''}`}
-              aria-label={`Page ${p}`}
+              aria-label={fill(t('pgPage'), { n: p })}
               aria-current={p === page ? 'page' : undefined}
               onClick={() => onPage(p)}
             >
@@ -61,7 +68,7 @@ export default function Pagination({ meta, onPage }: PaginationProps) {
           ),
         )}
 
-        <button type="button" className="pager-btn" onClick={() => hasNext && onPage(page + 1)} disabled={!hasNext} aria-label="Next page">
+        <button type="button" className="pager-btn" onClick={() => hasNext && onPage(page + 1)} disabled={!hasNext} aria-label={t('pgNext')}>
           <Icon name="forward" size={15} />
         </button>
       </div>

@@ -38,6 +38,20 @@ describe('filter bars', () => {
   });
 });
 
+describe('a section that a link jumps to', () => {
+  // The room's "1 sensor" link jumps to the Devices list. It lands with room above it, not glued to the top of the screen.
+  it('keeps clear of the top edge when it is scrolled to', () => {
+    expect(Number(/scroll-margin-top:\s*(\d+)px/.exec(rules('.anchor-target'))?.[1] ?? 0)).toBeGreaterThanOrEqual(72);
+  });
+});
+
+describe('the batch report', () => {
+  // The sentence "Day 14 of 28..." sat right against the tiles above it.
+  it('leaves room between a block of facts and the line that follows it', () => {
+    expect(rules('.facts + .report-line')).toMatch(/margin-top:\s*(1[2-9]|2\d)px/);
+  });
+});
+
 describe('a row of five tiles in a stack', () => {
   it('adds no margin of its own under the row', () => {
     expect(rules('.stack-24 > .grid-5')).toMatch(/margin-bottom:\s*0/);

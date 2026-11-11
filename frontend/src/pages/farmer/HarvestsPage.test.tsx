@@ -133,6 +133,12 @@ describe('Harvests page', () => {
     expect(await screen.findByText('1 record')).toBeInTheDocument();
   });
 
+  it('draws no empty pager panel when everything fits on one page', async () => {
+    open();
+    await screen.findByText('First picking');
+    expect(document.querySelector('.pager-panel')).toBeNull();
+  });
+
   it('shows one page and moves between pages', async () => {
     api.page.mockImplementation((page: number) => Promise.resolve(answer(
       [page === 1 ? records[0] : records[2]],

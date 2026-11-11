@@ -149,7 +149,10 @@ describe('Farm details page', () => {
 
   it('lists batches with a stage, counts and two ways in', async () => {
     open();
-    const row = (await screen.findByText('#abcdefg1')).closest('tr') as HTMLElement;
+    // The code is written in capitals here, as on every other screen (the batches list, the batch page, the reports).
+    const row = (await screen.findByText('#ABCDEFG1')).closest('tr') as HTMLElement;
+    expect(within(row).getByRole('link', { name: 'Details #ABCDEFG1' })).toBeInTheDocument();
+    expect(within(row).getByRole('link', { name: 'Check for disease #ABCDEFG1' })).toBeInTheDocument();
     expect(within(row).getByText('Larva')).toBeInTheDocument();
     expect(within(row).getByText('4')).toBeInTheDocument();
     expect(within(row).getByRole('link', { name: /^Details/ })).toHaveAttribute('href', '/batches/b1-abcdefg1');
@@ -172,27 +175,56 @@ describe('Farm details page', () => {
   describe('rooms panel', () => {
     const roomItem = async (name: string) => (await screen.findByText(name, { selector: '.room-main .cell-strong' })).closest('li') as HTMLElement;
 
-    it('shows the sensors of a room and what the room measured last', async () => {
+    // Each device is described once, in the Devices list. A room says only how many sensors it has and whether they work.
+    it('sums up the sensors of a room in one line that leads to the Devices list', async () => {
       open();
       const house = await roomItem('Rearing house 1');
-      expect(within(house).getByText('Sensor d1')).toBeInTheDocument();
+      const summary = within(house).getByRole('link', { name: '1 sensor' });
+      expect(summary).toHaveAttribute('href', '#farm-devices');
       expect(within(house).getByText('Online')).toBeInTheDocument();
-      expect(within(house).getByText(/24\.1 °C/)).toBeInTheDocument();
-      expect(within(house).getByText(/79\.9 %/)).toBeInTheDocument();
-      expect(within(house).getByText(/5 minutes ago/)).toBeInTheDocument();
     });
 
-    it('says so when a room has no sensor or no reading yet', async () => {
+    it('does not repeat the name or the reading of a device that the Devices list already shows', async () => {
+      open();
+      const house = await roomItem('Rearing house 1');
+      expect(within(house).queryByText('Sensor d1')).not.toBeInTheDocument();
+      expect(within(house).queryByText(/°C/)).not.toBeInTheDocument();
+      expect(within(house).queryByText(/Last reading/)).not.toBeInTheDocument();
+      expect(document.getElementById('farm-devices')).not.toBeNull();
+      expect(within(document.getElementById('farm-devices') as HTMLElement).getByText('Sensor d1')).toBeInTheDocument();
+    });
+
+    it('says so when a room has no sensor', async () => {
       open();
       const empty = await roomItem('Rearing house 2');
       expect(within(empty).getByText('No sensor in this room yet.')).toBeInTheDocument();
-      expect(within(empty).queryByText(/°C/)).not.toBeInTheDocument();
+      expect(within(empty).queryByRole('link', { name: /sensor/ })).not.toBeInTheDocument();
     });
 
-    it('says a room with a sensor but no reading has no reading yet', async () => {
-      api.rooms.mockResolvedValue({ data: { data: [room('r1', 'Rearing house 1', { devices: [{ id: 'd1', name: 'Sensor d1', status: 'offline', lastSeen: null }] })] } });
+    it('says an offline sensor is offline, and counts sensors', async () => {
+      api.rooms.mockResolvedValue({ data: { data: [
+        room('r1', 'Rearing house 1', { devices: [{ id: 'd1', name: 'Sensor d1', status: 'offline', lastSeen: null }] }),
+        room('r2', 'Rearing house 2', { devices: [{ id: 'd2', name: 'Sensor d2', status: 'online', lastSeen: null }, { id: 'd3', name: 'Sensor d3', status: 'online', lastSeen: null }] }),
+      ] } });
       open();
-      expect(within(await roomItem('Rearing house 1')).getByText('No reading yet.')).toBeInTheDocument();
+      const one = await roomItem('Rearing house 1');
+      expect(within(one).getByRole('link', { name: '1 sensor' })).toBeInTheDocument();
+      expect(within(one).getByText('Offline')).toBeInTheDocument();
+      const two = await roomItem('Rearing house 2');
+      expect(within(two).getByRole('link', { name: '2 sensors' })).toBeInTheDocument();
+      expect(within(two).getByText('Online')).toBeInTheDocument();
+    });
+
+    it('says how many work when some do and some do not, and flags a sensor that needs attention', async () => {
+      api.rooms.mockResolvedValue({ data: { data: [
+        room('r1', 'Rearing house 1', { devices: [{ id: 'd1', name: 'Sensor d1', status: 'online', lastSeen: null }, { id: 'd2', name: 'Sensor d2', status: 'offline', lastSeen: null }] }),
+        room('r2', 'Rearing house 2', { devices: [{ id: 'd3', name: 'Sensor d3', status: 'online', lastSeen: null }, { id: 'd4', name: 'Sensor d4', status: 'error', lastSeen: null }] }),
+      ] } });
+      open();
+      const some = await roomItem('Rearing house 1');
+      expect(within(some).getByText('1 of 2 online')).toBeInTheDocument();
+      const bad = await roomItem('Rearing house 2');
+      expect(within(bad).getByText('Needs attention')).toBeInTheDocument();
     });
 
     it('shows where each room stands with the supervisor, in words', async () => {

@@ -6,7 +6,7 @@ import { deviceService } from '../../services/device.service';
 import { roomService } from '../../services/room.service';
 import LocationPicker, { EMPTY_PLACE, PlaceValue } from '../../components/ui/LocationPicker';
 import { stageLabel } from '../../utils/constants';
-import { Farm, Batch, IoTDevice, Room } from '../../types';
+import { Farm, Batch, DeviceStatus, IoTDevice, Room } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
@@ -29,6 +29,23 @@ import { dateFormat } from '../../utils/dateFormat';
 
 const ROOM_AREA_MIN = 1;
 const ROOM_AREA_MAX = 5000;
+
+/**
+ * What a room says about its sensors: how many there are and whether they work, with a link down to the Devices list, which
+ * holds each device's name, readings and details. A device is described once.
+ */
+function SensorSummary({ devices }: { devices: Array<{ id: string; status: DeviceStatus }> }) {
+  const { t } = useLanguage();
+  const n = devices.length;
+  const online = devices.filter((d) => d.status === 'online').length;
+  const status: DeviceStatus | null = devices.some((d) => d.status === 'error') ? 'error' : online === n ? 'online' : online === 0 ? 'offline' : null;
+  return (
+    <>
+      <a href="#farm-devices" className="link">{fill(t(n === 1 ? 'rmSensorsOne' : 'rmSensorCount'), { n })}</a>
+      {status ? <DeviceStatusBadge status={status} /> : <span className="cell-sub">{fill(t('rmSensorsSome'), { k: online, n })}</span>}
+    </>
+  );
+}
 
 export default function FarmDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -404,16 +421,7 @@ export default function FarmDetailPage() {
                       {room.devices.length === 0 ? (
                         <span className="cell-sub">{t('rmNoSensor')}</span>
                       ) : (
-                        <>
-                          {room.devices.map((d) => (
-                            <span key={d.id} className="room-sensor"><span>{d.name}</span><DeviceStatusBadge status={d.status} /></span>
-                          ))}
-                          <span className="cell-sub">
-                            {room.latestReading
-                              ? `${t('rmLatest')}: ${room.latestReading.temperature} °C, ${room.latestReading.humidity} %, ${timeAgo(room.latestReading.timestamp, locale)}`
-                              : t('rmNoReading')}
-                          </span>
-                        </>
+                        <SensorSummary devices={room.devices} />
                       )}
                     </span>
                   </div>
@@ -429,6 +437,7 @@ export default function FarmDetailPage() {
           )}
         </Panel>
 
+        <div id="farm-devices" className="anchor-target">
         <Panel
           title={`${t('fdDevicesTitle')} (${devices.length})`}
           note={devices.length > 0 ? fill(t('fdDevicesNote'), { on: online, off: devices.length - online }) : undefined}
@@ -482,6 +491,7 @@ export default function FarmDetailPage() {
             </ul>
           )}
         </Panel>
+        </div>
 
         <Panel
           title={`${t('fdBatchesTitle')} (${batches.length})`}
@@ -518,15 +528,15 @@ export default function FarmDetailPage() {
                 <tbody>
                   {batches.map((b) => (
                     <tr key={b.id} className="tbody-row">
-                      <td className="cell-lead cell-mono cell-muted">#{b.id.slice(-8)}</td>
+                      <td className="cell-lead cell-mono cell-muted">#{b.id.slice(-8).toUpperCase()}</td>
                       <td data-label={t('fdColStage')}><StageBadge stage={b.stage} /></td>
                       <td data-label={t('fdColStarted')} className="cell-muted cell-nowrap">{date.format(new Date(b.startDate))}</td>
                       <td data-label={t('fdColHarvest')} className="cell-muted cell-nowrap">{date.format(new Date(b.expectedHarvestDate))}</td>
                       <td data-label={t('fdColChecks')} className="cell-strong">{b.counts?.diseaseDetections ?? 0}</td>
                       <td data-label="">
                         <div className="table-actions">
-                          <Link to={`/batches/${b.id}`} className="btn btn-ghost btn-xs" aria-label={`${t('fdDetails')} #${b.id.slice(-8)}`}>{t('fdDetails')}</Link>
-                          <Link to={`/batches/${b.id}/detect`} className="btn btn-ghost btn-xs" aria-label={`${t('fdCheck')} #${b.id.slice(-8)}`}>
+                          <Link to={`/batches/${b.id}`} className="btn btn-ghost btn-xs" aria-label={`${t('fdDetails')} #${b.id.slice(-8).toUpperCase()}`}>{t('fdDetails')}</Link>
+                          <Link to={`/batches/${b.id}/detect`} className="btn btn-ghost btn-xs" aria-label={`${t('fdCheck')} #${b.id.slice(-8).toUpperCase()}`}>
                             <Icon name="detections" size={14} />
                             {t('fdCheck')}
                           </Link>

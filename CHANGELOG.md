@@ -1,5 +1,26 @@
 # Changelog
 
+## The farmer flow, screen by screen
+
+The farmer's daily path (add a farm, add a batch, check a photo for disease, log a harvest, share the lot, read the report) was opened in a real browser at desktop and phone width, with the harvest, QR and delete dialogs and a mocked disease result. Most of it held up. These are the fixes.
+
+### Fixed
+- **The words of an invalid field are in the language of the screen.** Only one of the 21 forms checked its fields itself. All the others showed the browser's own bubble ("Please fill out this field."), which follows the browser's language and not the app's. A new `ValidationMessages` sets the message in English, French or Kinyarwanda ("Fill in this field.", "Remplissez ce champ.", "Uzuza iki gice.") for a missing value, an email, a number range, a length and a pattern, and takes it away when the person edits the field. A message a page sets for itself is left alone. It covers every form at once.
+- **The pager was English only** ("Showing 1 to 20 of 45", "Previous page", "Page 2"). It is in all three languages now.
+- **The harvests page drew an empty pager panel** under a list that fits on one page (a stray line under the table).
+- **"Healthy" on the disease check result** and in its confidence bars is said in the language of the screen, like everywhere else.
+- **The batch code is in capitals on the farm page** (`#XCBPHXM3`), as on every other screen. It was lowercase in the batch table there.
+- **The camera button and the photo drop zone have their own icons**, a camera and a photo, and no longer borrow the microscope of the menu.
+- **The batch report** leaves room between the facts and the "Day 14 of 28" line.
+- **A device is described once on the farm page.** Each room showed its sensors' names, status and last reading, and the Devices list below showed the same devices again. A room now says "1 sensor" with its status ("Online", "Offline", "Needs attention", or "1 of 2 online" when they differ), and the words link down to the Devices list, which keeps the name, the readings, when it was last seen and the Details button.
+- **Dialogs keep their header and buttons in place and scroll only the body.** A tall dialog such as Edit farm used to scroll as a whole, so Save needed a scroll on a short screen. The box is now a column: the title and the buttons stay, the body scrolls with a soft shadow at the edge where more is hidden, and the scroll does not pass to the page behind. One change covers every dialog, because they already pass their buttons as a footer. On a phone the sheet is sized by the visible height (`dvh`) and keeps its buttons clear of the home bar. Printing the QR code is unchanged.
+
+### Looked at and left alone
+The add farm and add batch forms, the disease check upload and result, the harvest records page and its dialog, the QR dialog, the report, the edit farm, add room and delete farm dialogs, and the phone layouts all held up. On a phone a dialog becomes a bottom sheet.
+
+### How it is guarded
+`components/ui/ValidationMessages.test.tsx` and `appValidation.test.ts`, `components/ui/Pagination.test.tsx`, `styles/modal.test.ts`, and new cases in the tests for the harvests page, the farm page, the disease check and the icons. No backend change.
+
 ## Kinyarwanda dates, and the rest of the screen review
 
 The second half of the screen review: French and Kinyarwanda on the farmer and admin screens, and a contrast check of the farmer, supervisor and admin screens in the light and the dark theme (all three roles pass AA, apart from the one fix below).
