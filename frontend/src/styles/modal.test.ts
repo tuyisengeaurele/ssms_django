@@ -41,20 +41,26 @@ describe('the dialog box', () => {
     expect(body).toMatch(/overscroll-behavior:\s*contain/);
   });
 
-  it('shows a soft shadow at the edge where more is hidden, with no script', () => {
+  it('shows a soft shadow at the bottom edge while more is hidden below, with no script', () => {
     const body = rules(css, '.modal-body');
-    expect(body).toMatch(/background-attachment:\s*local,\s*local,\s*scroll,\s*scroll/);
+    expect(body).toMatch(/background-attachment:\s*local,\s*scroll/);
   });
 
-  it('hides those shadows completely at rest, so no faint line shows under the title', () => {
+  // A shadow at the top as well left a one pixel line under the title at rest, where the two layers did not meet exactly.
+  it('draws no shadow at the top', () => {
+    const body = rules(css, '.modal-body');
+    expect(body).not.toMatch(/\btop \//);
+  });
+
+  it('hides the shadow completely when nothing is hidden below', () => {
     // The cover that scrolls with the text must be taller than the shadow it hides, and opaque across the shadow's height.
     const body = rules(css, '.modal-body');
     const group = String.raw`\((?:[^()]|\([^()]*\))*\)`;
     const sized = (kind: string, attachment: string) => [...body.matchAll(new RegExp(String.raw`${kind}-gradient${group} (?:top|bottom) / 100% (\d+)px no-repeat ${attachment}`, 'g'))].map((m) => Number(m[1]));
     const covers = sized('linear', 'local');
     const shadows = sized('radial', 'scroll');
-    expect(covers).toHaveLength(2);
-    expect(shadows).toHaveLength(2);
+    expect(covers).toHaveLength(1);
+    expect(shadows).toHaveLength(1);
     // 30% of the cover is fully opaque, and that has to reach past the shadow
     for (const cover of covers) for (const shadow of shadows) expect(cover * 0.3).toBeGreaterThan(shadow);
   });

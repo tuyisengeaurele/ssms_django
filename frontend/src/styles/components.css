@@ -927,13 +927,11 @@ tr.is-off td:last-child { opacity: 1; }
   padding: 4px 28px 18px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  /* Soft shadows at the top and the bottom edge, drawn only while more is hidden there: no script. */
+  /* A soft shadow at the bottom edge, drawn only while more is hidden below: no script. */
   background:
-    linear-gradient(var(--surface) 30%, transparent) top / 100% 48px no-repeat local,
     linear-gradient(transparent, var(--surface) 70%) bottom / 100% 48px no-repeat local,
-    radial-gradient(farthest-side at 50% 0, rgb(0 0 0 / 0.16), transparent) top / 100% 10px no-repeat scroll,
     radial-gradient(farthest-side at 50% 100%, rgb(0 0 0 / 0.16), transparent) bottom / 100% 10px no-repeat scroll;
-  background-attachment: local, local, scroll, scroll;
+  background-attachment: local, scroll;
 }
 
 .modal-box:not(:has(.modal-footer)) .modal-body { padding-bottom: 28px; }
