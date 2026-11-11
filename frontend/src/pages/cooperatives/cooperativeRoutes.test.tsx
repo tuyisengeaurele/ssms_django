@@ -95,7 +95,7 @@ describe('A cooperative, for an admin', () => {
   it('asks for the report of that one cooperative, and only while a section needs it', async () => {
     renderCoop('/admin/cooperatives/c1');
     await ready();
-    await screen.findByText('3 records, 24.5 kg of cocoons, 900 g of silk.');
+    await screen.findByText('Total cocoons');
     expect(api.report).toHaveBeenCalledWith({ from: '2026-09-29', to: '2026-10-28', cooperative: 'c1' });
     expect(api.report).toHaveBeenCalledTimes(1);
     // Report and Farms share the same numbers, so moving between them does not ask again.
@@ -139,7 +139,7 @@ describe('All the cooperatives, for an admin', () => {
 
   it('asks for the report of every cooperative, with no cooperative named', async () => {
     renderCoop('/admin/cooperatives/all');
-    await screen.findByText('3 records, 24.5 kg of cocoons, 900 g of silk.');
+    await screen.findByText('Total cocoons');
     expect(api.report).toHaveBeenCalledWith({ from: '2026-09-29', to: '2026-10-28' });
   });
 });
@@ -174,7 +174,7 @@ describe('My cooperative, for a supervisor', () => {
 
   it('asks for the report with no cooperative named, because it is always their own', async () => {
     renderCoop('/supervisor/cooperative');
-    await screen.findByText('3 records, 24.5 kg of cocoons, 900 g of silk.');
+    await screen.findByText('Total cocoons');
     expect(api.report).toHaveBeenCalledWith({ from: '2026-09-29', to: '2026-10-28' });
   });
 

@@ -65,6 +65,11 @@ describe('the batch report', () => {
   it('leaves room between a block of facts and the line that follows it', () => {
     expect(rules('.facts + .report-line')).toMatch(/margin-top:\s*(1[2-9]|2\d)px/);
   });
+
+  // The grades line of the cooperative harvest sat against the three tiles above it.
+  it('leaves the same room under the harvest tiles', () => {
+    expect(rules('.grid-3 + .report-line')).toMatch(/margin-top:\s*(1[2-9]|2\d)px/);
+  });
 });
 
 describe('a row of five tiles in a stack', () => {
