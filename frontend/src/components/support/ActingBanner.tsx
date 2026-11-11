@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { doneEnding, markEnding } from '../../services/session';
@@ -17,6 +18,7 @@ export function minutesLeft(endsAt: string, now: number): number {
 export default function ActingBanner() {
   const { acting, stopActing } = useAuth();
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [now, setNow] = useState(() => Date.now());
 
   // Once a minute, not every second: a screen reader would otherwise read it out all the time.
@@ -34,6 +36,9 @@ export default function ActingBanner() {
     // strip that offers an open visit from offering this one while the server is still hearing about it.
     markEnding(acting.id);
     stopActing();
+    // The admin was on a page of the person. Back as the admin it is not theirs (the person's allowance and supply cards
+    // answer 403 to an admin), so the visit ends where it began, on the Users list.
+    navigate('/admin/users', { replace: true });
     try {
       await supportService.end(acting.id);
     } catch {

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import { isEnding } from '../../services/session';
@@ -17,7 +18,14 @@ const acting = (over: Partial<ActingInfo> = {}): ActingInfo => ({
   id: 's1', person: aline, mode: 'view', endsAt: '2026-11-06T10:24:00Z', ...over,
 });
 
-const open = () => render(<LanguageProvider><ActingBanner /></LanguageProvider>);
+function Where() {
+  return <p data-testid="where">{useLocation().pathname}</p>;
+}
+const open = (at = '/farmer') => render(
+  <MemoryRouter initialEntries={[at]}>
+    <LanguageProvider><ActingBanner /><Where /></LanguageProvider>
+  </MemoryRouter>,
+);
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -85,6 +93,24 @@ describe('The banner while an admin acts as a person', () => {
     fireEvent.click(screen.getByRole('button', { name: 'End' }));
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(auth.stopActing).toHaveBeenCalledTimes(1);
+  });
+
+  // The admin was looking at a farmer's dashboard. Back as the admin that page is not theirs (its allowance and supply cards
+  // answer 403), so the visit ends back on the Users list, where it began.
+  it('takes the admin back to the Users list when the visit ends, not to the page of the person', async () => {
+    open('/farmer');
+    expect(screen.getByTestId('where')).toHaveTextContent('/farmer');
+    fireEvent.click(screen.getByRole('button', { name: 'End' }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(screen.getByTestId('where')).toHaveTextContent('/admin/users');
+  });
+
+  it('goes there even when the server cannot be reached', async () => {
+    support.end.mockRejectedValue(new Error('offline'));
+    open('/batches');
+    fireEvent.click(screen.getByRole('button', { name: 'End' }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(screen.getByTestId('where')).toHaveTextContent('/admin/users');
   });
 
   it('shows nothing when nobody is acting', () => {
