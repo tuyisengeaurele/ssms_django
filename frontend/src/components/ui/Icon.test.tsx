@@ -29,6 +29,11 @@ describe('Icon', () => {
     expect(svg).toHaveClass('x');
   });
 
+  it('has a camera and a photo, so taking and choosing a picture do not borrow the microscope', () => {
+    expect(ICON_NAMES).toContain('camera');
+    expect(ICON_NAMES).toContain('photo');
+  });
+
   it('covers every part of the admin menu', () => {
     for (const name of ['dashboard', 'adminDashboard', 'users', 'cooperatives', 'farms', 'batches', 'harvests', 'overview',
       'detections', 'devices', 'messages', 'audit', 'systemReport', 'alerts', 'profile', 'logout']) {

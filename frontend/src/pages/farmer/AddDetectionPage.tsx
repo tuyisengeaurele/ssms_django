@@ -217,7 +217,7 @@ export default function AddDetectionPage() {
               {canUseCamera && (
                 <div className="photo-choices">
                   <button type="button" className="btn btn-secondary" onClick={() => setCamera(true)}>
-                    <Icon name="detections" size={16} />
+                    <Icon name="camera" size={16} />
                     {t('phCameraOpen')}
                   </button>
                 </div>
@@ -229,7 +229,7 @@ export default function AddDetectionPage() {
                 onDrop={onDrop}
               >
                 <input ref={inputRef} type="file" className="sr-only" accept="image/jpeg,image/png,image/webp" onChange={onPick} />
-                <Icon name="detections" size={28} />
+                <Icon name="photo" size={28} />
                 <strong>{t('ckChoose')}</strong>
                 <span>{t('ckChooseHint')}</span>
               </label>

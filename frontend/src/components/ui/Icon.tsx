@@ -1,6 +1,6 @@
 import {
-  Activity, ArrowLeft, ArrowRight, ArrowUpRight, Ban, Bell, Building2, Calendar, ChartNoAxesColumn, Check,
-  ChevronDown, ChevronRight, CircleCheck, Cpu, Download, Droplets, Eye, EyeOff, Gauge, Info, Inbox, KeyRound,
+  Activity, ArrowLeft, ArrowRight, ArrowUpRight, Ban, Bell, Building2, Calendar, Camera, ChartNoAxesColumn, Check,
+  ChevronDown, ChevronRight, CircleCheck, Cpu, Download, Droplets, Eye, EyeOff, Gauge, ImagePlus, Info, Inbox, KeyRound,
   LayoutDashboard, Leaf, Lock, LogOut, Mail, MapPin, Microscope, PanelLeft, Pencil, Plus, Printer, RefreshCw,
   ScrollText, Search, Settings, ShieldCheck, ShoppingBasket, Thermometer, Trash2, TriangleAlert, UserCheck,
   UserRound, Users, UserX, Warehouse, Worm, X,
@@ -61,6 +61,8 @@ const ICONS = {
   activate: UserCheck,
   deactivate: UserX,
   key: KeyRound,
+  camera: Camera,
+  photo: ImagePlus,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;

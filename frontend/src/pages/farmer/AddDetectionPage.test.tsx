@@ -306,6 +306,14 @@ describe('Disease check page', () => {
       expect(screen.getByRole('button', { name: 'Use the camera' })).toBeInTheDocument();
     });
 
+    it('draws a camera on the camera button and a photo on the choose box, not the microscope of the menu', () => {
+      withCamera();
+      open();
+      expect(screen.getByRole('button', { name: 'Use the camera' }).querySelector('svg.lucide-camera')).not.toBeNull();
+      expect(screen.getByLabelText(/^Choose a photo/).closest('label')!.querySelector('svg.lucide-image-plus')).not.toBeNull();
+      expect(document.querySelector('.photo-choices svg.lucide-microscope, .dropzone svg.lucide-microscope')).toBeNull();
+    });
+
     it('swaps the choose box for the live camera, and back when it is closed', () => {
       withCamera();
       open();
