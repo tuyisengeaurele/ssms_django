@@ -14,6 +14,7 @@ import DiseaseInfoCard from './DiseaseInfoCard';
 import { Icon } from '../../components/ui/Icon';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
+import { resultLabel } from '../../utils/resultLabel';
 
 const percent = (value: number) => `${Math.round(value * 100)}%`;
 
@@ -144,7 +145,7 @@ export default function AddDetectionPage() {
               <div className="check-result">
                 {preview && <img src={preview} alt={t('ckPreviewAlt')} className="check-result-photo" />}
                 <div>
-                  <h2 className="check-result-name" style={{ color: colorFor('result', result.result) }}>{result.result}</h2>
+                  <h2 className="check-result-name" style={{ color: colorFor('result', result.result) }}>{resultLabel(t, result.result)}</h2>
                 </div>
               </div>
               <div className={`alert ${healthy ? 'alert-success' : 'alert-warning'}`} role="status">
@@ -161,7 +162,7 @@ export default function AddDetectionPage() {
               <Panel title={t('ckScores')}>
                 <BarList
                   label={t('ckScores')}
-                  rows={scores.map(([name, score]) => ({ key: name, label: name, value: score, color: colorFor('result', name) }))}
+                  rows={scores.map(([name, score]) => ({ key: name, label: resultLabel(t, name), value: score, color: colorFor('result', name) }))}
                   format={percent}
                 />
               </Panel>

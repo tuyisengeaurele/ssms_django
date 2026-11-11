@@ -202,6 +202,20 @@ describe('Disease check page', () => {
       expect(screen.getByRole('list', { name: 'How likely each condition is' })).toBeInTheDocument();
     });
 
+    it('says "Healthy" in the language of the screen, in the result and in the scores, and keeps a disease name', async () => {
+      localStorage.setItem('ssms_locale', 'fr');
+      api.create.mockResolvedValue(outcome({ result: 'Healthy', confidence: 0.97 }));
+      open();
+      fireEvent.change(screen.getByLabelText(/^Choisir une photo/), { target: { files: [photo()] } });
+      await screen.findByRole('img', { name: 'La photo choisie' });
+      fireEvent.click(screen.getByRole('button', { name: /Vérifier cette photo/ }));
+      expect(await screen.findByRole('heading', { level: 2, name: 'Sains' })).toBeInTheDocument();
+      const list = screen.getByRole('list', { name: 'Probabilité de chaque état' });
+      const names = within(list).getAllByRole('listitem').map((li) => li.querySelector('.barlist-label')?.textContent);
+      expect(names).toContain('Sains');
+      expect(names).toContain('Grasserie');
+    });
+
     it('is the same in French', async () => {
       localStorage.setItem('ssms_locale', 'fr');
       api.create.mockResolvedValue(outcome());
