@@ -15,6 +15,9 @@ interface Props {
   doneText?: string;
 }
 
+/** The words are lower case because they also sit inside a sentence. In a list of choices each starts with a capital. */
+const upperFirst = (text: string) => text.charAt(0).toLocaleUpperCase() + text.slice(1);
+
 /** The eggs arrived. How many, and in what state. This is what starts the batch. */
 export default function ConfirmReceiptModal({ request, onClose, onDone, doneText }: Props) {
   const { t } = useLanguage();
@@ -65,8 +68,8 @@ export default function ConfirmReceiptModal({ request, onClose, onDone, doneText
       <div className="form-group">
         <label className="form-label" htmlFor="receipt-condition">{t('rndFieldCondition')}</label>
         <select id="receipt-condition" className="form-select" value={condition} onChange={(e) => setCondition(e.target.value as 'good' | 'damaged')}>
-          <option value="good">{t('rndGood')}</option>
-          <option value="damaged">{t('rndDamaged')}</option>
+          <option value="good">{upperFirst(t('rndGood'))}</option>
+          <option value="damaged">{upperFirst(t('rndDamaged'))}</option>
         </select>
       </div>
     </Modal>

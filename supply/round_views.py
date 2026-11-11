@@ -222,7 +222,11 @@ class NotCollectedView(APIView):
 # ── the farmer's side ─────────────────────────────────────────────────────────
 
 class CurrentRoundView(APIView):
-    """GET the round the farmer should see: the one they have a request in, else the newest open one of their cooperative."""
+    """
+    GET the round the farmer should see. Rounds overlap (one hands out eggs while the next takes requests), so eggs the farmer
+    still has to collect come first, the soonest handover first. Otherwise the round of their newest request, else the newest
+    open round of their cooperative.
+    """
     permission_classes = [IsAuthenticated, RolePermission]
     resource = 'rounds'
     actions = {'get': 'read_current'}
@@ -232,10 +236,12 @@ class CurrentRoundView(APIView):
         if not farmer.cooperative_id:
             return api_success({'round': None, 'my_request': None, 'rooms': []})
         live = [Status.OPEN, Status.CLOSED, Status.ALLOCATED]
-        mine = (
+        asked = list(
             EggRequest.objects.filter(farmer=farmer, round__cooperative_id=farmer.cooperative_id, round__status__in=live)
-            .exclude(status=Req.CANCELLED).select_related('farmer', 'room', 'farm', 'round').order_by('-created_at').first()
+            .exclude(status=Req.CANCELLED).select_related('farmer', 'room', 'farm', 'round').order_by('-created_at')
         )
+        to_collect = [q for q in asked if q.status in (Req.APPROVED, Req.PART_APPROVED)]
+        mine = min(to_collect, key=lambda q: q.round.delivery_date) if to_collect else (asked[0] if asked else None)
         current = mine.round if mine else SupplyRound.objects.filter(cooperative_id=farmer.cooperative_id, status=Status.OPEN).order_by('-created_at').first()
         if current is None:
             return api_success({'round': None, 'my_request': None, 'rooms': []})

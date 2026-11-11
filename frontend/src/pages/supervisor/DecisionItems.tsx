@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { WaitingRoom } from '../../services/room.service';
@@ -92,6 +92,7 @@ function Evidence({ data }: { data: AllowanceEvidence }) {
   const { t } = useLanguage();
   return (
     <div className="decision-evidence">
+      <section className="decision-evidence-part">
       <h3 className="decision-evidence-title">{t('dcsHistory')}</h3>
       {data.history.length === 0 && <p className="cell-sub">{t('dcsNoHistory')}</p>}
       <ul>
@@ -105,8 +106,11 @@ function Evidence({ data }: { data: AllowanceEvidence }) {
           </li>
         ))}
       </ul>
+      </section>
+      <section className="decision-evidence-part">
       <h3 className="decision-evidence-title">{t('dcsRooms')}</h3>
       {data.rooms.length === 0 ? <p className="cell-sub">{t('dcsNoRooms')}</p> : <ul>{data.rooms.map((r) => <li key={r.id}>{roomLine(t, r)}</li>)}</ul>}
+      </section>
     </div>
   );
 }
@@ -166,6 +170,7 @@ export function RequestItem({ request, actions }: { request: WaitingAllowanceReq
   const [open, setOpen] = useState(false);
   const [evidence, setEvidence] = useState<AllowanceEvidence | null>(null);
   const [evidenceFailed, setEvidenceFailed] = useState(false);
+  const moreId = useId();
 
   const toggle = () => {
     const next = !open;
@@ -190,14 +195,19 @@ export function RequestItem({ request, actions }: { request: WaitingAllowanceReq
         <span className="badge badge-gray">{t('dcsKindAllowance')}</span>
         <p className="decision-title">{fill(t('dcsAsk'), { asked: boxesText(t, request.boxesAsked), current: boxesText(t, request.currentBoxes) })}</p>
         <p className="decision-reason">{request.reason}</p>
-        <button type="button" className="btn btn-ghost btn-xs" aria-expanded={open} onClick={toggle}>{open ? t('dcsDetailsHide') : t('dcsDetails')}</button>
-        {open && (evidence ? <Evidence data={evidence} /> : evidenceFailed ? <p className="cell-sub">{t('dcsDetailsFailed')}</p> : <span className="spinner" aria-hidden="true" />)}
+        <button type="button" className="btn btn-ghost btn-xs" aria-expanded={open} aria-controls={open ? moreId : undefined} onClick={toggle}>{open ? t('dcsDetailsHide') : t('dcsDetails')}</button>
       </div>
       <div className="decision-actions">
         <button className="btn btn-primary btn-sm" onClick={approve} disabled={busy}>{fill(t('dcsApproveBoxes'), { boxes: boxesText(t, request.boxesAsked) })}</button>
         <button className="btn btn-secondary btn-sm" onClick={() => setOther(true)}>{t('dcsApproveOther')}</button>
         <button className="btn btn-ghost btn-sm btn-quiet-danger" onClick={() => setDeclining(true)}>{t('dcsDecline')}</button>
       </div>
+      {/* On a row of its own under the words and the buttons, so it has the width of the card and not of one column. */}
+      {open && (
+        <div id={moreId} className="decision-more">
+          {evidence ? <Evidence data={evidence} /> : evidenceFailed ? <p className="cell-sub">{t('dcsDetailsFailed')}</p> : <span className="spinner" aria-hidden="true" />}
+        </div>
+      )}
       {other && <AmountDialog asked={request.boxesAsked} onSend={actions.approveAmount} onClose={() => setOther(false)} />}
       {declining && (
         <NoteDialog title={t('dcsDeclineTitle')} sendLabel={t('dcsDeclineSend')} farmerName={request.farmer.name} onSend={actions.decline} onClose={() => setDeclining(false)} />

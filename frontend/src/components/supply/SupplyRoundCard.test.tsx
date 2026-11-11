@@ -189,11 +189,42 @@ describe('SupplyRoundCard', () => {
       expect(screen.queryByRole('button', { name: 'Request eggs' })).not.toBeInTheDocument();
     });
 
+    // One click used to withdraw the request at once, even eggs that the supervisor had approved. It asks first now.
+    it('asks before it cancels, and does nothing when the person keeps the request', async () => {
+      answer({ round: round(), myRequest: request() });
+      show();
+      fireEvent.click(await screen.findByRole('button', { name: 'Cancel request' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Cancel this request?' });
+      expect(api.cancel).not.toHaveBeenCalled();
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Keep request' }));
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(api.cancel).not.toHaveBeenCalled();
+      expect(screen.getByRole('button', { name: 'Cancel request' })).toBeInTheDocument();
+    });
+
+    it('says the farmer can ask again while the round takes requests', async () => {
+      answer({ round: round(), myRequest: request({ boxesAsked: 2 }) });
+      show();
+      fireEvent.click(await screen.findByRole('button', { name: 'Cancel request' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Cancel this request?' });
+      expect(within(dialog).getByText(/You can ask again while the round takes requests/)).toBeInTheDocument();
+    });
+
+    it('says plainly that it cannot be asked again once the requests are closed, for eggs that were approved', async () => {
+      answer({ round: round({ status: 'allocated' }), myRequest: request({ status: 'approved', boxesApproved: 2 }) });
+      show();
+      fireEvent.click(await screen.findByRole('button', { name: 'Cancel request' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Cancel this request?' });
+      expect(within(dialog).getByText(/You cannot ask again once requests are closed/)).toBeInTheDocument();
+      expect(api.cancel).not.toHaveBeenCalled();
+    });
+
     it('cancels the request', async () => {
       answer({ round: round(), myRequest: request() });
       api.cancel.mockResolvedValue({ data: { data: null } });
       show();
       fireEvent.click(await screen.findByRole('button', { name: 'Cancel request' }));
+      fireEvent.click(within(await screen.findByRole('dialog', { name: 'Cancel this request?' })).getByRole('button', { name: 'Yes, cancel request' }));
       answer({ round: round(), rooms: [room()] });
       await waitFor(() => expect(api.cancel).toHaveBeenCalledWith('q1'));
       expect(await screen.findByText('Request cancelled.', {}, { timeout: 5000 })).toBeInTheDocument();
@@ -266,6 +297,12 @@ describe('SupplyRoundCard', () => {
       fireEvent.click(within(dialog).getByRole('button', { name: 'Confirm' }));
       await waitFor(() => expect(api.receive).toHaveBeenCalledWith('q1', { boxes: 3, condition: 'good' }));
       expect(await screen.findByText('Eggs received. A batch was started in Room A.', {}, { timeout: 5000 })).toBeInTheDocument();
+    });
+
+    it('names the two conditions with a capital letter in the choice, as a choice reads', async () => {
+      const dialog = await openReceipt();
+      const choices = within(within(dialog).getByLabelText('Condition')).getAllByRole('option').map((o) => o.textContent);
+      expect(choices).toEqual(['Good', 'Damaged']);
     });
 
     it('sends a smaller quantity and a damaged condition when that is what arrived', async () => {

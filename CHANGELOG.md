@@ -1,5 +1,20 @@
 # Changelog
 
+## The supervisor and egg supply flow, with real data
+
+Step 2 of covering every screen. The scratch database was filled with a pending room, a room size change, two allowance requests, an earned-allowance suggestion and three rounds (one open with requests, one closed with a split to confirm, one confirmed with eggs to receive). The Decisions inbox, the supply list, each round, the dialogs and the farmer's side were opened at desktop and phone width, in the dark theme, and in French and Kinyarwanda (no clipped text). Two real problems came out of it.
+
+### Fixed
+- **A farmer's egg supply card could hide eggs waiting to be received.** The card shows the round of the farmer's newest request. Rounds overlap (one hands out eggs while the next takes requests), so a newer request in the next round pushed the "Confirm received" prompt off the dashboard. Eggs the farmer still has to collect now come first (the soonest handover first), then the newest request as before. Three tests in `tests/test_supply_rounds_api.py`.
+- **"Cancel request" cancelled at once.** One click took back even eggs the supervisor had approved, and in a closed round they cannot be asked for again. It now asks first, says what happens ("The 3 boxes for you will go back to the round. You cannot ask again once requests are closed."), and has "Keep request" and "Yes, cancel request". French and Kinyarwanda included (drafts).
+- **Decision details open on a row of their own.** "See details" squeezed the history and rooms into the narrow middle column beside an empty column of buttons. They now run the width of the card, side by side, and the button is tied to them for screen readers.
+- **The receipt condition** reads "Good" and "Damaged" in the choice instead of "good" and "damaged".
+- **Dialogs:** the shadow at the top of the body left a one pixel line under the title, so only the bottom shadow is kept.
+- **The filter pills** (All, Rooms, Allowance, Supply) are one row that swipes on a phone, not two rows in a rounded box.
+
+### How it is guarded
+Backend tests for the round choice, new cases in the tests for the egg supply card and the Decisions page, and style guards in `styles/decisions.test.ts`, `modal.test.ts` and `phoneText.test.ts`. No other backend change.
+
 ## The farmer flow, screen by screen
 
 The farmer's daily path (add a farm, add a batch, check a photo for disease, log a harvest, share the lot, read the report) was opened in a real browser at desktop and phone width, with the harvest, QR and delete dialogs and a mocked disease result. Most of it held up. These are the fixes.
