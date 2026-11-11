@@ -1124,6 +1124,8 @@ tr.is-off td:last-child { opacity: 1; }
 .room-status:empty { display: none; }
 .room-sensors { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 6px; font-size: 0.9rem; }
 .room-sensor { display: inline-flex; align-items: center; gap: 8px; }
+/* A section that a link on the page jumps to */
+.anchor-target { scroll-margin-top: 88px; }
 .disease-about { margin: 0 0 12px; }
 .disease-steps { margin: 0 0 12px; padding-left: 20px; }
 .disease-steps li + li { margin-top: 6px; }

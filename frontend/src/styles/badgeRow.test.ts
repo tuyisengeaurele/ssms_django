@@ -38,6 +38,13 @@ describe('filter bars', () => {
   });
 });
 
+describe('a section that a link jumps to', () => {
+  // The room's "1 sensor" link jumps to the Devices list. It lands with room above it, not glued to the top of the screen.
+  it('keeps clear of the top edge when it is scrolled to', () => {
+    expect(Number(/scroll-margin-top:\s*(\d+)px/.exec(rules('.anchor-target'))?.[1] ?? 0)).toBeGreaterThanOrEqual(72);
+  });
+});
+
 describe('the batch report', () => {
   // The sentence "Day 14 of 28..." sat right against the tiles above it.
   it('leaves room between a block of facts and the line that follows it', () => {

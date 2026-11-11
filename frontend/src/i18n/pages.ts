@@ -968,8 +968,9 @@ export const pageTranslations = {
   dvMoved: k("Device moved.", "Appareil déplacé.", "Igikoresho cyimuwe."),
   rmSensors: k("Sensors", "Capteurs", "Ibyuma bipima"),
   rmNoSensor: k("No sensor in this room yet.", "Aucun capteur dans cette salle pour le moment.", "Nta cyuma gipima kiri muri iki cyumba."),
-  rmLatest: k("Last reading", "Dernière mesure", "Igipimo cya nyuma"),
-  rmNoReading: k("No reading yet.", "Aucune mesure pour le moment.", "Nta gipimo kiraboneka."),
+  rmSensorsOne: k("1 sensor", "1 capteur", "Icyuma gipima 1"),
+  rmSensorCount: k("{n} sensors", "{n} capteurs", "Ibyuma bipima {n}"),
+  rmSensorsSome: k("{k} of {n} online", "{k} sur {n} en ligne", "{k} kuri {n} bikora"),
   // Profile page
   pfSubtitle: k("See and update your account details.", "Consultez et mettez à jour les détails de votre compte.", "Reba kandi uvugurure amakuru ya konti yawe."),
   pfAbout: k("About you", "À propos de vous", "Ibyawe"),
