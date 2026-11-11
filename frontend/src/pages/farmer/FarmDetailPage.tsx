@@ -518,15 +518,15 @@ export default function FarmDetailPage() {
                 <tbody>
                   {batches.map((b) => (
                     <tr key={b.id} className="tbody-row">
-                      <td className="cell-lead cell-mono cell-muted">#{b.id.slice(-8)}</td>
+                      <td className="cell-lead cell-mono cell-muted">#{b.id.slice(-8).toUpperCase()}</td>
                       <td data-label={t('fdColStage')}><StageBadge stage={b.stage} /></td>
                       <td data-label={t('fdColStarted')} className="cell-muted cell-nowrap">{date.format(new Date(b.startDate))}</td>
                       <td data-label={t('fdColHarvest')} className="cell-muted cell-nowrap">{date.format(new Date(b.expectedHarvestDate))}</td>
                       <td data-label={t('fdColChecks')} className="cell-strong">{b.counts?.diseaseDetections ?? 0}</td>
                       <td data-label="">
                         <div className="table-actions">
-                          <Link to={`/batches/${b.id}`} className="btn btn-ghost btn-xs" aria-label={`${t('fdDetails')} #${b.id.slice(-8)}`}>{t('fdDetails')}</Link>
-                          <Link to={`/batches/${b.id}/detect`} className="btn btn-ghost btn-xs" aria-label={`${t('fdCheck')} #${b.id.slice(-8)}`}>
+                          <Link to={`/batches/${b.id}`} className="btn btn-ghost btn-xs" aria-label={`${t('fdDetails')} #${b.id.slice(-8).toUpperCase()}`}>{t('fdDetails')}</Link>
+                          <Link to={`/batches/${b.id}/detect`} className="btn btn-ghost btn-xs" aria-label={`${t('fdCheck')} #${b.id.slice(-8).toUpperCase()}`}>
                             <Icon name="detections" size={14} />
                             {t('fdCheck')}
                           </Link>

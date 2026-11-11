@@ -149,7 +149,10 @@ describe('Farm details page', () => {
 
   it('lists batches with a stage, counts and two ways in', async () => {
     open();
-    const row = (await screen.findByText('#abcdefg1')).closest('tr') as HTMLElement;
+    // The code is written in capitals here, as on every other screen (the batches list, the batch page, the reports).
+    const row = (await screen.findByText('#ABCDEFG1')).closest('tr') as HTMLElement;
+    expect(within(row).getByRole('link', { name: 'Details #ABCDEFG1' })).toBeInTheDocument();
+    expect(within(row).getByRole('link', { name: 'Check for disease #ABCDEFG1' })).toBeInTheDocument();
     expect(within(row).getByText('Larva')).toBeInTheDocument();
     expect(within(row).getByText('4')).toBeInTheDocument();
     expect(within(row).getByRole('link', { name: /^Details/ })).toHaveAttribute('href', '/batches/b1-abcdefg1');
