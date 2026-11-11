@@ -1163,7 +1163,8 @@ tr.is-off td:last-child { opacity: 1; }
 .place-notice.is-problem { color: var(--text); }
 .place-legacy { margin-bottom: 12px; }
 @media (max-width: 560px) { .place-grid { grid-template-columns: minmax(0, 1fr); } }
-.device-move { margin: 16px 0 4px; }
+.device-move { margin: 18px 0 22px; }
+.device-detail .mini-heading { margin-top: 20px; }
 .device-move-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .device-move-row .form-select { flex: 1 1 180px; min-width: 0; }
 .room-history { margin: 14px 0 0; padding: 12px 0 0; border-top: 1px solid var(--border-light); list-style: none; color: var(--text-muted); font-size: 0.9rem; line-height: 1.7; }

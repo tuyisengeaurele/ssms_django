@@ -38,6 +38,14 @@ describe('filter bars', () => {
   });
 });
 
+describe('the device detail', () => {
+  // "Move to another room", "Latest reading" and "Recent readings" ran into the block above them.
+  it('puts room between its sections', () => {
+    expect(Number(/margin:\s*\d+px 0 (\d+)px/.exec(rules('.device-move'))?.[1] ?? 0)).toBeGreaterThanOrEqual(16);
+    expect(Number(/margin-top:\s*(\d+)px/.exec(rules('.device-detail .mini-heading'))?.[1] ?? 0)).toBeGreaterThanOrEqual(16);
+  });
+});
+
 describe('a message that an admin reads', () => {
   // The hint "After you have sent your answer, mark it as answered" sat right on the first line of the message.
   it('has room between a hint above it and its first line', () => {
