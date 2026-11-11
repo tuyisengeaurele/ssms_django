@@ -5,6 +5,7 @@ import { useToast } from '../../context/ToastContext';
 import { CurrentRound, EggRequestRow, supplyService } from '../../services/supply.service';
 import { boxesText } from '../../utils/boxes';
 import { fill } from '../../utils/fill';
+import Modal from '../ui/Modal';
 import Panel from '../ui/Panel';
 import ConfirmReceiptModal from './ConfirmReceiptModal';
 import RequestEggsModal from './RequestEggsModal';
@@ -64,6 +65,7 @@ export default function SupplyRoundCard() {
   const [asking, setAsking] = useState(false);
   const [receiving, setReceiving] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   const load = useCallback(() => {
     // A card that cannot load stays out of the way, so the dashboard around it is never blanked.
@@ -83,6 +85,7 @@ export default function SupplyRoundCard() {
     try {
       await supplyService.cancelRequest(myRequest.id);
       success(t('rndCancelled'));
+      setConfirmingCancel(false);
       load();
     } catch (err) {
       showError(getErrorMessage(err));
@@ -122,9 +125,28 @@ export default function SupplyRoundCard() {
         )}
         {canReceive && <button className="btn btn-primary btn-sm" onClick={() => setReceiving(true)}>{t('rndConfirm')}</button>}
         {myRequest && ALIVE.includes(myRequest.status) && (
-          <button className="btn btn-secondary btn-sm" onClick={cancel} disabled={cancelling}>{t('rndCancel')}</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => setConfirmingCancel(true)}>{t('rndCancel')}</button>
         )}
       </div>
+
+      {/* Taking a request back cannot be undone once the round has closed, so it asks first. */}
+      <Modal
+        open={confirmingCancel && !!myRequest}
+        onClose={() => setConfirmingCancel(false)}
+        title={t('rndCancelAskTitle')}
+        footer={
+          <>
+            <button type="button" className="btn btn-secondary" onClick={() => setConfirmingCancel(false)} disabled={cancelling}>{t('rndKeep')}</button>
+            <button type="button" className="btn btn-danger" onClick={cancel} disabled={cancelling}>{t('rndCancelYes')}</button>
+          </>
+        }
+      >
+        <p className="modal-text">
+          {fill(t(round.status === 'open' && !promised ? 'rndCancelAsk' : 'rndCancelAskFinal'), {
+            boxes: boxesText(t, myRequest ? (promised ? myRequest.boxesApproved ?? myRequest.boxesAsked : myRequest.boxesAsked) : 0),
+          })}
+        </p>
+      </Modal>
 
       {asking && <RequestEggsModal round={round} rooms={rooms} onClose={() => setAsking(false)} onSent={load} />}
       {receiving && myRequest && <ConfirmReceiptModal request={myRequest} onClose={() => setReceiving(false)} onDone={load} />}
