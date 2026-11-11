@@ -38,6 +38,13 @@ describe('filter bars', () => {
   });
 });
 
+describe('a message that an admin reads', () => {
+  // The hint "After you have sent your answer, mark it as answered" sat right on the first line of the message.
+  it('has room between a hint above it and its first line', () => {
+    expect(rules('.form-hint + .message-body')).toMatch(/margin-top:\s*(1[0-9]|2[0-9])px/);
+  });
+});
+
 describe('a section that a link jumps to', () => {
   // The room's "1 sensor" link jumps to the Devices list. It lands with room above it, not glued to the top of the screen.
   it('keeps clear of the top edge when it is scrolled to', () => {
