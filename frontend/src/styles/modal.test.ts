@@ -46,6 +46,19 @@ describe('the dialog box', () => {
     expect(body).toMatch(/background-attachment:\s*local,\s*local,\s*scroll,\s*scroll/);
   });
 
+  it('hides those shadows completely at rest, so no faint line shows under the title', () => {
+    // The cover that scrolls with the text must be taller than the shadow it hides, and opaque across the shadow's height.
+    const body = rules(css, '.modal-body');
+    const group = String.raw`\((?:[^()]|\([^()]*\))*\)`;
+    const sized = (kind: string, attachment: string) => [...body.matchAll(new RegExp(String.raw`${kind}-gradient${group} (?:top|bottom) / 100% (\d+)px no-repeat ${attachment}`, 'g'))].map((m) => Number(m[1]));
+    const covers = sized('linear', 'local');
+    const shadows = sized('radial', 'scroll');
+    expect(covers).toHaveLength(2);
+    expect(shadows).toHaveLength(2);
+    // 30% of the cover is fully opaque, and that has to reach past the shadow
+    for (const cover of covers) for (const shadow of shadows) expect(cover * 0.3).toBeGreaterThan(shadow);
+  });
+
   it('gives a dialog with no footer its own room at the bottom', () => {
     expect(rules(css, '.modal-box:not(:has(.modal-footer)) .modal-body')).toMatch(/padding-bottom:\s*28px/);
   });
