@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -29,6 +29,19 @@ export default function ActingBanner() {
     return () => window.clearInterval(timer);
   }, [acting]);
 
+  // However the visit ends (the admin presses End, the person ends it, or the time runs out) the admin was on a page of the
+  // person. Back as the admin it is not theirs (the person's allowance and supply cards answer 403 to an admin), so the
+  // visit ends where it began, on the Users list.
+  const wasActing = useRef(false);
+  useEffect(() => {
+    if (acting) {
+      wasActing.current = true;
+    } else if (wasActing.current) {
+      wasActing.current = false;
+      navigate('/admin/users', { replace: true });
+    }
+  }, [acting, navigate]);
+
   if (!acting) return null;
 
   const end = async () => {
@@ -36,9 +49,6 @@ export default function ActingBanner() {
     // strip that offers an open visit from offering this one while the server is still hearing about it.
     markEnding(acting.id);
     stopActing();
-    // The admin was on a page of the person. Back as the admin it is not theirs (the person's allowance and supply cards
-    // answer 403 to an admin), so the visit ends where it began, on the Users list.
-    navigate('/admin/users', { replace: true });
     try {
       await supportService.end(acting.id);
     } catch {

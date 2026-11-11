@@ -95,22 +95,35 @@ describe('The banner while an admin acts as a person', () => {
     expect(auth.stopActing).toHaveBeenCalledTimes(1);
   });
 
-  // The admin was looking at a farmer's dashboard. Back as the admin that page is not theirs (its allowance and supply cards
-  // answer 403), so the visit ends back on the Users list, where it began.
-  it('takes the admin back to the Users list when the visit ends, not to the page of the person', async () => {
-    open('/farmer');
-    expect(screen.getByTestId('where')).toHaveTextContent('/farmer');
-    fireEvent.click(screen.getByRole('button', { name: 'End' }));
-    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
-    expect(screen.getByTestId('where')).toHaveTextContent('/admin/users');
-  });
+  // The admin was looking at the dashboard of a person. Back as the admin that page is not theirs (the person's allowance and
+  // supply cards answer 403 to an admin), so however the visit ends it ends on the Users list, where it began.
+  describe('when the visit ends', () => {
+    const rerender = (view: ReturnType<typeof open>) => view.rerender(
+      <MemoryRouter initialEntries={['/farmer']}>
+        <LanguageProvider><ActingBanner /><Where /></LanguageProvider>
+      </MemoryRouter>,
+    );
 
-  it('goes there even when the server cannot be reached', async () => {
-    support.end.mockRejectedValue(new Error('offline'));
-    open('/batches');
-    fireEvent.click(screen.getByRole('button', { name: 'End' }));
-    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
-    expect(screen.getByTestId('where')).toHaveTextContent('/admin/users');
+    it('goes back to the Users list, whether the admin pressed End, the person ended it or the time ran out', () => {
+      const view = open('/farmer');
+      expect(screen.getByTestId('where')).toHaveTextContent('/farmer');
+      auth.acting = null;
+      rerender(view);
+      expect(screen.getByTestId('where')).toHaveTextContent('/admin/users');
+    });
+
+    it('does not move anyone who was not acting', () => {
+      auth.acting = null;
+      const view = open('/batches');
+      rerender(view);
+      expect(screen.getByTestId('where')).toHaveTextContent('/batches');
+    });
+
+    it('does not move the admin while the visit goes on, even when the banner draws again', () => {
+      const view = open('/farmer');
+      rerender(view);
+      expect(screen.getByTestId('where')).toHaveTextContent('/farmer');
+    });
   });
 
   it('shows nothing when nobody is acting', () => {
