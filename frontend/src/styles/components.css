@@ -817,6 +817,12 @@ tr.is-off td:last-child { opacity: 1; }
 .segmented button { padding: 8px 18px; border: 0; border-radius: 999px; background: none; color: var(--text-2); font: 500 0.88rem var(--font-ui); transition: background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out); }
 .segmented button:hover:not(.is-on) { color: var(--ink); }
 .segmented button.is-on { background: var(--ink); color: var(--ivory); }
+/* After the base rules above, so it wins on a phone: one row that swipes, not two rows in a rounded box */
+@media (max-width: 640px) {
+  .segmented { max-width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .segmented::-webkit-scrollbar { display: none; }
+  .segmented button { flex: none; white-space: nowrap; }
+}
 
 /* Farm cards */
 .search-box--spaced { margin-bottom: 20px; }
