@@ -453,6 +453,38 @@ def test_the_current_round_after_the_split_shows_the_delivery_and_the_request(au
     assert data['round']['deliveryPlace'] == 'Cooperative store'
 
 
+def test_eggs_waiting_to_be_received_come_before_a_newer_request_in_another_round(auth_client, supervisor, coop):
+    """Rounds overlap: one hands out eggs while the next takes requests. The card must not hide the eggs a farmer has to collect."""
+    farmer, room, first_round, first_request = delivering(auth_client, supervisor, coop, boxes=2)
+    second_room = RearingRoom.objects.create(farm=room.farm, name='Room B', area_m2=Decimal('20'))
+    client = auth_client(supervisor)
+    second_round = open_round(client, name='December round')
+    assert ask(auth_client(farmer), second_round, second_room, 1).status_code == 201
+    data = auth_client(farmer).get(CURRENT).json()['data']
+    assert data['round']['id'] == first_round
+    assert (data['myRequest']['id'], data['myRequest']['status']) == (first_request, 'approved')
+
+
+def test_with_nothing_to_collect_the_newest_request_is_the_one_shown(auth_client, supervisor, coop):
+    farmer, room = farmer_with_room(coop)
+    second_room = RearingRoom.objects.create(farm=room.farm, name='Room B', area_m2=Decimal('20'))
+    client = auth_client(supervisor)
+    first_round = open_round(client, name='November round')
+    assert ask(auth_client(farmer), first_round, room, 1).status_code == 201
+    second_round = open_round(client, name='December round')
+    assert ask(auth_client(farmer), second_round, second_room, 1).status_code == 201
+    assert auth_client(farmer).get(CURRENT).json()['data']['round']['id'] == second_round
+
+
+def test_once_the_eggs_are_received_a_newer_request_takes_the_card(auth_client, supervisor, coop):
+    farmer, room, first_round, first_request = delivering(auth_client, supervisor, coop, boxes=2)
+    assert auth_client(farmer).post(f'/api/supply/requests/{first_request}/receipt', {'boxes': 2, 'condition': 'good'}, format='json').status_code == 201
+    second_room = RearingRoom.objects.create(farm=room.farm, name='Room B', area_m2=Decimal('20'))
+    second_round = open_round(auth_client(supervisor), name='December round')
+    assert ask(auth_client(farmer), second_round, second_room, 1).status_code == 201
+    assert auth_client(farmer).get(CURRENT).json()['data']['round']['id'] == second_round
+
+
 def test_a_received_request_is_still_shown_while_the_round_has_other_eggs_to_hand_out(auth_client, supervisor, coop):
     farmer, room = farmer_with_room(coop)
     other, other_room = farmer_with_room(coop)
