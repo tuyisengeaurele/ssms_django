@@ -1,5 +1,18 @@
 # Changelog
 
+## The shell: menu, notifications, idle warning and error screen
+
+Step 4 of covering every screen. The notifications dropdown, quick search, the phone menu, the bottom bar, the idle warning and the error screen were opened at desktop and phone width, in the dark theme, and in French and Kinyarwanda.
+
+### Fixed
+- **The notifications panel was cut off on a phone.** It hung under the bell, which sits near the right edge, so the first letters of every line ran off the left of the screen. On a phone it now spans the screen with a gutter on both sides.
+- **The phone menu did not close with Escape.** A keyboard user was stuck behind it. It closes like every other overlay.
+- **The error screen is rebuilt.** It was English only, drew its colours inline (a pink circle and green button that ignored the dark theme) and used a button style that is not loaded when a page breaks early. It is now in all three languages, follows the theme, and carries its own styles.
+- **A long bottom bar label broke mid word.** "Ibiburaniswa" (Alerts in Kinyarwanda) showed as "Ibiburanisw" and "a". The bar keeps its sides tighter, and labels get slightly smaller on the narrowest phones.
+
+### How it is guarded
+Tests for the Escape key in `Shell.test.tsx`, the error screen in `ErrorBoundary.test.tsx`, and style guards in `topbarPanel.test.ts` and `bottomBar.test.ts`. No backend change.
+
 ## The admin cooperative pages and the support visit
 
 Step 3 of covering every screen. The five admin cooperative pages (all cooperatives, and one cooperative's report, farms, members and details), the user, cooperative and invite dialogs, the delete confirmations and the support access flow were opened in a real browser. These are the fixes.
