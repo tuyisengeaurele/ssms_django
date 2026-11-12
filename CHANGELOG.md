@@ -1,5 +1,21 @@
 # Changelog
 
+## The sleeping API starts waking before a visitor needs it
+
+Phase 1 of the roadmap. The free plan puts the API to sleep after 15 minutes, and the first request after that waited about a minute (68 seconds was measured). The outside pinger already keeps it awake from 06:00 to 20:00. This change helps in the hours it sleeps, and makes a demonstration safe.
+
+### Added
+- **The page asks the API to wake as soon as a visitor shows they are about to sign in.** One quiet request goes to the health route when the sign in or create account page opens, and when a pointer, the keyboard or a finger reaches a Log in or Create account button on the landing page (the menu, the hero and the closing button). The visitor is reading or typing for a few seconds, so the wake has already started when they press the button. It sends no cookie and no token, never shows an error, does nothing if the browser asked to save data, and runs once per page load.
+- **It is not done when the landing page merely loads.** Search engines and link previews run pages too, and every wake of a sleeping free server uses some of the month's free hours.
+- **`scripts/warm_up.py`** wakes the API and the disease check service before a demonstration and prints how long each took. It asks each health route every 5 seconds for up to 3 minutes, sends nothing secret, refuses addresses that are not http or https, and exits with 1 if a service never answers.
+- **A "Before a demonstration" list** in the deploy checklist, and runbook text on waking early and on when to start paying.
+
+### Not changed
+The wake banner and the repeated reads stay as they are for the visitor who still meets a sleeping server. Nothing here costs anything.
+
+### How it is guarded
+`frontend/src/services/warmUp.test.ts` (once per load, no error, no fetch, save data, no cookie or token, hover focus and touch), tests on the two auth pages and the landing buttons (written to fail without the wiring), and `tests/test_warm_up_script.py` (13 tests on retrying, the limit, each address on its own, the health route per service and refusing bad addresses).
+
 ## The public API docs are guarded against leaking where the API runs
 
 Phase 1 of the roadmap. The API documentation is public on purpose, so a reviewer can read it without an account. That makes one rule important: it must never contain a host name, an email address, a server list or a key.
