@@ -1096,6 +1096,7 @@ export const pageTranslations = {
   lgKind_session_idle: k("Sign in ended for sitting idle", "Connexion terminée pour inactivité", "Kwinjira kwarangiye kubera kudakora"),
   lgKind_permission_denied: k("Refused for the role", "Refusé pour le rôle", "Byanzwe kubera inshingano"),
   lgKind_throttled: k("Slowed down", "Ralenti", "Byadindijwe"),
+  lgKind_csp_violation: k("Browser blocked something the page tried to load", "Le navigateur a bloqué un élément que la page voulait charger", "Mushakisha yahagaritse ikintu urupapuro rwashakaga gufungura"),
   lgKind_email_failed: k("Mail not sent", "Courriel non envoyé", "Ubutumwa ntibwoherejwe"),
   lgKind_device_rejected: k("Reading refused", "Mesure refusée", "Igipimo cyanzwe"),
   lgKind_device_offline: k("Device went quiet", "Appareil silencieux", "Igikoresho cyacecetse"),
