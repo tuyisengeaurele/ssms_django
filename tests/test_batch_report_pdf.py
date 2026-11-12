@@ -368,3 +368,9 @@ def test_the_scan_line_reads_in_french(auth_client, owner, batch):
     shared_lot(batch)
     assert 'Scannez pour voir d' in text_of(report(auth_client(owner), batch, 'fr'))
 
+
+
+def test_healthy_is_translated_in_the_checks_of_a_batch_report(auth_client, owner, batch):
+    DiseaseDetectionFactory(batch=batch, result='Healthy', confidence=0.97)
+    text = text_of(report(auth_client(owner), batch, lang='fr'))
+    assert 'Sains' in text and 'Healthy' not in text

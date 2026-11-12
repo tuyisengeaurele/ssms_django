@@ -452,3 +452,21 @@ def test_a_download_is_written_to_the_audit_log(auth_client, supervisor, farm, k
 def test_looking_at_the_numbers_is_not_written_to_the_audit_log(auth_client, supervisor, farm):
     get(auth_client(supervisor))
     assert not AuditLog.objects.filter(resource='CooperativeReport').exists()
+
+
+def test_the_pdf_translates_healthy_and_agrees_the_counts_in_french(auth_client, supervisor, farm):
+    check(farm, 'Healthy')
+    check(farm, 'Pebrine')
+    alert(farm, 'DISEASE', acknowledged_by=supervisor, acknowledged_at=at(date(2026, 3, 11)))
+    alert(farm, 'DISEASE')
+    text = pdf_text(get(auth_client(supervisor), f'{RANGE}&export=pdf&lang=fr'))
+    assert 'Sains' in text and 'Healthy' not in text
+    # "1 ont trouvé" and "1 prises en charge" read wrong, so the counts stand after a colon, not inside a verb.
+    assert '2 contrôles, dont 1 avec une maladie.' in text
+    assert '2 alertes. Prises en charge : 1. Résolues : 0.' in text
+
+
+def test_the_pdf_translates_healthy_in_kinyarwanda(auth_client, supervisor, farm):
+    check(farm, 'Healthy')
+    text = pdf_text(get(auth_client(supervisor), f'{RANGE}&export=pdf&lang=rw'))
+    assert 'Bizima' in text and 'Healthy' not in text
