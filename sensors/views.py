@@ -118,14 +118,25 @@ class SensorBatchSeriesView(APIView):
         return api_success(batch_series(batch, hours))
 
 
-def _serialize_device(device: IoTDevice) -> dict:
-    """Shared serializer for IoTDevice, includes latest reading."""
-    latest = (
+def _newest_readings(device_ids) -> dict:
+    """The newest reading of each of these devices, in one query. A device with no reading is not in the result."""
+    rows = (
         SensorReading.objects
-        .filter(device=device)
-        .order_by('-timestamp')
-        .first()
+        .filter(device_id__in=list(device_ids))
+        .order_by('device_id', '-timestamp')
+        .distinct('device_id')   # PostgreSQL: the first row of each device, which is its newest
     )
+    return {row.device_id: row for row in rows}
+
+
+def _serialize_device(device: IoTDevice, newest: dict | None = None) -> dict:
+    """Shared serializer for IoTDevice, includes latest reading.
+
+    A list passes `newest` (from `_newest_readings`) so its devices do not each ask for their own reading.
+    """
+    if newest is None:
+        newest = _newest_readings([device.pk])
+    latest = newest.get(device.pk)
     return {
         'id':        device.id,
         'name':      device.name,
@@ -166,7 +177,9 @@ class IoTDeviceListView(APIView):
         if farm_id:
             qs = qs.filter(farm_id=farm_id)
 
-        return api_success([_serialize_device(d) for d in qs.order_by('-last_seen')])
+        devices = list(qs.order_by('-last_seen'))
+        newest = _newest_readings(d.pk for d in devices)
+        return api_success([_serialize_device(d, newest) for d in devices])
 
     def post(self, request):
         """Create a new IoT device for a farm (ADMIN or SUPERVISOR)."""

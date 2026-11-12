@@ -21,9 +21,7 @@ LISTS = [
     '/api/farms',
     '/api/batches/active',
     '/api/alerts',
-    # One query per device for its latest reading (sensors/views.py, _serialize_device). Fixed in phase 2, task 2.5. The
-    # case is strict, so the day it is fixed this mark has to be removed.
-    pytest.param('/api/devices', marks=pytest.mark.xfail(strict=True, reason='N+1: latest reading per device')),
+    '/api/devices',
     '/api/harvest',
     '/api/calendar',
 ]
