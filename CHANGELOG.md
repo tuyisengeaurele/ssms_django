@@ -1,5 +1,15 @@
 # Changelog
 
+## The log page shows the whole detail of an event
+
+Found in a screenshot of the first live CSP report. The Detail of a security event was cut to `img-src blocked https://live-`, so the one line the log exists to show could not be read.
+
+### Fixed
+- **A long Detail wraps instead of being cut.** In a wide table the cell wraps within its 240 pixel width. In the card layout (a phone, or a table card too narrow for its columns) the cap is lifted, so the label and the whole value share the line and the value wraps at the card edge. The same fix applies to the jobs stream, the requests route column and the audit log page.
+
+### How it is guarded
+Style tests for the wide table, the phone card and the cramped table card in `styles/tables.test.ts`, and a test in `AdminLogsPage.test.tsx` that the Detail cell wraps. Looking at it in the browser after the deploy is the visual check.
+
 ## Browsers now report what the content security policy would block
 
 Phase 1 of the roadmap. The frontend has had a content security policy for some time, but only in "report only" mode, and the reports went nowhere. So nobody could know whether turning it on would break the map, the bot check, the error monitor or the photos. This change gives the reports somewhere to go. Nothing is blocked yet.
