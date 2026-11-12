@@ -9,6 +9,8 @@
   min-height: clamp(620px, calc(100svh - 104px), 820px);
   margin-inline: auto;
   overflow: hidden;
+  /* Safari can let a rotated child leave a rounded overflow box. Paint containment keeps it in. */
+  contain: paint;
   border-radius: var(--l-radius-card);
   background: var(--l-ink);
   color: var(--l-ivory);
