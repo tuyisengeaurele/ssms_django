@@ -214,6 +214,13 @@ describe('The jobs stream', () => {
     const other = screen.getByText('DHT22 A').closest('tr') as HTMLElement;
     expect(within(other).getByText('Device went quiet')).toBeInTheDocument();
   });
+
+  it('never cuts the detail with dots: it wraps', async () => {
+    open('/admin/system/logs?stream=jobs');
+    const cell = (await screen.findByText('SMTPException')).closest('td') as HTMLElement;
+    expect(cell).toHaveClass('cell-detail');
+    expect(cell).not.toHaveClass('cell-trim');
+  });
 });
 
 describe('In French', () => {
