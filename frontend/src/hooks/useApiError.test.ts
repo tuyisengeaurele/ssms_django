@@ -137,3 +137,43 @@ describe('getErrorMessage', () => {
     }
   });
 });
+
+// The sentences the app writes itself, and the few the server sends all the time, follow the language of the screen.
+describe('getErrorMessage in French and Kinyarwanda', () => {
+  afterEach(() => localStorage.clear());
+
+  it('says in French that the server cannot be reached, and that the session ended', () => {
+    localStorage.setItem('ssms_locale', 'fr');
+    expect(getErrorMessage(new AxiosError('Network Error', 'ERR_NETWORK'))).toBe('Impossible de joindre le serveur. Vérifiez votre connexion internet puis réessayez.');
+    expect(getErrorMessage(withResponse(401, {}))).toBe('Votre session est terminée. Veuillez vous reconnecter.');
+  });
+
+  it('translates the other sentences the app writes itself', () => {
+    localStorage.setItem('ssms_locale', 'rw');
+    const sentences = [
+      getErrorMessage(new AxiosError('x', 'ECONNABORTED')),
+      getErrorMessage(withResponse(422, {})),
+      getErrorMessage(withResponse(500, '<html>')),
+      getErrorMessage(withResponse(404, {})),
+      getErrorMessage(withResponse(403, {})),
+      getErrorMessage(withResponse(400, {})),
+      getErrorMessage(new Error('plain')),
+    ];
+    for (const sentence of sentences) expect(sentence).not.toMatch(/\b(please|try again|server|session|permission)\b/i);
+  });
+
+  it('translates a wrong password, the message people meet most often', () => {
+    localStorage.setItem('ssms_locale', 'rw');
+    const server = { message: "That email or password doesn't look right. Please try again." };
+    expect(getErrorMessage(withResponse(400, server))).not.toContain('password');
+    localStorage.setItem('ssms_locale', 'fr');
+    expect(getErrorMessage(withResponse(400, server))).toBe('Cet e-mail ou ce mot de passe semble incorrect. Veuillez réessayer.');
+  });
+
+  it('translates an email that is already taken, and leaves other server words as they are', () => {
+    localStorage.setItem('ssms_locale', 'fr');
+    expect(getErrorMessage(withResponse(422, { errors: { email: ['An account with this email already exists. Try signing in instead.'] } }))).toContain('Un compte existe déjà');
+    expect(getErrorMessage(withResponse(400, { message: 'Some sentence only the server knows.' }))).toBe('Some sentence only the server knows.');
+  });
+});
+
