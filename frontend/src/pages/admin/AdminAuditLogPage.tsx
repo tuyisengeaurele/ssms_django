@@ -198,7 +198,7 @@ export default function AdminAuditLogPage() {
                     <td data-label={t('auColResource')} className="cell-muted" title={e.resourceId || undefined}>
                       {e.resource}{e.resourceId ? ` #${shortId(e.resourceId)}` : ''}
                     </td>
-                    <td data-label={t('auColDetail')} className="cell-trim cell-detail">{e.detail || '-'}</td>
+                    <td data-label={t('auColDetail')} className="cell-detail">{e.detail || '-'}</td>
                     <td data-label={t('auColIp')} className="cell-muted cell-mono">{e.ipAddress || '-'}</td>
                     <td data-label={t('auColWhen')} className="cell-muted cell-nowrap">{when.format(new Date(e.createdAt))}</td>
                   </tr>

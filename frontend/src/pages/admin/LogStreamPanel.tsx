@@ -184,7 +184,7 @@ export default function LogStreamPanel({ stream }: Props) {
                     <td data-label={t('lgColEvent')}><span className="badge badge-gray">{kindWord(r.kind)}</span></td>
                     <td data-label={t('lgColPerson')} className="cell-muted">{r.userEmail || '-'}</td>
                     <td data-label={t('lgColAddress')} className="cell-muted cell-mono">{r.ipAddress || '-'}</td>
-                    <td data-label={t('lgColDetail')} className="cell-trim cell-detail">{r.detail || '-'}</td>
+                    <td data-label={t('lgColDetail')} className="cell-detail">{r.detail || '-'}</td>
                     <td data-label={t('lgColReference')}>{reference(r.requestId)}</td>
                   </tr>
                 ))}
@@ -205,7 +205,7 @@ export default function LogStreamPanel({ stream }: Props) {
                     <td className="cell-muted cell-nowrap cell-lead">{when.format(new Date(r.createdAt))}</td>
                     <td data-label={t('lgColWhat')}><span className="badge badge-gray">{kindWord(r.kind)}</span></td>
                     <td data-label={t('lgColSubject')} className="cell-strong">{r.subject || '-'}</td>
-                    <td data-label={t('lgColDetail')} className="cell-trim cell-detail">{r.detail || '-'}</td>
+                    <td data-label={t('lgColDetail')} className="cell-detail">{r.detail || '-'}</td>
                     <td data-label={t('lgColReference')}>{reference(r.requestId)}</td>
                   </tr>
                 ))}
