@@ -538,6 +538,29 @@ describe('Forgot password page', () => {
   });
 });
 
+describe('Reset password page in French and Kinyarwanda', () => {
+  it('speaks French on a link that is not valid', () => {
+    localStorage.setItem('ssms_locale', 'fr');
+    renderAt('/reset-password', <ResetPasswordPage />, '/reset-password');
+    expect(screen.getByRole('heading', { level: 1, name: 'Lien de réinitialisation invalide' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Demander un nouveau lien' })).toHaveAttribute('href', '/forgot-password');
+  });
+
+  it('speaks French on the form, with the rules and the button', () => {
+    localStorage.setItem('ssms_locale', 'fr');
+    renderAt('/reset-password?uid=u1&token=t1', <ResetPasswordPage />, '/reset-password');
+    expect(screen.getByRole('heading', { level: 1, name: 'Nouveau mot de passe' })).toBeInTheDocument();
+    expect(screen.getByText('Au moins 8 caractères')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Réinitialiser le mot de passe' })).toBeDisabled();
+  });
+
+  it('speaks Kinyarwanda on the form', () => {
+    localStorage.setItem('ssms_locale', 'rw');
+    renderAt('/reset-password?uid=u1&token=t1', <ResetPasswordPage />, '/reset-password');
+    expect(screen.getByRole('heading', { level: 1, name: "Ijambo ry'ibanga rishya" })).toBeInTheDocument();
+  });
+});
+
 describe('Reset password page', () => {
   it('explains an invalid link and offers a new one', () => {
     renderAt('/reset-password', <ResetPasswordPage />, '/reset-password');
@@ -550,9 +573,9 @@ describe('Reset password page', () => {
     const button = screen.getByRole('button', { name: 'Reset password' });
     expect(button).toBeDisabled();
     fill('New password', 'abc');
-    expect(screen.getByText('One number').closest('li')).not.toHaveClass('is-met');
+    expect(screen.getByText('A number').closest('li')).not.toHaveClass('is-met');
     fill('New password', 'Secret123');
-    expect(screen.getByText('One number').closest('li')).toHaveClass('is-met');
+    expect(screen.getByText('A number').closest('li')).toHaveClass('is-met');
     expect(button).toBeEnabled();
   });
 
@@ -575,6 +598,13 @@ describe('Check email page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Resend verification email' }));
     expect(await screen.findByText(/Verification email resent/)).toBeInTheDocument();
     expect(api.resendVerification).toHaveBeenCalledWith('a@b.rw');
+  });
+
+  it('does not stop mid sentence, or offer a resend, when it is opened without an address', () => {
+    renderAt('/check-email', <CheckEmailPage />, '/check-email');
+    expect(screen.getByText('We sent a verification link to your email address.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Resend verification email' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign in' })).toBeInTheDocument();
   });
 
   it('shows a message when the resend fails', async () => {

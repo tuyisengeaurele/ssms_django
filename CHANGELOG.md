@@ -1,5 +1,18 @@
 # Changelog
 
+## The public pages
+
+Step 5 of covering every screen. The landing page and every page a signed out person can reach (sign in, create account, forgot and reset password, check email, verify email, join, unauthorized, a real lot page, privacy, terms, not found) were opened at desktop and phone width, and in French and Kinyarwanda. Nothing overflows sideways at 390 pixels. These are the fixes.
+
+### Fixed
+- **The reset password page was English only.** The heading, the rules, the button and the "updated" message did not follow the language of the screen. They do now, and the rules say the same as on the create account form.
+- **The legal pages say they are English only.** The privacy policy and the terms are written in English. A French or Kinyarwanda reader now sees a short note saying so, "Last updated" and the contents label are translated, and the text is marked as English for screen readers. The legal text itself is not translated: that needs a native and legal review.
+- **The terms tick box broke into one word per line.** "I agree to the Terms of Service and the Privacy Policy." sat in a grid, so each link was a row and the full stop stood alone. It runs as one sentence, and a hint such as "This is a shared computer" still sits under its line.
+- **The check email page opened without an address** read "We sent a verification link to" and stopped, with a resend button that did nothing. It now says "We sent a verification link to your email address." and offers no resend.
+
+### How it is guarded
+New tests in `AuthPages.test.tsx`, `Legal.test.tsx` and `landing/auth/checkLabel.test.ts`. No backend change.
+
 ## The shell: menu, notifications, idle warning and error screen
 
 Step 4 of covering every screen. The notifications dropdown, quick search, the phone menu, the bottom bar, the idle warning and the error screen were opened at desktop and phone width, in the dark theme, and in French and Kinyarwanda.

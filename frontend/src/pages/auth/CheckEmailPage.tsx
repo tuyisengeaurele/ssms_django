@@ -31,7 +31,7 @@ export default function CheckEmailPage() {
       title={t('checkEmailHeading')}
       subtitle={
         <>
-          {t('checkEmailSent')} {email ? <strong>{email}</strong> : null}
+          {email ? <>{t('checkEmailSent')} <strong>{email}</strong></> : t('checkEmailSentNoAddress')}
         </>
       }
     >
@@ -44,8 +44,8 @@ export default function CheckEmailPage() {
           <p className="l-auth__ok" role="status">
             <span aria-hidden="true">&#10003;</span> {t('checkEmailResentOk')}
           </p>
-        ) : (
-          <button type="button" className="l-auth__ghost" onClick={handleResend} disabled={resending || !email}>
+        ) : email ? (
+          <button type="button" className="l-auth__ghost" onClick={handleResend} disabled={resending}>
             {resending ? (
               <>
                 <span className="l-auth__spinner" aria-hidden="true" />
@@ -55,7 +55,7 @@ export default function CheckEmailPage() {
               t('checkEmailResend')
             )}
           </button>
-        )}
+        ) : null}
 
         <Link to="/login" className="l-auth__submit">
           <span aria-hidden="true">&larr;</span> {t('loginSignIn')}
