@@ -11,6 +11,7 @@ import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 import { AuthAlert, AuthButton, AuthField, AuthShell } from '../../landing/auth/AuthShell';
 import GoogleButton from '../../landing/auth/GoogleButton';
+import { warmUp } from '../../services/warmUp';
 import { homePathFor } from '../../utils/roleHome';
 
 const NOTICE_WORDS: Record<string, string> = {
@@ -20,6 +21,8 @@ const NOTICE_WORDS: Record<string, string> = {
 };
 
 export default function LoginPage() {
+  // The person is about to press Sign in. If the free API is asleep, this starts the wake while they type.
+  useEffect(() => warmUp(), []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');

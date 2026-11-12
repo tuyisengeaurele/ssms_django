@@ -65,6 +65,17 @@ Then, from outside:
 - Stop the AI service: the disease check says so plainly and the rest of the site works.
 - Take a database backup and restore it somewhere else.
 
+## Before a demonstration
+
+The free plans sleep, and a cold start of the API was measured at about a minute. A demonstration must not start with a minute of waiting.
+
+1. Ten minutes before, wake both services and watch the numbers: `python scripts/warm_up.py https://ssms-api-cmqa.onrender.com https://ssms-ai.onrender.com`. Each line should say `ready`. If one says `NOT ANSWERING` after three minutes, look at the host dashboard before going on.
+2. Sign in once as each role you will show (farmer, supervisor, admin). The admin needs the authenticator code, so have the phone at hand.
+3. Run one disease check with a real photo, so the model is loaded. The first check after a wake is the slowest.
+4. Keep one tab open on the farmer dashboard. It asks the API every 30 seconds while the tab is visible, which keeps the server awake until you start.
+5. Have screenshots of the main screens ready in case the network fails.
+6. Do not run the five minute pinger all night to avoid this: it would use the free hours of every service (see section 7 of the runbook).
+
 ## 5. Known gaps on 2026-11-04
 
 These are written down so nobody is surprised. Each is on the backlog.

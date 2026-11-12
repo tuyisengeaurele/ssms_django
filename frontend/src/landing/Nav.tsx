@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { LOCALE_LABELS, type Locale } from '../i18n/translations';
+import { warmOnIntent } from '../services/warmUp';
 import './nav.css';
 
 const LINKS = [
@@ -101,10 +102,10 @@ export function Nav() {
 
         <div className="l-nav__actions">
           {languageSelect}
-          <Link to="/login" className="l-nav__login">
+          <Link to="/login" className="l-nav__login" {...warmOnIntent}>
             {t('lpNavLogin')}
           </Link>
-          <Link to="/register" className="l-btn l-btn--small">
+          <Link to="/register" className="l-btn l-btn--small" {...warmOnIntent}>
             {t('lpNavStart')}
           </Link>
         </div>
@@ -143,10 +144,10 @@ export function Nav() {
           </ul>
           <div className="l-nav__sheet-actions">
             {languageSelect}
-            <Link to="/login" onClick={() => setOpen(false)}>
+            <Link to="/login" onClick={() => setOpen(false)} {...warmOnIntent}>
               {t('lpNavLogin')}
             </Link>
-            <Link to="/register" className="l-btn" onClick={() => setOpen(false)}>
+            <Link to="/register" className="l-btn" onClick={() => setOpen(false)} {...warmOnIntent}>
               {t('lpNavStart')}
             </Link>
           </div>
