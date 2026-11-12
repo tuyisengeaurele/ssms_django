@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useId, useRef, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import MotionProvider from '../MotionProvider';
 import { settle } from '../../utils/motion';
 import { Icon } from './Icon';
 
@@ -72,6 +73,7 @@ export default function Modal({ open, onClose, title, children, maxWidth = 480, 
   };
 
   return createPortal(
+    <MotionProvider>
     <AnimatePresence>
       {open && (
         <motion.div
@@ -111,7 +113,8 @@ export default function Modal({ open, onClose, title, children, maxWidth = 480, 
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>,
+    </AnimatePresence>
+    </MotionProvider>,
     document.body
   );
 }
