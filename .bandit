@@ -1,0 +1,2 @@
+[bandit]
+exclude: ./venv,./tests,./frontend,./node_modules,./ai_service/.venv,./backups

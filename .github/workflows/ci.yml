@@ -83,5 +83,7 @@ jobs:
         run: npm run test
       - name: Build
         run: npm run build
+      - name: Landing page JavaScript budget
+        run: npm run check:bundle
       - name: Audit packages that ship to the browser
         run: npm audit --omit=dev --audit-level=moderate

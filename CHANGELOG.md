@@ -1,5 +1,17 @@
 # Changelog
 
+## Safety net: scans and budgets
+
+Phase 0 of the roadmap. Nothing a visitor sees changes. These are checks that run in CI so that risky code, leaked secrets, a heavy landing page or a slow list page are caught before they reach a farmer.
+
+### Added
+- **A security workflow** (`.github/workflows/security.yml`) runs on every pull request, on master and every Monday. It has four jobs: bandit over the Python code (medium and high risks), gitleaks over the whole history, CodeQL for Python and JavaScript, and a weekly dependency audit. Settings are in `.bandit` and `.gitleaks.toml`, and every exception carries its reason. Today bandit finds one false positive in `core/health.py`, which is marked with the reason.
+- **The landing page JavaScript budget now runs in CI** after the build. The limit is 230 KB compressed (the page is 219.6 KB today). It was only a script nobody ran before.
+- **A test that list pages do not add queries per row.** It grows a farmer's data from 2 to 12 farms and compares the query count of the farms, batches, alerts, devices, harvests and calendar lists. It found a real problem: the devices list runs one query per device for its latest reading (3 queries for 2 farms, 13 for 12). The case is marked as an expected failure and is fixed in the speed phase, and the mark must be removed then.
+
+### How it is guarded
+`frontend/src/bundleBudget.test.ts` for the budget arithmetic and `tests/test_query_growth.py` for the queries. No application behaviour changed.
+
 ## States, print and the other languages
 
 Step 6 of covering every screen. The pages were opened with the server answering errors, a print of the batch report was made from the dark theme, and the farmer pages were swept in French and Kinyarwanda at phone width (no sideways overflow, no cut off labels).
