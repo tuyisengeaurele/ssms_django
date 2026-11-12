@@ -196,6 +196,7 @@ export const pageTranslations = {
   colLocation: k('Location', 'Lieu', 'Aho riherereye'),
   colBatches: k('Batches', 'Lots', 'Amatsinda'),
   btnRetry: k('Try again', 'Réessayer', 'Ongera ugerageze'),
+  loadFailedBody: k('We could not load this page. Check your connection and try again.', "Nous n'avons pas pu charger cette page. Vérifiez votre connexion et réessayez.", 'Ntitwabashije gufungura uru rupapuro. Reba niba ufite murandasi, wongere ugerageze.'),
 
   // Users page
   usAdmins: k('Administrators', 'Administrateurs', 'Abayobozi'),

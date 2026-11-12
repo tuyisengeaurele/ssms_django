@@ -11,6 +11,7 @@ import { timeAgo } from '../../utils/timeAgo';
 import { stageLabel } from '../../utils/constants';
 import { ALERT_TYPE_KEY } from '../../utils/alertTypes';
 import EmptyState from '../../components/ui/EmptyState';
+import LoadError from '../../components/ui/LoadError';
 import { Icon } from '../../components/ui/Icon';
 import Modal from '../../components/ui/Modal';
 import PageHeader from '../../components/ui/PageHeader';
@@ -29,6 +30,8 @@ export default function AlertsPage() {
 
   const [alerts, setAlerts] = useState<AlertLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [tab, setTab] = useState<'all' | 'unread'>('all');
   const [type, setType] = useState<AlertType | ''>('');
   const [page, setPage] = useState(1);
@@ -40,13 +43,13 @@ export default function AlertsPage() {
 
   useEffect(() => {
     setLoading(true);
+    setFailed(false);
     alertService.getAll(tab === 'unread')
       .then((r) => setAlerts(r.data.data))
-      .catch((e) => showError(getErrorMessage(e)))
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
     setPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab]);
+  }, [tab, attempt]);
 
   const handleMarkRead = async (id: string) => {
     try {
@@ -101,7 +104,7 @@ export default function AlertsPage() {
   const current = Math.min(page, totalPages);
   const pageItems = shown.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
-  const subtitle = loading
+  const subtitle = loading || failed
     ? undefined
     : unread === 0 ? t('alCaughtUp') : fill(t(unread === 1 ? 'alUnreadOne' : 'alUnreadMany'), { n: unread });
 
@@ -163,7 +166,9 @@ export default function AlertsPage() {
           ))}
         </div>
 
-        {loading ? (
+        {failed ? (
+          <LoadError onRetry={() => setAttempt((n) => n + 1)} />
+        ) : loading ? (
           <SkeletonTable rows={6} cols={3} />
         ) : shown.length === 0 ? (
           <EmptyState

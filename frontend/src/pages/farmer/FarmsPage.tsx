@@ -4,10 +4,9 @@ import { farmService } from '../../services/farm.service';
 import { Farm } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { useToast } from '../../context/ToastContext';
-import { useApiError } from '../../hooks/useApiError';
 import { fill } from '../../utils/fill';
 import EmptyState from '../../components/ui/EmptyState';
+import LoadError from '../../components/ui/LoadError';
 import { Icon } from '../../components/ui/Icon';
 import PageHeader from '../../components/ui/PageHeader';
 import Pagination from '../../components/ui/Pagination';
@@ -25,17 +24,18 @@ interface PaginationMeta {
 export default function FarmsPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const { error: showError } = useToast();
-  const { getErrorMessage } = useApiError();
 
   const [farms, setFarms] = useState<Farm[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
 
   useEffect(() => {
     setLoading(true);
+    setFailed(false);
     farmService.getAll(page)
       .then((r) => {
         // A page of farms arrives as { data, pagination }. A flat list has no pagination.
@@ -43,10 +43,9 @@ export default function FarmsPage() {
         setFarms(body.data ?? (r.data as unknown as Farm[]));
         if (body.pagination) setMeta(body.pagination);
       })
-      .catch((e) => showError(getErrorMessage(e)))
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, attempt]);
 
   const canCreate = user?.role === 'FARMER' || user?.role === 'ADMIN';
   const query = search.trim().toLowerCase();
@@ -56,7 +55,7 @@ export default function FarmsPage() {
     <div>
       <PageHeader
         title={t('ptFarms')}
-        subtitle={loading ? undefined : fill(t(farms.length === 1 ? 'fmSubtitleOne' : 'fmSubtitleMany'), { n: farms.length })}
+        subtitle={loading || failed ? undefined : fill(t(farms.length === 1 ? 'fmSubtitleOne' : 'fmSubtitleMany'), { n: farms.length })}
         actions={
           canCreate ? (
             <Link to="/farms/new" className="btn btn-primary btn-sm">
@@ -72,7 +71,9 @@ export default function FarmsPage() {
         <input type="search" aria-label={t('fmSearch')} placeholder={t('fmSearch')} value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
-      {loading ? (
+      {failed ? (
+        <LoadError onRetry={() => setAttempt((n) => n + 1)} />
+      ) : loading ? (
         <div className="grid-auto">
           {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonCard key={i} height={150} />)}
         </div>

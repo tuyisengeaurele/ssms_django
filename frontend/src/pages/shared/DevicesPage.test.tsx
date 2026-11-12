@@ -316,3 +316,20 @@ describe('Devices page', () => {
     expect(container.innerHTML.toLowerCase()).not.toMatch(/#2563eb|#16a34a|#dc2626|#f0fdf4|#eff6ff|stat-card/);
   });
 });
+
+describe('Devices page when the devices cannot be loaded', () => {
+  it('says so, and does not claim that no device is registered', async () => {
+    api.getAll.mockRejectedValue(new Error('boom'));
+    open();
+    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load this page');
+    expect(screen.queryByText(/0 devices registered/)).not.toBeInTheDocument();
+  });
+
+  it('loads again with Try again', async () => {
+    api.getAll.mockRejectedValueOnce(new Error('boom'));
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(api.getAll).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+});

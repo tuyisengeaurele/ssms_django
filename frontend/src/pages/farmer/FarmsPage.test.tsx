@@ -102,3 +102,20 @@ describe('Farms page', () => {
     expect(container.innerHTML.toLowerCase()).not.toMatch(/gradient|var\(--brand-50\)|brand-100/);
   });
 });
+
+describe('Farms page when the farms cannot be loaded', () => {
+  it('says so, and does not claim there are no farms or count zero', async () => {
+    getAll.mockRejectedValue(new Error('boom'));
+    open();
+    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load this page');
+    expect(screen.queryByText('No farms yet')).not.toBeInTheDocument();
+    expect(screen.queryByText(/0 farms registered/)).not.toBeInTheDocument();
+  });
+
+  it('loads again with Try again', async () => {
+    getAll.mockRejectedValueOnce(new Error('boom'));
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('2 farms registered.')).toBeInTheDocument();
+  });
+});
