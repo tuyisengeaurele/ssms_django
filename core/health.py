@@ -10,6 +10,7 @@ Two kinds of check sit side by side:
 import asyncio
 import logging
 import time
+from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import timedelta
 from datetime import timezone as dt_timezone
 from urllib.parse import urlparse
@@ -220,10 +221,47 @@ def _all_checks(now) -> dict:
 SERVICE_KEYS = tuple(_all_checks(None))
 
 
+# The checks that only wait for another server to answer. They never touch the database, so they can share the time.
+# Every other check reads the database and stays on the calling thread, because the connection pool is small (4) and a
+# thread of its own would take a connection of its own.
+NETWORK_CHECKS = ('web', 'aiService', 'website')
+# How long the page waits for all of them together. httpx gives connecting and reading each their own timeout, so a sleeping
+# free host can keep a check waiting well past one timeout (4.5 seconds was measured on 2026-11-12). After this many seconds the page
+# reports "timeout" for the service that has not answered and moves on.
+NETWORK_DEADLINE = 3.0
+
+
 def run_checks(skip=()) -> dict:
-    """Run every check except the named ones. A scheduled run on a free host skips the services it must not wake."""
+    """Run every check except the named ones. A scheduled run on a free host skips the services it must not wake.
+
+    The network checks run side by side, so the page waits for the slowest one (about 3 seconds at worst) and not for
+    all of them added together. The result keeps the order of `_all_checks`.
+    """
     now = timezone.now()
-    checks = [_safely(key, fn) for key, fn in _all_checks(now).items() if key not in skip]
+    wanted = {key: fn for key, fn in _all_checks(now).items() if key not in skip}
+    network = {key: fn for key, fn in wanted.items() if key in NETWORK_CHECKS}
+
+    results = {}
+    if network:
+        # Not a `with` block: leaving it would wait for the slow threads. They stop by themselves at their own timeouts.
+        pool = ThreadPoolExecutor(max_workers=len(network))
+        try:
+            futures = {key: pool.submit(_safely, key, fn) for key, fn in network.items()}
+            for key, fn in wanted.items():
+                if key not in network:
+                    results[key] = _safely(key, fn)
+            wait(futures.values(), timeout=NETWORK_DEADLINE)
+            for key, future in futures.items():
+                if future.done():
+                    results[key] = future.result()
+                else:
+                    results[key] = {'key': key, 'status': PROBLEM, 'values': {'reason': 'timeout'}}
+        finally:
+            pool.shutdown(wait=False, cancel_futures=True)
+    else:
+        results = {key: _safely(key, fn) for key, fn in wanted.items()}
+
+    checks = [results[key] for key in wanted]
     return {
         'checked_at': now.isoformat(),
         'overall': PROBLEM if any(c['status'] == PROBLEM for c in checks) else OK,
