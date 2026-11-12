@@ -1,5 +1,20 @@
 # Changelog
 
+## The admin health page no longer waits for a slow service
+
+Phase 1 of the roadmap. The System page asks the web, the disease check service and the website one after another, and each of those could keep the page waiting for longer than its own time limit. The disease check service made it worst: on the free plan it sleeps, and the request took 4.5 seconds to give up.
+
+### Fixed
+- **The three network checks (web, disease check service, website) run side by side,** so the page waits for the slowest one and not for all of them added together.
+- **They share a 3 second deadline.** A service that has not answered by then is shown as a timeout, the same wording as before, and the page moves on. The slow request finishes by itself in the background. The measured run time on the scratch database went from 4.5 to 3.6 seconds, and the worst case no longer grows with every slow service.
+- **The checks that use the database stay on the calling thread,** so the small connection pool (4) is never shared by several threads.
+
+### Not changed
+Opening the page still asks the disease check service, which wakes it on the free plan. The five minute job already skips it for that reason, and the page has its own test button for it. Making the page use the last stored answer instead is possible later if the free hours get tight.
+
+### How it is guarded
+`tests/test_health_parallel.py`: the checks run side by side, the database checks stay on the calling thread, a check that breaks only fails its own service, skipped services stay skipped, and a service still waiting at the deadline is reported as a timeout. No screen changed.
+
 ## The devices list asks the database once
 
 The new query growth test (see "Safety net") found that the devices page ran one query for every device, to fetch its newest reading: 3 queries for 2 farms and 13 for 12. A cooperative with a few hundred devices would have paid hundreds of round trips on every visit. The list now fetches the newest reading of all its devices in one query, and what each device shows is unchanged.
