@@ -1,0 +1,2 @@
+[bandit]
+exclude_dirs = venv,tests,frontend,node_modules,ai_service/.venv,backups

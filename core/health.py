@@ -119,7 +119,7 @@ def what_is_waiting() -> dict:
 
 def _is_local(url: str) -> bool:
     host = (urlparse(url).hostname or '').lower()
-    return host in ('', 'localhost', '127.0.0.1', '::1', '0.0.0.0') or host.endswith('.localhost')
+    return host in ('', 'localhost', '127.0.0.1', '::1', '0.0.0.0') or host.endswith('.localhost')  # nosec B104 - compares a host name, binds nothing
 
 
 def check_website() -> dict:
