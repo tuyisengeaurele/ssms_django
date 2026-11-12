@@ -37,6 +37,10 @@ class PasswordResetRateThrottle(AnonRateThrottle):
     scope = 'password_reset'
 
 
+class CspReportThrottle(AnonRateThrottle):
+    scope = 'csp'   # browsers reporting what the content security policy blocked, 30 a minute per address
+
+
 class ContactRateThrottle(AnonRateThrottle):
     scope = 'contact'   # 5 messages an hour per address
 

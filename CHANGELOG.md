@@ -1,5 +1,26 @@
 # Changelog
 
+## Browsers now report what the content security policy would block
+
+Phase 1 of the roadmap. The frontend has had a content security policy for some time, but only in "report only" mode, and the reports went nowhere. So nobody could know whether turning it on would break the map, the bot check, the error monitor or the photos. This change gives the reports somewhere to go. Nothing is blocked yet.
+
+### Added
+- **`POST /api/csp-report`.** A browser sends a short report by itself when the policy would block something. The API keeps one line in the security events (new kind `csp_violation`): the rule, what was blocked, and the page, for example `img-src blocked https://tracker.example on /farmer`.
+- **It stays harmless on purpose,** because it is open to anyone:
+  - it keeps no query string (it can hold a token), no full policy text and nothing that names a visitor;
+  - it ignores reports caused by browser extensions, which the site cannot fix;
+  - it ignores bodies over 8 KB and anything that is not a report;
+  - it stores the same report once an hour;
+  - it allows 30 a minute per address, and always answers 204.
+- **The policy header sends its reports to it** (`report-uri /api/csp-report` in `vercel.json`, through the existing `/api` rewrite).
+- **The log page shows the new kind** in English, French and Kinyarwanda, and the Security stream can be filtered to it.
+
+### What happens next
+After the deploy the Logs page (Security stream, kind "Browser blocked something...") is watched for a week. Every host the app really needs gets added to the policy. After three quiet days the header changes from report only to enforced, which is a separate change.
+
+### How it is guarded
+`tests/security/test_csp_report.py` (16 tests: both report formats, no query strings, extensions ignored, repeated reports stored once, garbage and oversize bodies, long addresses, the throttle), the permission walk (the endpoint is listed as open on purpose), and `frontend/src/vercelHeaders.test.ts` (the policy reports to the API and still names every outside host the app uses).
+
 ## The admin health page no longer waits for a slow service
 
 Phase 1 of the roadmap. The System page asks the web, the disease check service and the website one after another, and each of those could keep the page waiting for longer than its own time limit. The disease check service made it worst: on the free plan it sleeps, and the request took 4.5 seconds to give up.

@@ -35,6 +35,7 @@ KINDS = {
     'support_refused': 'Action refused during support access',
     'permission_denied': 'Refused for the role',
     'throttled': 'Slowed down',
+    'csp_violation': 'Browser blocked something the page tried to load',
 }
 
 
