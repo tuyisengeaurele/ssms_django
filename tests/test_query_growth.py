@@ -5,7 +5,14 @@ first one to add a query per row fails by name, whatever the exact count is toda
 """
 import pytest
 
-from tests.factories import AlertLogFactory, BatchFactory, FarmFactory, HarvestRecordFactory, IoTDeviceFactory, UserFactory
+from tests.factories import (
+    AlertLogFactory,
+    BatchFactory,
+    FarmFactory,
+    HarvestRecordFactory,
+    IoTDeviceFactory,
+    UserFactory,
+)
 from tests.query_growth import queries_for
 
 pytestmark = pytest.mark.django_db
