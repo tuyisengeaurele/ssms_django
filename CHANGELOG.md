@@ -1,5 +1,19 @@
 # Changelog
 
+## The devices list asks the database once
+
+The new query growth test (see "Safety net") found that the devices page ran one query for every device, to fetch its newest reading: 3 queries for 2 farms and 13 for 12. A cooperative with a few hundred devices would have paid hundreds of round trips on every visit. The list now fetches the newest reading of all its devices in one query, and what each device shows is unchanged.
+
+### Fixed
+- **`GET /api/devices` no longer runs a query per device.** The count is the same for 2 farms and for 12. The single device page, and registering or moving a device, behave as before.
+- **The expected failure in `tests/test_query_growth.py` is gone.** The devices list is now guarded like the other five lists.
+
+### Still to do
+The newest-reading lookup sorts a device's readings. It is fast now and will need an index on (device, time) once readings number in the millions. That index is in the data foundation phase with the readings rollups.
+
+### How it is guarded
+`tests/test_device_latest_reading.py` shows that each device keeps its own newest reading (and none when it has none), that another device's reading never leaks in, and that the single device page agrees. `tests/test_query_growth.py` shows the count does not grow.
+
 ## Safety net: scans and budgets
 
 Phase 0 of the roadmap. Nothing a visitor sees changes. These are checks that run in CI so that risky code, leaked secrets, a heavy landing page or a slow list page are caught before they reach a farmer.
