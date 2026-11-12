@@ -1,5 +1,16 @@
 # Changelog
 
+## The public API docs are guarded against leaking where the API runs
+
+Phase 1 of the roadmap. The API documentation is public on purpose, so a reviewer can read it without an account. That makes one rule important: it must never contain a host name, an email address, a server list or a key.
+
+### Added
+- **Tests on the public schema.** It must name no host (Render, Vercel, Supabase, Cloudinary, Sentry, localhost), no email address, no `servers` list, and no key or token (`Bearer ey`, `sk_live`, `AKIA`). Today it is clean, so the tests pass, and they fail the day something leaks.
+- **A dated decision in the runbook.** The docs stay public while the project is assessed, then get switched off with `API_DOCS_ENABLED=false`.
+
+### Not changed
+The docs themselves, and who can read them.
+
 ## The log page shows the whole detail of an event
 
 Found in a screenshot of the first live CSP report. The Detail of a security event was cut to `img-src blocked https://live-`, so the one line the log exists to show could not be read.

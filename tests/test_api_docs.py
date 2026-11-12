@@ -86,3 +86,32 @@ def test_head_works_like_get_for_a_monitor(api_client):
 def test_only_get_and_head_are_allowed(api_client):
     for path in (SCHEMA, DOCS, CSS):
         assert api_client.post(path, {}, format='json').status_code == 405, path
+
+
+# The schema is public on purpose, so it must describe the API and nothing about where it runs or how it is secured. A host name,
+# an email address or a key written into a description or an example would be published to everyone.
+FORBIDDEN_IN_THE_PUBLIC_SCHEMA = (
+    'onrender.com', 'vercel.app', 'supabase', 'cloudinary.com', 'sentry.io', 'localhost', '127.0.0.1',
+    '@gmail.com', '@example', 'Bearer ey', 'sk_live', 'AKIA',
+)
+
+
+def test_the_public_schema_names_no_host_address_or_key(api_client):
+    text = api_client.get(SCHEMA).content.decode()
+    for needle in FORBIDDEN_IN_THE_PUBLIC_SCHEMA:
+        assert needle not in text, f'the public schema contains {needle!r}'
+
+
+def test_the_public_schema_lists_no_server_address(api_client):
+    # `servers` would tell a stranger where the API runs. Relative paths are all the page needs.
+    assert 'servers' not in api_client.get(SCHEMA).json()
+
+
+def test_the_public_schema_holds_no_example_of_a_real_secret_field(api_client):
+    paths = api_client.get(SCHEMA).json()['paths']
+    for path, operations in paths.items():
+        for method, operation in operations.items():
+            if not isinstance(operation, dict):
+                continue
+            for header in operation.get('parameters', []):
+                assert header.get('name', '').lower() not in ('x-device-key',) or 'example' not in header, (method, path)
