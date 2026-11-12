@@ -357,3 +357,22 @@ describe('TopBar', () => {
     expect(screen.getByRole('link', { name: 'Auris Tuyisenge, Paramètres' })).toHaveAttribute('href', '/settings/account');
   });
 });
+
+describe('The menu drawer on a phone', () => {
+  const drawer = (open: boolean, onClose = vi.fn()) => {
+    renderAt('/admin', <Sidebar collapsed={false} mobileOpen={open} onMobileClose={onClose} alertCount={0} />);
+    return onClose;
+  };
+
+  it('closes with Escape, so a keyboard user is not stuck behind it', () => {
+    const onClose = drawer(true);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not answer Escape while it is shut', () => {
+    const onClose = drawer(false);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).not.toHaveBeenCalled();
+  });
+});
