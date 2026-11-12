@@ -115,3 +115,33 @@ describe('Terms of service page', () => {
     expect(links.some((l) => l.getAttribute('href') === '/privacy')).toBe(true);
   });
 });
+
+describe('The legal pages in another language', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  // The policy and the terms are written in English only. A French or Kinyarwanda reader is told so, and the text is
+  // marked as English for screen readers, rather than the page looking translated when it is not.
+  it('say in French that the text is English only', () => {
+    localStorage.setItem('ssms_locale', 'fr');
+    renderPage(<PrivacyPolicyPage />, '/privacy');
+    expect(screen.getByRole('note')).toHaveTextContent("n'est disponible qu'en anglais");
+    expect(screen.getByText(/Dernière mise à jour/)).toBeInTheDocument();
+  });
+
+  it('say in Kinyarwanda that the text is English only', () => {
+    localStorage.setItem('ssms_locale', 'rw');
+    renderPage(<TermsOfServicePage />, '/terms');
+    expect(screen.getByRole('note')).toHaveTextContent('Cyongereza gusa');
+  });
+
+  it('mark the text as English, and show no notice in English', () => {
+    localStorage.setItem('ssms_locale', 'rw');
+    const { container } = renderPage(<PrivacyPolicyPage />, '/privacy');
+    expect(container.querySelector('article')).toHaveAttribute('lang', 'en');
+    localStorage.setItem('ssms_locale', 'en');
+    const again = renderPage(<PrivacyPolicyPage />, '/privacy');
+    expect(within(again.container).queryByRole('note')).not.toBeInTheDocument();
+  });
+});

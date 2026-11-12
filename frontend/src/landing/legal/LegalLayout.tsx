@@ -48,7 +48,7 @@ function useActiveSection(ids: string[]): string {
 }
 
 export function LegalLayout({ title, updated, intro, sections, other }: LegalLayoutProps) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const ids = sections.map((_, i) => `section-${i + 1}`);
   const active = useActiveSection(ids);
 
@@ -67,13 +67,14 @@ export function LegalLayout({ title, updated, intro, sections, other }: LegalLay
           <div className="l-container">
             <p className="l-eyebrow">{t('lpFooterLegal')}</p>
             <h1>{title}</h1>
-            <p className="l-legal__updated">Last updated: {updated}</p>
+            <p className="l-legal__updated">{t('lpLegalUpdated')}: {updated}</p>
+            {locale !== 'en' ? <p className="l-legal__notice" role="note">{t('lpLegalEnglishOnly')}</p> : null}
             <p className="l-legal__intro">{intro}</p>
           </div>
         </header>
 
         <div className="l-container l-legal__grid">
-          <nav className="l-legal__toc" aria-label="On this page">
+          <nav className="l-legal__toc" aria-label={t('lpLegalOnThisPage')}>
             <ol>
               {sections.map((section, i) => (
                 <li key={section.title}>
@@ -86,7 +87,7 @@ export function LegalLayout({ title, updated, intro, sections, other }: LegalLay
             </ol>
           </nav>
 
-          <article className="l-legal__body">
+          <article className="l-legal__body" lang="en">
             {sections.map((section, i) => (
               <section key={section.title} id={ids[i]}>
                 <h2>

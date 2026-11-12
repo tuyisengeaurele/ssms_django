@@ -401,6 +401,13 @@ export const landingTranslations = {
   lpFooterExplore: k('Explore', 'Explorer', 'Reba'),
   lpFooterAccount: k('Account', 'Compte', 'Konti'),
   lpFooterLegal: k('Legal', 'Mentions légales', 'Amategeko'),
+  lpLegalUpdated: k('Last updated', 'Dernière mise à jour', 'Ivugururwa bwa nyuma'),
+  lpLegalOnThisPage: k('On this page', 'Sur cette page', 'Kuri uru rupapuro'),
+  lpLegalEnglishOnly: k(
+    'This page is written in English only.',
+    "Cette page n'est disponible qu'en anglais. Pour une explication en français, écrivez-nous depuis le formulaire de contact.",
+    "Uru rupapuro ruri mu Cyongereza gusa. Niba ukeneye ko bagusobanurira mu Kinyarwanda, twandikire unyuze ku rupapuro rwo kuvugana natwe.",
+  ),
   lpFooterCreate: k('Create account', 'Créer un compte', 'Fungura konti'),
   lpFooterPrivacy: k('Privacy', 'Confidentialité', 'Ibanga'),
   lpFooterTerms: k('Terms', 'Conditions', 'Amabwiriza'),
