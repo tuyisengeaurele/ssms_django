@@ -38,6 +38,21 @@ describe('filter bars', () => {
   });
 });
 
+describe('the device detail', () => {
+  // "Move to another room", "Latest reading" and "Recent readings" ran into the block above them.
+  it('puts room between its sections', () => {
+    expect(Number(/margin:\s*\d+px 0 (\d+)px/.exec(rules('.device-move'))?.[1] ?? 0)).toBeGreaterThanOrEqual(16);
+    expect(Number(/margin-top:\s*(\d+)px/.exec(rules('.device-detail .mini-heading'))?.[1] ?? 0)).toBeGreaterThanOrEqual(16);
+  });
+});
+
+describe('a message that an admin reads', () => {
+  // The hint "After you have sent your answer, mark it as answered" sat right on the first line of the message.
+  it('has room between a hint above it and its first line', () => {
+    expect(rules('.form-hint + .message-body')).toMatch(/margin-top:\s*(1[0-9]|2[0-9])px/);
+  });
+});
+
 describe('a section that a link jumps to', () => {
   // The room's "1 sensor" link jumps to the Devices list. It lands with room above it, not glued to the top of the screen.
   it('keeps clear of the top edge when it is scrolled to', () => {
@@ -49,6 +64,11 @@ describe('the batch report', () => {
   // The sentence "Day 14 of 28..." sat right against the tiles above it.
   it('leaves room between a block of facts and the line that follows it', () => {
     expect(rules('.facts + .report-line')).toMatch(/margin-top:\s*(1[2-9]|2\d)px/);
+  });
+
+  // The grades line of the cooperative harvest sat against the three tiles above it.
+  it('leaves the same room under the harvest tiles', () => {
+    expect(rules('.grid-3 + .report-line')).toMatch(/margin-top:\s*(1[2-9]|2\d)px/);
   });
 });
 

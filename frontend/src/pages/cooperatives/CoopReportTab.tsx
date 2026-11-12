@@ -35,9 +35,11 @@ export default function CoopReportTab() {
                   <p className="report-line">{t('crHarvestNone')}</p>
                 ) : (
                   <>
-                    <p className="report-line">
-                      {fill(t(harvest.records === 1 ? 'brHarvestSumOne' : 'brHarvestSum'), { n: harvest.records, kg: trim(harvest.totalKg), g: trim(harvest.silkG, 1) })}
-                    </p>
+                    <div className="grid-3">
+                      <StatTile label={t('hpRecords')} value={number.format(harvest.records)} />
+                      <StatTile label={t('hpTileCocoon')} value={`${number.format(trim(harvest.totalKg))} kg`} />
+                      <StatTile label={t('hpTileSilk')} value={`${number.format(trim(harvest.silkG, 1))} g`} />
+                    </div>
                     <p className="report-line">{GRADES.map((g) => `${fill(t('hpGradeName'), { g })}: ${byGrade[g] ?? 0}`).join(', ')}</p>
                   </>
                 )}

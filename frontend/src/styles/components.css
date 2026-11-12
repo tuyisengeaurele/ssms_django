@@ -644,6 +644,7 @@ tr.is-off td:last-child { opacity: 1; }
 .message-date { margin: 0 0 14px; color: var(--text-muted); font-size: 0.82rem; }
 .message-answered { margin: 0 0 14px; color: var(--primary); font-size: 0.9rem; font-weight: 600; }
 .message-body { color: var(--ink); font-size: 0.98rem; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+.form-hint + .message-body { margin-top: 14px; }
 
 @media (max-width: 760px) {
   .inbox-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px; padding: 14px 16px; }
@@ -717,7 +718,8 @@ tr.is-off td:last-child { opacity: 1; }
 .report-section { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--border-light); break-inside: avoid; }
 .report-section h2 { margin: 0 0 8px; color: var(--ink); font: 450 1.2rem var(--font-display); }
 .report-line { margin: 0 0 4px; color: var(--text); line-height: 1.5; }
-.facts + .report-line { margin-top: 14px; }
+.facts + .report-line,
+.grid-3 + .report-line { margin-top: 14px; }
 .report-list { margin: 0; padding-left: 18px; color: var(--text); line-height: 1.6; }
 .report-table { width: 100%; margin: 6px 0 4px; border-collapse: collapse; font-size: 0.9rem; }
 .report-table th, .report-table td { padding: 5px 10px 5px 0; border-bottom: 1px solid var(--border-light); text-align: left; vertical-align: top; }
@@ -1162,7 +1164,8 @@ tr.is-off td:last-child { opacity: 1; }
 .place-notice.is-problem { color: var(--text); }
 .place-legacy { margin-bottom: 12px; }
 @media (max-width: 560px) { .place-grid { grid-template-columns: minmax(0, 1fr); } }
-.device-move { margin: 16px 0 4px; }
+.device-move { margin: 18px 0 22px; }
+.device-detail .mini-heading { margin-top: 20px; }
 .device-move-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .device-move-row .form-select { flex: 1 1 180px; min-width: 0; }
 .room-history { margin: 14px 0 0; padding: 12px 0 0; border-top: 1px solid var(--border-light); list-style: none; color: var(--text-muted); font-size: 0.9rem; line-height: 1.7; }

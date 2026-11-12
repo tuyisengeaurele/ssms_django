@@ -39,7 +39,8 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-const loaded = () => screen.findByText('3 records, 24.5 kg of cocoons, 900 g of silk.');
+const loaded = () => screen.findByText('Total cocoons');
+const tile = (label: string) => screen.getAllByText(label).map((e) => e.closest('.stat-tile')).find(Boolean) as HTMLElement;
 const section = (name: string) => screen.getByRole('heading', { level: 2, name }).closest('section') as HTMLElement;
 
 describe('The report of a cooperative', () => {
@@ -54,7 +55,6 @@ describe('The report of a cooperative', () => {
   it('counts farms, farmers and batches', async () => {
     renderCoop(PATH);
     await loaded();
-    const tile = (label: string) => screen.getAllByText(label).map((e) => e.closest('.stat-tile')).find(Boolean) as HTMLElement;
     expect(within(tile('Farms')).getByText('3')).toBeInTheDocument();
     expect(within(tile('Farmers with a farm')).getByText('2')).toBeInTheDocument();
     expect(within(tile('Batches running now')).getByText('6')).toBeInTheDocument();
@@ -65,8 +65,20 @@ describe('The report of a cooperative', () => {
     renderCoop(PATH);
     await loaded();
     const harvest = within(section('Harvest in the period'));
-    expect(harvest.getByText('3 records, 24.5 kg of cocoons, 900 g of silk.')).toBeInTheDocument();
+    // Three tiles, like the numbers above, and not a sentence.
+    expect(within(tile('Records')).getByText('3')).toBeInTheDocument();
+    expect(within(tile('Total cocoons')).getByText('24.5 kg')).toBeInTheDocument();
+    expect(within(tile('Total silk')).getByText('900 g')).toBeInTheDocument();
+    expect(harvest.queryByText(/records, .* of cocoons/)).not.toBeInTheDocument();
     expect(harvest.getByText('Grade A: 2, Grade B: 1, Grade C: 0')).toBeInTheDocument();
+  });
+
+  it('shows a single record as one, and no tiles when there was no harvest', async () => {
+    api.get.mockResolvedValue({ data: { data: report({ harvest: { records: 1, totalKg: 8, silkG: 300, byGrade: [{ grade: 'B', count: 1 }] } }) } });
+    renderCoop(PATH);
+    await loaded();
+    expect(within(tile('Records')).getByText('1')).toBeInTheDocument();
+    expect(within(tile('Total cocoons')).getByText('8 kg')).toBeInTheDocument();
   });
 
   it('says so when there was no harvest, no check and no alert', async () => {
