@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { warmOnIntent } from '../services/warmUp';
 import { Reveal } from './motion/Reveal';
 import './contact.css';
 
@@ -12,7 +13,7 @@ export function Cta() {
           <span id="cta-title">{t('lpCtaTitle')}</span>
         </Reveal>
         <Reveal delay={140}>
-          <Link to="/register" className="l-hero__cta">
+          <Link to="/register" className="l-hero__cta" {...warmOnIntent}>
             <span>{t('lpCtaButton')}</span>
             <i className="l-hero__cta-arrow">
               <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">

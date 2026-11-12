@@ -1,8 +1,9 @@
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../context/LanguageContext';
+import { resetWarmUp } from '../services/warmUp';
 import { Nav } from './Nav';
 
 function renderNav() {
@@ -102,3 +103,38 @@ describe('Nav', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
+
+describe('Nav waking the API', () => {
+  beforeEach(() => {
+    resetWarmUp();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  const healthCalls = () => (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(([url]) => String(url).endsWith('/health'));
+
+  it('does nothing when the page only loads', () => {
+    renderNav();
+    expect(healthCalls()).toHaveLength(0);
+  });
+
+  it('wakes the API when the pointer reaches Log in', async () => {
+    renderNav();
+    await userEvent.hover(screen.getByRole('link', { name: 'Log in' }));
+    expect(healthCalls()).toHaveLength(1);
+  });
+
+  it('wakes the API when the keyboard reaches Create account', async () => {
+    renderNav();
+    screen.getByRole('link', { name: 'Create account' }).focus();
+    expect(healthCalls()).toHaveLength(1);
+  });
+
+  it('asks only once however many buttons are touched', async () => {
+    renderNav();
+    await userEvent.hover(screen.getByRole('link', { name: 'Log in' }));
+    await userEvent.hover(screen.getByRole('link', { name: 'Create account' }));
+    expect(healthCalls()).toHaveLength(1);
+  });
+});
+

@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/auth.service';
 import { useApiError } from '../../hooks/useApiError';
@@ -6,8 +6,11 @@ import { useLanguage } from '../../context/LanguageContext';
 import { AuthAlert, AuthButton, AuthField, AuthShell } from '../../landing/auth/AuthShell';
 import GoogleButton from '../../landing/auth/GoogleButton';
 import NewAccountFields, { newAccountProblem } from '../../landing/auth/NewAccountFields';
+import { warmUp } from '../../services/warmUp';
 
 export default function RegisterPage() {
+  // The person is about to press Create account. If the free API is asleep, this starts the wake while they type.
+  useEffect(() => warmUp(), []);
   const [form, setForm] = useState({ name: '', email: '' });
   const [secret, setSecret] = useState({ password: '', confirm: '', accepted: false });
   const [error, setError] = useState('');

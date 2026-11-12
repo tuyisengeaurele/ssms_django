@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { warmOnIntent } from '../services/warmUp';
 import { HeroCards } from './HeroCards';
 import { useScrollProgress } from './motion/useScrollProgress';
 import './hero.css';
@@ -71,7 +72,7 @@ export function Hero() {
             </h1>
             <p className="l-hero__sub">{t('lpHeroSub')}</p>
             <div className="l-hero__actions">
-              <Link to="/register" className="l-hero__cta">
+              <Link to="/register" className="l-hero__cta" {...warmOnIntent}>
                 <span>{t('lpHeroCta')}</span>
                 <i className="l-hero__cta-arrow">
                   <Arrow />

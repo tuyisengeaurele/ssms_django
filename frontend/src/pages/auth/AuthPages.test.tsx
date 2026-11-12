@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AxiosError } from 'axios';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import { ToastProvider } from '../../context/ToastContext';
 
@@ -29,6 +29,7 @@ import ForgotPasswordPage from './ForgotPasswordPage';
 import LoginPage from './LoginPage';
 import RegisterPage from './RegisterPage';
 import ResetPasswordPage from './ResetPasswordPage';
+import { resetWarmUp } from '../../services/warmUp';
 import VerifyEmailPage from './VerifyEmailPage';
 
 function Where() {
@@ -643,5 +644,32 @@ describe('Verify email page', () => {
     expect(await screen.findByRole('heading', { level: 1, name: "We couldn't verify your email" })).toBeInTheDocument();
     expect(screen.getByText("This verification link isn't valid. Please request a new one.")).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Request new link' })).toHaveAttribute('href', '/check-email');
+  });
+});
+
+describe('Waking the API while a person starts to sign in', () => {
+  beforeEach(() => {
+    resetWarmUp();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  const healthCalls = () => (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(([url]) => String(url).endsWith('/health'));
+
+  it('asks the health route once when the sign in page opens', () => {
+    renderAt('/login', <LoginPage />, '/login');
+    expect(healthCalls()).toHaveLength(1);
+  });
+
+  it('asks the health route once when the create account page opens', () => {
+    renderAt('/register', <RegisterPage />, '/register');
+    expect(healthCalls()).toHaveLength(1);
+  });
+
+  it('does not ask again when the person moves between the two pages', () => {
+    const first = renderAt('/login', <LoginPage />, '/login');
+    first.unmount();
+    renderAt('/register', <RegisterPage />, '/register');
+    expect(healthCalls()).toHaveLength(1);
   });
 });
