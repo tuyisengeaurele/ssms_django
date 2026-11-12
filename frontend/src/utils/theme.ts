@@ -86,4 +86,17 @@ export function useApplyTheme() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
   useLayoutEffect(() => () => document.documentElement.removeAttribute('data-theme'), []);
+
+  // A print drops the page background but keeps the text colour, so the dark theme would print light text on white paper.
+  // The page prints in the light theme and goes back as soon as the print dialog closes.
+  useLayoutEffect(() => {
+    const toPaper = () => document.documentElement.setAttribute('data-theme', 'light');
+    const fromPaper = () => document.documentElement.setAttribute('data-theme', theme);
+    window.addEventListener('beforeprint', toPaper);
+    window.addEventListener('afterprint', fromPaper);
+    return () => {
+      window.removeEventListener('beforeprint', toPaper);
+      window.removeEventListener('afterprint', fromPaper);
+    };
+  }, [theme]);
 }
