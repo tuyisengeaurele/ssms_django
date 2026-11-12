@@ -1,5 +1,19 @@
 # Changelog
 
+## States, print and the other languages
+
+Step 6 of covering every screen. The pages were opened with the server answering errors, a print of the batch report was made from the dark theme, and the farmer pages were swept in French and Kinyarwanda at phone width (no sideways overflow, no cut off labels).
+
+### Fixed
+- **A failed request looked like an empty list.** When the server did not answer, Farms said "No farms yet" and "0 farms registered", Alerts said "You are all caught up", and Devices said "0 devices registered". A farmer could read that as good news. The farmer's Farms, Batches, Alerts and Devices pages, and the admin's Users, Messages and Cooperatives pages, now say "We could not load this page. Check your connection and try again." with a Try again button, in all three languages. They used to show only a toast that was gone after a few seconds.
+- **The dark theme printed as nothing.** A print drops the page background but keeps the text colour, so a batch report printed from the dark theme came out as light text on white paper. The page prints in the light theme and goes back to dark when the print dialog closes.
+
+### Not done
+The cooperative's Farmers and Members tabs still show a toast only when they fail to load. The batch detail, compare and device detail pages already show an error message.
+
+### How it is guarded
+A shared `LoadError` component with its own tests, a failure test on each of the seven pages (checked to fail without the change), and tests for the print theme in `theme.test.tsx`. No backend change.
+
 ## The public pages
 
 Step 5 of covering every screen. The landing page and every page a signed out person can reach (sign in, create account, forgot and reset password, check email, verify email, join, unauthorized, a real lot page, privacy, terms, not found) were opened at desktop and phone width, and in French and Kinyarwanda. Nothing overflows sideways at 390 pixels. These are the fixes.
