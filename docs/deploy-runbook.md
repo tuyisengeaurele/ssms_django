@@ -464,6 +464,8 @@ Press Authorize, paste the access token from `POST /api/auth/login` (the answer'
 - The schema holds no example values, so no credentials. A test checks that.
 - Only two files can be fetched under `/api/docs/assets/` (a fixed list). Anything else is 404.
 - The docs are open to anyone, like the route list in the README. To switch them off, set `API_DOCS_ENABLED=false` on Render. All three addresses then answer 404.
+- A test also checks that the public schema names no host address, email address, server list or key (`test_the_public_schema_names_no_host_address_or_key`).
+- **Decision (2026-11-12):** the docs stay public while the project is being assessed, because they let a reviewer read the API without an account. When the assessment is over, or before real farmers use the site, set `API_DOCS_ENABLED=false` on Render. Write the date it was switched off here: not yet.
 
 **If something looks wrong**
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## The public API docs are guarded against leaking where the API runs
+
+Phase 1 of the roadmap. The API documentation is public on purpose, so a reviewer can read it without an account. That makes one rule important: it must never contain a host name, an email address, a server list or a key.
+
+### Added
+- **Tests on the public schema.** It must name no host (Render, Vercel, Supabase, Cloudinary, Sentry, localhost), no email address, no `servers` list, and no key or token (`Bearer ey`, `sk_live`, `AKIA`). Today it is clean, so the tests pass, and they fail the day something leaks.
+- **A dated decision in the runbook.** The docs stay public while the project is assessed, then get switched off with `API_DOCS_ENABLED=false`.
+
+### Not changed
+The docs themselves, and who can read them.
+
 ## Browsers now report what the content security policy would block
 
 Phase 1 of the roadmap. The frontend has had a content security policy for some time, but only in "report only" mode, and the reports went nowhere. So nobody could know whether turning it on would break the map, the bot check, the error monitor or the photos. This change gives the reports somewhere to go. Nothing is blocked yet.
