@@ -350,3 +350,14 @@ describe('Users page', () => {
     });
   });
 });
+
+describe('Users page when the people cannot be loaded', () => {
+  it('says so, and loads again with Try again', async () => {
+    api.getUsers.mockRejectedValueOnce(new Error('boom'));
+    open();
+    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load this page');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+    expect(api.getUsers).toHaveBeenCalledTimes(2);
+  });
+});

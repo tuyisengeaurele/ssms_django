@@ -168,3 +168,14 @@ describe('Cooperatives page', () => {
     expect(container.querySelector('[style*="gradient"], .stat-card, .stat-card-icon')).toBeNull();
   });
 });
+
+describe('Cooperatives page when the cooperatives cannot be loaded', () => {
+  it('says so, and loads again with Try again', async () => {
+    api.getAll.mockRejectedValueOnce(new Error('boom'));
+    open();
+    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load this page');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+    expect(api.getAll).toHaveBeenCalledTimes(2);
+  });
+});

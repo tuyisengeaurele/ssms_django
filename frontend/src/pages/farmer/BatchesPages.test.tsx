@@ -297,3 +297,21 @@ describe('New batch page', () => {
     expect(container.innerHTML.toLowerCase()).not.toMatch(/#d97706|#10b981|#3b82f6|#8b5cf6|#ec4899|brand-50/);
   });
 });
+
+describe('Batches page when the batches cannot be loaded', () => {
+  const open = () => wrap('/batches', '/batches', <BatchesPage />);
+
+  it('says so, and does not claim there are no active batches', async () => {
+    api.active.mockRejectedValue(new Error('boom'));
+    open();
+    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load this page');
+    expect(screen.queryByText(/active batches across/)).not.toBeInTheDocument();
+  });
+
+  it('loads again with Try again', async () => {
+    api.active.mockRejectedValueOnce(new Error('boom'));
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('3 active batches across your farms.')).toBeInTheDocument();
+  });
+});

@@ -6,6 +6,7 @@ import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
 import EmptyState from '../../components/ui/EmptyState';
+import LoadError from '../../components/ui/LoadError';
 import { Icon } from '../../components/ui/Icon';
 import Modal from '../../components/ui/Modal';
 import PageHeader from '../../components/ui/PageHeader';
@@ -24,6 +25,8 @@ export default function AdminContactsPage() {
 
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [marking, setMarking] = useState(false);
   const [filter, setFilter] = useState<Filter>('all');
@@ -32,12 +35,13 @@ export default function AdminContactsPage() {
   const [markingAll, setMarkingAll] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
+    setFailed(false);
     contactsService.getAll()
       .then((r) => setMessages(r.data.data))
-      .catch((e) => showError(getErrorMessage(e)))
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [attempt]);
 
   const setRead = (ids: string[]) =>
     setMessages((prev) => prev.map((m) => (ids.includes(m.id) ? { ...m, isRead: true } : m)));
@@ -167,7 +171,7 @@ export default function AdminContactsPage() {
 
       <PageHeader
         title={t('ptMessages')}
-        subtitle={loading ? undefined : fill(t(messages.length === 1 ? 'msSummaryOne' : 'msSummary'), { total: messages.length, unread: unreadCount })}
+        subtitle={loading || failed ? undefined : fill(t(messages.length === 1 ? 'msSummaryOne' : 'msSummary'), { total: messages.length, unread: unreadCount })}
         actions={
           unreadCount > 0 ? (
             <button className="btn btn-secondary btn-sm" onClick={() => setAskAll(true)}>
@@ -203,7 +207,9 @@ export default function AdminContactsPage() {
           ))}
         </div>
 
-        {loading ? (
+        {failed ? (
+          <LoadError onRetry={() => setAttempt((n) => n + 1)} />
+        ) : loading ? (
           <SkeletonTable rows={5} cols={4} />
         ) : messages.length === 0 ? (
           <EmptyState icon={<Icon name="inbox" size={22} />} title={t('msNone')} description={t('msNoneBody')} />

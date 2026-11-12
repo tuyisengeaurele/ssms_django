@@ -14,6 +14,7 @@ import { useToast } from '../../context/ToastContext';
 import { fill } from '../../utils/fill';
 import Avatar from '../../components/ui/Avatar';
 import EmptyState from '../../components/ui/EmptyState';
+import LoadError from '../../components/ui/LoadError';
 import { Icon } from '../../components/ui/Icon';
 import Modal from '../../components/ui/Modal';
 import PageHeader from '../../components/ui/PageHeader';
@@ -38,6 +39,8 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [coops, setCoops] = useState<Cooperative[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [tab, setTab] = useState<Tab>('active');
   const [search, setSearch] = useState('');
 
@@ -75,15 +78,16 @@ export default function AdminUsersPage() {
   };
 
   useEffect(() => {
+    setLoading(true);
+    setFailed(false);
     Promise.all([adminService.getUsers(), cooperativeService.getAll()])
       .then(([usersRes, coopsRes]) => {
         setUsers(usersRes.data.data);
         setCoops(coopsRes.data.data);
       })
-      .catch((e) => showError(getErrorMessage(e)))
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [attempt]);
 
   const replaceUser = (updated: User) => setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
 
@@ -422,7 +426,9 @@ export default function AdminUsersPage() {
           ))}
         </div>
 
-        {loading ? (
+        {failed ? (
+          <LoadError onRetry={() => setAttempt((n) => n + 1)} />
+        ) : loading ? (
           <SkeletonTable rows={5} cols={5} />
         ) : filtered.length === 0 ? (
           <EmptyState
