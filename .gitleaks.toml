@@ -1,0 +1,12 @@
+title = "SSMS gitleaks settings"
+
+[extend]
+useDefault = true
+
+# Values made up for one CI run. ci.yml says they protect nothing, and they are written in a form no real key has.
+# An entry goes here only after a person has read the finding and written the reason. A real secret is never listed:
+# it is rotated.
+[allowlist]
+description = "Throwaway values used by CI"
+regexes = ['''ci-only-[a-z-]+-that-protects-nothing''']
+paths = ['''\.github/workflows/ci\.yml''']
