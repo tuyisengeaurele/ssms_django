@@ -5,11 +5,12 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
+import { evaluate } from './bundle-math.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dist = resolve(here, '../dist');
 const assets = resolve(dist, 'assets');
-const BUDGET_KB = Number(process.env.BUNDLE_BUDGET_KB ?? 250);
+const BUDGET_KB = Number(process.env.BUNDLE_BUDGET_KB ?? 230);
 
 const html = readFileSync(resolve(dist, 'index.html'), 'utf8');
 const entry = html.match(/src="\/assets\/(index-[^"]+\.js)"/)?.[1];
@@ -34,18 +35,16 @@ function walk(file) {
 walk(entry);
 walk(landing);
 
-let total = 0;
 const rows = [];
 for (const file of seen) {
-  const gz = gzipSync(readFileSync(resolve(assets, file))).length / 1024;
-  total += gz;
-  rows.push([file, gz]);
+  rows.push([file, gzipSync(readFileSync(resolve(assets, file))).length / 1024]);
 }
+const { total, ok } = evaluate(rows.map(([, gz]) => gz), BUDGET_KB);
 rows.sort((a, b) => b[1] - a[1]);
 for (const [file, gz] of rows) console.log(`${gz.toFixed(1).padStart(7)} KB gzip  ${file}`);
 console.log(`${total.toFixed(1).padStart(7)} KB gzip  total JS for the landing page (budget ${BUDGET_KB} KB)`);
 
-if (total > BUDGET_KB) {
+if (!ok) {
   console.error('Over budget.');
   process.exit(1);
 }
