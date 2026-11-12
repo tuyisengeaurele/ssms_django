@@ -26,6 +26,8 @@ PUBLIC = {
     'MfaVerifyView', 'MfaSetupStartView', 'MfaSetupConfirmView',
     'PasswordResetRequestView', 'PasswordResetConfirmView', 'VerifyEmailView', 'ResendVerificationView',
     'ContactCreateView', 'PublicLotView', 'InvitationDetailView', 'DeviceIngestView',
+    # A browser sends this report by itself, without signing in. It keeps one line and always answers 204 (core/csp.py).
+    'CspReportView',
 }
 
 # Views that are not classes, so they carry their own check. Named here so a new one is noticed.

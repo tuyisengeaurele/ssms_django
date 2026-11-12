@@ -209,6 +209,7 @@ REST_FRAMEWORK = {
         'register': '20/minute',
         'password_reset': '5/minute',
         'contact': '5/hour',
+        'csp': '30/minute',   # browsers reporting what the content security policy blocked, per address
         'device': '30/minute',   # readings per device key
         'invitation': '20/minute',
         'sessions': '30/minute',   # signed in devices: list and sign out
