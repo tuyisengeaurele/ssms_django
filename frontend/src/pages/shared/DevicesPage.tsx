@@ -4,11 +4,10 @@ import { farmService } from '../../services/farm.service';
 import { IoTDevice, DeviceStatus, Farm } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { useToast } from '../../context/ToastContext';
-import { useApiError } from '../../hooks/useApiError';
 import { fill } from '../../utils/fill';
 import { timeAgo } from '../../utils/timeAgo';
 import EmptyState from '../../components/ui/EmptyState';
+import LoadError from '../../components/ui/LoadError';
 import { Icon } from '../../components/ui/Icon';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
@@ -22,12 +21,11 @@ type Tab = DeviceStatus | 'all';
 export default function DevicesPage() {
   const { user } = useAuth();
   const { t, locale } = useLanguage();
-  const { error: showError } = useToast();
-  const { getErrorMessage } = useApiError();
 
   const [devices, setDevices] = useState<IoTDevice[]>([]);
   const [farms, setFarms] = useState<Farm[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<Tab>('all');
   const [selected, setSelected] = useState<IoTDevice | null>(null);
@@ -37,8 +35,8 @@ export default function DevicesPage() {
 
   const loadDevices = () =>
     deviceService.getAll()
-      .then((r) => setDevices(r.data.data))
-      .catch((e) => showError(getErrorMessage(e)));
+      .then((r) => { setDevices(r.data.data); setFailed(false); })
+      .catch(() => setFailed(true));
 
   useEffect(() => {
     Promise.allSettled([
@@ -72,7 +70,7 @@ export default function DevicesPage() {
     <div>
       <PageHeader
         title={t('ptDevices')}
-        subtitle={loading ? undefined : fill(t(devices.length === 1 ? 'dvSubtitleOne' : 'dvSubtitleMany'), { n: devices.length })}
+        subtitle={loading || failed ? undefined : fill(t(devices.length === 1 ? 'dvSubtitleOne' : 'dvSubtitleMany'), { n: devices.length })}
         actions={
           <>
             {canManage && (
@@ -107,7 +105,9 @@ export default function DevicesPage() {
           ))}
         </div>
 
-        {loading ? (
+        {failed && !loading ? (
+          <LoadError onRetry={refresh} />
+        ) : loading ? (
           <SkeletonTable rows={6} cols={6} />
         ) : devices.length === 0 ? (
           <EmptyState

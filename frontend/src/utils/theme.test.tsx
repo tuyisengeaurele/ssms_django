@@ -123,6 +123,24 @@ describe('useApplyTheme', () => {
     expect(attr()).toBe('dark');
   });
 
+  // Paper is white and a print drops the page background, so light text from the dark theme would print as nothing.
+  it('prints in the light theme and goes back to dark after', () => {
+    setThemeChoice('dark');
+    renderHook(() => useApplyTheme());
+    window.dispatchEvent(new Event('beforeprint'));
+    expect(attr()).toBe('light');
+    window.dispatchEvent(new Event('afterprint'));
+    expect(attr()).toBe('dark');
+  });
+
+  it('stops listening for a print when the app closes', () => {
+    setThemeChoice('dark');
+    const { unmount } = renderHook(() => useApplyTheme());
+    unmount();
+    window.dispatchEvent(new Event('beforeprint'));
+    expect(attr()).toBeNull();
+  });
+
   it('takes the theme off the page when the app closes, so public pages stay light', () => {
     setThemeChoice('dark');
     const { unmount } = renderHook(() => useApplyTheme());

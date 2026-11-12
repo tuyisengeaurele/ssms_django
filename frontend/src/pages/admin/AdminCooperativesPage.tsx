@@ -7,6 +7,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { fill } from '../../utils/fill';
 import EmptyState from '../../components/ui/EmptyState';
+import LoadError from '../../components/ui/LoadError';
 import { Icon } from '../../components/ui/Icon';
 import Modal from '../../components/ui/Modal';
 import PageHeader from '../../components/ui/PageHeader';
@@ -28,21 +29,24 @@ export default function AdminCooperativesPage() {
   const [deletedCoops, setDeletedCoops] = useState<Cooperative[]>([]);
   const [tab, setTab] = useState<'active' | 'deleted'>('active');
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [creating, setCreating] = useState(false);
   const [confirmRestore, setConfirmRestore] = useState<Cooperative | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
+    setLoading(true);
+    setFailed(false);
     Promise.all([cooperativeService.getAll(), cooperativeService.getDeleted()])
       .then(([active, deleted]) => {
         setCoops(active.data.data);
         setDeletedCoops(deleted.data.data);
       })
-      .catch((e) => showError(getErrorMessage(e)))
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [attempt]);
 
   const handleRestore = async () => {
     if (!confirmRestore) return;
@@ -120,7 +124,9 @@ export default function AdminCooperativesPage() {
           ))}
         </div>
 
-        {loading ? (
+        {failed ? (
+          <LoadError onRetry={() => setAttempt((n) => n + 1)} />
+        ) : loading ? (
           <SkeletonTable rows={4} cols={5} />
         ) : filtered.length === 0 ? (
           <EmptyState

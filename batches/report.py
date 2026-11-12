@@ -146,7 +146,7 @@ def batch_report_pdf(batch, made_by: str, lang: str = 'en', lot_links: bool = Fa
         story.append(para(t(lang, 'brChecksSummaryOne' if len(checks) == 1 else 'brChecksSummary', n=len(checks), p=found)))
         story.append(data_table(
             [t(lang, 'hpColDate'), t(lang, 'brColResult'), t(lang, 'brColConfidence')],
-            [[day(c.detected_at, lang), c.result, f'{round(c.confidence * 100)} %'] for c in checks],
+            [[day(c.detected_at, lang), t(lang, 'drHealthy') if c.result == 'Healthy' else c.result, f'{round(c.confidence * 100)} %'] for c in checks],
             col_widths=[0.3, 0.4, 0.3], right=[2],
         ))
 

@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { batchSupervisorService, ActiveBatch } from '../../services/sensor.service';
-import { useToast } from '../../context/ToastContext';
-import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
 import { harvestHint } from '../../utils/harvestHint';
 import { stageLabel, STAGE_ORDER } from '../../utils/constants';
 import EmptyState from '../../components/ui/EmptyState';
+import LoadError from '../../components/ui/LoadError';
 import { Icon } from '../../components/ui/Icon';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
@@ -18,22 +17,23 @@ import { dateFormat } from '../../utils/dateFormat';
 type Tab = 'ALL' | (typeof STAGE_ORDER)[number];
 
 export default function BatchesPage() {
-  const { error: showError } = useToast();
-  const { getErrorMessage } = useApiError();
   const { t, locale } = useLanguage();
 
   const [batches, setBatches] = useState<ActiveBatch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<Tab>('ALL');
 
   useEffect(() => {
+    setLoading(true);
+    setFailed(false);
     batchSupervisorService.getActive()
       .then((r) => setBatches(r.data.data))
-      .catch((e) => showError(getErrorMessage(e)))
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [attempt]);
 
   const query = search.trim().toLowerCase();
   const inStage = (stage: Tab) => (stage === 'ALL' ? batches : batches.filter((b) => b.stage === stage));
@@ -49,7 +49,7 @@ export default function BatchesPage() {
     <div>
       <PageHeader
         title={t('ptBatches')}
-        subtitle={loading ? undefined : fill(t(batches.length === 1 ? 'btSubtitleOne' : 'btSubtitleMany'), { n: batches.length })}
+        subtitle={loading || failed ? undefined : fill(t(batches.length === 1 ? 'btSubtitleOne' : 'btSubtitleMany'), { n: batches.length })}
         actions={
           <>
             <Link to="/batches/compare" className="btn btn-secondary btn-sm">{t('ptCompare')}</Link>
@@ -79,7 +79,9 @@ export default function BatchesPage() {
           ))}
         </div>
 
-        {loading ? (
+        {failed ? (
+          <LoadError onRetry={() => setAttempt((n) => n + 1)} />
+        ) : loading ? (
           <SkeletonTable rows={6} cols={5} />
         ) : batches.length === 0 ? (
           <EmptyState

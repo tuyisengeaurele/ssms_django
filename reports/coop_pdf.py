@@ -60,7 +60,7 @@ def coop_report_pdf(report: dict, made_by: str, lang: str = 'en') -> bytes:
     else:
         story.append(para(t(lang, 'brChecksSummaryOne' if checks['total'] == 1 else 'brChecksSummary', n=checks['total'], p=checks['found'])))
         story.append(data_table(
-            [t(lang, 'brColResult'), t(lang, 'crColCount')], [[r['result'], r['count']] for r in checks['by_result']],
+            [t(lang, 'brColResult'), t(lang, 'crColCount')], [[t(lang, 'drHealthy') if r['result'] == 'Healthy' else r['result'], r['count']] for r in checks['by_result']],
             col_widths=[0.7, 0.3], right=[1],
         ))
 

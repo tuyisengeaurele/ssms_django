@@ -1,5 +1,23 @@
 # Changelog
 
+## States, print and the other languages
+
+Step 6 of covering every screen. The pages were opened with the server answering errors, a print of the batch report was made from the dark theme, and the farmer pages were swept in French and Kinyarwanda at phone width (no sideways overflow, no cut off labels).
+
+### Fixed
+- **A failed request looked like an empty list.** When the server did not answer, Farms said "No farms yet" and "0 farms registered", Alerts said "You are all caught up", and Devices said "0 devices registered". A farmer could read that as good news. The farmer's Farms, Batches, Alerts and Devices pages, and the admin's Users, Messages and Cooperatives pages, now say "We could not load this page. Check your connection and try again." with a Try again button, in all three languages. They used to show only a toast that was gone after a few seconds.
+- **The dark theme printed as nothing.** A print drops the page background but keeps the text colour, so a batch report printed from the dark theme came out as light text on white paper. The page prints in the light theme and goes back to dark when the print dialog closes.
+
+- **The cooperative's Farmers and Members tabs** have the same load error. A failed Farmers load no longer shows "No farmers yet". When only the list of people to add fails to load, the Members tab keeps the members and says so, with Try again.
+- **The report PDFs said "Healthy" in French and Kinyarwanda,** in the cooperative report and in the batch report. They now say "Sains" and "Bizima", as the screens do. The French counts also read wrong ("1 ont trouvé une maladie", "1 prises en charge"). They now read "2 contrôles, dont 1 avec une maladie." and "2 alertes. Prises en charge : 1. Résolues : 0." on the screen and in the PDF.
+- **The common error messages were English in French and Kinyarwanda.** "We can't reach the server", "That took too long", "Your session has ended", "You don't have permission", the server problem message and the rest of the app's own sentences, plus the two the server sends all the time (a wrong email or password, an email already taken), now follow the language of the screen. Other words from the server still arrive in English.
+
+### Checked
+The lot QR sheet prints cleanly, and the cooperative report PDF has the right numbers in English, French and Kinyarwanda. The admin's system report PDF is English only, which was left as it is.
+
+### How it is guarded
+A shared `LoadError` component with its own tests, a failure test on each page (checked to fail without the change), tests for the print theme in `theme.test.tsx`, translated error tests in `useApiError.test.ts`, and PDF tests in `test_coop_report.py` and `test_batch_report_pdf.py`. The only backend change is the text in the two PDFs and `core/doc_text.py`, rebuilt from `pages.ts`.
+
 ## The public pages
 
 Step 5 of covering every screen. The landing page and every page a signed out person can reach (sign in, create account, forgot and reset password, check email, verify email, join, unauthorized, a real lot page, privacy, terms, not found) were opened at desktop and phone width, and in French and Kinyarwanda. Nothing overflows sideways at 390 pixels. These are the fixes.

@@ -253,3 +253,14 @@ describe('Messages page', () => {
     });
   });
 });
+
+describe('Messages page when the messages cannot be loaded', () => {
+  it('says so, and does not show the empty inbox', async () => {
+    api.getAll.mockRejectedValueOnce(new Error('boom'));
+    open();
+    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load this page');
+    expect(screen.queryByText('No messages yet')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+  });
+});

@@ -315,3 +315,20 @@ describe('Alerts page', () => {
     });
   });
 });
+
+describe('Alerts page when the alerts cannot be loaded', () => {
+  // "You are all caught up" would tell a farmer there is nothing to see when the truth is that nothing arrived.
+  it('says so, and does not say the person is all caught up', async () => {
+    api.getAll.mockRejectedValue(new Error('boom'));
+    open();
+    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load this page');
+    expect(screen.queryByText('You are all caught up.')).not.toBeInTheDocument();
+  });
+
+  it('loads again with Try again', async () => {
+    api.getAll.mockRejectedValueOnce(new Error('boom'));
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('Temperature too low: 21 C')).toBeInTheDocument();
+  });
+});

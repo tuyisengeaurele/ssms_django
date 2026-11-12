@@ -24,7 +24,7 @@ KEYS = [
     'brChecks', 'brChecksNone', 'brChecksSummary', 'brChecksSummaryOne', 'hpColDate', 'brColResult', 'brColConfidence',
     'brAlerts', 'brAlertsNone', 'brAlertsWaiting', 'brAlertsWaitingOne',
     'brHarvest', 'brHarvestNone', 'brHarvestSum', 'brHarvestSumOne', 'hpGradeName', 'lotScan', 'lotPrintCaption',
-    'brPrepared',
+    'brPrepared', 'drHealthy',
     # The farm summary
     'ptFarmSummary', 'fsFarm', 'fsOwner', 'fsRegistered', 'fsRoomCol', 'fsRoomBatchesCol', 'fsRoomsNone', 'fsBatches', 'fsBatchCol', 'fsBatchesNone',
     # The cooperative report

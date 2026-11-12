@@ -3,7 +3,22 @@ import { loadLocale } from '../context/LanguageContext';
 import { translations } from '../i18n/translations';
 import { fill } from '../utils/fill';
 
-const GENERIC = 'Something went wrong. Please try again.';
+/** One of the app's own sentences, in the language of the screen. */
+function say(key: string): string {
+  const entry = translations[key];
+  return entry[loadLocale()] ?? entry.en;
+}
+
+// Sentences the server sends all the time, and so the ones a person meets most. The rest of the server's words stay as sent.
+const KNOWN_SERVER_SENTENCES: Record<string, string> = {
+  "That email or password doesn't look right. Please try again.": 'erBadLogin',
+  'An account with this email already exists. Try signing in instead.': 'erEmailTaken',
+};
+
+function fromServer(message: string): string {
+  const key = KNOWN_SERVER_SENTENCES[message.trim()];
+  return key ? say(key) : message;
+}
 
 type ServerBody = { message?: string; errors?: Record<string, unknown>; retryAfter?: number; reference?: string };
 
@@ -57,12 +72,12 @@ function firstFieldError(errors: ServerBody['errors']): string | null {
 
 export function useApiError() {
   const getErrorMessage = (err: unknown): string => {
-    if (!(err instanceof AxiosError)) return GENERIC;
+    if (!(err instanceof AxiosError)) return say('erGeneric');
 
     // The request never got an answer.
     if (!err.response) {
-      if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') return 'That took too long. Please try again.';
-      return "We can't reach the server. Check your internet connection and try again.";
+      if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') return say('erTooSlow');
+      return say('erNoServer');
     }
 
     const { status, data } = err.response;
@@ -71,19 +86,19 @@ export function useApiError() {
     if (status === 429) return tooManyRequests(secondsToWait(err.response.headers, body));
 
     const detail = firstFieldError(body.errors);
-    if (detail) return detail;
+    if (detail) return fromServer(detail);
 
     if (status === 422 && !body.message) {
-      return 'Please check what you entered and try again.';
+      return say('erCheckInput');
     }
     const reference = status >= 500 ? referenceOf(err.response.headers, body) : null;
-    if (typeof body.message === 'string' && body.message.trim()) return withReference(body.message, reference);
+    if (typeof body.message === 'string' && body.message.trim()) return withReference(fromServer(body.message), reference);
 
-    if (status >= 500) return withReference('Our server hit a problem. Please try again in a moment.', reference);
-    if (status === 404) return "We couldn't find what you were looking for.";
-    if (status === 403) return "You don't have permission to do that.";
-    if (status === 401) return 'Your session has ended. Please sign in again.';
-    return GENERIC;
+    if (status >= 500) return withReference(say('erServer'), reference);
+    if (status === 404) return say('erNotFound');
+    if (status === 403) return say('erForbidden');
+    if (status === 401) return say('erSession');
+    return say('erGeneric');
   };
 
   return { getErrorMessage };
