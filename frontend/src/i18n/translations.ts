@@ -222,6 +222,7 @@ export const translations: TranslationMap = {
   checkEmailDesc:       { en: 'One last step before you get started', fr: 'Dernière étape avant de commencer', rw: 'Intambwe imwe ya nyuma' },
   checkEmailHeading:    { en: 'Check your inbox',                 fr: 'Vérifiez votre boîte mail',             rw: 'Reba aho imeyili zigenda' },
   checkEmailSent:       { en: 'We sent a verification link to',   fr: 'Nous avons envoyé un lien à',           rw: 'Twahaye igisomo cy\'imeyili kuri' },
+  checkEmailSentNoAddress: { en: 'We sent a verification link to your email address.', fr: 'Nous avons envoyé un lien de vérification à votre adresse e-mail.', rw: 'Twohereje igisomo cy\'imeyili kuri imeyili yawe.' },
   checkEmailSpam:       { en: "Didn't receive it? Check your spam folder or click below to resend.", fr: "Pas reçu ? Vérifiez les spams ou renvoyez.", rw: "Ntabwo wayikeye? Reba spam cyangwa ongera uhereze." },
   checkEmailNoEmail:    { en: "Didn't get it?",                   fr: "Vous ne l'avez pas reçu ?",             rw: "Ntabwo wayikeye?" },
   checkEmailResend:     { en: 'Resend verification email',        fr: 'Renvoyer le lien',                      rw: 'Ongera uhereze imeyili' },

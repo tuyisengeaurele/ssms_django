@@ -577,6 +577,13 @@ describe('Check email page', () => {
     expect(api.resendVerification).toHaveBeenCalledWith('a@b.rw');
   });
 
+  it('does not stop mid sentence, or offer a resend, when it is opened without an address', () => {
+    renderAt('/check-email', <CheckEmailPage />, '/check-email');
+    expect(screen.getByText('We sent a verification link to your email address.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Resend verification email' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign in' })).toBeInTheDocument();
+  });
+
   it('shows a message when the resend fails', async () => {
     api.resendVerification.mockRejectedValue(new Error('x'));
     renderAt('/check-email?email=a%40b.rw', <CheckEmailPage />, '/check-email');
