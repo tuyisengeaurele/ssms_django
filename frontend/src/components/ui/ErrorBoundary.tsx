@@ -1,7 +1,28 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
+import { Icon } from './Icon';
+import '../../styles/errorScreen.css';
 
 interface Props { children: ReactNode }
 interface State { hasError: boolean; error: Error | null }
+
+/** What the person sees when a page breaks. It sits outside the router, so the way out is a plain link. */
+function ErrorScreen() {
+  const { t } = useLanguage();
+  return (
+    <div className="error-screen" role="alert">
+      <div className="error-screen-card">
+        <span className="error-screen-mark" aria-hidden="true"><Icon name="warning" size={34} /></span>
+        <h1>{t('errTitle')}</h1>
+        <p>{t('errBody')}</p>
+        <div className="error-screen-actions">
+          <button type="button" className="error-screen-btn" onClick={() => window.location.reload()}>{t('errRefresh')}</button>
+          <a href="/" className="error-screen-btn error-screen-btn--primary">{t('errHome')}</a>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false, error: null };
@@ -17,54 +38,6 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (!this.state.hasError) return this.props.children;
 
-    return (
-      <div style={{
-        minHeight: '100vh', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        background: 'var(--bg, #f8faf9)', padding: '2rem', textAlign: 'center',
-      }}>
-        <div style={{ maxWidth: 480 }}>
-          <div style={{
-            width: 80, height: 80, borderRadius: '50%',
-            background: '#fef2f2', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', margin: '0 auto 1.5rem',
-          }}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-          </div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.5rem' }}>
-            This page ran into a problem
-          </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.65, marginBottom: '1.5rem' }}>
-            We're sorry. Please refresh the page.
-          </p>
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
-            <button
-              onClick={() => window.location.reload()}
-              style={{
-                padding: '0.6rem 1.25rem', borderRadius: 10,
-                border: '1.5px solid var(--border)', background: 'transparent',
-                color: 'var(--text)', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer',
-              }}
-            >
-              Refresh page
-            </button>
-            <a
-              href="/"
-              style={{
-                padding: '0.6rem 1.25rem', borderRadius: 10,
-                background: 'var(--brand-600, #16a34a)', color: '#fff',
-                fontWeight: 600, fontSize: '0.9rem', textDecoration: 'none',
-              }}
-            >
-              Go home
-            </a>
-          </div>
-        </div>
-      </div>
-    );
+    return <ErrorScreen />;
   }
 }
