@@ -1,5 +1,19 @@
 # Changelog
 
+## The landing page stays inside the screen on phones
+
+Phase 2 of the roadmap (speed and polish). A sideways scroll on the landing page was reported on a real phone. It could not be reproduced in desktop Chrome at any width from 280 to 430 pixels, in landscape, or with larger text, so this fixes the most likely cause and the real phone still has to confirm it.
+
+### Fixed
+- **The hero no longer lets its rotated sheet leave it.** The "pile of paper" behind the batch card is rotated and sits inside a rounded box with hidden overflow, which Safari does not always honour for a transformed child. The hero now also paints inside its own box (`contain: paint`), and on a narrow screen the sheet stays inside the card's width.
+- **Browsers older than 2022 get a fallback.** The page rule `overflow-x: clip` is unknown to them. A `hidden` rule now comes first and `clip` overrides it where it is understood, so nothing sticks out sideways.
+
+### Still to confirm
+Open the page on the phone that showed the problem and tell me its model and browser. If it still scrolls sideways there, it has to be reproduced in that browser before anything else is changed.
+
+### How it is guarded
+Three style tests in `landing/phoneOverflow.test.ts`: the fallback order, the paint containment, and the narrow screen rule.
+
 ## The sleeping API starts waking before a visitor needs it
 
 Phase 1 of the roadmap. The free plan puts the API to sleep after 15 minutes, and the first request after that waited about a minute (68 seconds was measured). The outside pinger already keeps it awake from 06:00 to 20:00. This change helps in the hours it sleeps, and makes a demonstration safe.
