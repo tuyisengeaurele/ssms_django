@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -135,6 +135,14 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
   const navigate = useNavigate();
   const groups = getNavGroups(user?.role, alertCount, t, decisionCount);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  // On a phone the menu covers the page, so Escape has to close it as it does every other overlay.
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onMobileClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [mobileOpen, onMobileClose]);
 
   const handleLogout = () => {
     setConfirmOpen(false);
