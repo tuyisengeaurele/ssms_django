@@ -1,5 +1,19 @@
 # Changelog
 
+## The admin cooperative pages and the support visit
+
+Step 3 of covering every screen. The five admin cooperative pages (all cooperatives, and one cooperative's report, farms, members and details), the user, cooperative and invite dialogs, the delete confirmations and the support access flow were opened in a real browser. These are the fixes.
+
+### Fixed
+- **A support visit always ends on the Users list.** However it ended (the admin pressed End, the person ended it, or the time ran out), the admin stayed on a page of the person, where the allowance and supply cards answer 403 to an admin. The banner now takes the admin back to the Users list. Three tests in `ActingBanner.test.tsx`.
+- **The answers to a support request are pills.** "How long" and "What you may do" were the browser's own blue radio buttons. Each answer is a pill with the real radio underneath, so the keyboard and screen readers work as before. Any other tick box or radio takes the app colour.
+- **The hint above a support message** has room before the first line of the message.
+- **The device detail** has room between "Move to another room", "Latest reading" and "Recent readings".
+- **The cooperative harvest is three tiles** (records, total cocoons, total silk) with the grades under them, like the other numbers on the report.
+
+### How it is guarded
+Style guards in `supportChoices.test.ts` and `badgeRow.test.ts`, and updated tests for the cooperative report and routes. No backend change.
+
 ## The supervisor and egg supply flow, with real data
 
 Step 2 of covering every screen. The scratch database was filled with a pending room, a room size change, two allowance requests, an earned-allowance suggestion and three rounds (one open with requests, one closed with a split to confirm, one confirmed with eggs to receive). The Decisions inbox, the supply list, each round, the dialogs and the farmer's side were opened at desktop and phone width, in the dark theme, and in French and Kinyarwanda (no clipped text). Two real problems came out of it.
