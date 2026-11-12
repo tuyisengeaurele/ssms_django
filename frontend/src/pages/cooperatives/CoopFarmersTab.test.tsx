@@ -326,3 +326,22 @@ describe('The farmers of my cooperative', () => {
     });
   });
 });
+
+describe('The farmers of my cooperative when they cannot be loaded', () => {
+  // "0 farmers" and "No farmers yet" would tell a supervisor their cooperative is empty.
+  it('says so, and does not claim there are no farmers', async () => {
+    api.farmers.mockRejectedValueOnce(new Error('boom'));
+    open();
+    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load this page');
+    expect(screen.queryByText('No farmers yet')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Farmers \(0\)/)).not.toBeInTheDocument();
+  });
+
+  it('loads again with Try again', async () => {
+    api.farmers.mockRejectedValueOnce(new Error('boom'));
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('Bruce Ishimwe')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+});

@@ -9,6 +9,7 @@ import { useToast } from '../../context/ToastContext';
 import { fill } from '../../utils/fill';
 import Avatar from '../../components/ui/Avatar';
 import EmptyState from '../../components/ui/EmptyState';
+import LoadError from '../../components/ui/LoadError';
 import { Icon } from '../../components/ui/Icon';
 import Modal from '../../components/ui/Modal';
 import Panel from '../../components/ui/Panel';
@@ -33,6 +34,8 @@ export default function CoopFarmersTab() {
   const [farmers, setFarmers] = useState<TeamFarmer[]>([]);
   const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   const [toRemove, setToRemove] = useState<TeamFarmer | null>(null);
   const [removing, setRemoving] = useState(false);
@@ -57,15 +60,16 @@ export default function CoopFarmersTab() {
   const [lowering, setLowering] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
+    setFailed(false);
     Promise.all([teamService.getFarmers(), teamService.getInvitations()])
       .then(([farmersRes, invitationsRes]) => {
         setFarmers(farmersRes.data.data);
         setInvitations(invitationsRes.data.data);
       })
-      .catch((e) => showError(getErrorMessage(e)))
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [attempt]);
 
   useEffect(() => {
     // Without the default the field starts empty and the invitation still works.
@@ -299,6 +303,10 @@ export default function CoopFarmersTab() {
         </button>
       </div>
 
+      {failed ? (
+        <LoadError onRetry={() => setAttempt((n) => n + 1)} />
+      ) : (
+      <>
       <div className="grid-3" style={{ marginBottom: 24 }}>
         {loading ? (
           [0, 1].map((i) => <SkeletonStatCard key={i} />)
@@ -430,6 +438,8 @@ export default function CoopFarmersTab() {
           )}
         </Panel>
       </div>
+      </>
+      )}
     </div>
   );
 }

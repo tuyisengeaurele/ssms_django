@@ -311,6 +311,7 @@ export const pageTranslations = {
   coRemoveBody: k("{name} will no longer belong to {coop}. Their account and farms stay in the system.", "{name} ne fera plus partie de {coop}. Son compte et ses fermes restent dans le système.", "{name} ntazongera kuba muri {coop}. Konti ye n'imirima ye bisigara muri sisitemu."),
   coRemoveYes: k("Yes, remove", "Oui, retirer", "Yego, kuramo"),
   coDetailMembers: k("Members", "Membres", "Abanyamuryango"),
+  coCandidatesFailed: k("We could not load the people you can add.", "Nous n'avons pas pu charger les personnes à ajouter.", "Ntitwabashije kubona abo wakongeraho."),
   coPersonToAdd: k("Person to add", "Personne à ajouter", "Uwo wongeraho"),
   coChoosePerson: k("Choose a person to add", "Choisissez une personne à ajouter", "Hitamo uwo wongeraho"),
   coAdd: k("Add", "Ajouter", "Ongeraho"),

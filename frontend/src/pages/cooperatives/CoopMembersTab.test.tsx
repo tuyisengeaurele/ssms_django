@@ -122,3 +122,17 @@ describe('The members of a cooperative', () => {
     expect(await screen.findByRole('heading', { level: 2, name: 'Membres (1)' })).toBeInTheDocument();
   });
 });
+
+describe('The members of a cooperative when the people to add cannot be loaded', () => {
+  // The members are still shown. Only the choice of a person to add is missing, and the page says so.
+  it('keeps the members, says the list to add from is missing, and loads it again', async () => {
+    api.users.mockRejectedValueOnce(new Error('boom'));
+    renderCoop(PATH);
+    await ready();
+    expect(screen.getByText('Bruce Ishimwe')).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load the people you can add');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByRole('combobox', { name: 'Person to add' })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+});

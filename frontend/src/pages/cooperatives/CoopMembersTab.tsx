@@ -9,6 +9,7 @@ import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
 import Avatar from '../../components/ui/Avatar';
 import { Icon } from '../../components/ui/Icon';
 import Modal from '../../components/ui/Modal';
+import LoadError from '../../components/ui/LoadError';
 import Panel from '../../components/ui/Panel';
 import { useCoop } from './coopContext';
 
@@ -22,15 +23,17 @@ export default function CoopMembersTab() {
   const [candidates, setCandidates] = useState<User[]>([]);
   const [addId, setAddId] = useState('');
   const [busy, setBusy] = useState(false);
+  const [candidatesFailed, setCandidatesFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   // The question asked before a person joins or leaves.
   const [ask, setAsk] = useState<{ kind: 'add' | 'remove'; userId: string; name: string } | null>(null);
 
   useEffect(() => {
+    setCandidatesFailed(false);
     adminService.getUsers()
       .then((res) => setCandidates(res.data.data.filter((u) => u.role !== 'ADMIN')))
-      .catch((e) => showError(getErrorMessage(e)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      .catch(() => setCandidatesFailed(true));
+  }, [attempt]);
 
   if (!detail) return <p className="panel-loading"><span className="spinner" /></p>;
 
@@ -65,6 +68,7 @@ export default function CoopMembersTab() {
 
   return (
     <Panel title={`${t('coDetailMembers')} (${detail.members.length})`}>
+      {candidatesFailed && <LoadError messageKey="coCandidatesFailed" onRetry={() => setAttempt((n) => n + 1)} />}
       {available.length > 0 && (
         <div className="add-row">
           <select className="form-select" aria-label={t('coPersonToAdd')} value={addId} onChange={(e) => setAddId(e.target.value)}>
