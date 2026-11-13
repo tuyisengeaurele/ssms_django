@@ -1,5 +1,21 @@
 # Changelog
 
+## The landing page no longer downloads the animation library
+
+Phase 2 of the roadmap (speed). The 41 KB (compressed) `motion` file is framer-motion, which only the signed in app, its dialogs and its toasts use. The landing page has its own small hooks and never animates with it. It downloaded it anyway, because the provider that passes the "reduce motion" setting to framer sat at the root of the whole app. The roadmap said to drop the animation library. Reading the code showed it was only misplaced, so nothing is removed.
+
+### Changed
+- **The provider moved to where framer-motion is used:** the dashboard layout, the dialogs and the toast list each wrap themselves. The root of the app no longer imports it.
+- **Nothing changes for a person using the app,** and a person who asked their computer for less motion still gets less motion, inside a dialog as before.
+
+### Measured (production build, Lighthouse mobile profile, simulated slow connection)
+- JavaScript the landing page loads: 220.1 KB to 179.0 KB (compressed).
+- Score 73 to 76. First content 3.3 s to 3.0 s. Largest image 4.3 s to 3.9 s. Transfer 496 KB to 455 KB.
+- The landing JavaScript budget in CI is tightened from 230 KB to 190 KB, so the library cannot slip back in unnoticed.
+
+### How it is guarded
+`motionScope.test.ts` (the app root imports neither framer-motion nor the provider, and every file that does use framer-motion renders inside a provider, so a future one cannot forget it), `Modal.motion.test.tsx` (a dialog reports "never" or "always" correctly), and the existing `MotionProvider` tests.
+
 ## The sleeping API starts waking before a visitor needs it
 
 Phase 1 of the roadmap. The free plan puts the API to sleep after 15 minutes, and the first request after that waited about a minute (68 seconds was measured). The outside pinger already keeps it awake from 06:00 to 20:00. This change helps in the hours it sleeps, and makes a demonstration safe.

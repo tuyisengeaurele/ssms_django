@@ -5,6 +5,7 @@ import '../../styles/components.css';
 import { useState, useEffect, useCallback } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import MotionProvider from '../MotionProvider';
 import Sidebar from './Sidebar';
 import { useDecisionCount } from '../../hooks/useDecisionCount';
 import TopBar from './TopBar';
@@ -114,6 +115,7 @@ export default function DashboardLayout() {
   };
 
   return (
+    <MotionProvider>
     <div className="app-layout">
       <Sidebar
         collapsed={rail}
@@ -149,5 +151,6 @@ export default function DashboardLayout() {
       <IdleWarningModal open={idle.warning} secondsLeft={idle.secondsLeft} onStay={idle.stay} onSignOut={logout} />
       <SupportRequestModal request={support.request} onAnswered={support.refresh} />
     </div>
+    </MotionProvider>
   );
 }

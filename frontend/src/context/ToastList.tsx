@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import MotionProvider from '../components/MotionProvider';
 import { settle } from '../utils/motion';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -22,6 +23,7 @@ export interface Toast {
  */
 export default function ToastList({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id: string) => void }) {
   return (
+    <MotionProvider>
     <AnimatePresence initial={false}>
       {toasts.map(t => (
         <motion.div
@@ -48,5 +50,6 @@ export default function ToastList({ toasts, onDismiss }: { toasts: Toast[]; onDi
         </motion.div>
       ))}
     </AnimatePresence>
+    </MotionProvider>
   );
 }
