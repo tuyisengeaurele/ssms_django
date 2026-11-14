@@ -10,7 +10,7 @@ import { evaluate } from './bundle-math.mjs';
 const here = dirname(fileURLToPath(import.meta.url));
 const dist = resolve(here, '../dist');
 const assets = resolve(dist, 'assets');
-const BUDGET_KB = Number(process.env.BUNDLE_BUDGET_KB ?? 230);
+const BUDGET_KB = Number(process.env.BUNDLE_BUDGET_KB ?? 190);
 
 const html = readFileSync(resolve(dist, 'index.html'), 'utf8');
 const entry = html.match(/src="\/assets\/(index-[^"]+\.js)"/)?.[1];
