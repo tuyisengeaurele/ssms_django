@@ -1,6 +1,5 @@
 # Changelog
 
-<<<<<<< HEAD
 ## The landing page no longer downloads the animation library
 
 Phase 2 of the roadmap (speed). The 41 KB (compressed) `motion` file is framer-motion, which only the signed in app, its dialogs and its toasts use. The landing page has its own small hooks and never animates with it. It downloaded it anyway, because the provider that passes the "reduce motion" setting to framer sat at the root of the whole app. The roadmap said to drop the animation library. Reading the code showed it was only misplaced, so nothing is removed.
@@ -16,7 +15,7 @@ Phase 2 of the roadmap (speed). The 41 KB (compressed) `motion` file is framer-m
 
 ### How it is guarded
 `motionScope.test.ts` (the app root imports neither framer-motion nor the provider, and every file that does use framer-motion renders inside a provider, so a future one cannot forget it), `Modal.motion.test.tsx` (a dialog reports "never" or "always" correctly), and the existing `MotionProvider` tests.
-=======
+
 ## The landing page stays inside the screen on phones
 
 Phase 2 of the roadmap (speed and polish). A sideways scroll on the landing page was reported on a real phone. It could not be reproduced in desktop Chrome at any width from 280 to 430 pixels, in landscape, or with larger text, so this fixes the most likely cause and the real phone still has to confirm it.
@@ -30,7 +29,6 @@ Open the page on the phone that showed the problem and tell me its model and bro
 
 ### How it is guarded
 Three style tests in `landing/phoneOverflow.test.ts`: the fallback order, the paint containment, and the narrow screen rule.
->>>>>>> master
 
 ## The sleeping API starts waking before a visitor needs it
 
