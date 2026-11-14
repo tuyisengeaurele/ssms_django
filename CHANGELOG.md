@@ -1,5 +1,24 @@
 # Changelog
 
+## The home page arrives already drawn
+
+Phase 2 of the roadmap (speed). Until now a visitor got an empty page, then downloaded and ran about 180 KB of JavaScript, and only then saw the headline. The build now draws the landing page itself and writes it into the home page, so the words and the photo appear as soon as the HTML and the styles arrive.
+
+### Changed
+- **The build renders the landing page in English into `dist/index.html`.** The plain app shell is kept as `dist/app.html`, and Vercel serves that one for every other address, so opening `/login` never flashes the landing page first.
+- **The hero is there at once.** It used to play about two seconds of entrance animation (the card, the navigation, the headline rising word by word, the buttons fading up). On a slow phone the page was ready long before that, so the animation only kept the words out of sight. Scroll reveals further down the page are unchanged, and anything already on screen is no longer hidden to fade in again.
+- **The fonts and the hero photo start downloading from the HTML,** not from a script that has to run first.
+- **While the page's code arrives, the screen keeps showing the page that was drawn,** so nothing blanks. A person who has chosen French or Kinyarwanda sees English for a moment, then their language, because the build cannot know the visitor's language.
+- **No hydration.** React replaces the drawn page with the real one instead of attaching to it. That avoids a class of mismatch bugs, and the cost is a second paint of identical content.
+
+### Measured (production build, Lighthouse mobile profile, simulated slow connection, three runs)
+- Score 76 to 85. First content 3.0 s to 2.3 s. Blocking time between 20 and 40 ms in the three runs. No layout shift.
+- Largest image stayed at about 4.0 s. The hero photo now decides it, which is the next thing to work on (fonts and image size).
+- Transfer 455 KB to 530 KB, because the fonts and the photo are now requested earlier. Nothing new is downloaded that was not downloaded before.
+
+### How it is guarded
+`prerenderPage.test.ts` (how the home page is built from the shell, empty renders and a missing root are refused), `prerendered.test.ts` and `RouteFallback.test.tsx` (the drawn copy is kept only on the home address and dropped once the real page is up), `heroEntrance.test.ts` (no entrance animation on the first screen), `Reveal.test.tsx` (server render, nothing on screen is hidden), `vercelHeaders.test.ts` (the catch-all rewrite serves `app.html`), and a new CI step, `npm run check:prerender`, which fails the build if the home page is not prerendered or the plain shell goes missing.
+
 ## The landing page no longer downloads the animation library
 
 Phase 2 of the roadmap (speed). The 41 KB (compressed) `motion` file is framer-motion, which only the signed in app, its dialogs and its toasts use. The landing page has its own small hooks and never animates with it. It downloaded it anyway, because the provider that passes the "reduce motion" setting to framer sat at the root of the whole app. The roadmap said to drop the animation library. Reading the code showed it was only misplaced, so nothing is removed.
