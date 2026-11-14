@@ -8,7 +8,7 @@ import { resolveSiteUrl } from './scripts/siteUrl.mjs';
 const siteUrl = resolveSiteUrl(process.env);
 if (siteUrl) process.env.VITE_SITE_URL = siteUrl;
 
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
   plugins: [react()],
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
@@ -23,6 +23,10 @@ export default defineConfig({
     },
   },
   build: {
+    // The prerender step reads this to find the landing page's own files. The server build that renders the page to HTML
+    // needs neither the manifest nor a second copy of public/.
+    manifest: !isSsrBuild,
+    copyPublicDir: !isSsrBuild,
     rollupOptions: {
       output: {
         // Heavy libraries get their own files so they cache between releases
@@ -46,4 +50,4 @@ export default defineConfig({
     // Typing tests and cold imports are slow when the whole suite runs at once on this machine.
     testTimeout: 15000,
   },
-});
+}));
