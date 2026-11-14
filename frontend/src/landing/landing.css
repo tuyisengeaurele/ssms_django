@@ -1,6 +1,8 @@
 /* Page level rules for the landing page. */
 .landing {
   min-height: 100vh;
+  /* Hidden first for browsers that do not know clip, then clip, which does not turn the page into a scroll container. */
+  overflow-x: hidden;
   overflow-x: clip;
 }
 
