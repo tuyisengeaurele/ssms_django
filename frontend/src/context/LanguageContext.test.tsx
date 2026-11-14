@@ -107,3 +107,24 @@ describe('using the context', () => {
     spy.mockRestore();
   });
 });
+
+describe('a language fixed by the caller', () => {
+  // The build writes the landing page to HTML on a machine whose own language is not the visitor's. It names English
+  // outright, so the page does not depend on where it was built.
+  it('is used instead of the saved choice and the browser', () => {
+    localStorage.setItem('ssms_locale', 'rw');
+    browser(['fr-CA']);
+    const { result } = renderHook(() => useLanguage(), {
+      wrapper: ({ children }: { children: React.ReactNode }) => <LanguageProvider initialLocale="en">{children}</LanguageProvider>,
+    });
+    expect(result.current.locale).toBe('en');
+  });
+
+  it('can still be changed by the person afterwards', () => {
+    const { result } = renderHook(() => useLanguage(), {
+      wrapper: ({ children }: { children: React.ReactNode }) => <LanguageProvider initialLocale="en">{children}</LanguageProvider>,
+    });
+    act(() => result.current.setLocale('fr'));
+    expect(result.current.locale).toBe('fr');
+  });
+});
