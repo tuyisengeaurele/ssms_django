@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../context/LanguageContext';
+import { prerenderedHtml, rememberPrerendered } from '../utils/prerendered';
 
 vi.mock('lenis', () => ({
   default: class FakeLenis {
@@ -63,5 +64,15 @@ describe('LandingPage', () => {
       screen.getByRole('heading', { level: 1, name: 'Élevez des vers à soie en meilleure santé.' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Aller au contenu' })).toBeInTheDocument();
+  });
+
+  it('lets go of the prerendered copy once the real page is on screen', () => {
+    const root = document.createElement('div');
+    root.setAttribute('data-prerendered', 'true');
+    root.innerHTML = '<p>copy</p>';
+    rememberPrerendered(root);
+    expect(prerenderedHtml()).toBe('<p>copy</p>');
+    renderPage();
+    expect(prerenderedHtml()).toBeNull();
   });
 });

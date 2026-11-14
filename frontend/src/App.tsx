@@ -49,6 +49,7 @@ const AppHome = lazy(() => import('./pages/AppHome'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const UnauthorizedPage = lazy(() => import('./pages/UnauthorizedPage'));
 import { ErrorBoundary }  from './components/ui/ErrorBoundary';
+import RouteFallback from './components/RouteFallback';
 
 export default function App() {
   return (
@@ -58,7 +59,7 @@ export default function App() {
     <ValidationMessages />
     <AuthProvider>
       <BrowserRouter>
-        <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F6F3EC' }} />}>
+        <Suspense fallback={<RouteFallback />}>
         <Routes>
           {/* Public */}
           <Route path="/login"            element={<LoginPage />} />
