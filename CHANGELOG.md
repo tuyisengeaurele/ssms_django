@@ -1,5 +1,24 @@
 # Changelog
 
+## A language is fetched before it is chosen
+
+Task L3 of the language experience plan. The first switch to French or Kinyarwanda used to wait for a 30 KB download. On a slow connection that was a third of a second or more with nothing to show for it. The language is now fetched when a person shows they are about to switch.
+
+### Changed
+- **Hover, keyboard focus or touch on a language button fetches that language.** This covers the top bar, the buttons in settings, and the menus on the landing and sign in pages. A menu fetches the other languages when it is focused or pressed, because any could be picked. A pointer only passing over it fetches nothing.
+- **Once the page is idle, the languages the browser lists after the current one are fetched.** A French reader whose browser puts English first finds French already here.
+- **It never spends data a person asked to save.** Nothing is fetched ahead of time when Save-Data is on or the connection is 2g or slower.
+- **A failed download ahead of time says nothing,** and choosing the language tries again.
+- **The four language controls now share one hook,** `useLanguagePicker`, so they behave the same way and the next change (task L4) happens in one place.
+
+### Measured (production build, 4x CPU slowdown, Slow 4G, farmer dashboard, one run)
+- First switch to French after hovering its button: 52 ms to the new words, 126 ms to paint, no download during the switch.
+- First switch to Kinyarwanda with no hover, same run: 461 ms and 480 ms, with the download.
+- The landing page JavaScript grows from 135.4 KB to 135.8 KB compressed.
+
+### How it is guarded
+`catalog.test.ts` (one download however often it is asked, nothing on Save-Data or 2g, silent failure and retry), `warm.test.ts` (which languages the browser suggests, waiting for idle, a timer fallback), `useLanguagePicker.test.tsx` (hover, focus and touch on a button, focus and press but not hover on a menu), and `languageControls.test.tsx` (each of the four real controls fetches ahead of time).
+
 ## Each language file has its own size limit
 
 First task of the language experience plan. French and Kinyarwanda are separate downloads (29.9 KB and 28.5 KB compressed). A text added to either makes the next person who switches wait longer, and the landing page budget does not see them, because they are not loaded with the page.
