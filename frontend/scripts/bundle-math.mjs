@@ -5,3 +5,8 @@ export function evaluate(sizesKb, budgetKb) {
   const total = sizesKb.reduce((sum, size) => sum + size, 0);
   return { total, ok: total <= budgetKb };
 }
+
+/** The files (name and compressed KB) that are over the limit, each judged alone. A file exactly at the limit fits. */
+export function overLimit(files, limitKb) {
+  return files.filter(([, sizeKb]) => sizeKb > limitKb);
+}
