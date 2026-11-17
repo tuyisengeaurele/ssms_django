@@ -172,7 +172,8 @@ def test_the_website_host_sends_api_calls_to_the_api_service_before_the_page_fal
     import json
     rewrites = json.loads((ROOT / 'frontend' / 'vercel.json').read_text(encoding='utf-8'))['rewrites']
     assert rewrites[0] == {'source': '/api/:path*', 'destination': f'https://{api_host()}/api/:path*'}
-    assert rewrites[-1]['destination'] == '/index.html'
+    # The home page is a file of its own (the prerendered landing page), so the fallback is the plain app shell.
+    assert rewrites[-1]['destination'] == '/app.html'
 
 
 def test_the_api_is_named_by_one_address_everywhere():
