@@ -6,6 +6,7 @@ import '../landing.css';
 import { useEffect, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
+import { useLanguagePicker } from '../../hooks/useLanguagePicker';
 import { LOCALE_LABELS, type Locale } from '../../i18n/locales';
 import './auth.css';
 
@@ -17,7 +18,8 @@ interface AuthShellProps {
 
 /** Split layout shared by sign in, sign up and the account email pages. */
 export function AuthShell({ title, subtitle, children }: AuthShellProps) {
-  const { t, locale, setLocale } = useLanguage();
+  const { t } = useLanguage();
+  const { locale, choose, menuIntent } = useLanguagePicker();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -55,7 +57,8 @@ export function AuthShell({ title, subtitle, children }: AuthShellProps) {
             className="l-auth__lang"
             aria-label={t('lpLangLabel')}
             value={locale}
-            onChange={(e) => setLocale(e.target.value as Locale)}
+            onChange={(e) => choose(e.target.value as Locale)}
+            {...menuIntent}
           >
             {(Object.keys(LOCALE_LABELS) as Locale[]).map((code) => (
               <option key={code} value={code}>

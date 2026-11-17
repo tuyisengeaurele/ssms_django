@@ -1,4 +1,5 @@
 import { useLanguage } from '../../context/LanguageContext';
+import { useLanguagePicker } from '../../hooks/useLanguagePicker';
 import { LOCALE_LABELS, type Locale } from '../../i18n/locales';
 
 const CODES = Object.keys(LOCALE_LABELS) as Locale[];
@@ -8,7 +9,8 @@ const CODES = Object.keys(LOCALE_LABELS) as Locale[];
  * and each button carries its own lang, so a screen reader says "Français" in French.
  */
 export default function LanguageSwitcher() {
-  const { t, locale, setLocale } = useLanguage();
+  const { t } = useLanguage();
+  const { locale, choose, intentFor } = useLanguagePicker();
   return (
     <div role="group" aria-label={t('lpLangLabel')} className="lang-pill">
       {CODES.map((code) => {
@@ -22,7 +24,8 @@ export default function LanguageSwitcher() {
             aria-label={LOCALE_LABELS[code]}
             className={on ? 'is-on' : ''}
             aria-pressed={on}
-            onClick={() => setLocale(code)}
+            onClick={() => choose(code)}
+            {...intentFor(code)}
           >
             {code.toUpperCase()}
           </button>
