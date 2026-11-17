@@ -40,3 +40,19 @@ describe('the content security policy header', () => {
     }
   });
 });
+
+describe('the rewrites that serve the app', () => {
+  // The home address is a static file, the landing page already written out (dist/index.html). Every other address that is
+  // not a file is the plain app shell (dist/app.html), so a visit to /login never flashes the landing page first.
+  const rewrites = config.rewrites;
+
+  it('sends the API through first', () => {
+    expect(rewrites[0].source).toBe('/api/:path*');
+    expect(rewrites[0].destination).toMatch(/^https:\/\//);
+  });
+
+  it('serves the plain app shell, not the prerendered home page, for every other address', () => {
+    const catchAll = rewrites.find((r) => !r.source.startsWith('/api/'));
+    expect(catchAll?.destination).toBe('/app.html');
+  });
+});

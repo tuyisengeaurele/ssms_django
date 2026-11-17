@@ -1,4 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
+import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setReducedMotion } from '../../test/setup';
 import { Reveal } from './Reveal';
@@ -68,5 +69,38 @@ describe('Reveal', () => {
     const el = screen.getByText('Hello');
     expect(el.style.getPropertyValue('--l-reveal-delay')).toBe('200ms');
     expect(el.style.getPropertyValue('--l-reveal-y')).toBe('40px');
+  });
+});
+
+describe('Reveal on a prerendered page', () => {
+  const rectOf = (top: number, height = 200) => ({ top, bottom: top + height, left: 0, right: 100, width: 100, height, x: 0, y: top, toJSON: () => ({}) });
+
+  beforeEach(() => {
+    vi.stubGlobal('IntersectionObserver', FakeObserver);
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('does not hide what is already on screen, so the first view does not blink', () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(rectOf(100) as DOMRect);
+    render(<Reveal>Hello</Reveal>);
+    expect(screen.getByText('Hello')).not.toHaveClass('l-reveal');
+  });
+
+  it('still hides what is below the fold until it scrolls into view', () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(rectOf(2000) as DOMRect);
+    render(<Reveal>Hello</Reveal>);
+    expect(screen.getByText('Hello')).toHaveClass('l-reveal');
+  });
+
+  it('renders on a server without a warning about layout effects', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const html = renderToString(<Reveal>Hello</Reveal>);
+    expect(html).toContain('Hello');
+    expect(html).not.toMatch(/class="[^"]*l-reveal/);
+    expect(spy).not.toHaveBeenCalled();
   });
 });

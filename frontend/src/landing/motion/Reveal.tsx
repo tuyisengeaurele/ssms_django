@@ -1,6 +1,6 @@
 import {
   createElement,
-  useLayoutEffect,
+  useEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -22,7 +22,9 @@ interface RevealProps {
 /**
  * Fades and rises into view once. The hidden state is only applied after
  * mount, and only when we can actually observe scrolling, so content is
- * never stuck invisible.
+ * never stuck invisible. What is already on screen when the page first shows is
+ * left alone: it was drawn on the server, and hiding it to fade it in again would
+ * make the first view blink.
  */
 export function Reveal({ children, delay = 0, y = 24, className = '', as = 'div', onPointerMove }: RevealProps) {
   const ref = useRef<HTMLElement | null>(null);
@@ -30,9 +32,14 @@ export function Reveal({ children, delay = 0, y = 24, className = '', as = 'div'
   const [armed, setArmed] = useState(false);
   const [shown, setShown] = useState(false);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const el = ref.current;
     if (reduced || !el || typeof IntersectionObserver === 'undefined') {
+      setArmed(false);
+      return;
+    }
+    const box = el.getBoundingClientRect();
+    if (box.height > 0 && box.bottom > 0 && box.top < window.innerHeight) {
       setArmed(false);
       return;
     }

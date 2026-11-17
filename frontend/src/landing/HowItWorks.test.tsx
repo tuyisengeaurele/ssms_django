@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LanguageProvider } from '../context/LanguageContext';
 import { setReducedMotion } from '../test/setup';
@@ -79,5 +80,25 @@ describe('HowItWorks', () => {
     setViewport(390, 844);
     const { container } = renderHow();
     expect(container.querySelector('section')).toHaveClass('how--stacked');
+  });
+});
+
+describe('HowItWorks before the screen has been measured', () => {
+  // A prerendered page, and the first render of the browser that hydrates it, cannot know the size of the screen. Both draw
+  // the plain list, so they match, and only after mount does a big screen switch to the pinned layout further down the page.
+  it('draws the plain list first, even on a big screen, and has no need of a window', () => {
+    setViewport(1440, 900);
+    const html = renderToString(
+      <LanguageProvider>
+        <HowItWorks />
+      </LanguageProvider>,
+    );
+    expect(html).toContain('how--stacked');
+  });
+
+  it('switches to the pinned layout once mounted on a big screen', () => {
+    setViewport(1440, 900);
+    const { container } = renderHow();
+    expect(container.querySelector('section')).not.toHaveClass('how--stacked');
   });
 });

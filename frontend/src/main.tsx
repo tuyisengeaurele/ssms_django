@@ -5,6 +5,7 @@ import './index.css';
 import './styles/toast.css';
 import { ToastProvider } from './context/ToastContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { rememberPrerendered } from './utils/prerendered';
 
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN as string | undefined;
 
@@ -33,7 +34,11 @@ if (SENTRY_DSN) {
   });
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const root = document.getElementById('root')!;
+// The build writes the landing page into the home page. Keep it, so it stays on screen while the page's code arrives.
+rememberPrerendered(root);
+
+ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <LanguageProvider>
       <ToastProvider>

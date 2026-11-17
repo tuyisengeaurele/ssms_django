@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && vite build --ssr src/entry-server.tsx --outDir dist-server && node scripts/prerender.mjs",
     "preview": "vite preview",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "test": "vitest run",
@@ -13,6 +13,7 @@
     "seo": "node scripts/make-seo.mjs",
     "prebuild": "node scripts/make-seo.mjs",
     "check:bundle": "node scripts/check-bundle.mjs",
+    "check:prerender": "node scripts/check-prerender.mjs",
     "check:links": "node scripts/check-links.mjs",
     "icons": "node scripts/make-icons.mjs"
   },

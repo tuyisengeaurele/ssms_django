@@ -26,8 +26,9 @@ export function loadLocale(): Locale {
   return detectLocale(ranked) ?? 'en';
 }
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(loadLocale);
+/** `initialLocale` fixes the first language, for the build that writes the landing page to HTML. The person can still change it. */
+export function LanguageProvider({ children, initialLocale }: { children: ReactNode; initialLocale?: Locale }) {
+  const [locale, setLocaleState] = useState<Locale>(() => initialLocale ?? loadLocale());
 
   // Screen readers and the browser translate bar read this.
   useEffect(() => {

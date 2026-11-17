@@ -23,9 +23,11 @@ const isSmallScreen = () => window.innerWidth < 860 || window.innerHeight < 640;
 /** Pinning needs room. Reduced motion, narrow and short screens get a plain list. */
 function useStacked(): boolean {
   const reduced = usePrefersReducedMotion();
-  const [small, setSmall] = useState(isSmallScreen);
+  // True until the screen has been measured: a server has no screen, and the browser's first render must match the server's.
+  const [small, setSmall] = useState(true);
 
   useEffect(() => {
+    setSmall(isSmallScreen());
     const onResize = () => setSmall(isSmallScreen());
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);

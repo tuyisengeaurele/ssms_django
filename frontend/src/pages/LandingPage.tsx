@@ -3,7 +3,9 @@ import '@fontsource-variable/fraunces/wght-italic.css';
 import '@fontsource-variable/geist';
 import '../landing/tokens.css';
 import '../landing/landing.css';
+import { useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { forgetPrerendered } from '../utils/prerendered';
 import { About } from '../landing/About';
 import { Challenge } from '../landing/Challenge';
 import { Contact } from '../landing/Contact';
@@ -20,6 +22,9 @@ import { SmoothScroll } from '../landing/motion/SmoothScroll';
 
 export default function LandingPage() {
   const { t } = useLanguage();
+
+  // The real page is on screen now. The copy the build wrote is no longer needed.
+  useEffect(() => forgetPrerendered(), []);
 
   return (
     <div className="landing">
