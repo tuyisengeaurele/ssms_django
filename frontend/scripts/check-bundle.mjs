@@ -5,12 +5,14 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
-import { evaluate } from './bundle-math.mjs';
+import { evaluate, overLimit } from './bundle-math.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dist = resolve(here, '../dist');
 const assets = resolve(dist, 'assets');
 const BUDGET_KB = Number(process.env.BUNDLE_BUDGET_KB ?? 145);
+// French and Kinyarwanda are fetched when a person picks them, so each has its own limit (29 and 31 KB today).
+const LOCALE_BUDGET_KB = Number(process.env.LOCALE_BUDGET_KB ?? 35);
 
 const html = readFileSync(resolve(dist, 'index.html'), 'utf8');
 const entry = html.match(/src="\/assets\/(index-[^"]+\.js)"/)?.[1];
@@ -44,7 +46,24 @@ rows.sort((a, b) => b[1] - a[1]);
 for (const [file, gz] of rows) console.log(`${gz.toFixed(1).padStart(7)} KB gzip  ${file}`);
 console.log(`${total.toFixed(1).padStart(7)} KB gzip  total JS for the landing page (budget ${BUDGET_KB} KB)`);
 
+let failed = false;
 if (!ok) {
   console.error('Over budget.');
-  process.exit(1);
+  failed = true;
 }
+
+const languages = readdirSync(assets)
+  .filter((f) => /^translations-.*\.js$/.test(f))
+  .map((f) => [f, gzipSync(readFileSync(resolve(assets, f))).length / 1024]);
+// Two files are expected, French and Kinyarwanda. None would mean the split broke and this check guards nothing.
+if (languages.length !== 2) {
+  console.error(`Expected two language files (French and Kinyarwanda), found ${languages.length}.`);
+  failed = true;
+}
+for (const [file, gz] of languages) console.log(`${gz.toFixed(1).padStart(7)} KB gzip  ${file} (language file, limit ${LOCALE_BUDGET_KB} KB)`);
+for (const [file, gz] of overLimit(languages, LOCALE_BUDGET_KB)) {
+  console.error(`${file} is ${gz.toFixed(1)} KB, over the ${LOCALE_BUDGET_KB} KB limit for a language file.`);
+  failed = true;
+}
+
+if (failed) process.exit(1);
