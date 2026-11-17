@@ -73,7 +73,9 @@ describe('changing language', () => {
   it('switches the words and remembers the choice', () => {
     const result = language();
     expect(result.current.t('btnCancel')).toBe('Cancel');
-    act(() => result.current.setLocale('fr'));
+    act(() => {
+      void result.current.setLocale('fr');
+    });
     expect(result.current.locale).toBe('fr');
     expect(result.current.t('btnCancel')).toBe('Annuler');
     expect(localStorage.getItem('ssms_locale')).toBe('fr');
@@ -82,14 +84,18 @@ describe('changing language', () => {
   it('still switches for this visit when the browser will not save the choice', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
     const result = language();
-    act(() => result.current.setLocale('rw'));
+    act(() => {
+      void result.current.setLocale('rw');
+    });
     expect(result.current.locale).toBe('rw');
   });
 
   it('tells the page and screen readers which language it is in', () => {
     const result = language();
     expect(document.documentElement.lang).toBe('en');
-    act(() => result.current.setLocale('rw'));
+    act(() => {
+      void result.current.setLocale('rw');
+    });
     expect(document.documentElement.lang).toBe('rw');
   });
 
@@ -124,7 +130,9 @@ describe('a language fixed by the caller', () => {
     const { result } = renderHook(() => useLanguage(), {
       wrapper: ({ children }: { children: React.ReactNode }) => <LanguageProvider initialLocale="en">{children}</LanguageProvider>,
     });
-    act(() => result.current.setLocale('fr'));
+    act(() => {
+      void result.current.setLocale('fr');
+    });
     expect(result.current.locale).toBe('fr');
   });
 });
