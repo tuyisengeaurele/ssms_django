@@ -1,5 +1,24 @@
 # Changelog
 
+## The language switch says what it is doing
+
+Task L4 of the language experience plan. A switch that has to download used to give no sign while it waited, and a failed download (no signal) did nothing at all. Now the person, and a screen reader, are told.
+
+### Changed
+- **The control that asked is marked busy while its language downloads:** a progress cursor and a dimmed look, with a slow pulse for people who have not asked for less motion. This covers the top bar, the settings buttons and the menus on the landing and sign in pages.
+- **A failed download keeps the current language and says so in a toast,** "Could not load Français. Check your connection and try again.", with a "Try again" button. The choice is not saved, so the next visit is not stuck on a language that never arrived.
+- **A screen reader is told in words:** "Loading Français" while it waits (in the language still on screen), then "Language changed to Français" in the new language. Nothing is said when the app opens in a saved language, because the person did not ask for a change.
+- **Going back to the language you had cancels the wait,** and the last language asked for always wins.
+- **Three languages for every new text:** `lpLangBusy`, `lpLangChanged`, `lpLangFailed` and `lpLangRetry`. French and Kinyarwanda are drafts until a native speaker reviews them.
+- `setLocale` now returns whether it worked (`'ok'` or `'failed'`), and the language context also tells which language is `pending`.
+
+### Decided
+- The plan said the landing page has no toast provider, so the failure would be shown inline. It has one (the toast provider wraps the whole app), so the failure uses the same toast as the rest of the product, and the control still works where there is none.
+- The screen reader region is a polite live region without a `status` role, placed in the page body. A `status` role collided with the status messages that many screens and their tests already use.
+
+### How it is guarded
+`LanguageContext.lazy.test.tsx` (what is pending, what is announced and in which language, nothing said for a saved language, cancelling, the result), `useLanguagePicker.feedback.test.tsx` (the failure toast, retry, no toast list present), `languageFeedback.test.tsx` (each of the four controls is marked busy and cleared), and `languageBusy.test.ts` (the pulse only runs when motion is allowed).
+
 ## A language is fetched before it is chosen
 
 Task L3 of the language experience plan. The first switch to French or Kinyarwanda used to wait for a 30 KB download. On a slow connection that was a third of a second or more with nothing to show for it. The language is now fetched when a person shows they are about to switch.
