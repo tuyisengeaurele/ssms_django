@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { LOCALE_LABELS, type Locale } from '../i18n/translations';
+import { LOCALE_LABELS, type Locale } from '../i18n/locales';
 import { warmOnIntent } from '../services/warmUp';
 import './nav.css';
 

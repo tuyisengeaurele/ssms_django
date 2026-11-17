@@ -1,12 +1,11 @@
 import { AxiosError } from 'axios';
 import { loadLocale } from '../context/LanguageContext';
-import { translations } from '../i18n/translations';
+import { say as sayIn } from '../i18n/catalog';
 import { fill } from '../utils/fill';
 
 /** One of the app's own sentences, in the language of the screen. */
 function say(key: string): string {
-  const entry = translations[key];
-  return entry[loadLocale()] ?? entry.en;
+  return sayIn(loadLocale(), key);
 }
 
 // Sentences the server sends all the time, and so the ones a person meets most. The rest of the server's words stay as sent.
@@ -40,8 +39,7 @@ function secondsToWait(headers: unknown, body: ServerBody): number | null {
 /** Said in the person's language, never in the server's words. */
 function tooManyRequests(seconds: number | null): string {
   const key = seconds === null ? 'rlWaitUnknown' : seconds === 1 ? 'rlWaitOne' : 'rlWait';
-  const entry = translations[key];
-  const text = entry[loadLocale()] ?? entry.en;
+  const text = say(key);
   return seconds === null ? text : fill(text, { n: seconds });
 }
 
@@ -56,8 +54,7 @@ function referenceOf(headers: unknown, body: ServerBody): string | null {
 
 function withReference(message: string, reference: string | null): string {
   if (!reference) return message;
-  const entry = translations.erReference;
-  return `${message} ${fill(entry[loadLocale()] ?? entry.en, { ref: reference })}`;
+  return `${message} ${fill(say('erReference'), { ref: reference })}`;
 }
 
 /** First readable sentence from a field error list such as { email: ['Already taken.'] }. */

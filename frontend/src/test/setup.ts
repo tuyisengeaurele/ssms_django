@@ -1,6 +1,10 @@
 import '@testing-library/jest-dom/vitest';
 import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
+import { loadCatalog } from '../i18n/catalog';
+
+// The app fetches French and Kinyarwanda when someone reads them. Tests expect every language on hand, as they were before.
+await Promise.all([loadCatalog('fr'), loadCatalog('rw')]);
 
 afterEach(() => {
   if (typeof document !== 'undefined') cleanup();

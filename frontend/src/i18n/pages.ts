@@ -1,4 +1,4 @@
-import type { Locale } from './translations';
+import type { Locale } from './locales';
 
 type Entry = Record<Locale, string>;
 const k = (en: string, fr: string, rw: string): Entry => ({ en, fr, rw });

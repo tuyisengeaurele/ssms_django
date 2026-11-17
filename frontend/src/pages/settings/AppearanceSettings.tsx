@@ -1,5 +1,5 @@
 import { useLanguage } from '../../context/LanguageContext';
-import { LOCALE_LABELS, Locale } from '../../i18n/translations';
+import { LOCALE_LABELS, Locale } from '../../i18n/locales';
 import { THEME_OPTIONS, useTheme } from '../../utils/theme';
 import Panel from '../../components/ui/Panel';
 

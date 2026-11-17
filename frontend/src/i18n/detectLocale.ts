@@ -1,4 +1,4 @@
-import type { Locale } from './translations';
+import type { Locale } from './locales';
 
 // The two letter codes the app speaks. Some systems give Kinyarwanda as its three letter code, "kin".
 const LANGUAGE_CODES: Record<string, Locale> = { en: 'en', fr: 'fr', rw: 'rw', kin: 'rw' };
