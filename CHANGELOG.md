@@ -1,5 +1,28 @@
 # Changelog
 
+## French and Kinyarwanda download only when someone reads them
+
+Phase 2 of the roadmap (speed). Every visitor downloaded all three languages, about 79 KB compressed, and read one. The translation files now keep their three-language layout for people who write them, and the build cuts one language out of them. English is always in the main file. French and Kinyarwanda are separate files, fetched when a person picks them or opens the app in that language.
+
+### Changed
+- **The main file shrinks from 109.3 KB to 62.7 KB compressed.** French is 29 KB and Kinyarwanda 31 KB, loaded only on demand.
+- **Choosing a language waits for it to arrive,** then switches everything at once, so the screen never shows a mix of two languages. If the download fails (no signal), the language stays as it was and the choice is not saved.
+- **Opening the app in a saved French or Kinyarwanda shows English for a moment,** then the language when it arrives. A text that is missing is never shown as its key.
+- **Error messages follow the same rule,** because they are said in the language of the screen.
+- **Nothing changes for people who write texts.** `pages.ts`, `landing.ts` and `translations.ts` keep the three languages side by side, and `scripts/build_doc_text.py` still reads `pages.ts`.
+- `Locale` and `LOCALE_LABELS` moved to `i18n/locales.ts`, so the language picker no longer pulls the translation files in.
+
+### Measured (production build, Lighthouse mobile profile, simulated slow connection, three runs)
+- JavaScript the landing page loads: 179.3 KB to 135.4 KB (compressed).
+- First content 2.3 s to 2.0 s. Largest image 4.0 s to 3.7 s. Transfer 530 KB to 486 KB. Score 85, 85 and 86.
+- The landing JavaScript budget in CI is tightened from 190 KB to 145 KB.
+
+### Still to do on the same theme
+English for the signed in screens (about 20 KB compressed) still travels in the main file. It can move to each area's own file later if it is worth the extra loading step.
+
+### How it is guarded
+`localeSplit.test.ts` (the cutter handles quotes, joined strings, templates and multi-line texts), `localeChunks.test.ts` (every key and text of the three cut languages equals the full files), `catalog.test.ts` (English fallback, one download per language, retry after a failure), `LanguageContext.lazy.test.tsx` (the screen waits, a failed download keeps the language, the last choice wins), and `splitScope.test.ts` (nothing in the app imports the three-language files, so they cannot slip back into the main file). The existing parity tests and the PDF text test pass unchanged.
+
 ## The home page arrives already drawn
 
 Phase 2 of the roadmap (speed). Until now a visitor got an empty page, then downloaded and ran about 180 KB of JavaScript, and only then saw the headline. The build now draws the landing page itself and writes it into the home page, so the words and the photo appear as soon as the HTML and the styles arrive.
