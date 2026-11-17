@@ -1,5 +1,5 @@
 import { useLanguage } from '../../context/LanguageContext';
-import { LOCALE_LABELS, type Locale } from '../../i18n/translations';
+import { LOCALE_LABELS, type Locale } from '../../i18n/locales';
 
 const CODES = Object.keys(LOCALE_LABELS) as Locale[];
 

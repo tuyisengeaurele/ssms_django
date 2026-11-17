@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { resolveSiteUrl } from './scripts/siteUrl.mjs';
+import { localeSplit } from './scripts/localeSplit.mjs';
 
 // index.html reads %VITE_SITE_URL% for the share preview and the canonical link. On Vercel the address comes from the
 // project when nobody set it by hand, so a deployed build never points its preview image at localhost.
@@ -9,7 +10,7 @@ const siteUrl = resolveSiteUrl(process.env);
 if (siteUrl) process.env.VITE_SITE_URL = siteUrl;
 
 export default defineConfig(({ isSsrBuild }) => ({
-  plugins: [react()],
+  plugins: [localeSplit(), react()],
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },

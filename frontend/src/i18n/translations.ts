@@ -5,15 +5,8 @@
  */
 
 import { landingTranslations } from './landing';
+import type { Locale } from './locales';
 import { pageTranslations } from './pages';
-
-export type Locale = 'en' | 'fr' | 'rw';
-
-export const LOCALE_LABELS: Record<Locale, string> = {
-  en: 'English',
-  fr: 'Français',
-  rw: 'Kinyarwanda',
-};
 
 type TranslationMap = Record<string, Record<Locale, string>>;
 
