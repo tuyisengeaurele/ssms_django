@@ -48,6 +48,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** For a place that can say something in a toast but works without one, such as a control shown outside the app. */
+export function useOptionalToast(): ToastContextValue | null {
+  return useContext(ToastContext);
+}
+
 export function useToast(): ToastContextValue {
   const ctx = useContext(ToastContext);
   if (!ctx) throw new Error('useToast must be used within ToastProvider');

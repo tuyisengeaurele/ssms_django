@@ -17,6 +17,14 @@ export const landingTranslations = {
   lpNavMenu: k('Menu', 'Menu', 'Menu'),
   lpNavClose: k('Close menu', 'Fermer le menu', 'Funga menu'),
   lpLangLabel: k('Language', 'Langue', 'Ururimi'),
+  lpLangBusy: k('Loading {language}', 'Chargement : {language}', 'Birimo gutegurwa : {language}'),
+  lpLangChanged: k('Language changed to {language}', 'Langue changée : {language}', 'Ururimi rwahindutse : {language}'),
+  lpLangFailed: k(
+    'Could not load {language}. Check your connection and try again.',
+    'Impossible de charger {language}. Vérifiez votre connexion et réessayez.',
+    'Ntibishobotse gushyiraho {language}. Reba niba ufite interineti, wongere ugerageze.',
+  ),
+  lpLangRetry: k('Try again', 'Réessayer', 'Ongera ugerageze'),
 
   // Hero
   lpHeroEyebrow: k(

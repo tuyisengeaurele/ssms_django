@@ -633,7 +633,8 @@ describe('Verify email page', () => {
       renderAt('/verify-email?uid=u1&token=t1', <VerifyEmailPage />, '/verify-email');
       await screen.findByRole('heading', { level: 1, name: 'Email verified!' });
       await vi.advanceTimersByTimeAsync(2500);
-      expect(screen.getByTestId('where')).toHaveTextContent('/login?verified=1');
+      // The router draws a navigation as a transition, a moment after the timer fires, so wait for it instead of reading at once.
+      expect(await screen.findByTestId('where')).toHaveTextContent('/login?verified=1');
     } finally {
       vi.useRealTimers();
     }
