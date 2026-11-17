@@ -1,11 +1,13 @@
 import { useLanguage } from '../../context/LanguageContext';
+import { useLanguagePicker } from '../../hooks/useLanguagePicker';
 import { LOCALE_LABELS, Locale } from '../../i18n/locales';
 import { THEME_OPTIONS, useTheme } from '../../utils/theme';
 import Panel from '../../components/ui/Panel';
 
 /** The language and the look of SSMS on this device. The top bar menu offers the same two as a shortcut. */
 export default function AppearanceSettings() {
-  const { t, locale, setLocale } = useLanguage();
+  const { t } = useLanguage();
+  const { locale, choose, intentFor } = useLanguagePicker();
   const { choice, setChoice } = useTheme();
 
   return (
@@ -13,7 +15,7 @@ export default function AppearanceSettings() {
       <Panel title={t('pfLanguage')} note={t('pfLanguageHint')}>
         <div className="segmented" role="group" aria-label={t('pfLanguage')}>
           {(Object.entries(LOCALE_LABELS) as [Locale, string][]).map(([code, label]) => (
-            <button key={code} type="button" className={locale === code ? 'is-on' : ''} aria-pressed={locale === code} onClick={() => setLocale(code)}>
+            <button key={code} type="button" className={locale === code ? 'is-on' : ''} aria-pressed={locale === code} onClick={() => choose(code)} {...intentFor(code)}>
               {label}
             </button>
           ))}

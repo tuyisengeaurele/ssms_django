@@ -33,7 +33,7 @@ const fake = vi.hoisted(() => {
   };
 });
 
-vi.mock('../i18n/catalog', () => ({ isLoaded: fake.isLoaded, say: fake.say, loadCatalog: fake.loadCatalog }));
+vi.mock('../i18n/catalog', () => ({ isLoaded: fake.isLoaded, say: fake.say, loadCatalog: fake.loadCatalog, prefetchCatalog: vi.fn() }));
 
 function Probe() {
   const { t, locale, setLocale } = useLanguage();

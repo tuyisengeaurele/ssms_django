@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { useLanguagePicker } from '../hooks/useLanguagePicker';
 import { LOCALE_LABELS, type Locale } from '../i18n/locales';
 import { warmOnIntent } from '../services/warmUp';
 import './nav.css';
@@ -19,7 +20,8 @@ function Mark() {
 }
 
 export function Nav() {
-  const { t, locale, setLocale } = useLanguage();
+  const { t } = useLanguage();
+  const { locale, choose, menuIntent } = useLanguagePicker();
   // On the home page a plain #hash scrolls. On other pages it must go home first.
   const base = useLocation().pathname === '/' ? '' : '/';
   const [condensed, setCondensed] = useState(false);
@@ -74,7 +76,8 @@ export function Nav() {
       className="l-nav__lang"
       aria-label={t('lpLangLabel')}
       value={locale}
-      onChange={(e) => setLocale(e.target.value as Locale)}
+      onChange={(e) => choose(e.target.value as Locale)}
+      {...menuIntent}
     >
       {(Object.keys(LOCALE_LABELS) as Locale[]).map((code) => (
         <option key={code} value={code}>

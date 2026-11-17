@@ -8,6 +8,8 @@ async function freshCatalog() {
 
 afterEach(() => {
   vi.doUnmock('./translations?locale=fr');
+  vi.doUnmock('./translations?locale=rw');
+  Reflect.deleteProperty(navigator, 'connection');
   vi.resetModules();
 });
 
@@ -58,5 +60,86 @@ describe('the catalog of texts', () => {
     expect(isLoaded('fr')).toBe(false);
     await loadCatalog('fr');
     expect(say('fr', 'navFarms')).toBe('Fermes');
+  });
+});
+
+// A person about to switch language shows it by hovering or focusing the control. Fetching then means the file is already here
+// when they choose. It must never cost data a person has asked to save, and never show an error for a download nobody asked for.
+
+function connection(value: { saveData?: boolean; effectiveType?: string }) {
+  Object.defineProperty(navigator, 'connection', { value, configurable: true });
+}
+
+function countDownloads(locale: 'fr' | 'rw', failFirst = false) {
+  const counter = { n: 0 };
+  vi.doMock(`./translations?locale=${locale}`, () => {
+    counter.n += 1;
+    if (failFirst && counter.n === 1) throw new Error('offline');
+    return { translations: { navFarms: 'x' } };
+  });
+  return counter;
+}
+
+describe('fetching a language before it is chosen', () => {
+  it('starts one download, however often it is asked', async () => {
+    const downloads = countDownloads('rw');
+    const { prefetchCatalog, loadCatalog, isLoaded } = await freshCatalog();
+    prefetchCatalog('rw');
+    prefetchCatalog('rw');
+    await loadCatalog('rw');
+    expect(downloads.n).toBe(1);
+    expect(isLoaded('rw')).toBe(true);
+  });
+
+  it('does nothing when the person has asked to save data', async () => {
+    const downloads = countDownloads('rw');
+    connection({ saveData: true });
+    const { prefetchCatalog, isLoaded } = await freshCatalog();
+    prefetchCatalog('rw');
+    await Promise.resolve();
+    expect(downloads.n).toBe(0);
+    expect(isLoaded('rw')).toBe(false);
+  });
+
+  it.each(['slow-2g', '2g'])('does nothing on a %s connection', async (effectiveType) => {
+    const downloads = countDownloads('rw');
+    connection({ effectiveType });
+    const { prefetchCatalog } = await freshCatalog();
+    prefetchCatalog('rw');
+    await Promise.resolve();
+    expect(downloads.n).toBe(0);
+  });
+
+  it('goes ahead on a 3g or better connection', async () => {
+    const downloads = countDownloads('rw');
+    connection({ effectiveType: '3g', saveData: false });
+    const { prefetchCatalog, loadCatalog } = await freshCatalog();
+    prefetchCatalog('rw');
+    await loadCatalog('rw');
+    expect(downloads.n).toBe(1);
+  });
+
+  it('does nothing for English, which is always here', async () => {
+    const { prefetchCatalog } = await freshCatalog();
+    expect(() => prefetchCatalog('en')).not.toThrow();
+  });
+
+  it('does not fetch a language that has already arrived', async () => {
+    const downloads = countDownloads('rw');
+    const { prefetchCatalog, loadCatalog } = await freshCatalog();
+    await loadCatalog('rw');
+    prefetchCatalog('rw');
+    expect(downloads.n).toBe(1);
+  });
+
+  it('says nothing when the download fails, and the real choice can try again', async () => {
+    const downloads = countDownloads('fr', true);
+    const { prefetchCatalog, loadCatalog, isLoaded } = await freshCatalog();
+    prefetchCatalog('fr');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(isLoaded('fr')).toBe(false);
+    await loadCatalog('fr');
+    expect(downloads.n).toBe(2);
+    expect(isLoaded('fr')).toBe(true);
   });
 });

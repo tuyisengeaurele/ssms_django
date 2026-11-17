@@ -1,3 +1,4 @@
+import { shouldSpareData } from '../utils/connection';
 import type { Locale } from './locales';
 import { translations as english } from './translations?locale=en';
 
@@ -22,6 +23,15 @@ export function isLoaded(locale: Locale): boolean {
 /** A text in a language. Until that language has arrived it is the English text, and a text nobody wrote is its own key. */
 export function say(locale: Locale, key: string): string {
   return loaded[locale]?.[key] ?? english[key] ?? key;
+}
+
+/**
+ * Start fetching a language that has not been asked for yet, because someone is about to ask. It does nothing for a person who
+ * is saving data, never reports a failure (nobody chose this download), and the real choice tries again if it failed.
+ */
+export function prefetchCatalog(locale: Locale): void {
+  if (locale === 'en' || loaded[locale] || loading[locale] || shouldSpareData()) return;
+  loadCatalog(locale).catch(() => {});
 }
 
 /** Fetch a language. Asking again while it is on its way waits for the same download, and a failed one can be tried again. */

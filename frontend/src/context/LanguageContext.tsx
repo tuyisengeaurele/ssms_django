@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, ReactNode } fro
 import { isLoaded, loadCatalog, say } from '../i18n/catalog';
 import { detectLocale } from '../i18n/detectLocale';
 import type { Locale } from '../i18n/locales';
+import { warmLikelyLanguages } from '../i18n/warm';
 
 interface LanguageContextValue {
   locale: Locale;
@@ -38,6 +39,11 @@ export function LanguageProvider({ children, initialLocale }: { children: ReactN
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
+
+  // A browser that lists French or Kinyarwanda after English suggests a switch. Have them ready once the page is idle.
+  useEffect(() => {
+    warmLikelyLanguages(wanted.current);
+  }, []);
 
   // Opening the app in a language that is not here yet shows English for a moment, then the language.
   useEffect(() => {
