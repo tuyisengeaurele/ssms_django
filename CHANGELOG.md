@@ -1,5 +1,16 @@
 # Changelog
 
+## Each language file has its own size limit
+
+First task of the language experience plan. French and Kinyarwanda are separate downloads (29.9 KB and 28.5 KB compressed). A text added to either makes the next person who switches wait longer, and the landing page budget does not see them, because they are not loaded with the page.
+
+### Changed
+- **`npm run check:bundle` now also checks each language file** against a limit of 35 KB compressed, and names the file that is over. Set `LOCALE_BUDGET_KB` to change the limit for one run.
+- **The check fails when it does not find exactly two language files,** so a change to how the languages are split cannot quietly turn the guard off.
+
+### How it is guarded
+`bundleBudget.test.ts` (a file over the limit is named, a file exactly at the limit fits, each file is judged alone), and the existing CI step that runs `npm run check:bundle` after the build.
+
 ## French and Kinyarwanda download only when someone reads them
 
 Phase 2 of the roadmap (speed). Every visitor downloaded all three languages, about 79 KB compressed, and read one. The translation files now keep their three-language layout for people who write them, and the build cuts one language out of them. English is always in the main file. French and Kinyarwanda are separate files, fetched when a person picks them or opens the app in that language.
