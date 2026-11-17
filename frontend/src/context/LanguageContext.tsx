@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
+import { isLoaded, loadCatalog, say } from '../i18n/catalog';
 import { detectLocale } from '../i18n/detectLocale';
-import { Locale, translations } from '../i18n/translations';
+import type { Locale } from '../i18n/locales';
 
 interface LanguageContextValue {
   locale: Locale;
@@ -29,13 +30,26 @@ export function loadLocale(): Locale {
 /** `initialLocale` fixes the first language, for the build that writes the landing page to HTML. The person can still change it. */
 export function LanguageProvider({ children, initialLocale }: { children: ReactNode; initialLocale?: Locale }) {
   const [locale, setLocaleState] = useState<Locale>(() => initialLocale ?? loadLocale());
+  // Counts the languages that have arrived, so the screen redraws in the new words.
+  const [, setArrivals] = useState(0);
+  const wanted = useRef<Locale>(locale);
 
   // Screen readers and the browser translate bar read this.
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
 
-  const setLocale = (l: Locale) => {
+  // Opening the app in a language that is not here yet shows English for a moment, then the language.
+  useEffect(() => {
+    if (isLoaded(locale)) return;
+    loadCatalog(locale)
+      .then(() => setArrivals((n) => n + 1))
+      .catch(() => {
+        // Offline or blocked. English stays, and the next visit tries again.
+      });
+  }, [locale]);
+
+  const apply = (l: Locale) => {
     setLocaleState(l);
     try {
       localStorage.setItem(STORAGE_KEY, l);
@@ -44,11 +58,24 @@ export function LanguageProvider({ children, initialLocale }: { children: ReactN
     }
   };
 
-  const t = (key: string): string => {
-    const entry = translations[key];
-    if (!entry) return key;
-    return entry[locale] ?? entry['en'] ?? key;
+  // A language that is not downloaded yet is fetched first, so the screen never shows a mix. If the download fails, the
+  // language stays as it was and the choice is not saved.
+  const setLocale = (l: Locale) => {
+    wanted.current = l;
+    if (isLoaded(l)) {
+      apply(l);
+      return;
+    }
+    loadCatalog(l)
+      .then(() => {
+        if (wanted.current === l) apply(l);
+      })
+      .catch(() => {
+        if (wanted.current === l) wanted.current = locale;
+      });
   };
+
+  const t = (key: string): string => say(locale, key);
 
   return (
     <LanguageContext.Provider value={{ locale, setLocale, t }}>
