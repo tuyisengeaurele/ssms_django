@@ -7,7 +7,12 @@ import { loadCatalog } from '../i18n/catalog';
 await Promise.all([loadCatalog('fr'), loadCatalog('rw')]);
 
 afterEach(() => {
-  if (typeof document !== 'undefined') cleanup();
+  if (typeof document !== 'undefined') {
+    cleanup();
+    // The language a test chose is also kept in a cookie. Storage is cleared by the tests that need it, so clear the cookie too,
+    // or one test's choice would be the next one's saved language.
+    document.cookie = 'ssms_locale=; Path=/; Max-Age=0';
+  }
 });
 
 // jsdom has no matchMedia. Tests flip these flags to simulate user settings.

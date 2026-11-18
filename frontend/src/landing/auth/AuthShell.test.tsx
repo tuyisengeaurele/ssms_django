@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import { AuthAlert, AuthButton, AuthField, AuthShell } from './AuthShell';
 
@@ -15,8 +15,11 @@ function renderShell(node: JSX.Element) {
 }
 
 beforeEach(() => {
+  // An app address: on the landing page a language change goes to the page in that language instead.
+  window.history.pushState({}, '', '/farms');
   localStorage.clear();
 });
+afterEach(() => window.history.pushState({}, '', '/'));
 
 describe('AuthShell', () => {
   it('has one page title, the form content and a skip link', () => {

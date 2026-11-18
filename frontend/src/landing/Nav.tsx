@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useLanguagePicker } from '../hooks/useLanguagePicker';
+import { landingAddress } from '../i18n/landingAddress';
 import { LOCALE_LABELS, type Locale } from '../i18n/locales';
 import { warmOnIntent } from '../services/warmUp';
 import './nav.css';
@@ -90,7 +91,7 @@ export function Nav() {
   return (
     <header className={`l-nav${condensed ? ' is-condensed' : ''}`}>
       <nav className="l-nav__pill" aria-label="Main">
-        <Link to="/" className="l-nav__brand" aria-label={`SSMS, ${t('lpFooterName')}`}>
+        <Link to={landingAddress(locale)} className="l-nav__brand" aria-label={`SSMS, ${t('lpFooterName')}`}>
           <Mark />
           <span className="l-nav__word">SSMS</span>
         </Link>

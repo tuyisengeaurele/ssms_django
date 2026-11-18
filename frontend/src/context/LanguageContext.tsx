@@ -4,6 +4,7 @@ import { isLoaded, loadCatalog, say } from '../i18n/catalog';
 import { detectLocale } from '../i18n/detectLocale';
 import { isLocale, LOCALE_LABELS, type Locale } from '../i18n/locales';
 import { pluralText } from '../i18n/plural';
+import { savedLocale, saveLocale } from '../i18n/savedLocale';
 import { warmLikelyLanguages } from '../i18n/warm';
 import { fill } from '../utils/fill';
 
@@ -39,18 +40,14 @@ const VISUALLY_HIDDEN = {
 
 /** The language the person chose, or the browser's. Also read outside React, by the error messages. */
 export function loadLocale(): Locale {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (isLocale(saved)) return saved;
-  } catch {
-    // Storage can be blocked. The browser language below still works.
-  }
+  const saved = savedLocale();
+  if (saved) return saved;
   // The browser's ranked list first, then the single language older browsers give.
   const ranked = navigator.languages?.length ? navigator.languages : [navigator.language ?? ''];
   return detectLocale(ranked) ?? 'en';
 }
 
-/** `initialLocale` fixes the first language, for the build that writes the landing page to HTML. The person can still change it. */
+/** `initialLocale` fixes the first language: for the build that writes the landing pages, and for a landing page address, which says its language. The person can still change it. */
 export function LanguageProvider({ children, initialLocale }: { children: ReactNode; initialLocale?: Locale }) {
   const [locale, setLocaleState] = useState<Locale>(() => initialLocale ?? loadLocale());
   // Counts the languages that have arrived, so the screen redraws in the new words.
@@ -88,11 +85,8 @@ export function LanguageProvider({ children, initialLocale }: { children: ReactN
   const apply = useCallback((l: Locale) => {
     setLocaleState(l);
     setSwitchedTo(l);
-    try {
-      localStorage.setItem(STORAGE_KEY, l);
-    } catch {
-      // The choice still holds for this visit.
-    }
+    // In storage for the app and in a cookie for the host. Either can be blocked, and the choice still holds for this visit.
+    saveLocale(l);
   }, []);
 
   // A language that is not downloaded yet is fetched first, so the screen never shows a mix. If the download fails, the

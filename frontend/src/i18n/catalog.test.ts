@@ -143,3 +143,45 @@ describe('fetching a language before it is chosen', () => {
     expect(isLoaded('fr')).toBe(true);
   });
 });
+
+// The page drawn by the build stays on screen while the app starts. For a language other than English the app waits a moment for
+// the language file before it draws, so what it draws is already in that language. A slow or failed download must never keep the
+// person waiting, so it waits only so long.
+
+describe('waiting a moment for a language before drawing', () => {
+  it('is done at once for English and for a language that is already here', async () => {
+    const { loadWithin, loadCatalog } = await freshCatalog();
+    await expect(loadWithin('en', 400)).resolves.toBeUndefined();
+    await loadCatalog('rw');
+    await expect(loadWithin('rw', 400)).resolves.toBeUndefined();
+  });
+
+  it('is done as soon as the language arrives, well before the limit', async () => {
+    const downloads = countDownloads('fr');
+    const { loadWithin, isLoaded } = await freshCatalog();
+    await loadWithin('fr', 5000);
+    expect(isLoaded('fr')).toBe(true);
+    expect(downloads.n).toBe(1);
+  });
+
+  it('gives up at the limit when the language is slow, and the download carries on', async () => {
+    vi.useFakeTimers();
+    let arrive: () => void = () => {};
+    vi.doMock('./translations?locale=fr', () => new Promise((resolve) => (arrive = () => resolve({ translations: { navFarms: 'Fermes' } }))));
+    const { loadWithin, isLoaded } = await freshCatalog();
+    const waited = loadWithin('fr', 400);
+    await vi.advanceTimersByTimeAsync(400);
+    await expect(waited).resolves.toBeUndefined();
+    expect(isLoaded('fr')).toBe(false);
+    arrive();
+    await vi.advanceTimersByTimeAsync(0);
+    vi.useRealTimers();
+  });
+
+  it('is done, and says nothing, when the download fails', async () => {
+    countDownloads('fr', true);
+    const { loadWithin, isLoaded } = await freshCatalog();
+    await expect(loadWithin('fr', 400)).resolves.toBeUndefined();
+    expect(isLoaded('fr')).toBe(false);
+  });
+});

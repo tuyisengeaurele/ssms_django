@@ -34,6 +34,28 @@ export function prefetchCatalog(locale: Locale): void {
   loadCatalog(locale).catch(() => {});
 }
 
+/**
+ * Wait for a language, but only so long. The app uses this before it draws a page whose HTML the build already wrote in that
+ * language, so what it draws first is in the same language. A slow download is not waited for (it carries on), and a failed one
+ * is not an error here: the app starts in English and the next visit tries again.
+ */
+export function loadWithin(locale: Locale, milliseconds: number): Promise<void> {
+  if (locale === 'en' || loaded[locale]) return Promise.resolve();
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, milliseconds);
+    loadCatalog(locale).then(
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+    );
+  });
+}
+
 /** Fetch a language. Asking again while it is on its way waits for the same download, and a failed one can be tried again. */
 export function loadCatalog(locale: Locale): Promise<void> {
   if (locale === 'en' || loaded[locale]) return Promise.resolve();

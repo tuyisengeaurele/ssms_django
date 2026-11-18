@@ -1,13 +1,15 @@
-// Run after both builds: npm run build does it. Turns dist/index.html into the landing page, already drawn, and keeps the plain
-// app shell as dist/app.html for every other address (vercel.json sends them there).
-import { copyFileSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+// Run after both builds: npm run build does it. Turns the app shell into the landing page, already drawn, once for each language:
+// dist/index.html (English), dist/fr/index.html and dist/rw/index.html. The plain app shell is kept as dist/app.html for every
+// other address (vercel.json sends them there).
+import { copyFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { buildLandingPage, fontsToPreload, stylesheetsOf } from './prerender-lib.mjs';
+import { buildLandingPage, fontsToPreload, landingFile, languageFileOf, stylesheetsOf } from './prerender-lib.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dist = resolve(here, '../dist');
 const server = resolve(here, '../dist-server');
+const LOCALES = ['en', 'fr', 'rw'];
 
 const indexPath = resolve(dist, 'index.html');
 const shell = readFileSync(indexPath, 'utf8');
@@ -21,7 +23,21 @@ const css = sheets.map((file) => readFileSync(resolve(dist, 'assets', file), 'ut
 const fonts = fontsToPreload(css);
 if (fonts.length === 0) throw new Error('Found no fonts to preload in the built styles. Did the font imports change?');
 
-const { renderLanding } = await import(pathToFileURL(resolve(server, 'entry-server.js')).href);
+const { renderLanding, landingMeta } = await import(pathToFileURL(resolve(server, 'entry-server.js')).href);
 
-writeFileSync(indexPath, buildLandingPage({ shell, appHtml: renderLanding(), stylesheets, modulepreloads, fonts }));
-console.log(`Prerendered the landing page into dist/index.html (${fonts.length} fonts, ${stylesheets.length} stylesheet, plain shell kept as dist/app.html).`);
+for (const locale of LOCALES) {
+  const page = buildLandingPage({
+    shell,
+    appHtml: await renderLanding(locale),
+    stylesheets,
+    modulepreloads,
+    fonts,
+    locale,
+    meta: await landingMeta(locale),
+    languageFile: languageFileOf(manifest, locale),
+  });
+  const file = resolve(dist, landingFile(locale));
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, page);
+}
+console.log(`Prerendered the landing page in ${LOCALES.length} languages (${fonts.length} fonts, ${stylesheets.length} stylesheet, plain shell kept as dist/app.html).`);
