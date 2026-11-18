@@ -21,6 +21,8 @@ export const translations: TranslationMap = {
   navBatches:       { en: 'Batches',           fr: 'Lots',              rw: 'Amatsinda' },
   navHarvests:      { en: 'Harvests',          fr: 'Récoltes',          rw: 'Isarura' },
   navDetections:    { en: 'Disease AI',        fr: 'Détection IA',      rw: 'Indwara AI' },
+  // The tab bar at the bottom of a phone has room for two short lines. The page itself is called "Disease checks" (ptDetectionReports).
+  navDetectionsShort: { en: 'Disease checks',  fr: 'Contrôles',         rw: "Isuzuma ry'indwara" },
   navAlerts:        { en: 'Alerts',            fr: 'Alertes',           rw: 'Ibiburaniswa' },
   navReports:       { en: 'Detection Reports', fr: 'Rapports',          rw: 'Raporo' },
   navDevices:       { en: 'Devices',           fr: 'Appareils',         rw: 'Ibikoresho' },

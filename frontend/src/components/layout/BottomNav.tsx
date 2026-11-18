@@ -11,7 +11,7 @@ interface Tab {
 }
 
 // The four pages each kind of person opens most. Everything else is under More.
-const TABS: Record<Role, Tab[]> = {
+export const TABS: Record<Role, Tab[]> = {
   FARMER: [
     { to: '/farmer', labelKey: 'navDashboard', icon: 'dashboard' },
     { to: '/farms', labelKey: 'navMyFarms', icon: 'farms' },
@@ -21,7 +21,7 @@ const TABS: Record<Role, Tab[]> = {
   SUPERVISOR: [
     { to: '/supervisor', labelKey: 'ptSupervisor', icon: 'overview' },
     { to: '/farms', labelKey: 'ptFarms', icon: 'farms' },
-    { to: '/detections/reports', labelKey: 'ptDetectionReports', icon: 'detections' },
+    { to: '/detections/reports', labelKey: 'navDetectionsShort', icon: 'detections' },
     { to: '/alerts', labelKey: 'ptAlerts', icon: 'alerts' },
   ],
   ADMIN: [
