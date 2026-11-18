@@ -6,11 +6,13 @@
  * unchanged, and the real page replaces it without a visible difference. Its links are plain anchors, so a click in that moment
  * still works.
  */
+import { isLandingPath } from '../i18n/landingAddress';
+
 let html: string | null = null;
 
-/** Remember the root's HTML, but only when the build wrote a landing page there and this is the home address. */
+/** Remember the root's HTML, but only when the build wrote a landing page there and this is a landing page address (/, /fr, /rw). */
 export function rememberPrerendered(root: HTMLElement): void {
-  html = root.hasAttribute('data-prerendered') && window.location.pathname === '/' ? root.innerHTML : null;
+  html = root.hasAttribute('data-prerendered') && isLandingPath(window.location.pathname) ? root.innerHTML : null;
 }
 
 export function prerenderedHtml(): string | null {

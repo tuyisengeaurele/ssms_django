@@ -23,6 +23,13 @@ describe('RouteFallback', () => {
     expect(screen.getByText('Raise healthier silkworms.')).toBeInTheDocument();
   });
 
+  it.each(['/fr', '/rw'])('shows it on the language pages too, %s', (path) => {
+    window.history.pushState({}, '', path);
+    remember('<p>Élevez des vers à soie.</p>');
+    render(<RouteFallback />);
+    expect(screen.getByText('Élevez des vers à soie.')).toBeInTheDocument();
+  });
+
   it('keeps the links of that page real, so a click before the app is ready still goes somewhere', () => {
     remember('<a href="/login">Log in</a>');
     render(<RouteFallback />);

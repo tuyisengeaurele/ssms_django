@@ -1,3 +1,4 @@
+import { isLandingPath } from '../i18n/landingAddress';
 import { prerenderedHtml } from '../utils/prerendered';
 
 /**
@@ -6,7 +7,7 @@ import { prerenderedHtml } from '../utils/prerendered';
  * the app colour.
  */
 export default function RouteFallback() {
-  const copy = window.location.pathname === '/' ? prerenderedHtml() : null;
+  const copy = isLandingPath(window.location.pathname) ? prerenderedHtml() : null;
   if (copy) return <div dangerouslySetInnerHTML={{ __html: copy }} />;
   return <div style={{ minHeight: '100vh', background: '#F6F3EC' }} />;
 }

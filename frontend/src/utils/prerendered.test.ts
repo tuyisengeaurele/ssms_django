@@ -22,6 +22,18 @@ describe('the prerendered landing page', () => {
     expect(prerenderedHtml()).toBe('<h1>Raise healthier silkworms.</h1>');
   });
 
+  it.each(['/fr', '/rw'])('is remembered from the language pages too, %s', (path) => {
+    window.history.pushState({}, '', path);
+    rememberPrerendered(rootWith('<h1>Élevez</h1>', true));
+    expect(prerenderedHtml()).toBe('<h1>Élevez</h1>');
+  });
+
+  it('is not remembered on a page that only looks like a language page', () => {
+    window.history.pushState({}, '', '/fr/privacy');
+    rememberPrerendered(rootWith('<h1>x</h1>', true));
+    expect(prerenderedHtml()).toBeNull();
+  });
+
   it('is not remembered when the build did not write one', () => {
     rememberPrerendered(rootWith('<h1>x</h1>', false));
     expect(prerenderedHtml()).toBeNull();
