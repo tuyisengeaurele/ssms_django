@@ -263,6 +263,13 @@
   max-width: 1440px;
   margin-inline: auto;
   padding: clamp(20px, 2.6vw, 40px) clamp(16px, 3vw, 44px) clamp(40px, 5vw, 72px);
+  /* A new page fades in. The old one is swapped out at once, so a click is never held back by a fade out. The cards rise in
+     after it (components.css). "backwards" leaves nothing behind when it ends. */
+  animation: app-page-in var(--duration-fast) var(--ease-out) backwards;
+}
+
+@keyframes app-page-in {
+  from { opacity: 0; }
 }
 
 /* ── Top bar ───────────────────────────────────────────────────────────────── */

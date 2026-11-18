@@ -918,6 +918,12 @@ tr.is-off td:last-child { opacity: 1; }
   padding: 16px;
   background: rgba(7, 20, 16, 0.55);
   backdrop-filter: blur(5px);
+  animation: pop-in var(--duration-normal) var(--ease-out) backwards;
+}
+
+.modal-overlay[data-leaving] {
+  pointer-events: none;
+  animation: pop-out var(--duration-fast) var(--ease-out) forwards;
 }
 
 .modal-box {
@@ -933,6 +939,20 @@ tr.is-off td:last-child { opacity: 1; }
   background: var(--surface);
   box-shadow: var(--shadow-xl);
   outline: none;
+  animation: pop-in var(--duration-normal) var(--ease-out) backwards;
+}
+
+.modal-overlay[data-leaving] .modal-box {
+  animation: pop-out var(--duration-fast) var(--ease-out) forwards;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .modal-box {
+    --pop-y: 14px;
+    --pop-scale: 0.96;
+    --pop-out-y: 8px;
+    --pop-out-scale: 0.98;
+  }
 }
 
 /* Header and footer stay put. Only the body scrolls, so Save is never below the fold. */

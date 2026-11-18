@@ -1,13 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-const loaded = vi.hoisted(() => ({ count: 0 }));
-
-vi.mock('framer-motion', async (importOriginal) => {
-  loaded.count += 1;
-  return importOriginal<typeof import('framer-motion')>();
-});
-
 import { ToastProvider, useToast } from './ToastContext';
 
 function Trigger() {
@@ -21,13 +14,20 @@ function Undoable({ onUndo }: { onUndo: () => void }) {
 }
 
 describe('ToastProvider', () => {
-  it('does not load the animation library until a toast is shown', () => {
+  it('keeps a toast that was closed on screen, marked as leaving, while it fades out, then removes it', async () => {
     render(
       <ToastProvider>
         <Trigger />
       </ToastProvider>,
     );
-    expect(loaded.count).toBe(0);
+    await act(async () => {
+      fireEvent.click(screen.getByText('go'));
+    });
+    const toast = (await screen.findByText('Saved your batch')).closest('.toast') as HTMLElement;
+    expect(toast).not.toHaveAttribute('data-leaving');
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.getByText('Saved your batch').closest('.toast')).toHaveAttribute('data-leaving');
+    await vi.waitFor(() => expect(screen.queryByText('Saved your batch')).not.toBeInTheDocument());
   });
 
   it('shows a toast and lets the reader close it', async () => {

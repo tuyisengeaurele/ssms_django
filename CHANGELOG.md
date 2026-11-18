@@ -1,5 +1,25 @@
 # Changelog
 
+## The animation library is gone, and the hero has its entrance back
+
+Task 2.3 of the audit roadmap.
+
+### Changed
+- **Dialogs, toasts and page changes animate in CSS, and `framer-motion` is removed.** Its own file was 42.1 KB compressed and was downloaded by every signed in visit. The motion is the same: a dialog and a toast fade in and rise a little, and fade out faster (0.12 s, so the next thing is not kept waiting). A closing dialog or toast stays in place for that moment (`hooks/usePresence.ts`), cannot be clicked while it goes, and a closing dialog is hidden from screen readers at once. With reduced motion set, everything is instant, as before.
+- **A page change is a 0.12 s fade in, with no fade out first.** The old page used to fade out before the new one could show, which held every click back by 0.12 s. Measured in the browser: the menu click lands on the new page in about 70 ms, and the cards still rise in one after another.
+- **The toast list is no longer loaded on demand**, since it no longer pulls in a library. The first toast on a page now fades in too (the old one did not).
+- Size: the main script grows by 0.7 KB compressed (the helper, the toast list and the hero code below), the landing page JavaScript goes from 137.9 to 138.6 KB (budget 145 KB), and a test (`motionScope.test.ts`) fails if the library comes back.
+
+### Added
+- **The hero has an entrance again, short and quiet.** An earlier version took two seconds and kept the headline out of sight, so it was removed in task 2.1. This one is over in about 1 s after the first paint: the English headline words are done in about 0.8 s, the buttons and cards a little later (the longest headline, French, adds about 0.1 s). The photo settles from 106% to 100% and is never hidden. The eyebrow, the headline words (each comes up out of its own line), the line under them, the buttons and the cards rise by 14 px or less and fade in, one after another. The first word starts 0.1 s in, and the headline is readable by about 0.13 s after the first paint. The card and the navigation stay still. It is CSS only, so it does not wait for any script, and it is off for people who asked for less motion (the page is fully visible from the first frame).
+- **It does not play twice.** The app replaces the page the build wrote, twice, within the first second. `continueEntrance` sets the new elements' animations to the time the first page had reached. Measured on a fast connection: the new copy carried on at 33 ms where the first stood at about 30 ms, with no restart and no dip in opacity. On a slow phone the entrance is over before the app takes over. A later visit to the home page (not the first page of the session) plays its entrance in full.
+
+### Not changed
+- A dialog that its page removes from the screen at the same moment it closes (for example "Ask for a different amount") still disappears at once. The old library did the same, because its exit animation lived inside the dialog that was being removed. A dialog that stays mounted and changes `open` fades out.
+
+### Also
+- A helper (`useIsoLayoutEffect`) keeps the build's server render free of React's layout effect warning.
+
 ## No English flash in the app for people who chose French or Kinyarwanda
 
 Task L14 of the language experience plan.

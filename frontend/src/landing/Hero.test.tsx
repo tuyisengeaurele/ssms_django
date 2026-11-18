@@ -1,9 +1,15 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../context/LanguageContext';
 import { setReducedMotion } from '../test/setup';
 import { Hero } from './Hero';
+
+const carried = vi.hoisted(() => ({ calls: [] as Array<Element | null> }));
+vi.mock('../utils/prerendered', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../utils/prerendered')>()),
+  continueEntrance: (element: Element | null) => void carried.calls.push(element),
+}));
 
 function renderHero() {
   return render(
@@ -18,6 +24,12 @@ function renderHero() {
 describe('Hero', () => {
   beforeEach(() => {
     localStorage.clear();
+    carried.calls.length = 0;
+  });
+
+  it('carries its entrance on from the page the build wrote, so it does not play twice', () => {
+    const { container } = renderHero();
+    expect(carried.calls).toEqual([container.querySelector('.l-hero')]);
   });
 
   it('has one headline, an eyebrow and the sub line', () => {

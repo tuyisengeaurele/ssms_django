@@ -1,8 +1,6 @@
 import { ReactNode, useEffect, useId, useRef, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import MotionProvider from '../MotionProvider';
-import { settle } from '../../utils/motion';
+import { usePresence } from '../../hooks/usePresence';
 import { Icon } from './Icon';
 
 interface ModalProps {
@@ -20,11 +18,15 @@ interface ModalProps {
   dismissible?: boolean;
 }
 
+/** How long a closed dialog stays to play its leaving animation. The same as --duration-fast in index.css. */
+const LEAVE_MS = 120;
+
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export default function Modal({ open, onClose, title, children, maxWidth = 480, footer, role = 'dialog', initialFocus, dismissible = true }: ModalProps) {
   const titleId = useId();
   const boxRef = useRef<HTMLDivElement>(null);
+  const { mounted, leaving } = usePresence(open, LEAVE_MS);
 
   // Close on ESC
   useEffect(() => {
@@ -72,49 +74,40 @@ export default function Modal({ open, onClose, title, children, maxWidth = 480, 
     }
   };
 
+  if (!mounted) return null;
+
   return createPortal(
-    <MotionProvider>
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="modal-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={settle}
-          onClick={(e) => { if (dismissible && e.target === e.currentTarget) onClose(); }}
-        >
-          <motion.div
-            ref={boxRef}
-            className="modal-box"
-            role={role}
-            aria-modal="true"
-            aria-labelledby={titleId}
-            tabIndex={-1}
-            onKeyDown={trapTab}
-            style={{ maxWidth }}
-            initial={{ opacity: 0, scale: 0.96, y: 14 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.98, y: 8 }}
-            transition={settle}
-          >
-            <div className="modal-header">
-              <h2 id={titleId} className="modal-title">{title}</h2>
-              {dismissible && (
-                <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
-                  <Icon name="close" size={16} />
-                </button>
-              )}
-            </div>
+    <div
+      className="modal-overlay"
+      data-leaving={leaving ? '' : undefined}
+      // While it fades out it is no longer a dialog anyone can use, so it is not announced as one.
+      aria-hidden={leaving ? true : undefined}
+      onClick={(e) => { if (dismissible && e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        ref={boxRef}
+        className="modal-box"
+        role={role}
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        onKeyDown={trapTab}
+        style={{ maxWidth }}
+      >
+        <div className="modal-header">
+          <h2 id={titleId} className="modal-title">{title}</h2>
+          {dismissible && (
+            <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
+              <Icon name="close" size={16} />
+            </button>
+          )}
+        </div>
 
-            <div className="modal-body">{children}</div>
+        <div className="modal-body">{children}</div>
 
-            {footer && <div className="modal-footer">{footer}</div>}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-    </MotionProvider>,
+        {footer && <div className="modal-footer">{footer}</div>}
+      </div>
+    </div>,
     document.body
   );
 }

@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useRef } from 'react';
+import { useIsoLayoutEffect } from '../hooks/useIsoLayoutEffect';
 import { useLanguage } from '../context/LanguageContext';
 import { warmOnIntent } from '../services/warmUp';
+import { continueEntrance } from '../utils/prerendered';
 import { HeroCards } from './HeroCards';
 import { useScrollProgress } from './motion/useScrollProgress';
 import './hero.css';
@@ -33,11 +36,16 @@ export function Hero() {
     cardRef.current?.style.setProperty('--p', String(p));
   }, 'leave');
 
+  // On the home address the build already wrote this section and its entrance is playing. This copy is new, so carry that entrance
+  // on from where it had got to instead of starting it again.
+  const sectionRef = useRef<HTMLElement>(null);
+  useIsoLayoutEffect(() => continueEntrance(sectionRef.current), []);
+
   const words = t('lpHeroTitle').split(' ');
   const accent = accentIndex(words);
 
   return (
-    <section className="l-hero" aria-labelledby="hero-title">
+    <section className="l-hero" aria-labelledby="hero-title" ref={sectionRef}>
       <div className="l-hero__card" ref={cardRef}>
         <div className="l-hero__layer l-hero__bg">
           <picture>

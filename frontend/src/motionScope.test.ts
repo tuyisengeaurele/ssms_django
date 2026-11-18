@@ -1,44 +1,33 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-// framer-motion is 41 KB compressed and only the signed in app, its dialogs and its toasts animate with it. The landing page
-// has its own small hooks. It used to download the library anyway, because the provider that tells framer about "reduced
-// motion" sat at the root of the whole app. These checks keep it out of the landing page's way and keep every animation
-// that does use framer inside a provider, so a person who asked for less motion still gets less motion.
+// The app used to download an animation library (41 KB compressed) for its dialogs, toasts and page changes. They animate in CSS
+// now (see styles/presenceCss.test.ts and hooks/usePresence.ts). These checks keep the library out for good, so a bundle that
+// shrank does not quietly grow again.
 
 const SRC = __dirname;
+const ROOT = join(SRC, '..');
 
-function sources(dir: string): string[] {
+function files(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const path = join(dir, name);
-    if (statSync(path).isDirectory()) return sources(path);
-    return /\.(ts|tsx)$/.test(name) && !/\.test\.(ts|tsx)$/.test(name) ? [path] : [];
+    return statSync(path).isDirectory() ? files(path) : [path];
   });
 }
 
-const read = (path: string) => readFileSync(path, 'utf8');
-
-describe('where framer-motion is used', () => {
-  it('is not pulled in by the root of the app, which the landing page shares', () => {
-    const app = read(join(SRC, 'App.tsx'));
-    expect(app).not.toMatch(/framer-motion/);
-    expect(app).not.toMatch(/MotionProvider/);
+describe('animation without a library', () => {
+  it('has no framer-motion in the dependencies', () => {
+    const manifest = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+    expect({ ...manifest.dependencies, ...manifest.devDependencies }).not.toHaveProperty('framer-motion');
   });
 
-  it('is only used by files that provide the reduced motion setting themselves', () => {
-    const users = sources(SRC).filter((file) => {
-      const code = read(file);
-      // A value import of the library. A type only import costs nothing at run time.
-      return /import\s+(?!type\b)[^;]*from\s+'framer-motion'/.test(code) && !file.endsWith('MotionProvider.tsx');
-    });
-    expect(users.map((file) => relative(SRC, file).replace(/\\/g, '/')).sort()).toEqual([
-      'components/layout/DashboardLayout.tsx',
-      'components/ui/Modal.tsx',
-      'context/ToastList.tsx',
-    ]);
-    for (const file of users) {
-      expect(read(file), relative(SRC, file)).toMatch(/<MotionProvider>/);
-    }
+  it('imports it nowhere in the source', () => {
+    const users = files(SRC).filter((file) => /\.(ts|tsx)$/.test(file) && !file.endsWith('motionScope.test.ts') && /from\s+'(framer-)?motion'/.test(readFileSync(file, 'utf8')));
+    expect(users).toEqual([]);
+  });
+
+  it('does not set aside a build chunk for it', () => {
+    expect(readFileSync(join(ROOT, 'vite.config.ts'), 'utf8')).not.toMatch(/framer-motion|'motion'/);
   });
 });
