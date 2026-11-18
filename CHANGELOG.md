@@ -1,5 +1,25 @@
 # Changelog
 
+## Labels that fit on a phone, in every language
+
+Task L9 of the language experience plan. Kinyarwanda and French texts are often longer than English, so a label that fits in English can be cut off. A scripted sweep opened every screen at 320, 360 and 390 pixels wide in English, French and Kinyarwanda and looked for text that is cut off, runs past the edge of the screen, or makes the page scroll sideways.
+
+### The sweep
+- **What it covered:** the public pages and the sign in code screen, the farmer, supervisor and admin screens (dashboards, lists, details, reports, settings, the cooperative report and the system pages), and the first dialog of each page that has one. About 44 screens, 3 widths, 3 languages, signed in as a farmer, a supervisor and an admin.
+- **What it found:** Kinyarwanda is clean everywhere. Three things in French, and nothing at 390 pixels. English "findings" were all intended (text hidden for screen readers, the sidebar kept off screen on a phone).
+- **What it cannot see:** a wrap that is merely awkward, a form with an error message showing, or a dialog other than the first one on a page.
+
+### Fixed
+- **The supervisor's "Disease checks" tab in French** read "Contrôles des maladies" and needed three lines in a tab that allows two, so it ended in "...". It has its own short label, "Contrôles", the way the bar already has "Plus". The page itself keeps its full title. English and Kinyarwanda are unchanged.
+- **The admin dashboard title in French** was "Tableau de bord de l'administration" (35 characters), and at 320 pixels the top bar gives a title about 83 pixels. It is now "Tableau de bord", since the line above it already says "Administration".
+- **The export buttons on the cooperative report** ("Télécharger le PDF" and "Exporter CSV") sat in one row that could not break, and in French at 320 pixels the second ran off the right edge. The row now wraps.
+
+### How it is guarded
+`bottomNavLabels.test.ts` (every tab label in every language breaks into two lines at the width of a tab, using measured widths), `pageTitles.test.ts` (no page title over 24 characters, and none repeats the section name above it), and `filterButtons.test.ts` (the button row wraps and never grows wider than the bar).
+
+### Also
+`SupervisorDashboard.test.tsx` waits up to five seconds for the decisions link. It waited one second, which was not always enough when the whole suite runs at once, and it failed on its own from time to time. It passed alone every time.
+
 ## One plural rule for every screen
 
 Task L8 of the language experience plan. 37 screens decided "1 farm" or "2 farms" with their own `n === 1` check. That is right in English and wrong for French, which says the singular for 0 as well ("0 ferme") and for anything under 2.
