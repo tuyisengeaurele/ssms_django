@@ -179,6 +179,57 @@
   justify-self: end;
 }
 
+/* The entrance. Short and quiet, and CSS only, so it never waits for a script. The text is in the page from the first paint: each
+   piece only starts a little low and faint and settles, then nothing is left behind ("backwards"). The photo is never hidden,
+   it only settles. The card and the navigation stay still. A headline word comes up out of its own clipped line.
+   When the app takes over from the page the build wrote, utils/prerendered.ts carries the entrance on from where it was. */
+@keyframes l-hero-settle {
+  from {
+    scale: 1.06;
+  }
+}
+
+@keyframes l-hero-up {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+
+@keyframes l-hero-word {
+  from {
+    opacity: 0;
+    translate: 0 70%;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .landing .l-hero__bg img {
+    animation: l-hero-settle 1.4s var(--l-ease) backwards;
+  }
+
+  .landing .l-hero__eyebrow {
+    animation: l-hero-up 560ms var(--l-ease) 80ms backwards;
+  }
+
+  .landing .l-hero__title .l-word > span {
+    animation: l-hero-word 600ms var(--l-ease) backwards;
+    animation-delay: calc(100ms + var(--i, 0) * 45ms);
+  }
+
+  .landing .l-hero__sub {
+    animation: l-hero-up 560ms var(--l-ease) 340ms backwards;
+  }
+
+  .landing .l-hero__actions {
+    animation: l-hero-up 560ms var(--l-ease) 440ms backwards;
+  }
+
+  .landing .l-hero__stack {
+    animation: l-hero-up 640ms var(--l-ease) 380ms backwards;
+  }
+}
+
 /* Tablet and phone */
 @media (max-width: 1080px) {
   .landing .l-hero__content {
