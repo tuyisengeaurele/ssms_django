@@ -17,6 +17,7 @@ import { Features } from '../landing/Features';
 import { Footer } from '../landing/Footer';
 import { Hero } from '../landing/Hero';
 import { HowItWorks } from '../landing/HowItWorks';
+import { LanguageSuggestion } from '../landing/LanguageSuggestion';
 import { Nav } from '../landing/Nav';
 import { SmoothScroll } from '../landing/motion/SmoothScroll';
 
@@ -47,6 +48,7 @@ export default function LandingPage() {
         </main>
         <Footer />
       </SmoothScroll>
+      <LanguageSuggestion />
     </div>
   );
 }

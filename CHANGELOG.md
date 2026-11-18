@@ -1,5 +1,27 @@
 # Changelog
 
+## The English page offers French and Kinyarwanda, and a language bug is fixed
+
+Task L13 of the language experience plan, and a bug found while checking it.
+
+### Fixed
+- **The app had two language providers, one inside the other.** The outer one (from `main.tsx`) knows the address and the saved choice. The inner one, in `App.tsx`, did not, so it used the browser's language and overruled the outer one. Result, live since the language addresses went out: a first time visitor with a French browser who opened `/` got a page in French under the English address, and `<html lang>` said `en` while the page read French (the two providers fought over it). There is now one provider. `/` is English whatever the browser says, and a test (`languageProviderScope.test.ts`) fails if a second one is added. The app's own pages (`/login`, `/farms` ...) still follow the browser on a first visit.
+
+### Added
+- **A first time visitor whose browser ranks French or Kinyarwanda first, on the English page `/`, is offered the page in that language:** one quiet line, "Voir ce site en français ?" or "Reba uru rubuga mu Kinyarwanda?", with a link to `/fr` or `/rw` and a way to say no. It is written in the language it offers and marked as that language, so a screen reader says it properly.
+- **It is never a redirect.** Nothing moves until the person chooses. A browser that ranks English first gets nothing, and neither does anyone who already chose a language (in storage or in the cookie), anyone on `/fr`, `/rw` or another page, or anyone who said no. Saying no is remembered and is not a language choice.
+- **It never moves the page.** It appears after 1.2 seconds, laid over the page (fixed at the bottom, clear of the phone's home indicator), so the headline stays where it was (checked: 265 px before and after). It fades in only for people who have not asked for less motion, can be dismissed with Escape, and has a clear focus ring. It is not in the pages the build writes, because it depends on who is looking.
+
+### Checked in a browser
+French and Kinyarwanda browsers, English browser, a saved choice, 320 px wide (no sideways scroll), reduced motion (no animation). Accepting lands on `/fr` or `/rw` and keeps the choice. Dismissing stays English across a reload.
+
+### Also
+- The French and Kinyarwanda wording of the offer is a draft for the native review.
+- The landing page JavaScript grows by 0.5 KB, to 137.9 KB (budget 145 KB).
+
+### How it is guarded
+`languageProviderScope.test.ts` (one provider, in `main.tsx` and the build entry only), `appValidation.test.ts` (the app is started inside it), `suggest.test.ts` (who is offered what: first language only, never with a saved choice or after a no, English page only), `LanguageSuggestion.test.tsx` (the line, its language, dismissal, Escape, blocked storage, not in the built page), `suggestionStyle.test.ts` (laid over the page, wraps, contrast, focus ring, motion), and the landing page tests.
+
 ## The landing page has an address in each language
 
 Tasks L10 to L12 of the language experience plan. A French or Kinyarwanda reader who is sent a link, or finds SSMS through search, used to get the English page first and then, after the scripts ran, their language. The landing page now exists in three complete pages: `/` (English), `/fr` and `/rw`. The design is in `docs/superpowers/specs/2026-11-18-language-urls-design.md`.
