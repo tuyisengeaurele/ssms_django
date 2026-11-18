@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { isLoaded, loadCatalog, say } from '../i18n/catalog';
 import { detectLocale } from '../i18n/detectLocale';
@@ -10,13 +10,14 @@ interface LanguageContextValue {
   locale: Locale;
   /** Switch language. A language not downloaded yet is fetched first. Says whether it worked. */
   setLocale: (l: Locale) => Promise<'ok' | 'failed'>;
-  /** The language being downloaded for a switch the person asked for, or null. */
-  pending: Locale | null;
   /** Translate a key, falling back to the key itself if not found. */
   t: (key: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
+
+// Which language is being downloaded for a switch. Kept apart so only the language controls draw again when a download starts.
+const PendingContext = createContext<Locale | null | undefined>(undefined);
 
 const STORAGE_KEY = 'ssms_locale';
 
@@ -50,8 +51,10 @@ export function loadLocale(): Locale {
 export function LanguageProvider({ children, initialLocale }: { children: ReactNode; initialLocale?: Locale }) {
   const [locale, setLocaleState] = useState<Locale>(() => initialLocale ?? loadLocale());
   // Counts the languages that have arrived, so the screen redraws in the new words.
-  const [, setArrivals] = useState(0);
+  const [arrivals, setArrivals] = useState(0);
   const wanted = useRef<Locale>(locale);
+  const current = useRef<Locale>(locale);
+  current.current = locale;
   const [pending, setPending] = useState<Locale | null>(null);
   // The announcer is added after the first render, so a page drawn on a server has none and nothing has to be matched.
   const [mounted, setMounted] = useState(false);
@@ -79,7 +82,7 @@ export function LanguageProvider({ children, initialLocale }: { children: ReactN
       });
   }, [locale]);
 
-  const apply = (l: Locale) => {
+  const apply = useCallback((l: Locale) => {
     setLocaleState(l);
     setSwitchedTo(l);
     try {
@@ -87,13 +90,13 @@ export function LanguageProvider({ children, initialLocale }: { children: ReactN
     } catch {
       // The choice still holds for this visit.
     }
-  };
+  }, []);
 
   // A language that is not downloaded yet is fetched first, so the screen never shows a mix. If the download fails, the
   // language stays as it was and the choice is not saved.
-  const setLocale = (l: Locale): Promise<'ok' | 'failed'> => {
+  const setLocale = useCallback((l: Locale): Promise<'ok' | 'failed'> => {
     wanted.current = l;
-    if (l === locale) {
+    if (l === current.current) {
       setPending(null);
       return Promise.resolve('ok');
     }
@@ -113,15 +116,21 @@ export function LanguageProvider({ children, initialLocale }: { children: ReactN
       },
       () => {
         if (wanted.current === l) {
-          wanted.current = locale;
+          wanted.current = current.current;
           setPending(null);
         }
         return 'failed' as const;
       },
     );
-  };
+  }, [apply]);
 
-  const t = (key: string): string => say(locale, key);
+  // `arrivals` is a dependency so the words are looked up again once a language that was still downloading has arrived.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const t = useCallback((key: string): string => say(locale, key), [locale, arrivals]);
+
+  // One value for the whole app. It changes only when the words do, so the bookkeeping below (a download starting, the
+  // announcement for a screen reader) does not make hundreds of components draw again.
+  const value = useMemo(() => ({ locale, setLocale, t }), [locale, setLocale, t]);
 
   // Said aloud to a screen reader. A polite live region needs no role, and it sits in the body, outside the app's own markup: that a language is loading (in the language still on screen), then that it changed (in the new one).
   const announcement = pending
@@ -131,8 +140,8 @@ export function LanguageProvider({ children, initialLocale }: { children: ReactN
       : '';
 
   return (
-    <LanguageContext.Provider value={{ locale, setLocale, pending, t }}>
-      {children}
+    <LanguageContext.Provider value={value}>
+      <PendingContext.Provider value={pending}>{children}</PendingContext.Provider>
       {!mounted
         ? null
         : createPortal(
@@ -149,4 +158,11 @@ export function useLanguage(): LanguageContextValue {
   const ctx = useContext(LanguageContext);
   if (!ctx) throw new Error('useLanguage must be used inside LanguageProvider');
   return ctx;
+}
+
+/** The language being downloaded for a switch the person asked for, or null. For the controls that show it. */
+export function useLanguagePending(): Locale | null {
+  const pending = useContext(PendingContext);
+  if (pending === undefined) throw new Error('useLanguagePending must be used inside LanguageProvider');
+  return pending;
 }

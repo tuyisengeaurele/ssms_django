@@ -2,7 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Locale } from '../i18n/locales';
 import { fakeCatalog as fake } from '../test/fakeCatalog';
-import { LanguageProvider, useLanguage } from './LanguageContext';
+import { LanguageProvider, useLanguage, useLanguagePending } from './LanguageContext';
 
 // French and Kinyarwanda are separate downloads. These tests hold a download open to see what a person sees while they wait.
 
@@ -11,12 +11,13 @@ vi.mock('../i18n/catalog', async () => (await import('../test/fakeCatalog')).fak
 let lastResult: Promise<'ok' | 'failed'> | undefined;
 
 function Probe() {
-  const { t, locale, setLocale, pending } = useLanguage();
+  const { t, locale, setLocale } = useLanguage();
+  const waiting = useLanguagePending();
   return (
     <div>
       <p data-testid="text">{t('hello')}</p>
       <p data-testid="locale">{locale}</p>
-      <p data-testid="pending">{pending ?? 'none'}</p>
+      <p data-testid="pending">{waiting ?? 'none'}</p>
       <button onClick={() => (lastResult = setLocale('fr'))}>fr</button>
       <button onClick={() => (lastResult = setLocale('rw'))}>rw</button>
       <button onClick={() => (lastResult = setLocale('en'))}>en</button>
