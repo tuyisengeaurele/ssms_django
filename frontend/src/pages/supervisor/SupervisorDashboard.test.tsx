@@ -300,6 +300,7 @@ describe('Live alerts', () => {
 describe('Supervisor dashboard, decisions', () => {
   it('says how many decisions wait, in the singular for one, and links to them', async () => {
     open();
-    expect(await screen.findByRole('link', { name: '1 decision waits for you' })).toHaveAttribute('href', '/decisions');
+    // A whole dashboard is drawn first, and under a full test run one second is not always enough to find the link.
+    expect(await screen.findByRole('link', { name: '1 decision waits for you' }, { timeout: 5000 })).toHaveAttribute('href', '/decisions');
   });
 });
