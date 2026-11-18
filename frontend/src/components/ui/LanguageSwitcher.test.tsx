@@ -1,7 +1,10 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import LanguageSwitcher from './LanguageSwitcher';
+
+beforeEach(() => window.history.pushState({}, '', '/farms'));
+afterEach(() => window.history.pushState({}, '', '/'));
 
 const show = (node = <LanguageSwitcher />) => render(<LanguageProvider>{node}</LanguageProvider>);
 

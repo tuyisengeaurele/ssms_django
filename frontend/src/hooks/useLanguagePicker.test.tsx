@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../context/LanguageContext';
 import { prefetchCatalog } from '../i18n/catalog';
 import { useLanguagePicker } from './useLanguagePicker';
@@ -34,9 +34,12 @@ const show = () =>
   );
 
 beforeEach(() => {
+  // An app address: on the landing page a language change goes to the page in that language instead.
+  window.history.pushState({}, '', '/farms');
   localStorage.clear();
   vi.mocked(prefetchCatalog).mockClear();
 });
+afterEach(() => window.history.pushState({}, '', '/'));
 
 describe('a control for one language', () => {
   it('fetches that language when the pointer reaches it', () => {

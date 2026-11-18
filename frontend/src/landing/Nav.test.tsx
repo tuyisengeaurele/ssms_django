@@ -4,7 +4,10 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../context/LanguageContext';
 import { resetWarmUp } from '../services/warmUp';
+import { goTo } from '../utils/goTo';
 import { Nav } from './Nav';
+
+vi.mock('../utils/goTo', () => ({ goTo: vi.fn() }));
 
 function renderNav() {
   return render(
@@ -28,6 +31,17 @@ describe('Nav', () => {
     localStorage.clear();
     document.documentElement.lang = 'en';
     scrollTo(0);
+  });
+
+  it('has a logo that goes to the landing page in the language on screen', () => {
+    localStorage.setItem('ssms_locale', 'fr');
+    renderNav();
+    expect(screen.getByRole('link', { name: /SSMS/ })).toHaveAttribute('href', '/fr');
+  });
+
+  it('has a logo that goes to the root in English', () => {
+    renderNav();
+    expect(screen.getByRole('link', { name: /SSMS/ })).toHaveAttribute('href', '/');
   });
 
   it('shows the English labels and the two actions', () => {
@@ -64,11 +78,19 @@ describe('Nav', () => {
     expect(screen.getByRole('link', { name: /Smart Sericulture Management System/i })).toHaveAttribute('href', '/');
   });
 
-  it('switches language and updates the page language', async () => {
+  it('goes to the page in the language chosen, which is already written in it', async () => {
     renderNav();
     await userEvent.selectOptions(screen.getByLabelText('Language'), 'fr');
+    expect(goTo).toHaveBeenCalledWith('/fr');
+    expect(localStorage.getItem('ssms_locale')).toBe('fr');
+  });
+
+  it('shows the French labels on the French page', () => {
+    window.history.pushState({}, '', '/fr');
+    localStorage.setItem('ssms_locale', 'fr');
+    renderNav();
     expect(screen.getByRole('link', { name: 'Se connecter' })).toBeInTheDocument();
-    expect(document.documentElement.lang).toBe('fr');
+    window.history.pushState({}, '', '/');
   });
 
   it('condenses after scrolling and relaxes at the top', () => {

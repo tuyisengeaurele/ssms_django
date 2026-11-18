@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import { setReducedMotion } from '../../test/setup';
 
@@ -14,10 +14,13 @@ function open() {
 }
 
 beforeEach(() => {
+  // An app address: on the landing page a language change goes to the page in that language instead.
+  window.history.pushState({}, '', '/farms');
   localStorage.clear();
   vi.clearAllMocks();
   setReducedMotion(true);
 });
+afterEach(() => window.history.pushState({}, '', '/'));
 
 describe('Appearance settings', () => {
   it('lets the person pick a language and shows which one is on', () => {

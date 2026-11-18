@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 
 const auth = vi.hoisted(() => ({
@@ -31,10 +31,13 @@ function renderAt(path: string, node: JSX.Element) {
 }
 
 beforeEach(() => {
+  // An app address: on the landing page a language change goes to the page in that language instead.
+  window.history.pushState({}, '', '/farms');
   localStorage.clear();
   reloadThemeChoice();
   auth.value = { user: { name: 'Auris Tuyisenge', role: 'ADMIN', email: 'auris@ssms.com' }, logout: vi.fn() };
 });
+afterEach(() => window.history.pushState({}, '', '/'));
 
 const sidebar = (path = '/admin', alertCount = 0, decisionCount = 0) =>
   renderAt(path, <Sidebar collapsed={false} mobileOpen={false} onMobileClose={() => {}} alertCount={alertCount} decisionCount={decisionCount} />);

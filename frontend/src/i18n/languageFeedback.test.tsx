@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LanguageSwitcher from '../components/ui/LanguageSwitcher';
 import { LanguageProvider } from '../context/LanguageContext';
 import { AuthShell } from '../landing/auth/AuthShell';
@@ -21,10 +21,13 @@ const inApp = (node: JSX.Element) =>
   );
 
 beforeEach(() => {
+  // An app address: on the landing page a language change goes to the page in that language instead.
+  window.history.pushState({}, '', '/farms');
   fake.reset();
   localStorage.clear();
   vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['en-US']);
 });
+afterEach(() => window.history.pushState({}, '', '/'));
 
 describe('a language control while a language downloads', () => {
   it('marks only the short code that was pressed as busy, and clears it on arrival', async () => {

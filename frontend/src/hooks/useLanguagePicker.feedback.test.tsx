@@ -1,6 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../context/LanguageContext';
 import { ToastProvider } from '../context/ToastContext';
 import { fakeCatalog as fake } from '../test/fakeCatalog';
@@ -31,10 +31,13 @@ const withToasts = () =>
   );
 
 beforeEach(() => {
+  // An app address: on the landing page a language change goes to the page in that language instead.
+  window.history.pushState({}, '', '/farms');
   fake.reset();
   localStorage.clear();
   vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['en-US']);
 });
+afterEach(() => window.history.pushState({}, '', '/'));
 
 describe('a switch that fails to download', () => {
   it('says so in a toast, in the language still on screen, naming the one that did not load', async () => {
