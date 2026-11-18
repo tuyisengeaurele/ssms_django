@@ -16,7 +16,7 @@ const SYMBOL = { HIGH: '!', MEDIUM: '', OK: '' } as const;
 
 /** A real map with a pin for each farm that has a place. The pins are drawn here, so no farm is ever sent to the map server. */
 export default function FarmMap({ rows }: { rows: FarmRisk[] }) {
-  const { t } = useLanguage();
+  const { t, tn } = useLanguage();
   const placed = rows.filter((r): r is Placed => r.position !== null);
   const unplaced = rows.filter((r) => r.position === null);
 
@@ -110,9 +110,9 @@ export default function FarmMap({ rows }: { rows: FarmRisk[] }) {
                 <span className={`risk-badge risk-${chosen.level.toLowerCase()}`}>{t(LEVEL_KEY[chosen.level])}</span>
                 <span className="risk-owner">{chosen.ownerName}</span>
               </div>
-              {riskReasons(chosen, t).length > 0 && (
+              {riskReasons(chosen, tn).length > 0 && (
                 <ul className="risk-why">
-                  {riskReasons(chosen, t).map((why) => <li key={why}>{why}</li>)}
+                  {riskReasons(chosen, tn).map((why) => <li key={why}>{why}</li>)}
                 </ul>
               )}
               {chosen.position.precision !== 'exact' && (

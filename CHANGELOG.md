@@ -1,5 +1,28 @@
 # Changelog
 
+## One plural rule for every screen
+
+Task L8 of the language experience plan. 37 screens decided "1 farm" or "2 farms" with their own `n === 1` check. That is right in English and wrong for French, which says the singular for 0 as well ("0 ferme") and for anything under 2.
+
+### Changed
+- **One helper decides, per language.** `tn(n, 'farmsOne', 'farms')` picks the singular or the other text and fills the count. English and Kinyarwanda say "one" for exactly 1. French says it for anything under 2, so 0 and 1.5 read "0 ferme", "1,5 ferme". The browser has no plural data for Kinyarwanda, so its rule is set by hand. The French rule is a draft until a native speaker confirms it.
+- **All 37 screens use it,** and so do the box counts, the farm risk reasons and the "too many requests, wait N seconds" message.
+- **29 singular texts now show the count with `{n}`** instead of a number 1 written in, in all three languages ("{n} egg box", "{n} jour de retard"). For a count of 1 they read exactly as before. For French 0 they now say "0 jour". The PDF texts that share them were regenerated; the PDF code already passes `n` and still chooses the singular only for exactly 1, so PDFs read the same as before.
+- **A singular text with no number is still safe:** for a count other than 1 the plural text is used, as it always was. One text is like that on purpose ("Show the farm").
+- **A count that is shown formatted still works:** `tn(1200, 'x', 'y', { n: '1,200' })`.
+
+### Fixed on the way
+- On the Harvests page, a total that the server had not sent yet showed "1 records" (the plural text) when the list happened to have one row. It now counts the same number it shows.
+
+### Checked in a browser
+27 page loads (farmer and supervisor, three languages): no leftover `{n}` and no raw text name. French reads "1 ferme enregistrée.", "2 lots actifs dans vos fermes.", "1 relevé sur tous vos lots.".
+
+### Not done
+The PDF code still chooses the singular for exactly 1 in every language, so a French PDF says "0 contrôles". It would need the same rule in Python. The French rule needs the native review first.
+
+### How it is guarded
+`plural.test.ts` (the rule for each language, zero, one, fractions, negative and not-a-number counts, the fallback for a singular with no number), `LanguageContext.plural.test.tsx` (`tn` on real texts in three languages), `pluralScope.test.ts` (no screen decides by hand with `=== 1`, `!== 1`, `> 1` or `<= 1`), `pluralTexts.test.ts` (every singular text used with `tn` shows the count in all three languages), and `usedKeys.test.ts` (the source readers behind the two checks, including calls named like `toString`).
+
 ## A missing text name is caught before a farmer sees it
 
 Task L7 of the language experience plan. The app asks for a text by name, `t('navFarms')`. A misspelt or removed name does not stop the build or throw an error: the screen shows the raw name. About 2,350 calls ask by a name written out in full, and about 90 more look the name up in a table or build it from a number.

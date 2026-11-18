@@ -4,7 +4,6 @@ import { farmService } from '../../services/farm.service';
 import { IoTDevice, DeviceStatus, Farm } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { fill } from '../../utils/fill';
 import { timeAgo } from '../../utils/timeAgo';
 import EmptyState from '../../components/ui/EmptyState';
 import LoadError from '../../components/ui/LoadError';
@@ -20,7 +19,7 @@ type Tab = DeviceStatus | 'all';
 
 export default function DevicesPage() {
   const { user } = useAuth();
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
 
   const [devices, setDevices] = useState<IoTDevice[]>([]);
   const [farms, setFarms] = useState<Farm[]>([]);
@@ -70,7 +69,7 @@ export default function DevicesPage() {
     <div>
       <PageHeader
         title={t('ptDevices')}
-        subtitle={loading || failed ? undefined : fill(t(devices.length === 1 ? 'dvSubtitleOne' : 'dvSubtitleMany'), { n: devices.length })}
+        subtitle={loading || failed ? undefined : tn(devices.length, 'dvSubtitleOne', 'dvSubtitleMany')}
         actions={
           <>
             {canManage && (

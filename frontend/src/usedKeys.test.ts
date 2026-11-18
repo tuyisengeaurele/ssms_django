@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calledKeys, definedValues, tableUses, templateFamilies } from '../scripts/usedKeys.mjs';
+import { calledKeys, definedValues, pluralPairs, singularChecks, tableUses, templateFamilies } from '../scripts/usedKeys.mjs';
 
 // The checks that every text the code asks for exists (src/i18n/keysUsed.test.ts) read the source with these helpers.
 
@@ -131,5 +131,83 @@ describe('definedValues: the texts written into tables and fields', () => {
     const { fields } = definedValues(`const TABS = [{ labelKey: 'navFarms', to: '/farms' }, { labelKey: 'navBatches', to: '/batches' }];`, 'x.ts');
     expect(fields.get('labelKey')?.map((v) => v.text)).toEqual(['navFarms', 'navBatches']);
     expect(fields.get('to')).toBeUndefined();
+  });
+});
+
+describe('singularChecks: a text chosen by hand because a count is 1', () => {
+  const lines = (code: string) => singularChecks(code, 'x.tsx').map((found) => found.line);
+
+  it('finds a choice between two texts made inside t()', () => {
+    expect(lines(`const a = t(n === 1 ? 'xOne' : 'x');`)).toEqual([1]);
+  });
+
+  it('finds a choice between two calls of t()', () => {
+    expect(lines(`const a = n === 1 ? t('xOne') : fill(t('x'), { n });`)).toEqual([1]);
+  });
+
+  it('finds it written the other way round, and with != and !==', () => {
+    expect(lines(`t(1 === n ? 'a' : 'b'); t(n !== 1 ? 'a' : 'b'); t(n != 1 ? 'a' : 'b')`)).toEqual([1, 1, 1]);
+  });
+
+  it('finds a comparison that is really the same choice, n > 1 and n <= 1', () => {
+    expect(lines(`t(n > 1 ? 'many' : 'one'); t(n <= 1 ? 'one' : 'many')`)).toEqual([1, 1]);
+  });
+
+  it('knows the line and the condition', () => {
+    const [found] = singularChecks(`
+
+const a = t(list.length === 1 ? 'a' : 'b');`, 'x.ts');
+    expect(found.line).toBe(3);
+    expect(found.condition).toBe('list.length === 1');
+  });
+
+  it('ignores a comparison with 1 that has nothing to do with texts', () => {
+    expect(lines(`const id = rooms.length === 1 ? rooms[0].id : '';`)).toEqual([]);
+  });
+
+  it('ignores a choice for zero, which is a different sentence and not a plural', () => {
+    expect(lines(`t(n === 0 ? 'none' : 'some')`)).toEqual([]);
+  });
+
+  it('ignores a condition that is only partly about a count', () => {
+    expect(lines(`const k = item.kind === 'late' && item.days === 1 ? 'yesterday' : KEY[item.kind];`)).toEqual([]);
+  });
+
+  it('finds the inner choice of a chain, so a zero check in front does not hide it', () => {
+    expect(lines(`const a = n === 0 ? t('none') : n === 1 ? t('one') : fill(t('many'), { n });`)).toEqual([1]);
+  });
+});
+
+describe('pluralPairs: the two texts a count chooses between', () => {
+  const pairs = (code: string) => pluralPairs(code, 'x.tsx').map((p) => `${p.one}|${p.other}`);
+
+  it('finds the keys given to tn', () => {
+    expect(pairs(`tn(n, 'xOne', 'x'); tn(a.length, 'yOne', 'y', { n: 1 })`)).toEqual(['xOne|x', 'yOne|y']);
+  });
+
+  it('finds the keys given to pluralText, where they come after the function and the language', () => {
+    expect(pairs(`pluralText(t, locale, n, 'xOne', 'x')`)).toEqual(['xOne|x']);
+  });
+
+  it('skips a call whose keys are not written out', () => {
+    expect(pairs(`tn(n, one, other); tn(n, ONE[x], 'x')`)).toEqual([]);
+  });
+
+  it('knows the line', () => {
+    expect(pluralPairs(`
+
+tn(n, 'xOne', 'x')`, 'x.ts')[0].line).toBe(3);
+  });
+});
+
+describe('calls that happen to share a name with something every object has', () => {
+  const odd = `a.toString(); b.valueOf(1, 2, 3); c.constructor(1); d.hasOwnProperty('x', 'y')`;
+
+  it('are not mistaken for text lookups or plural calls', () => {
+    expect(calledKeys(odd, 'x.ts')).toEqual([]);
+    expect(tableUses(odd, 'x.ts')).toEqual([]);
+    expect(templateFamilies(odd, 'x.ts')).toEqual([]);
+    expect(pluralPairs(odd, 'x.ts')).toEqual([]);
+    expect(singularChecks(odd, 'x.ts')).toEqual([]);
   });
 });

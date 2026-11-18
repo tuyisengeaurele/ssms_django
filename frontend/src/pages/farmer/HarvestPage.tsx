@@ -34,7 +34,7 @@ export default function HarvestPage() {
   const { id: batchId } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { success, error: showError } = useToast();
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const { getErrorMessage } = useApiError();
 
   const [batch, setBatch] = useState<Batch | null>(null);
@@ -248,7 +248,7 @@ export default function HarvestPage() {
           </div>
         )}
 
-        <Panel title={t('hpRecords')} note={records.length > 0 ? fill(t(records.length === 1 ? 'hpCountOne' : 'hpCount'), { n: records.length }) : undefined} flush>
+        <Panel title={t('hpRecords')} note={records.length > 0 ? tn(records.length, 'hpCountOne', 'hpCount') : undefined} flush>
           {records.length === 0 ? (
             <EmptyState
               icon={<Icon name="harvests" size={22} />}

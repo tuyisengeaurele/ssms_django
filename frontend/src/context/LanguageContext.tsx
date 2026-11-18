@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { isLoaded, loadCatalog, say } from '../i18n/catalog';
 import { detectLocale } from '../i18n/detectLocale';
 import { isLocale, LOCALE_LABELS, type Locale } from '../i18n/locales';
+import { pluralText } from '../i18n/plural';
 import { warmLikelyLanguages } from '../i18n/warm';
 import { fill } from '../utils/fill';
 
@@ -12,6 +13,8 @@ interface LanguageContextValue {
   setLocale: (l: Locale) => Promise<'ok' | 'failed'>;
   /** Translate a key, falling back to the key itself if not found. */
   t: (key: string) => string;
+  /** The singular or the other text for a count, in the language on screen, with the count filled in. See i18n/plural.ts. */
+  tn: (n: number, oneKey: string, otherKey: string, params?: Record<string, string | number>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
@@ -151,7 +154,11 @@ export function LanguageProvider({ children, initialLocale }: { children: ReactN
 
   // One value for the whole app. It changes only when the words do, so the bookkeeping below (a download starting, the
   // announcement for a screen reader) does not make hundreds of components draw again.
-  const value = useMemo(() => ({ locale, setLocale, t }), [locale, setLocale, t]);
+  const tn = useCallback(
+    (n: number, oneKey: string, otherKey: string, params?: Record<string, string | number>) => pluralText(t, locale, n, oneKey, otherKey, params),
+    [t, locale],
+  );
+  const value = useMemo(() => ({ locale, setLocale, t, tn }), [locale, setLocale, t, tn]);
 
   // Said aloud to a screen reader. A polite live region needs no role, and it sits in the body, outside the app's own markup: that a language is loading (in the language still on screen), then that it changed (in the new one).
   const announcement = pending

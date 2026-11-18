@@ -23,7 +23,7 @@ interface PaginationMeta {
 
 export default function FarmsPage() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, tn } = useLanguage();
 
   const [farms, setFarms] = useState<Farm[]>([]);
   const [search, setSearch] = useState('');
@@ -55,7 +55,7 @@ export default function FarmsPage() {
     <div>
       <PageHeader
         title={t('ptFarms')}
-        subtitle={loading || failed ? undefined : fill(t(farms.length === 1 ? 'fmSubtitleOne' : 'fmSubtitleMany'), { n: farms.length })}
+        subtitle={loading || failed ? undefined : tn(farms.length, 'fmSubtitleOne', 'fmSubtitleMany')}
         actions={
           canCreate ? (
             <Link to="/farms/new" className="btn btn-primary btn-sm">
@@ -114,7 +114,7 @@ export default function FarmsPage() {
                     </p>
                   ) : null}
                   <p className="farm-card-foot">
-                    <span>{n === 1 ? t('fmBatchOne') : fill(t('fmBatchMany'), { n })}</span>
+                    <span>{tn(n, 'fmBatchOne', 'fmBatchMany')}</span>
                     <span className="farm-card-open">
                       {t('fmOpen')}
                       <Icon name="forward" size={14} />

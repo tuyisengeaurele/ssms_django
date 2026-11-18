@@ -12,7 +12,7 @@ type Mark = 'done' | 'next' | 'waiting' | 'later';
 
 /** What a new farmer has done, what they do next, and who they are waiting for. It is not there once they are past every step. */
 export default function OnboardingCard() {
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const [data, setData] = useState<Onboarding | null>(null);
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export default function OnboardingCard() {
       case 'eggs:ready': return fill(t('onbEggsReady'), { round: d.roundName ?? '' });
       case 'eggs:waiting': return fill(t('onbEggsWaiting'), { round: d.roundName ?? '', names: names(d.waitingFor) });
       case 'eggs:approved': return fill(t('onbEggsApproved'), {
-        boxes: boxesText(t, d.boxes ?? 0), date: d.deliveryDate ? day.format(localDay(d.deliveryDate)) : '', place: d.deliveryPlace ?? '',
+        boxes: boxesText(tn, d.boxes ?? 0), date: d.deliveryDate ? day.format(localDay(d.deliveryDate)) : '', place: d.deliveryPlace ?? '',
       });
       case 'eggs:not_given': return d.note ? fill(t('onbEggsNotGiven'), { note: d.note }) : t('onbEggsNotGivenNoNote');
       default: return null;

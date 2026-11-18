@@ -27,7 +27,7 @@ const trim = (value: number, places = 2) => parseFloat(value.toFixed(places));
 export default function HarvestsPage() {
   const { error: showError } = useToast();
   const { getErrorMessage } = useApiError();
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
 
   const [stats, setStats] = useState<HarvestStats | null>(null);
   const [rows, setRows] = useState<HarvestRecord[]>([]);
@@ -108,7 +108,7 @@ export default function HarvestsPage() {
     <div>
       <PageHeader
         title={t('ptHarvests')}
-        subtitle={loading || failed ? undefined : fill(t(total === 1 ? 'hvSubtitleOne' : 'hvSubtitleMany'), { n: total })}
+        subtitle={loading || failed ? undefined : tn(total, 'hvSubtitleOne', 'hvSubtitleMany')}
         actions={
           <button className="btn btn-secondary btn-sm" onClick={exportCsv} disabled={exporting || total === 0}>
             <Icon name="download" size={15} />
@@ -155,7 +155,7 @@ export default function HarvestsPage() {
 
           <Panel
             title={t('hvAll')}
-            note={fill(t(meta?.totalItems === 1 ? 'hpCountOne' : 'hpCount'), { n: meta?.totalItems ?? rows.length })}
+            note={tn(meta?.totalItems ?? rows.length, 'hpCountOne', 'hpCount')}
             flush
             actions={
               <div className="search-box">

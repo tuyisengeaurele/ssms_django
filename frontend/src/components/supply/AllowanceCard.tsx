@@ -11,7 +11,7 @@ import { dateFormat } from '../../utils/dateFormat';
 
 /** What a farmer may take per round, where it came from, and the one thing they can do about it. */
 export default function AllowanceCard() {
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const { success, error: showError } = useToast();
   const { getErrorMessage } = useApiError();
   const [allowance, setAllowance] = useState<Allowance | null>(null);
@@ -30,7 +30,7 @@ export default function AllowanceCard() {
   const last = allowance.history.find((line) => line.kind !== 'start');
   const lastText = last
     ? fill(t(last.kind === 'reduction' ? 'alwLowered' : 'alwChanged'), {
-        boxes: boxesText(t, last.newBoxes), name: last.byName ?? t('alwYourCooperative'), reason: last.reason,
+        boxes: boxesText(tn, last.newBoxes), name: last.byName ?? t('alwYourCooperative'), reason: last.reason,
       })
     : '';
   const waiting = allowance.openRequest;
@@ -51,7 +51,7 @@ export default function AllowanceCard() {
 
   return (
     <Panel title={t('alwTitle')}>
-      <p className="allowance-amount">{boxesText(t, allowance.boxes)}</p>
+      <p className="allowance-amount">{boxesText(tn, allowance.boxes)}</p>
       <p className="cell-sub">
         {allowance.source === 'set' && allowance.since ? fill(t('alwSourceSet'), { date: date.format(new Date(allowance.since)) }) : t('alwSourceDefault')}
       </p>
@@ -59,7 +59,7 @@ export default function AllowanceCard() {
       <div className="allowance-actions">
         {waiting ? (
           <>
-            <p role="status">{fill(t('alwWaiting'), { boxes: boxesText(t, waiting.boxesAsked) })}</p>
+            <p role="status">{fill(t('alwWaiting'), { boxes: boxesText(tn, waiting.boxesAsked) })}</p>
             <button className="btn btn-secondary btn-sm" onClick={withdraw} disabled={withdrawing}>{t('alwWithdraw')}</button>
           </>
         ) : (

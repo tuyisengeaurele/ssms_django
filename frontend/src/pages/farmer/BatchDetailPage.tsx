@@ -49,7 +49,7 @@ const WINDOWS = [
 export default function BatchDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const { getErrorMessage } = useApiError();
   const { success, error: showError } = useToast();
   const navigate = useNavigate();
@@ -316,7 +316,7 @@ export default function BatchDetailPage() {
   const quantityText = batch.quantity
     ? batch.quantityUnit === 'WORMS'
       ? fill(t('bdQtyWorms'), { n: number.format(batch.quantity) })
-      : fill(t(batch.quantity === 1 ? 'bdQtyBoxesOne' : 'bdQtyBoxes'), { n: number.format(batch.quantity) })
+      : tn(batch.quantity, 'bdQtyBoxesOne', 'bdQtyBoxes', { n: number.format(batch.quantity) })
     : '';
   const totalText = batch.quantity && batch.quantityUnit === 'WORMS'
     ? fill(t('bdDeathsTotalOf'), { n: number.format(deathsTotal), q: number.format(batch.quantity), pct: ((deathsTotal / batch.quantity) * 100).toFixed(1) })

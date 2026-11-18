@@ -27,7 +27,7 @@ const STATUS_KEY = {
 /** The farmers of the supervisor's cooperative, the invitation links, and the way to invite or remove a farmer. */
 export default function CoopFarmersTab() {
   const { user } = useAuth();
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const { getErrorMessage } = useApiError();
   const { success, error: showError } = useToast();
 
@@ -215,7 +215,7 @@ export default function CoopFarmersTab() {
         {lowerError && <div className="alert alert-error" role="alert">{lowerError}</div>}
         {toLower && (
           <>
-            <p className="modal-text">{fill(t('alwLowerBody'), { boxes: boxesText(t, toLower.allowance.boxes) })}</p>
+            <p className="modal-text">{fill(t('alwLowerBody'), { boxes: boxesText(tn, toLower.allowance.boxes) })}</p>
             <div className="form-group">
               <label className="form-label" htmlFor="lower-boxes">{t('alwFieldNewBoxes')}</label>
               <input id="lower-boxes" type="number" inputMode="numeric" className="form-input" min={0} max={toLower.allowance.boxes - 1} step={1} value={lowerBoxes} onChange={(e) => setLowerBoxes(e.target.value)} />
@@ -355,7 +355,7 @@ export default function CoopFarmersTab() {
                       </td>
                       <td data-label={t('alwColAllowance')}>
                         <div className="cell-stack">
-                          <span>{boxesText(t, f.allowance.boxes)}</span>
+                          <span>{boxesText(tn, f.allowance.boxes)}</span>
                           {f.allowance.source === 'default' && <span className="cell-sub">{t('alwColDefault')}</span>}
                         </div>
                       </td>
@@ -409,7 +409,7 @@ export default function CoopFarmersTab() {
                         <div className="cell-stack">
                           <span className="cell-strong">{i.email || t('tmLinkOnly')}</span>
                           {i.acceptedByName && <span className="cell-sub">{i.acceptedByName}</span>}
-                          {i.starterBoxes != null && <span className="cell-sub">{fill(t('alwStarterFor'), { boxes: boxesText(t, i.starterBoxes) })}</span>}
+                          {i.starterBoxes != null && <span className="cell-sub">{fill(t('alwStarterFor'), { boxes: boxesText(tn, i.starterBoxes) })}</span>}
                         </div>
                       </td>
                       <td data-label={t('tmColStatus')}>

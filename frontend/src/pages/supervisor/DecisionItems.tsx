@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { WaitingRoom } from '../../services/room.service';
 import { AllowanceEvidence, EarnedAllowance, SupplyRound, WaitingAllowanceRequest, supplyService } from '../../services/supply.service';
+import type { PluralText } from '../../i18n/plural';
 import { boxesText } from '../../utils/boxes';
 import { fill } from '../../utils/fill';
 import Avatar from '../../components/ui/Avatar';
@@ -76,7 +77,7 @@ export function RoomItem({ room, actions }: { room: WaitingRoom; actions: RoomAc
   );
 }
 
-function roomLine(t: (key: string) => string, room: AllowanceEvidence['rooms'][number]): string {
+function roomLine(t: (key: string) => string, tn: PluralText, room: AllowanceEvidence['rooms'][number]): string {
   let size: string;
   if (room.areaM2 == null) size = t('dcsNoSize');
   else if (room.pendingAreaM2 != null) size = fill(t('roomApSizeAsked'), { old: room.areaM2, new: room.pendingAreaM2 });
@@ -84,12 +85,12 @@ function roomLine(t: (key: string) => string, room: AllowanceEvidence['rooms'][n
   let tail: string;
   if (room.approvalStatus !== 'approved') tail = t('dcsRoomNotApproved');
   else if (room.capacityBoxes == null) tail = t('dcsHoldsUnknown');
-  else tail = fill(t('dcsHolds'), { boxes: boxesText(t, room.capacityBoxes) });
+  else tail = fill(t('dcsHolds'), { boxes: boxesText(tn, room.capacityBoxes) });
   return fill(t('dcsRoomLine'), { name: room.name, size, tail });
 }
 
 function Evidence({ data }: { data: AllowanceEvidence }) {
-  const { t } = useLanguage();
+  const { t, tn } = useLanguage();
   return (
     <div className="decision-evidence">
       <section className="decision-evidence-part">
@@ -99,9 +100,9 @@ function Evidence({ data }: { data: AllowanceEvidence }) {
         {data.history.map((line, i) => (
           <li key={`${line.at}-${i}`}>
             {line.kind === 'start'
-              ? fill(t('dcsStarted'), { boxes: boxesText(t, line.newBoxes) })
+              ? fill(t('dcsStarted'), { boxes: boxesText(tn, line.newBoxes) })
               : fill(t(line.kind === 'reduction' ? 'alwLowered' : 'alwChanged'), {
-                  boxes: boxesText(t, line.newBoxes), name: line.byName ?? t('alwYourCooperative'), reason: line.reason,
+                  boxes: boxesText(tn, line.newBoxes), name: line.byName ?? t('alwYourCooperative'), reason: line.reason,
                 })}
           </li>
         ))}
@@ -109,7 +110,7 @@ function Evidence({ data }: { data: AllowanceEvidence }) {
       </section>
       <section className="decision-evidence-part">
       <h3 className="decision-evidence-title">{t('dcsRooms')}</h3>
-      {data.rooms.length === 0 ? <p className="cell-sub">{t('dcsNoRooms')}</p> : <ul>{data.rooms.map((r) => <li key={r.id}>{roomLine(t, r)}</li>)}</ul>}
+      {data.rooms.length === 0 ? <p className="cell-sub">{t('dcsNoRooms')}</p> : <ul>{data.rooms.map((r) => <li key={r.id}>{roomLine(t, tn, r)}</li>)}</ul>}
       </section>
     </div>
   );
@@ -117,7 +118,7 @@ function Evidence({ data }: { data: AllowanceEvidence }) {
 
 /** A farmer who finished a lot in good order and may have earned one more box. One click either way, no form. */
 export function EarnedItem({ earned, actions }: { earned: EarnedAllowance; actions: EarnedActions }) {
-  const { t } = useLanguage();
+  const { t, tn } = useLanguage();
   const [busy, setBusy] = useState(false);
   const run = async (action: () => Promise<void>) => {
     setBusy(true);
@@ -131,7 +132,7 @@ export function EarnedItem({ earned, actions }: { earned: EarnedAllowance; actio
         <span className="badge badge-gray">{t('dcsKindAllowance')}</span>
         <p className="decision-title">{fill(t('dcsNudgeTitle'), { name: earned.farmer.name })}</p>
         <p className="cell-sub cell-sub--wrap">
-          {fill(t('dcsNudgeBody'), { code: earned.batch.lotCode, suggested: boxesText(t, earned.suggestedBoxes), current: earned.currentBoxes })}
+          {fill(t('dcsNudgeBody'), { code: earned.batch.lotCode, suggested: boxesText(tn, earned.suggestedBoxes), current: earned.currentBoxes })}
         </p>
       </div>
       <div className="decision-actions">
@@ -144,7 +145,7 @@ export function EarnedItem({ earned, actions }: { earned: EarnedAllowance; actio
 
 /** A supply round whose requests are closed, waiting for the supervisor to split the eggs. The work is on the round's page. */
 export function RoundItem({ round }: { round: SupplyRound }) {
-  const { t } = useLanguage();
+  const { t, tn } = useLanguage();
   const n = round.requestCount ?? 0;
   return (
     <li className="decision">
@@ -153,7 +154,7 @@ export function RoundItem({ round }: { round: SupplyRound }) {
       </div>
       <div className="decision-body">
         <span className="badge badge-gray">{t('dcsKindRound')}</span>
-        <p className="decision-title">{n === 1 ? fill(t('dcsRoundToSplitOne'), { name: round.name }) : fill(t('dcsRoundToSplit'), { name: round.name, n })}</p>
+        <p className="decision-title">{tn(n, 'dcsRoundToSplitOne', 'dcsRoundToSplit', { name: round.name })}</p>
       </div>
       <div className="decision-actions">
         <Link to={`/supply/${round.id}`} className="btn btn-primary btn-sm">{t('dcsOpenRound')}</Link>
@@ -163,7 +164,7 @@ export function RoundItem({ round }: { round: SupplyRound }) {
 }
 
 export function RequestItem({ request, actions }: { request: WaitingAllowanceRequest; actions: RequestActions }) {
-  const { t } = useLanguage();
+  const { t, tn } = useLanguage();
   const [declining, setDeclining] = useState(false);
   const [other, setOther] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -193,12 +194,12 @@ export function RequestItem({ request, actions }: { request: WaitingAllowanceReq
       <Person name={request.farmer.name} email={request.farmer.email} />
       <div className="decision-body">
         <span className="badge badge-gray">{t('dcsKindAllowance')}</span>
-        <p className="decision-title">{fill(t('dcsAsk'), { asked: boxesText(t, request.boxesAsked), current: boxesText(t, request.currentBoxes) })}</p>
+        <p className="decision-title">{fill(t('dcsAsk'), { asked: boxesText(tn, request.boxesAsked), current: boxesText(tn, request.currentBoxes) })}</p>
         <p className="decision-reason">{request.reason}</p>
         <button type="button" className="btn btn-ghost btn-xs" aria-expanded={open} aria-controls={open ? moreId : undefined} onClick={toggle}>{open ? t('dcsDetailsHide') : t('dcsDetails')}</button>
       </div>
       <div className="decision-actions">
-        <button className="btn btn-primary btn-sm" onClick={approve} disabled={busy}>{fill(t('dcsApproveBoxes'), { boxes: boxesText(t, request.boxesAsked) })}</button>
+        <button className="btn btn-primary btn-sm" onClick={approve} disabled={busy}>{fill(t('dcsApproveBoxes'), { boxes: boxesText(tn, request.boxesAsked) })}</button>
         <button className="btn btn-secondary btn-sm" onClick={() => setOther(true)}>{t('dcsApproveOther')}</button>
         <button className="btn btn-ghost btn-sm btn-quiet-danger" onClick={() => setDeclining(true)}>{t('dcsDecline')}</button>
       </div>

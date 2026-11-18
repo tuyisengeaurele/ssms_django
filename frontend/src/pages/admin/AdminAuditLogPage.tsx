@@ -3,7 +3,6 @@ import { auditLogService, AuditLogEntry } from '../../services/admin.service';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { useAutoFilters } from '../../hooks/useAutoFilters';
-import { fill } from '../../utils/fill';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
 import SectionHeader from '../../components/ui/SectionHeader';
@@ -45,7 +44,7 @@ interface Filters {
 const NO_FILTERS: Filters = { search: '', action: '', resource: '', reference: '' };
 
 export default function AdminAuditLogPage() {
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const { success, error: showError } = useToast();
 
   const [entries, setEntries] = useState<AuditLogEntry[]>([]);
@@ -95,7 +94,7 @@ export default function AdminAuditLogPage() {
     <div>
       <SectionHeader
         title={t('ptAudit')}
-        subtitle={loading && entries.length === 0 ? undefined : fill(t(meta.totalItems === 1 ? 'auSummaryOne' : 'auSummary'), { n: meta.totalItems.toLocaleString(locale) })}
+        subtitle={loading && entries.length === 0 ? undefined : tn(meta.totalItems, 'auSummaryOne', 'auSummary', { n: meta.totalItems.toLocaleString(locale) })}
         actions={
           <div className="page-actions">
             <button className="btn btn-secondary btn-sm" onClick={download('pdf')} disabled={exporting !== null}>

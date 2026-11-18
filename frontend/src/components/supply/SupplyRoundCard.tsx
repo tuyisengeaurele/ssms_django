@@ -21,18 +21,18 @@ const ALIVE = ['submitted', 'approved', 'part_approved', 'waitlisted'];
 
 /** The timeline of a request in plain words: what was asked, what was decided, where the eggs are. */
 function Timeline({ request, deliveredText }: { request: EggRequestRow; deliveredText: string }) {
-  const { t } = useLanguage();
-  const lines: string[] = [fill(t('rndAsked'), { boxes: boxesText(t, request.boxesAsked), room: request.room.name })];
+  const { t, tn } = useLanguage();
+  const lines: string[] = [fill(t('rndAsked'), { boxes: boxesText(tn, request.boxesAsked), room: request.room.name })];
   const approved = request.boxesApproved ?? 0;
   switch (request.status) {
     case 'submitted':
       lines.push(t('rndWaiting'));
       break;
     case 'approved':
-      lines.push(fill(t('rndApproved'), { boxes: boxesText(t, approved) }), deliveredText);
+      lines.push(fill(t('rndApproved'), { boxes: boxesText(tn, approved) }), deliveredText);
       break;
     case 'part_approved':
-      lines.push(fill(t('rndPart'), { approved: boxesText(t, approved), asked: request.boxesAsked }), deliveredText);
+      lines.push(fill(t('rndPart'), { approved: boxesText(tn, approved), asked: request.boxesAsked }), deliveredText);
       break;
     case 'waitlisted':
       lines.push(t('rndWaitlist'));
@@ -41,7 +41,7 @@ function Timeline({ request, deliveredText }: { request: EggRequestRow; delivere
       lines.push(request.decisionNote ? fill(t('rndDeclined'), { note: request.decisionNote }) : t('rndDeclinedNoNote'));
       break;
     case 'received':
-      lines.push(fill(t('rndReceived'), { boxes: boxesText(t, request.boxesReceived ?? 0), condition: request.condition === 'damaged' ? t('rndDamaged') : t('rndGood') }));
+      lines.push(fill(t('rndReceived'), { boxes: boxesText(tn, request.boxesReceived ?? 0), condition: request.condition === 'damaged' ? t('rndDamaged') : t('rndGood') }));
       break;
     case 'not_collected':
       lines.push(t('rndNotCollected'));
@@ -58,7 +58,7 @@ function Timeline({ request, deliveredText }: { request: EggRequestRow; delivere
 
 /** The round of eggs a farmer can ask in, their request, and the one thing to do next. */
 export default function SupplyRoundCard() {
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const { success, error: showError } = useToast();
   const { getErrorMessage } = useApiError();
   const [current, setCurrent] = useState<CurrentRound | null>(null);
@@ -143,7 +143,7 @@ export default function SupplyRoundCard() {
       >
         <p className="modal-text">
           {fill(t(round.status === 'open' && !promised ? 'rndCancelAsk' : 'rndCancelAskFinal'), {
-            boxes: boxesText(t, myRequest ? (promised ? myRequest.boxesApproved ?? myRequest.boxesAsked : myRequest.boxesAsked) : 0),
+            boxes: boxesText(tn, myRequest ? (promised ? myRequest.boxesApproved ?? myRequest.boxesAsked : myRequest.boxesAsked) : 0),
           })}
         </p>
       </Modal>

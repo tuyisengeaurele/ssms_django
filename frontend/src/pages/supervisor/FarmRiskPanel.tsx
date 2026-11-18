@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { farmService } from '../../services/farm.service';
 import { FarmRisk } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
-import { fill } from '../../utils/fill';
 import { LEVEL_KEY, riskReasons } from '../../utils/farmRisk';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
@@ -17,7 +16,7 @@ const FIRST = 5;
 
 /** The farms that need a look first, and why, as a list or on a map. The server ranks them; this only shows the answer. */
 export default function FarmRiskPanel() {
-  const { t } = useLanguage();
+  const { t, tn } = useLanguage();
   const [rows, setRows] = useState<FarmRisk[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -80,9 +79,9 @@ export default function FarmRiskPanel() {
                     <span className={`risk-badge risk-${r.level.toLowerCase()}`}>{t(LEVEL_KEY[r.level])}</span>
                     <span className="risk-owner">{r.ownerName}</span>
                   </div>
-                  {riskReasons(r, t).length > 0 && (
+                  {riskReasons(r, tn).length > 0 && (
                     <ul className="risk-why">
-                      {riskReasons(r, t).map((why) => <li key={why}>{why}</li>)}
+                      {riskReasons(r, tn).map((why) => <li key={why}>{why}</li>)}
                     </ul>
                   )}
                 </li>
@@ -92,7 +91,7 @@ export default function FarmRiskPanel() {
           {toggle && (
             <div className="risk-foot">
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAll((v) => !v)}>
-                {all ? t('fkShowLess') : fill(t(rows.length === 1 ? 'fkShowOne' : 'fkShowAll'), { n: rows.length })}
+                {all ? t('fkShowLess') : tn(rows.length, 'fkShowOne', 'fkShowAll')}
               </button>
             </div>
           )}

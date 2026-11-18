@@ -36,7 +36,7 @@ const trim = (value: number, places = 2) => parseFloat(value.toFixed(places));
 export default function BatchReportPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const { error: showError } = useToast();
   const [downloading, setDownloading] = useState(false);
 
@@ -124,7 +124,7 @@ export default function BatchReportPage() {
   const quantityText = batch.quantity
     ? batch.quantityUnit === 'WORMS'
       ? fill(t('bdQtyWorms'), { n: number.format(batch.quantity) })
-      : fill(t(batch.quantity === 1 ? 'bdQtyBoxesOne' : 'bdQtyBoxes'), { n: number.format(batch.quantity) })
+      : tn(batch.quantity, 'bdQtyBoxesOne', 'bdQtyBoxes', { n: number.format(batch.quantity) })
     : '';
 
   const startMs = new Date(batch.startDate).getTime();
@@ -243,7 +243,7 @@ export default function BatchReportPage() {
           <p className="report-line">{t('brChecksNone')}</p>
         ) : (
           <>
-            <p className="report-line">{fill(t(checks.length === 1 ? 'brChecksSummaryOne' : 'brChecksSummary'), { n: checks.length, p: found })}</p>
+            <p className="report-line">{tn(checks.length, 'brChecksSummaryOne', 'brChecksSummary', { p: found })}</p>
             <table className="report-table">
               <thead>
                 <tr><th>{t('hpColDate')}</th><th>{t('brColResult')}</th><th>{t('brColConfidence')}</th></tr>
@@ -262,7 +262,7 @@ export default function BatchReportPage() {
       <section className="report-section">
         <h2>{t('brAlerts')}</h2>
         <p className="report-line">
-          {unseen === 0 ? t('brAlertsNone') : fill(t(unseen === 1 ? 'brAlertsWaitingOne' : 'brAlertsWaiting'), { n: unseen })}
+          {unseen === 0 ? t('brAlertsNone') : tn(unseen, 'brAlertsWaitingOne', 'brAlertsWaiting')}
         </p>
       </section>
 
@@ -273,7 +273,7 @@ export default function BatchReportPage() {
         ) : (
           <>
             <p className="report-line">
-              {fill(t(harvests.length === 1 ? 'brHarvestSumOne' : 'brHarvestSum'), { n: harvests.length, kg: trim(harvestKg), g: trim(harvestSilk, 1) })}
+              {tn(harvests.length, 'brHarvestSumOne', 'brHarvestSum', { kg: trim(harvestKg), g: trim(harvestSilk, 1) })}
             </p>
             <p className="report-line">{gradeLine}</p>
           </>

@@ -5,3 +5,5 @@ export function definedValues(
   code: string,
   fileName: string,
 ): { tables: Map<string, Array<{ text: string; line: number }>>; fields: Map<string, Array<{ text: string; line: number }>> };
+export function singularChecks(code: string, fileName: string): Array<{ line: number; condition: string }>;
+export function pluralPairs(code: string, fileName: string): Array<{ one: string; other: string; line: number }>;

@@ -28,7 +28,7 @@ const RECOUNT = 'ssms:decisions';
 /** One supply round: its facts, the requests, the split to confirm, and the eggs being handed out. */
 export default function SupplyRoundPage() {
   const { id = '' } = useParams<{ id: string }>();
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const { success, error: showError } = useToast();
   const { getErrorMessage } = useApiError();
 
@@ -119,11 +119,11 @@ export default function SupplyRoundPage() {
     const approved = q.boxesApproved ?? 0;
     switch (q.status) {
       case 'submitted': return t('rsReqWaiting');
-      case 'approved': return fill(t('rndApproved'), { boxes: boxesText(t, approved) });
-      case 'part_approved': return fill(t('rndPart'), { approved: boxesText(t, approved), asked: q.boxesAsked });
+      case 'approved': return fill(t('rndApproved'), { boxes: boxesText(tn, approved) });
+      case 'part_approved': return fill(t('rndPart'), { approved: boxesText(tn, approved), asked: q.boxesAsked });
       case 'waitlisted': return t('rndWaitlist');
       case 'declined': return q.decisionNote ? fill(t('rndDeclined'), { note: q.decisionNote }) : t('rndDeclinedNoNote');
-      case 'received': return fill(t('rndReceived'), { boxes: boxesText(t, q.boxesReceived ?? 0), condition: q.condition === 'damaged' ? t('rndDamaged') : t('rndGood') });
+      case 'received': return fill(t('rndReceived'), { boxes: boxesText(tn, q.boxesReceived ?? 0), condition: q.condition === 'damaged' ? t('rndDamaged') : t('rndGood') });
       case 'not_collected': return t('rndNotCollected');
       default: return t('rsReqCancelled');
     }
@@ -156,7 +156,7 @@ export default function SupplyRoundPage() {
           }
         >
           <dl className="facts">
-            <div><dt>{t('rsFactStock')}</dt><dd>{boxesText(t, round.stockBoxes)}</dd></div>
+            <div><dt>{t('rsFactStock')}</dt><dd>{boxesText(tn, round.stockBoxes)}</dd></div>
             <div><dt>{t('rsFactDeadline')}</dt><dd>{moment.format(new Date(round.requestDeadline))}</dd></div>
             <div><dt>{t('rsFactDelivery')}</dt><dd>{day.format(localDay(round.deliveryDate))}</dd></div>
             <div><dt>{t('rsFactPlace')}</dt><dd>{round.deliveryPlace}</dd></div>
