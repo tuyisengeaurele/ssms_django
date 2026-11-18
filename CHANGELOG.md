@@ -1,5 +1,31 @@
 # Changelog
 
+## The landing page has an address in each language
+
+Tasks L10 to L12 of the language experience plan. A French or Kinyarwanda reader who is sent a link, or finds SSMS through search, used to get the English page first and then, after the scripts ran, their language. The landing page now exists in three complete pages: `/` (English), `/fr` and `/rw`. The design is in `docs/superpowers/specs/2026-11-18-language-urls-design.md`.
+
+### Added
+- **Three pages written at build time,** each with the right `<html lang>`, description, share preview text and schema, its own canonical address, `hreflang` links naming all three plus `x-default` (English), and a request to start fetching its language file. The sitemap lists the three with their alternates.
+- **The address says the language.** English is at `/` with no prefix. `/en` goes to `/`. The app's own pages (`/farms`, `/login` ...) keep addresses with no language.
+- **Choosing a language on the landing page goes to the page in that language,** keeping the section you were reading. The page is already written in it, so it is instant and its title and description are right. Everywhere else the language still changes in place.
+- **The choice is kept in a cookie as well as in browser storage.** The cookie holds only the language (`ssms_locale`, one year, same site). The host reads it, so a returning visitor who chose French or Kinyarwanda is sent from `/` to `/fr` or `/rw` before any script runs, with no flash. A search engine has no cookie, so it always sees `/`. People who chose before the cookie existed get it on their next visit, and are sent by the page itself this time.
+- **Opening `/fr` or `/rw` is a choice,** so the rest of the app follows it: the sign in page after `/rw` is in Kinyarwanda.
+- **No flash on the way in.** The page that was drawn stays on screen while the app loads, and the app waits up to 0.4 s for the language file before it draws, so its first draw is already in that language. Measured in a browser: the only headline ever on screen at `/fr/` was the French one.
+
+### Decided
+- **Only the landing page gets language addresses.** The signed in app is not indexed, and a link to `/farms/42` must open for everyone in their own language.
+- **The legal pages stay at `/privacy` and `/terms`.** They are English only on purpose, so `/fr/privacy` would be an English page under a French address. They get the prefixes when the reviewed translations exist.
+- **The browser's language is never used to redirect.** A search engine has none, and a guess hides pages. A first visit to `/` is English. A dismissible suggestion for French and Kinyarwanda browsers is the next task.
+- A first time visit to the app's own pages still uses the browser's language, as before.
+
+### Also
+- The French and Kinyarwanda descriptions for search and share previews are drafts until the native review. The English ones are checked against `index.html` by a test, so the English page does not change.
+- `docs/deploy-checklist.md` lists the host checks that cannot run on a laptop (`/fr` and `/rw` answering, `/en`, the cookie redirect, the sitemap).
+- The landing page JavaScript grows by 0.8 KB, to 137.4 KB (budget 145 KB).
+
+### How it is guarded
+`prerenderPage.test.ts` (each language page: language, texts, own canonical, alternates, the file preload, escaping), `entryServer.test.tsx` (each language is drawn, the English meta text equals `index.html`), `sitemap.test.ts`, `check:prerender` in CI (three files, each with its own language, canonical and alternates, and no English headline in the others), `vercelHeaders.test.ts` (the redirects and rewrites, nothing that can loop, no redirect by browser language), `startup.test.ts` (every address and saved language), `savedLocale.test.ts`, `landingRoutes.test.tsx`, `useLanguagePicker.landing.test.tsx`, and `catalog.test.ts` (waiting a moment for a language).
+
 ## Labels that fit on a phone, in every language
 
 Task L9 of the language experience plan. Kinyarwanda and French texts are often longer than English, so a label that fits in English can be cut off. A scripted sweep opened every screen at 320, 360 and 390 pixels wide in English, French and Kinyarwanda and looked for text that is cut off, runs past the edge of the screen, or makes the page scroll sideways.

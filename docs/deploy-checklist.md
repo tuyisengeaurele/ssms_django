@@ -62,6 +62,12 @@ Then, from outside:
 - Open a lot's QR page signed out. Stop sharing it: the old link stops working.
 - Two supervisors keep the dashboard open, then use the rest of the site: nothing stalls.
 - Switch language on every role's dashboard. Keyboard only: reach every main action.
+- Language addresses (the host rules in `frontend/vercel.json` cannot be run on a laptop, so check them on the deployed site or the Vercel preview):
+  - `/fr` and `/rw` answer with 200 and the page is already in that language (view the source: `<html lang="fr">`, a French description, `hreflang` links, the canonical link naming itself).
+  - `/en` goes to `/`.
+  - Choose French on the landing page: the address becomes `/fr`. Close the tab, open `/`: you land on `/fr` with no flash of English. Choose English: `/` stays English.
+  - In a private window with no cookie, `/` stays English whatever the browser language, and `/fr/` does not loop.
+  - `/sitemap.xml` lists `/`, `/fr` and `/rw` with their alternates.
 - Stop the AI service: the disease check says so plainly and the rest of the site works.
 - Take a database backup and restore it somewhere else.
 
