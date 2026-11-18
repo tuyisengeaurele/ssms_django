@@ -12,7 +12,7 @@ export const pageTranslations = {
   ptSectionMonitoring: k('Monitoring', 'Suivi', 'Gukurikirana'),
   ptSectionAccount: k('Account', 'Compte', 'Konti'),
 
-  ptAdmin: k('Admin dashboard', "Tableau de bord de l'administration", "Ikibaho cy'ubuyobozi"),
+  ptAdmin: k('Admin dashboard', 'Tableau de bord', "Ikibaho cy'ubuyobozi"),
   ptUsers: k('Users', 'Utilisateurs', 'Abakoresha'),
   ptCooperatives: k('Cooperatives', 'Coopératives', 'Amakoperative'),
   ptMessages: k('Messages', 'Messages', 'Ubutumwa'),
