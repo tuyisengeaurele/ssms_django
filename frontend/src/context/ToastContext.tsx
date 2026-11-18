@@ -1,7 +1,5 @@
-import { createContext, lazy, Suspense, useContext, useState, useCallback, ReactNode } from 'react';
-import type { Toast, ToastAction, ToastType } from './ToastList';
-
-const ToastList = lazy(() => import('./ToastList'));
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import ToastList, { type Toast, type ToastAction, type ToastType } from './ToastList';
 
 interface ToastContextValue {
   toast: (message: string, type?: ToastType, action?: ToastAction) => void;
@@ -15,8 +13,6 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  // Once the first toast has appeared the list stays mounted, so exit animations can finish.
-  const [shown, setShown] = useState(false);
 
   const dismiss = useCallback((id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
@@ -24,7 +20,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const toast = useCallback((message: string, type: ToastType = 'info', action?: ToastAction) => {
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2);
-    setShown(true);
     // Several requests on one page can fail for the same reason at the same moment. One toast says it.
     setToasts(prev => (prev.some(t => t.message === message && t.type === type) ? prev : [...prev, { id, message, type, action }]));
     setTimeout(() => dismiss(id), action ? 7000 : 4000);
@@ -38,11 +33,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ toast, success, error, warning }}>
       {children}
       <div className="toast-container">
-        {shown && (
-          <Suspense fallback={null}>
-            <ToastList toasts={toasts} onDismiss={dismiss} />
-          </Suspense>
-        )}
+        <ToastList toasts={toasts} onDismiss={dismiss} />
       </div>
     </ToastContext.Provider>
   );

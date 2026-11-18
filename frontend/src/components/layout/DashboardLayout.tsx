@@ -4,8 +4,6 @@ import '../../styles/shell.css';
 import '../../styles/components.css';
 import { useState, useEffect, useCallback } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import MotionProvider from '../MotionProvider';
 import Sidebar from './Sidebar';
 import { useDecisionCount } from '../../hooks/useDecisionCount';
 import TopBar from './TopBar';
@@ -22,7 +20,6 @@ import { alertService } from '../../services/alert.service';
 import { endSession } from '../../services/api';
 import { authService } from '../../services/auth.service';
 import { sessionsService } from '../../services/sessions.service';
-import { pageVariants } from '../../utils/motion';
 import { useCrampedTables } from '../../hooks/useCrampedTables';
 import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 import { useApplyTheme } from '../../utils/theme';
@@ -115,7 +112,6 @@ export default function DashboardLayout() {
   };
 
   return (
-    <MotionProvider>
     <div className="app-layout">
       <Sidebar
         collapsed={rail}
@@ -132,18 +128,10 @@ export default function DashboardLayout() {
         <SupportActiveBanner active={support.active} onEnded={support.refresh} />
         <TopBar onMenuToggle={toggleMenu} onSearch={() => setSearchOpen(true)} alertCount={alertCount} />
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${location.pathname}:${user?.id ?? ''}`}
-            className="app-content"
-            variants={pageVariants}
-            initial="initial"
-            animate="enter"
-            exit="exit"
-          >
-            <Outlet />
-          </motion.div>
-        </AnimatePresence>
+        {/* A new key is a new page: it fades in (shell.css). */}
+        <div key={`${location.pathname}:${user?.id ?? ''}`} className="app-content">
+          <Outlet />
+        </div>
       </main>
 
       <BottomNav alertCount={alertCount} onMore={() => setMobileOpen(true)} />
@@ -151,6 +139,5 @@ export default function DashboardLayout() {
       <IdleWarningModal open={idle.warning} secondsLeft={idle.secondsLeft} onStay={idle.stay} onSignOut={logout} />
       <SupportRequestModal request={support.request} onAnswered={support.refresh} />
     </div>
-    </MotionProvider>
   );
 }

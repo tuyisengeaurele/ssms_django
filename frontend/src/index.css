@@ -418,6 +418,16 @@ input[type='checkbox'], input[type='radio'] { accent-color: var(--primary); }
   50%       { transform: translateY(-8px); }
 }
 
+/* A dialog or a toast arriving and leaving. It always fades. It rises and grows only where a rule sets --pop-y and --pop-scale,
+   and those rules sit inside the "no preference" media query. A leaving one stays in place for the length of the animation
+   (data-leaving, see hooks/usePresence.ts). */
+@keyframes pop-in {
+  from { opacity: 0; translate: 0 var(--pop-y, 0px); scale: var(--pop-scale, 1); }
+}
+@keyframes pop-out {
+  to   { opacity: 0; translate: 0 var(--pop-out-y, 0px); scale: var(--pop-out-scale, 1); }
+}
+
 .anim-in   { animation: fadeSlideUp 0.4s var(--ease-out) both; }
 .anim-fade { animation: fadeIn 0.3s ease both; }
 .anim-scale { animation: scaleIn 0.25s var(--ease-out) both; }

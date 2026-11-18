@@ -24,6 +24,21 @@
   font-size: 0.9rem;
   font-weight: 500;
   pointer-events: all;
+  animation: pop-in var(--duration-normal) var(--ease-out) backwards;
+}
+
+.toast[data-leaving] {
+  pointer-events: none;
+  animation: pop-out var(--duration-fast) var(--ease-out) forwards;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toast {
+    --pop-y: 20px;
+    --pop-scale: 0.95;
+    --pop-out-y: 10px;
+    --pop-out-scale: 0.95;
+  }
 }
 
 .toast-success { background: #123524; }
