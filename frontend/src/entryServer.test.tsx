@@ -33,6 +33,10 @@ describe('renderLanding', () => {
     expect(html).not.toContain('Raise healthier silkworms.');
   });
 
+  it('leaves out the offer of another language, which depends on who is looking and not on the page', async () => {
+    for (const locale of ['en', 'fr', 'rw'] as const) expect(await renderLanding(locale)).not.toContain('l-suggest');
+  });
+
   it('draws a page of a similar size in every language, so none is a stub', async () => {
     const sizes = await Promise.all((['en', 'fr', 'rw'] as const).map(async (l) => (await renderLanding(l)).length));
     for (const size of sizes) expect(size).toBeGreaterThan(20000);

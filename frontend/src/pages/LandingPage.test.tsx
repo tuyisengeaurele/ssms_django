@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../context/LanguageContext';
 import { prerenderedHtml, rememberPrerendered } from '../utils/prerendered';
 
@@ -74,5 +74,30 @@ describe('LandingPage', () => {
     expect(prerenderedHtml()).toBe('<p>copy</p>');
     renderPage();
     expect(prerenderedHtml()).toBeNull();
+  });
+});
+
+describe('LandingPage, the offer of another language', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    localStorage.clear();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('is shown to a first time visitor whose browser prefers French', () => {
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['fr-FR', 'en']);
+    renderPage();
+    act(() => void vi.advanceTimersByTime(2000));
+    expect(screen.getByRole('link', { name: 'Voir en français' })).toHaveAttribute('href', '/fr');
+  });
+
+  it('is not shown to an English reader', () => {
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['en-US']);
+    renderPage();
+    act(() => void vi.advanceTimersByTime(2000));
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
   });
 });
