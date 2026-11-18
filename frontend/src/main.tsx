@@ -55,9 +55,11 @@ async function start() {
 
   // The build writes the landing page into the page. Keep it, so it stays on screen while the page's code arrives.
   rememberPrerendered(root);
-  // That page is already in its language. Wait a moment for the language file, so the first thing React draws is in the same
-  // language and nothing flips. A slow or failed download is not waited for.
-  if (root.hasAttribute('data-prerendered')) await loadWithin(begin.initialLocale ?? loadLocale(), 400);
+  // Wait a moment for the language file, so the first thing React draws is in the person's language and nothing flips from English.
+  // The landing page is already written in its language; every other page has been asking for the file since the page began
+  // (public/locale-boot.js). A slow or failed download is not waited for.
+  const first = begin.initialLocale ?? loadLocale();
+  if (first !== 'en') await loadWithin(first, 400);
 
   ReactDOM.createRoot(root).render(
     <React.StrictMode>
