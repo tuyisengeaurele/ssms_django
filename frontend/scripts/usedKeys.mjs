@@ -44,7 +44,7 @@ export function calledKeys(code, fileName) {
   const visit = (node) => {
     if (ts.isCallExpression(node)) {
       const name = calleeName(node);
-      if (name && name in KEY_ARGUMENT) {
+      if (name && Object.hasOwn(KEY_ARGUMENT, name)) {
         const argument = node.arguments[KEY_ARGUMENT[name]];
         if (argument) for (const key of literalsOf(argument)) found.push({ key, line: lineOf(file, argument) });
       }
@@ -62,7 +62,7 @@ export function templateFamilies(code, fileName) {
   const visit = (node) => {
     if (ts.isCallExpression(node)) {
       const name = calleeName(node);
-      const argument = name && name in KEY_ARGUMENT ? node.arguments[KEY_ARGUMENT[name]] : undefined;
+      const argument = name && Object.hasOwn(KEY_ARGUMENT, name) ? node.arguments[KEY_ARGUMENT[name]] : undefined;
       if (argument && ts.isTemplateExpression(argument)) {
         const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, (c) => '\\' + c);
         const parts = [argument.head.text, ...argument.templateSpans.map((span) => span.literal.text)];
@@ -114,7 +114,7 @@ export function tableUses(code, fileName) {
   const visit = (node) => {
     if (ts.isCallExpression(node)) {
       const name = calleeName(node);
-      if (name && name in KEY_ARGUMENT && node.arguments[KEY_ARGUMENT[name]]) dynamicUses(node.arguments[KEY_ARGUMENT[name]], found, file);
+      if (name && Object.hasOwn(KEY_ARGUMENT, name) && node.arguments[KEY_ARGUMENT[name]]) dynamicUses(node.arguments[KEY_ARGUMENT[name]], found, file);
     }
     ts.forEachChild(node, visit);
   };
@@ -165,4 +165,73 @@ export function definedValues(code, fileName) {
   };
   visit(file);
   return { tables, fields };
+}
+
+const COMPARES_WITH_ONE = new Set([
+  ts.SyntaxKind.EqualsEqualsEqualsToken,
+  ts.SyntaxKind.EqualsEqualsToken,
+  ts.SyntaxKind.ExclamationEqualsEqualsToken,
+  ts.SyntaxKind.ExclamationEqualsToken,
+  ts.SyntaxKind.GreaterThanToken,
+  ts.SyntaxKind.LessThanEqualsToken,
+]);
+
+const isOne = (node) => ts.isNumericLiteral(unwrap(node)) && unwrap(node).text === '1';
+
+/** True when the node, or something inside it, asks for a text with t() or say(). */
+function asksForText(node) {
+  let found = false;
+  const look = (n) => {
+    if (found) return;
+    if (ts.isCallExpression(n) && ['t', 'say'].includes(calleeName(n) ?? '')) found = true;
+    else ts.forEachChild(n, look);
+  };
+  look(node);
+  return found;
+}
+
+/**
+ * Places that pick a text by hand because a count is 1, such as t(n === 1 ? 'xOne' : 'x') or n === 1 ? t('a') : t('b').
+ * The rule for "one" differs by language, so the choice belongs to the plural helper. [{ line, condition }]
+ */
+export function singularChecks(code, fileName) {
+  const file = parse(code, fileName);
+  const found = [];
+  const visit = (node) => {
+    if (ts.isConditionalExpression(node)) {
+      const condition = unwrap(node.condition);
+      if (ts.isBinaryExpression(condition) && COMPARES_WITH_ONE.has(condition.operatorToken.kind) && (isOne(condition.right) || isOne(condition.left))) {
+        const parent = node.parent && ts.isParenthesizedExpression(node.parent) ? node.parent.parent : node.parent;
+        const insideTextCall = parent && ts.isCallExpression(parent) && ['t', 'say'].includes(calleeName(parent) ?? '');
+        if (insideTextCall || asksForText(node.whenTrue) || asksForText(node.whenFalse)) {
+          found.push({ line: lineOf(file, node), condition: condition.getText(file) });
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+  return found;
+}
+
+/** Where the two keys are in a plural call: tn(n, one, other) and pluralText(t, locale, n, one, other). */
+const PLURAL_ARGUMENTS = { tn: [1, 2], pluralText: [3, 4] };
+
+/** The pairs of texts a count chooses between, when both keys are written out: [{ one, other, line }]. */
+export function pluralPairs(code, fileName) {
+  const file = parse(code, fileName);
+  const found = [];
+  const visit = (node) => {
+    if (ts.isCallExpression(node)) {
+      const name = calleeName(node);
+      const at = name && Object.hasOwn(PLURAL_ARGUMENTS, name) ? PLURAL_ARGUMENTS[name] : undefined;
+      if (at) {
+        const [one, other] = at.map((index) => node.arguments[index]).map((argument) => (argument ? literalsOf(argument) : []));
+        if (one?.length === 1 && other?.length === 1) found.push({ one: one[0], other: other[0], line: lineOf(file, node) });
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+  return found;
 }
