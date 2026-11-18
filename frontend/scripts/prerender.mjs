@@ -4,6 +4,7 @@
 import { copyFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { localeBootScript } from './locale-boot.mjs';
 import { buildLandingPage, fontsToPreload, landingFile, languageFileOf, stylesheetsOf } from './prerender-lib.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -40,4 +41,7 @@ for (const locale of LOCALES) {
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, page);
 }
+// The page that asks for the saved language early (see locale-boot.mjs). It is not under /assets, so the host does not cache it
+// for a year: the file names inside it change with each build.
+writeFileSync(resolve(dist, 'locale-boot.js'), localeBootScript({ fr: languageFileOf(manifest, 'fr'), rw: languageFileOf(manifest, 'rw') }));
 console.log(`Prerendered the landing page in ${LOCALES.length} languages (${fonts.length} fonts, ${stylesheets.length} stylesheet, plain shell kept as dist/app.html).`);

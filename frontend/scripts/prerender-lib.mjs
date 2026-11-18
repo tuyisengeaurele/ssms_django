@@ -64,6 +64,8 @@ export function buildLandingPage({ shell, appHtml, stylesheets, modulepreloads, 
     .join('');
 
   return shell
+    .replace('<script src="/locale-boot.js"></script>\n', '')
+    .replace('<script src="/locale-boot.js"></script>', '')
     .replace('<script src="/hero-preload.js"></script>\n', '')
     .replace('<script src="/hero-preload.js"></script>', '')
     .replace(/<html lang="[^"]*">/, `<html lang="${locale}">`)

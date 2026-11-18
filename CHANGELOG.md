@@ -1,5 +1,25 @@
 # Changelog
 
+## No English flash in the app for people who chose French or Kinyarwanda
+
+Task L14 of the language experience plan.
+
+### Fixed
+- **A person who had chosen French saw English for a moment on every app page (`/login`, `/farms` ...) before it turned French.** The language file was asked for only after the main script had run. On a slow phone (Slow 4G, 4x slower processor, `/login`, three runs) the headline read "Welcome back" for about 0.8 to 0.9 seconds and then changed to "Bon retour", and the language file was requested at about 2.8 seconds.
+
+### Changed
+- **A small script, `/locale-boot.js`, now runs first and asks for the language file at once.** It makes the same choice as the app (saved choice in storage, then the cookie, then the browser's ranked languages), skips `/`, `/fr`, `/rw` and `/en`, and does nothing for English, which is in the main script. The build writes it, because the language files have hashed names. It is plain old JavaScript, works with storage blocked, and changes nothing if anything goes wrong.
+- **The app waits up to 0.4 seconds for that file before drawing**, for any page and not only the landing page, so the first thing drawn is already in the person's language. A slow or failed download is not waited for.
+- Same measurement after the change: the language file is requested at about 0.46 seconds, and the headline is "Bon retour" from its first draw, never English. The French headline appears at about 3.8 to 4.1 seconds, a little earlier than before (4.15 to 4.38).
+
+### Tested
+- 33 checks run the script as a browser would. One of them compares it with the app's own rules over every mix of storage, cookie and browser language (324 situations), so the two cannot drift apart.
+- `check:prerender` now fails if the shell does not load the script, or if the script names different language files from the ones the language pages ask for.
+
+### Also
+- The landing pages do not load the script. They already ask for their own file in the head.
+- The landing page JavaScript is unchanged at 137.9 KB (budget 145 KB).
+
 ## The English page offers French and Kinyarwanda, and a language bug is fixed
 
 Task L13 of the language experience plan, and a bug found while checking it.

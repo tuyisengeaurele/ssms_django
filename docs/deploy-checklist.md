@@ -68,6 +68,7 @@ Then, from outside:
   - Choose French on the landing page: the address becomes `/fr`. Close the tab, open `/`: you land on `/fr` with no flash of English. Choose English: `/` stays English.
   - In a private window with no cookie, `/` stays English whatever the browser language, and `/fr/` does not loop.
   - `/sitemap.xml` lists `/`, `/fr` and `/rw` with their alternates.
+  - `/locale-boot.js` answers with 200, names both language files, and is not cached for a year (it changes with every build). Choose French, open `/login` on a throttled connection: the headline is French from the first draw, with no English first.
 - Stop the AI service: the disease check says so plainly and the rest of the site works.
 - Take a database backup and restore it somewhere else.
 
