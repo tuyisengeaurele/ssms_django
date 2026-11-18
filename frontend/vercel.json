@@ -1,8 +1,47 @@
 {
+  "redirects": [
+    {
+      "source": "/en",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "cookie",
+          "key": "ssms_locale",
+          "value": "fr"
+        }
+      ],
+      "destination": "/fr",
+      "permanent": false
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "cookie",
+          "key": "ssms_locale",
+          "value": "rw"
+        }
+      ],
+      "destination": "/rw",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/:path*",
       "destination": "https://ssms-api-cmqa.onrender.com/api/:path*"
+    },
+    {
+      "source": "/fr",
+      "destination": "/fr/index.html"
+    },
+    {
+      "source": "/rw",
+      "destination": "/rw/index.html"
     },
     {
       "source": "/((?!assets/).*)",

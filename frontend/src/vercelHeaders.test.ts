@@ -10,6 +10,7 @@ interface Header { key: string; value: string }
 const config = JSON.parse(readFileSync(join(__dirname, '../vercel.json'), 'utf8')) as {
   headers: Array<{ source: string; headers: Header[] }>;
   rewrites: Array<{ source: string; destination: string }>;
+  redirects?: Array<{ source: string; destination: string; permanent?: boolean; has?: unknown }>;
 };
 const all: Header[] = config.headers.find((h) => h.source === '/(.*)')!.headers;
 const policy = all.find((h) => h.key.startsWith('Content-Security-Policy'));
@@ -52,7 +53,54 @@ describe('the rewrites that serve the app', () => {
   });
 
   it('serves the plain app shell, not the prerendered home page, for every other address', () => {
-    const catchAll = rewrites.find((r) => !r.source.startsWith('/api/'));
+    const catchAll = rewrites[rewrites.length - 1];
+    expect(catchAll.source).toMatch(/^\/\(/);
     expect(catchAll?.destination).toBe('/app.html');
+  });
+});
+
+describe('the language addresses', () => {
+  // English is the root address. /en is not a page, but people will type it, so it goes to the root.
+  const redirects = config.redirects ?? [];
+  const cookieRedirects = redirects.filter((r) => r.source === '/');
+
+  it('sends /en to the English page for good', () => {
+    expect(redirects).toContainEqual({ source: '/en', destination: '/', permanent: true });
+  });
+
+  it('sends a returning visitor who chose French or Kinyarwanda from the root to that page, by the cookie only', () => {
+    expect(cookieRedirects).toEqual([
+      { source: '/', has: [{ type: 'cookie', key: 'ssms_locale', value: 'fr' }], destination: '/fr', permanent: false },
+      { source: '/', has: [{ type: 'cookie', key: 'ssms_locale', value: 'rw' }], destination: '/rw', permanent: false },
+    ]);
+  });
+
+  it('never redirects by the language of the browser, which a search engine does not have', () => {
+    const conditions = cookieRedirects.flatMap((r) => (r.has as Array<{ type: string }>).map((h) => h.type));
+    expect(conditions.every((type) => type === 'cookie')).toBe(true);
+  });
+
+  it('serves the French and Kinyarwanda pages at /fr and /rw, whether or not the host would find the folder index by itself', () => {
+    expect(config.rewrites).toContainEqual({ source: '/fr', destination: '/fr/index.html' });
+    expect(config.rewrites).toContainEqual({ source: '/rw', destination: '/rw/index.html' });
+  });
+
+  it('puts those rewrites after the API and before the catch-all, so neither is shadowed', () => {
+    const order = config.rewrites.map((r) => r.source);
+    expect(order[0]).toBe('/api/:path*');
+    expect(order.indexOf('/fr')).toBeLessThan(order.length - 1);
+    expect(order.indexOf('/rw')).toBeLessThan(order.length - 1);
+    expect(order.indexOf('/fr')).toBeGreaterThan(0);
+  });
+
+  it('keeps the root redirect temporary, so a search engine that once saw it does not remember it', () => {
+    expect(cookieRedirects.every((r) => r.permanent === false)).toBe(true);
+  });
+
+  it('redirects nothing else, and never to an address it redirects from, so no address can loop', () => {
+    const sources = new Set(redirects.map((r) => r.source));
+    expect([...sources].sort()).toEqual(['/', '/en']);
+    expect(redirects.filter((r) => sources.has(r.destination) && r.destination !== '/')).toEqual([]);
+    expect(redirects.filter((r) => r.source === r.destination)).toEqual([]);
   });
 });

@@ -50,6 +50,7 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const UnauthorizedPage = lazy(() => import('./pages/UnauthorizedPage'));
 import { ErrorBoundary }  from './components/ui/ErrorBoundary';
 import RouteFallback from './components/RouteFallback';
+import { landingRoutes } from './pages/landingRoutes';
 
 export default function App() {
   return (
@@ -127,7 +128,7 @@ export default function App() {
           <Route path="/terms"   element={<TermsOfServicePage />} />
 
           {/* Default */}
-          <Route path="/" element={<LandingPage />} />
+          {landingRoutes(LandingPage)}
           <Route path="*"  element={<NotFoundPage />} />
         </Routes>
         </Suspense>
