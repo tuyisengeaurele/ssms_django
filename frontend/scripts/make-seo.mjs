@@ -3,6 +3,7 @@
 import { writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { sitemapXml } from './sitemap.mjs';
 import { resolveSiteUrl } from './siteUrl.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -14,14 +15,8 @@ if (!resolved) {
   console.warn('VITE_SITE_URL is not set, using http://localhost:5173 for robots.txt and sitemap.xml');
 }
 
-const pages = ['/', '/login', '/register', '/privacy', '/terms'];
 const today = new Date().toISOString().slice(0, 10);
-
-const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${pages.map((p) => `  <url><loc>${site}${p === '/' ? '/' : p}</loc><lastmod>${today}</lastmod></url>`).join('\n')}
-</urlset>
-`;
+const sitemap = sitemapXml({ site, today });
 
 const robots = `User-agent: *
 Allow: /
