@@ -1,4 +1,4 @@
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage, useLanguagePending } from '../context/LanguageContext';
 import { useOptionalToast } from '../context/ToastContext';
 import { prefetchCatalog } from '../i18n/catalog';
 import { LOCALE_LABELS, type Locale } from '../i18n/locales';
@@ -16,7 +16,8 @@ const OTHER_THAN_ENGLISH = (Object.keys(LOCALE_LABELS) as Locale[]).filter((code
  * - `choose(code)`: switch. If the download fails the language stays as it was and a toast says so, with a way to try again.
  */
 export function useLanguagePicker() {
-  const { t, locale, setLocale, pending } = useLanguage();
+  const { t, locale, setLocale } = useLanguage();
+  const pending = useLanguagePending();
   const toasts = useOptionalToast();
 
   const choose = async (code: Locale): Promise<'ok' | 'failed'> => {
