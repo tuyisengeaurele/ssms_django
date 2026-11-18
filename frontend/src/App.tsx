@@ -1,7 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import { LanguageProvider } from './context/LanguageContext';
 import WakeBanner from './components/ui/WakeBanner';
 import ValidationMessages from './components/ui/ValidationMessages';
 import { cooperativeRoutes } from './pages/cooperatives/cooperativeRoutes';
@@ -55,7 +54,6 @@ import { landingRoutes } from './pages/landingRoutes';
 export default function App() {
   return (
     <ErrorBoundary>
-    <LanguageProvider>
     <WakeBanner />
     <ValidationMessages />
     <AuthProvider>
@@ -134,7 +132,6 @@ export default function App() {
         </Suspense>
       </BrowserRouter>
     </AuthProvider>
-    </LanguageProvider>
     </ErrorBoundary>
   );
 }
