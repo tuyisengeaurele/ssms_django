@@ -80,6 +80,8 @@ export default function Modal({ open, onClose, title, children, maxWidth = 480, 
     <div
       className="modal-overlay"
       data-leaving={leaving ? '' : undefined}
+      // While it fades out it is no longer a dialog anyone can use, so it is not announced as one.
+      aria-hidden={leaving ? true : undefined}
       onClick={(e) => { if (dismissible && e.target === e.currentTarget) onClose(); }}
     >
       <div

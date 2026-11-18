@@ -29,8 +29,16 @@ describe('a dialog and its leaving animation', () => {
   it('stays, marked as leaving, for a moment after it closes, then goes', () => {
     const { rerender } = render(view(true));
     rerender(view(false));
-    expect(screen.getByRole('dialog').closest('.modal-overlay')).toHaveAttribute('data-leaving');
+    expect(screen.getByRole('dialog', { hidden: true }).closest('.modal-overlay')).toHaveAttribute('data-leaving');
     act(() => void vi.advanceTimersByTime(200));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('is hidden from assistive technology as soon as it starts to leave, so it is never announced as still open', () => {
+    const { rerender } = render(view(true));
+    expect(screen.getByRole('dialog').closest('.modal-overlay')).not.toHaveAttribute('aria-hidden');
+    rerender(view(false));
+    expect(screen.getByRole('dialog', { hidden: true }).closest('.modal-overlay')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
