@@ -25,6 +25,7 @@ const SHELL = `<!doctype html>
       }
     </script>
     <script src="/theme-boot.js"></script>
+    <script src="/locale-boot.js"></script>
     <script src="/hero-preload.js"></script>
     <script type="module" crossorigin src="/assets/index-abc.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-abc.css">
@@ -74,6 +75,10 @@ describe('buildLandingPage', () => {
   it('preloads the hero photo with a link the browser can see at once, not with a script', () => {
     expect(page).not.toContain('/hero-preload.js');
     expect(page).toMatch(/<link rel="preload" as="image" type="image\/avif" fetchpriority="high" imagesrcset="[^"]*hero-bg-1280\.avif 1280w[^"]*" imagesizes="[^"]+">/);
+  });
+
+  it('leaves out the language boot script, since a language address already asks for its own file in the head', () => {
+    expect(page).not.toContain('/locale-boot.js');
   });
 
   it('keeps the rest of the shell as it was', () => {

@@ -43,6 +43,21 @@ for (const locale of LOCALES) {
 check(shell.includes('<div id="root"></div>'), 'dist/app.html is not the plain shell');
 check(!shell.includes('data-prerendered'), 'dist/app.html carries the landing page');
 
+// Every other page asks for the saved language early, with a small script the build writes. It must be in the shell and must name
+// the same files the landing pages ask for, or a French visitor sees English first again.
+check(shell.includes('<script src="/locale-boot.js"></script>'), 'dist/app.html does not load the language boot script');
+let boot = '';
+try {
+  boot = readFileSync(resolve(dist, 'locale-boot.js'), 'utf8');
+} catch {
+  problems.push('dist/locale-boot.js is missing');
+}
+for (const locale of ['fr', 'rw']) {
+  const page = readFileSync(resolve(dist, landingFile(locale)), 'utf8');
+  const file = page.match(/<link rel="modulepreload" crossorigin href="(\/assets\/translations-[^"]+\.js)">/)?.[1];
+  check(Boolean(file) && boot.includes(JSON.stringify(file)), `dist/locale-boot.js does not name the ${locale} file (${file}) that dist/${landingFile(locale)} asks for`);
+}
+
 if (problems.length) {
   for (const problem of problems) console.error(`  ${problem}`);
   process.exit(1);
