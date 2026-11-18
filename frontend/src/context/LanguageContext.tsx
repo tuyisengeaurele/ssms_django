@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { createPortal } from 'react-dom';
 import { isLoaded, loadCatalog, say } from '../i18n/catalog';
 import { detectLocale } from '../i18n/detectLocale';
-import { LOCALE_LABELS, type Locale } from '../i18n/locales';
+import { isLocale, LOCALE_LABELS, type Locale } from '../i18n/locales';
 import { warmLikelyLanguages } from '../i18n/warm';
 import { fill } from '../utils/fill';
 
@@ -38,7 +38,7 @@ const VISUALLY_HIDDEN = {
 export function loadLocale(): Locale {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved && ['en', 'fr', 'rw'].includes(saved)) return saved as Locale;
+    if (isLocale(saved)) return saved;
   } catch {
     // Storage can be blocked. The browser language below still works.
   }
@@ -123,6 +123,27 @@ export function LanguageProvider({ children, initialLocale }: { children: ReactN
       },
     );
   }, [apply]);
+
+  // The same app open in another tab: when the person changes the language there, this tab follows. The browser sends a storage
+  // event to every other tab, never to the one that wrote, so there is no loop. The other tab already saved the choice, so
+  // nothing is written back, and nothing is said aloud, since nobody asked for a change in this tab. If the download fails,
+  // the language stays as it was and the next visit picks up the saved one.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== STORAGE_KEY || !isLocale(event.newValue)) return;
+      const next = event.newValue;
+      wanted.current = next;
+      setPending(null);
+      if (next === current.current) return;
+      const follow = () => {
+        if (wanted.current === next) setLocaleState(next);
+      };
+      if (isLoaded(next)) follow();
+      else loadCatalog(next).then(follow, () => {});
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   // `arrivals` is a dependency so the words are looked up again once a language that was still downloading has arrived.
   // eslint-disable-next-line react-hooks/exhaustive-deps
