@@ -1,5 +1,22 @@
 # Changelog
 
+## A missing text name is caught before a farmer sees it
+
+Task L7 of the language experience plan. The app asks for a text by name, `t('navFarms')`. A misspelt or removed name does not stop the build or throw an error: the screen shows the raw name. About 2,350 calls ask by a name written out in full, and about 90 more look the name up in a table or build it from a number.
+
+### Added
+- **A test that reads the source and fails on a name that has no text,** with the file and line of each. It covers names written out in full (and either answer of a choice, and the text after `??`), names built from a number or a word (`lpFaq${n}Q` must match at least one text), texts kept in tables (`t(ROLE_LABEL_KEY[role])`), and texts kept in fields (`t(tab.labelKey)`, read from the same file).
+- **The helpers that read the source** are in `scripts/usedKeys.mjs`, with their own tests.
+
+### Found
+Nothing. Every name the code asks for exists today. To be sure the guard can fail, four things were broken on purpose (a literal, a template family, a table entry and a field): each was caught with the right file and line, and then restored.
+
+### Not covered, on purpose
+A name passed on as a plain variable, `t(key)`, about twenty calls. The name comes from a function parameter and only running the code knows it. The test says so at the top.
+
+### How it is guarded
+`src/i18n/keysUsed.test.ts` (the four checks over the real source, plus one that fails if the scan finds almost nothing) and `src/usedKeys.test.ts` (the helpers: literals, choices, fallbacks, templates, tables, fields and line numbers).
+
 ## Other tabs follow a language change
 
 Task L6 of the language experience plan, which finishes the "feel instant" stage. A person with the app open in two tabs who changed the language in one used to find the other still in the old language until it was reloaded.
