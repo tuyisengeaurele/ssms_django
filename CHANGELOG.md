@@ -1,5 +1,23 @@
 # Changelog
 
+## Other tabs follow a language change
+
+Task L6 of the language experience plan, which finishes the "feel instant" stage. A person with the app open in two tabs who changed the language in one used to find the other still in the old language until it was reloaded.
+
+### Changed
+- **A tab follows a language chosen in another tab.** The browser tells every other tab of the same site when one saves the language. The tab loads that language if it does not have it yet, keeps the old one on screen until it arrives, then switches.
+- **Nothing is written back and nothing is said aloud.** The other tab already saved the choice, so there is no loop (checked: the first tab received no storage event from the second). A screen reader is not told, since nobody asked for a change in that tab.
+- **If the language cannot be downloaded in the other tab, it stays as it was,** quietly. The saved language is picked up the next time it opens.
+- **If both tabs change the language at about the same time,** the later choice wins, and a download this tab was waiting for is forgotten when the other tab's choice arrives first.
+- **Values that are not a language are ignored:** an unknown word, an empty value, the choice being cleared, and changes to other saved settings.
+- `isLocale` now says whether a value is one of the three languages, and the first-language lookup uses it too.
+
+### Checked in a browser
+Two tabs on the built landing page: choosing French in the first switched the second, a Kinyarwanda choice with the second tab's download blocked left it on French, and choosing English switched it back.
+
+### How it is guarded
+`LanguageContext.tabs.test.tsx` (following at once, following after a download, staying quiet on a failed download, no write back, nothing announced, the unknown and cleared values and other keys, two changes at once in both orders, and the listener being removed when the page is left).
+
 ## A language switch redraws the screen once
 
 Task L5 of the language experience plan. Hundreds of components read the language, and every time the language provider handed them a new value they all drew again. After the previous task, that happened three times around one switch: once when the language provider added its screen reader announcer at the start, once when a download began, and once when it landed.
