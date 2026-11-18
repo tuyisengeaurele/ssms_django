@@ -80,6 +80,15 @@ describe('how often the screen draws again around a language switch', () => {
     expect(draws).toBe(before);
   });
 
+  it('keeps the same functions in hand while a download starts, so nothing that depends on them redraws', () => {
+    show();
+    const before = controls;
+    act(() => void controls?.setLocale('fr'));
+    expect(controls?.t).toBe(before?.t);
+    expect(controls?.tn).toBe(before?.tn);
+    expect(controls?.setLocale).toBe(before?.setLocale);
+  });
+
   it('does not draw again for a choice that changes nothing', () => {
     show();
     const before = draws;
