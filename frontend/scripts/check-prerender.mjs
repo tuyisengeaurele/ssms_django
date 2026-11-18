@@ -1,23 +1,50 @@
 // Run after a build: npm run check:prerender
-// The home page must arrive with the landing page already in it, and every other address must get the plain shell. Either one
-// going wrong is silent: the site still works, only slower or with a flash of the wrong page.
+// The landing page must arrive already written, in each language, at its own address, and every other address must get the plain
+// shell. Any of these going wrong is silent: the site still works, only slower, with a flash of the wrong page or the wrong
+// language for a search engine.
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { landingAddress, landingFile, siteOf } from './prerender-lib.mjs';
 
 const dist = resolve(dirname(fileURLToPath(import.meta.url)), '../dist');
-const home = readFileSync(resolve(dist, 'index.html'), 'utf8');
 const shell = readFileSync(resolve(dist, 'app.html'), 'utf8');
+const site = siteOf(shell);
+
+// A word that only the headline of that language has, and the English headline that must not be in the others.
+const HEADLINE = { en: 'Raise healthier silkworms.', fr: 'Élevez des vers à soie en meilleure santé.', rw: 'Korora inyo z' };
+const LOCALES = ['en', 'fr', 'rw'];
 
 const problems = [];
-if (!home.includes('<div id="root" data-prerendered="true"><div class="landing">')) problems.push('dist/index.html has no prerendered landing page');
-if (!/<h1[^>]*>/.test(home)) problems.push('dist/index.html has no headline');
-if (home.includes('/hero-preload.js')) problems.push('dist/index.html still loads the hero preload script');
-if (!shell.includes('<div id="root"></div>')) problems.push('dist/app.html is not the plain shell');
-if (shell.includes('data-prerendered')) problems.push('dist/app.html carries the landing page');
+const check = (condition, message) => {
+  if (!condition) problems.push(message);
+};
+
+for (const locale of LOCALES) {
+  const file = `dist/${landingFile(locale)}`;
+  let page = '';
+  try {
+    page = readFileSync(resolve(dist, landingFile(locale)), 'utf8');
+  } catch {
+    problems.push(`${file} is missing`);
+    continue;
+  }
+  check(page.includes('<div id="root" data-prerendered="true"><div class="landing">'), `${file} has no prerendered landing page`);
+  check(/<h1[^>]*>/.test(page), `${file} has no headline`);
+  check(page.includes(HEADLINE[locale]), `${file} does not have the ${locale} headline`);
+  if (locale !== 'en') check(!page.includes(HEADLINE.en), `${file} still has the English headline`);
+  check(page.includes(`<html lang="${locale}">`), `${file} does not say it is ${locale}`);
+  check(page.includes(`<link rel="canonical" href="${site}${landingAddress(locale)}" />`), `${file} has the wrong canonical address`);
+  for (const other of LOCALES) check(page.includes(`hreflang="${other}" href="${site}${landingAddress(other)}"`), `${file} does not list ${other} as an alternate`);
+  check(page.includes(`hreflang="x-default" href="${site}/"`), `${file} has no x-default alternate`);
+  check(locale === 'en' || /<link rel="modulepreload" crossorigin href="\/assets\/translations-[^"]+\.js">/.test(page), `${file} does not ask for its language file`);
+  check(!page.includes('/hero-preload.js'), `${file} still loads the hero preload script`);
+}
+check(shell.includes('<div id="root"></div>'), 'dist/app.html is not the plain shell');
+check(!shell.includes('data-prerendered'), 'dist/app.html carries the landing page');
 
 if (problems.length) {
   for (const problem of problems) console.error(`  ${problem}`);
   process.exit(1);
 }
-console.log('The home page is prerendered and the plain shell is kept as app.html.');
+console.log('The landing page is prerendered in English, French and Kinyarwanda, and the plain shell is kept as app.html.');

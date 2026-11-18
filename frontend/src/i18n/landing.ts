@@ -26,6 +26,23 @@ export const landingTranslations = {
   ),
   lpLangRetry: k('Try again', 'Réessayer', 'Ongera ugerageze'),
 
+  // What search engines and share previews show for the landing page. The English is also in index.html, and a test keeps them equal.
+  lpMetaDescription: k(
+    "Smart Sericulture Management System helps Rwandan silk farmers watch every batch, catch disease early and harvest at the right time.",
+    "Smart Sericulture Management System aide les sériciculteurs rwandais à suivre chaque lot, à repérer tôt les maladies et à récolter au bon moment.",
+    "Smart Sericulture Management System ifasha abahinzi b'ubudodo bo mu Rwanda gukurikirana buri tsinda, kubona indwara hakiri kare no gusarura ku gihe gikwiye.",
+  ),
+  lpMetaShare: k(
+    "Watch every batch, catch disease early, harvest at the right time.",
+    "Suivez chaque lot, repérez tôt les maladies, récoltez au bon moment.",
+    "Kurikirana buri tsinda, bona indwara hakiri kare, usarure ku gihe gikwiye.",
+  ),
+  lpMetaSchema: k(
+    "Watch every silkworm batch, catch disease early from a photo and harvest at the right time.",
+    "Suivez chaque lot de vers à soie, repérez tôt une maladie grâce à une photo et récoltez au bon moment.",
+    "Kurikirana buri tsinda ry'inyo z'ubudodo, bona indwara hakiri kare ukoresheje ifoto, kandi usarure ku gihe gikwiye.",
+  ),
+
   // Hero
   lpHeroEyebrow: k(
     "Smart Sericulture Management System",
