@@ -81,6 +81,18 @@ describe('changing language', () => {
     expect(localStorage.getItem('ssms_locale')).toBe('fr');
   });
 
+  it('keeps the choice in a cookie as well, for the host to read before any script runs', () => {
+    const cookies: string[] = [];
+    vi.spyOn(document, 'cookie', 'set').mockImplementation((value: string) => {
+      cookies.push(value);
+    });
+    const result = language();
+    act(() => {
+      void result.current.setLocale('rw');
+    });
+    expect(cookies.some((cookie) => cookie.startsWith('ssms_locale=rw;'))).toBe(true);
+  });
+
   it('still switches for this visit when the browser will not save the choice', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
     const result = language();
