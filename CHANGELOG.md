@@ -1,5 +1,24 @@
 # Changelog
 
+## A language switch redraws the screen once
+
+Task L5 of the language experience plan. Hundreds of components read the language, and every time the language provider handed them a new value they all drew again. After the previous task, that happened three times around one switch: once when the language provider added its screen reader announcer at the start, once when a download began, and once when it landed.
+
+### Changed
+- **The language value is stable.** It changes only when the words do, so the bookkeeping around a switch (a download starting or failing, the announcement for a screen reader, the announcer being added) no longer redraws the app. A cold switch now redraws everything once, when the words arrive, where it used to redraw it twice. The first draw of the app is one, not two.
+- **Which language is on its way is a separate hook,** `useLanguagePending`. Only the language controls read it, so only they draw when a download starts. `useLanguage()` no longer returns `pending`.
+
+### Measured (production build, 4x CPU slowdown, Slow 4G, farmer dashboard, two builds measured alternately)
+- The busy mark appears 33 ms after a cold switch starts (29 to 37), against 47 ms (39 to 77) before.
+- A switch to a language already downloaded takes about 120 ms to paint on both builds. It was always one redraw, so this task does not change it.
+- Correction: the 540 ms warm switch quoted in the earlier baseline came from a script that did not let one switch settle before the next. The real figure is about 120 ms.
+
+### Left out on purpose
+`startTransition`, setting the `lang` attribute in the same commit as the words, and the View Transitions API. At about 120 ms on a 4x slowed CPU a warm switch is already near the 100 ms goal, and no measurement showed any of them helping. They add code and, for view transitions, extra work on every switch.
+
+### How it is guarded
+`LanguageContext.renders.test.tsx` (a component that reads the words draws once at the start, not again when a download starts or fails, once when the language arrives or is already here, not at all for a choice that changes nothing, and a control that reads `useLanguagePending` is told when a download starts and ends).
+
 ## The language switch says what it is doing
 
 Task L4 of the language experience plan. A switch that has to download used to give no sign while it waited, and a failed download (no signal) did nothing at all. Now the person, and a screen reader, are told.
