@@ -39,7 +39,7 @@ const HOME: Record<string, string> = { ADMIN: '/admin', SUPERVISOR: '/supervisor
 
 export default function DetectionReportsPage() {
   const { user: me } = useAuth();
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const { getErrorMessage } = useApiError();
   const { error: showError } = useToast();
 
@@ -164,7 +164,7 @@ export default function DetectionReportsPage() {
               )}
             </Panel>
 
-            <Panel title={t('drHistory')} note={loading ? undefined : fill(t(history.length === 1 ? 'drHistoryCountOne' : 'drHistoryCount'), { n: history.length })} flush>
+            <Panel title={t('drHistory')} note={loading ? undefined : tn(history.length, 'drHistoryCountOne', 'drHistoryCount')} flush>
               {loading ? (
                 <SkeletonTable rows={6} cols={6} />
               ) : history.length === 0 ? (

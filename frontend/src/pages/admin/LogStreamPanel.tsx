@@ -3,7 +3,6 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { useAutoFilters } from '../../hooks/useAutoFilters';
 import { JobRow, LogFilters, logsService, LogStream, RequestRow, SecurityRow } from '../../services/logs.service';
-import { fill } from '../../utils/fill';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
 import Pagination from '../../components/ui/Pagination';
@@ -38,7 +37,7 @@ interface Props {
 
 /** One of the logs that is not the audit log: a filter bar, a table, pages and an export. */
 export default function LogStreamPanel({ stream }: Props) {
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const { success, error: showError } = useToast();
 
   const [rows, setRows] = useState<Row[]>([]);
@@ -98,7 +97,7 @@ export default function LogStreamPanel({ stream }: Props) {
     <div>
       <SectionHeader
         title={t(`lgStream_${stream}`)}
-        subtitle={loading && rows.length === 0 ? undefined : fill(t(meta.totalItems === 1 ? 'lgSummaryOne' : 'lgSummary'), { n: meta.totalItems.toLocaleString(locale) })}
+        subtitle={loading && rows.length === 0 ? undefined : tn(meta.totalItems, 'lgSummaryOne', 'lgSummary', { n: meta.totalItems.toLocaleString(locale) })}
         actions={
           <button type="button" className="btn btn-primary btn-sm" onClick={download} disabled={exporting}>
             <Icon name="download" size={15} />

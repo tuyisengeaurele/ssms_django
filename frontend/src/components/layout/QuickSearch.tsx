@@ -48,7 +48,7 @@ function farmItem(farm: Farm): SearchItem {
  */
 export default function QuickSearch({ open, onClose }: QuickSearchProps) {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, tn } = useLanguage();
   const navigate = useNavigate();
   const listId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -123,7 +123,7 @@ export default function QuickSearch({ open, onClose }: QuickSearchProps) {
 
   const status = results.length === 0
     ? t('qsNoneStatus')
-    : results.length === 1 ? t('qsOne') : t('qsMany').replace('{n}', String(results.length));
+    : tn(results.length, 'qsOne', 'qsMany');
 
   return createPortal(
     <div className="qs-backdrop" data-testid="quick-search-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>

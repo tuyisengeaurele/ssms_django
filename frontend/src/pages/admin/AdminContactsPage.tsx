@@ -21,7 +21,7 @@ const previewOf = (text: string) => text.replace(/\s+/g, ' ').trim();
 export default function AdminContactsPage() {
   const { success, error: showError } = useToast();
   const { getErrorMessage } = useApiError();
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
 
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -171,7 +171,7 @@ export default function AdminContactsPage() {
 
       <PageHeader
         title={t('ptMessages')}
-        subtitle={loading || failed ? undefined : fill(t(messages.length === 1 ? 'msSummaryOne' : 'msSummary'), { total: messages.length, unread: unreadCount })}
+        subtitle={loading || failed ? undefined : tn(messages.length, 'msSummaryOne', 'msSummary', { total: messages.length, unread: unreadCount })}
         actions={
           unreadCount > 0 ? (
             <button className="btn btn-secondary btn-sm" onClick={() => setAskAll(true)}>

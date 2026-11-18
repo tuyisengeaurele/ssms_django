@@ -32,7 +32,7 @@ function useNoIndex() {
  */
 export default function PublicLotPage() {
   const { token = '' } = useParams<{ token: string }>();
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const [state, setState] = useState<State>('loading');
   useNoIndex();
 
@@ -61,7 +61,7 @@ export default function PublicLotPage() {
         [t('lotRowBreed'), lot.breed],
         [t('lotRowStarted'), dateOf(lot.startedOn)],
         [t('lotRowHarvested'), dateOf(lot.harvestedOn)],
-        [t('lotRowDays'), lot.rearingDays === 1 ? t('lotDayOne') : fill(t('lotDays'), { n: number.format(lot.rearingDays) })],
+        [t('lotRowDays'), tn(lot.rearingDays, 'lotDayOne', 'lotDays', { n: number.format(lot.rearingDays) })],
         [t('lotRowWeight'), `${number.format(lot.cocoonWeightKg)} kg`],
         [t('lotRowSilk'), lot.silkYieldG != null ? `${number.format(lot.silkYieldG)} g` : null],
         [t('lotRowGrade'), fill(t('hpGradeName'), { g: lot.grade })],

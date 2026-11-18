@@ -12,7 +12,7 @@ interface Props {
 
 /** Shown a minute before an idle sign out. Escape or a click outside counts as staying, because the person is there. */
 export default function IdleWarningModal({ open, secondsLeft, onStay, onSignOut }: Props) {
-  const { t } = useLanguage();
+  const { t, tn } = useLanguage();
 
   // A screen reader hears the countdown every 10 seconds. Every second would talk over everything else.
   const [announced, setAnnounced] = useState(secondsLeft);
@@ -40,7 +40,7 @@ export default function IdleWarningModal({ open, secondsLeft, onStay, onSignOut 
         </>
       }
     >
-      <p className="modal-text">{fill(t(secondsLeft === 1 ? 'idBodyOne' : 'idBody'), { n: secondsLeft })}</p>
+      <p className="modal-text">{tn(secondsLeft, 'idBodyOne', 'idBody')}</p>
       <p className="idle-count" aria-hidden="true">{secondsLeft}</p>
       <p className="sr-only" role="status" aria-live="polite">{fill(t('idLeft'), { n: announced })}</p>
     </Modal>

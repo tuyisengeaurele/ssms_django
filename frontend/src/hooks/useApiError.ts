@@ -1,6 +1,7 @@
 import { AxiosError } from 'axios';
 import { loadLocale } from '../context/LanguageContext';
 import { say as sayIn } from '../i18n/catalog';
+import { pluralText } from '../i18n/plural';
 import { fill } from '../utils/fill';
 
 /** One of the app's own sentences, in the language of the screen. */
@@ -38,9 +39,8 @@ function secondsToWait(headers: unknown, body: ServerBody): number | null {
 
 /** Said in the person's language, never in the server's words. */
 function tooManyRequests(seconds: number | null): string {
-  const key = seconds === null ? 'rlWaitUnknown' : seconds === 1 ? 'rlWaitOne' : 'rlWait';
-  const text = say(key);
-  return seconds === null ? text : fill(text, { n: seconds });
+  if (seconds === null) return say('rlWaitUnknown');
+  return pluralText(say, loadLocale(), seconds, 'rlWaitOne', 'rlWait');
 }
 
 /** The reference to quote when asking for help, from the body or the header. Only a plain one is shown. */

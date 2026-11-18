@@ -26,7 +26,7 @@ export default function AlertsPage() {
   const { getErrorMessage } = useApiError();
   const { user } = useAuth();
   const { success, error: showError } = useToast();
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
 
   const [alerts, setAlerts] = useState<AlertLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,7 +106,7 @@ export default function AlertsPage() {
 
   const subtitle = loading || failed
     ? undefined
-    : unread === 0 ? t('alCaughtUp') : fill(t(unread === 1 ? 'alUnreadOne' : 'alUnreadMany'), { n: unread });
+    : unread === 0 ? t('alCaughtUp') : tn(unread, 'alUnreadOne', 'alUnreadMany');
 
   return (
     <div>

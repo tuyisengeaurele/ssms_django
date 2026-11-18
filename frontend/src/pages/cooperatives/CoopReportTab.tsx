@@ -12,7 +12,7 @@ const trim = (value: number, places = 2) => parseFloat(value.toFixed(places));
 
 /** What happened in a cooperative between two dates: its farms and people in numbers, its harvest, its checks and its alerts. */
 export default function CoopReportTab() {
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const number = new Intl.NumberFormat(locale);
 
   return (
@@ -50,7 +50,7 @@ export default function CoopReportTab() {
                   <p className="report-line">{t('crChecksNone')}</p>
                 ) : (
                   <>
-                    <p className="report-line">{fill(t(checks.total === 1 ? 'brChecksSummaryOne' : 'brChecksSummary'), { n: checks.total, p: checks.found })}</p>
+                    <p className="report-line">{tn(checks.total, 'brChecksSummaryOne', 'brChecksSummary', { p: checks.found })}</p>
                     <table className="report-table">
                       <thead><tr><th>{t('brColResult')}</th><th>{t('crColCount')}</th></tr></thead>
                       <tbody>{checks.byResult.map((r) => <tr key={r.result}><td>{resultLabel(t, r.result)}</td><td>{number.format(r.count)}</td></tr>)}</tbody>
@@ -64,7 +64,7 @@ export default function CoopReportTab() {
                   <p className="report-line">{t('crAlertsNone')}</p>
                 ) : (
                   <>
-                    <p className="report-line">{fill(t(alerts.total === 1 ? 'crAlertsSumOne' : 'crAlertsSum'), { n: alerts.total, a: alerts.acknowledged, r: alerts.resolved })}</p>
+                    <p className="report-line">{tn(alerts.total, 'crAlertsSumOne', 'crAlertsSum', { a: alerts.acknowledged, r: alerts.resolved })}</p>
                     <table className="report-table">
                       <thead><tr><th>{t('crColType')}</th><th>{t('crColCount')}</th></tr></thead>
                       <tbody>

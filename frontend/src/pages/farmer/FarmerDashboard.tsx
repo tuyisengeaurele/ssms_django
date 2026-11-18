@@ -31,7 +31,7 @@ import { dateFormat } from '../../utils/dateFormat';
 
 export default function FarmerDashboard() {
   const { user } = useAuth();
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const { success, error: showError } = useToast();
   const { getErrorMessage } = useApiError();
 
@@ -161,7 +161,7 @@ export default function FarmerDashboard() {
           <StatTile
             label={t('fhStatBatches')}
             value={batches.length}
-            hint={batches.length === 0 ? t('fhHintNoBatches') : fill(t(farmsWithBatches === 1 ? 'fhHintAcrossOne' : 'fhHintAcross'), { n: farmsWithBatches })}
+            hint={batches.length === 0 ? t('fhHintNoBatches') : tn(farmsWithBatches, 'fhHintAcrossOne', 'fhHintAcross')}
           />
           <StatTile
             label={t('fhStatAlerts')}

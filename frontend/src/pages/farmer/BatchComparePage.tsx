@@ -171,7 +171,7 @@ function Chart({ batches }: { batches: BatchComparison[] }) {
 }
 
 function Result({ ids }: { ids: string[] }) {
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const [state, setState] = useState<{ batches: BatchComparison[] } | 'loading' | 'missing' | 'failed'>('loading');
   const key = ids.join(',');
 
@@ -205,7 +205,7 @@ function Result({ ids }: { ids: string[] }) {
   const startedWith = (b: BatchComparison) => {
     if (!b.quantity) return null;
     if (b.quantityUnit === 'WORMS') return fill(t('cmpStartWorms'), { n: num.format(b.quantity) });
-    return b.quantity === 1 ? t('cmpStartBoxOne') : fill(t('cmpStartBoxes'), { n: num.format(b.quantity) });
+    return tn(b.quantity, 'cmpStartBoxOne', 'cmpStartBoxes', { n: num.format(b.quantity) });
   };
 
   const groups: Array<{ title: string; rows: Row[] }> = [

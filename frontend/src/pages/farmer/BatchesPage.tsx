@@ -17,7 +17,7 @@ import { dateFormat } from '../../utils/dateFormat';
 type Tab = 'ALL' | (typeof STAGE_ORDER)[number];
 
 export default function BatchesPage() {
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
 
   const [batches, setBatches] = useState<ActiveBatch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +49,7 @@ export default function BatchesPage() {
     <div>
       <PageHeader
         title={t('ptBatches')}
-        subtitle={loading || failed ? undefined : fill(t(batches.length === 1 ? 'btSubtitleOne' : 'btSubtitleMany'), { n: batches.length })}
+        subtitle={loading || failed ? undefined : tn(batches.length, 'btSubtitleOne', 'btSubtitleMany')}
         actions={
           <>
             <Link to="/batches/compare" className="btn btn-secondary btn-sm">{t('ptCompare')}</Link>
@@ -124,7 +124,7 @@ export default function BatchesPage() {
                         const words = hint.kind === 'left' ? fill(t('btLeft'), { n: hint.days })
                           : hint.kind === 'tomorrow' ? t('btTomorrow')
                           : hint.kind === 'today' ? t('btToday')
-                          : hint.days === 1 ? t('btLateOne') : fill(t('btLate'), { n: hint.days });
+                          : tn(hint.days, 'btLateOne', 'btLate');
                         return <span className="cell-hint" data-kind={hint.kind}>{words}</span>;
                       })()}
                     </td>

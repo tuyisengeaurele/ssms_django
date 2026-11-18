@@ -35,13 +35,13 @@ const ROOM_AREA_MAX = 5000;
  * holds each device's name, readings and details. A device is described once.
  */
 function SensorSummary({ devices }: { devices: Array<{ id: string; status: DeviceStatus }> }) {
-  const { t } = useLanguage();
+  const { t, tn } = useLanguage();
   const n = devices.length;
   const online = devices.filter((d) => d.status === 'online').length;
   const status: DeviceStatus | null = devices.some((d) => d.status === 'error') ? 'error' : online === n ? 'online' : online === 0 ? 'offline' : null;
   return (
     <>
-      <a href="#farm-devices" className="link">{fill(t(n === 1 ? 'rmSensorsOne' : 'rmSensorCount'), { n })}</a>
+      <a href="#farm-devices" className="link">{tn(n, 'rmSensorsOne', 'rmSensorCount')}</a>
       {status ? <DeviceStatusBadge status={status} /> : <span className="cell-sub">{fill(t('rmSensorsSome'), { k: online, n })}</span>}
     </>
   );

@@ -10,7 +10,7 @@ import { dateFormat } from '../../utils/dateFormat';
 
 /** An admin's authenticator app: is it on, how many recovery codes are left, and a way to make new ones. */
 export default function MfaSettings() {
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const [status, setStatus] = useState<MfaStatus | null>(null);
   const [failed, setFailed] = useState(false);
   const [asking, setAsking] = useState(false);
@@ -55,9 +55,7 @@ export default function MfaSettings() {
               <>
                 {since ? <p>{fill(t('adMfaOnSince'), { date: since })}</p> : null}
                 <p>
-                  {status.recoveryCodesLeft === 1
-                    ? t('adMfaCodesLeftOne')
-                    : fill(t('adMfaCodesLeft'), { n: status.recoveryCodesLeft })}
+                  {tn(status.recoveryCodesLeft, 'adMfaCodesLeftOne', 'adMfaCodesLeft')}
                 </p>
               </>
             ) : null}

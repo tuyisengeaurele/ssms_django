@@ -27,7 +27,7 @@ const BADGE: Record<LotTraceBatch['status'], { badge: string; word: string }> = 
 /** Every batch that got the same lot of eggs, so a disease on one farm can be followed to the others. Staff only. */
 export default function SupplyLotPage() {
   const { code = '' } = useParams<{ code: string }>();
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const [lot, setLot] = useState<LotTrace | null>(null);
   const [status, setStatus] = useState<Status>('loading');
 
@@ -57,7 +57,7 @@ export default function SupplyLotPage() {
 
   const day = dateFormat(locale, { dateStyle: 'medium' });
   const s = lot.summary;
-  const quantity = (b: LotTraceBatch) => (b.quantityUnit === 'BOXES' ? boxesText(t, b.quantity as number) : String(b.quantity));
+  const quantity = (b: LotTraceBatch) => (b.quantityUnit === 'BOXES' ? boxesText(tn, b.quantity as number) : String(b.quantity));
 
   return (
     <div>

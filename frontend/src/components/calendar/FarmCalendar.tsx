@@ -20,7 +20,7 @@ const asDate = (iso: string) => {
  * order, and every event is also written as text, so a colour is never the only way to tell them apart.
  */
 export default function FarmCalendar({ staff = false }: { staff?: boolean }) {
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const today = localIsoDay(new Date());
   const [selected, setSelected] = useState(today);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -67,7 +67,7 @@ export default function FarmCalendar({ staff = false }: { staff?: boolean }) {
   const monthTitle = dateFormat(locale, { month: 'long', year: 'numeric' }).format(new Date(year, month - 1, 1));
   const weekdays = Array.from({ length: 7 }, (_, i) => dateFormat(locale, { weekday: 'short' }).format(asDate(addDays('2026-11-02', i))));
 
-  const countText = (n: number) => (n === 0 ? t('calNoEvents') : n === 1 ? t('calOneEvent') : fill(t('calManyEvents'), { n }));
+  const countText = (n: number) => (n === 0 ? t('calNoEvents') : tn(n, 'calOneEvent', 'calManyEvents'));
 
   const textOf = (e: CalendarEvent): string => {
     const d = e.detail;

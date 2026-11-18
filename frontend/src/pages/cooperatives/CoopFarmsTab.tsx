@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { CoopReport } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { LEVEL_KEY } from '../../utils/farmRisk';
-import { fill } from '../../utils/fill';
+import type { PluralText } from '../../i18n/plural';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
 import Panel from '../../components/ui/Panel';
@@ -11,18 +11,18 @@ import { CoopPeriodBar, CoopReportGate } from './CoopReportGate';
 const trim = (value: number, places = 2) => parseFloat(value.toFixed(places));
 
 /** Why a farm is at the level it is: the counts behind it, in words. Empty when there is nothing to say. */
-function whyText(f: CoopReport['farms'][number], t: (k: string) => string): string {
+function whyText(f: CoopReport['farms'][number], tn: PluralText): string {
   const parts = [
-    f.diseaseAlerts > 0 && fill(t(f.diseaseAlerts === 1 ? 'fkDiseaseOne' : 'fkDisease'), { n: f.diseaseAlerts }),
-    f.openAirAlerts > 0 && fill(t(f.openAirAlerts === 1 ? 'fkAirOne' : 'fkAir'), { n: f.openAirAlerts }),
-    f.offlineDevices > 0 && fill(t(f.offlineDevices === 1 ? 'fkDevicesOne' : 'fkDevices'), { n: f.offlineDevices }),
+    f.diseaseAlerts > 0 && tn(f.diseaseAlerts, 'fkDiseaseOne', 'fkDisease'),
+    f.openAirAlerts > 0 && tn(f.openAirAlerts, 'fkAirOne', 'fkAir'),
+    f.offlineDevices > 0 && tn(f.offlineDevices, 'fkDevicesOne', 'fkDevices'),
   ].filter(Boolean) as string[];
   return parts.join('; ');
 }
 
 /** Every farm of the cooperative once, the riskiest first, with what each did in the period. */
 export default function CoopFarmsTab() {
-  const { t, locale } = useLanguage();
+  const { t, tn, locale } = useLanguage();
   const number = new Intl.NumberFormat(locale);
 
   return (
@@ -47,7 +47,7 @@ export default function CoopFarmsTab() {
                   </thead>
                   <tbody>
                     {farms.map((f) => {
-                      const why = whyText(f, t);
+                      const why = whyText(f, tn);
                       return (
                         <tr key={f.id} className="tbody-row">
                           <td className="cell-lead">
