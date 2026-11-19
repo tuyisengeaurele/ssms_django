@@ -1,5 +1,31 @@
 # Changelog
 
+## Fewer round trips to the database
+
+Task 2.5 of the audit roadmap. Every question the API asks the database is a round trip to a server in another country, so the number of questions is the number to cut. Counted in the test database, on one request after the first:
+
+| Request | Before | After |
+|---|---|---|
+| Page of one batch (with 3 alerts) | 20, and 3 more for every alert | 7, however many alerts |
+| Cooperative report, made | 14 | 10 |
+| Cooperative report, opened again within a minute | 14 | 2 (the sign in check and the cooperative) |
+| Getting started card (farmer dashboard) | 10 | 6 |
+| Farm calendar | 9 | 7 |
+| Allowance card | 8 | 6 |
+
+### Fixed
+- **The page of one batch asked three questions for every alert** (the batch, its farm and the farm's owner, looked up one alert at a time, and one more per alert of a room for the batches in it). Ten more alerts took the request from 13 to 43 queries. The alerts now come with their farm owner, room and the batches in the room in one query, the batch's stays in its rooms are read once (they were read three times), and two prefetches that were thrown away are gone. A test fails if the count grows with the alerts, the room alerts, the rooms or the detections.
+
+### Changed
+- **The cooperative report on screen is kept for a minute**, per cooperative, period and kind of reader (an admin and a supervisor never share an entry). The cost: a change shows up in it up to a minute late. A CSV or PDF download is always made fresh, and its "generated at" is true. It is kept in memory, not in the database cache table, because reading that table is itself a round trip. The harvest and alert figures of the report are fetched in one query each instead of three.
+- **A cooperative's supply settings are read once per request** (the allowance card read the same row three times). The row is held on the cooperative object the request already has, so the next request reads it again and nothing goes stale.
+- **The getting started card reads a farmer's rooms once and their egg requests once**, and decides in code. It was up to three and four questions, on a card shown on most farmer dashboard loads.
+- **The farm calendar reads the rounds once** (deadlines and deliveries were two queries) and looks up a farmer's approved requests only when a delivery is in the window.
+
+### Not changed
+- Nothing a person sees changes, except the report being up to a minute old on screen. The tests that pin each answer all pass unchanged.
+- Task 2.6 (200 farms, 1,000 batches, a month of readings in a scratch database) measures the time of each endpoint, which is where anything over 300 ms becomes a task.
+
 ## The fonts are half the size
 
 Task 2.4 of the audit roadmap.
