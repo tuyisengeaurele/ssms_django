@@ -1,5 +1,5 @@
 """What every alert list needs to say who acknowledged an alert and how many comments it has, in the same query."""
-from django.db.models import Count, IntegerField, OuterRef, Subquery
+from django.db.models import Count, IntegerField, OuterRef, Prefetch, Subquery
 from django.db.models.functions import Coalesce
 
 from .models import AlertComment
@@ -12,3 +12,13 @@ def with_comment_summary(qs):
         .order_by().values('alert').annotate(n=Count('pk')).values('n')
     )
     return qs.select_related('acknowledged_by').annotate(comment_count=Coalesce(Subquery(live, output_field=IntegerField()), 0))
+
+
+def with_rooms(qs):
+    """What the serializer needs to name an alert's room and batches without a query for each alert."""
+    from batches.models import Batch
+
+    qs = qs.select_related('batch__farm__owner', 'room__farm__owner').prefetch_related(
+        Prefetch('room__batches', queryset=Batch.objects.filter(is_active=True).order_by('created_at'), to_attr='live_batches'),
+    )
+    return with_comment_summary(qs)
