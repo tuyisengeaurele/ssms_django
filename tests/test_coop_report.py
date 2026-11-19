@@ -339,6 +339,20 @@ def test_the_query_count_does_not_grow_with_the_farms(auth_client, supervisor, o
     assert cost(client) == few
 
 
+def test_making_the_report_takes_at_most_twelve_queries(auth_client, supervisor, farm):
+    """It took 16: the harvest figures and the alert figures were each asked for in three separate queries."""
+    harvest(farm, 5, 'A')
+    harvest(farm, 3, 'B')
+    check(farm)
+    alert(farm, 'DISEASE')
+    alert(farm, 'TEMPERATURE')
+    client = auth_client(supervisor)
+    caches['reports'].clear()
+    with CaptureQueriesContext(connection) as queries:
+        assert get(client).status_code == 200
+    assert len(queries) <= 12, f'{len(queries)} queries'
+
+
 # ── CSV ─────────────────────────────────────────────────────────────────────
 
 def test_the_csv_has_the_numbers_and_a_dated_file_name(auth_client, supervisor, farm):
