@@ -1,10 +1,11 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework.test import APIClient
+from rest_framework_simplejwt import tokens
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.tokens import AccessToken
 
@@ -26,10 +27,31 @@ def sign_in(user, password='Pass1234'):
     return client, response
 
 
+def lifetime(token) -> int:
+    return token['exp'] - token['iat']
+
+
 def test_access_token_lives_15_minutes():
     _, response = sign_in(UserFactory())
     token = AccessToken(response.json()['data']['token'])
-    assert token['exp'] - token['iat'] == 15 * 60
+    # To the second, give or take one: see the next test for why one.
+    assert abs(lifetime(token) - 15 * 60) <= 1
+
+
+def test_the_lifetime_is_still_15_minutes_when_a_second_ticks_over_while_the_tokens_are_made(monkeypatch):
+    """simplejwt makes the access token after the refresh token. Its `iat` is read from the clock then, and its `exp` is set from
+    the clock reading of the refresh token, a moment earlier, so when a second ticks over between the two the difference is 899.
+    This forces that second to tick over, so the check above does not depend on how fast the machine is."""
+    user = UserFactory()
+    before = datetime(2026, 1, 1, 12, 0, 0, 900_000, tzinfo=timezone.utc)
+    after = datetime(2026, 1, 1, 12, 0, 1, 100_000, tzinfo=timezone.utc)
+    readings = iter([before])
+    monkeypatch.setattr(tokens, 'aware_utcnow', lambda: next(readings, after))
+    _, response = sign_in(user)
+    # The clock was in 2026, so the token is long expired by now. Its claims are what is being read.
+    token = AccessToken(response.json()['data']['token'], verify=False)
+    assert lifetime(token) == 15 * 60 - 1
+    assert abs(lifetime(token) - 15 * 60) <= 1
 
 
 def test_refresh_cookie_lasts_7_days():
