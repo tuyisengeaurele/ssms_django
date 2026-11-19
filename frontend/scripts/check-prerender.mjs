@@ -2,7 +2,7 @@
 // The landing page must arrive already written, in each language, at its own address, and every other address must get the plain
 // shell. Any of these going wrong is silent: the site still works, only slower, with a flash of the wrong page or the wrong
 // language for a search engine.
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { landingAddress, landingFile, siteOf } from './prerender-lib.mjs';
@@ -39,6 +39,11 @@ for (const locale of LOCALES) {
   check(page.includes(`hreflang="x-default" href="${site}/"`), `${file} has no x-default alternate`);
   check(locale === 'en' || /<link rel="modulepreload" crossorigin href="\/assets\/translations-[^"]+\.js">/.test(page), `${file} does not ask for its language file`);
   check(!page.includes('/hero-preload.js'), `${file} still loads the hero preload script`);
+  // The first screen draws with three cut fonts (src/fonts). The full files must not come back as the ones that are preloaded.
+  const fonts = [...page.matchAll(/<link rel="preload" as="font"[^>]*href="([^"]+)"/g)].map((match) => match[1]);
+  check(fonts.length === 3 && fonts.every((href) => /^\/assets\/(fraunces-latin-(normal|italic)|geist-latin-normal)-[^/]+\.woff2$/.test(href)), `${file} does not preload the three cut fonts (it preloads ${fonts.join(', ') || 'none'})`);
+  const fontBytes = fonts.reduce((sum, href) => sum + (statSync(resolve(dist, href.slice(1)), { throwIfNoEntry: false })?.size ?? 0), 0);
+  check(fontBytes > 0 && fontBytes < 60 * 1024, `${file} preloads ${Math.round(fontBytes / 1024)} KB of fonts, over the 60 KB limit`);
 }
 check(shell.includes('<div id="root"></div>'), 'dist/app.html is not the plain shell');
 check(!shell.includes('data-prerendered'), 'dist/app.html carries the landing page');
