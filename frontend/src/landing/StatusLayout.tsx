@@ -1,6 +1,4 @@
-import '@fontsource-variable/fraunces/wght.css';
-import '@fontsource-variable/fraunces/wght-italic.css';
-import '@fontsource-variable/geist';
+import '../fonts/fonts.css';
 import './tokens.css';
 import './landing.css';
 import { useEffect, type ReactNode } from 'react';

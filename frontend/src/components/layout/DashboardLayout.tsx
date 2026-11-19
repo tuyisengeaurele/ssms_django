@@ -1,5 +1,4 @@
-import '@fontsource-variable/fraunces/wght.css';
-import '@fontsource-variable/geist';
+import '../../fonts/fonts.css';
 import '../../styles/shell.css';
 import '../../styles/components.css';
 import { useState, useEffect, useCallback } from 'react';
