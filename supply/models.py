@@ -32,7 +32,15 @@ class SupplySettings(models.Model):
 
     @classmethod
     def for_cooperative(cls, cooperative) -> 'SupplySettings':
-        found, _ = cls.objects.get_or_create(cooperative=cooperative)
+        """The cooperative's settings, made with the defaults if it has none yet.
+
+        Kept on the cooperative object you pass, so a request that needs the starting boxes, the capacity and the round limit reads the
+        row once. The object lives as long as the request does, and the next request starts with a new one, so nothing goes stale.
+        """
+        found = getattr(cooperative, '_supply_settings', None)
+        if found is None:
+            found, _ = cls.objects.get_or_create(cooperative=cooperative)
+            cooperative._supply_settings = found
         return found
 
 
