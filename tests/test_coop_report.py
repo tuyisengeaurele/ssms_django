@@ -5,6 +5,7 @@ from datetime import timezone as dt_timezone
 from decimal import Decimal
 
 import pytest
+from django.core.cache import caches
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
@@ -319,6 +320,7 @@ def test_the_report_says_when_it_was_made(auth_client, supervisor):
 
 def test_the_query_count_does_not_grow_with_the_farms(auth_client, supervisor, owner):
     def cost(client):
+        caches['reports'].clear()   # the report is kept for a minute; this counts what it costs to make it
         with CaptureQueriesContext(connection) as queries:
             assert get(client).status_code == 200
         return len(queries)

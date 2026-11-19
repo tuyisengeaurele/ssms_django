@@ -20,6 +20,7 @@ from core.throttles import ExportRateThrottle, UserRateThrottle
 from core.utils import api_error, api_success
 
 from .coop import NO_COOPERATIVE, ReportInputError, cooperative_report, parse_period
+from .coop_cache import kept_report
 from .coop_pdf import coop_report_pdf
 
 NO_PERMISSION = "You don't have permission to do that."
@@ -94,10 +95,11 @@ class CooperativeReportView(APIView):
                     return api_error("We couldn't find that cooperative.", 404)
                 farms = farms.filter(owner__cooperative_id=cooperative.pk)
 
-        report = cooperative_report(farms, cooperative, start, end)
         kind = request.query_params.get('export')
         if kind not in ('csv', 'pdf'):
-            return api_success(report)
+            # On screen, the report of the last minute will do.
+            return api_success(kept_report(user, cooperative, start, end, lambda: cooperative_report(farms, cooperative, start, end)))
+        report = cooperative_report(farms, cooperative, start, end)
 
         # What leaves the screen is written down: who took a report about a cooperative's farmers, and for when.
         log_action(request, 'OTHER', 'CooperativeReport', '', f'Downloaded the cooperative report ({kind}) for {cooperative.name if cooperative else "all cooperatives"} from {start} to {end}')
