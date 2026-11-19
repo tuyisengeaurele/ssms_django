@@ -9,7 +9,7 @@ import re
 from datetime import date, datetime, time, timedelta
 from datetime import timezone as dt_timezone
 
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Q
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -92,16 +92,22 @@ def _round_events(user, start, end, low, high):
         if not user.cooperative_id:
             return
         rounds = SupplyRound.objects.filter(cooperative_id=user.cooperative_id, status__in=_LIVE_ROUNDS)
+    else:
+        rounds = staff_rounds(user).filter(status__in=_LIVE_ROUNDS)
+    # One read for both kinds of event: a round counts if its deadline or its delivery day falls in the window.
+    in_window = list(rounds.filter(Q(request_deadline__gte=low, request_deadline__lt=high) | Q(delivery_date__gte=start, delivery_date__lte=end)))
+    delivers = [r for r in in_window if start <= r.delivery_date <= end]
+    # A farmer is shown a delivery only for a round they were promised eggs in. Looked up only when a delivery is in the window.
+    delivering = None
+    if user.role == 'FARMER' and delivers:
         delivering = set(
             EggRequest.objects.filter(farmer=user, status__in=('approved', 'part_approved', 'received')).values_list('round_id', flat=True)
         )
-    else:
-        rounds = staff_rounds(user).filter(status__in=_LIVE_ROUNDS)
-        delivering = None
-    for r in rounds.filter(request_deadline__gte=low, request_deadline__lt=high):
-        yield _event('round_deadline', _day(r.request_deadline), detail=_round_detail(r), key=r.pk)
-    for r in rounds.filter(delivery_date__gte=start, delivery_date__lte=end):
-        if delivering is None or r.pk in delivering:
+    for r in in_window:
+        if low <= aware(r.request_deadline) < high:
+            yield _event('round_deadline', _day(r.request_deadline), detail=_round_detail(r), key=r.pk)
+    for r in delivers:
+        if user.role != 'FARMER' or r.pk in delivering:
             yield _event('round_delivery', r.delivery_date, detail=_round_detail(r), key=r.pk)
 
 
