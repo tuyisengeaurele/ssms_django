@@ -1,5 +1,23 @@
 # Changelog
 
+## The fonts are half the size
+
+Task 2.4 of the audit roadmap.
+
+### Changed
+- **The first screen downloads 54.6 KB of fonts instead of 111.7 KB.** Every page, signed in or not, used to download the full Latin files of Fraunces (upright 36.6 KB, italic 45.7 KB) and Geist (29.4 KB). They are now cut to the characters of English, French and Kinyarwanda (143 of them: letters with their French accents, `oe`, quotes, dashes, the French spaces, the degree sign and a few more) and to the weights in use, which makes them 23.9, 16.6 and 14.1 KB. At the 1.6 Mbps of the slow phone profile that is about 0.27 seconds of transfer instead of 0.56. A sign in page, which has no italic, needs 38 KB instead of 66.
+- **Nothing is lost for a rare character.** The full files stay declared behind the cut ones, so a name with an `Ñ` or an `Å` still draws in the same font: the full Geist file is fetched then, and only then (checked in a browser).
+- **The look is the same.** Compared with the live site in English, French and Kinyarwanda at 1280 wide: the hero is the same height, the whole page is the same height, and text widths are within 0.7 px. One exception: the italic footer line is 2.5 px wider, because the italic is now one design (weight 450, the headline accent) instead of a variable font. The italics in use (weights 400, 450 and 500) are hard to tell apart at that size.
+- The build preloads the three cut files (`fontsToPreload`), and `check:prerender` fails if a landing page preloads anything else, or more than 60 KB of fonts.
+
+### How it is made
+- `frontend/scripts/fonts/make_fonts.py` cuts the files (fonttools, run by hand, output committed to `frontend/src/fonts/`, so the build needs no Python). The characters are in `glyphs.txt`, and `fonts.css` repeats them as its `unicode-range`. `fontFiles.test.ts` keeps the two equal, checks that every character in the translation files is in the list, and that nothing but `fonts.css` reaches for the fontsource files.
+- A lesson, now in a comment and a test: a browser matches the weight range before the characters, and prefers the widest range. A first version declared the cut files for 400 to 700 and the full files (100 to 900) won, so the 45.7 KB italic was downloaded anyway. The cut files now say 100 to 900, like the full ones, and the one declared last wins.
+
+### Not changed
+- The hero photo is already responsive and preloaded from the page's HTML: a phone gets a 33.6 KB AVIF, a laptop 92 to 135 KB.
+- The landing page JavaScript is unchanged at 138.6 KB.
+
 ## The animation library is gone, and the hero has its entrance back
 
 Task 2.3 of the audit roadmap.
