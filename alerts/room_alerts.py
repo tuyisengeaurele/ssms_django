@@ -14,10 +14,13 @@ from .models import AlertLog
 PROBLEM_TYPES = ['TEMPERATURE', 'HUMIDITY']
 
 
-def alerts_for_batch(batch, qs=None):
-    """The alerts of one batch, as a queryset, so a caller can order, slice and aggregate it."""
+def alerts_for_batch(batch, qs=None, stays=None):
+    """The alerts of one batch, as a queryset, so a caller can order, slice and aggregate it.
+
+    A caller that already has the batch's stays (a page that also lists them) passes them in, so they are read once.
+    """
     condition = Q(batch=batch)
-    for stay in BatchRoomStay.objects.filter(batch=batch):
+    for stay in BatchRoomStay.objects.filter(batch=batch) if stays is None else stays:
         in_stay = Q(batch__isnull=True, room_id=stay.room_id, created_at__gte=stay.started_at)
         if stay.ended_at is not None:
             in_stay &= Q(created_at__lt=stay.ended_at)
