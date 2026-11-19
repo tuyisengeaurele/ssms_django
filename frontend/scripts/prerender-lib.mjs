@@ -119,12 +119,13 @@ export function stylesheetsOf(manifest) {
 }
 
 /**
- * The font files the first screen draws with: the Latin Fraunces (upright and italic, for the headline) and the Latin Geist.
- * They are found in the built stylesheet text, because the file names carry a hash. Other scripts' files stay lazy.
+ * The font files the first screen draws with: the cut Latin Fraunces (upright and italic, for the headline) and the cut Latin
+ * Geist (src/fonts, made by scripts/fonts/make_fonts.py). They are found in the built stylesheet text, because the file names
+ * carry a hash. The full files that stay behind them as a fallback, and the other scripts' files, stay lazy.
  */
 export function fontsToPreload(css) {
   const found = [];
-  const pattern = /url\(["']?(\/assets\/(?:fraunces-latin-wght-(?:normal|italic)|geist-latin-wght-normal)-[^)"']+\.woff2)["']?\)/g;
+  const pattern = /url\(["']?(\/assets\/(?:fraunces-latin-(?:normal|italic)|geist-latin-normal)-[^)"']+\.woff2)["']?\)/g;
   for (const match of css.matchAll(pattern)) {
     if (!found.includes(match[1])) found.push(match[1]);
   }

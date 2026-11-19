@@ -223,17 +223,21 @@ describe('stylesheetsOf, fontsToPreload and languageFileOf', () => {
     expect(() => stylesheetsOf({ 'index.html': manifest['index.html'] })).toThrow(/LandingPage/);
   });
 
-  it('picks the two fonts the first screen uses from the stylesheet text, and no others', () => {
+  it('picks the three cut fonts the first screen uses from the stylesheet text, and no others', () => {
     const css = [
-      '@font-face{font-family:Fraunces;src:url(/assets/fraunces-latin-wght-normal-AAA.woff2) format("woff2")}',
-      '@font-face{font-family:Fraunces;font-style:italic;src:url(/assets/fraunces-latin-wght-italic-BBB.woff2) format("woff2")}',
-      '@font-face{font-family:Geist;src:url(/assets/geist-latin-wght-normal-CCC.woff2) format("woff2")}',
+      // The full files stay in the stylesheet as the fallback for a rare character. They are not preloaded.
+      '@font-face{font-family:Fraunces;src:url(/assets/fraunces-latin-wght-normal-OLD1.woff2) format("woff2")}',
+      '@font-face{font-family:Fraunces;font-style:italic;src:url(/assets/fraunces-latin-wght-italic-OLD2.woff2) format("woff2")}',
+      '@font-face{font-family:Geist;src:url(/assets/geist-latin-wght-normal-OLD3.woff2) format("woff2")}',
       '@font-face{font-family:Geist;src:url(/assets/geist-latin-ext-wght-normal-DDD.woff2) format("woff2")}',
+      '@font-face{font-family:Fraunces;src:url(/assets/fraunces-latin-normal-AAA.woff2) format("woff2")}',
+      '@font-face{font-family:Fraunces;font-style:italic;src:url(/assets/fraunces-latin-italic-BBB.woff2) format("woff2")}',
+      '@font-face{font-family:Geist;src:url(/assets/geist-latin-normal-CCC.woff2) format("woff2")}',
     ].join('\n');
     expect(fontsToPreload(css)).toEqual([
-      '/assets/fraunces-latin-wght-normal-AAA.woff2',
-      '/assets/fraunces-latin-wght-italic-BBB.woff2',
-      '/assets/geist-latin-wght-normal-CCC.woff2',
+      '/assets/fraunces-latin-normal-AAA.woff2',
+      '/assets/fraunces-latin-italic-BBB.woff2',
+      '/assets/geist-latin-normal-CCC.woff2',
     ]);
   });
 

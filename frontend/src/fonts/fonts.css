@@ -1,0 +1,40 @@
+/* The fonts of the app. The full files come first (every language they have, each downloaded only when a character of it is
+   drawn). Then the three files cut for English, French and Kinyarwanda, which come last and so win for the characters they hold:
+   that is all the first screen needs, in 54.6 KB instead of 111.7 KB. Made by scripts/fonts/make_fonts.py. The ranges below are
+   the same list as scripts/fonts/glyphs.txt (fontFiles.test.ts keeps them equal). */
+@import '@fontsource-variable/fraunces/wght.css';
+@import '@fontsource-variable/fraunces/wght-italic.css';
+@import '@fontsource-variable/geist/index.css';
+
+@font-face {
+  font-family: 'Fraunces Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('./fraunces-latin-normal.woff2') format('woff2');
+  unicode-range: U+0020-007E, U+00A0, U+00AB, U+00B0, U+00B2, U+00B7, U+00BB, U+00C0, U+00C2, U+00C6, U+00C7-00CB, U+00CE-00CF, U+00D4, U+00D9, U+00DB-00DC, U+00E0, U+00E2, U+00E6, U+00E7-00EB, U+00EE-00EF, U+00F4, U+00F9, U+00FB-00FC, U+00FF, U+0152-0153, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+202F, U+2039-203A;
+}
+
+/* The italic is one design, cut at weight 450 (the headline accent): a plain font without a variable font's tables, a third
+   smaller. At 400 or 500, where the italics are also used, it is hard to tell apart.
+   All three say "100 900", the same range as the full files above. A browser matches the weight range first and prefers the
+   widest, so a narrower range lost to the full file and the full file was downloaded. With the same range they are one family of
+   faces and the one declared last wins for the characters it holds. The files hold the weights in use (make_fonts.py), and a
+   request outside them gets the nearest. */
+@font-face {
+  font-family: 'Fraunces Variable';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('./fraunces-latin-italic.woff2') format('woff2');
+  unicode-range: U+0020-007E, U+00A0, U+00AB, U+00B0, U+00B2, U+00B7, U+00BB, U+00C0, U+00C2, U+00C6, U+00C7-00CB, U+00CE-00CF, U+00D4, U+00D9, U+00DB-00DC, U+00E0, U+00E2, U+00E6, U+00E7-00EB, U+00EE-00EF, U+00F4, U+00F9, U+00FB-00FC, U+00FF, U+0152-0153, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+202F, U+2039-203A;
+}
+
+@font-face {
+  font-family: 'Geist Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('./geist-latin-normal.woff2') format('woff2');
+  unicode-range: U+0020-007E, U+00A0, U+00AB, U+00B0, U+00B2, U+00B7, U+00BB, U+00C0, U+00C2, U+00C6, U+00C7-00CB, U+00CE-00CF, U+00D4, U+00D9, U+00DB-00DC, U+00E0, U+00E2, U+00E6, U+00E7-00EB, U+00EE-00EF, U+00F4, U+00F9, U+00FB-00FC, U+00FF, U+0152-0153, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+202F, U+2039-203A;
+}
