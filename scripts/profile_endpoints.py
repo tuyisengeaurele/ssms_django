@@ -12,6 +12,9 @@ The time is the application's own: the database here is on the same machine, so 
 every query is a round trip to a database in another country, so a second figure adds --round-trip-ms (25 by default) for each
 query. That estimate is what decides what is slow: anything over --limit-ms (300) in it is listed as a task.
 
+A single query is cancelled after --statement-timeout-ms (20 seconds), so a page that cannot finish is listed with a 500 and the
+run goes on.
+
 It refuses a database whose name does not say it is a scratch one (see seed_load_data.py).
 """
 from __future__ import annotations
@@ -134,7 +137,7 @@ def client_for(user):
         now = timezone.now()
         session = UserSession.objects.create(user=user, last_used_at=now, last_activity_at=now, expires_at=UserSession.ends_at(now), mfa_verified_at=now)
         token['sid'] = session.id
-    client = APIClient()
+    client = APIClient(raise_request_exception=False)   # a query that was cancelled is a 500 in the table, not the end of the run
     client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
     return client
 
@@ -173,6 +176,7 @@ def main(argv=None) -> int:
     parser.add_argument('--rounds', type=int, default=ROUNDS, help='Timed requests for each endpoint after the warm up.')
     parser.add_argument('--limit-ms', type=float, default=LIMIT_MS)
     parser.add_argument('--round-trip-ms', type=float, default=ROUND_TRIP_MS, help='What one query would cost to a database far away.')
+    parser.add_argument('--statement-timeout-ms', type=int, default=20000, help='Cancel any one query that takes longer; the page then answers 500 and is listed as such.')
     parser.add_argument('--json', default=None, help='Also write the numbers to this file.')
     options = parser.parse_args(argv)
     setup_django()
@@ -190,6 +194,8 @@ def main(argv=None) -> int:
         print(refusal, file=sys.stderr)
         return 2
     settings.ALLOWED_HOSTS = ['*']
+    with connection.cursor() as cursor:
+        cursor.execute(f'SET statement_timeout = {int(options.statement_timeout_ms)}')
     print(f'Database: {connection.settings_dict["NAME"]}')
 
     from batches.models import Batch
