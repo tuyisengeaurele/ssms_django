@@ -11,10 +11,13 @@ from batches.models import BatchRoomStay
 from .models import SensorReading
 
 
-def readings_for_batch(batch, qs=None):
-    """The readings of one batch, as a queryset, so a caller can order, slice and aggregate it."""
+def readings_for_batch(batch, qs=None, stays=None):
+    """The readings of one batch, as a queryset, so a caller can order, slice and aggregate it.
+
+    A caller that already has the batch's stays (a page that also lists them) passes them in, so they are read once.
+    """
     condition = Q(batch=batch, room__isnull=True)
-    for stay in BatchRoomStay.objects.filter(batch=batch):
+    for stay in BatchRoomStay.objects.filter(batch=batch) if stays is None else stays:
         in_stay = Q(room_id=stay.room_id, timestamp__gte=stay.started_at)
         if stay.ended_at is not None:
             in_stay &= Q(timestamp__lt=stay.ended_at)

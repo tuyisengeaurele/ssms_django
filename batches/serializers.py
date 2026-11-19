@@ -68,12 +68,15 @@ class BatchDetailSerializer(serializers.ModelSerializer):
     def get_room(self, obj):
         return room_brief(obj)
 
+    def _stays(self, obj):
+        """Where the batch has been, oldest first, read once. The view prefetches them with their rooms."""
+        return sorted(obj.room_stays.all(), key=lambda stay: stay.started_at)
+
     def get_room_stays(self, obj):
-        # Where the batch has been, newest first. The open stay has no end.
-        stays = obj.room_stays.select_related('room').order_by('-started_at')
+        # Newest first. The open stay has no end.
         return [
             {'room_id': s.room_id, 'room_name': s.room.name, 'started_at': s.started_at, 'ended_at': s.ended_at}
-            for s in stays
+            for s in reversed(self._stays(obj))
         ]
 
     def get_mortality_total(self, obj):
@@ -88,14 +91,14 @@ class BatchDetailSerializer(serializers.ModelSerializer):
     def get_sensor_readings(self, obj):
         from sensors.room_readings import readings_for_batch
         from sensors.serializers import SensorReadingSerializer
-        qs = readings_for_batch(obj).order_by('-timestamp')[:20]
+        qs = readings_for_batch(obj, stays=self._stays(obj)).order_by('-timestamp')[:20]
         return SensorReadingSerializer(qs, many=True).data
 
     def get_alert_logs(self, obj):
         from alerts.room_alerts import alerts_for_batch
         from alerts.serializers import AlertLogSerializer
-        from alerts.summary import with_comment_summary
-        qs = with_comment_summary(alerts_for_batch(obj).filter(is_read=False).select_related('room')).order_by('-created_at')
+        from alerts.summary import with_rooms
+        qs = with_rooms(alerts_for_batch(obj, stays=self._stays(obj)).filter(is_read=False)).order_by('-created_at')
         return AlertLogSerializer(qs, many=True).data
 
 

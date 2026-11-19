@@ -5,6 +5,7 @@ from datetime import timezone as dt_timezone
 from decimal import Decimal
 
 import pytest
+from django.core.cache import caches
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
@@ -319,6 +320,7 @@ def test_the_report_says_when_it_was_made(auth_client, supervisor):
 
 def test_the_query_count_does_not_grow_with_the_farms(auth_client, supervisor, owner):
     def cost(client):
+        caches['reports'].clear()   # the report is kept for a minute; this counts what it costs to make it
         with CaptureQueriesContext(connection) as queries:
             assert get(client).status_code == 200
         return len(queries)
@@ -335,6 +337,20 @@ def test_the_query_count_does_not_grow_with_the_farms(auth_client, supervisor, o
         alert(extra)
         check(extra)
     assert cost(client) == few
+
+
+def test_making_the_report_takes_at_most_twelve_queries(auth_client, supervisor, farm):
+    """It took 16: the harvest figures and the alert figures were each asked for in three separate queries."""
+    harvest(farm, 5, 'A')
+    harvest(farm, 3, 'B')
+    check(farm)
+    alert(farm, 'DISEASE')
+    alert(farm, 'TEMPERATURE')
+    client = auth_client(supervisor)
+    caches['reports'].clear()
+    with CaptureQueriesContext(connection) as queries:
+        assert get(client).status_code == 200
+    assert len(queries) <= 12, f'{len(queries)} queries'
 
 
 # ── CSV ─────────────────────────────────────────────────────────────────────

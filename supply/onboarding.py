@@ -16,22 +16,26 @@ LIVE_ROUNDS = [SupplyRound.Status.OPEN, SupplyRound.Status.CLOSED, SupplyRound.S
 
 
 def _room_step(farmer) -> dict:
-    rooms = RearingRoom.objects.filter(farm__owner=farmer, farm__is_active=True, is_active=True)
-    if rooms.filter(approval_status=RearingRoom.Approval.APPROVED).exists():
+    # One read of the farmer's rooms. A farmer has a handful, and three questions about them were three round trips.
+    rooms = list(RearingRoom.objects.filter(farm__owner=farmer, farm__is_active=True, is_active=True).only('name', 'approval_status', 'review_note', 'reviewed_at'))
+    if any(r.approval_status == RearingRoom.Approval.APPROVED for r in rooms):
         return {'key': 'room', 'state': 'done', 'detail': {}}
-    if rooms.filter(approval_status=RearingRoom.Approval.PENDING).exists():
+    if any(r.approval_status == RearingRoom.Approval.PENDING for r in rooms):
         return {'key': 'room', 'state': 'waiting', 'detail': {'waiting_for': [r.name for r in reviewers_of(farmer)]}}
-    turned_down = rooms.filter(approval_status=RearingRoom.Approval.REJECTED).order_by('-reviewed_at').first()
-    if turned_down is not None:
+    rejected = [r for r in rooms if r.approval_status == RearingRoom.Approval.REJECTED]
+    if rejected:
+        # The newest review. As in the database's descending order, a room with no review date sorts first.
+        turned_down = max(rejected, key=lambda r: (r.reviewed_at is None, r.reviewed_at.timestamp() if r.reviewed_at else 0))
         return {'key': 'room', 'state': 'rejected', 'detail': {'note': turned_down.review_note}}
     return {'key': 'room', 'state': 'todo', 'detail': {}}
 
 
 def _eggs_step(farmer, has_approved_room: bool) -> dict:
-    mine = EggRequest.objects.filter(farmer=farmer).select_related('round')
-    if mine.filter(status=Req.RECEIVED).exists():
+    # One read of the farmer's requests with their rounds, newest first. The steps below look through the list, not the database.
+    mine = list(EggRequest.objects.filter(farmer=farmer).select_related('round').order_by('-created_at'))
+    if any(r.status == Req.RECEIVED for r in mine):
         return {'key': 'eggs', 'state': 'done', 'detail': {}}
-    live = mine.filter(round__status__in=LIVE_ROUNDS, status__in=[Req.SUBMITTED, Req.APPROVED, Req.PART_APPROVED]).order_by('-created_at').first()
+    live = next((r for r in mine if r.round.status in LIVE_ROUNDS and r.status in (Req.SUBMITTED, Req.APPROVED, Req.PART_APPROVED)), None)
     if live is not None:
         round = live.round
         if live.status == Req.SUBMITTED:
@@ -48,7 +52,7 @@ def _eggs_step(farmer, has_approved_room: bool) -> dict:
             return {'key': 'eggs', 'state': 'ready' if has_approved_room else 'needs_room', 'detail': {'round_name': open_round.name, 'request_deadline': open_round.request_deadline}}
     # A round that gave this farmer nothing says why, until a new round opens. It may already be done, since a round with
     # nobody promised any eggs finishes at once.
-    left_out = mine.filter(status__in=[Req.WAITLISTED, Req.DECLINED]).order_by('-created_at').first()
+    left_out = next((r for r in mine if r.status in (Req.WAITLISTED, Req.DECLINED)), None)
     if left_out is not None:
         return {'key': 'eggs', 'state': 'not_given', 'detail': {'round_name': left_out.round.name, 'note': left_out.decision_note}}
     return {'key': 'eggs', 'state': 'no_round', 'detail': {}}

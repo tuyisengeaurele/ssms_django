@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import Prefetch
 from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
@@ -17,7 +18,7 @@ from farms.models import RearingRoom
 from farms.room_review import NO_APPROVED_ROOM, ROOM_NOT_APPROVED
 
 from .compare import BadChoice, compare_batches, parse_ids
-from .models import Batch
+from .models import Batch, BatchRoomStay
 from .placement import leave_room, place_batch
 from .queries import with_counts
 from .report import batch_report_pdf
@@ -126,7 +127,9 @@ class BatchDetailView(APIView):
     def get(self, request, pk):
         batch = get_batch_or_404(
             request.user, pk,
-            Batch.objects.select_related('room').prefetch_related('disease_detections', 'alert_logs'),
+            # Its stays come with their rooms, once, for the stay list and for finding its readings and alerts.
+            # The detections and alerts are asked for by the serializer, which limits them, so they are not prefetched whole.
+            Batch.objects.select_related('room').prefetch_related(Prefetch('room_stays', queryset=BatchRoomStay.objects.select_related('room'))),
         )
         return api_success(BatchDetailSerializer(batch).data)
 

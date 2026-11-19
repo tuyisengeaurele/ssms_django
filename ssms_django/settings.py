@@ -177,6 +177,14 @@ CACHES = {
         'LOCATION': 'ssms-throttle',
         'OPTIONS': {'MAX_ENTRIES': 20000},
     },
+    # The cooperative report on screen, kept for a minute (reports/coop_cache.py). Memory, not the database table above: a read
+    # from that table is itself a round trip to a database in another country. Each process keeps its own copy, which is fine
+    # for something that only has to be fresh to the minute.
+    'reports': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'ssms-reports',
+        'OPTIONS': {'MAX_ENTRIES': 500},
+    },
 }
 
 REST_FRAMEWORK = {

@@ -6,6 +6,7 @@ of each farm is not for the period. It is how the farm stands today, as in the s
 The whole report is answered with a fixed number of queries, however many farms there are.
 """
 import re
+from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 
 from django.db.models import Count, Q, Sum
@@ -62,10 +63,6 @@ def _bounds(start: date, end: date) -> tuple[datetime, datetime]:
     return datetime.combine(start, time.min, tzinfo=zone), datetime.combine(end + timedelta(days=1), time.min, tzinfo=zone)
 
 
-def _grouped(rows) -> dict:
-    return {key: value for key, value in rows}
-
-
 def cooperative_report(farms, cooperative, start: date, end: date) -> dict:
     """The report as a dict. `farms` is the queryset the caller may see, already narrowed to the cooperative asked for."""
     now = timezone.now()
@@ -77,13 +74,22 @@ def cooperative_report(farms, cooperative, start: date, end: date) -> dict:
     farmers = farms.values('owner_id').distinct().count()
 
     # ── harvest ─────────────────────────────────────────────────────────────
+    # One query, by farm and grade, and the totals are added up here: it was three queries for the same rows.
     made = HarvestRecord.objects.live().filter(batch__farm_id__in=ids, batch__is_active=True, harvested_at__gte=lo, harvested_at__lt=hi)
-    totals = made.aggregate(records=Count('id'), kg=Sum('cocoon_weight_kg'), silk=Sum('silk_yield_g'))
-    by_grade = [
-        {'grade': r['quality_grade'], 'count': r['count'], 'total_kg': float(r['kg'] or 0)}
-        for r in made.values('quality_grade').annotate(count=Count('id'), kg=Sum('cocoon_weight_kg')).order_by('quality_grade')
-    ]
-    kg_by_farm = _grouped(made.values_list('batch__farm_id').annotate(kg=Sum('cocoon_weight_kg')))
+    harvest_rows = made.values('batch__farm_id', 'quality_grade').annotate(count=Count('id'), kg=Sum('cocoon_weight_kg'), silk=Sum('silk_yield_g'))
+    records = kg = silk = 0
+    grade_count: dict = defaultdict(int)
+    grade_kg: dict = defaultdict(int)
+    kg_by_farm: dict = defaultdict(int)
+    for r in harvest_rows:
+        records += r['count']
+        kg += r['kg'] or 0
+        silk += r['silk'] or 0
+        grade_count[r['quality_grade']] += r['count']
+        grade_kg[r['quality_grade']] += r['kg'] or 0
+        kg_by_farm[r['batch__farm_id']] += r['kg'] or 0
+    totals = {'records': records, 'kg': kg, 'silk': silk}
+    by_grade = [{'grade': grade, 'count': grade_count[grade], 'total_kg': float(grade_kg[grade])} for grade in sorted(grade_count)]
 
     # ── disease checks ──────────────────────────────────────────────────────
     checked = DiseaseDetection.objects.filter(batch__farm_id__in=ids, batch__is_active=True, detected_at__gte=lo, detected_at__lt=hi)
@@ -98,16 +104,21 @@ def cooperative_report(farms, cooperative, start: date, end: date) -> dict:
         Q(batch__farm_id__in=ids, batch__is_active=True) | Q(room__farm_id__in=ids, room__is_active=True),
         created_at__gte=lo, created_at__lt=hi,
     )
-    alert_totals = raised.aggregate(
-        total=Count('id'), acknowledged=Count('id', filter=Q(acknowledged_at__isnull=False)), resolved=Count('id', filter=Q(resolved_at__isnull=False)),
+    # One query, by farm and type, added up here: it was three queries for the same rows.
+    alert_rows = (
+        raised.annotate(farm=Coalesce('batch__farm_id', 'room__farm_id')).values('farm', 'type')
+        .annotate(n=Count('id'), acknowledged=Count('id', filter=Q(acknowledged_at__isnull=False)), resolved=Count('id', filter=Q(resolved_at__isnull=False)))
     )
-    alerts_by_type = [
-        {'type': r['type'], 'count': r['count']}
-        for r in raised.values('type').annotate(count=Count('id')).order_by('-count', 'type')
-    ]
-    alerts_by_farm = _grouped(
-        raised.annotate(farm=Coalesce('batch__farm_id', 'room__farm_id')).values_list('farm').annotate(n=Count('id'))
-    )
+    alert_totals = {'total': 0, 'acknowledged': 0, 'resolved': 0}
+    type_count: dict = defaultdict(int)
+    alerts_by_farm: dict = defaultdict(int)
+    for r in alert_rows:
+        alert_totals['total'] += r['n']
+        alert_totals['acknowledged'] += r['acknowledged']
+        alert_totals['resolved'] += r['resolved']
+        type_count[r['type']] += r['n']
+        alerts_by_farm[r['farm']] += r['n']
+    alerts_by_type = [{'type': kind, 'count': type_count[kind]} for kind in sorted(type_count, key=lambda kind: (-type_count[kind], kind))]
 
     rows = []
     for row in ranking:

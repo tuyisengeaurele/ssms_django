@@ -1,10 +1,8 @@
-from django.db.models import Prefetch
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from audit_log.changes import build_changes, snapshot
 from audit_log.utils import log_action
-from batches.models import Batch
 from core.access import get_batch_or_404, scope_alerts
 from core.pagination import StandardPagination
 from core.params import int_param
@@ -14,16 +12,8 @@ from core.utils import api_error, api_success
 from .models import AlertLog, StageThreshold
 from .room_alerts import alerts_for_batch
 from .serializers import AlertLogSerializer, StageThresholdSerializer
-from .summary import with_comment_summary
+from .summary import with_rooms
 from .tickets import TICKET_SECONDS, issue_ticket
-
-
-def with_rooms(qs):
-    """What the serializer needs to name an alert's room and batches without a query for each alert."""
-    qs = qs.select_related('batch__farm__owner', 'room__farm__owner').prefetch_related(
-        Prefetch('room__batches', queryset=Batch.objects.filter(is_active=True).order_by('created_at'), to_attr='live_batches'),
-    )
-    return with_comment_summary(qs)
 
 
 class AlertListView(APIView):
