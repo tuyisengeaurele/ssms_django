@@ -2,9 +2,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-// The content security policy is sent by Vercel (vercel.json). It starts as "report only", so the browser tells the API what
-// it would have blocked, without blocking anything. After a quiet week it is enforced. These checks keep the policy honest in
-// both stages: it reports to our own API, and it still names every outside host the app really uses.
+// The content security policy is sent by Vercel (vercel.json). It was "report only" from 2026-11-12, so the browser told the API what
+// it would have blocked without blocking anything. Eight days of real use gave no genuine report (only our own probes), and every
+// outside host the code references is in it, so it is enforced since 2026-11-20. It keeps reporting, so a later violation still
+// reaches the Security log. These checks keep the policy honest: it is enforced, it reports to our own API, and it still names every
+// outside host the app really uses.
 
 interface Header { key: string; value: string }
 const config = JSON.parse(readFileSync(join(__dirname, '../vercel.json'), 'utf8')) as {
@@ -18,6 +20,10 @@ const policy = all.find((h) => h.key.startsWith('Content-Security-Policy'));
 describe('the content security policy header', () => {
   it('exists', () => {
     expect(policy).toBeDefined();
+  });
+
+  it('is enforced, not only reported', () => {
+    expect(policy?.key).toBe('Content-Security-Policy');
   });
 
   it('sends its reports to the API on the same address', () => {

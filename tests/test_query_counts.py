@@ -19,8 +19,9 @@ from tests.factories import (
 
 pytestmark = pytest.mark.django_db
 
-# Most queries a single request may make, however much data there is. Authentication, the role and the data itself.
-MOST_QUERIES = 12
+# Most queries a single request may make, however much data there is. Authentication, the role and the data itself. The busiest of
+# these pages makes 6 today (it was 12 before the query work of phase 2), so 8 leaves room without letting a query per row slip in.
+MOST_QUERIES = 8
 
 # (who asks, what they ask for, the least rows the answer holds so an empty answer cannot pass)
 CASES = [
