@@ -4,10 +4,11 @@ An alert about the air of a room, or a sensor that went quiet, belongs to the ro
 room it stayed in, raised from the moment the stay began up to, but not including, the moment it ended. Alerts that
 are about one batch (stage change, disease) and alerts made before rooms existed know their batch and count for it.
 """
-from django.db.models import Count, Exists, IntegerField, OuterRef, Q, Subquery, Value
+from django.db.models import Count, DateTimeField, ExpressionWrapper, IntegerField, OuterRef, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 
 from batches.models import BatchRoomStay
+from sensors.room_readings import FAR_FUTURE
 
 from .models import AlertLog
 
@@ -28,30 +29,36 @@ def alerts_for_batch(batch, qs=None, stays=None):
     return (AlertLog.objects.all() if qs is None else qs).filter(condition)
 
 
-def belongs_to_batch(batch_pk):
-    """The same rule as a filter for a subquery that is run once for every batch of a list.
-
-    Pass the batch's key as the subquery sees it, for example OuterRef('pk').
-    """
-    during_a_stay = BatchRoomStay.objects.filter(
-        batch=OuterRef(batch_pk),
-        room=OuterRef('room'),
-        started_at__lte=OuterRef('created_at'),
-    ).filter(Q(ended_at__isnull=True) | Q(ended_at__gt=OuterRef('created_at')))
-    return Q(batch=batch_pk) | (Q(batch__isnull=True) & Q(Exists(during_a_stay)))
-
-
 def _count(qs):
     rows = qs.order_by().annotate(one=Value(1)).values('one').annotate(n=Count('pk')).values('n')
     return Coalesce(Subquery(rows, output_field=IntegerField()), 0)
 
 
 def alert_count(types=None):
-    """How many alerts each batch of a list has, worked out in the one query. Only those of `types`, when given."""
-    alerts = AlertLog.objects.filter(belongs_to_batch(OuterRef('pk')))
-    if types:
-        alerts = alerts.filter(type__in=types)
-    return _count(alerts)
+    """How many alerts each batch of a list has, worked out in the one query. Only those of `types`, when given.
+
+    The alerts of the batch itself, and those of each room it stayed in, raised during the stay. It goes from the batch's stays to the
+    alerts of that room, as sensors.room_readings.reading_count does for readings, so a batch costs its own stays and not a pass over
+    every alert (alerts_for_batch above is the rule, and tests/test_reading_queries.py holds this to it).
+    """
+    base = AlertLog.objects.all() if not types else AlertLog.objects.filter(type__in=types)
+    per_stay = (
+        base.filter(
+            batch__isnull=True, room=OuterRef('room'), created_at__gte=OuterRef('started_at'),
+            created_at__lt=Coalesce(OuterRef('ended_at'), Value(FAR_FUTURE, output_field=DateTimeField())),
+        )
+        .order_by().values('room').annotate(n=Count('pk')).values('n')
+    )
+    in_stays = (
+        BatchRoomStay.objects.filter(batch=OuterRef('pk'))
+        .annotate(n=Coalesce(Subquery(per_stay, output_field=IntegerField()), 0))
+        .order_by().values('batch').annotate(total=Sum('n')).values('total')
+    )
+    its_own = base.filter(batch=OuterRef('pk')).order_by().values('batch').annotate(n=Count('pk')).values('n')
+    return ExpressionWrapper(
+        Coalesce(Subquery(in_stays, output_field=IntegerField()), 0) + Coalesce(Subquery(its_own, output_field=IntegerField()), 0),
+        output_field=IntegerField(),
+    )
 
 
 def open_problem_count():

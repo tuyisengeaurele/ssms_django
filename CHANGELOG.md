@@ -1,5 +1,27 @@
 # Changelog
 
+## Pages that took 16 seconds now take 20 milliseconds
+
+Task 2.7 of the audit roadmap, the finding of the load profile (task 2.6). Measured on the same scratch database, 200 farms, 1,000 batches, 288,000 readings.
+
+| Page | Before | After |
+|---|---|---|
+| A farmer's farm list | 16.3 s | 18 ms |
+| A farmer's farm | 15.8 s | 22 ms |
+| A farm's batches | 14.3 s | 19 ms |
+| Comparing two batches | 5.6 s | 32 ms |
+| A supervisor's farm list | did not finish in 20 s | 46 ms |
+| An admin's farm list | did not finish in 20 s | 42 ms |
+| A supervisor's active batches | did not finish in 20 s | 168 ms |
+| An admin's active batches (1,000) | did not finish in 20 s | 764 ms |
+
+### Fixed
+- **A batch's readings were found by testing every reading in the table**, so no index could help, and each batch of a list cost a pass over all of them (2.4 seconds for one batch's count with 288,000 readings, growing with every reading the sensors send). A batch's readings and alerts are now found by going from its stays to the readings and alerts of that room in those dates, which the existing room and time index answers. The old test is gone. This changed no answer: a new test file holds the new counts and newest readings to the old rule on the awkward cases (a move at an exact moment, returning to a room, old readings with no room, a stay with no readings), and checks that the database never has to read the whole readings table to answer.
+- Nothing a person sees changes except that these pages open. The batch counts, alert counts, the newest reading of each batch and the comparison show the same numbers as before.
+
+### Still slow (task 2.8)
+The admin's active batches list (1,000 batches in one answer of 538 KB wants paging), the admin device list (337 ms in the database), the admin calendar (Python time over 1,000 batches), and the report and the cooperative list at 12 queries each. Details in `docs/load-profile.md`.
+
 ## Load data and a profile: the first real finding is a 16 second farm list
 
 Task 2.6 of the audit roadmap. No change to the app: two scripts, and the numbers they gave.
