@@ -1,6 +1,7 @@
 import { AxiosError, AxiosHeaders, type AxiosResponse } from 'axios';
 import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
+import { ERROR_CODE_KEY } from '../utils/errorCodes';
 import { useApiError } from './useApiError';
 
 const { getErrorMessage } = renderHook(() => useApiError()).result.current;
@@ -168,6 +169,45 @@ describe('getErrorMessage in French and Kinyarwanda', () => {
     expect(getErrorMessage(withResponse(400, server))).not.toContain('password');
     localStorage.setItem('ssms_locale', 'fr');
     expect(getErrorMessage(withResponse(400, server))).toBe('Cet e-mail ou ce mot de passe semble incorrect. Veuillez réessayer.');
+  });
+
+  it('goes by the code the server sends, in the language of the screen, whatever language the sentence came in', () => {
+    localStorage.setItem('ssms_locale', 'fr');
+    expect(getErrorMessage(withResponse(401, { code: 'bad_login', message: 'Words in some other language.' })))
+      .toBe('Cet e-mail ou ce mot de passe semble incorrect. Veuillez réessayer.');
+    expect(getErrorMessage(withResponse(422, { code: 'email_taken', message: 'Please check what you entered.', errors: { email: ['x'] } })))
+      .toContain('Un compte existe déjà');
+  });
+
+  it.each(Object.keys(ERROR_CODE_KEY))('has a sentence for the code %s in all three languages', (code) => {
+    const sentences = (['en', 'fr', 'rw'] as const).map((locale) => {
+      localStorage.setItem('ssms_locale', locale);
+      return getErrorMessage(withResponse(code === 'server_error' ? 500 : 400, { code, message: 'stored words' }));
+    });
+    for (const sentence of sentences) {
+      expect(sentence).not.toContain('stored words');
+      expect(sentence).not.toMatch(/^(er|ae)[A-Z]/);
+    }
+    expect(new Set(sentences).size).toBe(3);
+  });
+
+  it('shows the first field problem rather than the general sentence of an invalid form', () => {
+    expect(getErrorMessage(withResponse(422, { code: 'invalid_input', message: 'Please check what you entered.', errors: { name: ['Enter your name.'] } })))
+      .toBe('Enter your name.');
+  });
+
+  it('says the general sentence of an invalid form when no field gives one', () => {
+    localStorage.setItem('ssms_locale', 'fr');
+    expect(getErrorMessage(withResponse(422, { code: 'invalid_input', message: 'x' }))).toBe('Vérifiez ce que vous avez saisi puis réessayez.');
+  });
+
+  it('leaves the codes that belong to a flow alone, and shows the message the server sent', () => {
+    expect(getErrorMessage(withResponse(403, { code: 'mfa_recent_required', message: 'Please confirm with a code.' }))).toBe('Please confirm with a code.');
+    expect(getErrorMessage(withResponse(409, { code: 'stale', message: 'That moved on.' }))).toBe('That moved on.');
+  });
+
+  it('keeps the reference on a server error that has a code', () => {
+    expect(getErrorMessage(withResponse(500, { code: 'server_error', message: 'x', reference: 'ABCDEF123456' }))).toContain('ABCDEF123456');
   });
 
   it('translates an email that is already taken, and leaves other server words as they are', () => {

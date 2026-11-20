@@ -2,6 +2,7 @@ import { AxiosError } from 'axios';
 import { loadLocale } from '../context/LanguageContext';
 import { say as sayIn } from '../i18n/catalog';
 import { pluralText } from '../i18n/plural';
+import { ERROR_CODE_KEY } from '../utils/errorCodes';
 import { fill } from '../utils/fill';
 
 /** One of the app's own sentences, in the language of the screen. */
@@ -9,7 +10,7 @@ function say(key: string): string {
   return sayIn(loadLocale(), key);
 }
 
-// Sentences the server sends all the time, and so the ones a person meets most. The rest of the server's words stay as sent.
+// What the server said before it sent codes. An older answer, or a cached one, may still come in these words.
 const KNOWN_SERVER_SENTENCES: Record<string, string> = {
   "That email or password doesn't look right. Please try again.": 'erBadLogin',
   'An account with this email already exists. Try signing in instead.': 'erEmailTaken',
@@ -20,7 +21,7 @@ function fromServer(message: string): string {
   return key ? say(key) : message;
 }
 
-type ServerBody = { message?: string; errors?: Record<string, unknown>; retryAfter?: number; reference?: string };
+type ServerBody = { code?: string; message?: string; errors?: Record<string, unknown>; retryAfter?: number; reference?: string };
 
 const REFERENCE = /^[A-Za-z0-9._-]{8,64}$/;
 
@@ -82,13 +83,19 @@ export function useApiError() {
 
     if (status === 429) return tooManyRequests(secondsToWait(err.response.headers, body));
 
+    // A code the server sent says which sentence it means, so the page writes it itself, in the language of the screen.
+    const key = typeof body.code === 'string' ? ERROR_CODE_KEY[body.code] : undefined;
+    const reference = status >= 500 ? referenceOf(err.response.headers, body) : null;
+    // A form that did not pass is told by its first problem when there is one: that is more exact than the general sentence.
+    if (key && body.code !== 'invalid_input') return withReference(say(key), reference);
+
     const detail = firstFieldError(body.errors);
     if (detail) return fromServer(detail);
+    if (key) return say(key);
 
     if (status === 422 && !body.message) {
       return say('erCheckInput');
     }
-    const reference = status >= 500 ? referenceOf(err.response.headers, body) : null;
     if (typeof body.message === 'string' && body.message.trim()) return withReference(fromServer(body.message), reference);
 
     if (status >= 500) return withReference(say('erServer'), reference);

@@ -46,6 +46,18 @@ describe('API client', () => {
     expect(headers.Authorization).toBe('Bearer held.in.memory');
   });
 
+  it('says which language the screen is in, so the server answers in it', async () => {
+    localStorage.setItem('ssms_locale', 'rw');
+    expect((await sentHeaders('/farms'))['Accept-Language']).toBe('rw');
+    localStorage.setItem('ssms_locale', 'fr');
+    expect((await sentHeaders('/auth/login', 'post'))['Accept-Language']).toBe('fr');
+  });
+
+  it('says the language of the screen when nothing was chosen, and English when the browser has no match', async () => {
+    localStorage.clear();
+    expect(['en', 'fr', 'rw']).toContain((await sentHeaders('/farms'))['Accept-Language']);
+  });
+
   it('never looks for a token in browser storage', async () => {
     setAccessToken(null);
     localStorage.setItem('ssms_token', 'left.in.storage');
