@@ -42,7 +42,7 @@ class RegisterSerializer(serializers.Serializer):
 
     def validate_email(self, value):
         if User.objects.filter(email=value.lower()).exists():
-            raise serializers.ValidationError('An account with this email already exists. Try signing in instead.')
+            raise serializers.ValidationError('An account with this email already exists. Try signing in instead.', code='email_taken')
         return value.lower()
 
     def validate(self, attrs):
@@ -153,7 +153,7 @@ class LoginSerializer(serializers.Serializer):
             password=attrs['password'],
         )
         if not user:
-            raise serializers.ValidationError("That email or password doesn't look right. Please try again.")
+            raise serializers.ValidationError("That email or password doesn't look right. Please try again.", code='bad_login')
         if not user.is_email_verified:
             raise serializers.ValidationError('email_not_verified')
         attrs['user'] = user

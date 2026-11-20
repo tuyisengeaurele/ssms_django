@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios';
+import { loadLocale } from '../context/LanguageContext';
 import { setWaiting, shouldWakeRetry, WAKE_DEADLINE_MS, wakeDelayMs } from './wake';
 import {
   clearLegacyStorage, endedNotice, forgetSession, getAccessToken, isActing, leaveNotice, notifySupportEnded, refreshAccessToken,
@@ -30,6 +31,8 @@ api.interceptors.request.use((config) => {
   const isPublic = PUBLIC_PATHS.some((path) => config.url?.startsWith(path));
   const token = getAccessToken();
   if (token && !isPublic) config.headers.Authorization = `Bearer ${token}`;
+  // The language of the screen, so the server writes its sentences in it (and so does a page that cannot read the code).
+  config.headers['Accept-Language'] = loadLocale();
   return config;
 });
 

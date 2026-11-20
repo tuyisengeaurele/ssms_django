@@ -64,6 +64,7 @@ PASSWORD_RESET_TIMEOUT = 3600
 
 MIDDLEWARE = [
     'core.request_id.RequestIdMiddleware',   # first, so every answer carries a reference
+    'core.language.LanguageMiddleware',      # the language the page asks for, so every error answer speaks it
     'logs.middleware.RequestLogMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'core.middleware.SecurityHeadersMiddleware',
