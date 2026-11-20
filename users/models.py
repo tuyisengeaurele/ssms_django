@@ -88,6 +88,35 @@ class User(AbstractBaseUser):
         return self.role == Role.ADMIN
 
 
+class NotificationPreference(models.Model):
+    """How a person wants to be reached. A person with no row has the defaults (see `users.notification_preferences`).
+
+    The in app inbox has no switch that can be off: a disease alert must always reach the person somewhere. Quiet hours
+    are clock times in Kigali (UTC+2, no daylight saving) and the window may run past midnight, so start is not before end.
+    """
+    user = models.OneToOneField(User, primary_key=True, on_delete=models.CASCADE, db_column='userId', related_name='notification_preference')
+    in_app = models.BooleanField(db_column='inApp', default=True)
+    email = models.BooleanField(default=True)
+    sms = models.BooleanField(default=False)
+    whatsapp = models.BooleanField(default=False)
+    quiet_start = models.TimeField(db_column='quietStart', null=True, blank=True)
+    quiet_end = models.TimeField(db_column='quietEnd', null=True, blank=True)
+    updated_at = models.DateTimeField(db_column='updatedAt', auto_now=True)
+
+    class Meta:
+        db_table = 'notification_preferences'
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(quiet_start__isnull=True, quiet_end__isnull=True)
+                    | (models.Q(quiet_start__isnull=False, quiet_end__isnull=False) & ~models.Q(quiet_start=models.F('quiet_end')))
+                ),
+                name='notification_quiet_hours_both_or_none',
+            ),
+            models.CheckConstraint(condition=models.Q(in_app=True), name='notification_in_app_always_on'),
+        ]
+
+
 class UserSession(models.Model):
     """One signed in browser or app. Its id travels inside the tokens as the claim `sid`.
 
