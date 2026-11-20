@@ -103,6 +103,12 @@ services:
       - key: AI_SERVICE_SECRET
         sync: false    # the same value goes into ssms-ai
 
+      # The secret the website sends with every request it forwards here, so the API believes the website about a visitor's address and
+      # not a visitor's own X-Forwarded-For. Made with: python -c "import secrets; print(secrets.token_urlsafe(32))". The same value is the
+      # website's EDGE_SECRET environment variable (docs/deploy-runbook.md, section 23).
+      - key: EDGE_SECRET
+        sync: false
+
       # Encrypts admin second factor secrets. Made by hand with Fernet.generate_key(), kept in a password manager.
       # Without it the deploy check stops the deploy before the running copy is replaced.
       - key: MFA_ENCRYPTION_KEY

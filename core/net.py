@@ -1,3 +1,4 @@
+import hmac
 import ipaddress
 
 from django.conf import settings
@@ -34,27 +35,57 @@ def is_infrastructure(text: str) -> bool:
     return any(address in net for net in _CLOUDFLARE + _PRIVATE if net.version == address.version)
 
 
+def _is_address(text: str) -> bool:
+    try:
+        ipaddress.ip_address(text)
+    except ValueError:
+        return False
+    return True
+
+
+def _came_through_the_site(request) -> bool:
+    """True when the request carries the secret only the website knows. Compared in constant time, as bytes, so odd characters are no problem."""
+    secret = getattr(settings, 'EDGE_SECRET', '')
+    sent = request.META.get('HTTP_X_SSMS_EDGE', '')
+    return bool(secret) and bool(sent) and hmac.compare_digest(sent.encode('utf-8'), secret.encode('utf-8'))
+
+
+def _hops_after_the_hosting_path(request) -> list[str]:
+    """The forwarded chain without the hops of the hosting path at its right end (Cloudflare's addresses and private ones)."""
+    hops = [hop.strip() for hop in (request.META.get('HTTP_X_FORWARDED_FOR') or '').split(',') if hop.strip()]
+    while hops and is_infrastructure(hops[-1]):
+        hops.pop()
+    return hops
+
+
 def get_client_ip(request) -> str | None:
-    """The caller's address, believing X-Forwarded-For only as far as TRUSTED_PROXY_COUNT allows.
+    """The address a request is counted as, for the audit and security logs and for every limit by address.
 
-    With no trusted proxy the header is ignored, because any client can write it. With a count of N the real client is
-    the N-th entry from the right, after the hops of the hosting path are stepped over: Cloudflare's addresses and
-    private ones sit at the right end of the chain and are not counted. Through the site the chain is the visitor,
-    Vercel, Cloudflare, the balancer; straight at the host it is the visitor, Cloudflare, the balancer. With a count of 2
-    both give the visitor.
+    With no trusted proxy (TRUSTED_PROXY_COUNT 0) the forwarded headers are ignored, because anyone can write them.
 
-    A caller who goes straight to the host and writes an extra entry at the left of the header can still choose the
-    address it is counted as. That only lets it spread its own requests over several limits, and the sign in lockout
-    counts by email as well.
+    With EDGE_SECRET set, only the website can say who a visitor is. A request that carries the secret is counted by the address the
+    website reports (X-Vercel-Forwarded-For). Any other request is counted by the last address in the chain that is not part of the hosting
+    path: the address that connected to Cloudflare, which no header can change. A visitor who writes an X-Forwarded-For of their own,
+    through the site or straight at the host, is counted as themselves.
+
+    Without EDGE_SECRET (the older rule) the real client is the N-th entry from the right, once Cloudflare's addresses and private ones at
+    the right end are stepped over. That can be fooled: an extra entry at the left of the header chooses the address, and a visitor
+    who sends one through the site is believed too. The deploy check warns while the secret is not set.
     """
     remote = request.META.get('REMOTE_ADDR')
     trusted = getattr(settings, 'TRUSTED_PROXY_COUNT', 0)
-    forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
-    if trusted <= 0 or not forwarded:
+    if trusted <= 0:
         return remote
-    hops = [hop.strip() for hop in forwarded.split(',') if hop.strip()]
-    while hops and is_infrastructure(hops[-1]):
-        hops.pop()
+    hops = _hops_after_the_hosting_path(request)
+
+    if getattr(settings, 'EDGE_SECRET', ''):
+        if _came_through_the_site(request):
+            reported = request.META.get('HTTP_' + settings.EDGE_CLIENT_IP_HEADER.upper().replace('-', '_'), '')
+            first = reported.split(',')[0].strip()
+            if _is_address(first):
+                return first
+        return hops[-1] if hops else remote
+
     if not hops:
         return remote
     return hops[-min(trusted, len(hops))]
