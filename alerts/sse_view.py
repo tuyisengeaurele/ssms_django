@@ -29,6 +29,8 @@ def _payload(alert) -> dict:
     return {
         'id':        alert.id,
         'type':      alert.type,
+        'code':      alert.code,
+        'params':    alert.params or {},
         'message':   alert.message,
         'batchId':   alert.batch_id,
         'roomId':    alert.room_id,

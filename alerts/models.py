@@ -34,6 +34,10 @@ class AlertLog(models.Model):
         blank=True,
     )
     type = models.CharField(max_length=20, choices=AlertType.choices)
+    # What the alert says is a code and its values, written into a sentence when it is shown (see alerts/alert_text.py).
+    # `message` keeps the English sentence for new alerts and is all an old alert has, so a row with no code is shown by it.
+    code = models.CharField(max_length=40, null=True, blank=True)
+    params = models.JSONField(default=dict, blank=True)
     message = models.TextField()
     is_read = models.BooleanField(db_column='isRead', default=False)
     created_at = models.DateTimeField(db_column='createdAt', auto_now_add=True)

@@ -22,6 +22,7 @@ from django.utils import timezone
 from core.mail import Email
 from core.mail import send_email_async as _send_mail_async
 
+from .alert_text import render_alert
 from .models import AlertLog, StageThreshold
 
 # The stages in the order a batch lives them, so the youngest one can be told apart.
@@ -131,20 +132,36 @@ def _send_farmer_alert(room, batches, alert: AlertLog, safe: SafeRange) -> None:
         pass   # never let email failure break the main flow
 
 
-def temperature_problem(value: float, safe: SafeRange) -> str | None:
+def coded(code: str, params: dict) -> dict:
+    """The fields an alert is made with: the code, its values, and the English sentence kept in `message`."""
+    return {'code': code, 'params': params, 'message': render_alert(code, params)}
+
+
+def temperature_alert(value: float, safe: SafeRange) -> tuple[str, dict] | None:
     if value < safe.temp_min:
-        return f'Temperature too low: {value} °C (safe min is {safe.temp_min} °C). Check heating.'
+        return 'temperature_low', {'value': value, 'min': safe.temp_min}
     if value > safe.temp_max:
-        return f'Temperature too high: {value} °C (safe max is {safe.temp_max} °C). Improve ventilation.'
+        return 'temperature_high', {'value': value, 'max': safe.temp_max}
     return None
+
+
+def humidity_alert(value: float, safe: SafeRange) -> tuple[str, dict] | None:
+    if value < safe.hum_min:
+        return 'humidity_low', {'value': value, 'min': safe.hum_min}
+    if value > safe.hum_max:
+        return 'humidity_high', {'value': value, 'max': safe.hum_max}
+    return None
+
+
+def temperature_problem(value: float, safe: SafeRange) -> str | None:
+    """The English sentence for a temperature out of range, or None. Seeding uses it; alerts use temperature_alert."""
+    found = temperature_alert(value, safe)
+    return render_alert(*found) if found else None
 
 
 def humidity_problem(value: float, safe: SafeRange) -> str | None:
-    if value < safe.hum_min:
-        return f'Humidity too low: {value}% (safe min is {safe.hum_min}%). Add moisture.'
-    if value > safe.hum_max:
-        return f'Humidity too high: {value}% (safe max is {safe.hum_max}%). Improve air circulation.'
-    return None
+    found = humidity_alert(value, safe)
+    return render_alert(*found) if found else None
 
 
 def settle_room_alerts(room_id: str) -> None:
@@ -181,15 +198,15 @@ def check_room_alerts(room_id: str, temperature: float, humidity: float) -> list
         safe = room_range([b.stage for b in batches])
         now = timezone.now()
         to_create = []
-        for type_, message in (
-            ('TEMPERATURE', temperature_problem(temperature, safe)),
-            ('HUMIDITY', humidity_problem(humidity, safe)),
+        for type_, problem in (
+            ('TEMPERATURE', temperature_alert(temperature, safe)),
+            ('HUMIDITY', humidity_alert(humidity, safe)),
         ):
             open_alerts = AlertLog.objects.filter(room_id=room_id, type=type_, resolved_at__isnull=True)
-            if message is None:
+            if problem is None:
                 open_alerts.update(resolved_at=now)
             elif not open_alerts.exists():
-                to_create.append(AlertLog(room_id=room_id, type=type_, message=message))
+                to_create.append(AlertLog(room_id=room_id, type=type_, **coded(*problem)))
 
         if not to_create:
             return []

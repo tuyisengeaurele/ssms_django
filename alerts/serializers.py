@@ -19,7 +19,7 @@ class AlertLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = AlertLog
         fields = [
-            'id', 'batch_id', 'room_id', 'type', 'message', 'is_read', 'created_at', 'resolved_at',
+            'id', 'batch_id', 'room_id', 'type', 'code', 'params', 'message', 'is_read', 'created_at', 'resolved_at',
             'acknowledged_by', 'acknowledged_at', 'comment_count',
             'farmer_name', 'batch', 'room', 'batches',
         ]

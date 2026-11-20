@@ -36,11 +36,9 @@ def raise_disease_alert(batch, result: str, confidence: float, checked_by) -> Al
     recent = AlertLog.objects.filter(
         batch_id=batch.pk, type='DISEASE', created_at__gte=timezone.now() - timedelta(minutes=EMAIL_THROTTLE_MINUTES),
     ).exists()
-    message = (
-        f'{result} suspected in this batch ({round(confidence * 100)}% confidence). '
-        'Check the batch and ask your supervisor to take a look.'
+    alert = AlertLog.objects.create(
+        batch=batch, type='DISEASE', **utils.coded('disease_suspected', {'disease': result, 'confidence': round(confidence * 100)}),
     )
-    alert = AlertLog.objects.create(batch=batch, type='DISEASE', message=message)
 
     owner = batch.farm.owner
     if not recent and owner.pk != checked_by.pk:
