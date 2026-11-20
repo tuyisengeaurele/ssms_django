@@ -2,6 +2,22 @@
 
 # Changelog
 
+## Alerts as a code plus values (phase 3, task 3.3)
+
+An alert used to be one English sentence. It is now a code and its values, and the sentence is written when it is shown, in the language of the reader. Nothing changes for an alert already stored: it keeps its message.
+
+### Added
+- `AlertLog.code` and `AlertLog.params` (migration `alerts.0008`). Seven codes: `temperature_low`, `temperature_high`, `humidity_low`, `humidity_high`, `disease_suspected`, `stage_changed`, `device_offline`.
+- `render_alert(code, params, lang)` on the server (`alerts/alert_text.py`) and `alertText(t, alert)` on the web (`utils/alertText.ts`). English, French and Kinyarwanda. The two keep the same words, and a test compares them. The French and Kinyarwanda sentences are drafts until a native speaker has read them.
+- The list answer and the live stream carry `code` and `params` next to `message`.
+- Migration `alerts.0009` gives old alerts a code and values by the shape of their sentence. A sentence it does not recognise is left alone and shown as stored.
+
+### Changed
+- New alerts keep the English sentence in `message`, so anything that only knows `message` still works.
+- A stage change now names the stage as a word ("Larva") instead of its code ("LARVA").
+- A device that went quiet is found by its id when its alert is closed, so renaming the device no longer leaves the outage open. Alerts from before this are still found by their sentence.
+- The alerts page, the notification panel, the dashboards and the batch page write an alert through `alertText`.
+
 ## Notification preferences (phase 3, task 3.2)
 
 ### Added
