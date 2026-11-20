@@ -7,7 +7,8 @@ Run by the nightly job (.github/workflows/jobs-nightly.yml). By hand:
     python manage.py rollup_readings
     python manage.py rollup_readings --since 2026-10-01    # write the summaries again from a day, for readings added late
 """
-from datetime import datetime, timezone as dt_timezone
+from datetime import datetime
+from datetime import timezone as dt_timezone
 
 from django.conf import settings
 from django.utils import timezone
