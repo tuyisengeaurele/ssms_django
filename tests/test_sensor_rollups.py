@@ -367,3 +367,49 @@ def test_a_chart_of_many_readings_an_hour_has_the_same_counts_and_the_same_value
     assert [p['count'] for p in after] == [p['count'] for p in before]
     for new, old in zip(after, before):
         assert abs(new['temperature'] - old['temperature']) <= 0.1 and abs(new['humidity'] - old['humidity']) <= 0.1
+
+
+@pytest.mark.usefixtures('naive_reading_times')
+class TestOlderDatabase:
+    """A database built before Django keeps the reading times without a time zone. The nightly job must still run on it."""
+
+    def test_the_hours_are_summarised(self):
+        room = room_in()
+        reading(room, 3, 20.0), reading(room, 3, 30.0, minute=30)
+        assert roll_up(now=NOW) == 1
+        row = summary(room, 3)
+        assert (row.count, row.temp_avg) == (2, 25.0)
+
+    def test_the_first_run_finds_the_oldest_reading_and_covers_the_days_before_it(self):
+        room = room_in()
+        reading(room, 24 * 9), reading(room, 2)
+        assert roll_up(now=NOW, days_per_pass=2) == 2
+
+    def test_old_readings_are_summarised_then_removed(self, settings):
+        settings.SENSOR_RAW_KEEP_DAYS = 2
+        room = room_in()
+        old = reading(room, 24 * 4)
+        kept = reading(room, 5)
+        assert prune_raw(now=NOW) == 1
+        assert not SensorReading.objects.filter(pk=old.pk).exists()
+        assert SensorReading.objects.filter(pk=kept.pk).exists()
+        assert summary(room, 24 * 4).count == 1
+
+    def test_the_nightly_command_runs(self, settings):
+        settings.SENSOR_RAW_KEEP_DAYS = 2
+        room = room_in()
+        reading(room, 24 * 4)
+        call_command('rollup_readings', verbosity=0)
+        assert SensorReadingHourly.objects.count() == 1 and not SensorReading.objects.exists()
+
+    def test_a_long_chart_reads_the_summaries_and_the_raw_readings_together(self, settings):
+        settings.SENSOR_RAW_KEEP_DAYS = 2
+        room = room_in()
+        batch = BatchFactory(farm=room.farm)
+        stay(batch, room, 24 * 10)
+        reading(room, 24 * 5, 22.0)
+        reading(room, 3, 28.0)
+        before = batch_series(batch, 24 * 9)
+        prune_raw(now=NOW)
+        after = batch_series(batch, 24 * 9)
+        assert [(p['temperature'], p['count']) for p in after] == [(p['temperature'], p['count']) for p in before]

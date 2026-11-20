@@ -21,6 +21,7 @@ from django.db.models.functions import TruncHour
 from django.utils import timezone
 
 from batches.models import BatchRoomStay
+from core.timeutil import aware
 
 from .models import SensorReading, SensorReadingHourly
 
@@ -102,7 +103,7 @@ def roll_up(now: datetime | None = None, since: datetime | None = None, days_per
             oldest = SensorReading.objects.filter(room__isnull=False).aggregate(oldest=Min('timestamp'))['oldest']
             if oldest is None:
                 return 0
-            since = oldest
+            since = aware(oldest)    # an older database holds the time without its zone
         else:
             since = through - OVERLAP
     return _roll_up_between(hour_floor(since), until, days_per_pass)
@@ -129,7 +130,7 @@ def delete_rolled_up(now: datetime | None = None, step: int = 5000) -> int:
 def prune_raw(now: datetime | None = None, step: int = 5000) -> int:
     """Summarise what is about to be removed, then remove it. Safe to run every night."""
     cutoff = raw_cutoff(now)
-    oldest = SensorReading.objects.filter(room__isnull=False).aggregate(oldest=Min('timestamp'))['oldest']
+    oldest = aware(SensorReading.objects.filter(room__isnull=False).aggregate(oldest=Min('timestamp'))['oldest'])
     if oldest is not None and oldest < cutoff:
         _roll_up_between(hour_floor(oldest), cutoff, 7)
     return delete_rolled_up(now, step)
@@ -139,8 +140,8 @@ def rollups_for_batch(batch, stays=None):
     """The summaries of a batch: those of each room it stayed in, for the hours of the stay (the hour of a move counts for the room left)."""
     condition = Q(pk__in=[])
     for stay in BatchRoomStay.objects.filter(batch=batch) if stays is None else stays:
-        in_stay = Q(room_id=stay.room_id, hour__gte=hour_floor(stay.started_at))
+        in_stay = Q(room_id=stay.room_id, hour__gte=hour_floor(aware(stay.started_at)))
         if stay.ended_at is not None:
-            in_stay &= Q(hour__lt=stay.ended_at)
+            in_stay &= Q(hour__lt=aware(stay.ended_at))
         condition |= in_stay
     return SensorReadingHourly.objects.filter(condition)
