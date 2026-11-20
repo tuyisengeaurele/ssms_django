@@ -195,6 +195,21 @@ def add_plain_routes(result, generator, request, public):
             '429': {'description': 'Too many requests. Wait and try again.', **_error_ref()},
         },
     }}
+    result['paths']['/api/health/proxy'] = {'get': {
+        'operationId': 'getProxyCheck',
+        'summary': 'See which forwarding header can be trusted',
+        'description': (
+            'Temporary, open to anyone. For each forwarding header it says whether the address named in `me` is in it and whether a forged '
+            'address got through. It never prints an address or the secret. It is used once to settle which header to trust for a '
+            "visitor's address and is then removed. It does not use the answer envelope.\n\nNo sign in is needed."
+        ),
+        'tags': ['health'],
+        'parameters': [{'name': 'me', 'in': 'query', 'required': False, 'schema': {'type': 'string'}, 'description': 'The address of the caller.'}],
+        'responses': {
+            '200': {'description': 'The answer.', 'content': {'application/json': {'schema': {'type': 'object'}}}},
+            '429': {'description': 'Too many requests. Wait and try again.', **_error_ref()},
+        },
+    }}
     result['paths']['/api/alerts/stream'] = {'get': {
         'operationId': 'getAlertsStream',
         'summary': 'Stream new alerts as server-sent events',
