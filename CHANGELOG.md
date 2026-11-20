@@ -2,6 +2,10 @@
 
 # Changelog
 
+## Older alert wording gets a code too
+
+Running the alert backfill on the dev database left 43 of 133 alerts with no code. Most were written by the first versions: no degree sign ("21.0 C") and a disease sentence that stopped after the confidence. The backfill now knows both, and migration `alerts.0010` runs it again. It only touches alerts with no code, and a sentence it still does not know ("Batch initialized at EGG stage") is shown as stored.
+
 ## Alerts as a code plus values (phase 3, task 3.3)
 
 An alert used to be one English sentence. It is now a code and its values, and the sentence is written when it is shown, in the language of the reader. Nothing changes for an alert already stored: it keeps its message.
