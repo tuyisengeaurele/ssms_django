@@ -1,5 +1,12 @@
 # Changelog
 
+## A way to see the shape of the forwarded headers (temporary)
+
+The live API logs a Cloudflare address for every visitor: the audit, security and request logs name Cloudflare's network instead of the visitor, and every limit that counts by address is shared by visitors behind the same Cloudflare address. `TRUSTED_PROXY_COUNT` is 2 on Render and the logs are still wrong, so the chain is not the shape that was assumed.
+
+### Added
+- **`GET /api/health/proxy`** answers with how many entries the forwarded chain has, the kind of each (cloudflare, private, public, unknown), the kind of the connecting address, the kind of address the app would use with the count it has, the count itself, and which of the interesting headers exist (`x-forwarded-for`, `x-real-ip`, `cf-connecting-ip`, `x-vercel-forwarded-for` and the like). It never says an address, only kinds. Asked through the site and straight at the Render host, it shows where the visitor's real address is, so the count (or the header) can be chosen from evidence. It is temporary and is removed when the fix lands.
+
 ## The last slow lists are quick
 
 Task 2.8 of the audit roadmap, measured on the same 200-farm scratch database as the load profile.

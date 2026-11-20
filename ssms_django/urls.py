@@ -6,6 +6,7 @@ from contacts.urls import admin_urlpatterns as contacts_admin_urlpatterns
 from core.api_docs import asset_view, docs_view, schema_view
 from core.csp import CspReportView
 from core.farm_calendar import CalendarView
+from core.proxy_shape import proxy_shape
 from core.utils import health_check
 from logs.views import LogsView
 from reports.health_views import SystemHealthHistoryView, SystemHealthTestView, SystemHealthView
@@ -16,6 +17,7 @@ handler500 = 'core.utils.server_error'
 
 urlpatterns = [
     path('api/health', health_check),
+    path('api/health/proxy', proxy_shape),   # TEMPORARY: the shape of the forwarded headers, no addresses (core/proxy_shape.py)
     path('api/csp-report', CspReportView.as_view()),   # POST what a browser's content security policy blocked (open, 204)
     path('api/calendar', CalendarView.as_view()),   # GET the dated events of the farms a person may see
     # The API's own documentation. Plain views, switched off with API_DOCS_ENABLED=false (they then answer 404).
