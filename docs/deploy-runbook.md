@@ -535,3 +535,15 @@ A farmer sees their own batches, a supervisor the batches of their cooperative's
 | An admin is sent back to sign in and asked for a code | the session never passed a code (signed in before this shipped, or just promoted to admin) | sign in again. It asks for the code, or for set-up |
 | An admin's code is always refused | the phone clock is off, or the key was changed after the app was set up | turn on automatic time. After a key change, run `reset_admin_mfa` and set up again |
 | Render says the month's free hours are used up | two always-awake services exceed 750 hours | let `ssms-ai` sleep (it does when idle) and keep only the API awake |
+
+## 21. Load data and the profile
+
+How to see what the API does when the data is the size of a real deployment, without touching real data. The numbers it gave on 2026-11-20 are in `docs/load-profile.md`: read them first, and put a new table next to them after a change.
+
+1. Make a scratch database. Its name must say so (`ssms_load`, or anything with `scratch`, `load` or `measure` in it): both scripts refuse any other name, and `ssms_db` is never one. For example, in `psql`: `CREATE DATABASE ssms_load;`.
+2. Build it: `DB_NAME=ssms_load python manage.py migrate`, then `DB_NAME=ssms_load python manage.py createcachetable`.
+3. Fill it: `DB_NAME=ssms_load python scripts/seed_load_data.py` (200 farms, 1,000 batches, 288,400 hourly readings and what goes with them, about 45 seconds). It will not seed twice. To start again, drop the database and make it anew, since deleting the readings row by row is slower.
+4. Time it: `DB_NAME=ssms_load python scripts/profile_endpoints.py --json profile.json`. It signs in as a farmer, a supervisor and an admin of the seeded data, asks for the 53 pages they read, and prints the median and worst time, the number of queries, the time in the database and the size of each answer. Because the database is on your machine a query costs almost nothing, so it also estimates each page with `--round-trip-ms` (25) added for every query, which is what a database in another country costs. A page over `--limit-ms` (300) in that estimate is listed as slow. One query is cancelled after 20 seconds and shows as a 500.
+5. Drop the scratch database when you are done. The accounts end in `@load.ssms.rw`, none has a usable password, and nothing is sent anywhere.
+
+What it taught us so far: count the queries and look at the plan before the time. The slow pages were always one query shape that no index could help (a test run against every row), and a page that makes a dozen fast queries is slow only because each one crosses an ocean.
