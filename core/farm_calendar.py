@@ -36,8 +36,9 @@ _STAGES = {stage.value for stage in BatchStage}
 _STAGE_IN_MESSAGE = re.compile(r'\bto ([A-Z]+)\b')
 
 
-def _day(moment) -> date:
-    return timezone.localtime(aware(moment)).date()
+def _day(moment, zone=None) -> date:
+    """The local day of a moment. A caller with thousands of them passes the zone, which is read from thread storage once, not each time."""
+    return aware(moment).astimezone(zone or timezone.get_current_timezone()).date()
 
 
 def _bounds(start: date, end: date):
@@ -45,42 +46,47 @@ def _bounds(start: date, end: date):
     return low, datetime.combine(end + timedelta(days=1), time.min, tzinfo=dt_timezone.utc)
 
 
-def _event(kind, when, *, expected=False, batch=None, farm=None, detail=None, key=''):
-    farm = farm or (batch.farm if batch is not None else None)
+def _event(kind, when, *, expected=False, batch_id=None, farm_id=None, farm_name='', detail=None, key=''):
     return {
         'id': f'{kind}:{key}',
         'date': when.isoformat(),
         'kind': kind,
         'expected': expected,
-        'batch_id': batch.pk if batch is not None else None,
-        'farm_id': farm.pk if farm is not None else None,
-        'farm_name': farm.name if farm is not None else '',
+        'batch_id': batch_id,
+        'farm_id': farm_id,
+        'farm_name': farm_name or '',
         'detail': detail or {},
     }
 
 
+# Events are made from plain values, not from a model object for each: an admin's month is thousands of events, and building a batch
+# and a farm for every one of them to read an id, a name and a date cost about 300 ms of Python.
+_BATCH = ('pk', 'farm_id', 'farm__name')
+
+
 def _batch_events(user, low, high):
-    batches = scope_batches(user).select_related('farm')
-    for b in batches.filter(start_date__gte=low, start_date__lt=high):
-        yield _event('batch_started', _day(b.start_date), batch=b, key=b.pk)
+    zone = timezone.get_current_timezone()
+    batches = scope_batches(user)
+    for b in batches.filter(start_date__gte=low, start_date__lt=high).values(*_BATCH, 'start_date'):
+        yield _event('batch_started', _day(b['start_date'], zone), batch_id=b['pk'], farm_id=b['farm_id'], farm_name=b['farm__name'], key=b['pk'])
     harvested = HarvestRecord.objects.filter(batch=OuterRef('pk'), is_active=True)
     waiting = batches.filter(expected_harvest_date__gte=low, expected_harvest_date__lt=high).filter(~Exists(harvested))
-    for b in waiting:
-        yield _event('harvest_expected', _day(b.expected_harvest_date), expected=True, batch=b, key=b.pk)
+    for b in waiting.values(*_BATCH, 'expected_harvest_date'):
+        yield _event('harvest_expected', _day(b['expected_harvest_date'], zone), expected=True, batch_id=b['pk'], farm_id=b['farm_id'], farm_name=b['farm__name'], key=b['pk'])
 
-    checks = scope_by_batch(user, DiseaseDetection.objects.filter(detected_at__gte=low, detected_at__lt=high).select_related('batch__farm'))
-    for c in checks:
-        yield _event('disease_check', _day(c.detected_at), batch=c.batch, detail={'result': c.result}, key=c.pk)
+    checks = scope_by_batch(user, DiseaseDetection.objects.filter(detected_at__gte=low, detected_at__lt=high))
+    for c in checks.values('pk', 'detected_at', 'result', 'batch_id', 'batch__farm_id', 'batch__farm__name'):
+        yield _event('disease_check', _day(c['detected_at'], zone), batch_id=c['batch_id'], farm_id=c['batch__farm_id'], farm_name=c['batch__farm__name'], detail={'result': c['result']}, key=c['pk'])
 
-    records = scope_by_batch(user, HarvestRecord.objects.filter(is_active=True, harvested_at__gte=low, harvested_at__lt=high).select_related('batch__farm'))
-    for r in records:
-        yield _event('harvest_recorded', _day(r.harvested_at), batch=r.batch, key=r.pk)
+    records = scope_by_batch(user, HarvestRecord.objects.filter(is_active=True, harvested_at__gte=low, harvested_at__lt=high))
+    for r in records.values('pk', 'harvested_at', 'batch_id', 'batch__farm_id', 'batch__farm__name'):
+        yield _event('harvest_recorded', _day(r['harvested_at'], zone), batch_id=r['batch_id'], farm_id=r['batch__farm_id'], farm_name=r['batch__farm__name'], key=r['pk'])
 
-    changes = scope_by_batch(user, AlertLog.objects.filter(type='STAGE_CHANGE', batch__isnull=False, created_at__gte=low, created_at__lt=high).select_related('batch__farm'))
-    for a in changes:
-        named = _STAGE_IN_MESSAGE.search(a.message or '')
+    changes = scope_by_batch(user, AlertLog.objects.filter(type='STAGE_CHANGE', batch__isnull=False, created_at__gte=low, created_at__lt=high))
+    for a in changes.values('pk', 'created_at', 'message', 'batch_id', 'batch__farm_id', 'batch__farm__name'):
+        named = _STAGE_IN_MESSAGE.search(a['message'] or '')
         stage = named.group(1) if named and named.group(1) in _STAGES else None
-        yield _event('stage_changed', _day(a.created_at), batch=a.batch, detail={'stage': stage}, key=a.pk)
+        yield _event('stage_changed', _day(a['created_at'], zone), batch_id=a['batch_id'], farm_id=a['batch__farm_id'], farm_name=a['batch__farm__name'], detail={'stage': stage}, key=a['pk'])
 
 
 def _round_detail(r: SupplyRound) -> dict:
