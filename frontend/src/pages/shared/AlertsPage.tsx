@@ -9,6 +9,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
 import { timeAgo } from '../../utils/timeAgo';
 import { stageLabel } from '../../utils/constants';
+import { alertText } from '../../utils/alertText';
 import { ALERT_TYPE_KEY } from '../../utils/alertTypes';
 import EmptyState from '../../components/ui/EmptyState';
 import LoadError from '../../components/ui/LoadError';
@@ -182,7 +183,7 @@ export default function AlertsPage() {
               <li key={a.id} className={a.isRead ? 'is-read' : ''}>
                 <div className="alert-feed-row">
                 <div className="alert-feed-main">
-                  <p className="alert-feed-message">{a.message}</p>
+                  <p className="alert-feed-message">{alertText(t, a)}</p>
                   <p className="alert-feed-meta">
                     <span className="alert-type">{t(ALERT_TYPE_KEY[a.type] ?? 'alTypeSystem')}</span>
                     {a.farmerName ? <span>{a.farmerName}</span> : null}

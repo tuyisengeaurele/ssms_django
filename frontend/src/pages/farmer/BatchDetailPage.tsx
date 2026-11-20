@@ -25,6 +25,7 @@ import Panel from '../../components/ui/Panel';
 import RangeChart from '../../components/ui/RangeChart';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import StageStepper from './StageStepper';
+import { alertText } from '../../utils/alertText';
 import { dateFormat } from '../../utils/dateFormat';
 import { resultLabel } from '../../utils/resultLabel';
 
@@ -622,7 +623,7 @@ export default function BatchDetailPage() {
                 <ul className="batch-alerts">
                   {alerts.slice(0, 3).map((a) => (
                     <li key={a.id}>
-                      <span>{a.message}</span>
+                      <span>{alertText(t, a)}</span>
                       <span className="batch-alerts-time">{timeAgo(a.createdAt, locale)}</span>
                     </li>
                   ))}

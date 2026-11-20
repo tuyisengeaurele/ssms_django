@@ -22,6 +22,7 @@ import { SkeletonStatCard } from '../../components/ui/SkeletonLoader';
 import StageBadge from '../../components/ui/StageBadge';
 import StatTile from '../../components/ui/StatTile';
 import FarmRiskPanel from './FarmRiskPanel';
+import { alertText } from '../../utils/alertText';
 import { dateFormat } from '../../utils/dateFormat';
 import { resultLabel } from '../../utils/resultLabel';
 
@@ -231,7 +232,7 @@ export default function SupervisorDashboard() {
               {alerts.slice(0, 8).map((a) => (
                 <li key={a.id} className={a.isRead ? 'is-read' : ''}>
                   <div className="alert-feed-main">
-                    <p className="alert-feed-message">{a.message}</p>
+                    <p className="alert-feed-message">{alertText(t, a)}</p>
                     <p className="alert-feed-meta"><span>{timeAgo(a.createdAt, locale)}</span></p>
                   </div>
                 </li>

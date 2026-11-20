@@ -27,6 +27,7 @@ import AllowanceCard from '../../components/supply/AllowanceCard';
 import OnboardingCard from '../../components/supply/OnboardingCard';
 import SupplyRoundCard from '../../components/supply/SupplyRoundCard';
 import TodayCard from './TodayCard';
+import { alertText } from '../../utils/alertText';
 import { dateFormat } from '../../utils/dateFormat';
 
 export default function FarmerDashboard() {
@@ -240,7 +241,7 @@ export default function FarmerDashboard() {
                 {alerts.slice(0, 6).map((a) => (
                   <li key={a.id} className={a.isRead ? 'is-read' : ''}>
                     <div className="alert-feed-main">
-                      <p className="alert-feed-message">{a.message}</p>
+                      <p className="alert-feed-message">{alertText(t, a)}</p>
                       <p className="alert-feed-meta"><span>{timeAgo(a.createdAt, locale)}</span></p>
                     </div>
                     {!a.isRead && (

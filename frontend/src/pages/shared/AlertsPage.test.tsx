@@ -56,6 +56,25 @@ beforeEach(() => {
   api.addComment.mockImplementation((_id: string, body: string) => Promise.resolve({ data: { data: { id: 'c9', body, createdAt: new Date().toISOString(), author: { id: 'me', name: 'Claire Mukamana' }, canDelete: true } } }));
 });
 
+describe('Alerts page: the words of an alert', () => {
+  it('writes an alert that has a code in the language of the screen, not in the English that was stored', async () => {
+    localStorage.setItem('ssms_locale', 'fr');
+    api.getAll.mockResolvedValue({
+      data: { data: [makeAlert(1, { code: 'humidity_high', params: { value: 92, max: 85 }, type: 'HUMIDITY', message: 'Humidity too high: 92% (safe max is 85%). Improve air circulation.' })] },
+    });
+    open();
+    expect(await screen.findByText("Humidité trop élevée : 92 % (maximum sûr : 85 %). Améliorez la circulation de l'air.")).toBeInTheDocument();
+    expect(screen.queryByText(/Humidity too high/)).not.toBeInTheDocument();
+  });
+
+  it('shows the stored message of an older alert that has no code', async () => {
+    localStorage.setItem('ssms_locale', 'fr');
+    api.getAll.mockResolvedValue({ data: { data: [makeAlert(1, { code: null, params: {}, message: 'Temperature too low: 21 C' })] } });
+    open();
+    expect(await screen.findByText('Temperature too low: 21 C')).toBeInTheDocument();
+  });
+});
+
 describe('Alerts page', () => {
   it('has one title and counts what is unread', async () => {
     open();
