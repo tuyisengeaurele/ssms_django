@@ -2,6 +2,16 @@
 
 # Changelog
 
+## Profile fields on the user (phase 3, task 3.1)
+
+All optional, all with a safe default, so nothing changes for people who already have an account.
+
+### Added
+- `User.phone` (a Rwandan mobile number kept as E.164, `+250` and nine digits; 72, 73, 78 and 79 prefixes), `phone_verified_at`, `photo_url`, `preferred_language` (`en`, `fr` or `rw`, default `en`), and the two-step prompt counters `mfa_prompt_snoozed_until`, `mfa_prompt_dismissals` (default 0) and `mfa_prompted_at`. Migration `users.0012`.
+- `users/phone_numbers.py` writes a number typed as `0788 123 456`, `788123456` or `+250788123456` in E.164 and refuses anything else. `User.save()` applies it, and an empty number is stored as `NULL`, so it never repeats as text.
+- A verified number is unique: two accounts cannot both hold it. An unverified number can repeat, because anyone can type anyone's number.
+- The profile answer carries `phone`, `phoneVerified`, `photoUrl` and `preferredLanguage`. The prompt counters stay private. None of them can be written through this answer yet.
+
 ## The visitor's address in the logs and the limits
 
 The live API named a Cloudflare address for every visitor: the audit, security and request logs showed Cloudflare's network, and every limit that counts by address was shared by visitors behind the same Cloudflare address. A temporary check of the forwarded chain (kinds only, no addresses) showed why. Through the site the chain is the visitor, Vercel, Cloudflare, then the host's balancer. Straight at the host it is the visitor, Cloudflare, then the balancer. Counting from the right landed on Cloudflare in both.
