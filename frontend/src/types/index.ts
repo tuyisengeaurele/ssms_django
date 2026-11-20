@@ -31,6 +31,11 @@ export interface User {
   isEmailVerified: boolean;
   /** False once an administrator has turned the account off. */
   isActive?: boolean;
+  /** A Rwandan mobile number in E.164, when the person gave one. */
+  phone?: string | null;
+  phoneVerified?: boolean;
+  photoUrl?: string | null;
+  preferredLanguage?: 'en' | 'fr' | 'rw';
   createdAt: string;
   updatedAt: string;
 }

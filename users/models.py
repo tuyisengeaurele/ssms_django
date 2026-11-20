@@ -3,6 +3,10 @@ from django.db import models
 
 from core.ids import new_id as _generate_id  # migrations import this name
 
+from .phone_numbers import normalize_rwanda_mobile
+
+LANGUAGES = [('en', 'English'), ('fr', 'Français'), ('rw', 'Kinyarwanda')]
+
 
 class Role(models.TextChoices):
     ADMIN = 'ADMIN', 'Admin'
@@ -44,6 +48,15 @@ class User(AbstractBaseUser):
     is_email_verified = models.BooleanField(db_column='isEmailVerified', default=False)
     # When the person ticked the box for the terms and the privacy policy while creating the account. Empty if they did not.
     terms_accepted_at = models.DateTimeField(db_column='termsAcceptedAt', null=True, blank=True)
+    # A Rwandan mobile number in E.164, written by save(). Empty is None, never '', so the empty value cannot repeat.
+    phone = models.CharField(max_length=16, null=True, blank=True, validators=[normalize_rwanda_mobile])
+    phone_verified_at = models.DateTimeField(db_column='phoneVerifiedAt', null=True, blank=True)
+    photo_url = models.URLField(db_column='photoUrl', max_length=500, null=True, blank=True)
+    preferred_language = models.CharField(db_column='preferredLanguage', max_length=2, choices=LANGUAGES, default='en')
+    # The nudge to turn on two-step sign in: when it may show again, how often it was dismissed, when it last showed.
+    mfa_prompt_snoozed_until = models.DateTimeField(db_column='mfaPromptSnoozedUntil', null=True, blank=True)
+    mfa_prompt_dismissals = models.PositiveSmallIntegerField(db_column='mfaPromptDismissals', default=0)
+    mfa_prompted_at = models.DateTimeField(db_column='mfaPromptedAt', null=True, blank=True)
     created_at = models.DateTimeField(db_column='createdAt', auto_now_add=True)
     updated_at = models.DateTimeField(db_column='updatedAt', auto_now=True)
 
@@ -57,9 +70,17 @@ class User(AbstractBaseUser):
 
     class Meta:
         db_table = 'users'
+        constraints = [
+            # Anyone can type anyone's number, so only a verified one is unique.
+            models.UniqueConstraint(fields=['phone'], condition=models.Q(phone_verified_at__isnull=False), name='users_verified_phone_unique'),
+        ]
 
     def __str__(self):
         return self.email
+
+    def save(self, *args, **kwargs):
+        self.phone = normalize_rwanda_mobile(self.phone) if (self.phone or '').strip() else None
+        super().save(*args, **kwargs)
 
     # Required by simplejwt and Django internals
     @property
