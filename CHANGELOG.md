@@ -1,5 +1,22 @@
 # Changelog
 
+## Load data and a profile: the first real finding is a 16 second farm list
+
+Task 2.6 of the audit roadmap. No change to the app: two scripts, and the numbers they gave.
+
+### Added
+- **`scripts/seed_load_data.py` fills a scratch database with a real deployment's worth of data:** 5 cooperatives, 200 farmers and farms, 400 rooms and sensors, 1,000 batches, 288,400 hourly readings, 3,651 alerts, 1,400 disease checks, 600 harvests and open egg rounds with requests. It takes 45 seconds. It refuses any database whose name does not say it is a scratch one (never `ssms_db`), and it will not seed twice.
+- **`scripts/profile_endpoints.py` times what a farmer, a supervisor and an admin read** (53 pages): median and worst time, queries, time in the database, size of the answer, and an estimate with a 25 ms round trip for each query, which is what a database in another country costs. Over 300 ms in that estimate is slow. A single query is cancelled after 20 seconds.
+- **`docs/load-profile.md` holds the baseline** and what it showed.
+
+### What it showed
+- **One query shape makes the busiest pages unusable at this size.** A farmer's own farm list takes 16.3 s, a farm 15.8 s, a farm's batches 14.3 s, comparing two batches 5.6 s. A supervisor's or an admin's farm list and active batches list did not finish in 20 seconds. All of them wait on the database, in 3 to 15 queries. The cause is how a batch's readings are found (tested against every reading, so no index helps): 2,428 ms for one batch's count against 22 ms for the same answer written as a join from the batch's stays to the readings, using an index that already exists. It grows with the readings table, not with a person's farms.
+- Smaller: the admin device list (313 ms in the database), time spent in Python on the admin calendar, a farm summary and the report, and two lists that make a dozen queries.
+- Everything else (sign in, alerts, harvest, disease checks, readings, supply, onboarding, the team pages) answers in under 100 ms here.
+
+### Next
+The reading query is the first fix, before the rest of phase 2: it is the difference between a dashboard that opens and one that does not.
+
 ## Fewer round trips to the database
 
 Task 2.5 of the audit roadmap. Every question the API asks the database is a round trip to a server in another country, so the number of questions is the number to cut. Counted in the test database, on one request after the first:
