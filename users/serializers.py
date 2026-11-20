@@ -10,14 +10,21 @@ User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     cooperative_name = serializers.SerializerMethodField()
+    phone_verified = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'name', 'email', 'role', 'cooperative_id', 'cooperative_name', 'is_email_verified', 'is_active', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'name', 'email', 'role', 'cooperative_id', 'cooperative_name', 'is_email_verified', 'is_active', 'created_at', 'updated_at']
+        fields = [
+            'id', 'name', 'email', 'role', 'cooperative_id', 'cooperative_name', 'is_email_verified', 'is_active',
+            'phone', 'phone_verified', 'photo_url', 'preferred_language', 'created_at', 'updated_at',
+        ]
+        read_only_fields = fields
 
     def get_cooperative_name(self, obj):
         return obj.cooperative.name if obj.cooperative_id and obj.cooperative else None
+
+    def get_phone_verified(self, obj):
+        return obj.phone_verified_at is not None
 
 
 class RegisterSerializer(serializers.Serializer):
