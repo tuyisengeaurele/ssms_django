@@ -8,7 +8,7 @@ from core.permissions import RolePermission
 from core.utils import api_error, api_success
 
 from .models import Cooperative
-from .serializers import CooperativeDetailSerializer, CooperativeSerializer, CooperativeWriteSerializer
+from .serializers import CooperativeDetailSerializer, CooperativeSerializer, CooperativeWriteSerializer, with_counts
 
 
 def _require_admin(user):
@@ -28,7 +28,7 @@ class CooperativeListCreateView(APIView):
             coops = Cooperative.objects.filter(id=request.user.cooperative_id, is_active=True)
         else:
             coops = Cooperative.objects.none()
-        return api_success(CooperativeSerializer(coops, many=True).data)
+        return api_success(CooperativeSerializer(with_counts(coops), many=True).data)
 
     def post(self, request):
         """POST /api/cooperatives, create a cooperative (admin only)."""

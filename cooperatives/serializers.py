@@ -3,6 +3,25 @@ from rest_framework import serializers
 from .models import Cooperative
 
 
+def with_counts(coops):
+    """Members and farms of every cooperative of a list, counted in the one query. See CooperativeSerializer."""
+    from django.contrib.auth import get_user_model
+    from django.db.models import Count, IntegerField, OuterRef, Subquery
+    from django.db.models.functions import Coalesce
+
+    from farms.models import Farm
+
+    people = get_user_model().objects.filter(cooperative=OuterRef('pk'), is_active=True).order_by().values('cooperative').annotate(n=Count('pk')).values('n')
+    farms = (
+        Farm.objects.filter(owner__cooperative=OuterRef('pk'), owner__role='FARMER', is_active=True)
+        .order_by().values('owner__cooperative').annotate(n=Count('pk')).values('n')
+    )
+    return coops.annotate(
+        member_total=Coalesce(Subquery(people, output_field=IntegerField()), 0),
+        farm_total=Coalesce(Subquery(farms, output_field=IntegerField()), 0),
+    )
+
+
 class CooperativeSerializer(serializers.ModelSerializer):
     member_count = serializers.SerializerMethodField()
     farm_count = serializers.SerializerMethodField()
@@ -17,9 +36,14 @@ class CooperativeSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'is_active', 'created_at', 'updated_at', 'member_count', 'farm_count']
 
     def get_member_count(self, obj):
-        return obj.members.filter(is_active=True).count()
+        # A list counts both in its own query (with_counts below). One cooperative on its own asks here.
+        counted = getattr(obj, 'member_total', None)
+        return counted if counted is not None else obj.members.filter(is_active=True).count()
 
     def get_farm_count(self, obj):
+        counted = getattr(obj, 'farm_total', None)
+        if counted is not None:
+            return counted
         from farms.models import Farm
         return Farm.objects.filter(owner__cooperative=obj, owner__role='FARMER', is_active=True).count()
 
