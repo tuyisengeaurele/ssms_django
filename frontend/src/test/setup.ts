@@ -11,7 +11,11 @@ afterEach(() => {
     cleanup();
     // The language a test chose is also kept in a cookie. Storage is cleared by the tests that need it, so clear the cookie too,
     // or one test's choice would be the next one's saved language.
-    document.cookie = 'ssms_locale=; Path=/; Max-Age=0';
+    try {
+      document.cookie = 'ssms_locale=; Path=/; Max-Age=0';
+    } catch {
+      // A test that blocks cookies on purpose still has its spy in place here (vitest 4 puts spies back after this hook).
+    }
   }
 });
 
