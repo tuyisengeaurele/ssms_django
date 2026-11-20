@@ -2,6 +2,8 @@
 import math
 
 from audit_log.utils import log_action
+from core.error_text import error_text
+from core.language import current_language
 from core.utils import api_error, api_success
 from logs.security import record_security_event
 
@@ -18,9 +20,8 @@ def shared_flag(request) -> bool:
 def too_many_attempts(request, email: str, wait: int):
     """The answer for an email that is locked for `wait` seconds."""
     minutes = max(1, math.ceil(wait / 60))
-    unit = 'minute' if minutes == 1 else 'minutes'
     record_security_event('lockout', request, detail=email)
-    return api_error(f'Too many attempts. Please try again in {minutes} {unit}.', 429)
+    return api_error(error_text('locked', current_language(), n=minutes), 429, code='throttled')
 
 
 def finish_sign_in(request, user, *, mfa_verified: bool, extra: dict | None = None):

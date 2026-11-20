@@ -37,7 +37,7 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data, context={'request': request})
         if not serializer.is_valid():
-            return api_error('Please check what you entered and try again.', 422, serializer.errors)
+            return api_error('Please check what you entered and try again.', 422, serializer.errors, code='invalid_input')
         user = serializer.save()
         log_action(request, 'CREATE', 'User', user.pk, f'Registered: {user.email}')
         if user.is_email_verified:
@@ -79,8 +79,8 @@ class LoginView(APIView):
                     lockout.record_failure(email)
                     log_action(request, 'OTHER', 'User', detail=f'Failed login: {email}', outcome='failure')
                 record_security_event('login_failed', request, detail=email)
-                return api_error(message, 401)
-            return api_error('Please check what you entered and try again.', 422, errors)
+                return api_error(message, 401, code=getattr(non_field[0], 'code', None))
+            return api_error('Please check what you entered and try again.', 422, errors, code='invalid_input')
         user = serializer.validated_data['user']
         if user.role == Role.ADMIN:
             # An admin is not signed in by a password. Nothing is cleared yet either: the failure count is cleared only

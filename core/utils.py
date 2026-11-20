@@ -6,6 +6,8 @@ from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated, Pa
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
 
+from .error_text import CODE_KEYS, error_text
+from .language import current_language
 from .request_id import current_request_id
 
 
@@ -13,7 +15,36 @@ def api_success(data=None, message='Success', status_code=status.HTTP_200_OK):
     return Response({'success': True, 'message': message, 'data': data}, status=status_code)
 
 
+def localize_errors(errors, lang):
+    """A serializer's field errors with each sentence that has a code of ours written in `lang`, and the first such code.
+
+    The code travels on the error itself (serializers.ValidationError(text, code='email_taken')). Django REST framework's own
+    codes ('required', 'invalid') are not ours and are left as they are."""
+    if not isinstance(errors, dict):
+        return errors, None
+    found, out = None, {}
+    for field, value in errors.items():
+        items = value if isinstance(value, (list, tuple)) else [value]
+        written = []
+        for item in items:
+            code = getattr(item, 'code', None)
+            if code in CODE_KEYS:
+                found = found or code
+                item = error_text(code, lang)
+            written.append(item)
+        out[field] = written if isinstance(value, (list, tuple)) else written[0]
+    return out, found
+
+
 def api_error(message='Error', status_code=status.HTTP_400_BAD_REQUEST, errors=None, code=None):
+    """An error answer. A `code` of ours says which sentence is meant: the sentence is then written in the language of the request
+    (English when it asked for none), and the web translates the code by itself. Without a code the message goes as given."""
+    lang = current_language()
+    if code in CODE_KEYS:
+        message = error_text(code, lang)
+    if errors is not None:
+        errors, found = localize_errors(errors, lang)
+        code = found or code   # the case a field names is more exact than the general one
     body = {'success': False, 'message': message, 'reference': current_request_id()}
     if errors is not None:
         body['errors'] = errors
@@ -34,40 +65,40 @@ def _failure_code(exc) -> str:
     return str(code or '')
 
 
-def _friendly_message(exc, status_code, data):
-    """Plain, kind wording for every error the API can raise."""
+def _answer(exc, status_code, data, lang):
+    """(sentence, code) for an error. The code is None for the answers a page handles by a code of its own."""
     if isinstance(exc, Throttled):
-        if exc.wait:
-            seconds = int(math.ceil(exc.wait))
-            unit = 'second' if seconds == 1 else 'seconds'
-            return f'Too many attempts. Please try again in {seconds} {unit}.'
-        return 'Too many attempts. Please wait a moment and try again.'
+        wait = int(math.ceil(exc.wait)) if exc.wait else None
+        return error_text('throttled', lang, n=wait), 'throttled'
     if isinstance(exc, AuthenticationFailed) and getattr(exc.detail, 'code', '') == 'user_inactive':
-        return 'This account has been deleted. Please contact the SSMS team.'
+        return error_text('inactive_account', lang), 'inactive_account'
     if isinstance(exc, NotAuthenticated):
-        return 'Please sign in to continue.'
+        return error_text('not_authenticated', lang), 'not_authenticated'
     if status_code == 403 and _failure_code(exc) == 'mfa_recent_required':
-        return 'Please confirm with a code from your authenticator app.'
+        return 'Please confirm with a code from your authenticator app.', None
     code = _failure_code(exc)
     if code == 'support_ended':
-        return 'The support session has ended.'
+        return 'The support session has ended.', None
     if code == 'support_view_only':
-        return 'Support access can only look, not change.'
+        return 'Support access can only look, not change.', None
     if code == 'support_blocked':
-        return 'Support access cannot do that.'
+        return 'Support access cannot do that.', None
+    named = None
     if status_code == 401:
-        return 'Your session has ended. Please sign in again.'
-    if status_code == 403:
-        return "You don't have permission to do that."
-    if status_code == 404:
-        return "We couldn't find what you were looking for."
-    if status_code == 405:
-        return "That action isn't available here."
-    if isinstance(exc, ParseError):
-        return "We couldn't read that request. Please check it and try again."
+        named = 'session_ended'
+    elif status_code == 403:
+        named = 'forbidden'
+    elif status_code == 404:
+        named = 'not_found'
+    elif status_code == 405:
+        named = 'method_not_allowed'
+    elif isinstance(exc, ParseError):
+        named = 'bad_request'
+    if named:
+        return error_text(named, lang), named
     if isinstance(data, dict) and 'detail' in data:
-        return str(data['detail'])
-    return 'Something went wrong. Please try again.'
+        return str(data['detail']), None
+    return error_text('something_wrong', lang), 'something_wrong'
 
 
 def _note_refusal(exc, context, status_code):
@@ -89,7 +120,8 @@ def custom_exception_handler(exc, context):
 
     status_code = response.status_code
     data = response.data
-    message = _friendly_message(exc, status_code, data)
+    lang = current_language()
+    message, named = _answer(exc, status_code, data, lang)
 
     # Sign in problems carry token internals. People do not need to see those.
     errors = None
@@ -105,7 +137,12 @@ def custom_exception_handler(exc, context):
     if isinstance(exc, Throttled) and exc.wait:
         response.data['retryAfter'] = int(math.ceil(exc.wait))
     if errors:
+        errors, from_field = localize_errors(errors, lang)
         response.data['errors'] = errors
+        named = named or from_field
+    # A code the page already handles (an idle session, the second factor, support access) is kept as it is set above.
+    if named and 'code' not in response.data:
+        response.data['code'] = named
 
     return response
 
@@ -113,7 +150,7 @@ def custom_exception_handler(exc, context):
 def not_found(request, exception=None):
     """An address the API does not have. Plain JSON, like every other answer, with the reference."""
     return JsonResponse(
-        {'success': False, 'message': "We couldn't find what you were looking for.", 'reference': current_request_id()},
+        {'success': False, 'message': error_text('not_found', current_language()), 'code': 'not_found', 'reference': current_request_id()},
         status=404,
     )
 
@@ -121,7 +158,7 @@ def not_found(request, exception=None):
 def server_error(request):
     """Something broke. Nothing about what is said, only that it happened and the reference to find it by."""
     return JsonResponse(
-        {'success': False, 'message': 'Something went wrong on our side. Please try again in a moment.', 'reference': current_request_id()},
+        {'success': False, 'message': error_text('server_error', current_language()), 'code': 'server_error', 'reference': current_request_id()},
         status=500,
     )
 
