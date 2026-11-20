@@ -18,7 +18,7 @@ from batches.models import Batch
 from batches.placement import leave_room, place_batch
 from farms.models import RearingRoom
 from sensors.models import SensorReading
-from sensors.room_readings import newest_reading, reading_count, readings_for_batch
+from sensors.room_readings import newest_of, newest_reading, reading_count, readings_for_batch
 from tests.factories import BatchFactory, FarmFactory
 
 pytestmark = pytest.mark.django_db
@@ -113,19 +113,17 @@ def test_the_newest_reading_is_the_rule_for_every_batch(world):
     rows = annotated(world)
     for name, batch in world.items():
         newest = readings_for_batch(batch).order_by('-timestamp').first()
-        row = rows[batch.pk]
+        found = newest_of(rows[batch.pk])
         if newest is None:
-            assert (row.latest_temperature, row.latest_humidity, row.latest_reading_at) == (None, None, None), name
+            assert found is None, name
         else:
-            assert row.latest_temperature == newest.temperature, name
-            assert row.latest_humidity == newest.humidity, name
-            assert row.latest_reading_at == newest.timestamp, name
+            assert found == {'temperature': newest.temperature, 'humidity': newest.humidity, 'timestamp': newest.timestamp}, name
 
 
 def test_a_legacy_reading_newer_than_the_room_readings_is_the_newest(world):
-    row = annotated(world)[world['both'].pk]
-    assert row.latest_temperature == 19.5
-    assert row.latest_reading_at == ago(0.2)
+    found = newest_of(annotated(world)[world['both'].pk])
+    assert found['temperature'] == 19.5
+    assert found['timestamp'] == ago(0.2)
 
 
 def test_a_reading_at_the_moment_of_a_move_belongs_to_the_new_room(world):
@@ -153,7 +151,7 @@ def test_the_count_does_not_have_to_read_every_reading(world):
 
 
 def test_the_newest_reading_does_not_have_to_read_every_reading(world):
-    text = plan(Batch.objects.annotate(**newest_reading()).values('latest_reading_at'))
+    text = plan(Batch.objects.annotate(**newest_reading()).values('newest_in_stays'))
     assert 'Seq Scan on sensor_readings' not in text, text
 
 

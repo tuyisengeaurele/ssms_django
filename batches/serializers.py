@@ -165,11 +165,9 @@ class BatchSupervisorSerializer(serializers.ModelSerializer):
         return getattr(obj, 'open_alerts', 0)
 
     def get_latest_reading(self, obj):
-        # Annotated by the view, so this costs no query. None when the batch has no readings yet.
-        at = getattr(obj, 'latest_reading_at', None)
-        if at is None:
-            return None
-        return {'temperature': obj.latest_temperature, 'humidity': obj.latest_humidity, 'timestamp': at}
+        # Annotated by the view (sensors.room_readings.newest_reading), so this costs no query. None when the batch has no readings yet.
+        from sensors.room_readings import newest_of
+        return newest_of(obj)
 
     def get_detection_count(self, obj):
         # Uses annotated value from view queryset (no extra query)
