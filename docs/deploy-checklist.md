@@ -69,6 +69,11 @@ Then, from outside:
   - In a private window with no cookie, `/` stays English whatever the browser language, and `/fr/` does not loop.
   - `/sitemap.xml` lists `/`, `/fr` and `/rw` with their alternates.
   - `/locale-boot.js` answers with 200, names both language files, and is not cached for a year (it changes with every build). Choose French, open `/login` on a throttled connection: the headline is French from the first draw, with no English first.
+- Motion and fonts (task 2.3 and 2.4), on the deployed site with the browser's network tab open:
+  - `/`, `/fr` and `/rw` download exactly three font files (`fraunces-latin-normal`, `fraunces-latin-italic`, `geist-latin-normal`, about 54 KB in all) and no `-wght-` file. The hero entrance plays once, in about a second, and does not play a second time when the page finishes loading. With the system's "reduce motion" on, nothing moves.
+  - Signed in as a farmer: moving between pages is a quick fade, a dialog fades and rises in, a toast fades in and out, and none of them blocks a click.
+  - A name with an unusual letter (for example `Ñ`) still shows in the same font: the network tab fetches one `-wght-` file then, and only then.
+- The cooperative report (task 2.5): as a supervisor open it, change the period and go back. The second open is instant. A change you make shows up in it within a minute. A CSV or PDF download is always current.
 - Stop the AI service: the disease check says so plainly and the rest of the site works.
 - Take a database backup and restore it somewhere else.
 
@@ -83,12 +88,14 @@ The free plans sleep, and a cold start of the API was measured at about a minute
 5. Have screenshots of the main screens ready in case the network fails.
 6. Do not run the five minute pinger all night to avoid this: it would use the free hours of every service (see section 7 of the runbook).
 
-## 5. Known gaps on 2026-11-04
+## 5. Known gaps on 2026-11-20
 
 These are written down so nobody is surprised. Each is on the backlog.
 
 - Farmers have no idle limit unless they tick "This is a shared computer" at sign in (30 minutes). Admins have 15 minutes and supervisors 30. `SESSION_IDLE_FARMER_MINUTES` sets a limit for every farmer.
-- No second factor for admin accounts.
+- The admin's active batches list is one answer for every active batch (538 KB for 1,000). It takes 200 to 500 ms at that size and wants paging. See `docs/load-profile.md`.
+- The cooperative report on screen is kept for a minute per cooperative, period and kind of reader, in each API process's memory. A change can take up to a minute to show.
+- Migration `sensors/0006` builds a plain index on the readings table. It is quick while the table is small. A table of millions of rows would want the index built concurrently first.
 - The Content Security Policy in `frontend/vercel.json` has been enforced since 2026-11-20 (it was report only from 2026-11-12, and the Security log showed only our own probes). It still reports to `/api/csp-report`, so a violation appears in the Security log as "Browser blocked something the page tried to load". If a legitimate resource is ever blocked, the fast way back is to rename the header key to `Content-Security-Policy-Report-Only`, then add the host to the right directive. The API address in `connect-src` is the `ALLOWED_HOSTS` value in `render.yaml`: change both together, or drop it if the host proxies `/api` so the site only talks to itself. Not yet seen enforced on the live site: the farm map with real farms, the location picker, photo upload and the bot check. After the deploy, walk those pages and read the console for "Refused to".
 - The sensor simulation workflow in `.github/workflows` writes simulated readings into whatever database its secrets point at. It runs only when someone presses the button. Never press it on a database with real farm data.
 
