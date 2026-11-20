@@ -64,7 +64,7 @@ After saving, run **Frequent jobs** by hand from the Actions tab (**Run workflow
 - Sign in, stay on a page 16 minutes, reload: still signed in. That proves the cookie works through the proxy.
 - Admin, System, Health tab: ten cards. Press each test button once.
 - The alert bell still receives a live alert (the live stream goes through the Vercel forward).
-- Audit log shows your real address, not a Vercel or Render address. If every visitor shows the same address, `TRUSTED_PROXY_COUNT` is wrong: try `1` or `3` and reload.
+- Audit log shows your real address, not a Vercel or Render address. If every visitor shows the same address, or a Cloudflare one, check `TRUSTED_PROXY_COUNT` (it is `2`). Cloudflare and private hops at the right end of the forwarded chain are skipped before counting, so do not raise it to step over them.
 - `python scripts/smoke_deploy.py https://<vercel address> --site https://<vercel address>` with `SMOKE_EMAIL` and `SMOKE_PASSWORD` set to a throwaway account.
 
 ## 7. Outside monitor

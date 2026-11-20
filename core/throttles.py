@@ -5,6 +5,8 @@ from rest_framework.throttling import AnonRateThrottle as _AnonRateThrottle
 from rest_framework.throttling import SimpleRateThrottle
 from rest_framework.throttling import UserRateThrottle as _UserRateThrottle
 
+from .net import get_client_ip
+
 # Rate limit counters live in memory, not in the database cache. In the database every request cost six round trips to
 # Supabase (read, count, savepoint, check, write, release). The cost of memory is that each API process counts for
 # itself and a restart starts the counts again. The API runs one process (WEB_CONCURRENCY=1), so the limits are exact
@@ -13,11 +15,18 @@ from rest_framework.throttling import UserRateThrottle as _UserRateThrottle
 THROTTLE_CACHE = caches['throttle']
 
 
-class AnonRateThrottle(_AnonRateThrottle):
+class VisitorAddress:
+    """Count by the address the logs use. DRF's own lookup counts hops from the right and so finds Cloudflare's address."""
+
+    def get_ident(self, request):
+        return get_client_ip(request) or ''
+
+
+class AnonRateThrottle(VisitorAddress, _AnonRateThrottle):
     cache = THROTTLE_CACHE
 
 
-class UserRateThrottle(_UserRateThrottle):
+class UserRateThrottle(VisitorAddress, _UserRateThrottle):
     cache = THROTTLE_CACHE
 
 
@@ -83,7 +92,7 @@ class SupportRequestThrottle(UserRateThrottle):
     scope = 'support'   # an admin asking to look at somebody's account, 5 an hour
 
 
-class DeviceKeyThrottle(SimpleRateThrottle):
+class DeviceKeyThrottle(VisitorAddress, SimpleRateThrottle):
     """30 readings a minute for each device key. A device that sends no key is counted by its address."""
     scope = 'device'
     cache = THROTTLE_CACHE

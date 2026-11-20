@@ -18,7 +18,7 @@ Work through this top to bottom for every deploy, including a rehearsal on a tes
 | `DATABASE_URL` | the host's database, password rotated |
 | `ALLOWED_HOSTS` | the API's own address |
 | `CORS_ALLOWED_ORIGINS`, `FRONTEND_URL` | the website address, https |
-| `TRUSTED_PROXY_COUNT` | `2` with the Vercel forward and Render in front (one proxy, `1`). Wrong values make every visitor share one address, so read the address in the audit log |
+| `TRUSTED_PROXY_COUNT` | `2` with the Vercel forward and Render in front (one proxy, `1`). Cloudflare and private hops are skipped before counting. Wrong values make every visitor share one address, so read the address in the audit log |
 | `AI_SERVICE_URL`, `AI_SERVICE_SECRET` | same secret on both services |
 | `MFA_ENCRYPTION_KEY` | a Fernet key made by hand and kept in a password manager (runbook section 9). Without it `start.sh` stops the deploy before the running copy is replaced |
 | `SENTRY_DSN` | set, so errors reach someone |
