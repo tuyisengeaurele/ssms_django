@@ -52,7 +52,35 @@ database far away. The report is now kept for a minute on screen. The cooperativ
 Sign in, alerts, harvest, disease checks, readings, the series chart, supply, onboarding and the supervisor's team pages all answer in
 under 100 ms here and under 300 ms with a far database.
 
-## All 53 measurements, slowest first
+## After task 2.7 (the reading queries), same data, same machine
+
+| Page | Before | After |
+|---|---|---|
+| Farmer, `/api/farms` | 16,343 ms | 18 ms |
+| Farmer, `/api/farms/{id}` | 15,777 ms | 22 ms |
+| Farmer, `/api/batches/farm/{id}` | 14,304 ms | 19 ms |
+| Farmer, `/api/batches/compare` | 5,554 ms | 32 ms |
+| Supervisor, `/api/farms` | did not finish (500 after 20 s) | 46 ms |
+| Admin, `/api/farms` | did not finish (500 after 20 s) | 42 ms |
+| Supervisor, `/api/batches/active` | did not finish (500 after 20 s) | 168 ms |
+| Admin, `/api/batches/active` (1,000 batches) | did not finish (500 after 20 s) | 764 ms |
+
+The fix: a batch's readings and alerts are found by going from its stays to the readings and alerts of that room in those dates
+(`sensors/room_readings.py`: `reading_count`, `newest_reading`; `alerts/room_alerts.py`: `alert_count`), not by testing every row
+against the batch. `tests/test_reading_queries.py` holds them to the old rule on awkward cases (a move at an exact moment, returning
+to a room, old readings with no room, a stay with no readings) and checks the plan never has to read the whole readings table.
+
+Still over 300 ms with a database far away, which is task 2.8:
+
+| Page | Median ms here | Why |
+|---|---|---|
+| Admin, `/api/batches/active` | 764 | 1,000 batches in one answer of 538 KB, 539 ms in the database: it wants paging more than a faster query |
+| Admin, `/api/calendar` | 346 | 43 ms in the database, the rest is Python over 1,000 batches |
+| Admin, `/api/devices` | 411 | 337 ms in the database: the newest reading of each of 400 devices |
+| Admin and supervisor, `/api/reports/cooperative` | 112 and 49 | 12 queries each, 337 to 412 ms with a far database (kept for a minute on screen) |
+| Admin, `/api/cooperatives` | 21 | 12 queries |
+
+## All 53 measurements before task 2.7, slowest first
 (A farmer asking for `/api/detections/recent` is refused with 403 by design: it is a staff page. It has moved to the supervisor list.)
 
 | Role | Endpoint | Status | Median ms | Worst ms | Queries | Query ms | KB | With a database far away | |
