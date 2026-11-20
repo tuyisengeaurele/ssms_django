@@ -2,6 +2,15 @@
 
 # Changelog
 
+## Notification preferences (phase 3, task 3.2)
+
+### Added
+- `GET` and `PATCH /api/auth/me/notifications`: how the signed in person wants to be reached. Switches for `in_app`, `email`, `sms` and `whatsapp`, and quiet hours as `quiet_start` and `quiet_end` (`HH:MM`, Kigali time, the window may run past midnight). Everyone reads and changes only their own.
+- Defaults for a person who never chose: in app on, email on, SMS off, WhatsApp off, no quiet hours. `preferences_for(user)` gives them to any sender and never writes a row.
+- Table `notification_preferences` (migration `users.0013`), one row per person, created on the first change.
+- The in app inbox cannot be turned off, so a disease alert always reaches the person somewhere. A change of quiet hours needs both times, or neither, and two different times. The database refuses a row that breaks either rule, not only the API.
+- Each change is written to the audit log with what it was and became.
+
 ## Profile fields on the user (phase 3, task 3.1)
 
 All optional, all with a safe default, so nothing changes for people who already have an account.
