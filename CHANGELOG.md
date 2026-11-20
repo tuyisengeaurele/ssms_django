@@ -2,6 +2,23 @@
 
 # Changelog
 
+## The server speaks the language of the screen (phase 3, task 3.4)
+
+The page sends the language chosen in the picker, and the server answers in it. An error answer also carries a code, so the page can write the sentence itself.
+
+### Added
+- The web sends `Accept-Language` with every request: the language chosen in the picker, else the browser's. The server reads it (`core/language.py`) and puts `request.language` on the request: `en`, `fr` or `rw`. Weights are respected, `kin` counts as Kinyarwanda, and a missing, odd or very long header means English.
+- Error answers carry a `code`: `bad_login`, `email_taken`, `invalid_input`, `forbidden`, `not_found`, `session_ended`, `not_authenticated`, `inactive_account`, `method_not_allowed`, `bad_request`, `server_error`, `something_wrong`, and `throttled` (with `retryAfter`). The sentence next to it is in the language of the request. The codes that belong to a flow (`session_idle`, the second factor, support access) are unchanged.
+- A field error can carry its own code (an email that is taken is `email_taken`). A code of ours wins over the general `invalid_input`.
+- The words come from the page's catalogue, copied into `core/doc_text.py` by `scripts/build_doc_text.py`, so there is one place to change them. New entries: the `ae` sentences in `i18n/pages.ts`. French and Kinyarwanda are drafts until a native speaker has read them.
+
+### Changed
+- `useApiError` goes by the code first, and by the old English sentences only as a fallback for an older answer.
+- A locked email is answered with the same `throttled` code, told in minutes.
+
+### Still in English
+Sentences written straight into a view (for example "Please enter your name."), Django REST framework's own field messages ("Enter a valid email address."), and the sentences for the second factor and support access. Each can take a code the same way, one at a time.
+
 ## Older alert wording gets a code too
 
 Running the alert backfill on the dev database left 43 of 133 alerts with no code. Most were written by the first versions: no degree sign ("21.0 C") and a disease sentence that stopped after the confidence. The backfill now knows both, and migration `alerts.0010` runs it again. It only touches alerts with no code, and a sentence it still does not know ("Batch initialized at EGG stage") is shown as stored.
