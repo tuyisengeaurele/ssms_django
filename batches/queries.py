@@ -1,4 +1,4 @@
-from django.db.models import Count, IntegerField, OuterRef, Subquery, Value
+from django.db.models import Count, IntegerField, OuterRef, Subquery
 from django.db.models.functions import Coalesce
 
 
@@ -6,18 +6,6 @@ def _count_of(model):
     rows = (
         model.objects.filter(batch=OuterRef('pk'))
         .order_by().values('batch').annotate(n=Count('pk')).values('n')
-    )
-    return Coalesce(Subquery(rows, output_field=IntegerField()), 0)
-
-
-def _reading_count():
-    """The readings of each batch are those of the rooms it stayed in, so they are counted by its stays."""
-    from sensors.models import SensorReading
-    from sensors.room_readings import belongs_to_batch
-
-    rows = (
-        SensorReading.objects.filter(belongs_to_batch(OuterRef('pk')))
-        .order_by().annotate(one=Value(1)).values('one').annotate(n=Count('pk')).values('n')
     )
     return Coalesce(Subquery(rows, output_field=IntegerField()), 0)
 
@@ -30,9 +18,10 @@ def with_counts(qs):
     """
     from alerts.room_alerts import alert_count
     from sensors.models import DiseaseDetection
+    from sensors.room_readings import reading_count
 
     return qs.select_related('room').annotate(
         detection_total=_count_of(DiseaseDetection),
-        reading_total=_reading_count(),
+        reading_total=reading_count(),
         alert_total=alert_count(),
     )

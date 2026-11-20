@@ -187,22 +187,18 @@ class BatchActiveSupervisorView(APIView):
     actions = {'get': 'active'}
 
     def get(self, request):
-        from django.db.models import Count, OuterRef, Subquery
+        from django.db.models import Count
 
         from alerts.room_alerts import open_problem_count
-        from sensors.models import SensorReading
-        from sensors.room_readings import belongs_to_batch
+        from sensors.room_readings import newest_reading
 
         # Everything is worked out in the one query, so the list does not cost more as batches are added.
-        newest = SensorReading.objects.filter(belongs_to_batch(OuterRef('pk'))).order_by('-timestamp')
         qs = scope_batches(
             request.user,
             Batch.objects.select_related('farm', 'room').annotate(
                 detection_count=Count('disease_detections', distinct=True),
                 open_alerts=open_problem_count(),
-                latest_temperature=Subquery(newest.values('temperature')[:1]),
-                latest_humidity=Subquery(newest.values('humidity')[:1]),
-                latest_reading_at=Subquery(newest.values('timestamp')[:1]),
+                **newest_reading(),
             ),
         ).order_by('-created_at')
         return api_success(BatchSupervisorSerializer(qs, many=True).data)
