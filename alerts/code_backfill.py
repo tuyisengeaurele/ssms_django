@@ -11,13 +11,17 @@ def _air(kind: str, word: str, side: str, unit: str, advice: str) -> str:
     return rf'^{kind} too {word}: {_NUMBER.format("value")} {unit} \(safe {side} is {_NUMBER.format(side)} {unit}\)\. {advice}\.$'
 
 
-# Written as the old messages were: a space before the degree sign, none before the percent sign.
+# Written as the old messages were: a space before the degree sign, none before the percent sign. The first versions had no
+# degree sign at all ("21.0 C").
+_DEGREES = r'(?:°C|C)'
+
 PATTERNS = [
-    ('temperature_low', re.compile(_air('Temperature', 'low', 'min', '°C', 'Check heating'))),
-    ('temperature_high', re.compile(_air('Temperature', 'high', 'max', '°C', 'Improve ventilation'))),
+    ('temperature_low', re.compile(_air('Temperature', 'low', 'min', _DEGREES, 'Check heating'))),
+    ('temperature_high', re.compile(_air('Temperature', 'high', 'max', _DEGREES, 'Improve ventilation'))),
     ('humidity_low', re.compile(rf'^Humidity too low: {_NUMBER.format("value")}% \(safe min is {_NUMBER.format("min")}%\)\. Add moisture\.$')),
     ('humidity_high', re.compile(rf'^Humidity too high: {_NUMBER.format("value")}% \(safe max is {_NUMBER.format("max")}%\)\. Improve air circulation\.$')),
-    ('disease_suspected', re.compile(r'^(?P<disease>.+?) suspected in this batch \((?P<confidence>\d+)% confidence\)\. ')),
+    # The first versions stopped after the confidence, with no advice after it.
+    ('disease_suspected', re.compile(r'^(?P<disease>.+?) suspected in this batch \((?P<confidence>\d+)% confidence\)\.(?: |$)')),
     ('stage_changed', re.compile(r'^Batch stage updated to (?P<stage>[A-Z]+)\.$')),
     ('device_offline', re.compile(r'^Device (?P<device>.+) has not sent data for (?P<minutes>\d+) minutes\. Check its power and connection\.$')),
 ]

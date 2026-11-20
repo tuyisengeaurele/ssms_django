@@ -215,6 +215,10 @@ def test_the_stream_payload_of_an_old_alert_has_a_null_code():
         ('disease_suspected', {'disease': 'Grasserie', 'confidence': 87}),
     ),
     ('Batch stage updated to LARVA.', ('stage_changed', {'stage': 'LARVA'})),
+    # How the first versions wrote them: no degree sign, and a disease sentence that stopped after the confidence.
+    ('Temperature too low: 20.3 C (safe min is 22.0 C). Check heating.', ('temperature_low', {'value': 20.3, 'min': 22.0})),
+    ('Temperature too high: 28.1 C (safe max is 28.0 C). Improve ventilation.', ('temperature_high', {'value': 28.1, 'max': 28.0})),
+    ('Flacherie suspected in this batch (78% confidence).', ('disease_suspected', {'disease': 'Flacherie', 'confidence': 78})),
     (
         'Device DHT22 north has not sent data for 30 minutes. Check its power and connection.',
         ('device_offline', {'device': 'DHT22 north', 'minutes': 30}),
