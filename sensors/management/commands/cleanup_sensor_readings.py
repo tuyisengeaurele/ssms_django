@@ -1,6 +1,7 @@
 """
 Management command: cleanup_sensor_readings
-Deletes SensorReading rows older than --days (default 90).
+Deletes the SensorReading rows older than --days (default 90) that no room owns. Those are the readings made before rooms existed, which
+know only their batch and cannot be summarised by the hour. Readings of a room go through `rollup_readings`, which summarises them first.
 
 Run manually:
     python manage.py cleanup_sensor_readings
@@ -20,7 +21,7 @@ from sensors.models import SensorReading
 
 
 class Command(LoggedCommand):
-    help = 'Delete sensor readings older than N days to prevent unbounded table growth.'
+    help = 'Delete the sensor readings that no room owns, older than N days.'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -40,7 +41,7 @@ class Command(LoggedCommand):
         dry_run  = options['dry_run']
         cutoff   = timezone.now() - timedelta(days=days)
 
-        qs = SensorReading.objects.filter(timestamp__lt=cutoff)
+        qs = SensorReading.objects.filter(timestamp__lt=cutoff, room__isnull=True)
         count = qs.count()
 
         if dry_run:

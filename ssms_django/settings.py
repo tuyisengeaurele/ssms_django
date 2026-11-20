@@ -157,6 +157,8 @@ PASSWORD_HASHERS = [
 # How many reverse proxies sit in front of the app. 0 on a laptop. Set to 1 behind a single host
 # proxy such as Render. Throttles and audit logs only believe X-Forwarded-For up to this depth.
 # A disease check raises an alert when it names a disease with at least this much confidence (0 to 1).
+# Raw sensor readings are kept this long. Older ones are removed once their hour is summarised (sensors/rollups.py).
+SENSOR_RAW_KEEP_DAYS = config('SENSOR_RAW_KEEP_DAYS', default=30, cast=int)
 DISEASE_ALERT_MIN_CONFIDENCE = config('DISEASE_ALERT_MIN_CONFIDENCE', default=0.5, cast=float)
 
 # A device that sends nothing for this long is shown offline.

@@ -547,3 +547,13 @@ How to see what the API does when the data is the size of a real deployment, wit
 5. Drop the scratch database when you are done. The accounts end in `@load.ssms.rw`, none has a usable password, and nothing is sent anywhere.
 
 What it taught us so far: count the queries and look at the plan before the time. The slow pages were always one query shape that no index could help (a test run against every row), and a page that makes a dozen fast queries is slow only because each one crosses an ocean.
+
+## 22. Sensor readings: the hourly summaries and removing old ones
+
+A sensor reports every few minutes, so the readings table is the one that grows. The nightly job (`rollup_readings`, 02:00 UTC) writes one summary row for each room and each complete hour (`sensor_readings_hourly`: how many readings, and the lowest, average and highest temperature and humidity), then removes the raw readings that are older than `SENSOR_RAW_KEEP_DAYS` (30) and whose hour has a summary. A chart of more than a week, and the share in range on the compare page, read the summaries for the old hours and the raw readings for the rest. The readings from before rooms existed know only their batch, cannot be summarised, and `cleanup_sensor_readings --days 90` removes them.
+
+- **First deploy.** `migrate` creates the table (`sensors.0007`) and then the batch and time index (`sensors.0008`) with `CREATE INDEX CONCURRENTLY`, which does not stop devices writing. If that build is interrupted it leaves an invalid index: drop it (`DROP INDEX CONCURRENTLY sensor_batch_time_idx`) and run `migrate` again. The first night's run summarises everything from the oldest reading, a week at a time.
+- **See what would go.** `python manage.py rollup_readings --dry-run` says how many raw readings are old enough to be removed and changes nothing.
+- **Readings added late** (an import, a seed): `python manage.py rollup_readings --since 2026-10-01` writes the summaries again from that day. The normal run goes on from the newest summary and does not look back.
+- **A removed reading is gone.** The summary keeps the count and the lowest, average and highest of the hour, not the minute. Keep `SENSOR_RAW_KEEP_DAYS` at the number you can live with before the first night it runs on a real deployment.
+- **Measured on 2026-11-20** on the scratch database (288,400 readings, one for each room and hour, so nothing to compress): summarising took 44 seconds and removing 231,200 old readings 44 seconds. A room reporting every five minutes for 30 days (8,501 readings) became 709 summaries, and its 30 day chart took 14 ms instead of 43.

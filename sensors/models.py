@@ -84,10 +84,38 @@ class SensorReading(models.Model):
             models.Index(fields=['timestamp'], name='sensor_timestamp_idx'),
             # The newest reading of a device is the first row of this index (sensors/views.py: newest_readings_query).
             models.Index(fields=['device', '-timestamp'], name='sensor_device_time_idx'),
+            # The old readings that know only their batch (and the batch's own readings by time).
+            models.Index(fields=['batch', 'timestamp'], name='sensor_batch_time_idx'),
         ]
 
     def __str__(self):
         return f'Reading {self.id}: {self.temperature}°C / {self.humidity}%'
+
+
+class SensorReadingHourly(models.Model):
+    """What the readings of one room said in one complete hour: how many, and the lowest, average and highest of each.
+
+    Written by `sensors.rollups.roll_up`. Raw readings are removed once they are old and their hour is here, and a long chart reads
+    these rows (sensors/rollups.py has the rules). The hour is the start of the hour, in UTC.
+    """
+    id = models.BigAutoField(primary_key=True)
+    room = models.ForeignKey('farms.RearingRoom', on_delete=models.CASCADE, db_column='roomId', related_name='hourly_readings')
+    hour = models.DateTimeField()
+    count = models.PositiveIntegerField()
+    temp_min = models.FloatField(db_column='tempMin')
+    temp_avg = models.FloatField(db_column='tempAvg')
+    temp_max = models.FloatField(db_column='tempMax')
+    hum_min = models.FloatField(db_column='humMin')
+    hum_avg = models.FloatField(db_column='humAvg')
+    hum_max = models.FloatField(db_column='humMax')
+
+    class Meta:
+        db_table = 'sensor_readings_hourly'
+        constraints = [models.UniqueConstraint(fields=['room', 'hour'], name='sensor_hourly_room_hour_uniq')]
+        indexes = [models.Index(fields=['hour'], name='sensor_hourly_hour_idx')]
+
+    def __str__(self):
+        return f'{self.room_id} {self.hour:%Y-%m-%d %H}h: {self.count} readings'
 
 
 class DiseaseDetection(models.Model):

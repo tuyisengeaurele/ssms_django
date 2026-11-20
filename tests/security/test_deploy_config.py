@@ -144,10 +144,10 @@ def test_the_frequent_jobs_run_every_five_minutes_and_leave_the_disease_service_
     assert '--skip aiService' in commands
 
 
-def test_the_nightly_jobs_clean_readings_sessions_and_logs():
+def test_the_nightly_jobs_summarise_and_clean_readings_sessions_and_logs():
     flow, commands = workflow('jobs-nightly.yml')
     assert len(flow['triggers']['schedule']) == 1 and 'workflow_dispatch' in flow['triggers']
-    for name in ('cleanup_sensor_readings --days 90', 'prune_sessions --days 30', 'prune_logs'):
+    for name in ('rollup_readings', 'cleanup_sensor_readings --days 90', 'prune_sessions --days 30', 'prune_logs'):
         assert name in commands
 
 
