@@ -80,6 +80,29 @@ Still over 300 ms with a database far away, which is task 2.8:
 | Admin and supervisor, `/api/reports/cooperative` | 112 and 49 | 12 queries each, 337 to 412 ms with a far database (kept for a minute on screen) |
 | Admin, `/api/cooperatives` | 21 | 12 queries |
 
+## After task 2.8 (the smaller slow pages), same data, same machine
+
+| Page | After 2.7 | After 2.8 |
+|---|---|---|
+| Admin, `/api/devices` | 411 ms (337 in the database) | 105 ms (24) |
+| Admin, `/api/calendar` | 346 ms | 121 ms |
+| Supervisor, `/api/calendar` | 103 ms | 67 ms |
+| Admin, `/api/cooperatives` | 12 queries | 2 queries, 12 ms |
+| Admin, `/api/batches/active` (1,000 batches) | 764 ms (539 in the database) | 205 to 490 ms (62 to 142) |
+| Supervisor, `/api/batches/active` | 168 ms (100) | 55 ms (20) |
+
+What changed: the newest reading of each device is found through a new index on the device and the time
+(`sensor_device_time_idx`, migration `sensors/0006`), the calendar reads plain values and the time zone once instead of building a
+model object for each event, the cooperative list counts members and farms in its own query (it asked 2 questions for each
+cooperative), and the newest reading of each batch is found with one search that returns all three values, not three searches.
+
+Three pages are still over 300 ms with a far database, and each is a decision more than a fix:
+- **Admin `/api/batches/active`**: 1,000 batches in one answer of 538 KB. Down from 764 ms and it varies from run to run (205 to
+  490 ms), mostly the size of the answer. Paging it needs the pages that read it whole (farmer, supervisor, compare) to ask for pages.
+- **The cooperative report** (11 to 12 queries; 360 to 430 ms with a far database): kept for a minute on screen since task 2.5, so a
+  person pays it once. Most of the queries are the farm ranking that `/api/farms/risk` also uses.
+- (`/api/farms/{id}/summary` shows 190 ms in the tables above. It is a PDF download that the server draws, not a page load.)
+
 ## All 53 measurements before task 2.7, slowest first
 (A farmer asking for `/api/detections/recent` is refused with 403 by design: it is a staff page. It has moved to the supervisor list.)
 
