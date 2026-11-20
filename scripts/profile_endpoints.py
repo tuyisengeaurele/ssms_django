@@ -99,14 +99,14 @@ FARMER = [
     '/api/auth/me', '/api/farms', '/api/farms/{farm}', '/api/farms/{farm}/summary', '/api/farms/{farm}/rooms',
     '/api/batches/farm/{farm}', '/api/batches/{batch}', '/api/batches/compare?ids={batch},{other}',
     '/api/alerts', '/api/alerts/batch/{batch}', '/api/devices', '/api/harvest', '/api/harvest/stats',
-    '/api/detections/recent', '/api/detections/history', '/api/detections/stats',
+    '/api/detections/history', '/api/detections/stats',
     '/api/sensors/batch/{batch}', '/api/sensors/batch/{batch}/series?hours=720',
     '/api/calendar', '/api/supply/allowance', '/api/supply/onboarding', '/api/supply/rounds/current',
 ]
 SUPERVISOR = [
     '/api/auth/me', '/api/farms', '/api/farms/risk', '/api/batches/active', '/api/alerts', '/api/devices',
     '/api/team/farmers', '/api/team/decisions', '/api/team/rooms', '/api/calendar', '/api/harvest', '/api/harvest/stats',
-    '/api/detections/history', '/api/detections/stats', '/api/reports/cooperative?from={start}&to={end}',
+    '/api/detections/recent', '/api/detections/history', '/api/detections/stats', '/api/reports/cooperative?from={start}&to={end}',
     '/api/supply/rounds', '/api/supply/rounds/{round}', '/api/supply/suggestions', '/api/supply/allowance/requests',
 ]
 ADMIN = [
