@@ -82,6 +82,8 @@ class SensorReading(models.Model):
             models.Index(fields=['batch'], name='sensor_batch_idx'),
             models.Index(fields=['room', 'timestamp'], name='sensor_room_time_idx'),
             models.Index(fields=['timestamp'], name='sensor_timestamp_idx'),
+            # The newest reading of a device is the first row of this index (sensors/views.py: newest_readings_query).
+            models.Index(fields=['device', '-timestamp'], name='sensor_device_time_idx'),
         ]
 
     def __str__(self):

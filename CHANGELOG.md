@@ -1,5 +1,28 @@
 # Changelog
 
+## The last slow lists are quick
+
+Task 2.8 of the audit roadmap, measured on the same 200-farm scratch database as the load profile.
+
+| Page | Before | After |
+|---|---|---|
+| Admin device list | 411 ms | 105 ms |
+| Admin calendar | 346 ms | 121 ms |
+| Admin active batches (1,000) | 764 ms | 205 to 490 ms |
+| Supervisor active batches | 168 ms | 55 ms |
+| Admin cooperative list | 12 queries | 2 queries |
+
+### Added
+- **An index on the device and the time of a reading** (`sensor_device_time_idx`, migration `sensors/0006`). The newest reading of each device is now the first row of it, found once for each device, instead of sorting every reading of every device and keeping the first: 327 ms became 44, and it stays quick for a device that went quiet weeks ago, which the faster query alone would not (it would walk the timestamp index backwards). The index is a plain one: the readings table on the live site is small, so building it takes a moment. This is the first piece of the indexes planned for phase 3.
+
+### Fixed
+- **The cooperative list asked two questions for every cooperative** (members, then farms): 5 cooperatives cost 12 queries and 40 would cost 82. It counts both in the list's own query.
+- **The calendar built a batch and a farm object for every event** just to read an id, a name and a date, and looked up the time zone again for each. It reads plain values and the zone once. The events are the same.
+- **The newest reading of each batch was searched for three times** (temperature, humidity, time), each time through the batch's stays. One search now returns all three: 432 ms for 1,000 batches became 182.
+
+### Not changed
+- The admin active list is one answer of 538 KB for 1,000 batches. Paging it needs the pages that read it whole to ask for pages, which is a separate decision. The cooperative report is kept for a minute on screen and makes 12 queries when made. Both are in `docs/load-profile.md`.
+
 ## Pages that took 16 seconds now take 20 milliseconds
 
 Task 2.7 of the audit roadmap, the finding of the load profile (task 2.6). Measured on the same scratch database, 200 farms, 1,000 batches, 288,000 readings.
