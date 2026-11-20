@@ -2,6 +2,24 @@
 
 # Changelog
 
+## Sensor readings by the hour (phase 3, task 3.5)
+
+### Added
+- `sensor_readings_hourly` (migration `sensors.0007`): one row for each room and each complete hour, with how many readings and the lowest, average and highest temperature and humidity. A batch's readings are those of the rooms it stayed in, so the summary is by room, not by device.
+- `sensors/rollups.py` and the nightly command `rollup_readings`: write the summaries (safe to run again, `--since` writes them again from a day, `--dry-run` changes nothing), then remove the raw readings older than `SENSOR_RAW_KEEP_DAYS` (30) whose hour has a summary, in steps of 5,000. The keeping time is counted in whole hours.
+- An index on the batch and the time (`sensors.0008`), built with `CREATE INDEX CONCURRENTLY` so devices keep writing. The device and time index was added earlier (`sensors.0006`).
+- Runbook section 22.
+
+### Changed
+- A batch chart of more than a week reads the summaries for the hours that have one and the raw readings for the rest, so it is whole between two nightly runs. Counts are the same as from raw readings and values agree to the rounding of a decimal. Only the first partial hour of the window and the hour of a move between rooms count whole.
+- The share in range on the compare page covers a batch's whole life after old readings are removed: raw readings from the split point on, summaries before it. For the old hours an hour counts as inside when its average was inside.
+- `cleanup_sensor_readings` now removes only the readings no room owns (made before rooms existed), at 90 days. Readings of a room are removed by `rollup_readings`, after they are summarised.
+- The nightly job runs `rollup_readings` first. The System page counts it among the nightly commands.
+
+### Known effects
+- The reading count shown for a batch is of the raw readings still kept, so it falls once a batch is older than 30 days.
+- The readings table in the seed data has one reading for each room and hour, so it shows no saving. A room that reports every five minutes keeps about one row in twelve.
+
 ## The server speaks the language of the screen (phase 3, task 3.4)
 
 The page sends the language chosen in the picker, and the server answers in it. An error answer also carries a code, so the page can write the sentence itself.
