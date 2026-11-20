@@ -263,6 +263,10 @@ export interface AlertLog {
   batchId: string | null;
   roomId?: string | null;
   type: AlertType;
+  /** What the alert says, as a code (for example `humidity_high`) and its values. Older alerts have none: show `message`. */
+  code?: string | null;
+  params?: Record<string, string | number>;
+  /** The English sentence the server stored. Show it only through `alertText`, which uses the code when there is one. */
   message: string;
   isRead: boolean;
   createdAt: string;

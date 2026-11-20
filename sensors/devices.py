@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from alerts.models import AlertLog
-from alerts.utils import check_room_alerts, running_batches
+from alerts.utils import check_room_alerts, coded, running_batches
 from farms.models import RearingRoom
 from logs.jobs import record_job
 
@@ -31,6 +31,14 @@ def _offline_prefix(device: IoTDevice) -> str:
     return f'Device {device.name} has not sent data'
 
 
+def _open_outage(room_id, device: IoTDevice):
+    """The open outage alerts of one device in a room. An alert made since codes carries the device's id, so a rename does
+    not lose it; an older one is found by the sentence it was written with."""
+    return AlertLog.objects.filter(room_id=room_id, type='SYSTEM', resolved_at__isnull=True).filter(
+        Q(params__device_id=device.pk) | Q(code__isnull=True, message__startswith=_offline_prefix(device)),
+    )
+
+
 def room_for_device(device: IoTDevice):
     """The room a device's readings go to, or None when it has none.
 
@@ -51,9 +59,7 @@ def record_device_reading(device: IoTDevice, room: RearingRoom, temperature: flo
         device.last_seen = now
         device.save(update_fields=['status', 'last_seen'])
         # Hearing from the device again ends its outage.
-        AlertLog.objects.filter(
-            room=room, type='SYSTEM', resolved_at__isnull=True, message__startswith=_offline_prefix(device),
-        ).update(resolved_at=now)
+        _open_outage(room.pk, device).update(resolved_at=now)
     check_room_alerts(room.pk, temperature, humidity)
     return reading
 
@@ -80,13 +86,9 @@ def mark_offline_devices(now=None) -> list[IoTDevice]:
 
         if device.room_id is None or not running_batches(device.room_id).exists():
             continue
-        already_open = AlertLog.objects.filter(
-            room_id=device.room_id, type='SYSTEM', resolved_at__isnull=True, message__startswith=_offline_prefix(device),
-        ).exists()
-        if not already_open:
+        if not _open_outage(device.room_id, device).exists():
             AlertLog.objects.create(
-                room_id=device.room_id,
-                type='SYSTEM',
-                message=f'{_offline_prefix(device)} for {minutes} minutes. Check its power and connection.',
+                room_id=device.room_id, type='SYSTEM',
+                **coded('device_offline', {'device': device.name, 'device_id': device.pk, 'minutes': minutes}),
             )
     return changed

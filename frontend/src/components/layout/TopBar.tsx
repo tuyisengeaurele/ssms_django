@@ -6,6 +6,7 @@ import { alertService } from '../../services/alert.service';
 import { contactsService } from '../../services/contacts.service';
 import { AlertLog, ContactMessage } from '../../types';
 import { ALERT_TYPE_KEY } from '../../utils/alertTypes';
+import { alertText } from '../../utils/alertText';
 import { usePageTitle } from '../../utils/pageTitle';
 import { timeAgo } from '../../utils/timeAgo';
 import { Icon } from '../ui/Icon';
@@ -80,7 +81,7 @@ function NotificationPanel({ isAdmin, alertCount, onClose }: { isAdmin: boolean;
             alerts.map((a) => (
               <div key={a.id} className={`topbar-note${a.isRead ? ' is-read' : ''}`}>
                 <div>
-                  <p className="note-text">{a.message}</p>
+                  <p className="note-text">{alertText(t, a)}</p>
                   <p className="note-meta">{t(ALERT_TYPE_KEY[a.type] ?? 'alTypeSystem')} · {timeAgo(a.createdAt, locale)}</p>
                 </div>
               </div>

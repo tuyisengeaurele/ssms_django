@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from alerts.models import AlertLog, AlertType
+from alerts.utils import coded
 from audit_log.changes import build_changes, snapshot
 from audit_log.utils import log_action, on_behalf_of
 from core.access import get_batch_or_404, get_farm_or_404, scope_batches
@@ -234,11 +235,7 @@ class BatchUpdateStageView(APIView):
         with transaction.atomic():
             batch.stage = new_stage
             batch.save(update_fields=['stage'])
-            AlertLog.objects.create(
-                batch=batch,
-                type=AlertType.STAGE_CHANGE,
-                message=f'Batch stage updated to {new_stage}.',
-            )
+            AlertLog.objects.create(batch=batch, type=AlertType.STAGE_CHANGE, **coded('stage_changed', {'stage': new_stage}))
         batch.refresh_from_db()
         if new_stage == 'HARVEST' and batch.room_id:
             # A room judges only the batches still being reared, so this may have emptied it.
