@@ -1,5 +1,17 @@
 # Changelog
 
+## Housekeeping before phase 3
+
+No change to the product.
+
+### Changed
+- **The dev tools are upgraded (`vite` 5 to 7, `vitest` 2 to 4)** to clear the open security alerts. The critical one was `tinypool` (code execution through worker options), then several in `vite` and `vitest`. They only touch the tools that run the tests and the dev server, and the production dependencies had no alerts, but a critical alert should not sit open. All 3,142 frontend tests, the lint, the type check, the production build, the prerender and the bundle checks pass on the new tools, the landing JavaScript is 137.7 KB (it was 138.6), and the dev server and the built site load with no errors. One alert remains, moderate, for `minimatch` inside the lint tool's own dependencies (a denial of service on crafted file patterns, not reachable from here). `@testing-library/dom` is now listed explicitly, as it is a peer that the testing library needs. The shared test setup now tolerates a blocked cookie, because the new vitest puts a test's spies back after the cleanup hook.
+- **The shared query budget of the list pages is 8, not 12.** The busiest budgeted page makes 6 queries now.
+
+### Docs
+- The deploy checklist has the phase 2 checks (three font files and no more, the hero entrance once, motion in the signed in app, the report kept for a minute) and its known gaps are current (admin two-step sign in is no longer a gap).
+- The runbook has section 21, how to make a scratch database, fill it with load-sized data and time every page (`docs/load-profile.md` holds the baseline).
+
 ## The last slow lists are quick
 
 Task 2.8 of the audit roadmap, measured on the same 200-farm scratch database as the load profile.
