@@ -1,7 +1,7 @@
 name: Nightly jobs
 
-# Once a night at 02:00 UTC: remove sensor readings older than 90 days, ended sign ins older than 30 days,
-# and the logs past their keeping time.
+# Once a night at 02:00 UTC: summarise sensor readings by the hour and remove the raw ones older than 30 days that have a summary,
+# remove the readings from before rooms older than 90 days, ended sign ins older than 30 days, and the logs past their keeping time.
 
 on:
   schedule:
@@ -40,7 +40,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Remove old sensor readings
+      - name: Summarise sensor readings and remove the old raw ones
+        run: python manage.py rollup_readings
+
+      - name: Remove old readings from before rooms
         run: python manage.py cleanup_sensor_readings --days 90
 
       - name: Remove old sign ins

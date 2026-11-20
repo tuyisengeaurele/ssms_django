@@ -17,9 +17,10 @@ from core.access import scope_batches
 from core.timeutil import aware
 from harvest.models import HarvestRecord, QualityGrade
 from sensors.models import DiseaseDetection
+from sensors.rollups import rollups_for_batch, split_point
 from sensors.room_readings import readings_for_batch
 
-from .models import Batch, MortalityRecord
+from .models import Batch, BatchRoomStay, MortalityRecord
 from .queries import with_counts
 
 MOST = 4
@@ -69,19 +70,32 @@ def _safe_ranges() -> dict:
     }
 
 
-def _conditions(batch, ranges: dict):
-    """How much of what the batch's room measured was inside the safe range of its stage, or None with no readings."""
+def _conditions(batch, ranges: dict, split):
+    """How much of what the batch's room measured was inside the safe range of its stage, or None with no readings.
+
+    Readings older than the keeping time have been summarised by the hour and removed, so they are counted from the summaries: an hour
+    counts as inside when its average was inside, which is close but not the reading-by-reading figure the newer readings give.
+    """
     safe = ranges.get(batch.stage, DEFAULT_RANGE)
-    totals = readings_for_batch(batch).aggregate(
-        total=Count('pk'),
-        inside=Count('pk', filter=Q(
-            temperature__gte=safe.temp_min, temperature__lte=safe.temp_max,
-            humidity__gte=safe.hum_min, humidity__lte=safe.hum_max,
-        )),
-    )
-    if not totals['total']:
+    stays = list(BatchRoomStay.objects.filter(batch=batch))     # read once, for the raw readings and the summaries
+    inside = Q(temperature__gte=safe.temp_min, temperature__lte=safe.temp_max, humidity__gte=safe.hum_min, humidity__lte=safe.hum_max)
+    raw = readings_for_batch(batch, stays=stays)
+    if split is not None:
+        raw = raw.filter(Q(room__isnull=True) | Q(timestamp__gte=split))
+    totals = raw.aggregate(total=Count('pk'), inside=Count('pk', filter=inside))
+    total, inside_count = totals['total'], totals['inside']
+    if split is not None:
+        summarised = rollups_for_batch(batch, stays).filter(hour__lt=split).aggregate(
+            total=Sum('count'),
+            inside=Sum('count', filter=Q(
+                temp_avg__gte=safe.temp_min, temp_avg__lte=safe.temp_max, hum_avg__gte=safe.hum_min, hum_avg__lte=safe.hum_max,
+            )),
+        )
+        total += summarised['total'] or 0
+        inside_count += summarised['inside'] or 0
+    if not total:
         return None
-    return {'in_range_pct': round(totals['inside'] / totals['total'] * 100), 'readings': totals['total']}
+    return {'in_range_pct': round(inside_count / total * 100), 'readings': total}
 
 
 def _curve(batch, records):
@@ -118,6 +132,7 @@ def compare_batches(user, ids: list[str]) -> list[dict]:
 
     now = timezone.now()
     ranges = _safe_ranges()
+    split = split_point()     # once for every batch: where the raw readings stop and the hourly summaries begin
     rows = []
     for batch_id in ids:
         batch = found[batch_id]
@@ -149,7 +164,7 @@ def compare_batches(user, ids: list[str]) -> list[dict]:
                 'yield_per_unit': _yield_per_unit(batch, kg),
                 'curve': _curve(batch, mine),
             },
-            'conditions': _conditions(batch, ranges),
+            'conditions': _conditions(batch, ranges, split),
             'checks': {'total': batch.detection_total, 'grasserie': grasserie.get(batch_id, 0)},
             'alerts': batch.problem_alert_total,
         })

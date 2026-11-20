@@ -128,7 +128,7 @@ def test_a_command_that_failed_is_logged_and_still_fails():
 
 
 @pytest.mark.parametrize('name, app', [
-    ('mark_offline_devices', 'sensors'), ('cleanup_sensor_readings', 'sensors'), ('simulate_sensors', 'sensors'),
+    ('mark_offline_devices', 'sensors'), ('cleanup_sensor_readings', 'sensors'), ('rollup_readings', 'sensors'), ('simulate_sensors', 'sensors'),
     ('prune_sessions', 'users'), ('prune_logs', 'logs'),
 ])
 def test_every_scheduled_command_is_logged(name, app):
