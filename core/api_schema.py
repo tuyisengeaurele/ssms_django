@@ -195,30 +195,6 @@ def add_plain_routes(result, generator, request, public):
             '429': {'description': 'Too many requests. Wait and try again.', **_error_ref()},
         },
     }}
-    result['paths']['/api/health/proxy'] = {'get': {
-        'operationId': 'getProxyShape',
-        'summary': 'See what shape the forwarded headers arrive in',
-        'description': (
-            'Temporary, open to anyone. Says how many entries the forwarded chain has and what kind each is (cloudflare, private, '
-            'public or unknown), the kind of the connecting address, the kind of address the API would use with its proxy count, '
-            'the count, and which of the interesting headers exist. It never says an address. It is used to set the proxy count '
-            'from evidence and is removed after that. It does not use the answer envelope.\n\nNo sign in is needed.'
-        ),
-        'tags': ['health'],
-        'responses': {
-            '200': {'description': 'The shape.', 'content': {'application/json': {'schema': {
-                'type': 'object',
-                'properties': {
-                    'trustedProxyCount': {'type': 'integer'},
-                    'forwardedFor': {'type': 'array', 'items': {'type': 'string', 'enum': ['cloudflare', 'private', 'public', 'unknown']}},
-                    'remoteAddr': {'type': 'string', 'enum': ['cloudflare', 'private', 'public', 'unknown']},
-                    'chosen': {'type': 'string', 'enum': ['cloudflare', 'private', 'public', 'unknown']},
-                    'headers': {'type': 'array', 'items': {'type': 'string'}},
-                },
-            }}}},
-            '429': {'description': 'Too many requests. Wait and try again.', **_error_ref()},
-        },
-    }}
     result['paths']['/api/alerts/stream'] = {'get': {
         'operationId': 'getAlertsStream',
         'summary': 'Stream new alerts as server-sent events',

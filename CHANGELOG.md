@@ -2,12 +2,16 @@
 
 # Changelog
 
-## A way to see the shape of the forwarded headers (temporary)
+## The visitor's address in the logs and the limits
 
-The live API logs a Cloudflare address for every visitor: the audit, security and request logs name Cloudflare's network instead of the visitor, and every limit that counts by address is shared by visitors behind the same Cloudflare address. `TRUSTED_PROXY_COUNT` is 2 on Render and the logs are still wrong, so the chain is not the shape that was assumed.
+The live API named a Cloudflare address for every visitor: the audit, security and request logs showed Cloudflare's network, and every limit that counts by address was shared by visitors behind the same Cloudflare address. A temporary check of the forwarded chain (kinds only, no addresses) showed why. Through the site the chain is the visitor, Vercel, Cloudflare, then the host's balancer. Straight at the host it is the visitor, Cloudflare, then the balancer. Counting from the right landed on Cloudflare in both.
 
-### Added
-- **`GET /api/health/proxy`** answers with how many entries the forwarded chain has, the kind of each (cloudflare, private, public, unknown), the kind of the connecting address, the kind of address the app would use with the count it has, the count itself, and which of the interesting headers exist (`x-forwarded-for`, `x-real-ip`, `cf-connecting-ip`, `x-vercel-forwarded-for` and the like). It never says an address, only kinds. Asked through the site and straight at the Render host, it shows where the visitor's real address is, so the count (or the header) can be chosen from evidence. It is temporary and is removed when the fix lands.
+### Fixed
+- `get_client_ip` steps over the hosting path first: Cloudflare's published ranges and private addresses at the right end of the chain are not counted. With `TRUSTED_PROXY_COUNT=2` both paths now give the visitor. A caller who goes straight to the host and writes an extra entry at the left of the header can still pick its own counted address, which only spreads its own requests over several limits.
+- Every address limit (login, register, contact, device readings and the rest) counts by the same address the logs use, instead of Django REST framework's own lookup.
+
+### Removed
+- The temporary `GET /api/health/proxy` check, its schema entry and its tests.
 
 ## Housekeeping before phase 3
 
