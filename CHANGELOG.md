@@ -2,6 +2,21 @@
 
 # Changelog
 
+## How long the logs are kept (phase 3, task 3.7)
+
+The nightly `prune_logs` job already existed and ran from `jobs-nightly.yml`, but it had no number the owner had chosen and kept the older logs for longer than needed.
+
+### Changed
+- Request logs are kept 30 days (was 14), security events 180 days (was 365), and the jobs and devices log 30 days (was 90). Health check results stay at 30 days. The audit log, who changed what, is never removed. The numbers are the settings `REQUEST_LOG_KEEP_DAYS`, `SECURITY_LOG_KEEP_DAYS`, `JOB_LOG_KEEP_DAYS` and `HEALTH_LOG_KEEP_DAYS`.
+- The first run after this goes live removes the security events and job rows that are older than the new times, once.
+
+### Added
+- `tests/test_log_retention.py`: for every log, a row just inside its keeping time stays and one just past it goes; the audit log survives; each log is judged by its own time; the times follow the settings; the job reports its counts, writes that it ran, and running it twice removes nothing more. This replaces three older tests in `tests/test_request_log.py` that pinned the old numbers.
+- Runbook section 25: the table of keeping times and what lowering one means.
+
+### Known
+Security events older than 180 days cannot be looked at any more. The only code that reads security events is the burst check (`check_log_bursts`), and it looks back minutes, not months.
+
 ## Tidier data: limits in the database, devices and rooms, diseases, memberships (phase 3, task 3.6)
 
 Five changes, each its own commit, each with a test that the old behaviour holds and that a bad value is refused by the database.
