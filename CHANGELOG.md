@@ -2,6 +2,10 @@
 
 # Changelog
 
+## The hourly summaries on a database built before Django
+
+`rollup_readings` failed on the owner's local database with "can't compare offset-naive and offset-aware datetimes". That database keeps `sensor_readings.timestamp` without a time zone, so the oldest reading came back naive while the code compared it with the current time. The test database always has the zone, so the tests could not see it. The rollup, the removal and the long chart now turn those times into UTC first (`core.timeutil.aware`), and a new fixture (`naive_reading_times`) makes the test database look like the older one. Run on `ssms_db`: 3,406 summaries covering all 3,971 readings, 3,347 old raw readings removed, and a second run changes nothing. Production is not affected, its columns have the zone.
+
 ## Sensor readings by the hour (phase 3, task 3.5)
 
 ### Added
