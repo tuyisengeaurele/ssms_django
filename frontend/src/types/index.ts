@@ -361,7 +361,6 @@ export interface IoTDevice {
   deviceKey: string;
   farmId: string | null;
   farmName: string | null;
-  batchId: string | null;
   /** The room the sensor measures, or null while it has not been placed. */
   room: { id: string; name: string } | null;
   location: string;

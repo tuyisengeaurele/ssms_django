@@ -4,7 +4,7 @@ from core.ids import new_id as _generate_id  # migrations import this name
 
 
 class IoTDevice(models.Model):
-    """A named IoT sensor device (physical or simulated) attached to a farm/batch."""
+    """A named IoT sensor device (physical or simulated). It belongs to a farm and measures one room of it."""
 
     STATUS_ONLINE  = 'online'
     STATUS_OFFLINE = 'offline'
@@ -23,13 +23,7 @@ class IoTDevice(models.Model):
         on_delete=models.SET_NULL, null=True, blank=True,
         db_column='farmId', related_name='devices',
     )
-    batch      = models.ForeignKey(
-        'batches.Batch',
-        on_delete=models.SET_NULL, null=True, blank=True,
-        db_column='batchId', related_name='devices',
-    )
-    # Where the sensor is. It measures the air of this room, which every batch in the room shares.
-    # The old link to one batch above is no longer used.
+    # Where the sensor is. It measures the air of this room, which every batch in the room shares. A device never names a batch.
     room       = models.ForeignKey(
         'farms.RearingRoom',
         on_delete=models.SET_NULL, null=True, blank=True,

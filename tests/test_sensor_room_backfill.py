@@ -48,30 +48,18 @@ def test_a_reading_of_a_batch_that_was_never_placed_is_left_alone():
     assert row.room_id is None
 
 
-def test_a_device_gets_the_room_of_its_batch():
-    farm = FarmFactory()
-    first, second = RearingRoom.objects.create(farm=farm, name='Room 1'), RearingRoom.objects.create(farm=farm, name='Room 2')
-    batch = BatchFactory(farm=farm)
-    place_batch(batch, second)
-    device = IoTDeviceFactory(farm=farm, batch=batch)
-    backfill(apps)
-    device.refresh_from_db()
-    assert device.room_id == second.pk
-    assert first.pk != device.room_id
-
-
 def test_a_device_with_only_a_farm_gets_the_first_room_of_that_farm():
     farm = FarmFactory()
     first = RearingRoom.objects.create(farm=farm, name='Room 1')
     RearingRoom.objects.create(farm=farm, name='Room 2')
-    device = IoTDeviceFactory(farm=farm, batch=None)
+    device = IoTDeviceFactory(farm=farm)
     backfill(apps)
     device.refresh_from_db()
     assert device.room_id == first.pk
 
 
 def test_a_device_on_a_farm_without_rooms_stays_unplaced():
-    device = IoTDeviceFactory(farm=FarmFactory(), batch=None)
+    device = IoTDeviceFactory(farm=FarmFactory())
     backfill(apps)
     device.refresh_from_db()
     assert device.room_id is None
@@ -83,7 +71,7 @@ def test_running_it_twice_changes_nothing_more():
     batch = BatchFactory(farm=farm)
     place_batch(batch, room)
     legacy_reading(batch)
-    IoTDeviceFactory(farm=farm, batch=batch)
+    IoTDeviceFactory(farm=farm)
     backfill(apps)
     def state():
         return list(SensorReading.objects.values_list('pk', 'room_id')), list(IoTDevice.objects.values_list('pk', 'room_id'))

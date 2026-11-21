@@ -20,8 +20,10 @@ def backfill(apps) -> None:
 
     for device in Device.objects.filter(room__isnull=True):
         room_id = None
-        if device.batch_id:
-            room_id = Batch.objects.filter(pk=device.batch_id).values_list('room_id', flat=True).first()
+        # The link to a batch was removed by sensors 0010, so only the model as it was before that has it.
+        batch_id = getattr(device, 'batch_id', None)
+        if batch_id:
+            room_id = Batch.objects.filter(pk=batch_id).values_list('room_id', flat=True).first()
         if room_id is None and device.farm_id:
             first = Room.objects.filter(farm_id=device.farm_id, is_active=True).order_by('created_at').first()
             room_id = first.pk if first else None

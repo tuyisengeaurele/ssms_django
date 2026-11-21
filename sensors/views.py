@@ -149,7 +149,6 @@ def _serialize_device(device: IoTDevice, newest: dict | None = None) -> dict:
         'deviceKey': device.device_key,
         'farmId':    device.farm_id,
         'farmName':  device.farm.name if device.farm else None,
-        'batchId':   device.batch_id,
         'room':      {'id': device.room_id, 'name': device.room.name} if device.room_id and device.room.is_active else None,
         'location':  device.location,
         'status':    effective_status(device),
@@ -173,7 +172,7 @@ class IoTDeviceListView(APIView):
     resource = 'devices'
 
     def _scoped_qs(self, user):
-        return scope_by_farm(user, IoTDevice.objects.select_related('farm', 'batch', 'room').filter(is_active=True))
+        return scope_by_farm(user, IoTDevice.objects.select_related('farm', 'room').filter(is_active=True))
 
     def get(self, request):
         qs = self._scoped_qs(request.user)
@@ -245,7 +244,7 @@ class IoTDeviceDetailView(APIView):
         """Return (device, None), or (None, a 404 response) when it is missing or out of scope."""
         device = scope_by_farm(
             request.user,
-            IoTDevice.objects.select_related('farm', 'farm__owner', 'batch', 'room').filter(is_active=True),
+            IoTDevice.objects.select_related('farm', 'farm__owner', 'room').filter(is_active=True),
         ).filter(pk=pk).first()
         if device is None:
             return None, api_error("We couldn't find that device.", 404)

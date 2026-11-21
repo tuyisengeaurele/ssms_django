@@ -9,7 +9,7 @@ const auth = vi.hoisted(() => ({ role: 'ADMIN' }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', role: auth.role } }) }));
 
 const dev = (o: object) => ({
-  batchId: null, room: null, isActive: true, createdAt: '2026-05-01T00:00:00Z', recentReadings: [], ...o,
+  room: null, isActive: true, createdAt: '2026-05-01T00:00:00Z', recentReadings: [], ...o,
 });
 // The clock is frozen here, so "5 minutes ago" stays 5 minutes however slow the machine is.
 const NOW = vi.hoisted(() => Date.UTC(2026, 9, 8, 10, 5, 0));
