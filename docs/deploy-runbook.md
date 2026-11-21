@@ -558,16 +558,29 @@ A sensor reports every few minutes, so the readings table is the one that grows.
 - **A removed reading is gone.** The summary keeps the count and the lowest, average and highest of the hour, not the minute. Keep `SENSOR_RAW_KEEP_DAYS` at the number you can live with before the first night it runs on a real deployment.
 - **Measured on 2026-11-20** on the scratch database (288,400 readings, one for each room and hour, so nothing to compress): summarising took 44 seconds and removing 231,200 old readings 44 seconds. A room reporting every five minutes for 30 days (8,501 readings) became 709 summaries, and its 30 day chart took 14 ms instead of 43.
 
-## 23. The visitor's address and the shared secret
+## 23. The visitor's address: what can and cannot be trusted
 
-Every limit by address (sign in, register, the contact form, device readings) and the IP column of the audit and security logs count a request by an address. Measured on the live API on 2026-11-20: a visitor who sent an `X-Forwarded-For` of their own was counted as that address, through the website and straight at Render, and so slipped past every limit by address (13 sign in attempts in a minute, where the limit is 10). The sign in lockout also counts by email, which still held.
+Every limit by address (sign in, register, the contact form, device readings) and the IP column of the audit and security logs count a request by an address. This section is what was measured on 2026-11-20 and 2026-11-21, so nobody trusts a header that cannot be trusted. **Do not set `EDGE_SECRET` yet**: the website does not send the header it needs, so setting it changes nothing safe, and `check --deploy` warning `ssms.W002` stays until it is built.
 
-The fix is a secret the website sends and a visitor cannot. Vercel sets the header `X-SSMS-Edge` on every request it forwards to the API and replaces any value a visitor sends. The API then counts a request by the address the website reports when the secret matches, and by the address that connected to Cloudflare when it does not. That address cannot be changed by a header. Nothing changes until `EDGE_SECRET` is set on the API, and `check --deploy` warns (`ssms.W002`) while it is not.
+**What was measured on the live site.** The temporary route `GET /api/health/proxy?me=<your address>` says, for each header, whether a forged value arrived. It prints no address.
 
-1. Make the secret: `python -c "import secrets; print(secrets.token_urlsafe(32))"`. Keep a copy in a password manager. Never paste it into a chat, an issue or a commit.
-2. Put it in the website first: Vercel, the project, Settings, Environment Variables, `EDGE_SECRET`, for Production and Preview. The website's `vercel.json` sends it (see the transform rule there).
-3. Then put the same value in the API: Render, `ssms-api`, Environment, `EDGE_SECRET`. The service restarts.
-4. Check it from outside. These should be refused at the eleventh try, whatever is written in `X-Forwarded-For`: send 13 sign in attempts for emails that do not exist, once straight at `https://ssms-api-cmqa.onrender.com/api/auth/login` and once through `https://ssms-django.vercel.app/api/auth/login`, each with a different `X-Forwarded-For`. Wait a minute between the two.
-5. To change the secret, change it in the website first, then in the API. For the minutes between them the website's requests are counted by the address Cloudflare saw (a Vercel address shared by many visitors), which is safe but coarse.
+| Header | Straight at Render | Through the website |
+|---|---|---|
+| `CF-Connecting-IP` | cannot be forged (Cloudflare answers 403) and is the caller's own address | cannot be forged, but it is the address Cloudflare saw, which is Vercel's, shared by every visitor |
+| `X-Forwarded-For` | a forged first entry is believed | sometimes replaced by Vercel with the real address, sometimes kept as the visitor wrote it, for the same kind of request from the same client |
+| `X-Vercel-Forwarded-For` | a forged value arrives | a forged value arrives |
+| `Forwarded`, `True-Client-IP`, `X-Real-IP` | forged values arrive or are not sent | replaced or not sent, not usable for the visitor |
 
-If the website is ever served without the header (a deploy that lost the transform), requests are counted by the Vercel address that Cloudflare saw. That is shared between visitors, so limits fire early, and it is the visible sign to look at the transform.
+So a visitor can choose the address they are counted as, through the website and straight at Render. Thirteen sign in attempts in a minute with a different forged `X-Forwarded-For` each were all answered 401, where the same thirteen with none were stopped (the limit is 10). Sign in lockout also counts by email, which held.
+
+**What the code does today.** Without `EDGE_SECRET` the older rule applies (the address is read from `X-Forwarded-For` with Cloudflare's and private hops stepped over) and can be fooled as above. With `EDGE_SECRET` set, a request is counted by the header named in `EDGE_CLIENT_IP_HEADER` (default `X-SSMS-Client-IP`) only when it also carries the matching `X-SSMS-Edge`. Every other request is counted by the address that connected to Cloudflare, which cannot be changed. That is sound only if the website's own code sets both headers and replaces anything a visitor sends. Today nothing does, so with the secret set every website request would be counted by Vercel's address.
+
+**What would make it sound.** Something that Vercel runs on every `/api` request, before the rewrite, that sets `X-SSMS-Edge` (from an environment variable) and `X-SSMS-Client-IP` (from the connection) and replaces what a visitor sends. The candidates, and why none is done yet:
+
+1. Routing middleware in `frontend/` using `ipAddress(request)` from `@vercel/functions`. Vercel's documentation does not say where `ipAddress` reads the address or that a client cannot spoof it, which is the problem measured above. It also puts every `/api` call, including the live alert stream, through new code. It would have to be tried first on a harmless path, and its answer checked with the temporary route, before it is trusted.
+2. A route transform in `vercel.json` that sets `X-SSMS-Edge` from an environment variable (Vercel documents this as the origin secret pattern). It proves a request passed through Vercel, which is not enough alone, and our file uses `rewrites` and `headers`, which the transform may need `routes` for.
+3. Not relying on the address. A bot check (Cloudflare Turnstile, free) on sign in, register and the contact form, and the per email lockout that exists, stop automated abuse whatever address it claims. The widget is built for the contact form and loads nothing until `VITE_TURNSTILE_SITE_KEY` is set. This is the recommended first step.
+
+Until one of these is done, treat limits by address as best effort, and the IP column of the logs as what the caller claimed.
+
+When this is settled, remove the temporary route (`core/proxy_check.py`, its route, schema entry, walk entry and tests).
