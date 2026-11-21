@@ -47,6 +47,8 @@ jobs:
         run: pip install -r requirements-dev.txt
       - name: Make a second factor key for this run
         run: echo "MFA_ENCRYPTION_KEY=$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')" >> "$GITHUB_ENV"
+      - name: Make the secret the website shares with the API for this run
+        run: echo "EDGE_SECRET=$(python -c 'import secrets; print(secrets.token_urlsafe(32))')" >> "$GITHUB_ENV"
       - name: Lint with ruff
         run: ruff check .
       - name: Audit Python packages
