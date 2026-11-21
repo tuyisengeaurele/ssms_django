@@ -24,6 +24,8 @@ def production_env(**extra):
         'TRUSTED_PROXY_COUNT': '1',
         # A live site now has this too. A new key each time, never written down.
         'MFA_ENCRYPTION_KEY': Fernet.generate_key().decode(),
+        # The secret the website and the API share, so the API believes the website about a visitor's address.
+        'EDGE_SECRET': secrets.token_urlsafe(32),
     })
     env.update(extra)
     return env

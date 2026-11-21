@@ -28,6 +28,8 @@ def _quiet_settings(request, settings):
     settings.EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
     # A new key for every test, made here and never written down, so no key sits in the repository.
     settings.MFA_ENCRYPTION_KEY = Fernet.generate_key().decode()
+    # The website secret is off unless a test sets it, so a machine that has EDGE_SECRET in its environment (CI does) cannot change what a test sees.
+    settings.EDGE_SECRET = ''
     # Good answers are not sampled into the request log, so one test cannot change another's counts. Failures still are.
     settings.REQUEST_LOG_SAMPLE_RATE = 0.0
     # A cheap hasher first, so building a dozen users stays fast. The real hashers stay in the list,

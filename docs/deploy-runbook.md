@@ -557,3 +557,17 @@ A sensor reports every few minutes, so the readings table is the one that grows.
 - **Readings added late** (an import, a seed): `python manage.py rollup_readings --since 2026-10-01` writes the summaries again from that day. The normal run goes on from the newest summary and does not look back.
 - **A removed reading is gone.** The summary keeps the count and the lowest, average and highest of the hour, not the minute. Keep `SENSOR_RAW_KEEP_DAYS` at the number you can live with before the first night it runs on a real deployment.
 - **Measured on 2026-11-20** on the scratch database (288,400 readings, one for each room and hour, so nothing to compress): summarising took 44 seconds and removing 231,200 old readings 44 seconds. A room reporting every five minutes for 30 days (8,501 readings) became 709 summaries, and its 30 day chart took 14 ms instead of 43.
+
+## 23. The visitor's address and the shared secret
+
+Every limit by address (sign in, register, the contact form, device readings) and the IP column of the audit and security logs count a request by an address. Measured on the live API on 2026-11-20: a visitor who sent an `X-Forwarded-For` of their own was counted as that address, through the website and straight at Render, and so slipped past every limit by address (13 sign in attempts in a minute, where the limit is 10). The sign in lockout also counts by email, which still held.
+
+The fix is a secret the website sends and a visitor cannot. Vercel sets the header `X-SSMS-Edge` on every request it forwards to the API and replaces any value a visitor sends. The API then counts a request by the address the website reports when the secret matches, and by the address that connected to Cloudflare when it does not. That address cannot be changed by a header. Nothing changes until `EDGE_SECRET` is set on the API, and `check --deploy` warns (`ssms.W002`) while it is not.
+
+1. Make the secret: `python -c "import secrets; print(secrets.token_urlsafe(32))"`. Keep a copy in a password manager. Never paste it into a chat, an issue or a commit.
+2. Put it in the website first: Vercel, the project, Settings, Environment Variables, `EDGE_SECRET`, for Production and Preview. The website's `vercel.json` sends it (see the transform rule there).
+3. Then put the same value in the API: Render, `ssms-api`, Environment, `EDGE_SECRET`. The service restarts.
+4. Check it from outside. These should be refused at the eleventh try, whatever is written in `X-Forwarded-For`: send 13 sign in attempts for emails that do not exist, once straight at `https://ssms-api-cmqa.onrender.com/api/auth/login` and once through `https://ssms-django.vercel.app/api/auth/login`, each with a different `X-Forwarded-For`. Wait a minute between the two.
+5. To change the secret, change it in the website first, then in the API. For the minutes between them the website's requests are counted by the address Cloudflare saw (a Vercel address shared by many visitors), which is safe but coarse.
+
+If the website is ever served without the header (a deploy that lost the transform), requests are counted by the Vercel address that Cloudflare saw. That is shared between visitors, so limits fire early, and it is the visible sign to look at the transform.

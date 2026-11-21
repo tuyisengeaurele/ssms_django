@@ -19,6 +19,7 @@ Work through this top to bottom for every deploy, including a rehearsal on a tes
 | `ALLOWED_HOSTS` | the API's own address |
 | `CORS_ALLOWED_ORIGINS`, `FRONTEND_URL` | the website address, https |
 | `TRUSTED_PROXY_COUNT` | `2` with the Vercel forward and Render in front (one proxy, `1`). Cloudflare and private hops are skipped before counting. Wrong values make every visitor share one address, so read the address in the audit log |
+| `EDGE_SECRET` | The same value as the website's `EDGE_SECRET` (Vercel, Production and Preview). Made with `python -c "import secrets; print(secrets.token_urlsafe(32))"`, at least 32 characters, never written in a file. Without it a visitor can choose the address they are counted as (`check --deploy` warns). Runbook section 23 |
 | `AI_SERVICE_URL`, `AI_SERVICE_SECRET` | same secret on both services |
 | `MFA_ENCRYPTION_KEY` | a Fernet key made by hand and kept in a password manager (runbook section 9). Without it `start.sh` stops the deploy before the running copy is replaced |
 | `SENTRY_DSN` | set, so errors reach someone |
@@ -90,14 +91,38 @@ The free plans sleep, and a cold start of the API was measured at about a minute
 
 ## 5. Known gaps on 2026-11-20
 
-These are written down so nobody is surprised. Each is on the backlog.
+These are written down so nobody is surprised. Each is on the backlog or waiting on the owner.
 
+**Security**
+
+- **A visitor can choose the address they are counted as, until `EDGE_SECRET` is set.** Measured on 2026-11-20: a forged `X-Forwarded-For` got past every limit by address, through the website and straight at Render. The code is in (runbook section 23), the website's `vercel.json` has to send the header, and the secret has to be set in Vercel and in Render. `check --deploy` warns (`ssms.W002`) until then. Sign in lockout by email is not affected.
+- The contact form and registration have no bot check on the live site: `VITE_TURNSTILE_SITE_KEY` is not set, so the Turnstile widget loads nothing. They rely on the limit by address, which is only as good as the item above.
+- Limits by address and the 60 second report cache live in each API process's memory (`WEB_CONCURRENCY=1`). A restart clears them, and with more than one process each would allow the full rate. Sign in lockout, code challenges and stream tickets are in the database cache and survive a restart.
+- Cloudflare's address ranges are a copy in `core/net.py`. Cloudflare changes them rarely (https://www.cloudflare.com/ips/). If it adds a range, a request from it would be counted as the hosting path and not as a visitor. Check the list once a year.
 - Farmers have no idle limit unless they tick "This is a shared computer" at sign in (30 minutes). Admins have 15 minutes and supervisors 30. `SESSION_IDLE_FARMER_MINUTES` sets a limit for every farmer.
-- The admin's active batches list is one answer for every active batch (538 KB for 1,000). It takes 200 to 500 ms at that size and wants paging. See `docs/load-profile.md`.
-- The cooperative report on screen is kept for a minute per cooperative, period and kind of reader, in each API process's memory. A change can take up to a minute to show.
-- Migration `sensors/0006` builds a plain index on the readings table. It is quick while the table is small. A table of millions of rows would want the index built concurrently first.
-- The Content Security Policy in `frontend/vercel.json` has been enforced since 2026-11-20 (it was report only from 2026-11-12, and the Security log showed only our own probes). It still reports to `/api/csp-report`, so a violation appears in the Security log as "Browser blocked something the page tried to load". If a legitimate resource is ever blocked, the fast way back is to rename the header key to `Content-Security-Policy-Report-Only`, then add the host to the right directive. The API address in `connect-src` is the `ALLOWED_HOSTS` value in `render.yaml`: change both together, or drop it if the host proxies `/api` so the site only talks to itself. Not yet seen enforced on the live site: the farm map with real farms, the location picker, photo upload and the bot check. After the deploy, walk those pages and read the console for "Refused to".
+- The Content Security Policy in `frontend/vercel.json` has been enforced since 2026-11-20. It still reports to `/api/csp-report`, so a violation appears in the Security log as "Browser blocked something the page tried to load". If a legitimate resource is ever blocked, the fast way back is to rename the header key to `Content-Security-Policy-Report-Only`, then add the host to the right directive. The API address in `connect-src` is the `ALLOWED_HOSTS` value in `render.yaml`: change both together. Seen working under the policy on 2026-11-20: the landing page, sign in, register, new farm, map tiles and Cloudinary images. Not seen: the farm map with real farms, photo upload, and the bot check (it is switched off).
 - The sensor simulation workflow in `.github/workflows` writes simulated readings into whatever database its secrets point at. It runs only when someone presses the button. Never press it on a database with real farm data.
+
+**Data**
+
+- Raw sensor readings older than 30 days are removed by the nightly `rollup_readings`, once summarised by the hour. The first run on the live database has not been seen yet (02:00 UTC after the deploy): read the Jobs and devices log for `rollup_readings` finished. A removed reading is gone: the summary keeps the count and the lowest, average and highest of the hour.
+- Because of that, the reading count on a batch is of the raw readings still kept, and the share in range on the compare page counts an old hour as inside when its average was inside. Close, not reading by reading.
+- Readings from before rooms existed cannot be summarised, and are removed at 90 days by `cleanup_sensor_readings`.
+- Request logs, security events and job logs are not yet removed on a schedule beyond what `prune_logs` does: the retention numbers of task 3.7 are not in. Watch the database size on Supabase (500 MB on the free plan).
+- The admin's active batches list is one answer for every active batch (538 KB for 1,000). It takes 200 to 500 ms at that size and wants paging. See `docs/load-profile.md`.
+- Some older alerts have no code ("Batch initialized at EGG stage."). They show their stored English sentence in every language.
+- Saved but not used yet: `preferred_language`, the phone number and the notification preferences. Nothing sends by SMS or WhatsApp, and nothing reads the preferences until messaging is built.
+
+**Language**
+
+- All French and Kinyarwanda is a draft until a native speaker has read it: the plural rule, the offer wording, the meta descriptions, the legal pages, the glossary. Alert sentences write numbers with a point ("22.0 °C") in every language.
+- Server sentences written straight into a view (for example "Please enter your name."), Django REST framework's own field messages and the second factor and support access sentences are still English. They take a code one at a time (`core/error_text.py`).
+- The legal pages are English only.
+
+**Hosting**
+
+- Render's free plan sleeps. An outside pinger keeps the API awake from 06:00 to 19:00, and the disease check service can take about a minute to wake.
+- The cooperative report on screen is kept for a minute per cooperative, period and kind of reader. A change can take up to a minute to show.
 
 ## 6. If it goes wrong
 

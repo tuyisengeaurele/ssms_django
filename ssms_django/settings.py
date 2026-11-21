@@ -165,6 +165,12 @@ DISEASE_ALERT_MIN_CONFIDENCE = config('DISEASE_ALERT_MIN_CONFIDENCE', default=0.
 DEVICE_OFFLINE_MINUTES = config('DEVICE_OFFLINE_MINUTES', default=30, cast=int)
 
 TRUSTED_PROXY_COUNT = config('TRUSTED_PROXY_COUNT', default=0, cast=int)
+# A secret the website sends in the X-SSMS-Edge header on every request it forwards to this API (Vercel sets it, and replaces any value a
+# visitor sends). A request that carries it is counted by the address the website reports; any other request is counted by the address that
+# connected to Cloudflare, which no header can change. Empty means the older rule, which a visitor can fool with an X-Forwarded-For.
+EDGE_SECRET = config('EDGE_SECRET', default='')
+# The header the website reports the visitor's address in. Vercel sets it from the connection, not from anything the visitor sent.
+EDGE_CLIENT_IP_HEADER = config('EDGE_CLIENT_IP_HEADER', default='X-Vercel-Forwarded-For')
 
 # Throttle counters must be shared by every worker, so they live in the database.
 # Create the table once with: python manage.py createcachetable

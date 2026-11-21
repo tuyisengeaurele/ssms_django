@@ -17,6 +17,29 @@ def check_trusted_proxy(app_configs, **kwargs):
 
 
 @register(Tags.security, deploy=True)
+def check_edge_secret(app_configs, **kwargs):
+    """Without the shared secret the API cannot tell the website's word about a visitor's address from a visitor's own forged header,
+    so anyone can choose the address they are counted as and slip past every limit by address."""
+    if settings.DEBUG:
+        return []
+    secret = settings.EDGE_SECRET
+    if not secret:
+        return [Warning(
+            'EDGE_SECRET is not set on a live site.',
+            hint='Make one with: python -c "import secrets; print(secrets.token_urlsafe(32))". Set it as EDGE_SECRET here and in the environment '
+                 'of the website (docs/deploy-runbook.md, section 23). Until then a visitor can choose the address they are counted as.',
+            id='ssms.W002',
+        )]
+    if len(secret) < 32:
+        return [Warning(
+            'EDGE_SECRET is shorter than 32 characters.',
+            hint='A short secret can be guessed. Make a new one with: python -c "import secrets; print(secrets.token_urlsafe(32))".',
+            id='ssms.W003',
+        )]
+    return []
+
+
+@register(Tags.security, deploy=True)
 def check_mfa_key(app_configs, **kwargs):
     """Admin second factor secrets are encrypted with this key. Without it on a live site no admin could sign in, so the
     deploy stops here, before a new copy replaces the one that is running."""

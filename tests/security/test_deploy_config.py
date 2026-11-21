@@ -57,6 +57,11 @@ def test_the_api_service_trusts_the_two_proxies_in_front_of_it():
     assert api['TRUSTED_PROXY_COUNT']['value'] == '2'
 
 
+def test_the_api_service_takes_the_website_secret_from_the_dashboard_and_never_from_the_file():
+    secret = env_of(render_services()['ssms-api'])['EDGE_SECRET']
+    assert secret.get('sync') is False and 'value' not in secret and 'generateValue' not in secret
+
+
 def test_the_api_service_has_the_shared_secret_for_the_disease_check_service():
     secret = env_of(render_services()['ssms-api'])['AI_SERVICE_SECRET']
     assert secret.get('sync') is False and 'value' not in secret
