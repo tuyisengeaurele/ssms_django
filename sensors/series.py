@@ -4,6 +4,8 @@ from datetime import timedelta
 from django.db.models import Q
 from django.utils import timezone
 
+from core.timeutil import aware
+
 from .rollups import hour_floor, rolled_through, rollups_for_batch
 from .room_readings import readings_for_batch
 
@@ -44,7 +46,8 @@ def batch_series(batch, hours: int) -> list:
     buckets = {}
 
     def add(stamp, temp_sum, hum_sum, n):
-        total = buckets.setdefault(_start_of_bucket(stamp, bucket_hours), [0.0, 0.0, 0])
+        # An older database hands back the readings' times without a zone, the summaries have one: one kind, or they cannot be sorted.
+        total = buckets.setdefault(_start_of_bucket(aware(stamp), bucket_hours), [0.0, 0.0, 0])
         total[0] += temp_sum
         total[1] += hum_sum
         total[2] += n

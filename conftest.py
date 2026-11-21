@@ -101,3 +101,18 @@ def naive_batch_dates(db):
             'ALTER COLUMN "expectedHarvestDate" TYPE timestamp without time zone'
         )
         cursor.execute('SET CONSTRAINTS ALL DEFERRED')
+
+
+@pytest.fixture
+def naive_reading_times(db):
+    """The reading times as an older database holds them: no time zone, so Django hands them back naive.
+
+    The owner's local database was built before Django and stores sensor_readings.timestamp this way. Same method as
+    naive_batch_dates: the change is made inside the test's transaction and rolled back with it.
+    """
+    from django.db import connection
+
+    with connection.cursor() as cursor:
+        cursor.execute('SET CONSTRAINTS ALL IMMEDIATE')
+        cursor.execute('ALTER TABLE sensor_readings ALTER COLUMN "timestamp" TYPE timestamp without time zone')
+        cursor.execute('SET CONSTRAINTS ALL DEFERRED')
