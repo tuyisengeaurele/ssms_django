@@ -108,7 +108,7 @@ These are written down so nobody is surprised. Each is on the backlog or waiting
 - Raw sensor readings older than 30 days are removed by the nightly `rollup_readings`, once summarised by the hour. The first run on the live database has not been seen yet (02:00 UTC after the deploy): read the Jobs and devices log for `rollup_readings` finished. A removed reading is gone: the summary keeps the count and the lowest, average and highest of the hour.
 - Because of that, the reading count on a batch is of the raw readings still kept, and the share in range on the compare page counts an old hour as inside when its average was inside. Close, not reading by reading.
 - Readings from before rooms existed cannot be summarised, and are removed at 90 days by `cleanup_sensor_readings`.
-- Request logs, security events and job logs are not yet removed on a schedule beyond what `prune_logs` does: the retention numbers of task 3.7 are not in. Watch the database size on Supabase (500 MB on the free plan).
+- Logs are removed every night by `prune_logs`: request logs after 30 days, security events after 180, jobs and devices after 30 and health check results after 30. The audit log is never removed. Watch the database size on Supabase (500 MB on the free plan).
 - The admin's active batches list is one answer for every active batch (538 KB for 1,000). It takes 200 to 500 ms at that size and wants paging. See `docs/load-profile.md`.
 - Some older alerts have no code ("Batch initialized at EGG stage."). They show their stored English sentence in every language.
 - Saved but not used yet: `preferred_language`, the phone number and the notification preferences. Nothing sends by SMS or WhatsApp, and nothing reads the preferences until messaging is built.

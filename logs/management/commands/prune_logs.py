@@ -4,7 +4,8 @@ Deletes log rows that are past their keeping time. The audit log, who changed wh
 
     python manage.py prune_logs
 
-Run it every night. The keeping times are REQUEST_LOG_KEEP_DAYS (14), SECURITY_LOG_KEEP_DAYS (365) and JOB_LOG_KEEP_DAYS (90) and HEALTH_LOG_KEEP_DAYS (30).
+Run it every night. The keeping times are REQUEST_LOG_KEEP_DAYS (30), SECURITY_LOG_KEEP_DAYS (180), JOB_LOG_KEEP_DAYS (30) and
+HEALTH_LOG_KEEP_DAYS (30).
 """
 from datetime import timedelta
 

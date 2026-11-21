@@ -612,3 +612,19 @@ SELECT count(*) FROM farms WHERE (latitude IS NOT NULL AND (latitude < -90 OR la
 5. Deploy the AI service when convenient. It adds `modelVersion` to its answer. The API works with and without it, and checks made before it have an empty version.
 
 Going back: the constraints and the new table can be dropped by migrating `farms`, `batches`, `sensors` and `cooperatives` back. The dropped `iot_devices.batchId` comes back empty.
+
+## 25. How long the logs are kept
+
+`prune_logs` runs every night at 02:00 UTC from `jobs-nightly.yml` and deletes the rows past their keeping time. The times are settings, so a longer or shorter time needs no code change.
+
+| Log | Setting | Default |
+|---|---|---|
+| Requests (failures and a sample of the good ones) | `REQUEST_LOG_KEEP_DAYS` | 30 days |
+| Security events (sign ins, lockouts, refusals) | `SECURITY_LOG_KEEP_DAYS` | 180 days |
+| Jobs and devices | `JOB_LOG_KEEP_DAYS` | 30 days |
+| Health check results | `HEALTH_LOG_KEEP_DAYS` | 30 days |
+| Audit log (who changed what) | none | never removed |
+
+- The command prints how many rows it removed from each log, and writes a start and an end row to the jobs and devices log, which is how the System page knows the scheduler is alive.
+- To look into something older than the keeping time, the row is gone. Copy what you need before the night it expires.
+- Lowering a number removes the older rows the next night. A backup taken before is the only way back.

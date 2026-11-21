@@ -1,7 +1,8 @@
 name: Nightly jobs
 
 # Once a night at 02:00 UTC: summarise sensor readings by the hour and remove the raw ones older than 30 days that have a summary,
-# remove the readings from before rooms older than 90 days, ended sign ins older than 30 days, and the logs past their keeping time.
+# remove the readings from before rooms older than 90 days, ended sign ins older than 30 days, and the logs past their keeping time
+# (request logs 30 days, security events 180, jobs and devices 30, health checks 30; the audit log is never removed).
 
 on:
   schedule:

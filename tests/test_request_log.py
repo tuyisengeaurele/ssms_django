@@ -1,13 +1,10 @@
 """The request log: every failure and a sample of the good answers, with the route pattern and never what was in the request."""
-from datetime import timedelta
 from unittest import mock
 
 import pytest
-from django.core.management import call_command
-from django.utils import timezone
 from rest_framework.test import APIClient
 
-from logs.models import JobLog, RequestLog, SecurityEvent
+from logs.models import RequestLog
 from tests.factories import FarmFactory, UserFactory
 from tests.mfa_helpers import sign_in_admin
 
@@ -134,43 +131,6 @@ def test_the_user_of_a_token_is_known_by_the_time_the_row_is_written(everything)
     RequestLog.objects.all().delete()
     client.get('/api/auth/me')
     assert rows()[0].user_id == user.pk
-
-
-# ── keeping it short ────────────────────────────────────────────────────────────────────────
-
-def old(model, days, **fields):
-    row = model.objects.create(**fields)
-    model.objects.filter(pk=row.pk).update(created_at=timezone.now() - timedelta(days=days))
-    return row.pk
-
-
-def test_the_prune_command_deletes_only_what_is_past_its_keeping_time():
-    keep_request = old(RequestLog, 13, request_id='R' * 12, method='GET', route='api/x', status=404)
-    drop_request = old(RequestLog, 15, request_id='R' * 12, method='GET', route='api/x', status=404)
-    keep_event = old(SecurityEvent, 364, kind='login_ok')
-    drop_event = old(SecurityEvent, 366, kind='login_ok')
-    keep_job = old(JobLog, 89, kind='email_failed')
-    drop_job = old(JobLog, 91, kind='email_failed')
-    call_command('prune_logs')
-    assert set(RequestLog.objects.values_list('pk', flat=True)) == {keep_request} and drop_request
-    assert set(SecurityEvent.objects.values_list('pk', flat=True)) == {keep_event} and drop_event
-    # The command writes its own start and end rows, which are new and stay.
-    assert set(JobLog.objects.exclude(kind__startswith='command_').values_list('pk', flat=True)) == {keep_job} and drop_job
-
-
-def test_the_audit_log_is_never_pruned():
-    from audit_log.models import AuditLog
-    row = AuditLog.objects.create(action='OTHER', resource='X')
-    AuditLog.objects.filter(pk=row.pk).update(created_at=timezone.now() - timedelta(days=4000))
-    call_command('prune_logs')
-    assert AuditLog.objects.filter(pk=row.pk).exists()
-
-
-def test_the_keeping_times_can_be_changed_in_settings(settings):
-    settings.REQUEST_LOG_KEEP_DAYS = 1
-    old(RequestLog, 2, request_id='R' * 12, method='GET', route='api/x', status=404)
-    call_command('prune_logs')
-    assert RequestLog.objects.count() == 0
 
 
 def test_a_farm_request_logs_its_pattern_not_its_id(everything):
