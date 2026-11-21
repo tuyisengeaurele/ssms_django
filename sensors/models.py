@@ -124,6 +124,20 @@ class SensorReadingHourly(models.Model):
         return f'{self.room_id} {self.hour:%Y-%m-%d %H}h: {self.count} readings'
 
 
+class Disease(models.Model):
+    """A result the disease check can give. `code` is the word the check, the screens and the reports already use."""
+    code = models.CharField(primary_key=True, max_length=30)
+    name = models.CharField(max_length=60)
+    is_healthy = models.BooleanField(default=False, db_column='isHealthy')
+
+    class Meta:
+        db_table = 'diseases'
+        ordering = ['code']
+
+    def __str__(self):
+        return self.name
+
+
 class DiseaseDetection(models.Model):
     id = models.CharField(primary_key=True, max_length=36, default=_generate_id, editable=False)
     batch = models.ForeignKey(
@@ -134,6 +148,13 @@ class DiseaseDetection(models.Model):
     )
     image_url = models.TextField(db_column='imageUrl')
     result = models.TextField()
+    # The row of the lookup that `result` names, set on checks made since the lookup. Older checks are linked by a migration, and a
+    # result the lookup does not know stays empty. `result` stays as it was, because reports, alerts and the screens read it.
+    disease = models.ForeignKey(Disease, null=True, blank=True, on_delete=models.PROTECT, db_column='diseaseCode', related_name='detections')
+    # Which version of the model gave the result, as the AI service reports it. Empty when it did not say.
+    model_version = models.CharField(max_length=60, blank=True, default='', db_column='modelVersion')
+    # Every score the model gave for the photo, by disease code. The result is the highest of them.
+    probabilities = models.JSONField(default=dict, blank=True)
     confidence = models.FloatField()
     detected_at = models.DateTimeField(db_column='detectedAt', auto_now_add=True)
     notes = models.TextField(null=True, blank=True)

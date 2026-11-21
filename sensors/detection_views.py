@@ -45,6 +45,13 @@ UNCLEAR_PHOTO = {
 }
 
 
+def _scores(value) -> dict:
+    """The scores the service sent, kept only when each is a plain number, so nothing else is stored from outside."""
+    if not isinstance(value, dict):
+        return {}
+    return {str(k)[:30]: float(v) for k, v in value.items() if isinstance(v, (int, float)) and not isinstance(v, bool)}
+
+
 def _upload_to_cloudinary(uploaded_file) -> str:
     """
     Upload an image to Cloudinary using the unsigned preset.
@@ -140,6 +147,9 @@ class DiseaseDetectionCreateView(APIView):
             image_url=image_url,
             result=ai_data['result'],
             confidence=ai_data['confidence'],
+            disease_id=result,
+            model_version=str(ai_data.get('modelVersion') or '')[:60],
+            probabilities=_scores(ai_data.get('allScores')),
             notes=notes or None,
         )
 
