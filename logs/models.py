@@ -1,8 +1,8 @@
 """Three of the four log streams, and the memory of the system health checks. The fourth, who changed what, is `audit_log.AuditLog`.
 
-* SecurityEvent: sign ins, lockouts, password changes, new devices, ended sessions, refusals and slow downs. Kept 12 months.
-* RequestLog: every failed request and a sample of the good ones. Kept 14 days. Never a body, a header or a query.
-* JobLog: mail that failed, readings a device sent that were refused, devices that went quiet, and commands that ran.
+* SecurityEvent: sign ins, lockouts, password changes, new devices, ended sessions, refusals and slow downs. Kept 180 days.
+* RequestLog: every failed request and a sample of the good ones. Kept 30 days. Never a body, a header or a query.
+* JobLog: mail that failed, readings a device sent that were refused, devices that went quiet, and commands that ran. Kept 30 days.
 
 Every row can carry the reference of the request it came from, so one reference finds the rest.
 """
