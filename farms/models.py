@@ -54,6 +54,19 @@ class Farm(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        # A farm with a place shows the line made from that place and its street, so the text cannot say one thing and the codes
+        # another. A farm from before places (no village code) keeps the text it has.
+        if self.village_code:
+            from locations import registry
+            found = registry.chain(self.village_code)
+            if found is not None:
+                self.location = registry.describe(found, self.street)
+                fields = kwargs.get('update_fields')
+                if fields is not None and {'village_code', 'street'} & set(fields):
+                    kwargs['update_fields'] = {*fields, 'location'}
+        super().save(*args, **kwargs)
+
 
 class RearingRoom(models.Model):
     """A room (or rearing house) on a farm. Its air is shared by every batch inside it. Deleting only hides it."""
