@@ -230,7 +230,7 @@ def a_batch_that_moved():
         in_a = h > 24 * 4
         reading(a if in_a else b, h, 20.0 + (h % 7), 70.0 + (h % 11))
         # the room the batch is not in has readings too, which are not the batch's
-        reading(b if in_a else a, h, 99.0, 99.0)
+        reading(b if in_a else a, h, 80.0, 80.0)
     return batch, a, b
 
 
@@ -289,7 +289,7 @@ def test_the_summaries_of_a_batch_are_those_of_the_rooms_it_stayed_in_and_when()
     roll_up(now=NOW)
     rows = rollups_for_batch(batch)
     assert set(rows.values_list('room_id', flat=True)) == {a.pk, b.pk}
-    assert not rows.filter(temp_avg=99.0).exists()
+    assert not rows.filter(temp_avg=80.0).exists()
 
 
 # ── how a batch compares ────────────────────────────────────────────────────────────────────
