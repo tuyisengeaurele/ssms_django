@@ -2,6 +2,30 @@
 
 # Changelog
 
+## Tidier data: limits in the database, devices and rooms, diseases, memberships (phase 3, task 3.6)
+
+Five changes, each its own commit, each with a test that the old behaviour holds and that a bad value is refused by the database.
+
+### Added
+- CHECK constraints, so a script or a shell cannot leave behind what the API would never accept: a batch stage and unit from the lists, a quantity of at least 1, a mortality count of at least 1, a room stay that does not end before it starts, a room's approval state from the list and its size (and queued size) between 1 and 5000 square metres, a device status from the list, a reading between -40 and 85 degrees and 0 and 100 percent, an hourly summary with at least one reading and a low that is not above its high, a disease check confidence between 0 and 1, and a farm position that is on the earth. Migrations `farms.0006`, `batches.0006`, `sensors.0009`. The two reading constraints are added `NOT VALID` and then validated, so the large readings table is not locked while it is read.
+- A `diseases` lookup (Healthy, Grasserie, Flacherie, Muscardine, Pebrine) and, on each disease check, the disease it points at, the `modelVersion` that gave it and every score the model gave (`probabilities`). Old checks are linked to their disease by a migration, and a result the lookup does not know stays empty. `result` is unchanged, because the reports, the alerts and the screens read it. Migrations `sensors.0012` and `0013`.
+- The AI service names the model in every answer (`modelVersion`: the `MODEL_VERSION` setting, else the model file's name). The API accepts an answer from a service that sends none, so the two can be deployed in either order.
+- `cooperative_memberships` (migration `cooperatives.0004`): who was in which cooperative, from when to when. A person has one open membership at a time and keeps the closed ones as history. Everyone already in a cooperative gets an open one, starting when their account was made, because the real joining dates were never kept.
+
+### Changed
+- A device no longer has a batch. A device belongs to a farm and measures one room, and every batch in the room shares that air. `batchId` is gone from the device answers and `iot_devices.batchId` is dropped (`sensors.0010` first gives any device without a room the room of its batch, then `0011` drops the column).
+- A farm with a place has its location line built from the place and the street whenever it is saved, so the text and the codes cannot disagree. A farm from before places keeps its own text.
+- What a supervisor may see is read from the open memberships of their cooperative. `users.cooperative` still says where a person is now, and every save that changes it keeps the memberships in step.
+- A test marker reading of 99 degrees became 80, because the database now refuses 99.
+
+### Deploy
+Back up, check that no row breaks a constraint, then migrate. The queries and the order are in runbook section 24.
+
+### Known
+- A write that skips `save()` (`bulk_create`, `queryset.update(cooperative=...)`) does not touch the memberships. The load data script makes its own. Nothing in the app does this.
+- A farm that already has a place gets its line rebuilt the next time it is saved, not by a migration.
+- A device keeps its farm (it can wait for a room) and its free text location note.
+
 ## A visitor can choose the address they are counted as: what was measured and what changed
 
 A correction to the entry "The visitor's address in the logs and the limits" below. It said that only a caller going straight to the Render host could choose their counted address by writing an extra entry in `X-Forwarded-For`, and that this was minor. Measured on the live API on 2026-11-20 and 21 it is wider: thirteen sign in attempts in a minute, with a different forged `X-Forwarded-For` each, were all answered 401, through the website and straight at Render, where the same thirteen with none were stopped at the eleventh (the limit is 10 a minute). Anyone could slip past the limits by address (sign in, register, the contact form), and the audit and security logs could be made to show a made up address. Sign in lockout by email still held.

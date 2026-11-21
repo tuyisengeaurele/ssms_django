@@ -584,3 +584,31 @@ So a visitor can choose the address they are counted as, through the website and
 Until one of these is done, treat limits by address as best effort, and the IP column of the logs as what the caller claimed.
 
 When this is settled, remove the temporary route (`core/proxy_check.py`, its route, schema entry, walk entry and tests).
+
+## 24. Putting the tidier data rules on a live database (task 3.6)
+
+The migrations are `farms.0006`, `batches.0006`, `sensors.0009` to `0013` and `cooperatives.0004`. `sensors.0009` is not atomic on purpose: it adds the two reading constraints `NOT VALID` and then validates them, so devices can keep writing while the old rows are read.
+
+1. Back up the database.
+2. Count the rows that would break a constraint. Every count must be 0, and if one is not, fix those rows first, because the constraint would refuse to be added:
+
+```sql
+SELECT count(*) FROM batches WHERE stage::text NOT IN ('EGG','LARVA','PUPA','COCOON','HARVEST');
+SELECT count(*) FROM batches WHERE "quantityUnit"::text NOT IN ('BOXES','WORMS');
+SELECT count(*) FROM batches WHERE quantity IS NOT NULL AND quantity < 1;
+SELECT count(*) FROM batch_mortality WHERE count < 1;
+SELECT count(*) FROM batch_room_stays WHERE "endedAt" IS NOT NULL AND "endedAt" < "startedAt";
+SELECT count(*) FROM iot_devices WHERE status::text NOT IN ('online','offline','error');
+SELECT count(*) FROM rearing_rooms WHERE "approvalStatus" NOT IN ('approved','pending','rejected');
+SELECT count(*) FROM rearing_rooms WHERE ("areaM2" IS NOT NULL AND ("areaM2" < 1 OR "areaM2" > 5000)) OR ("pendingAreaM2" IS NOT NULL AND ("pendingAreaM2" < 1 OR "pendingAreaM2" > 5000));
+SELECT count(*) FROM sensor_readings WHERE temperature < -40 OR temperature > 85 OR humidity < 0 OR humidity > 100;
+SELECT count(*) FROM sensor_readings_hourly WHERE count < 1 OR "tempMin" > "tempMax" OR "humMin" > "humMax";
+SELECT count(*) FROM disease_detections WHERE confidence < 0 OR confidence > 1;
+SELECT count(*) FROM farms WHERE (latitude IS NOT NULL AND (latitude < -90 OR latitude > 90)) OR (longitude IS NOT NULL AND (longitude < -180 OR longitude > 180));
+```
+
+3. Run `python manage.py migrate`. If it stops while validating a reading constraint, run it again, or finish by hand with `ALTER TABLE sensor_readings VALIDATE CONSTRAINT reading_temperature_range;` (and `reading_humidity_range`).
+4. Check: `SELECT count(*) FROM cooperative_memberships WHERE "endedAt" IS NULL;` equals the number of users with a cooperative, and `SELECT count(*) FROM disease_detections WHERE "diseaseCode" IS NULL;` is only checks whose result is not in the `diseases` table.
+5. Deploy the AI service when convenient. It adds `modelVersion` to its answer. The API works with and without it, and checks made before it have an empty version.
+
+Going back: the constraints and the new table can be dropped by migrating `farms`, `batches`, `sensors` and `cooperatives` back. The dropped `iot_devices.batchId` comes back empty.
