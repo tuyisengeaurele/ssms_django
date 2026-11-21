@@ -64,7 +64,7 @@ def get_client_ip(request) -> str | None:
     With no trusted proxy (TRUSTED_PROXY_COUNT 0) the forwarded headers are ignored, because anyone can write them.
 
     With EDGE_SECRET set, only the website can say who a visitor is. A request that carries the secret is counted by the address the
-    website reports (X-Vercel-Forwarded-For). Any other request is counted by the last address in the chain that is not part of the hosting
+    website reports (X-SSMS-Client-IP, which only the website's own code sets). Any other request is counted by the last address in the chain that is not part of the hosting
     path: the address that connected to Cloudflare, which no header can change. A visitor who writes an X-Forwarded-For of their own,
     through the site or straight at the host, is counted as themselves.
 

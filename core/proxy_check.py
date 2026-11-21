@@ -15,7 +15,7 @@ from .net import _came_through_the_site, get_client_ip
 
 WATCH = [
     'x-forwarded-for', 'forwarded', 'x-real-ip', 'true-client-ip', 'cf-connecting-ip', 'x-vercel-forwarded-for', 'x-vercel-id',
-    'x-vercel-ip-country', 'x-forwarded-host', 'x-ssms-edge',
+    'x-vercel-ip-country', 'x-forwarded-host', 'x-ssms-edge', 'x-ssms-client-ip',
 ]
 _FORGED = ipaddress.ip_network('203.0.113.0/24')
 _SPLIT = re.compile(r'[,;\s]+')
