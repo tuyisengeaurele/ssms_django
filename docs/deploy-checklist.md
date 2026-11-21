@@ -19,7 +19,7 @@ Work through this top to bottom for every deploy, including a rehearsal on a tes
 | `ALLOWED_HOSTS` | the API's own address |
 | `CORS_ALLOWED_ORIGINS`, `FRONTEND_URL` | the website address, https |
 | `TRUSTED_PROXY_COUNT` | `2` with the Vercel forward and Render in front (one proxy, `1`). Cloudflare and private hops are skipped before counting. Wrong values make every visitor share one address, so read the address in the audit log |
-| `EDGE_SECRET` | The same value as the website's `EDGE_SECRET` (Vercel, Production and Preview). Made with `python -c "import secrets; print(secrets.token_urlsafe(32))"`, at least 32 characters, never written in a file. Without it a visitor can choose the address they are counted as (`check --deploy` warns). Runbook section 23 |
+| `EDGE_SECRET` | Leave it unset for now: the website does not yet send the header that makes it safe (runbook section 23). When that is built: a value of at least 32 characters made with `python -c "import secrets; print(secrets.token_urlsafe(32))"`, the same on the website, never written in a file |
 | `AI_SERVICE_URL`, `AI_SERVICE_SECRET` | same secret on both services |
 | `MFA_ENCRYPTION_KEY` | a Fernet key made by hand and kept in a password manager (runbook section 9). Without it `start.sh` stops the deploy before the running copy is replaced |
 | `SENTRY_DSN` | set, so errors reach someone |
@@ -95,7 +95,7 @@ These are written down so nobody is surprised. Each is on the backlog or waiting
 
 **Security**
 
-- **A visitor can choose the address they are counted as, until `EDGE_SECRET` is set.** Measured on 2026-11-20: a forged `X-Forwarded-For` got past every limit by address, through the website and straight at Render. The code is in (runbook section 23), the website's `vercel.json` has to send the header, and the secret has to be set in Vercel and in Render. `check --deploy` warns (`ssms.W002`) until then. Sign in lockout by email is not affected.
+- **A visitor can choose the address they are counted as.** Measured on 2026-11-20 and 21: a forged `X-Forwarded-For` got past every limit by address, straight at Render and through the website (Vercel sometimes replaces it and sometimes keeps the visitor's), and `X-Vercel-Forwarded-For` arrives as the visitor wrote it. Do not set `EDGE_SECRET` yet: nothing on the website sends the header it needs. Treat limits by address as best effort and the IP column of the logs as what the caller claimed. The recommended first step is a bot check (Turnstile) on sign in, register and the contact form. Runbook section 23 has the table and the options. Sign in lockout by email is not affected.
 - The contact form and registration have no bot check on the live site: `VITE_TURNSTILE_SITE_KEY` is not set, so the Turnstile widget loads nothing. They rely on the limit by address, which is only as good as the item above.
 - Limits by address and the 60 second report cache live in each API process's memory (`WEB_CONCURRENCY=1`). A restart clears them, and with more than one process each would allow the full rate. Sign in lockout, code challenges and stream tickets are in the database cache and survive a restart.
 - Cloudflare's address ranges are a copy in `core/net.py`. Cloudflare changes them rarely (https://www.cloudflare.com/ips/). If it adds a range, a request from it would be counted as the hosting path and not as a visitor. Check the list once a year.

@@ -86,14 +86,13 @@ def strict_request(forwarded=None, *, secret=SECRET, vercel=None, remote=BALANCE
     if secret is not None:
         extra['HTTP_X_SSMS_EDGE'] = secret
     if vercel is not None:
-        extra['HTTP_X_VERCEL_FORWARDED_FOR'] = vercel
+        extra['HTTP_X_SSMS_CLIENT_IP'] = vercel
     return RequestFactory().get('/x', **extra)
 
 
 @pytest.fixture
 def strict(settings):
     settings.EDGE_SECRET = SECRET
-    settings.EDGE_CLIENT_IP_HEADER = 'X-Vercel-Forwarded-For'
 
 
 def test_a_request_from_the_site_is_counted_by_the_address_the_site_reports(strict):
@@ -185,3 +184,25 @@ def test_a_short_secret_is_refused_because_it_can_be_guessed(settings):
     from ssms_django.checks import check_edge_secret
     settings.DEBUG, settings.EDGE_SECRET = False, 'short'
     assert [item.id for item in check_edge_secret(app_configs=None)] == ['ssms.W003']
+
+
+# ── which header the site's word about the visitor is read from ─────────────────────────────
+#
+# Measured on 2026-11-21: through the website, a visitor's own X-Vercel-Forwarded-For (and, on some requests, X-Forwarded-For) reaches the API
+# as written, because Vercel does not always replace it. The secret alone only proves a request passed through Vercel, so the address header
+# has to be one that nobody but the website's own code sets, and that code has to replace what a visitor sends.
+
+def test_the_header_the_site_reports_the_visitor_in_is_one_only_our_own_code_sets(settings):
+    from django.conf import settings as default
+    assert default.EDGE_CLIENT_IP_HEADER == 'X-SSMS-Client-IP'
+
+
+def test_a_visitor_who_forges_the_vercel_header_through_the_site_is_not_believed(strict):
+    request = strict_request(THROUGH_THE_SITE, vercel=None)
+    request.META['HTTP_X_VERCEL_FORWARDED_FOR'] = FORGED
+    assert get_client_ip(request) == VEND      # the address Cloudflare saw, not the forged one
+
+
+def test_a_forged_forwarded_for_is_never_what_the_request_is_counted_by_once_the_secret_is_set(strict):
+    request = strict_request(f'{FORGED}, {VEND}, {CLOUDFLARE}, {BALANCER}', vercel=None)
+    assert get_client_ip(request) == VEND

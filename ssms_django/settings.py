@@ -169,8 +169,10 @@ TRUSTED_PROXY_COUNT = config('TRUSTED_PROXY_COUNT', default=0, cast=int)
 # visitor sends). A request that carries it is counted by the address the website reports; any other request is counted by the address that
 # connected to Cloudflare, which no header can change. Empty means the older rule, which a visitor can fool with an X-Forwarded-For.
 EDGE_SECRET = config('EDGE_SECRET', default='')
-# The header the website reports the visitor's address in. Vercel sets it from the connection, not from anything the visitor sent.
-EDGE_CLIENT_IP_HEADER = config('EDGE_CLIENT_IP_HEADER', default='X-Vercel-Forwarded-For')
+# The header the website reports the visitor's address in. It must be a header that only the website's own code sets, replacing anything a
+# visitor sends: measured on 2026-11-21, through Vercel a visitor's own X-Vercel-Forwarded-For (and on some requests X-Forwarded-For) reaches
+# this API as written, so neither can be used. The default is the one the website's routing middleware is to set (docs/deploy-runbook.md, 23).
+EDGE_CLIENT_IP_HEADER = config('EDGE_CLIENT_IP_HEADER', default='X-SSMS-Client-IP')
 
 # Throttle counters must be shared by every worker, so they live in the database.
 # Create the table once with: python manage.py createcachetable

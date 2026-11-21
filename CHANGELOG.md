@@ -2,6 +2,24 @@
 
 # Changelog
 
+## A visitor can choose the address they are counted as: what was measured and what changed
+
+A correction to the entry "The visitor's address in the logs and the limits" below. It said that only a caller going straight to the Render host could choose their counted address by writing an extra entry in `X-Forwarded-For`, and that this was minor. Measured on the live API on 2026-11-20 and 21 it is wider: thirteen sign in attempts in a minute, with a different forged `X-Forwarded-For` each, were all answered 401, through the website and straight at Render, where the same thirteen with none were stopped at the eleventh (the limit is 10 a minute). Anyone could slip past the limits by address (sign in, register, the contact form), and the audit and security logs could be made to show a made up address. Sign in lockout by email still held.
+
+What was measured with the temporary route (the table is in runbook section 23): `CF-Connecting-IP` cannot be forged, but through the website it is Vercel's address for every visitor. `X-Vercel-Forwarded-For` arrives as the visitor wrote it. `X-Forwarded-For` is sometimes replaced by Vercel with the real address and sometimes kept as the visitor wrote it, for the same kind of request. So no forwarding header that arrives through the website can be trusted for the visitor's address, and a secret alone only proves a request passed through Vercel.
+
+### Added
+- `EDGE_SECRET` and `EDGE_CLIENT_IP_HEADER` (default `X-SSMS-Client-IP`, a header only the website's own code could set). With the secret set, a request that carries the matching `X-SSMS-Edge` header (compared in constant time) is counted by the address in that header. Every other request is counted by the last address in the chain that is not part of the hosting path, the one that connected to Cloudflare, which no header can change. Nothing changes until the secret is set, and nothing on the website sends the headers yet, so **do not set it**.
+- A deploy warning, `ssms.W002`, while the secret is not set on a live site, and `ssms.W003` when it is shorter than 32 characters. `render.yaml` declares `EDGE_SECRET` with `sync: false`. CI makes a throwaway secret for its run, and the tests never read the machine's.
+- A temporary route, `GET /api/health/proxy?me=<address>`, that says for each forwarding header whether the caller's own address is in it and whether a forged one got through, without printing any address. Remove it when the question is settled.
+- Runbook section 23 and the checklist: what was measured, what is and is not safe today, and the options (Vercel routing middleware tried first on a harmless path, or not relying on the address at all with a bot check on sign in, register and the contact form, which is the recommended first step).
+
+### Corrected
+- The first version of this change read the visitor's address from `X-Vercel-Forwarded-For`, which a visitor can forge through the website. The default is now `X-SSMS-Client-IP`, and a test shows a forged `X-Vercel-Forwarded-For` is not believed.
+
+### Known
+Limits by address are best effort until the website sends a header a visitor cannot forge, and the IP column of the logs is what the caller claimed.
+
 ## The hourly summaries on a database built before Django
 
 `rollup_readings` failed on the owner's local database with "can't compare offset-naive and offset-aware datetimes". That database keeps `sensor_readings.timestamp` without a time zone, so the oldest reading came back naive while the code compared it with the current time. The test database always has the zone, so the tests could not see it. The rollup, the removal and the long chart now turn those times into UTC first (`core.timeutil.aware`), and a new fixture (`naive_reading_times`) makes the test database look like the older one. Run on `ssms_db`: 3,406 summaries covering all 3,971 readings, 3,347 old raw readings removed, and a second run changes nothing. Production is not affected, its columns have the zone.
