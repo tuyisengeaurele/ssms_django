@@ -44,6 +44,7 @@ class IoTDevice(models.Model):
     class Meta:
         db_table = 'iot_devices'
         indexes  = [models.Index(fields=['farm'], name='device_farm_idx')]
+        constraints = [models.CheckConstraint(condition=models.Q(status__in=['online', 'offline', 'error']), name='device_status_valid')]
 
     def __str__(self):
         return f'{self.name} [{self.status}]'
@@ -87,6 +88,11 @@ class SensorReading(models.Model):
             # The old readings that know only their batch (and the batch's own readings by time).
             models.Index(fields=['batch', 'timestamp'], name='sensor_batch_time_idx'),
         ]
+        constraints = [
+            # What a DHT22 can report, the widest range the API takes (sensors/serializers.py).
+            models.CheckConstraint(condition=models.Q(temperature__gte=-40, temperature__lte=85), name='reading_temperature_range'),
+            models.CheckConstraint(condition=models.Q(humidity__gte=0, humidity__lte=100), name='reading_humidity_range'),
+        ]
 
     def __str__(self):
         return f'Reading {self.id}: {self.temperature}°C / {self.humidity}%'
@@ -111,7 +117,13 @@ class SensorReadingHourly(models.Model):
 
     class Meta:
         db_table = 'sensor_readings_hourly'
-        constraints = [models.UniqueConstraint(fields=['room', 'hour'], name='sensor_hourly_room_hour_uniq')]
+        constraints = [
+            models.UniqueConstraint(fields=['room', 'hour'], name='sensor_hourly_room_hour_uniq'),
+            models.CheckConstraint(condition=models.Q(count__gte=1), name='hourly_count_positive'),
+            models.CheckConstraint(
+                condition=models.Q(temp_min__lte=models.F('temp_max'), hum_min__lte=models.F('hum_max')), name='hourly_low_below_high',
+            ),
+        ]
         indexes = [models.Index(fields=['hour'], name='sensor_hourly_hour_idx')]
 
     def __str__(self):
@@ -141,6 +153,7 @@ class DiseaseDetection(models.Model):
         indexes = [
             models.Index(fields=['batch'], name='disease_batch_idx'),
         ]
+        constraints = [models.CheckConstraint(condition=models.Q(confidence__gte=0, confidence__lte=1), name='detection_confidence_range')]
 
     def __str__(self):
         return f'{self.result} ({self.confidence:.0%})'

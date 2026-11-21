@@ -42,6 +42,14 @@ class Farm(models.Model):
         indexes = [
             models.Index(fields=['owner'], name='farms_owner_idx'),
         ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(latitude__isnull=True) | models.Q(latitude__gte=-90, latitude__lte=90), name='farm_latitude_range',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(longitude__isnull=True) | models.Q(longitude__gte=-180, longitude__lte=180), name='farm_longitude_range',
+            ),
+        ]
 
     def __str__(self):
         return self.name
@@ -94,6 +102,15 @@ class RearingRoom(models.Model):
             # One live room of a name per farm, whatever the capitals. A deleted room frees its name.
             models.UniqueConstraint(
                 Lower('name'), 'farm', condition=models.Q(is_active=True), name='unique_active_room_name_per_farm',
+            ),
+            models.CheckConstraint(condition=models.Q(approval_status__in=['approved', 'pending', 'rejected']), name='room_approval_valid'),
+            # The same range the form allows (AREA_MIN and AREA_MAX above).
+            models.CheckConstraint(
+                condition=models.Q(area_m2__isnull=True) | models.Q(area_m2__gte=AREA_MIN, area_m2__lte=AREA_MAX), name='room_area_in_range',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(pending_area_m2__isnull=True) | models.Q(pending_area_m2__gte=AREA_MIN, pending_area_m2__lte=AREA_MAX),
+                name='room_pending_area_in_range',
             ),
         ]
 
