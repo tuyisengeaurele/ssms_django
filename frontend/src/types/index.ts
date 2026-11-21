@@ -247,6 +247,10 @@ export interface DiseaseDetection {
   /** When the result was wrong, what it really was, if they said. */
   actualResult?: string | null;
   feedbackAt?: string | null;
+  /** Which version of the model gave the result. Empty on checks made before versions were kept. */
+  modelVersion?: string;
+  /** Every score the model gave, by disease. Empty on checks made before they were kept. */
+  probabilities?: Record<string, number>;
 }
 
 export interface SensorReading {
@@ -361,7 +365,6 @@ export interface IoTDevice {
   deviceKey: string;
   farmId: string | null;
   farmName: string | null;
-  batchId: string | null;
   /** The room the sensor measures, or null while it has not been placed. */
   room: { id: string; name: string } | null;
   location: string;

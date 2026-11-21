@@ -357,7 +357,8 @@ def test_an_administrator_gets_the_code_too(auth_client, batch):
 
 def test_a_supervisor_gets_the_report_but_not_the_secret_link(auth_client, owner, batch):
     coop = CooperativeFactory()
-    type(owner).objects.filter(pk=owner.pk).update(cooperative=coop)
+    owner.cooperative = coop
+    owner.save()
     shared_lot(batch)
     text = text_of(report(auth_client(UserFactory(role='SUPERVISOR', cooperative=coop)), batch))
     assert SCAN not in text

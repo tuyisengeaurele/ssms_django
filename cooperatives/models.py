@@ -61,3 +61,31 @@ class CooperativeInvitation(models.Model):
 
     def __str__(self):
         return f'Invitation to {self.cooperative_id} ({self.status})'
+
+
+class CooperativeMembership(models.Model):
+    """A person's time in a cooperative. The open one (no end) is where they are now, and a person has at most one open.
+
+    `users.cooperative` still says where a person is now. `cooperatives.memberships.sync_membership` keeps these rows in step
+    whenever it changes, so the closed rows are the history and the open row is what a supervisor's reach is read from.
+    """
+
+    id = models.CharField(primary_key=True, max_length=36, default=_generate_id, editable=False)
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, db_column='userId', related_name='memberships')
+    cooperative = models.ForeignKey(Cooperative, on_delete=models.CASCADE, db_column='cooperativeId', related_name='memberships')
+    started_at = models.DateTimeField(db_column='startedAt')
+    ended_at = models.DateTimeField(db_column='endedAt', null=True, blank=True)
+
+    class Meta:
+        db_table = 'cooperative_memberships'
+        ordering = ['started_at']
+        indexes = [models.Index(fields=['cooperative', 'ended_at'], name='membership_coop_open_idx')]
+        constraints = [
+            models.UniqueConstraint(fields=['user'], condition=models.Q(ended_at__isnull=True), name='membership_one_open_per_user'),
+            models.CheckConstraint(
+                condition=models.Q(ended_at__isnull=True) | models.Q(ended_at__gte=models.F('started_at')), name='membership_ends_after_start',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.user_id} in {self.cooperative_id}'

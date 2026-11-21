@@ -10,7 +10,7 @@ class DiseaseDetectionSerializer(serializers.ModelSerializer):
         model = DiseaseDetection
         fields = [
             'id', 'batch_id', 'image_url', 'result', 'confidence', 'detected_at', 'notes',
-            'is_correct', 'actual_result', 'feedback_at',
+            'is_correct', 'actual_result', 'feedback_at', 'model_version', 'probabilities',
         ]
         read_only_fields = fields
 

@@ -95,7 +95,7 @@ def seed(farms=200, batches_per_farm=5, days=30, cooperatives=5, seed_number=202
 
     from alerts.models import AlertLog
     from batches.models import Batch, BatchRoomStay
-    from cooperatives.models import Cooperative
+    from cooperatives.models import Cooperative, CooperativeMembership
     from farms.models import Farm, RearingRoom
     from harvest.models import HarvestRecord
     from sensors.models import DiseaseDetection, IoTDevice, SensorReading
@@ -126,6 +126,11 @@ def seed(farms=200, batches_per_farm=5, days=30, cooperatives=5, seed_number=202
     farmers = [User(email=f'farmer{n + 1}@{DOMAIN}', name=f'Farmer {n + 1}', role='FARMER', cooperative=coops[n % cooperatives], is_email_verified=True, password=nobody)
                for n in range(farms)]
     User.objects.bulk_create(staff + farmers)
+    # bulk_create does not run User.save, so the memberships it would have opened are made here.
+    CooperativeMembership.objects.bulk_create([
+        CooperativeMembership(user_id=u.pk, cooperative_id=u.cooperative_id, started_at=now)
+        for u in staff + farmers if u.cooperative_id
+    ], batch_size=1000)
     step(f'{len(staff)} staff and {len(farmers)} farmers')
 
     # Farms, rooms, devices

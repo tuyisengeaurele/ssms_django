@@ -148,7 +148,8 @@ class TestWhoMayShare:
 
     def test_a_supervisor_cannot_make_or_end_a_link_nor_read_it(self, auth_client, owner, lot):
         coop = CooperativeFactory()
-        type(owner).objects.filter(pk=owner.pk).update(cooperative=coop)
+        owner.cooperative = coop
+        owner.save()
         supervisor = UserFactory(role='SUPERVISOR', cooperative=coop)
         client = auth_client(supervisor)
         assert client.post(share_url(lot)).status_code == 403
@@ -199,7 +200,8 @@ class TestWhatAStrangerSees:
 
     def test_names_the_cooperative_when_the_farm_is_in_one(self, api_client, auth_client, owner, lot):
         coop = CooperativeFactory(name='Gatsibo Silk Cooperative')
-        type(owner).objects.filter(pk=owner.pk).update(cooperative=coop)
+        owner.cooperative = coop
+        owner.save()
         token = make_link(auth_client(owner), lot)
         assert public(api_client, token).data['data']['cooperative_name'] == 'Gatsibo Silk Cooperative'
 

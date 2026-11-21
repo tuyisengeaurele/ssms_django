@@ -133,3 +133,17 @@ def test_preprocess_matches_tensorflow(app):
     image = Image.fromarray(np.random.default_rng(1).integers(0, 255, (224, 224, 3), dtype=np.uint8))
     expected = tf.keras.applications.resnet50.preprocess_input(np.array(image, dtype=np.float32))
     assert np.allclose(app.preprocess(image)[0], expected, atol=1e-3)
+
+
+# ── which model answered ────────────────────────────────────────────────────────────────────
+
+def test_the_answer_names_the_model_version(client):
+    body = predict(client, picture()).json()
+    assert isinstance(body['modelVersion'], str) and body['modelVersion']
+
+
+def test_the_version_can_be_set_by_the_deployment(monkeypatch):
+    monkeypatch.setenv('MODEL_VERSION', 'resnet50-2026-09')
+    module = load_app(monkeypatch)
+    monkeypatch.setattr(module, 'run_model', lambda arr: np.array([0.05, 0.05, 0.8, 0.05, 0.05]))
+    assert predict(TestClient(module.app), picture()).json()['modelVersion'] == 'resnet50-2026-09'

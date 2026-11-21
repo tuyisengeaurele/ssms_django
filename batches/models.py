@@ -45,6 +45,11 @@ class Batch(models.Model):
             models.Index(fields=['farm'], name='batches_farm_idx'),
             models.Index(fields=['stage'], name='batches_stage_idx'),
         ]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(stage__in=BatchStage.values), name='batch_stage_valid'),
+            models.CheckConstraint(condition=models.Q(quantity_unit__in=QuantityUnit.values), name='batch_unit_valid'),
+            models.CheckConstraint(condition=models.Q(quantity__isnull=True) | models.Q(quantity__gte=1), name='batch_quantity_positive'),
+        ]
 
     def __str__(self):
         return f'Batch {self.id} ({self.stage})'
@@ -64,6 +69,7 @@ class MortalityRecord(models.Model):
     class Meta:
         db_table = 'batch_mortality'
         indexes = [models.Index(fields=['batch'], name='mortality_batch_idx')]
+        constraints = [models.CheckConstraint(condition=models.Q(count__gte=1), name='mortality_count_positive')]
 
     def __str__(self):
         return f'{self.count} on {self.recorded_on}'
@@ -83,6 +89,11 @@ class BatchRoomStay(models.Model):
         db_table = 'batch_room_stays'
         ordering = ['started_at']
         indexes = [models.Index(fields=['batch', 'ended_at'], name='stay_batch_open_idx')]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(ended_at__isnull=True) | models.Q(ended_at__gte=models.F('started_at')), name='stay_ends_after_start',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.batch_id} in {self.room_id}'

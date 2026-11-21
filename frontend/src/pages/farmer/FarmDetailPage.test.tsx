@@ -38,7 +38,7 @@ const room = (id: string, name: string, over: object = {}) => ({
   id, name, notes: '', batchCount: 0, batches: [], devices: [], latestReading: null, approvalStatus: 'approved', reviewNote: '', areaM2: 12, pendingAreaM2: null, createdAt: '2026-05-01T00:00:00Z', ...over,
 });
 const device = (id: string, status: string, over: object = {}) => ({
-  id, name: `Sensor ${id}`, deviceKey: `key-${id}`, farmId: 'f1', farmName: "Serge's farm", batchId: null, room: { id: 'r1', name: 'Rearing house 1' }, location: 'Room A', status,
+  id, name: `Sensor ${id}`, deviceKey: `key-${id}`, farmId: 'f1', farmName: "Serge's farm", room: { id: 'r1', name: 'Rearing house 1' }, location: 'Room A', status,
   lastSeen: new Date(Date.now() - 600_000).toISOString(), isActive: true, createdAt: '', latestReading: { temperature: 24.1, humidity: 79.9, timestamp: '' }, recentReadings: [], ...over,
 });
 

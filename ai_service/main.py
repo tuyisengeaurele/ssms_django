@@ -53,6 +53,9 @@ def load_classes(path: str) -> list[str]:
 
 
 CLASS_NAMES: list[str] = load_classes(CLASSES_PATH)
+# Named in every answer so a stored result can be traced to the model that gave it. Set MODEL_VERSION when a model is replaced;
+# without it the model file's name is used.
+MODEL_VERSION = os.environ.get("MODEL_VERSION", "").strip() or os.path.splitext(os.path.basename(MODEL_PATH))[0]
 UNCERTAIN_BELOW = read_limit(os.environ.get("UNCERTAIN_BELOW", ""))
 
 SECRET = os.environ.get("AI_SERVICE_SECRET", "")
@@ -183,6 +186,7 @@ async def predict(file: UploadFile = File(...)):
         result      - Grasserie, Healthy, NotSilkworm or Uncertain
         confidence  - float 0-1, the model's highest score
         allScores   - the Grasserie and Healthy scores. They need not add up to one.
+        modelVersion - which model answered: the MODEL_VERSION setting, else the model file's name
     """
     contents = await file.read(MAX_BYTES + 1)
     if len(contents) > MAX_BYTES:
@@ -198,6 +202,7 @@ async def predict(file: UploadFile = File(...)):
     return {
         "result": result,
         "confidence": round(confidence, 4),
+        "modelVersion": MODEL_VERSION,
         "allScores": {
             SILKWORM_RESULTS[name]: round(float(scores[i]), 4)
             for i, name in enumerate(CLASS_NAMES)
