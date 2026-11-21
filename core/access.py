@@ -1,7 +1,7 @@
 """Who may see which farm and which records. Every view asks this module, none keeps its own rules.
 
 * A farmer sees their own farms.
-* A supervisor sees the farms of farmers in their cooperative, and nothing at all without a cooperative.
+* A supervisor sees the farms of farmers who are in their cooperative now (an open membership), and nothing at all without one.
 * An admin sees every farm that has not been deleted.
 * A deleted farm or batch is hidden from everyone, admins included, and so is everything inside it.
 
@@ -12,6 +12,7 @@ from django.db.models import Q
 from rest_framework.exceptions import NotFound
 
 from batches.models import Batch
+from cooperatives.models import CooperativeMembership
 from farms.models import Farm, RearingRoom
 
 
@@ -22,10 +23,12 @@ def _owner_q(user, owner_path: str) -> Q | None:
     if user.role == 'FARMER':
         return Q(**{owner_path: user})
     if user.role == 'SUPERVISOR' and user.cooperative_id:
-        return Q(**{
-            f'{owner_path}__cooperative_id': user.cooperative_id,
-            f'{owner_path}__role': 'FARMER',
-        })
+        # The farmers who are in the supervisor's cooperative now: those with an open membership there. A subquery, so a farmer with
+        # several closed memberships can never repeat a row.
+        farmers = CooperativeMembership.objects.filter(
+            cooperative_id=user.cooperative_id, ended_at__isnull=True, user__role='FARMER',
+        ).values('user_id')
+        return Q(**{f'{owner_path}__in': farmers})
     return None
 
 

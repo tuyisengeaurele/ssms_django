@@ -7,6 +7,8 @@ from .phone_numbers import normalize_rwanda_mobile
 
 LANGUAGES = [('en', 'English'), ('fr', 'Français'), ('rw', 'Kinyarwanda')]
 
+_UNKNOWN = object()
+
 
 class Role(models.TextChoices):
     ADMIN = 'ADMIN', 'Admin'
@@ -78,9 +80,24 @@ class User(AbstractBaseUser):
     def __str__(self):
         return self.email
 
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        user = super().from_db(db, field_names, values)
+        # What the memberships were last made to match. Unknown when the cooperative was not loaded, and then a save looks again.
+        user._memberships_match = user.__dict__.get('cooperative_id', _UNKNOWN)
+        return user
+
     def save(self, *args, **kwargs):
         self.phone = normalize_rwanda_mobile(self.phone) if (self.phone or '').strip() else None
+        adding = self._state.adding
         super().save(*args, **kwargs)
+        # The memberships follow the cooperative. Only a save that wrote it, and only when it is new or has changed, looks at them.
+        fields = kwargs.get('update_fields')
+        wrote_it = fields is None or bool({'cooperative', 'cooperative_id'} & set(fields))
+        if wrote_it and (adding or getattr(self, '_memberships_match', _UNKNOWN) != self.cooperative_id):
+            from cooperatives.memberships import sync_membership
+            sync_membership(self)
+            self._memberships_match = self.cooperative_id
 
     # Required by simplejwt and Django internals
     @property
