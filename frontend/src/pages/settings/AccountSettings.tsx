@@ -5,6 +5,7 @@ import { useToast } from '../../context/ToastContext';
 import { useApiError } from '../../hooks/useApiError';
 import { authService } from '../../services/auth.service';
 import ConfirmPhoneChangeDialog from '../../components/ui/ConfirmPhoneChangeDialog';
+import PhoneLink from '../../components/ui/PhoneLink';
 import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
 import { initialsOf } from '../../components/ui/Avatar';
 import Panel from '../../components/ui/Panel';
@@ -82,6 +83,9 @@ export default function AccountSettings() {
           <div><dt>{t('pfSince')}</dt><dd>{joined}</dd></div>
           <div><dt>{t('pfAccountId')}</dt><dd className="cell-mono">{user?.id?.slice(-8).toUpperCase() ?? '-'}</dd></div>
           <div><dt>{t('pfCooperative')}</dt><dd>{user?.cooperativeName ?? t('pfNotAssigned')}</dd></div>
+          {user?.supervisor ? (
+            <div><dt>{t('pfSupervisor')}</dt><dd><span className="cell-stack"><span>{user.supervisor.name}</span><PhoneLink phone={user.supervisor.phone} name={user.supervisor.name} /></span></dd></div>
+          ) : null}
         </dl>
       </section>
 

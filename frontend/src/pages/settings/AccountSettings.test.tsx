@@ -57,6 +57,20 @@ describe('Account settings', () => {
     expect(within(card).getByText('Not assigned')).toBeInTheDocument();
   });
 
+  it('shows a farmer their supervisor with a call and a WhatsApp link', () => {
+    (auth.user as Record<string, unknown>).supervisor = { id: 's1', name: 'Claire Uwimana', phone: '+250722000111' };
+    open();
+    const card = screen.getByRole('region', { name: 'About you' });
+    expect(within(card).getByText('Claire Uwimana')).toBeInTheDocument();
+    expect(within(card).getByRole('link', { name: 'Call Claire Uwimana' })).toHaveAttribute('href', 'tel:+250722000111');
+    delete (auth.user as Record<string, unknown>).supervisor;
+  });
+
+  it('shows no supervisor row when the account has none', () => {
+    open();
+    expect(screen.queryByText('Your supervisor')).not.toBeInTheDocument();
+  });
+
   it('shows the cooperative when there is one', () => {
     auth.user.cooperativeName = 'Gatsibo Sericulture 1';
     open();

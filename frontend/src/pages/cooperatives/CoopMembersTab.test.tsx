@@ -42,6 +42,22 @@ beforeEach(() => {
 const ready = () => screen.findByRole('heading', { level: 2, name: 'Members (1)' });
 
 describe('The members of a cooperative', () => {
+  it('shows a member\'s number with a call and a WhatsApp link when the answer carries one', async () => {
+    api.getById.mockResolvedValue({ data: { data: detail({ members: [{ id: 'm1', name: 'Bruce Ishimwe', email: 'bruce@gmail.com', phone: '+250788123456', role: 'FARMER', createdAt: '2026-05-01T00:00:00Z' }] }) } });
+    renderCoop(PATH);
+    await ready();
+    const row = screen.getByText('Bruce Ishimwe').closest('li') as HTMLElement;
+    expect(within(row).getByText('0788 123 456')).toBeInTheDocument();
+    expect(within(row).getByRole('link', { name: 'Call Bruce Ishimwe' })).toHaveAttribute('href', 'tel:+250788123456');
+  });
+
+  it('shows no number and no link for a member the answer sent none for', async () => {
+    renderCoop(PATH);
+    await ready();
+    const row = screen.getByText('Bruce Ishimwe').closest('li') as HTMLElement;
+    expect(within(row).queryByRole('link', { name: /Call|WhatsApp/ })).not.toBeInTheDocument();
+  });
+
   it('lists the members with their email and their role in words', async () => {
     renderCoop(PATH);
     await ready();

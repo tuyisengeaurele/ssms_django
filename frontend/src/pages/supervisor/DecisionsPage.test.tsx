@@ -20,7 +20,7 @@ import DecisionsPage from './DecisionsPage';
 
 const newRoom = {
   id: 'r1', name: 'North house', kind: 'new', approvalStatus: 'pending', areaM2: 14.5, pendingAreaM2: null, createdAt: '2026-11-05T10:00:00Z',
-  farm: { id: 'f1', name: 'Hillside' }, owner: { name: 'Aline Uwase', email: 'aline@example.rw' },
+  farm: { id: 'f1', name: 'Hillside' }, owner: { name: 'Aline Uwase', email: 'aline@example.rw', phone: '+250788123456' },
 };
 const sizeChange = {
   id: 'r2', name: 'Cocoon room', kind: 'size', approvalStatus: 'approved', areaM2: 12, pendingAreaM2: 20, createdAt: '2026-11-06T09:00:00Z',
@@ -88,6 +88,14 @@ const withEarned = (...list: object[]) => api.suggestions.mockResolvedValue({ da
 const stale = () => new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, { status: 409, data: { message: 'changed', code: 'stale' } } as never);
 
 describe('Decisions, earned allowances', () => {
+  it('shows the owner of a room, a farmer or an earned allowance with a call and a WhatsApp link when there is a number', async () => {
+    render(<MemoryRouter><LanguageProvider><ToastProvider><DecisionsPage /></ToastProvider></LanguageProvider></MemoryRouter>);
+    const aline = await item('Aline Uwase');
+    expect(within(aline).getByRole('link', { name: 'Call Aline Uwase' })).toHaveAttribute('href', 'tel:+250788123456');
+    const bruce = await item('Bruce Ishimwe');
+    expect(within(bruce).queryByRole('link', { name: /Call|WhatsApp/ })).not.toBeInTheDocument();
+  });
+
   it('shows who earned more, which lot, and the amount suggested next to the current one', async () => {
     withEarned(earned());
     open();

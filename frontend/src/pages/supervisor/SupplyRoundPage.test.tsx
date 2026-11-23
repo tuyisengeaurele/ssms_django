@@ -56,6 +56,19 @@ beforeEach(() => {
 });
 
 describe('A supply round', () => {
+  it('shows who asked, with their number and a call and a WhatsApp link when the answer carries one', async () => {
+    serve(round(), [
+      request('q1', 'Gad Anaclet', { farmer: { id: 'u-q1', name: 'Gad Anaclet', email: 'q1@x.rw', phone: '+250788123456' } }),
+      request('q2', 'Bruce Ishimwe'),
+    ]);
+    open();
+    const gad = (await screen.findByText('Gad Anaclet')).closest('tr') as HTMLElement;
+    expect(within(gad).getByText('0788 123 456')).toBeInTheDocument();
+    expect(within(gad).getByRole('link', { name: 'Call Gad Anaclet' })).toHaveAttribute('href', 'tel:+250788123456');
+    const bruce = screen.getByText('Bruce Ishimwe').closest('tr') as HTMLElement;
+    expect(within(bruce).queryByRole('link', { name: /Call|WhatsApp/ })).not.toBeInTheDocument();
+  });
+
   it('shows its facts, its lot code and its status', async () => {
     open();
     expect(await screen.findByRole('heading', { level: 2, name: 'November round' })).toBeInTheDocument();

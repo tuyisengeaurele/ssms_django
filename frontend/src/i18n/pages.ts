@@ -1020,6 +1020,11 @@ export const pageTranslations = {
   cpSubmit: k("Change number", "Changer le numéro", "Hindura nimero"),
   cpSame: k("That is already your number.", "C'est déjà votre numéro.", "Iyo ni yo nimero usanganywe."),
   cpSaved: k("Your phone number is changed.", "Votre numéro de téléphone a été changé.", "Nimero yawe ya telefone yarahinduwe."),
+  plCall: k("Call", "Appeler", "Hamagara"),
+  plChat: k("WhatsApp", "WhatsApp", "WhatsApp"),
+  plCallName: k("Call {name}", "Appeler {name}", "Hamagara {name}"),
+  plChatName: k("Message {name} on WhatsApp", "Écrire à {name} sur WhatsApp", "Andikira {name} kuri WhatsApp"),
+  pfSupervisor: k("Your supervisor", "Votre superviseur", "Umugenzuzi wawe"),
   pfSecurity: k("Password", "Mot de passe", "Ijambo ry'ibanga"),
   pfSecurityHint: k("Choose a new password when you want to.", "Choisissez un nouveau mot de passe quand vous le souhaitez.", "Hitamo irindi jambo ry'ibanga igihe ubishakiye."),
 

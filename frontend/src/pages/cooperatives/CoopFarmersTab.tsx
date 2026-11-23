@@ -8,6 +8,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { fill } from '../../utils/fill';
 import Avatar from '../../components/ui/Avatar';
+import PhoneLink from '../../components/ui/PhoneLink';
 import EmptyState from '../../components/ui/EmptyState';
 import LoadError from '../../components/ui/LoadError';
 import { Icon } from '../../components/ui/Icon';
@@ -350,6 +351,7 @@ export default function CoopFarmersTab() {
                           <div className="cell-stack">
                             <span className="cell-strong">{f.name}</span>
                             <span className="cell-sub">{f.email}</span>
+                            <PhoneLink phone={f.phone} name={f.name} />
                           </div>
                         </div>
                       </td>
