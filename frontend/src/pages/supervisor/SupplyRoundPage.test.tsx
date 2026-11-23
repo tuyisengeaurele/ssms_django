@@ -63,7 +63,7 @@ describe('A supply round', () => {
     ]);
     open();
     const gad = (await screen.findByText('Gad Anaclet')).closest('tr') as HTMLElement;
-    expect(within(gad).getByText('0788 123 456')).toBeInTheDocument();
+    expect(within(gad).getByText('0788123456')).toBeInTheDocument();
     expect(within(gad).getByRole('link', { name: 'Call Gad Anaclet' })).toHaveAttribute('href', 'tel:+250788123456');
     const bruce = screen.getByText('Bruce Ishimwe').closest('tr') as HTMLElement;
     expect(within(bruce).queryByRole('link', { name: /Call|WhatsApp/ })).not.toBeInTheDocument();

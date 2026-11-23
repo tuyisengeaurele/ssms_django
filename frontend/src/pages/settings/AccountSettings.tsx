@@ -121,7 +121,7 @@ export default function AccountSettings() {
                 inputMode="tel"
                 autoComplete="tel"
                 maxLength={40}
-                placeholder="0788 123 456"
+                placeholder="0788123456"
                 value={phone}
                 onChange={(e) => { setPhone(e.target.value); setPhoneError(''); }}
                 aria-invalid={phoneError ? true : undefined}

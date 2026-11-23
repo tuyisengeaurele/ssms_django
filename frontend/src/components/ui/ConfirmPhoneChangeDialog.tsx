@@ -93,7 +93,7 @@ export default function ConfirmPhoneChangeDialog({ open, currentPhone, onClose, 
             inputMode="tel"
             autoComplete="off"
             maxLength={40}
-            placeholder="0733 000 000"
+            placeholder="0733000000"
             value={next}
             onChange={(e) => { setNext(e.target.value); setNextError(''); }}
             aria-invalid={nextError ? true : undefined}

@@ -23,7 +23,7 @@ function open(currentPhone = '+250788123456') {
   );
 }
 const newNumber = () => screen.getByLabelText('New phone number');
-const confirm = () => screen.getByLabelText('Type 0788 123 456 to confirm');
+const confirm = () => screen.getByLabelText('Type 0788123456 to confirm');
 const change = () => screen.getByRole('button', { name: 'Change number' });
 const type = (field: HTMLElement, value: string) => fireEvent.change(field, { target: { value } });
 
@@ -116,12 +116,12 @@ describe('The change phone number dialog', () => {
   });
 
   it('shows a number that is not a Rwandan mobile beside the new number', async () => {
-    api.updateProfile.mockRejectedValue(refused('invalid_phone', 'phone', 'Enter a Rwandan mobile number, for example 0788 123 456.'));
+    api.updateProfile.mockRejectedValue(refused('invalid_phone', 'phone', 'Enter a Rwandan mobile number, for example 0788123456.'));
     open();
     type(newNumber(), '12345');
     type(confirm(), '0788 123 456');
     fireEvent.click(change());
-    expect(await screen.findByText('Enter a Rwandan mobile number, for example 0788 123 456.')).toBeInTheDocument();
+    expect(await screen.findByText('Enter a Rwandan mobile number, for example 0788123456.')).toBeInTheDocument();
   });
 
   it('shows a confirmation the server did not accept beside the confirmation field', async () => {
@@ -158,7 +158,7 @@ describe('The change phone number dialog', () => {
     localStorage.setItem('ssms_locale', 'fr');
     open();
     expect(screen.getByRole('dialog', { name: 'Changer votre numéro de téléphone' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Saisissez 0788 123 456 pour confirmer')).toBeInTheDocument();
+    expect(screen.getByLabelText('Saisissez 0788123456 pour confirmer')).toBeInTheDocument();
   });
 
   it('is written in Kinyarwanda with no English left on it', () => {

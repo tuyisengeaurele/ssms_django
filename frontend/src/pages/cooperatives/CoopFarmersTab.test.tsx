@@ -60,7 +60,7 @@ describe('The farmers of my cooperative', () => {
   it('shows a farmer\'s number with a call and a WhatsApp link, and nothing for a farmer the answer sent no number for', async () => {
     open();
     const bruce = await rowOf('Bruce Ishimwe');
-    expect(within(bruce).getByText('0788 123 456')).toBeInTheDocument();
+    expect(within(bruce).getByText('0788123456')).toBeInTheDocument();
     expect(within(bruce).getByRole('link', { name: 'Call Bruce Ishimwe' })).toHaveAttribute('href', 'tel:+250788123456');
     expect(within(bruce).getByRole('link', { name: 'Message Bruce Ishimwe on WhatsApp' })).toHaveAttribute('href', 'https://wa.me/250788123456');
     const gad = await rowOf('Gad Anaclet');

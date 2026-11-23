@@ -48,7 +48,8 @@ describe('The phone number gate', () => {
     expect(phone()).toHaveAttribute('type', 'tel');
     expect(phone()).toHaveAttribute('autocomplete', 'tel');
     expect(phone()).toHaveAttribute('aria-required', 'true');
-    expect(screen.getByText(/Only you, your supervisor and the SSMS team can see it\./)).toBeInTheDocument();
+    expect(screen.getByText('A Rwandan mobile number, for example 0788123456.')).toBeInTheDocument();
+    expect(screen.queryByText(/can see it/)).not.toBeInTheDocument();
   });
 
   it('saves the number and hands the new account to the app', async () => {
@@ -72,11 +73,11 @@ describe('The phone number gate', () => {
   });
 
   it('shows a number that is not a Rwandan mobile beside the field and keeps what was typed', async () => {
-    api.updateProfile.mockRejectedValue(refused('invalid_phone', 'phone', 'Enter a Rwandan mobile number, for example 0788 123 456.'));
+    api.updateProfile.mockRejectedValue(refused('invalid_phone', 'phone', 'Enter a Rwandan mobile number, for example 0788123456.'));
     open();
     fireEvent.change(phone(), { target: { value: '12345' } });
     save();
-    expect(await screen.findByText('Enter a Rwandan mobile number, for example 0788 123 456.')).toHaveAttribute('role', 'alert');
+    expect(await screen.findByText('Enter a Rwandan mobile number, for example 0788123456.')).toHaveAttribute('role', 'alert');
     expect(phone()).toHaveValue('12345');
     expect(auth.updateUser).not.toHaveBeenCalled();
   });

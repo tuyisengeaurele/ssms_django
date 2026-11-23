@@ -3,8 +3,8 @@ import { formatRwandaMobile, phoneFieldError, samePhone } from './phone';
 
 describe('formatRwandaMobile', () => {
   it('writes a stored number the way a person writes it', () => {
-    expect(formatRwandaMobile('+250788123456')).toBe('0788 123 456');
-    expect(formatRwandaMobile('+250722000111')).toBe('0722 000 111');
+    expect(formatRwandaMobile('+250788123456')).toBe('0788123456');
+    expect(formatRwandaMobile('+250722000111')).toBe('0722000111');
   });
 
   it('gives an empty text for no number', () => {

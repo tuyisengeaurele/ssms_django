@@ -54,7 +54,7 @@ export default function PhoneGate() {
           type="tel"
           inputMode="tel"
           autoComplete="tel"
-          placeholder="0788 123 456"
+          placeholder="0788123456"
           value={phone}
           onChange={(e) => { setPhone(e.target.value); setPhoneError(''); }}
         />

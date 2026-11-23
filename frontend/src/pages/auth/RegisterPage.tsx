@@ -73,7 +73,7 @@ export default function RegisterPage() {
           inputMode="tel"
           value={form.phone}
           onChange={set('phone')}
-          placeholder="0788 123 456"
+          placeholder="0788123456"
           autoComplete="tel"
         />
         <NewAccountFields idPrefix="reg" {...secret} onChange={(patch) => setSecret((s) => ({ ...s, ...patch }))} />
