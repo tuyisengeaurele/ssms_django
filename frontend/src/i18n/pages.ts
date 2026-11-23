@@ -1006,6 +1006,10 @@ export const pageTranslations = {
   pfSave: k("Save changes", "Enregistrer", "Bika impinduka"),
   pfSaving: k("Saving", "Enregistrement", "Kubika"),
   pfSaved: k("Your profile is updated.", "Votre profil est mis à jour.", "Umwirondoro wawe wavuguruwe."),
+  pnLabel: k("Phone number", "Numéro de téléphone", "Nimero ya telefone"),
+  pnLabelOptional: k("Phone number (optional)", "Numéro de téléphone (facultatif)", "Nimero ya telefone (si ngombwa)"),
+  pnHint: k("A Rwandan mobile number, for example 0788 123 456. Only you and the staff who look after your account can see it.", "Un numéro mobile rwandais, par exemple 0788 123 456. Seuls vous et le personnel qui s'occupe de votre compte pouvez le voir.", "Nimero ya telefone igendanwa yo mu Rwanda, urugero 0788 123 456. Ni wowe n'abakozi bita kuri konti yawe gusa bashobora kuyibona."),
+  pnRemoveNote: k("Leave it empty to remove your number.", "Laissez vide pour supprimer votre numéro.", "Irekere ubusa niba ushaka kuyikuraho."),
   pfSecurity: k("Password", "Mot de passe", "Ijambo ry'ibanga"),
   pfSecurityHint: k("Choose a new password when you want to.", "Choisissez un nouveau mot de passe quand vous le souhaitez.", "Hitamo irindi jambo ry'ibanga igihe ubishakiye."),
 

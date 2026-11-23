@@ -19,7 +19,7 @@ export default function JoinPage() {
 
   const [invitation, setInvitation] = useState<InvitationDetails | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'invalid'>('loading');
-  const [form, setForm] = useState({ name: '', email: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '' });
   const [secret, setSecret] = useState({ password: '', confirm: '', accepted: false });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -63,7 +63,10 @@ export default function JoinPage() {
     setError('');
     setBusy(true);
     try {
-      const res = await authService.register({ name: form.name, email: form.email, password: secret.password, acceptedTerms: true, invitation: token });
+      const phone = form.phone.trim();
+      const res = await authService.register({
+        name: form.name, email: form.email, password: secret.password, acceptedTerms: true, invitation: token, ...(phone ? { phone } : {}),
+      });
       if (res.data.data.user.isEmailVerified) {
         // The link went to this address, so there is nothing to verify.
         try { sessionStorage.setItem('ssms_notice', 'account_ready'); } catch { /* the notice is a courtesy */ }
@@ -147,6 +150,17 @@ export default function JoinPage() {
           readOnly={!!invitation.email}
           autoComplete="email"
           required
+        />
+        <AuthField
+          id="join-phone"
+          label={t('pnLabelOptional')}
+          hint={t('pnHint')}
+          type="tel"
+          inputMode="tel"
+          value={form.phone}
+          onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+          placeholder="0788 123 456"
+          autoComplete="tel"
         />
         <NewAccountFields idPrefix="join" {...secret} onChange={(patch) => setSecret((s) => ({ ...s, ...patch }))} />
         <AuthButton loading={busy} loadingLabel={t('jnCreating')}>{t('jnCreate')}</AuthButton>

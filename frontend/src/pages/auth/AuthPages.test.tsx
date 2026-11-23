@@ -430,6 +430,34 @@ describe('Register page', () => {
     expect(api.register).toHaveBeenCalledWith({ name: 'Aline U', email: 'aline@b.rw', password: 'Secret123', acceptedTerms: true });
   });
 
+  it('asks for a phone number, as an optional field with a plain hint', () => {
+    open();
+    const field = screen.getByLabelText('Phone number (optional)');
+    expect(field).toHaveAttribute('type', 'tel');
+    expect(field).toHaveAttribute('autocomplete', 'tel');
+    expect(field).not.toBeRequired();
+    expect(screen.getByText(/A Rwandan mobile number, for example 0788 123 456\./)).toBeInTheDocument();
+  });
+
+  it('sends the phone number when one is given', async () => {
+    api.register.mockResolvedValue({ data: {} });
+    open();
+    fillAll();
+    fill('Phone number (optional)', '0788 123 456');
+    submit();
+    await waitFor(() => expect(api.register).toHaveBeenCalledWith({ name: 'Aline U', email: 'aline@b.rw', password: 'Secret123', acceptedTerms: true, phone: '0788 123 456' }));
+  });
+
+  it('leaves the phone out when the field is empty or only spaces', async () => {
+    api.register.mockResolvedValue({ data: {} });
+    open();
+    fillAll();
+    fill('Phone number (optional)', '   ');
+    submit();
+    await waitFor(() => expect(api.register).toHaveBeenCalled());
+    expect(api.register.mock.calls[0][0]).not.toHaveProperty('phone');
+  });
+
   it('does not send a role, because the server decides it', async () => {
     api.register.mockResolvedValue({ data: {} });
     open();

@@ -1,11 +1,10 @@
 """A person can give a phone number when they register, and add, change or remove it later in their account.
 
-There is no SMS provider yet, so nothing is sent and no number is confirmed: a number is kept as the person wrote it (as +250 and nine
-digits) and is marked not confirmed. Only a confirmed number is unique, which no number can be today, so two people may hold the same one.
-The confirmation code comes when there is a provider to send it.
+There is no SMS provider yet, so nothing is sent to a number: it is kept in one form (+250 and nine digits), whichever way the person
+wrote it, and is not checked beyond being a Rwandan mobile. Confirming a number with a code, and making a confirmed number unique, come
+when there is a provider to send the code.
 """
 import pytest
-from django.utils import timezone
 from rest_framework.test import APIClient
 
 from tests.factories import CooperativeFactory, FarmFactory, UserFactory
@@ -25,13 +24,13 @@ def register(**extra):
 
 # ── registering ──────────────────────────────────────────────────────────────────────────────
 
-def test_a_number_given_when_registering_is_kept_in_one_form_and_not_confirmed():
+def test_a_number_given_when_registering_is_kept_in_one_form():
     response = register(phone='0788 123 456')
     assert response.status_code == 201
     user = User.objects.get(email='aline@example.rw')
-    assert user.phone == '+250788123456' and user.phone_verified_at is None
+    assert user.phone == '+250788123456'
     body = response.json()['data']['user']
-    assert body['phone'] == '+250788123456' and body['phoneVerified'] is False
+    assert body['phone'] == '+250788123456'
 
 
 @pytest.mark.parametrize('written', ['0788123456', '788 123 456', '+250 788 123 456', '250788123456', '0788-123-456'])
@@ -92,7 +91,7 @@ def test_a_person_with_no_number_can_add_one(person, auth_client):
     response = edit(person, auth_client, phone='0788 123 456')
     assert response.status_code == 200
     person.refresh_from_db()
-    assert person.phone == '+250788123456' and person.phone_verified_at is None
+    assert person.phone == '+250788123456'
     assert response.json()['data']['phone'] == '+250788123456'
 
 
@@ -110,24 +109,13 @@ def test_a_person_can_remove_their_number(person, auth_client, empty):
     person.save()
     assert edit(person, auth_client, phone=empty).status_code == 200
     person.refresh_from_db()
-    assert person.phone is None and person.phone_verified_at is None
+    assert person.phone is None
 
 
 def test_the_name_and_the_number_can_be_saved_together(person, auth_client):
     edit(person, auth_client, name='Aline Uwase', phone='0788 123 456')
     person.refresh_from_db()
     assert (person.name, person.phone) == ('Aline Uwase', '+250788123456')
-
-
-def test_changing_the_number_clears_the_confirmation_and_saving_the_same_one_keeps_it(person, auth_client):
-    person.phone, person.phone_verified_at = '+250788123456', timezone.now()
-    person.save()
-    edit(person, auth_client, phone='0788 123 456')
-    person.refresh_from_db()
-    assert person.phone_verified_at is not None
-    edit(person, auth_client, phone='0733 000 000')
-    person.refresh_from_db()
-    assert person.phone == '+250733000000' and person.phone_verified_at is None
 
 
 def test_a_bad_number_is_refused_and_nothing_changes(person, auth_client):
@@ -158,7 +146,7 @@ def test_an_empty_name_is_still_refused_whatever_the_number(person, auth_client)
     assert person.phone is None
 
 
-def test_two_people_may_hold_the_same_unconfirmed_number(auth_client):
+def test_two_people_may_hold_the_same_number(auth_client):
     first, second = UserFactory(), UserFactory()
     assert edit(first, auth_client, phone='0788 123 456').status_code == 200
     assert edit(second, auth_client, phone='0788 123 456').status_code == 200

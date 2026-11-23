@@ -56,7 +56,7 @@ class RegisterSerializer(serializers.Serializer):
     email    = serializers.EmailField()
     password = serializers.CharField(write_only=True)
     accepted_terms = serializers.BooleanField(write_only=True, required=False, default=False)
-    # Optional. Kept as written by the person and not confirmed: there is no way to send a code yet.
+    # Optional. Kept in one form (+250 and nine digits), whichever way the person wrote it.
     phone = PhoneField()
     # A link from a supervisor. With it, the new farmer joins that cooperative.
     invitation = serializers.CharField(write_only=True, required=False, allow_blank=True)

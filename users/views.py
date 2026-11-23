@@ -101,8 +101,7 @@ class ProfileView(APIView):
     def patch(self, request):
         """Change the name, the phone number, or both. A key that is not sent is left as it is, and an empty number removes it.
 
-        A number is kept as written (as +250 and nine digits) and is not confirmed, because there is no way to send a code yet.
-        Changing it clears any earlier confirmation."""
+        A number is kept in one form (+250 and nine digits), whichever way the person wrote it."""
         if 'name' not in request.data and 'phone' not in request.data:
             return api_error('Please enter your name.', 422)
         serializer = ProfileUpdateSerializer(data=request.data)
@@ -117,8 +116,7 @@ class ProfileView(APIView):
             changed.append('name')
         if 'phone' in serializer.validated_data and serializer.validated_data['phone'] != user.phone:
             user.phone = serializer.validated_data['phone']
-            user.phone_verified_at = None
-            changed += ['phone', 'phone_verified_at']
+            changed.append('phone')
         if changed:
             user.save(update_fields=changed)
         return api_success(UserSerializer(user).data, 'Profile updated.')

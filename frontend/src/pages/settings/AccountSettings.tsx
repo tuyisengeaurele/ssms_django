@@ -1,3 +1,4 @@
+import { AxiosError } from 'axios';
 import { FormEvent, useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -8,15 +9,20 @@ import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
 import { initialsOf } from '../../components/ui/Avatar';
 import Panel from '../../components/ui/Panel';
 import { dateFormat } from '../../utils/dateFormat';
+import { formatRwandaMobile } from '../../utils/phone';
 
-/** Who the person is, and the one thing they can change about it: their name. */
+/** Who the person is, and the two things they can change about it: their name and their phone number. */
 export default function AccountSettings() {
   const { user, refreshUser, updateUser } = useAuth();
   const { success, error: showError } = useToast();
   const { getErrorMessage } = useApiError();
   const { t, locale } = useLanguage();
 
+  const savedPhone = formatRwandaMobile(user?.phone);
   const [name, setName] = useState(user?.name ?? '');
+  const [phone, setPhone] = useState(savedPhone);
+  // The server's refusal of the number, shown beside the field until the person types again.
+  const [phoneError, setPhoneError] = useState('');
   const [saving, setSaving] = useState(false);
 
   // Fetch the latest details, so the cooperative and name are never stale.
@@ -29,6 +35,13 @@ export default function AccountSettings() {
     if (user?.name) setName(user.name);
   }, [user?.name]);
 
+  useEffect(() => {
+    setPhone(formatRwandaMobile(user?.phone));
+  }, [user?.phone]);
+
+  const nameChanged = name !== user?.name;
+  const phoneChanged = phone.trim() !== savedPhone;
+
   const joined = user?.createdAt
     ? dateFormat(locale, { dateStyle: 'medium' }).format(new Date(user.createdAt))
     : '-';
@@ -36,12 +49,18 @@ export default function AccountSettings() {
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setPhoneError('');
     try {
-      const res = await authService.updateProfile({ name });
+      // Only what changed is sent, so saving a new number never touches the name, and the other way round.
+      const body: { name?: string; phone?: string | null } = {};
+      if (nameChanged) body.name = name;
+      if (phoneChanged) body.phone = phone.trim() || null;
+      const res = await authService.updateProfile(body);
       updateUser(res.data.data);
       success(t('pfSaved'));
     } catch (err) {
-      showError(getErrorMessage(err));
+      if (err instanceof AxiosError && err.response?.data?.code === 'invalid_phone') setPhoneError(getErrorMessage(err));
+      else showError(getErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -75,12 +94,33 @@ export default function AccountSettings() {
             <span id="pf-email-note" className="form-hint">{t('pfEmailNote')}</span>
           </div>
 
+          <div className="form-group">
+            <label className="form-label" htmlFor="pf-phone">{t('pnLabel')}</label>
+            <input
+              id="pf-phone"
+              className="form-input"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              maxLength={40}
+              placeholder="0788 123 456"
+              value={phone}
+              onChange={(e) => { setPhone(e.target.value); setPhoneError(''); }}
+              aria-invalid={phoneError ? true : undefined}
+              aria-describedby={phoneError ? 'pf-phone-error pf-phone-note' : 'pf-phone-note'}
+            />
+            {phoneError ? <span id="pf-phone-error" className="form-error" role="alert">{phoneError}</span> : null}
+            <span id="pf-phone-note" className="form-hint">
+              {t('pnHint')} {t('pnRemoveNote')}
+            </span>
+          </div>
+
           <p className="form-hint profile-note">
             {t('pfRoleNote')}
             {!user?.cooperativeId && user?.role !== 'ADMIN' ? ` ${t('pfCoopHelp')}` : ''}
           </p>
 
-          <button type="submit" className="btn btn-primary" disabled={saving || name === user?.name}>
+          <button type="submit" className="btn btn-primary" disabled={saving || !(nameChanged || phoneChanged)}>
             {saving ? <><span className="spinner" />{t('pfSaving')}</> : t('pfSave')}
           </button>
         </form>

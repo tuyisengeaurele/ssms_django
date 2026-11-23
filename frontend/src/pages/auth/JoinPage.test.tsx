@@ -82,6 +82,22 @@ describe('Join page, signed out', () => {
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/check-email?email=aline%40example.rw'));
   });
 
+  it('sends an optional phone number through the link too', async () => {
+    api.register.mockResolvedValue({ data: { data: { user: { isEmailVerified: false } } } });
+    open();
+    await screen.findByRole('heading', { level: 1, name: 'Join Gatsibo Silk' });
+    fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Aline Uwase' } });
+    fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'aline@example.rw' } });
+    fireEvent.change(screen.getByLabelText('Phone number (optional)'), { target: { value: '0722 000 111' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Zebra-Quartz-84' } });
+    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Zebra-Quartz-84' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /I agree to the/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create account and join' }));
+    await waitFor(() => expect(api.register).toHaveBeenCalledWith({
+      name: 'Aline Uwase', email: 'aline@example.rw', password: 'Zebra-Quartz-84', acceptedTerms: true, invitation: 'tok123', phone: '0722 000 111',
+    }));
+  });
+
   it('goes straight to sign in when the link was sent to that address and so proves it', async () => {
     api.get.mockResolvedValue({ data: { data: { ...details, email: 'aline@example.rw' } } });
     api.register.mockResolvedValue({ data: { data: { user: { isEmailVerified: true } } } });
