@@ -57,7 +57,7 @@ describe('Sidebar for an administrator', () => {
     expect(names).toEqual([
       'Dashboard', 'Decisions', 'Supply', 'Farm monitoring',
       'Farms', 'Harvests', 'Disease checks', 'Devices', 'Alerts',
-      'Users', 'Cooperatives', 'Messages', 'System',
+      'Users', 'Cooperatives', 'Messages', 'Requests', 'System',
       'Settings',
     ]);
   });
@@ -114,10 +114,10 @@ describe('Sidebar for an administrator', () => {
 });
 
 describe('The admin menu after the cleanup', () => {
-  it('has 13 pages and Settings, the Decisions and Supply pages included', () => {
+  it('has 14 pages and Settings, the Decisions, Supply and Requests pages included', () => {
     sidebar();
     const nav = screen.getByRole('navigation', { name: 'Main menu' });
-    expect(within(nav).getAllByRole('link')).toHaveLength(14);
+    expect(within(nav).getAllByRole('link')).toHaveLength(15);
   });
 
   it('shows the all-farms view as Farm monitoring, at the address the supervisor dashboard has', () => {
@@ -144,7 +144,7 @@ describe('The admin menu after the cleanup', () => {
   it('puts the admin pages in a group called Administration', () => {
     sidebar();
     const group = screen.getByRole('group', { name: 'Administration' });
-    expect(within(group).getAllByRole('link').map((a) => a.textContent)).toEqual(['Users', 'Cooperatives', 'Messages', 'System']);
+    expect(within(group).getAllByRole('link').map((a) => a.textContent)).toEqual(['Users', 'Cooperatives', 'Messages', 'Requests', 'System']);
   });
 });
 

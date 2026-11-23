@@ -112,6 +112,7 @@ function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) =
           { to: '/admin/users', label: t('ptUsers'), icon: 'users' },
           { to: '/admin/cooperatives', label: t('ptCooperatives'), icon: 'cooperatives' },
           { to: '/admin/contacts', label: t('ptMessages'), icon: 'messages' },
+          { to: '/admin/requests', label: t('ptCoopRequests'), icon: 'inbox' },
           { to: '/admin/system', label: t('ptSystem'), icon: 'activity' },
         ],
       },

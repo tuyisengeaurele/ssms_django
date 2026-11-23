@@ -10,7 +10,7 @@ const APP_PATHS = [
   '/farmer', '/supervisor', '/supervisor/cooperative', '/supervisor/cooperative/farms', '/supervisor/cooperative/farmers', '/farms', '/farms/new', '/farms/abc123', '/farms/abc123/batches/new',
   '/batches', '/batches/compare', '/batches/abc123', '/batches/abc123/detect', '/batches/abc123/harvest',
   '/harvests', '/detections/reports', '/alerts', '/devices', '/settings/account', '/settings/security', '/settings/appearance', '/settings/safe-ranges',
-  '/admin', '/admin/users', '/admin/cooperatives', '/admin/cooperatives/all', '/admin/cooperatives/abc123', '/supply/lots/L2611-AB12', '/admin/cooperatives/abc123/members', '/admin/contacts', '/admin/system', '/admin/system/health', '/admin/system/logs', '/admin/system/activity',
+  '/admin', '/admin/users', '/admin/cooperatives', '/admin/cooperatives/all', '/admin/cooperatives/abc123', '/supply/lots/L2611-AB12', '/admin/cooperatives/abc123/members', '/admin/contacts', '/admin/requests', '/admin/system', '/admin/system/health', '/admin/system/logs', '/admin/system/activity',
 ];
 
 describe('getPageInfo', () => {
@@ -19,6 +19,7 @@ describe('getPageInfo', () => {
     ['/admin/users', 'Users', 'Administration'],
     ['/admin/cooperatives', 'Cooperatives', 'Administration'],
     ['/admin/contacts', 'Messages', 'Administration'],
+    ['/admin/requests', 'Cooperative requests', 'Administration'],
     ['/admin/system', 'System', 'Administration'],
     ['/admin/system/health', 'System', 'Administration'],
     ['/admin/system/logs', 'System', 'Administration'],
