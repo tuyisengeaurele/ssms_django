@@ -96,6 +96,7 @@ describe('The typed confirmation dialog', () => {
   it('shows the intro and the hint', () => {
     open({ intro: <p>This cannot be undone.</p>, hint: 'This stops a stray click.' });
     expect(screen.getByText('This cannot be undone.')).toBeInTheDocument();
+    expect(screen.getByText('This cannot be undone.').closest('.cbt-intro')).not.toBeNull();
     expect(screen.getByText('This stops a stray click.')).toBeInTheDocument();
   });
 

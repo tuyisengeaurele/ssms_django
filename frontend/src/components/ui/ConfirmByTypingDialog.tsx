@@ -78,7 +78,7 @@ export default function ConfirmByTypingDialog({
         </>
       )}
     >
-      {intro}
+      {intro ? <div className="cbt-intro">{intro}</div> : null}
       <form id={formId} onSubmit={submit} noValidate>
         {children}
         <div className="form-group">
