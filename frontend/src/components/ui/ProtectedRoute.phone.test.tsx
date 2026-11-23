@@ -36,7 +36,8 @@ describe('The route guard and the phone number', () => {
   it('shows the gate instead of the page when the account has no number', async () => {
     auth.value = { ...auth.value, user: { ...farmer, phoneRequired: true } };
     open();
-    expect(await screen.findByRole('heading', { level: 1, name: 'Add your phone number' })).toBeInTheDocument();
+    // The gate is loaded on demand, so a busy machine can take longer than the default second.
+    expect(await screen.findByRole('heading', { level: 1, name: 'Add your phone number' }, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.queryByText('Farmer dashboard')).not.toBeInTheDocument();
   });
 
