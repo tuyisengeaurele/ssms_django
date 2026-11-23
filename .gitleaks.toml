@@ -8,5 +8,7 @@ useDefault = true
 # it is rotated.
 [allowlist]
 description = "Throwaway values used by CI"
-regexes = ['''ci-only-[a-z-]+-that-protects-nothing''']
+# Zebra-Quartz-84 is the made-up password the tests use to register and sign in test accounts (24 places in the tests, none
+# in the app). It sits next to the word "password:" in a request body, so the generic rule reads it as a key. It opens nothing.
+regexes = ['''ci-only-[a-z-]+-that-protects-nothing''', '''Zebra-Quartz-84''']
 paths = ['''\.github/workflows/ci\.yml''']
