@@ -5,7 +5,9 @@ import { useToast } from '../../context/ToastContext';
 import { useApiError } from '../../hooks/useApiError';
 import { accountService, EmailChangePending } from '../../services/account.service';
 import { authService } from '../../services/auth.service';
+import { CooperativeRequest, cooperativeRequestService } from '../../services/cooperativeRequest.service';
 import ConfirmPhoneChangeDialog from '../../components/ui/ConfirmPhoneChangeDialog';
+import CooperativeRequestModal from '../../components/ui/CooperativeRequestModal';
 import EmailChangeDialog from '../../components/ui/EmailChangeDialog';
 import PhoneLink from '../../components/ui/PhoneLink';
 import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
@@ -14,6 +16,16 @@ import Panel from '../../components/ui/Panel';
 import { dateFormat } from '../../utils/dateFormat';
 import { fill } from '../../utils/fill';
 import { formatRwandaMobile, phoneFieldError } from '../../utils/phone';
+
+const SEEN_KEY = 'ssms:coop-request-seen';
+
+/** Which answer the person already read and put away. A convenience of this browser only, so a failure of storage is no failure. */
+function readSeen(): string {
+  try { return localStorage.getItem(SEEN_KEY) ?? ''; } catch { return ''; }
+}
+function writeSeen(id: string) {
+  try { localStorage.setItem(SEEN_KEY, id); } catch { /* the answer shows again next time, which is harmless */ }
+}
 
 /** Who the person is, and the two things they can change about it: their name and their phone number. */
 export default function AccountSettings() {
@@ -32,6 +44,11 @@ export default function AccountSettings() {
   const [changingEmail, setChangingEmail] = useState(false);
   // A change of login email that waits for its link to be opened. The new address is masked by the server.
   const [pendingEmail, setPendingEmail] = useState<EmailChangePending | null>(null);
+  // Only a farmer or a supervisor belongs to a cooperative, so only they can ask to change it.
+  const canAskCooperative = user?.role === 'FARMER' || user?.role === 'SUPERVISOR';
+  const [coopRequest, setCoopRequest] = useState<CooperativeRequest | null>(null);
+  const [askingCooperative, setAskingCooperative] = useState(false);
+  const [seenRequest, setSeenRequest] = useState(readSeen);
 
   // Fetch the latest details, so the cooperative and name are never stale.
   useEffect(() => {
@@ -51,6 +68,30 @@ export default function AccountSettings() {
     return () => { live = false; };
   }, []);
 
+  useEffect(() => {
+    if (!canAskCooperative) return;
+    let live = true;
+    cooperativeRequestService.mine()
+      .then((res) => { if (live) setCoopRequest(res.data.data); })
+      .catch(() => undefined);
+    return () => { live = false; };
+  }, [canAskCooperative]);
+
+  const withdrawCooperativeRequest = async () => {
+    try {
+      await cooperativeRequestService.withdraw();
+      setCoopRequest(null);
+      success(t('cqWithdrawn'));
+    } catch (err) {
+      showError(getErrorMessage(err));
+    }
+  };
+
+  const putAwayAnswer = (id: string) => {
+    writeSeen(id);
+    setSeenRequest(id);
+  };
+
   const cancelEmailChange = async () => {
     try {
       await accountService.cancelEmailChange();
@@ -69,6 +110,15 @@ export default function AccountSettings() {
   const hasPhone = !!user?.phone;
   const nameChanged = name !== user?.name;
   const phoneChanged = !hasPhone && phone.trim() !== '';
+
+  const day = (iso: string) => dateFormat(locale, { dateStyle: 'medium' }).format(new Date(iso));
+  // An answer stays until the person has read it and put it away.
+  const answered = coopRequest && (coopRequest.status === 'approved' || coopRequest.status === 'declined') && coopRequest.id !== seenRequest ? coopRequest : null;
+  const answerText = (r: CooperativeRequest) => {
+    const date = day(r.decidedAt ?? r.createdAt);
+    if (r.status === 'declined') return fill(t('cqDecidedNo'), { date });
+    return r.to ? fill(t('cqDecidedYes'), { name: r.to.name, date }) : fill(t('cqDecidedLeft'), { date });
+  };
 
   const joined = user?.createdAt
     ? dateFormat(locale, { dateStyle: 'medium' }).format(new Date(user.createdAt))
@@ -106,7 +156,30 @@ export default function AccountSettings() {
         <dl className="identity-facts">
           <div><dt>{t('pfSince')}</dt><dd>{joined}</dd></div>
           <div><dt>{t('pfAccountId')}</dt><dd className="cell-mono">{user?.id?.slice(-8).toUpperCase() ?? '-'}</dd></div>
-          <div><dt>{t('pfCooperative')}</dt><dd>{user?.cooperativeName ?? t('pfNotAssigned')}</dd></div>
+          <div>
+            <dt>{t('pfCooperative')}</dt>
+            <dd>
+              <span className="cell-stack">
+                <span>{user?.cooperativeName ?? t('pfNotAssigned')}</span>
+                {canAskCooperative && coopRequest?.status !== 'requested' ? (
+                  <button type="button" className="btn btn-ghost btn-xs" aria-label={t('cqChangeAria')} onClick={() => setAskingCooperative(true)}>{t('cpChange')}</button>
+                ) : null}
+                {coopRequest?.status === 'requested' ? (
+                  <span className="form-hint">
+                    <span>{coopRequest.to ? fill(t('cqWaiting'), { date: day(coopRequest.createdAt), name: coopRequest.to.name }) : fill(t('cqWaitingLeave'), { date: day(coopRequest.createdAt) })}</span>{' '}
+                    <button type="button" className="btn btn-ghost btn-xs" onClick={withdrawCooperativeRequest}>{t('cqWithdraw')}</button>
+                  </span>
+                ) : null}
+                {answered ? (
+                  <span className="form-hint">
+                    <span>{answerText(answered)}</span>
+                    {answered.decisionNote ? <span> {fill(t('cqNote'), { note: answered.decisionNote })}</span> : null}{' '}
+                    <button type="button" className="btn btn-ghost btn-xs" onClick={() => putAwayAnswer(answered.id)}>{t('cqGotIt')}</button>
+                  </span>
+                ) : null}
+              </span>
+            </dd>
+          </div>
           {user?.supervisor ? (
             <div><dt>{t('pfSupervisor')}</dt><dd><span className="cell-stack"><span>{user.supervisor.name}</span><PhoneLink phone={user.supervisor.phone} name={user.supervisor.name} /></span></dd></div>
           ) : null}
@@ -176,6 +249,15 @@ export default function AccountSettings() {
           currentEmail={user.email}
           onClose={() => setChangingEmail(false)}
           onStarted={(change) => { setPendingEmail(change); success(fill(t('ecSent'), { email: change.newEmail })); setChangingEmail(false); }}
+        />
+      ) : null}
+
+      {canAskCooperative ? (
+        <CooperativeRequestModal
+          open={askingCooperative}
+          currentCooperativeId={user?.cooperativeId ?? null}
+          onClose={() => setAskingCooperative(false)}
+          onSent={(request) => { setCoopRequest(request); success(t('cqSent')); setAskingCooperative(false); }}
         />
       ) : null}
 
