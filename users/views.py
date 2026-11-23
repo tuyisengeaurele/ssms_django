@@ -21,7 +21,7 @@ from . import mfa, mfa_challenge
 from .cookie_utils import REFRESH_COOKIE, clear_refresh_cookie, set_refresh_cookie
 from .email_verification_views import _send_verification_email
 from .models import Role, UserSession
-from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
+from .serializers import LoginSerializer, ProfileUpdateSerializer, RegisterSerializer, UserSerializer
 from .sessions import IDLE_MESSAGE, SessionEnded, end_all_but, reissue, revoke, rotate, start_session
 from .signin import finish_sign_in, too_many_attempts
 
@@ -99,14 +99,29 @@ class ProfileView(APIView):
         return api_success(UserSerializer(request.user).data)
 
     def patch(self, request):
-        name = request.data.get('name', '').strip()
-        if not name:
+        """Change the name, the phone number, or both. A key that is not sent is left as it is, and an empty number removes it.
+
+        A number is kept as written (as +250 and nine digits) and is not confirmed, because there is no way to send a code yet.
+        Changing it clears any earlier confirmation."""
+        if 'name' not in request.data and 'phone' not in request.data:
             return api_error('Please enter your name.', 422)
-        if len(name) > 100:
-            return api_error('Please keep your name under 100 characters.', 422)
-        request.user.name = name
-        request.user.save(update_fields=['name'])
-        return api_success(UserSerializer(request.user).data, 'Profile updated.')
+        serializer = ProfileUpdateSerializer(data=request.data)
+        if not serializer.is_valid():
+            errors = serializer.errors
+            if 'name' in errors and 'phone' not in errors:
+                return api_error(str(errors['name'][0]), 422, errors)
+            return api_error('Please check what you entered and try again.', 422, errors, code='invalid_input')
+        user, changed = request.user, []
+        if 'name' in serializer.validated_data:
+            user.name = serializer.validated_data['name']
+            changed.append('name')
+        if 'phone' in serializer.validated_data and serializer.validated_data['phone'] != user.phone:
+            user.phone = serializer.validated_data['phone']
+            user.phone_verified_at = None
+            changed += ['phone', 'phone_verified_at']
+        if changed:
+            user.save(update_fields=changed)
+        return api_success(UserSerializer(user).data, 'Profile updated.')
 
 
 class LogoutView(APIView):

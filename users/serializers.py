@@ -1,9 +1,12 @@
 from django.contrib.auth import authenticate, get_user_model
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from core.validators import validate_new_password
+
+from .phone_numbers import normalize_rwanda_mobile
 
 User = get_user_model()
 
@@ -27,11 +30,34 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.phone_verified_at is not None
 
 
+class PhoneField(serializers.CharField):
+    """An optional Rwandan mobile number. Any usual way of writing it is accepted and it is kept as +250 and nine digits.
+    Empty, blank or null all mean no number. Anything else that is not a Rwandan mobile is refused with the code `invalid_phone`."""
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault('required', False)
+        kwargs.setdefault('allow_blank', True)
+        kwargs.setdefault('allow_null', True)
+        kwargs.setdefault('max_length', 40)
+        super().__init__(**kwargs)
+
+    def run_validation(self, data=serializers.empty):
+        value = super().run_validation(data)
+        if value is None or not str(value).strip():
+            return None
+        try:
+            return normalize_rwanda_mobile(value)
+        except DjangoValidationError:
+            raise serializers.ValidationError('Enter a Rwandan mobile number, for example 0788 123 456.', code='invalid_phone') from None
+
+
 class RegisterSerializer(serializers.Serializer):
     name     = serializers.CharField(max_length=100)
     email    = serializers.EmailField()
     password = serializers.CharField(write_only=True)
     accepted_terms = serializers.BooleanField(write_only=True, required=False, default=False)
+    # Optional. Kept as written by the person and not confirmed: there is no way to send a code yet.
+    phone = PhoneField()
     # A link from a supervisor. With it, the new farmer joins that cooperative.
     invitation = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
@@ -74,6 +100,7 @@ class RegisterSerializer(serializers.Serializer):
                 email=validated_data['email'],
                 password=validated_data['password'],
                 name=validated_data['name'],
+                phone=validated_data.get('phone'),
                 role='FARMER',   # hard-coded, never trust client-supplied role
             )
             if validated_data.get('accepted_terms'):
@@ -102,6 +129,7 @@ class AdminCreateUserSerializer(serializers.Serializer):
     role = serializers.ChoiceField(choices=['ADMIN', 'SUPERVISOR', 'FARMER'], default='FARMER')
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
     cooperative_id = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    phone = PhoneField()
 
     def validate_email(self, value):
         if User.objects.filter(email=value.lower()).exists():
@@ -138,8 +166,21 @@ class AdminCreateUserSerializer(serializers.Serializer):
             name=validated_data['name'],
             role=validated_data['role'],
             cooperative=validated_data['cooperative'],
+            phone=validated_data.get('phone'),
             is_email_verified=True,
         )
+
+
+class ProfileUpdateSerializer(serializers.Serializer):
+    """What a person can change about themselves: their name and their phone number. Either, or both. An empty number removes it."""
+    name = serializers.CharField(required=False, allow_blank=True, max_length=100, error_messages={'max_length': 'Please keep your name under 100 characters.'})
+    phone = PhoneField()
+
+    def validate_name(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError('Please enter your name.')
+        return value
 
 
 class LoginSerializer(serializers.Serializer):

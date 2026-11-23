@@ -8,6 +8,7 @@ from .doc_text import t
 CODE_KEYS = {
     'bad_login': 'erBadLogin',
     'email_taken': 'erEmailTaken',
+    'invalid_phone': 'erBadPhone',
     'invalid_input': 'erCheckInput',
     'forbidden': 'erForbidden',
     'not_found': 'erNotFound',
