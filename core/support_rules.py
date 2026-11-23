@@ -37,6 +37,7 @@ SAFE_POSTS = frozenset({('locations', 'locate'), ('account', 'ping')})
 REFUSED_PAIRS = frozenset({('account', 'sessions'), ('alerts', 'stream_ticket'), ('alerts', 'stream'), ('harvests', 'share')})
 REFUSED_RESOURCES = frozenset({
     'support_access', 'second_factor', 'admin_users', 'system_health', 'audit_log', 'logs', 'contacts', 'reports',
+    'account_security', 'cooperative_requests', 'cooperative_options',
 })
 
 

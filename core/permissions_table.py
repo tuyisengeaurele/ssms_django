@@ -101,6 +101,15 @@ PERMISSIONS: dict[str, dict[str, frozenset]] = {
     'admin_users': {
         'read': ADMIN_ONLY, 'create': ADMIN_ONLY, 'update': ADMIN_ONLY, 'delete': ADMIN_ONLY, 'restore': ADMIN_ONLY,
     },
+    # What a person does to their own account and has to prove: a new email, closing it, downloading their data. Closing is
+    # open to every role at the door, and the route tells staff, in plain words, to ask the SSMS team.
+    'account_security': {'email_change': ALL, 'delete': ALL, 'export': ALL},
+    # A farmer or supervisor asking to move to another cooperative, and the SSMS team deciding. Only the names of the
+    # cooperatives are listed to the person asking.
+    'cooperative_requests': {
+        'read': NON_ADMIN, 'create': NON_ADMIN, 'withdraw': NON_ADMIN, 'review': ADMIN_ONLY, 'decide': ADMIN_ONLY,
+    },
+    'cooperative_options': {'read': NON_ADMIN},
 }
 
 
