@@ -16,6 +16,7 @@ from supply import allowance as supply_allowance
 from supply import nudges as supply_nudges
 from supply.rounds import rounds_to_split
 from users.models import User
+from users.phone_visibility import person_row, visible_phone_ids
 
 from . import invitations
 from .models import Cooperative, CooperativeInvitation
@@ -139,8 +140,9 @@ class TeamFarmerListView(APIView):
         )
         farmers = list(farmers)
         amounts = supply_allowance.for_farmers(farmers, coop)
+        visible = visible_phone_ids(request.user, [f.pk for f in farmers])
         return api_success([
-            {'id': f.pk, 'name': f.name, 'email': f.email, 'joined_at': f.created_at, 'farm_count': f.farm_count, 'allowance': amounts[f.pk]}
+            person_row(request.user, f, visible, joined_at=f.created_at, farm_count=f.farm_count, allowance=amounts[f.pk])
             for f in farmers
         ])
 
@@ -161,6 +163,8 @@ class TeamRoomListView(APIView):
                 return api_error('You are not part of a cooperative yet.', 403)
         else:
             cooperative_id = request.query_params.get('cooperativeId') or None
+        waiting = list(room_review.waiting_for(user, cooperative_id))
+        visible = visible_phone_ids(user, [r.farm.owner_id for r in waiting])
         rows = [
             {
                 'id': r.pk,
@@ -171,9 +175,9 @@ class TeamRoomListView(APIView):
                 'pending_area_m2': r.pending_area_m2,
                 'created_at': r.created_at,
                 'farm': {'id': r.farm_id, 'name': r.farm.name},
-                'owner': {'name': r.farm.owner.name, 'email': r.farm.owner.email},
+                'owner': person_row(user, r.farm.owner, visible),
             }
-            for r in room_review.waiting_for(user, cooperative_id)
+            for r in waiting
         ]
         return api_success({'rooms': rows, 'count': len(rows)})
 

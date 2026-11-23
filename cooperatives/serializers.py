@@ -58,17 +58,11 @@ class CooperativeDetailSerializer(CooperativeSerializer):
     def get_members(self, obj):
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        users = User.objects.filter(cooperative=obj, is_active=True).order_by('role', 'name')
-        return [
-            {
-                'id': u.id,
-                'name': u.name,
-                'email': u.email,
-                'role': u.role,
-                'created_at': u.created_at.isoformat(),
-            }
-            for u in users
-        ]
+        from users.phone_visibility import person_row, visible_phone_ids
+        users = list(User.objects.filter(cooperative=obj, is_active=True).order_by('role', 'name'))
+        viewer = self.context['request'].user
+        visible = visible_phone_ids(viewer, [u.pk for u in users])
+        return [person_row(viewer, u, visible, role=u.role, created_at=u.created_at.isoformat()) for u in users]
 
     def get_farms(self, obj):
         from farms.models import Farm

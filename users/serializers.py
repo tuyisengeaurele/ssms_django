@@ -18,12 +18,13 @@ class UserSerializer(serializers.ModelSerializer):
     cooperative_name = serializers.SerializerMethodField()
     phone_verified = serializers.SerializerMethodField()
     phone_required = serializers.SerializerMethodField()
+    supervisor = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             'id', 'name', 'email', 'role', 'cooperative_id', 'cooperative_name', 'is_email_verified', 'is_active',
-            'phone', 'phone_verified', 'phone_required', 'photo_url', 'preferred_language', 'created_at', 'updated_at',
+            'phone', 'phone_verified', 'phone_required', 'supervisor', 'photo_url', 'preferred_language', 'created_at', 'updated_at',
         ]
         read_only_fields = fields
 
@@ -32,6 +33,22 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_phone_verified(self, obj):
         return obj.phone_verified_at is not None
+
+    def get_supervisor(self, obj):
+        """The supervisor of a farmer's cooperative, for the farmer's own screen, or None. Only asked for with
+        context={'with_supervisor': True}: a list of accounts would otherwise cost a query per row."""
+        if not self.context.get('with_supervisor') or obj.role != 'FARMER' or not obj.cooperative_id:
+            return None
+        found = User.objects.filter(role='SUPERVISOR', cooperative_id=obj.cooperative_id, is_active=True).order_by('name').first()
+        if found is None:
+            return None
+        return {'id': found.pk, 'name': found.name, 'phone': found.phone}
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not self.context.get('with_supervisor'):
+            data.pop('supervisor', None)
+        return data
 
     def get_phone_required(self, obj):
         # True for an account with no number: the page then shows the screen that asks for one.

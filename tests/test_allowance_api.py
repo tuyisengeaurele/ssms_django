@@ -158,7 +158,7 @@ def test_a_supervisor_lists_the_open_requests_of_their_cooperative_only(auth_cli
     assert data['count'] == 1
     row = data['requests'][0]
     assert (row['boxesAsked'], row['currentBoxes'], row['reason']) == (5, allowance.current(farmer)['boxes'], 'I built a second house')
-    assert row['farmer'] == {'id': farmer.pk, 'name': 'Aline Uwase', 'email': farmer.email}
+    assert row['farmer'] == {'id': farmer.pk, 'name': 'Aline Uwase', 'email': farmer.email, 'phone': farmer.phone}
     assert auth_client(outsider).get(REQUESTS).json()['data']['count'] == 1
 
 

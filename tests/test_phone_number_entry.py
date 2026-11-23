@@ -146,17 +146,16 @@ def test_two_people_cannot_hold_the_same_number(auth_client):
     assert second.phone is None
 
 
-# ── who can see a number ─────────────────────────────────────────────────────────────────────
+# ── who can see a number (the full rules: tests/test_phone_visibility.py) ─────────────────────────────────────────────────────────────────────
 
-def test_nobody_else_is_shown_a_farmers_number(auth_client):
-    """The cooperative's own lists do not carry numbers yet. Showing them to the staff is a separate, deliberate step."""
+def test_another_farmer_is_never_shown_a_farmers_number(auth_client):
+    """The rules for the staff and for a farmer's own supervisor are in tests/test_phone_visibility.py."""
     coop = CooperativeFactory()
-    supervisor = UserFactory(role='SUPERVISOR', cooperative=coop)
     farmer = UserFactory(cooperative=coop, phone='+250788123456')
     FarmFactory(owner=farmer)
     other_farmer = UserFactory(cooperative=coop)
-    for who, url in ((supervisor, '/api/team/farmers'), (supervisor, f'/api/cooperatives/{coop.pk}'), (other_farmer, '/api/auth/me')):
-        response = auth_client(who).get(url)
+    for url in ('/api/auth/me', f'/api/cooperatives/{coop.pk}'):
+        response = auth_client(other_farmer).get(url)
         assert response.status_code == 200, url
         assert '788123456' not in response.content.decode(), url
 

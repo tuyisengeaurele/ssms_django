@@ -116,7 +116,7 @@ class ProfileView(APIView):
     resource = 'account'
 
     def get(self, request):
-        return api_success(UserSerializer(request.user).data)
+        return api_success(UserSerializer(request.user, context={'with_supervisor': True}).data)
 
     def patch(self, request):
         """Change the name, the phone number, or both. A key that is not sent is left as it is.
@@ -156,7 +156,7 @@ class ProfileView(APIView):
                 return _phone_answer('phone_taken', PHONE_TAKEN)
             if 'phone' in changed:
                 record_security_event('phone_changed', request, user=user, detail=describe_change(old_number, user.phone))
-        return api_success(UserSerializer(user).data, 'Profile updated.')
+        return api_success(UserSerializer(user, context={'with_supervisor': True}).data, 'Profile updated.')
 
 
 class LogoutView(APIView):
