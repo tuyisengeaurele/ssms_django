@@ -411,10 +411,11 @@ describe('Login page', () => {
 describe('Register page', () => {
   const open = () => renderAt('/register', <RegisterPage />, '/register');
   const submit = () => fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
-  const fillAll = (over: { password?: string; confirm?: string; terms?: boolean } = {}) => {
-    const { password = 'Secret123', confirm = password, terms = true } = over;
+  const fillAll = (over: { password?: string; confirm?: string; terms?: boolean; phone?: string } = {}) => {
+    const { password = 'Secret123', confirm = password, terms = true, phone = '0788 123 456' } = over;
     fill('Full name', 'Aline U');
     fill('Email address', 'aline@b.rw');
+    fill('Phone number', phone);
     fill('Password', password);
     fill('Confirm password', confirm);
     if (terms) fireEvent.click(screen.getByRole('checkbox', { name: /I agree to the/ }));
@@ -427,35 +428,61 @@ describe('Register page', () => {
     fillAll();
     submit();
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/check-email?email=aline%40b.rw'));
-    expect(api.register).toHaveBeenCalledWith({ name: 'Aline U', email: 'aline@b.rw', password: 'Secret123', acceptedTerms: true });
+    expect(api.register).toHaveBeenCalledWith({ name: 'Aline U', email: 'aline@b.rw', password: 'Secret123', acceptedTerms: true, phone: '0788 123 456' });
   });
 
-  it('asks for a phone number, as an optional field with a plain hint', () => {
+  it('asks for a phone number as a required field, with a plain hint saying who can see it', () => {
     open();
-    const field = screen.getByLabelText('Phone number (optional)');
+    const field = screen.getByLabelText('Phone number');
     expect(field).toHaveAttribute('type', 'tel');
     expect(field).toHaveAttribute('autocomplete', 'tel');
-    expect(field).not.toBeRequired();
-    expect(screen.getByText(/A Rwandan mobile number, for example 0788 123 456\./)).toBeInTheDocument();
+    expect(field).toHaveAttribute('aria-required', 'true');
+    expect(screen.queryByLabelText(/optional/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/A Rwandan mobile number, for example 0788 123 456\. Only you, your supervisor and the SSMS team can see it\./)).toBeInTheDocument();
   });
 
-  it('sends the phone number when one is given', async () => {
+  it('sends the phone number as it was written', async () => {
     api.register.mockResolvedValue({ data: {} });
     open();
-    fillAll();
-    fill('Phone number (optional)', '0788 123 456');
+    fillAll({ phone: '  0722 000 111 ' });
     submit();
-    await waitFor(() => expect(api.register).toHaveBeenCalledWith({ name: 'Aline U', email: 'aline@b.rw', password: 'Secret123', acceptedTerms: true, phone: '0788 123 456' }));
+    await waitFor(() => expect(api.register).toHaveBeenCalledWith({ name: 'Aline U', email: 'aline@b.rw', password: 'Secret123', acceptedTerms: true, phone: '0722 000 111' }));
   });
 
-  it('leaves the phone out when the field is empty or only spaces', async () => {
-    api.register.mockResolvedValue({ data: {} });
+  it.each(['', '   '])('does not ask the server when the phone number is empty (%j), and says so beside the field', async (empty) => {
+    open();
+    fillAll({ phone: empty });
+    submit();
+    const message = await screen.findByText('Please enter your phone number.');
+    expect(message).toHaveAttribute('role', 'alert');
+    const field = screen.getByLabelText('Phone number');
+    expect(field).toHaveAttribute('aria-invalid', 'true');
+    expect(field.getAttribute('aria-describedby')).toContain(message.id);
+    expect(api.register).not.toHaveBeenCalled();
+    fill('Phone number', '0788 123 456');
+    expect(screen.queryByText('Please enter your phone number.')).not.toBeInTheDocument();
+    expect(field).not.toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('shows the server refusal of the number beside the field, and keeps the rest of the form', async () => {
+    api.register.mockRejectedValue(new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, {
+      status: 422, data: { code: 'phone_taken', message: 'Please check what you entered and try again.', errors: { phone: ['This phone number is already used by another account. Contact the SSMS team if it is yours.'] } },
+    } as never));
     open();
     fillAll();
-    fill('Phone number (optional)', '   ');
     submit();
-    await waitFor(() => expect(api.register).toHaveBeenCalled());
-    expect(api.register.mock.calls[0][0]).not.toHaveProperty('phone');
+    const message = await screen.findByText('This phone number is already used by another account. Contact the SSMS team if it is yours.');
+    expect(message.id).toBe('reg-phone-error');
+    expect(screen.getByLabelText('Phone number')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Full name')).toHaveValue('Aline U');
+    expect(screen.queryByText('Please check what you entered and try again.')).not.toBeInTheDocument();
+  });
+
+  it('writes the missing number message in French', async () => {
+    localStorage.setItem('ssms_locale', 'fr');
+    const { container } = open();
+    fireEvent.submit(container.querySelector('form')!);
+    expect(await screen.findByText('Veuillez saisir votre numéro de téléphone.')).toBeInTheDocument();
   });
 
   it('does not send a role, because the server decides it', async () => {

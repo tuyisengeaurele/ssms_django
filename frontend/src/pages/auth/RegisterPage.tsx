@@ -7,6 +7,7 @@ import { AuthAlert, AuthButton, AuthField, AuthShell } from '../../landing/auth/
 import GoogleButton from '../../landing/auth/GoogleButton';
 import NewAccountFields, { newAccountProblem } from '../../landing/auth/NewAccountFields';
 import { warmUp } from '../../services/warmUp';
+import { phoneFieldError } from '../../utils/phone';
 
 export default function RegisterPage() {
   // The person is about to press Create account. If the free API is asleep, this starts the wake while they type.
@@ -14,31 +15,42 @@ export default function RegisterPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '' });
   const [secret, setSecret] = useState({ password: '', confirm: '', accepted: false });
   const [error, setError] = useState('');
+  // About the number only: written beside its field, and gone as soon as the person types again.
+  const [phoneError, setPhoneError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { getErrorMessage } = useApiError();
   const { t } = useLanguage();
 
-  const set = (field: 'name' | 'email' | 'phone') => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const set = (field: 'name' | 'email' | 'phone') => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    if (field === 'phone') setPhoneError('');
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     // Said here, in plain words, so the person is not sent to the server to be told what the page already knows.
+    const phone = form.phone.trim();
+    if (!phone) {
+      setPhoneError(t('erPhoneRequired'));
+      return;
+    }
     const problem = newAccountProblem(secret);
     if (problem) {
       setError(t(problem));
       return;
     }
     setError('');
+    setPhoneError('');
     setLoading(true);
     try {
       // The server decides the role, so none is sent. Public sign up always makes a farmer.
-      const phone = form.phone.trim();
-      await authService.register({ name: form.name, email: form.email, password: secret.password, acceptedTerms: true, ...(phone ? { phone } : {}) });
+      await authService.register({ name: form.name, email: form.email, password: secret.password, acceptedTerms: true, phone });
       navigate(`/check-email?email=${encodeURIComponent(form.email)}`, { replace: true });
     } catch (err) {
-      setError(getErrorMessage(err));
+      const aboutThePhone = phoneFieldError(err, t);
+      if (aboutThePhone) setPhoneError(aboutThePhone);
+      else setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -53,8 +65,10 @@ export default function RegisterPage() {
         <AuthField id="reg-email" label={t('loginEmailLabel')} type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" autoComplete="email" required />
         <AuthField
           id="reg-phone"
-          label={t('pnLabelOptional')}
+          label={t('pnLabel')}
           hint={t('pnHint')}
+          error={phoneError}
+          aria-required="true"
           type="tel"
           inputMode="tel"
           value={form.phone}

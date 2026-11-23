@@ -34,6 +34,10 @@ export interface User {
   /** A Rwandan mobile number in E.164, when the person gave one. */
   phone?: string | null;
   phoneVerified?: boolean;
+  /** True for an account with no phone number: the page then asks for one before anything else. */
+  phoneRequired?: boolean;
+  /** A farmer's own answer only: the supervisor of their cooperative, to call for help. */
+  supervisor?: { id: string; name: string; phone?: string | null } | null;
   photoUrl?: string | null;
   preferredLanguage?: 'en' | 'fr' | 'rw';
   createdAt: string;

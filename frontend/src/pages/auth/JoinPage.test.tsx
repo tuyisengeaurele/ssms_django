@@ -73,22 +73,24 @@ describe('Join page, signed out', () => {
     open();
     await screen.findByRole('heading', { level: 1, name: 'Join Gatsibo Silk' });
     fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Aline Uwase' } });
+    fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '0788 123 456' } });
     fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'aline@example.rw' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Zebra-Quartz-84' } });
     fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Zebra-Quartz-84' } });
     fireEvent.click(screen.getByRole('checkbox', { name: /I agree to the/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Create account and join' }));
-    await waitFor(() => expect(api.register).toHaveBeenCalledWith({ name: 'Aline Uwase', email: 'aline@example.rw', password: 'Zebra-Quartz-84', acceptedTerms: true, invitation: 'tok123' }));
+    await waitFor(() => expect(api.register).toHaveBeenCalledWith({ name: 'Aline Uwase', email: 'aline@example.rw', password: 'Zebra-Quartz-84', acceptedTerms: true, invitation: 'tok123', phone: '0788 123 456' }));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/check-email?email=aline%40example.rw'));
   });
 
-  it('sends an optional phone number through the link too', async () => {
+  it('sends the phone number through the link too', async () => {
     api.register.mockResolvedValue({ data: { data: { user: { isEmailVerified: false } } } });
     open();
     await screen.findByRole('heading', { level: 1, name: 'Join Gatsibo Silk' });
     fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Aline Uwase' } });
+    fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '0788 123 456' } });
     fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'aline@example.rw' } });
-    fireEvent.change(screen.getByLabelText('Phone number (optional)'), { target: { value: '0722 000 111' } });
+    fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '0722 000 111' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Zebra-Quartz-84' } });
     fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Zebra-Quartz-84' } });
     fireEvent.click(screen.getByRole('checkbox', { name: /I agree to the/ }));
@@ -96,6 +98,48 @@ describe('Join page, signed out', () => {
     await waitFor(() => expect(api.register).toHaveBeenCalledWith({
       name: 'Aline Uwase', email: 'aline@example.rw', password: 'Zebra-Quartz-84', acceptedTerms: true, invitation: 'tok123', phone: '0722 000 111',
     }));
+  });
+
+  it('asks for the phone number as a required field', async () => {
+    open();
+    await screen.findByRole('heading', { level: 1, name: 'Join Gatsibo Silk' });
+    const field = screen.getByLabelText('Phone number');
+    expect(field).toHaveAttribute('aria-required', 'true');
+    expect(screen.queryByLabelText(/optional/i)).not.toBeInTheDocument();
+  });
+
+  it('does not ask the server without a phone number, and says so beside the field', async () => {
+    open();
+    await screen.findByRole('heading', { level: 1, name: 'Join Gatsibo Silk' });
+    fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Aline Uwase' } });
+    fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '   ' } });
+    fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'aline@example.rw' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Zebra-Quartz-84' } });
+    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Zebra-Quartz-84' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /I agree to the/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create account and join' }));
+    const message = await screen.findByText('Please enter your phone number.');
+    expect(message).toHaveAttribute('role', 'alert');
+    expect(screen.getByLabelText('Phone number')).toHaveAttribute('aria-invalid', 'true');
+    expect(api.register).not.toHaveBeenCalled();
+  });
+
+  it('shows a number that is already taken beside the field', async () => {
+    api.register.mockRejectedValue(new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, {
+      status: 422, data: { code: 'phone_taken', message: 'x', errors: { phone: ['This phone number is already used by another account. Contact the SSMS team if it is yours.'] } },
+    } as never));
+    open();
+    await screen.findByRole('heading', { level: 1, name: 'Join Gatsibo Silk' });
+    fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Aline' } });
+    fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '0788 123 456' } });
+    fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'aline@example.rw' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Zebra-Quartz-84' } });
+    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Zebra-Quartz-84' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /I agree to the/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create account and join' }));
+    const message = await screen.findByText('This phone number is already used by another account. Contact the SSMS team if it is yours.');
+    expect(message.id).toBe('join-phone-error');
+    expect(screen.getByLabelText('Phone number')).toHaveAttribute('aria-invalid', 'true');
   });
 
   it('goes straight to sign in when the link was sent to that address and so proves it', async () => {
@@ -106,6 +150,7 @@ describe('Join page, signed out', () => {
     expect(email).toHaveValue('aline@example.rw');
     expect(email).toHaveAttribute('readonly');
     fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Aline Uwase' } });
+    fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '0788 123 456' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Zebra-Quartz-84' } });
     fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Zebra-Quartz-84' } });
     fireEvent.click(screen.getByRole('checkbox', { name: /I agree to the/ }));
@@ -119,6 +164,7 @@ describe('Join page, signed out', () => {
     open();
     await screen.findByRole('heading', { level: 1, name: 'Join Gatsibo Silk' });
     fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Aline' } });
+    fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '0788 123 456' } });
     fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'aline@example.rw' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Zebra-Quartz-84' } });
     fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Zebra-Quartz-84' } });
@@ -139,6 +185,7 @@ describe('Join page, signed out', () => {
     open();
     await screen.findByRole('heading', { level: 1, name: 'Join Gatsibo Silk' });
     fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Aline Uwase' } });
+    fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '0788 123 456' } });
     fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'aline@example.rw' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Zebra-Quartz-84' } });
     fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Zebra-Quartz-84' } });
@@ -156,6 +203,13 @@ describe('Join page, signed out', () => {
 
 describe('Join page, signed in', () => {
   const signIn = (user: object) => { auth.value = { user, isAuthenticated: true, isLoading: false }; };
+
+  it('asks a signed in person with no phone number for one before the join step', async () => {
+    auth.value = { user: farmer({ phoneRequired: true }), isAuthenticated: true, isLoading: false, updateUser: vi.fn(), logout: vi.fn() } as never;
+    open();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Add your phone number' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Join Gatsibo Silk/ })).not.toBeInTheDocument();
+  });
 
   it('lets a farmer with no cooperative join in one step', async () => {
     signIn(farmer());

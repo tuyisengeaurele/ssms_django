@@ -90,7 +90,7 @@ describe('Account settings', () => {
       expect(phone()).toHaveValue('');
       expect(phone()).toHaveAttribute('type', 'tel');
       expect(phone()).toHaveAttribute('autocomplete', 'tel');
-      expect(screen.getByText(/Only you and the staff who look after your account can see it\./)).toBeInTheDocument();
+      expect(screen.getByText(/Only you, your supervisor and the SSMS team can see it\./)).toBeInTheDocument();
     });
 
     it('shows the saved number the way a person writes it', () => {

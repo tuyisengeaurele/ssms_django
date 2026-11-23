@@ -19,8 +19,8 @@ export const authService = {
 
   getProfile: () => api.get<ApiResponse<User>>('/auth/me'),
 
-  /** Send only what changed. A phone of null removes the number. */
-  updateProfile: (data: { name?: string; phone?: string | null }) =>
+  /** Send only what changed. Replacing a number also needs `confirmPhone`, the current number typed. */
+  updateProfile: (data: { name?: string; phone?: string | null; confirmPhone?: string }) =>
     api.patch<ApiResponse<User>>('/auth/me', data),
 
   requestPasswordReset: (data: { email: string }) =>
