@@ -13,6 +13,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { fill } from '../../utils/fill';
 import Avatar from '../../components/ui/Avatar';
+import AdminPhoneDialog from '../../components/ui/AdminPhoneDialog';
 import PhoneLink from '../../components/ui/PhoneLink';
 import EmptyState from '../../components/ui/EmptyState';
 import LoadError from '../../components/ui/LoadError';
@@ -52,6 +53,7 @@ export default function AdminUsersPage() {
 
   // Edit access: a form first, then a review of what will change before anything is saved.
   const [editing, setEditing] = useState<User | null>(null);
+  const [numberFor, setNumberFor] = useState<User | null>(null);
   const [draftRole, setDraftRole] = useState<Role>('FARMER');
   const [draftCoop, setDraftCoop] = useState('');
   const [stage, setStage] = useState<'form' | 'review'>('form');
@@ -489,6 +491,9 @@ export default function AdminUsersPage() {
                               <button className="btn btn-ghost btn-xs" aria-label={fill(t('usEditFor'), { name: u.name })} onClick={() => openEdit(u)}>
                                 {t('usEdit')}
                               </button>
+                              <button className="btn btn-ghost btn-xs" aria-label={fill(t('usNumberFor'), { name: u.name })} onClick={() => setNumberFor(u)}>
+                                {t('usActNumber')}
+                              </button>
                               {u.role !== 'ADMIN' && (
                                 <button className="btn btn-ghost btn-xs" aria-label={fill(t('adSupportActionFor'), { name: u.name })} onClick={() => setAskSupport(u)}>
                                   {t('adSupportAction')}
@@ -519,6 +524,17 @@ export default function AdminUsersPage() {
           </div>
         )}
       </Panel>
+
+      <AdminPhoneDialog
+        open={numberFor !== null}
+        user={numberFor}
+        onClose={() => setNumberFor(null)}
+        onSaved={(updated, what) => {
+          replaceUser(updated);
+          success(fill(t(what === 'cleared' ? 'apCleared' : 'apSaved'), { name: updated.name }));
+          setNumberFor(null);
+        }}
+      />
     </div>
   );
 }

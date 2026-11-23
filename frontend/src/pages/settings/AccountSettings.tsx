@@ -3,13 +3,16 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { useApiError } from '../../hooks/useApiError';
+import { accountService, EmailChangePending } from '../../services/account.service';
 import { authService } from '../../services/auth.service';
 import ConfirmPhoneChangeDialog from '../../components/ui/ConfirmPhoneChangeDialog';
+import EmailChangeDialog from '../../components/ui/EmailChangeDialog';
 import PhoneLink from '../../components/ui/PhoneLink';
 import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
 import { initialsOf } from '../../components/ui/Avatar';
 import Panel from '../../components/ui/Panel';
 import { dateFormat } from '../../utils/dateFormat';
+import { fill } from '../../utils/fill';
 import { formatRwandaMobile, phoneFieldError } from '../../utils/phone';
 
 /** Who the person is, and the two things they can change about it: their name and their phone number. */
@@ -26,6 +29,9 @@ export default function AccountSettings() {
   const [phoneError, setPhoneError] = useState('');
   const [saving, setSaving] = useState(false);
   const [changing, setChanging] = useState(false);
+  const [changingEmail, setChangingEmail] = useState(false);
+  // A change of login email that waits for its link to be opened. The new address is masked by the server.
+  const [pendingEmail, setPendingEmail] = useState<EmailChangePending | null>(null);
 
   // Fetch the latest details, so the cooperative and name are never stale.
   useEffect(() => {
@@ -36,6 +42,24 @@ export default function AccountSettings() {
   useEffect(() => {
     if (user?.name) setName(user.name);
   }, [user?.name]);
+
+  useEffect(() => {
+    let live = true;
+    accountService.getEmailChange()
+      .then((res) => { if (live) setPendingEmail(res.data.data); })
+      .catch(() => undefined);
+    return () => { live = false; };
+  }, []);
+
+  const cancelEmailChange = async () => {
+    try {
+      await accountService.cancelEmailChange();
+      setPendingEmail(null);
+      success(t('ecCancelled'));
+    } catch (err) {
+      showError(getErrorMessage(err));
+    }
+  };
 
   useEffect(() => {
     setPhone(formatRwandaMobile(user?.phone));
@@ -98,8 +122,16 @@ export default function AccountSettings() {
 
           <div className="form-group">
             <label className="form-label" htmlFor="pf-email">{t('pfFieldEmail')}</label>
-            <input id="pf-email" className="form-input is-fixed" type="email" value={user?.email ?? ''} readOnly aria-describedby="pf-email-note" />
-            <span id="pf-email-note" className="form-hint">{t('pfEmailNote')}</span>
+            <div className="form-inline">
+              <input id="pf-email" className="form-input is-fixed" type="email" value={user?.email ?? ''} readOnly />
+              <button type="button" className="btn btn-secondary btn-sm" aria-label={t('ecChangeAria')} onClick={() => setChangingEmail(true)}>{t('cpChange')}</button>
+            </div>
+            {pendingEmail ? (
+              <div className="form-hint">
+                <span>{fill(t('ecPending'), { email: pendingEmail.newEmail })}</span>{' '}
+                <button type="button" className="btn btn-ghost btn-xs" onClick={cancelEmailChange}>{t('ecCancel')}</button>
+              </div>
+            ) : null}
           </div>
 
           {hasPhone ? (
@@ -132,16 +164,20 @@ export default function AccountSettings() {
             </div>
           )}
 
-          <p className="form-hint profile-note">
-            {t('pfRoleNote')}
-            {!user?.cooperativeId && user?.role !== 'ADMIN' ? ` ${t('pfCoopHelp')}` : ''}
-          </p>
-
           <button type="submit" className="btn btn-primary" disabled={saving || !(nameChanged || phoneChanged)}>
             {saving ? <><span className="spinner" />{t('pfSaving')}</> : t('pfSave')}
           </button>
         </form>
       </Panel>
+
+      {user ? (
+        <EmailChangeDialog
+          open={changingEmail}
+          currentEmail={user.email}
+          onClose={() => setChangingEmail(false)}
+          onStarted={(change) => { setPendingEmail(change); success(fill(t('ecSent'), { email: change.newEmail })); setChangingEmail(false); }}
+        />
+      ) : null}
 
       {user?.phone ? (
         <ConfirmPhoneChangeDialog

@@ -216,3 +216,32 @@ class RecoveryCode(models.Model):
     class Meta:
         db_table = 'recovery_codes'
         indexes = [models.Index(fields=['user', 'code_hash'], name='recovery_codes_user_hash')]
+
+
+class EmailChange(models.Model):
+    """A person's request to change their login email. Nothing changes until the link sent to the new address is opened.
+
+    The row stays after the change, so the undo link (good for seven days) can find what the old address was."""
+
+    class Status(models.TextChoices):
+        PENDING = 'pending'
+        DONE = 'done'
+        UNDONE = 'undone'
+        CANCELLED = 'cancelled'
+        EXPIRED = 'expired'
+
+    id = models.CharField(primary_key=True, max_length=36, default=_generate_id, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='email_changes', db_column='userId')
+    old_email = models.EmailField(db_column='oldEmail')
+    new_email = models.EmailField(db_column='newEmail')
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    created_at = models.DateTimeField(auto_now_add=True, db_column='createdAt')
+    confirmed_at = models.DateTimeField(null=True, blank=True, db_column='confirmedAt')
+
+    class Meta:
+        db_table = 'email_changes'
+        ordering = ['-created_at']
+        constraints = [
+            # One open request per person, held by the database so two taps cannot make two.
+            models.UniqueConstraint(fields=['user'], condition=models.Q(status='pending'), name='one_pending_email_change_per_user'),
+        ]

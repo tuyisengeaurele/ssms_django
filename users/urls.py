@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .email_change_views import EmailChangeConfirmView, EmailChangeUndoView, EmailChangeView
 from .email_verification_views import ResendVerificationView, VerifyEmailView
 from .mfa_views import (
     MfaRecoveryCodesView,
@@ -27,6 +28,9 @@ urlpatterns = [
     path('me',                ProfileView.as_view(),          name='auth_me'),
     path('me/notifications',  NotificationPreferencesView.as_view(), name='auth_me_notifications'),
     path('change-password',   ChangePasswordView.as_view(),   name='auth_change_password'),
+    path('email-change',            EmailChangeView.as_view(),        name='auth_email_change'),
+    path('email-change/confirm',    EmailChangeConfirmView.as_view(),  name='auth_email_change_confirm'),   # public: the link in the email
+    path('email-change/undo',       EmailChangeUndoView.as_view(),     name='auth_email_change_undo'),      # public: the undo link
     path('session/ping',            SessionPingView.as_view(),         name='auth_session_ping'),
     path('sessions',                SessionListView.as_view(),         name='auth_sessions'),
     path('sessions/revoke-others',  SessionRevokeOthersView.as_view(), name='auth_sessions_revoke_others'),

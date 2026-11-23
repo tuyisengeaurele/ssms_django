@@ -33,7 +33,7 @@ KEYS = [
     'crColType', 'crRisk', 'crRiskNote', 'crColFarm', 'crColLevel', 'crColWhy', 'crEachFarm', 'crColBatches', 'crColKg', 'crColAlerts',
     'alTypeTemperature', 'alTypeHumidity', 'alTypeDisease', 'alTypeStage', 'alTypeSystem',
     # What the API says when something is refused, in the language the page asks for (core/error_text.py)
-    'erBadLogin', 'erEmailTaken', 'erBadPhone', 'erPhoneRequired', 'erPhoneTaken', 'erPhoneConfirm', 'erCheckInput', 'erForbidden', 'erNotFound', 'erSession', 'erGeneric',
+    'erBadLogin', 'erEmailTaken', 'erBadPhone', 'erPhoneRequired', 'erPhoneTaken', 'erPhoneConfirm', 'erConfirmTyped', 'erWrongPassword', 'erEmailSame', 'erLinkInvalid', 'erLinkExpired', 'erLinkUsed', 'erEmailNotSent', 'erNothingToCancel', 'erUndoBlocked', 'erCheckInput', 'erForbidden', 'erNotFound', 'erSession', 'erGeneric',
     'aeThrottled', 'aeThrottledOne', 'aeThrottledWait', 'aeLocked', 'aeLockedOne',
     'aeSignIn', 'aeInactive', 'aeMethod', 'aeBadRequest', 'aeServerSide',
     'fkNoFarms', 'fkHigh', 'fkMedium', 'fkOk', 'fkDisease', 'fkDiseaseOne', 'fkAir', 'fkAirOne', 'fkDevices', 'fkDevicesOne',

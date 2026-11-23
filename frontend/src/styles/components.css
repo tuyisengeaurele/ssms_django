@@ -817,7 +817,6 @@ tr.is-off td:last-child { opacity: 1; }
 .settings-body .identity-facts dd { text-align: left; }
 
 .form-input.is-fixed { background: var(--surface-2); color: var(--text-muted); cursor: not-allowed; }
-.profile-note { margin: 4px 0 18px; }
 .fixed-value { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 0.72rem 0.95rem; border: 1px solid var(--border-light); border-radius: 14px; background: var(--surface-2); color: var(--text-2); }
 .fixed-value small { color: var(--text-muted); font-size: 0.8rem; }
 .profile-actions { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -1467,6 +1466,7 @@ tr.is-off td:last-child { opacity: 1; }
 
 /* A value the person reads and cannot type over, with the button that changes it beside it. */
 .form-inline { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.form-inline > .form-input { flex: 1 1 14rem; min-width: 0; }
 .form-static { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 
 /* ── Calendar ──────────────────────────────────────────────────────────────── */

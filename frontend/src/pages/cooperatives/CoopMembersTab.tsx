@@ -94,7 +94,7 @@ export default function CoopMembersTab() {
               <Avatar name={m.name} />
               <span className="cell-stack">
                 <span className="cell-strong">{m.name}</span>
-                <span className="cell-sub">{m.email}</span>
+                {m.email ? <span className="cell-sub">{m.email}</span> : null}
                 <PhoneLink phone={m.phone} name={m.name} />
               </span>
               <span className="badge badge-gray">{t(ROLE_LABEL_KEY[m.role])}</span>

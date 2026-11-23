@@ -14,6 +14,8 @@ vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
 
 const api = vi.hoisted(() => ({ updateProfile: vi.fn() }));
 vi.mock('../../services/auth.service', () => ({ authService: api }));
+const account = vi.hoisted(() => ({ getEmailChange: vi.fn(), cancelEmailChange: vi.fn(), startEmailChange: vi.fn() }));
+vi.mock('../../services/account.service', () => ({ accountService: account }));
 
 import AccountSettings from './AccountSettings';
 
@@ -39,6 +41,8 @@ beforeEach(() => {
   auth.user.cooperativeName = null;
   auth.user.phone = null;
   api.updateProfile.mockResolvedValue({ data: { data: { ...auth.user, name: 'Auris T' } } });
+  account.getEmailChange.mockResolvedValue({ data: { data: null } });
+  account.cancelEmailChange.mockResolvedValue({ data: { data: null } });
 });
 
 describe('Account settings', () => {
@@ -77,10 +81,70 @@ describe('Account settings', () => {
     expect(screen.getByText('Gatsibo Sericulture 1')).toBeInTheDocument();
   });
 
-  it('keeps the email fixed and explains why', () => {
-    open();
-    expect(screen.getByLabelText('Email address')).toHaveAttribute('readonly');
-    expect(screen.getByText('You cannot change your email here. Contact the SSMS team if it needs to change.')).toBeInTheDocument();
+  describe('the email address', () => {
+    const pending = { id: 'c1', newEmail: 'n***@example.rw', createdAt: '2026-11-23T10:00:00Z', expiresAt: '2026-11-24T10:00:00Z' };
+
+    it('is shown as a field nobody can type over, with a Change button and no note about who to contact', () => {
+      open();
+      expect(screen.getByLabelText('Email address')).toHaveAttribute('readonly');
+      expect(screen.getByRole('button', { name: 'Change email address' })).toBeInTheDocument();
+      expect(screen.queryByText(/Contact the SSMS team/)).not.toBeInTheDocument();
+    });
+
+    it('opens the dialog from the button', async () => {
+      open();
+      fireEvent.click(screen.getByRole('button', { name: 'Change email address' }));
+      expect(await screen.findByRole('dialog', { name: 'Change your email address' })).toBeInTheDocument();
+    });
+
+    it('shows nothing about a request when none is pending', async () => {
+      open();
+      await waitFor(() => expect(account.getEmailChange).toHaveBeenCalled());
+      expect(screen.queryByText(/We sent a link to/)).not.toBeInTheDocument();
+    });
+
+    it('says where the link went when a request is pending, with a way to cancel it', async () => {
+      account.getEmailChange.mockResolvedValue({ data: { data: pending } });
+      open();
+      expect(await screen.findByText('We sent a link to n***@example.rw. Your email changes when you open it.')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Cancel request' })).toBeInTheDocument();
+    });
+
+    it('cancels the request and the notice goes', async () => {
+      account.getEmailChange.mockResolvedValue({ data: { data: pending } });
+      open();
+      fireEvent.click(await screen.findByRole('button', { name: 'Cancel request' }));
+      await waitFor(() => expect(account.cancelEmailChange).toHaveBeenCalled());
+      await waitFor(() => expect(screen.queryByText(/We sent a link to/)).not.toBeInTheDocument());
+      expect(await screen.findByText('The request was cancelled.', {}, { timeout: 5000 })).toBeInTheDocument();
+    });
+
+    it('shows the pending notice and a toast after the dialog sends the link', async () => {
+      account.startEmailChange.mockResolvedValue({ data: { data: pending } });
+      open();
+      fireEvent.click(screen.getByRole('button', { name: 'Change email address' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Change your email address' });
+      fireEvent.change(within(dialog).getByLabelText('New email address'), { target: { value: 'new@example.rw' } });
+      fireEvent.change(within(dialog).getByLabelText('Your password'), { target: { value: 'Secret123' } });
+      fireEvent.change(within(dialog).getByLabelText('Type auris@ssms.com to confirm'), { target: { value: 'auris@ssms.com' } });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Send the link' }));
+      expect(await screen.findByText('We sent a link to n***@example.rw. Your email changes when you open it.', {}, { timeout: 5000 })).toBeInTheDocument();
+      expect(await screen.findByText('We sent a link to n***@example.rw.', {}, { timeout: 5000 })).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    });
+  });
+
+  it.each([
+    ['en', /SSMS team/],
+    ['fr', /l'équipe SSMS/],
+    ['rw', /itsinda rya SSMS/],
+  ])('does not tell the person what the SSMS team sets, or send them to it (%s)', (locale, pattern) => {
+    localStorage.setItem('ssms_locale', locale as string);
+    auth.user.cooperativeId = null;
+    auth.user.role = 'FARMER';
+    const { container } = open();
+    expect(container.textContent).not.toMatch(pattern as RegExp);
+    auth.user.role = 'ADMIN';
   });
 
   it('saves a new name, and only when it changed', async () => {

@@ -51,6 +51,16 @@ describe('The members of a cooperative', () => {
     expect(within(row).getByRole('link', { name: 'Call Bruce Ishimwe' })).toHaveAttribute('href', 'tel:+250788123456');
   });
 
+  it('draws no email line for a member the answer sent none for, as it does not for a farmer', async () => {
+    api.getById.mockResolvedValue({ data: { data: detail({ members: [{ id: 'm1', name: 'Bruce Ishimwe', role: 'FARMER', createdAt: '2026-05-01T00:00:00Z' }] }) } });
+    renderCoop(PATH);
+    await ready();
+    const row = screen.getByText('Bruce Ishimwe').closest('li') as HTMLElement;
+    expect(row.querySelectorAll('.cell-sub').length).toBe(0);
+    expect(within(row).queryByText('undefined')).not.toBeInTheDocument();
+    expect(within(row).getByText('Farmer')).toBeInTheDocument();
+  });
+
   it('shows no number and no link for a member the answer sent none for', async () => {
     renderCoop(PATH);
     await ready();

@@ -2,7 +2,6 @@ import logging
 
 from django.contrib.auth import authenticate
 from django.db import IntegrityError
-from rest_framework.exceptions import ErrorDetail
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -13,6 +12,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from audit_log.utils import log_action
 from core import lockout
 from core.permissions import RolePermission
+from core.sensitive import sensitive_error
 from core.throttles import LoginRateThrottle, RegisterRateThrottle
 from core.tokens import revoke_all_refresh_tokens
 from core.utils import api_error, api_success, body_field
@@ -108,7 +108,7 @@ class LoginView(APIView):
 
 def _phone_answer(code, text, field='phone'):
     """A refusal about the number, with the code the page tells cases apart by, on the field it belongs to."""
-    return api_error('Please check what you entered and try again.', 422, {field: [ErrorDetail(text, code=code)]}, code='invalid_input')
+    return sensitive_error(code, text, field)
 
 
 class ProfileView(APIView):

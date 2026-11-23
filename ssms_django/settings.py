@@ -232,6 +232,7 @@ REST_FRAMEWORK = {
         'device': '30/minute',   # readings per device key
         'invitation': '20/minute',
         'sessions': '30/minute',   # signed in devices: list and sign out
+        'sensitive': '5/minute',   # email change, closing an account, downloading the data, per person
         'health_test': '5/minute',   # the test buttons on the Health tab
         'mfa': '10/minute',   # second factor codes and set-up, per address
         'report': '20/minute',   # PDF reports, per person

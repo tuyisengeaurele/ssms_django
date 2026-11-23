@@ -33,6 +33,10 @@ export const adminService = {
 
   restoreUser: (userId: string) =>
     api.post<ApiResponse<User>>(`/admin/users/${userId}/restore`),
+
+  /** Set the number of someone else, or clear it with null so they are asked for one again. */
+  setPhone: (userId: string, phone: string | null) =>
+    api.patch<ApiResponse<User>>(`/admin/users/${userId}/phone`, { phone }),
 };
 
 export interface AuditLogEntry {

@@ -17,7 +17,8 @@ export interface Cooperative {
 }
 
 export interface CooperativeDetail extends Cooperative {
-  members: Array<{ id: string; name: string; email: string; phone?: string | null; role: Role; createdAt: string }>;
+  /** A farmer is not sent anyone's email, so it is optional. */
+  members: Array<{ id: string; name: string; email?: string; phone?: string | null; role: Role; createdAt: string }>;
   farms: Array<{ id: string; name: string; location: string; ownerId: string; ownerName: string }>;
 }
 
