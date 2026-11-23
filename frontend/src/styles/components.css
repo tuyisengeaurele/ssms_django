@@ -1467,6 +1467,10 @@ tr.is-off td:last-child { opacity: 1; }
 /* A value the person reads and cannot type over, with the button that changes it beside it. */
 .form-inline { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .form-inline > .form-input { flex: 1 1 14rem; min-width: 0; }
+
+/* The line that opens a typed confirmation dialog keeps a gap under it, so the first label does not touch it. */
+.cbt-intro { margin-bottom: 16px; }
+.cbt-intro > :last-child { margin-bottom: 0; }
 .form-static { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 
 /* ── Calendar ──────────────────────────────────────────────────────────────── */
