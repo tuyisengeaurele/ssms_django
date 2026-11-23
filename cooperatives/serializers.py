@@ -62,7 +62,9 @@ class CooperativeDetailSerializer(CooperativeSerializer):
         users = list(User.objects.filter(cooperative=obj, is_active=True).order_by('role', 'name'))
         viewer = self.context['request'].user
         visible = visible_phone_ids(viewer, [u.pk for u in users])
-        return [person_row(viewer, u, visible, role=u.role, created_at=u.created_at.isoformat()) for u in users]
+        # A farmer sees who is in the cooperative, and not anyone's email: it is the other person's login.
+        with_email = viewer.role != 'FARMER'
+        return [person_row(viewer, u, visible, with_email=with_email, role=u.role, created_at=u.created_at.isoformat()) for u in users]
 
     def get_farms(self, obj):
         from farms.models import Farm

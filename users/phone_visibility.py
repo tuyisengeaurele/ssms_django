@@ -36,9 +36,13 @@ def can_see_phone(viewer, target) -> bool:
     return str(target.pk) in visible_phone_ids(viewer, [target.pk])
 
 
-def person_row(viewer, person, visible, **row) -> dict:
-    """{id, name, email, ...} for a person, with their number only when `visible` (from visible_phone_ids) holds them."""
-    out = {'id': person.pk, 'name': person.name, 'email': person.email, **row}
+def person_row(viewer, person, visible, with_email: bool = True, **row) -> dict:
+    """{id, name, email, ...} for a person, with their number only when `visible` (from visible_phone_ids) holds them.
+
+    `with_email=False` leaves the address out, for a viewer who has no use for the login of someone else."""
+    out = {'id': person.pk, 'name': person.name, **row}
+    if with_email:
+        out['email'] = person.email
     if str(person.pk) in visible and person.phone:
         out['phone'] = person.phone
     return out
