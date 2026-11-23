@@ -84,7 +84,7 @@ class PhoneField(serializers.CharField):
         try:
             return normalize_rwanda_mobile(value)
         except DjangoValidationError:
-            raise serializers.ValidationError('Enter a Rwandan mobile number, for example 0788 123 456.', code='invalid_phone') from None
+            raise serializers.ValidationError('Enter a Rwandan mobile number, for example 0788123456.', code='invalid_phone') from None
 
 
 def _free_number(value):

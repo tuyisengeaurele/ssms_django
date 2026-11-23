@@ -368,7 +368,7 @@ export default function AdminUsersPage() {
         </div>
         <div className="form-group">
           <label className="form-label" htmlFor="new-phone">{t('pnLabel')}</label>
-          <input id="new-phone" type="tel" inputMode="tel" className="form-input" value={form.phone} autoComplete="off" placeholder="0788 123 456"
+          <input id="new-phone" type="tel" inputMode="tel" className="form-input" value={form.phone} autoComplete="off" placeholder="0788123456"
             aria-required="true" onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
         </div>
         <div className="form-group">

@@ -9,7 +9,7 @@ _SEPARATORS = re.compile(r'[\s\-().]')
 
 
 def normalize_rwanda_mobile(text: str) -> str:
-    """'0788 123 456', '788123456', '250788123456' and '+250788123456' all become '+250788123456'. Anything else is refused."""
+    """'0788123456', '788123456', '250788123456' and '+250788123456' all become '+250788123456'. Anything else is refused."""
     cleaned = _SEPARATORS.sub('', text or '')
     if cleaned.startswith('+'):
         candidate = cleaned
@@ -20,7 +20,7 @@ def normalize_rwanda_mobile(text: str) -> str:
     else:
         candidate = '+250' + cleaned
     if not _MOBILE.match(candidate):
-        raise ValidationError('Enter a Rwandan mobile number, for example 0788 123 456.', code='invalid_phone')
+        raise ValidationError('Enter a Rwandan mobile number, for example 0788123456.', code='invalid_phone')
     return candidate
 
 

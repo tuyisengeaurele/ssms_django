@@ -438,7 +438,8 @@ describe('Register page', () => {
     expect(field).toHaveAttribute('autocomplete', 'tel');
     expect(field).toHaveAttribute('aria-required', 'true');
     expect(screen.queryByLabelText(/optional/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/A Rwandan mobile number, for example 0788 123 456\. Only you, your supervisor and the SSMS team can see it\./)).toBeInTheDocument();
+    expect(screen.getByText('A Rwandan mobile number, for example 0788123456.')).toBeInTheDocument();
+    expect(screen.queryByText(/can see it/)).not.toBeInTheDocument();
   });
 
   it('sends the phone number as it was written', async () => {

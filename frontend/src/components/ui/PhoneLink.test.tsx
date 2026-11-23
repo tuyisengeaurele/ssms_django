@@ -10,7 +10,7 @@ beforeEach(() => localStorage.clear());
 describe('PhoneLink', () => {
   it('writes the number the way a person writes it', () => {
     open({ phone: '+250788123456', name: 'Aline Uwase' });
-    expect(screen.getByText('0788 123 456')).toBeInTheDocument();
+    expect(screen.getByText('0788123456')).toBeInTheDocument();
   });
 
   it('links to a call and to WhatsApp, with the exact numbers', () => {

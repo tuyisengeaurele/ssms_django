@@ -102,10 +102,11 @@ describe('Account settings', () => {
       auth.user.phone = '+250788123456';
       open();
       const card = screen.getByRole('group', { name: 'Phone number' });
-      expect(within(card).getByText('0788 123 456')).toBeInTheDocument();
+      expect(within(card).getByText('0788123456')).toBeInTheDocument();
       expect(within(card).getByRole('button', { name: 'Change' })).toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: 'Phone number' })).not.toBeInTheDocument();
-      expect(screen.getByText(/Only you, your supervisor and the SSMS team can see it\./)).toBeInTheDocument();
+      expect(screen.getByText('A Rwandan mobile number, for example 0788123456.')).toBeInTheDocument();
+      expect(screen.queryByText(/can see it/)).not.toBeInTheDocument();
       expect(screen.queryByText(/Leave it empty to remove/)).not.toBeInTheDocument();
     });
 
@@ -116,7 +117,7 @@ describe('Account settings', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Change' }));
       const dialog = await screen.findByRole('dialog', { name: 'Change your phone number' });
       fireEvent.change(within(dialog).getByLabelText('New phone number'), { target: { value: '0733 000 000' } });
-      fireEvent.change(within(dialog).getByLabelText('Type 0788 123 456 to confirm'), { target: { value: '0788 123 456' } });
+      fireEvent.change(within(dialog).getByLabelText('Type 0788123456 to confirm'), { target: { value: '0788 123 456' } });
       fireEvent.click(within(dialog).getByRole('button', { name: 'Change number' }));
       await waitFor(() => expect(api.updateProfile).toHaveBeenCalledWith({ phone: '0733 000 000', confirmPhone: '0788 123 456' }));
       await waitFor(() => expect(auth.updateUser).toHaveBeenCalledWith(expect.objectContaining({ phone: '+250733000000' })));
@@ -155,13 +156,13 @@ describe('Account settings', () => {
 
     it('says beside the field when that number is not a Rwandan mobile, and keeps what was typed', async () => {
       api.updateProfile.mockRejectedValue(new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, {
-        status: 422, data: { code: 'invalid_phone', message: 'Please check what you entered.', errors: { phone: ['Enter a Rwandan mobile number, for example 0788 123 456.'] } },
+        status: 422, data: { code: 'invalid_phone', message: 'Please check what you entered.', errors: { phone: ['Enter a Rwandan mobile number, for example 0788123456.'] } },
       } as never));
       open();
       const field = screen.getByLabelText('Phone number');
       fireEvent.change(field, { target: { value: '12345' } });
       fireEvent.click(save());
-      const message = await screen.findByText('Enter a Rwandan mobile number, for example 0788 123 456.');
+      const message = await screen.findByText('Enter a Rwandan mobile number, for example 0788123456.');
       expect(message).toHaveAttribute('role', 'alert');
       expect(field).toHaveAttribute('aria-invalid', 'true');
       expect(field).toHaveValue('12345');

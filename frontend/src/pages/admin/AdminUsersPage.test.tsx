@@ -255,7 +255,7 @@ describe('Users page', () => {
   it('shows each number with a call and a WhatsApp link, and nothing for an account with none', async () => {
     open();
     const bruce = (await screen.findByText('Bruce Ishimwe')).closest('tr') as HTMLElement;
-    expect(within(bruce).getByText('0788 123 456')).toBeInTheDocument();
+    expect(within(bruce).getByText('0788123456')).toBeInTheDocument();
     expect(within(bruce).getByRole('link', { name: 'Call Bruce Ishimwe' })).toHaveAttribute('href', 'tel:+250788123456');
     const supervisor = screen.getByText('Coop Supervisor').closest('tr') as HTMLElement;
     expect(within(supervisor).queryByRole('link', { name: /Call|WhatsApp/ })).not.toBeInTheDocument();

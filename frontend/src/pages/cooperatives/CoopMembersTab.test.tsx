@@ -47,7 +47,7 @@ describe('The members of a cooperative', () => {
     renderCoop(PATH);
     await ready();
     const row = screen.getByText('Bruce Ishimwe').closest('li') as HTMLElement;
-    expect(within(row).getByText('0788 123 456')).toBeInTheDocument();
+    expect(within(row).getByText('0788123456')).toBeInTheDocument();
     expect(within(row).getByRole('link', { name: 'Call Bruce Ishimwe' })).toHaveAttribute('href', 'tel:+250788123456');
   });
 

@@ -173,7 +173,7 @@ export default function JoinPage() {
           inputMode="tel"
           value={form.phone}
           onChange={(e) => { setForm((f) => ({ ...f, phone: e.target.value })); setPhoneError(''); }}
-          placeholder="0788 123 456"
+          placeholder="0788123456"
           autoComplete="tel"
         />
         <NewAccountFields idPrefix="join" {...secret} onChange={(patch) => setSecret((s) => ({ ...s, ...patch }))} />
