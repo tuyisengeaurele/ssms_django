@@ -19,6 +19,9 @@ const PUBLIC_PATHS = [
   '/auth/password-reset',
   '/auth/resend-verification',
   '/auth/verify-email',
+  // The links in the emails about a change of login email. Asking for one (/auth/email-change itself) needs the person.
+  '/auth/email-change/confirm',
+  '/auth/email-change/undo',
   '/auth/token/refresh',
   // The second step of an admin sign in is proved by a challenge, not a token.
   '/auth/mfa/verify',

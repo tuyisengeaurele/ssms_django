@@ -17,6 +17,8 @@ const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
 const CheckEmailPage = lazy(() => import('./pages/auth/CheckEmailPage'));
 const VerifyEmailPage = lazy(() => import('./pages/auth/VerifyEmailPage'));
+const ConfirmEmailChangePage = lazy(() => import('./pages/auth/ConfirmEmailChangePage'));
+const UndoEmailChangePage = lazy(() => import('./pages/auth/UndoEmailChangePage'));
 const FarmerDashboard = lazy(() => import('./pages/farmer/FarmerDashboard'));
 const SupervisorDashboard = lazy(() => import('./pages/supervisor/SupervisorDashboard'));
 const DecisionsPage = lazy(() => import('./pages/supervisor/DecisionsPage'));
@@ -67,6 +69,8 @@ export default function App() {
           <Route path="/reset-password"   element={<ResetPasswordPage />} />
           <Route path="/check-email"      element={<CheckEmailPage />} />
           <Route path="/verify-email"     element={<VerifyEmailPage />} />
+          <Route path="/confirm-email-change" element={<ConfirmEmailChangePage />} />
+          <Route path="/undo-email-change"    element={<UndoEmailChangePage />} />
           <Route path="/unauthorized"     element={<UnauthorizedPage />} />
           <Route path="/join/:token"      element={<JoinPage />} />
           <Route path="/lot/:token"       element={<PublicLotPage />} />

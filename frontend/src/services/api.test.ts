@@ -72,10 +72,17 @@ describe('API client', () => {
     '/auth/password-reset/confirm',
     '/auth/resend-verification',
     '/auth/verify-email',
+    '/auth/email-change/confirm',
+    '/auth/email-change/undo',
     '/lots/abc123tokenXYZ',
   ])('does not send the token to %s', async (url) => {
     const headers = await sentHeaders(url, 'post');
     expect(headers.Authorization).toBeUndefined();
+  });
+
+  it.each(['/auth/email-change', '/auth/email-change?x=1'])('sends the token to %s, because asking for a new email needs the person', async (url) => {
+    const headers = await sentHeaders(url, 'post');
+    expect(headers.Authorization).toBe('Bearer held.in.memory');
   });
 
   // The public lot page lives at /lots/<token>. The staff lot trace has /lots/ inside its address as well, and it is

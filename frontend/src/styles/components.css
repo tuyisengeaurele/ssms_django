@@ -1466,6 +1466,7 @@ tr.is-off td:last-child { opacity: 1; }
 
 /* A value the person reads and cannot type over, with the button that changes it beside it. */
 .form-inline { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.form-inline > .form-input { flex: 1 1 14rem; min-width: 0; }
 .form-static { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 
 /* ── Calendar ──────────────────────────────────────────────────────────────── */
