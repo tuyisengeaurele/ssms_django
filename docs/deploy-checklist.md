@@ -111,7 +111,9 @@ These are written down so nobody is surprised. Each is on the backlog or waiting
 - Logs are removed every night by `prune_logs`: request logs after 30 days, security events after 180, jobs and devices after 30 and health check results after 30. The audit log is never removed. Watch the database size on Supabase (500 MB on the free plan).
 - The admin's active batches list is one answer for every active batch (538 KB for 1,000). It takes 200 to 500 ms at that size and wants paging. See `docs/load-profile.md`.
 - Some older alerts have no code ("Batch initialized at EGG stage."). They show their stored English sentence in every language.
-- Saved but not used yet: `preferred_language`, the phone number and the notification preferences. Nothing sends by SMS or WhatsApp, and nothing reads the preferences until messaging is built.
+- Saved but not used yet: `preferred_language`, the phone number and the notification preferences. Every account must have a phone number and it is shown by role with Call and WhatsApp links, but nothing sends to it: there is no SMS or WhatsApp provider, and nothing reads the preferences until messaging is built. A number is not confirmed with a code, so the first account to hold a number keeps it until the SSMS team frees it. Every existing account meets an "Add your phone number" screen on its first visit after the deploy (runbook section 26).
+- The admin users page has no button to clear or reassign a phone number. The route exists (`PATCH /api/admin/users/<id>/phone`).
+- The phone number screens (the gate, the change dialog, the call and WhatsApp links) are tested but have not been looked at in a browser, on a phone, yet.
 
 **Language**
 

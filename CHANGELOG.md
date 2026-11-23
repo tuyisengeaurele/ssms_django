@@ -2,6 +2,30 @@
 
 # Changelog
 
+## A required, unique phone number (phase 4, task 4.1)
+
+Every account has a phone number, no two accounts share one, it shows on the screens where people appear, and changing it needs the current number typed. There is still no SMS provider, so a number is not proven to belong to the person who typed it. The owner will use the numbers to send SSMS messages on WhatsApp and to call a supervisor or a farmer from the mobile app.
+
+### Added
+- **Phone number** is required on the register page, the invitation page and the admin form that adds a person. An empty one is stopped on the page with a message beside the field, and by the server (`phone_required`).
+- A number is accepted written any usual way (`0788 123 456`, `788123456`, `+250 788 123 456`) and kept as `+250788123456`. Only a Rwandan mobile is accepted (72, 73, 78, 79). Anything else is refused beside the field (`invalid_phone`).
+- One account per number. A number another account holds is refused (`phone_taken`) and the message never says whose it is. The database enforces it (`users_phone_unique`, migration `users.0014`, which replaces the rule that only covered confirmed numbers), so two people saving the same number at the same moment cannot both win.
+- **A gate for accounts with no number.** Accounts made before this change, and accounts whose number the SSMS team cleared, meet an "Add your phone number" screen after signing in and cannot reach the app until they save one. The server refuses every other call with 403 `phone_required`; only the account, sign out, session and second factor status routes stay open. `/api/auth/me` carries `phoneRequired`. An administrator looking at an account through support access is not stopped.
+- **Changing the number asks for the current one typed.** Settings, Account shows the number as text with a **Change** button. The dialog asks for the new number and for the current number to be typed (`Type 0788 123 456 to confirm`), in any usual form, and the button stays off until it matches. The server checks `confirmPhone` too (`phone_confirm_mismatch`), so a client that skips the dialog is refused. A first number needs no confirmation, and a number cannot be emptied. Each change is written to the security log as `phone_changed`, with both numbers masked (`+250*****456 to +250*****000`).
+- **Who sees whose number.** The person sees their own and the SSMS team sees all. A supervisor sees the farmers who are in their cooperative now (an open membership, so a farmer who left disappears at once). A farmer sees their own supervisor, in their account, and never another farmer. Everyone else gets no `phone` key at all. The number appears with **Call** (`tel:`) and **WhatsApp** (`wa.me`) links on the decisions page, the cooperative's farmers and members, the admin users table, and the people of a supply round.
+- `PATCH /api/admin/users/<id>/phone` lets the SSMS team set a number, or clear it with `null` so the person is asked again. It needs no typed confirmation, because it is the way back for a number taken by mistake, and it refuses the caller's own account. There is no screen for it yet.
+
+### Changed
+- `PATCH /api/auth/me` takes `name`, `phone`, `confirmPhone`. Nothing is saved unless everything asked for is allowed, so a refused number leaves the name alone too.
+- The hint under the field now says who can see the number: the person, their supervisor and the SSMS team.
+- Test accounts, the demo data and the load data all carry a number.
+
+### Not done on purpose
+- No confirmation code and no "confirmed" state. `phone_verified_at` and `phoneVerified` stay where they were and wait for a provider.
+- Until a code can be sent, the first account to hold a number keeps it. Someone could register a number that is not theirs. The SSMS team frees it with the route above.
+- No admin screen to clear or reassign a number.
+- The French and Kinyarwanda texts are a draft until a native speaker has read them.
+
 ## How long the logs are kept (phase 3, task 3.7)
 
 The nightly `prune_logs` job already existed and ran from `jobs-nightly.yml`, but it had no number the owner had chosen and kept the older logs for longer than needed.

@@ -124,12 +124,12 @@ class Command(BaseCommand):
         coop = Cooperative.objects.create(name=COOP_NAME, location='Eastern Province, Rwanda', description='Demo data for showing SSMS.')
         User.objects.create_user(
             email=f'supervisor@{DEMO_DOMAIN}', password=password, name='Claire Uwimana',
-            role='SUPERVISOR', cooperative=coop, is_email_verified=True,
+            role='SUPERVISOR', cooperative=coop, is_email_verified=True, phone='+250788000001',
         )
         for number, (name, farm_name, place, age) in enumerate(FARMERS, start=1):
             farmer = User.objects.create_user(
                 email=f'farmer{number}@{DEMO_DOMAIN}', password=password, name=name,
-                role='FARMER', cooperative=coop, is_email_verified=True,
+                role='FARMER', cooperative=coop, is_email_verified=True, phone=f'+25078800{number + 1:04d}',
             )
             farm = Farm.objects.create(name=farm_name, owner=farmer, **self._place(place))
             # The running batch is in the first room and the finished one in the second, as on a real farm with two rooms.

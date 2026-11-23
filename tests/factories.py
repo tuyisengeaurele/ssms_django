@@ -31,6 +31,8 @@ class UserFactory(factory.django.DjangoModelFactory):
     role = 'FARMER'
     cooperative = None
     is_email_verified = True
+    # Every account has its own number, as in the real app. A test that wants none passes phone=None.
+    phone = factory.Sequence(lambda n: f'+25078{n:07d}')
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):

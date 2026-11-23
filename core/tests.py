@@ -56,7 +56,7 @@ class PublicEndpointsIgnoreStaleTokens(APITestCase):
     def test_register_works_with_a_stale_token(self):
         res = self.client.post(
             '/api/auth/register',
-            {'name': 'New Person', 'email': 'new@test.com', 'password': 'SecurePass1'},
+            {'name': 'New Person', 'email': 'new@test.com', 'password': 'SecurePass1', 'phone': '0788 000 111'},
             format='json', **STALE,
         )
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)

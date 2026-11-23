@@ -27,7 +27,7 @@ def assert_branded(message, reason_starts):
 
 
 def test_the_verification_email(api_client):
-    api_client.post('/api/auth/register', {'name': 'Alice', 'email': 'alice@test.com', 'password': 'SecurePass1'}, format='json')
+    api_client.post('/api/auth/register', {'name': 'Alice', 'email': 'alice@test.com', 'password': 'SecurePass1', 'phone': '0788 000 111'}, format='json')
     message = mail.outbox[0]
     assert_branded(message, 'You received this because an SSMS account was created with this address.')
     assert '/verify-email?uid=' in message.body
@@ -43,7 +43,7 @@ def test_the_password_reset_email(api_client):
 
 def test_the_email_for_a_person_an_admin_added(auth_client):
     admin = auth_client(UserFactory(role='ADMIN'))
-    admin.post('/api/admin/users', {'name': 'Aline Uwase', 'email': 'aline@example.rw', 'role': 'FARMER'}, format='json')
+    admin.post('/api/admin/users', {'name': 'Aline Uwase', 'email': 'aline@example.rw', 'role': 'FARMER', 'phone': '0788 000 111'}, format='json')
     assert_branded(mail.outbox[0], 'You received this because an SSMS account was created for this address.')
 
 

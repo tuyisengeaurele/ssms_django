@@ -58,7 +58,7 @@ class CooperativeDetailView(APIView):
         coop, err = self._get_coop(pk, request.user)
         if err:
             return err
-        return api_success(CooperativeDetailSerializer(coop).data)
+        return api_success(CooperativeDetailSerializer(coop, context={'request': request}).data)
 
     def patch(self, request, pk):
         """PATCH /api/cooperatives/<id>, update (admin only)."""

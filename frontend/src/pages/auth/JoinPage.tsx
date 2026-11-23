@@ -8,20 +8,23 @@ import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
 import { AuthAlert, AuthButton, AuthField, AuthShell } from '../../landing/auth/AuthShell';
 import NewAccountFields, { newAccountProblem } from '../../landing/auth/NewAccountFields';
+import { phoneFieldError } from '../../utils/phone';
+import PhoneGate from './PhoneGate';
 
 /** The page behind an invitation link from a supervisor. Public, so it does not rely on the app's pop-up styles. */
 export default function JoinPage() {
   const { token = '' } = useParams<{ token: string }>();
   const { t } = useLanguage();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, acting } = useAuth();
   const { getErrorMessage } = useApiError();
   const navigate = useNavigate();
 
   const [invitation, setInvitation] = useState<InvitationDetails | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'invalid'>('loading');
-  const [form, setForm] = useState({ name: '', email: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '' });
   const [secret, setSecret] = useState({ password: '', confirm: '', accepted: false });
   const [error, setError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
@@ -55,15 +58,23 @@ export default function JoinPage() {
 
   const register = async (e: FormEvent) => {
     e.preventDefault();
+    const phone = form.phone.trim();
+    if (!phone) {
+      setPhoneError(t('erPhoneRequired'));
+      return;
+    }
     const problem = newAccountProblem(secret);
     if (problem) {
       setError(t(problem));
       return;
     }
     setError('');
+    setPhoneError('');
     setBusy(true);
     try {
-      const res = await authService.register({ name: form.name, email: form.email, password: secret.password, acceptedTerms: true, invitation: token });
+      const res = await authService.register({
+        name: form.name, email: form.email, password: secret.password, acceptedTerms: true, invitation: token, phone,
+      });
       if (res.data.data.user.isEmailVerified) {
         // The link went to this address, so there is nothing to verify.
         try { sessionStorage.setItem('ssms_notice', 'account_ready'); } catch { /* the notice is a courtesy */ }
@@ -72,7 +83,9 @@ export default function JoinPage() {
         navigate(`/check-email?email=${encodeURIComponent(form.email)}`, { replace: true });
       }
     } catch (err) {
-      setError(getErrorMessage(err));
+      const aboutThePhone = phoneFieldError(err, t);
+      if (aboutThePhone) setPhoneError(aboutThePhone);
+      else setError(getErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -93,6 +106,8 @@ export default function JoinPage() {
   };
 
   // ── signed in ──
+  // The server refuses everything to an account with no number, joining included, so the person is asked for it first.
+  if (isAuthenticated && user?.phoneRequired && !acting) return <PhoneGate />;
   if (isAuthenticated && user) {
     if (user.role !== 'FARMER') {
       return (
@@ -147,6 +162,19 @@ export default function JoinPage() {
           readOnly={!!invitation.email}
           autoComplete="email"
           required
+        />
+        <AuthField
+          id="join-phone"
+          label={t('pnLabel')}
+          hint={t('pnHint')}
+          error={phoneError}
+          aria-required="true"
+          type="tel"
+          inputMode="tel"
+          value={form.phone}
+          onChange={(e) => { setForm((f) => ({ ...f, phone: e.target.value })); setPhoneError(''); }}
+          placeholder="0788 123 456"
+          autoComplete="tel"
         />
         <NewAccountFields idPrefix="join" {...secret} onChange={(patch) => setSecret((s) => ({ ...s, ...patch }))} />
         <AuthButton loading={busy} loadingLabel={t('jnCreating')}>{t('jnCreate')}</AuthButton>

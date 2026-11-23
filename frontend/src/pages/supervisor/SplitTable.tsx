@@ -2,6 +2,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { SplitRow } from '../../services/supply.service';
 import { fill } from '../../utils/fill';
 import Avatar from '../../components/ui/Avatar';
+import PhoneLink from '../../components/ui/PhoneLink';
 
 interface Props {
   rows: SplitRow[];
@@ -38,6 +39,7 @@ export default function SplitTable({ rows, values, notes, onValue, onNote }: Pro
                   <div className="cell-stack">
                     <span className="cell-strong">{r.farmer.name}</span>
                     <span className="cell-sub">{r.farmer.email}</span>
+                    <PhoneLink phone={r.farmer.phone} name={r.farmer.name} />
                     {r.note && <span className="cell-sub">{r.note}</span>}
                   </div>
                 </div>

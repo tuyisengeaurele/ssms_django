@@ -89,11 +89,13 @@ interface AuthFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id
   id: string;
   label: string;
   hint?: string;
+  /** A problem with this field, written beside it. The field is marked invalid and points at the message. */
+  error?: string;
   /** Shown on the right of the label, for example a forgot password link. */
   aside?: ReactNode;
 }
 
-export function AuthField({ id, label, hint, aside, type = 'text', ...rest }: AuthFieldProps) {
+export function AuthField({ id, label, hint, error, aside, type = 'text', ...rest }: AuthFieldProps) {
   const { t } = useLanguage();
   const [shown, setShown] = useState(false);
   const isPassword = type === 'password';
@@ -108,7 +110,8 @@ export function AuthField({ id, label, hint, aside, type = 'text', ...rest }: Au
         <input
           id={id}
           type={isPassword && shown ? 'text' : type}
-          aria-describedby={hint ? `${id}-hint` : undefined}
+          aria-describedby={[error ? `${id}-error` : '', hint ? `${id}-hint` : ''].filter(Boolean).join(' ') || undefined}
+          aria-invalid={error ? true : undefined}
           {...rest}
         />
         {isPassword ? (
@@ -131,6 +134,11 @@ export function AuthField({ id, label, hint, aside, type = 'text', ...rest }: Au
           </button>
         ) : null}
       </div>
+      {error ? (
+        <p id={`${id}-error`} className="l-field__hint l-field__hint--problem" role="alert">
+          {error}
+        </p>
+      ) : null}
       {hint ? (
         <p id={`${id}-hint`} className="l-field__hint">
           {hint}

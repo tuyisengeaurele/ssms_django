@@ -5,7 +5,7 @@ import type { DeviceHints } from './clientHints';
 export interface RegisterResponse { user: User }
 
 export const authService = {
-  register: (data: { name: string; email: string; password: string; role?: string; invitation?: string; acceptedTerms?: boolean }) =>
+  register: (data: { name: string; email: string; password: string; role?: string; invitation?: string; acceptedTerms?: boolean; phone?: string }) =>
     api.post<ApiResponse<RegisterResponse>>('/auth/register', data),
 
   login: (data: { email: string; password: string; device?: DeviceHints; sharedDevice?: boolean }) =>
@@ -19,7 +19,8 @@ export const authService = {
 
   getProfile: () => api.get<ApiResponse<User>>('/auth/me'),
 
-  updateProfile: (data: { name: string }) =>
+  /** Send only what changed. Replacing a number also needs `confirmPhone`, the current number typed. */
+  updateProfile: (data: { name?: string; phone?: string | null; confirmPhone?: string }) =>
     api.patch<ApiResponse<User>>('/auth/me', data),
 
   requestPasswordReset: (data: { email: string }) =>

@@ -4,8 +4,11 @@ import logging
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
+from django.db import IntegrityError
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from rest_framework.exceptions import ErrorDetail
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
@@ -16,8 +19,10 @@ from core.mail import Email, send_email
 from core.permissions import RolePermission
 from core.tokens import revoke_all_refresh_tokens
 from core.utils import api_error, api_success
+from logs.security import record_security_event
 
-from .serializers import AdminCreateUserSerializer, UserSerializer
+from .phone_numbers import describe_change, phone_in_use
+from .serializers import PHONE_TAKEN, AdminCreateUserSerializer, PhoneField, UserSerializer
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -66,7 +71,10 @@ class AdminUserListCreateView(APIView):
         if not serializer.is_valid():
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
         had_password = bool(serializer.validated_data['password'])
-        user = serializer.save()
+        try:
+            user = serializer.save()
+        except DRFValidationError as exc:
+            return api_error('Please check what you entered and try again.', 422, exc.detail, code='invalid_input')
         log_action(request, 'CREATE', 'User', user.pk, f'Admin created user {user.email} with role {user.role}')
 
         message = 'User created.'
@@ -145,6 +153,46 @@ class AdminUserRestoreView(APIView):
             user.save(update_fields=['is_active'])
             log_action(request, 'UPDATE', 'User', user.pk, f'Restored user {user.email}')
         return api_success(UserSerializer(user).data, 'User restored.')
+
+
+def _taken_answer():
+    return api_error('Please check what you entered and try again.', 422, {'phone': [ErrorDetail(PHONE_TAKEN, code='phone_taken')]}, code='invalid_input')
+
+
+class AdminUserPhoneView(APIView):
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'admin_users'
+
+    def patch(self, request, user_id):
+        """PATCH /api/admin/users/<id>/phone, set a person's number, or clear it with null so they are asked for a new one.
+
+        No typed confirmation: this is the way back for a number taken by mistake. A person's own number is changed in their
+        own settings, so the route refuses the caller's own account."""
+        if user_id == request.user.id:
+            return api_error('Change your own number in your settings.', 400)
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return api_error("We couldn't find that user.", 404)
+        if 'phone' not in request.data:
+            return api_error('Please enter a phone number, or null to clear it.', 422)
+        try:
+            number = PhoneField().run_validation(request.data.get('phone'))
+        except DRFValidationError as exc:
+            return api_error('Please check what you entered and try again.', 422, {'phone': exc.detail}, code='invalid_input')
+        if number is not None and phone_in_use(number, exclude_user_id=user.pk):
+            return _taken_answer()
+        old_number = user.phone
+        if number != old_number:
+            user.phone = number
+            try:
+                user.save(update_fields=['phone'])
+            except IntegrityError:
+                return _taken_answer()
+            what = 'cleared' if number is None else 'set'
+            log_action(request, 'UPDATE', 'User', user.pk, f'Phone number {what} for {user.email}')
+            record_security_event('phone_changed', request, user=user, detail=describe_change(old_number, number))
+        return api_success(UserSerializer(user).data, 'Phone number updated.')
 
 
 class AdminUserCooperativeView(APIView):

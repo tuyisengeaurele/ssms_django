@@ -10,7 +10,7 @@ const base = { cooperativeId: null, cooperativeName: null, isEmailVerified: true
 const people = vi.hoisted(() => [
   { id: 'me', name: 'Auris Tuyisenge', email: 'auris@ssms.com', role: 'ADMIN', isActive: true },
   { id: 's1', name: 'Coop Supervisor', email: 'supervisor@ssms.com', role: 'SUPERVISOR', isActive: true, cooperativeId: 'c1', cooperativeName: 'Gatsibo 1' },
-  { id: 'f1', name: 'Bruce Ishimwe', email: 'bruce@gmail.com', role: 'FARMER', isActive: true },
+  { id: 'f1', name: 'Bruce Ishimwe', email: 'bruce@gmail.com', phone: '+250788123456', role: 'FARMER', isActive: true },
   { id: 'f2', name: 'Gad Anaclet', email: 'gad@ssms.com', role: 'FARMER', isActive: false },
 ]);
 
@@ -252,6 +252,46 @@ describe('Users page', () => {
     expect(await screen.findByText('Nobody has been deleted')).toBeInTheDocument();
   });
 
+  it('shows each number with a call and a WhatsApp link, and nothing for an account with none', async () => {
+    open();
+    const bruce = (await screen.findByText('Bruce Ishimwe')).closest('tr') as HTMLElement;
+    expect(within(bruce).getByText('0788 123 456')).toBeInTheDocument();
+    expect(within(bruce).getByRole('link', { name: 'Call Bruce Ishimwe' })).toHaveAttribute('href', 'tel:+250788123456');
+    const supervisor = screen.getByText('Coop Supervisor').closest('tr') as HTMLElement;
+    expect(within(supervisor).queryByRole('link', { name: /Call|WhatsApp/ })).not.toBeInTheDocument();
+  });
+
+  it('asks for a phone number when creating a user, as a required field', async () => {
+    open();
+    await screen.findByText('Bruce Ishimwe');
+    fireEvent.click(screen.getByRole('button', { name: 'Create user' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Create a new user' });
+    const field = within(dialog).getByLabelText('Phone number');
+    expect(field).toHaveAttribute('type', 'tel');
+    fireEvent.change(within(dialog).getByLabelText('Full name'), { target: { value: 'Aline Uwase' } });
+    fireEvent.change(within(dialog).getByLabelText('Email address'), { target: { value: 'aline@x.rw' } });
+    fireEvent.change(within(dialog).getByLabelText('Password'), { target: { value: 'Secret123' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Create user' }));
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Please fill in every field.');
+    expect(api.createUser).not.toHaveBeenCalled();
+  });
+
+  it('shows what the server said about the number when creating a user', async () => {
+    api.createUser.mockRejectedValue(new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, {
+      status: 422, data: { code: 'phone_taken', message: 'x', errors: { phone: ['taken'] } },
+    } as never));
+    open();
+    await screen.findByText('Bruce Ishimwe');
+    fireEvent.click(screen.getByRole('button', { name: 'Create user' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Create a new user' });
+    fireEvent.change(within(dialog).getByLabelText('Full name'), { target: { value: 'Aline Uwase' } });
+    fireEvent.change(within(dialog).getByLabelText('Email address'), { target: { value: 'aline@x.rw' } });
+    fireEvent.change(within(dialog).getByLabelText('Phone number'), { target: { value: '0788 123 456' } });
+    fireEvent.change(within(dialog).getByLabelText('Password'), { target: { value: 'Secret123' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Create user' }));
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('This phone number is already used by another account.');
+  });
+
   it('creates a user and adds them to the list', async () => {
     api.createUser.mockResolvedValue({ data: { data: withBase({ id: 'n1', name: 'Aline Uwase', email: 'aline@x.rw', role: 'FARMER', isActive: true }) } });
     open();
@@ -260,9 +300,10 @@ describe('Users page', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Create a new user' });
     fireEvent.change(within(dialog).getByLabelText('Full name'), { target: { value: 'Aline Uwase' } });
     fireEvent.change(within(dialog).getByLabelText('Email address'), { target: { value: 'aline@x.rw' } });
+    fireEvent.change(within(dialog).getByLabelText('Phone number'), { target: { value: ' 0788 123 456 ' } });
     fireEvent.change(within(dialog).getByLabelText('Password'), { target: { value: 'Secret123' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Create user' }));
-    await waitFor(() => expect(api.createUser).toHaveBeenCalledWith({ name: 'Aline Uwase', email: 'aline@x.rw', password: 'Secret123', role: 'FARMER' }));
+    await waitFor(() => expect(api.createUser).toHaveBeenCalledWith({ name: 'Aline Uwase', email: 'aline@x.rw', phone: '0788 123 456', password: 'Secret123', role: 'FARMER' }));
     expect(await screen.findByText('Aline Uwase')).toBeInTheDocument();
   });
 

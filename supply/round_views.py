@@ -14,6 +14,7 @@ from cooperatives.team_views import team_cooperative
 from core.permissions import RolePermission
 from core.utils import api_error, api_success
 from farms.models import RearingRoom
+from users.phone_visibility import person_row, visible_phone_ids
 
 from . import round_notify, rounds
 from .limits import request_limit
@@ -38,12 +39,13 @@ def _round_row(r: SupplyRound, **extra) -> dict:
     }
 
 
-def _request_row(q: EggRequest) -> dict:
+def _request_row(q: EggRequest, viewer=None, visible=frozenset()) -> dict:
+    # `visible` is visible_phone_ids for the viewer, so a list of requests costs one query for all the numbers.
     return {
         'id': q.pk, 'status': q.status, 'boxes_asked': q.boxes_asked, 'note': q.note, 'boxes_approved': q.boxes_approved,
         'decision_note': q.decision_note, 'boxes_received': q.boxes_received, 'condition': q.condition, 'received_at': q.received_at,
         'batch_id': q.batch_id, 'created_at': q.created_at,
-        'farmer': {'id': q.farmer_id, 'name': q.farmer.name, 'email': q.farmer.email},
+        'farmer': person_row(viewer, q.farmer, visible),
         'room': {'id': q.room_id, 'name': q.room.name}, 'farm': {'id': q.farm_id, 'name': q.farm.name},
     }
 
@@ -108,7 +110,9 @@ class RoundDetailView(APIView):
         if found is None:
             return api_error('We could not find that round.', 404)
         asked = found.requests.select_related('farmer', 'room', 'farm').order_by('created_at')
-        return api_success({'round': _round_row(found), 'requests': [_request_row(q) for q in asked]})
+        asked = list(asked)
+        visible = visible_phone_ids(request.user, [q.farmer_id for q in asked])
+        return api_success({'round': _round_row(found), 'requests': [_request_row(q, request.user, visible) for q in asked]})
 
     def patch(self, request, pk):
         found = _staff_rounds(request.user).filter(pk=pk).first()

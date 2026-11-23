@@ -7,6 +7,7 @@ import { useToast } from '../../context/ToastContext';
 import { fill } from '../../utils/fill';
 import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
 import Avatar from '../../components/ui/Avatar';
+import PhoneLink from '../../components/ui/PhoneLink';
 import { Icon } from '../../components/ui/Icon';
 import Modal from '../../components/ui/Modal';
 import LoadError from '../../components/ui/LoadError';
@@ -94,6 +95,7 @@ export default function CoopMembersTab() {
               <span className="cell-stack">
                 <span className="cell-strong">{m.name}</span>
                 <span className="cell-sub">{m.email}</span>
+                <PhoneLink phone={m.phone} name={m.name} />
               </span>
               <span className="badge badge-gray">{t(ROLE_LABEL_KEY[m.role])}</span>
               <button

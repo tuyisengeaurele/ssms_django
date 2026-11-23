@@ -6,6 +6,10 @@
 export const ERROR_CODE_KEY: Record<string, string> = {
   bad_login: 'erBadLogin',
   email_taken: 'erEmailTaken',
+  invalid_phone: 'erBadPhone',
+  phone_required: 'erPhoneRequired',
+  phone_taken: 'erPhoneTaken',
+  phone_confirm_mismatch: 'erPhoneConfirm',
   invalid_input: 'erCheckInput',
   forbidden: 'erForbidden',
   not_found: 'erNotFound',

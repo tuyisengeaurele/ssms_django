@@ -49,7 +49,7 @@ def join_details(token):
 
 
 def register(token, **extra):
-    body = {'name': 'Aline Uwase', 'email': 'aline@example.rw', 'password': STRONG, 'invitation': token, **extra}
+    body = {'name': 'Aline Uwase', 'email': 'aline@example.rw', 'password': STRONG, 'invitation': token, 'phone': '0788 000 111', **extra}
     return APIClient().post('/api/auth/register', body, format='json')
 
 
@@ -262,7 +262,7 @@ def test_a_bad_link_stops_the_registration_and_creates_nothing():
 
 
 def test_registering_without_a_link_still_works_as_before():
-    response = APIClient().post('/api/auth/register', {'name': 'Plain Person', 'email': 'plain@example.rw', 'password': STRONG}, format='json')
+    response = APIClient().post('/api/auth/register', {'name': 'Plain Person', 'email': 'plain@example.rw', 'password': STRONG, 'phone': '0788 000 111'}, format='json')
     assert response.status_code == 201
     assert User.objects.get(email='plain@example.rw').cooperative_id is None
 

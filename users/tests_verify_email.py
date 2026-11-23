@@ -95,7 +95,7 @@ def test_an_incomplete_link_is_a_422(api_client):
 
 
 def test_the_emailed_link_works_from_registration_to_verification(api_client):
-    api_client.post('/api/auth/register', {'name': 'Aline', 'email': 'aline@example.rw', 'password': 'Zebra-Quartz-84'}, format='json')
+    api_client.post('/api/auth/register', {'name': 'Aline', 'email': 'aline@example.rw', 'password': 'Zebra-Quartz-84', 'phone': '0788 000 111'}, format='json')
     body = mail.outbox[0].body
     uid, token = re.search(r'uid=([^&\s]+)&token=([^\s]+)', body).groups()
     response = api_client.post(VERIFY, {'uid': uid, 'token': token}, format='json')

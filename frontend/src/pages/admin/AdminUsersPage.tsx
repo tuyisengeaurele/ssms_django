@@ -13,6 +13,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { fill } from '../../utils/fill';
 import Avatar from '../../components/ui/Avatar';
+import PhoneLink from '../../components/ui/PhoneLink';
 import EmptyState from '../../components/ui/EmptyState';
 import LoadError from '../../components/ui/LoadError';
 import { Icon } from '../../components/ui/Icon';
@@ -24,7 +25,7 @@ import StatTile from '../../components/ui/StatTile';
 import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
 
 const ROLES: Role[] = ['FARMER', 'SUPERVISOR', 'ADMIN'];
-const EMPTY_FORM: CreateUserPayload = { name: '', email: '', password: '', role: 'FARMER' };
+const EMPTY_FORM: CreateUserPayload = { name: '', email: '', phone: '', password: '', role: 'FARMER' };
 
 type Tab = 'active' | 'deleted';
 
@@ -191,13 +192,13 @@ export default function AdminUsersPage() {
 
   const handleCreate = async () => {
     setFormError('');
-    if (!form.name || !form.email || !form.password) {
+    if (!form.name || !form.email || !form.phone.trim() || !form.password) {
       setFormError(t('usFillAll'));
       return;
     }
     setSubmitting(true);
     try {
-      const res = await adminService.createUser(form);
+      const res = await adminService.createUser({ ...form, phone: form.phone.trim() });
       setUsers((prev) => [res.data.data, ...prev]);
       closeCreate();
       success(t('usCreated'));
@@ -366,6 +367,11 @@ export default function AdminUsersPage() {
             onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
         </div>
         <div className="form-group">
+          <label className="form-label" htmlFor="new-phone">{t('pnLabel')}</label>
+          <input id="new-phone" type="tel" inputMode="tel" className="form-input" value={form.phone} autoComplete="off" placeholder="0788 123 456"
+            aria-required="true" onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
+        </div>
+        <div className="form-group">
           <label className="form-label" htmlFor="new-password">{t('usFieldPassword')}</label>
           <input id="new-password" type="password" className="form-input" value={form.password} autoComplete="new-password"
             onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} aria-describedby="new-password-hint" />
@@ -463,6 +469,7 @@ export default function AdminUsersPage() {
                               {isMe && <span className="cell-tag">{t('usYou')}</span>}
                             </span>
                             <span className="cell-sub">{u.email}</span>
+                            <PhoneLink phone={u.phone} name={u.name} />
                           </div>
                         </div>
                       </td>

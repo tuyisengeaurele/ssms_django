@@ -20,7 +20,7 @@ export interface WaitingRoom {
   pendingAreaM2: number | null;
   createdAt: string;
   farm: { id: string; name: string };
-  owner: { name: string; email: string };
+  owner: { id?: string; name: string; email: string; phone?: string | null };
 }
 
 export const roomService = {

@@ -4,20 +4,28 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { useApiError } from '../../hooks/useApiError';
 import { authService } from '../../services/auth.service';
+import ConfirmPhoneChangeDialog from '../../components/ui/ConfirmPhoneChangeDialog';
+import PhoneLink from '../../components/ui/PhoneLink';
 import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
 import { initialsOf } from '../../components/ui/Avatar';
 import Panel from '../../components/ui/Panel';
 import { dateFormat } from '../../utils/dateFormat';
+import { formatRwandaMobile, phoneFieldError } from '../../utils/phone';
 
-/** Who the person is, and the one thing they can change about it: their name. */
+/** Who the person is, and the two things they can change about it: their name and their phone number. */
 export default function AccountSettings() {
   const { user, refreshUser, updateUser } = useAuth();
   const { success, error: showError } = useToast();
   const { getErrorMessage } = useApiError();
   const { t, locale } = useLanguage();
 
+  const savedPhone = formatRwandaMobile(user?.phone);
   const [name, setName] = useState(user?.name ?? '');
+  const [phone, setPhone] = useState(savedPhone);
+  // The server's refusal of the number, shown beside the field until the person types again.
+  const [phoneError, setPhoneError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [changing, setChanging] = useState(false);
 
   // Fetch the latest details, so the cooperative and name are never stale.
   useEffect(() => {
@@ -29,6 +37,15 @@ export default function AccountSettings() {
     if (user?.name) setName(user.name);
   }, [user?.name]);
 
+  useEffect(() => {
+    setPhone(formatRwandaMobile(user?.phone));
+  }, [user?.phone]);
+
+  // An account that has a number cannot type over it: changing it goes through the dialog that asks for the number to be typed.
+  const hasPhone = !!user?.phone;
+  const nameChanged = name !== user?.name;
+  const phoneChanged = !hasPhone && phone.trim() !== '';
+
   const joined = user?.createdAt
     ? dateFormat(locale, { dateStyle: 'medium' }).format(new Date(user.createdAt))
     : '-';
@@ -36,12 +53,19 @@ export default function AccountSettings() {
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setPhoneError('');
     try {
-      const res = await authService.updateProfile({ name });
+      // Only what changed is sent, so saving a new number never touches the name, and the other way round.
+      const body: { name?: string; phone?: string } = {};
+      if (nameChanged) body.name = name;
+      if (phoneChanged) body.phone = phone.trim();
+      const res = await authService.updateProfile(body);
       updateUser(res.data.data);
       success(t('pfSaved'));
     } catch (err) {
-      showError(getErrorMessage(err));
+      const aboutThePhone = phoneFieldError(err, t);
+      if (aboutThePhone) setPhoneError(aboutThePhone);
+      else showError(getErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -59,6 +83,9 @@ export default function AccountSettings() {
           <div><dt>{t('pfSince')}</dt><dd>{joined}</dd></div>
           <div><dt>{t('pfAccountId')}</dt><dd className="cell-mono">{user?.id?.slice(-8).toUpperCase() ?? '-'}</dd></div>
           <div><dt>{t('pfCooperative')}</dt><dd>{user?.cooperativeName ?? t('pfNotAssigned')}</dd></div>
+          {user?.supervisor ? (
+            <div><dt>{t('pfSupervisor')}</dt><dd><span className="cell-stack"><span>{user.supervisor.name}</span><PhoneLink phone={user.supervisor.phone} name={user.supervisor.name} /></span></dd></div>
+          ) : null}
         </dl>
       </section>
 
@@ -75,16 +102,55 @@ export default function AccountSettings() {
             <span id="pf-email-note" className="form-hint">{t('pfEmailNote')}</span>
           </div>
 
+          {hasPhone ? (
+            <div className="form-group" role="group" aria-labelledby="pf-phone-label" aria-describedby="pf-phone-note">
+              <span id="pf-phone-label" className="form-label">{t('pnLabel')}</span>
+              <div className="form-inline">
+                <span className="form-static">{savedPhone}</span>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setChanging(true)}>{t('cpChange')}</button>
+              </div>
+              <span id="pf-phone-note" className="form-hint">{t('pnHint')}</span>
+            </div>
+          ) : (
+            <div className="form-group">
+              <label className="form-label" htmlFor="pf-phone">{t('pnLabel')}</label>
+              <input
+                id="pf-phone"
+                className="form-input"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                maxLength={40}
+                placeholder="0788 123 456"
+                value={phone}
+                onChange={(e) => { setPhone(e.target.value); setPhoneError(''); }}
+                aria-invalid={phoneError ? true : undefined}
+                aria-describedby={phoneError ? 'pf-phone-error pf-phone-note' : 'pf-phone-note'}
+              />
+              {phoneError ? <span id="pf-phone-error" className="form-error" role="alert">{phoneError}</span> : null}
+              <span id="pf-phone-note" className="form-hint">{t('pnHint')}</span>
+            </div>
+          )}
+
           <p className="form-hint profile-note">
             {t('pfRoleNote')}
             {!user?.cooperativeId && user?.role !== 'ADMIN' ? ` ${t('pfCoopHelp')}` : ''}
           </p>
 
-          <button type="submit" className="btn btn-primary" disabled={saving || name === user?.name}>
+          <button type="submit" className="btn btn-primary" disabled={saving || !(nameChanged || phoneChanged)}>
             {saving ? <><span className="spinner" />{t('pfSaving')}</> : t('pfSave')}
           </button>
         </form>
       </Panel>
+
+      {user?.phone ? (
+        <ConfirmPhoneChangeDialog
+          open={changing}
+          currentPhone={user.phone}
+          onClose={() => setChanging(false)}
+          onSaved={(saved) => { updateUser(saved); success(t('cpSaved')); setChanging(false); }}
+        />
+      ) : null}
     </div>
   );
 }

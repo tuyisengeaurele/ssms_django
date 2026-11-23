@@ -8,6 +8,7 @@ import { EggRequestRow, SplitRow, SupplyRound, supplyService } from '../../servi
 import { boxesText } from '../../utils/boxes';
 import { fill } from '../../utils/fill';
 import Avatar from '../../components/ui/Avatar';
+import PhoneLink from '../../components/ui/PhoneLink';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
 import PageHeader from '../../components/ui/PageHeader';
@@ -204,6 +205,7 @@ export default function SupplyRoundPage() {
                             <div className="cell-stack">
                               <span className="cell-strong">{q.farmer.name}</span>
                               <span className="cell-sub">{q.farmer.email}</span>
+                              <PhoneLink phone={q.farmer.phone} name={q.farmer.name} />
                               {q.note && <span className="cell-sub">{q.note}</span>}
                             </div>
                           </div>

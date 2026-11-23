@@ -8,6 +8,8 @@ const today = () => new Date().toISOString().slice(0, 10);
 export interface CreateUserPayload {
   name: string;
   email: string;
+  /** Every account has a number. */
+  phone: string;
   password: string;
   role: Role;
 }

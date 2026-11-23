@@ -120,10 +120,10 @@ def seed(farms=200, batches_per_farm=5, days=30, cooperatives=5, seed_number=202
         Cooperative(name=f'Load Silk Cooperative {n + 1}', location=f'{DISTRICTS[n % len(DISTRICTS)]}, Rwanda', description='Load data.')
         for n in range(cooperatives)
     ])
-    staff = [User(email=f'supervisor{n + 1}@{DOMAIN}', name=f'Supervisor {n + 1}', role='SUPERVISOR', cooperative=coop, is_email_verified=True, password=nobody)
+    staff = [User(email=f'supervisor{n + 1}@{DOMAIN}', name=f'Supervisor {n + 1}', role='SUPERVISOR', cooperative=coop, is_email_verified=True, password=nobody, phone=f'+25073{n + 1:07d}')
              for n, coop in enumerate(coops)]
-    staff.append(User(email=f'admin@{DOMAIN}', name='Load Admin', role='ADMIN', is_email_verified=True, password=nobody))
-    farmers = [User(email=f'farmer{n + 1}@{DOMAIN}', name=f'Farmer {n + 1}', role='FARMER', cooperative=coops[n % cooperatives], is_email_verified=True, password=nobody)
+    staff.append(User(email=f'admin@{DOMAIN}', name='Load Admin', role='ADMIN', is_email_verified=True, password=nobody, phone='+250730000000'))
+    farmers = [User(email=f'farmer{n + 1}@{DOMAIN}', name=f'Farmer {n + 1}', role='FARMER', cooperative=coops[n % cooperatives], is_email_verified=True, password=nobody, phone=f'+25072{n + 1:07d}')
                for n in range(farms)]
     User.objects.bulk_create(staff + farmers)
     # bulk_create does not run User.save, so the memberships it would have opened are made here.

@@ -38,7 +38,7 @@ def token_of(response):
 
 
 def register(token, email='aline@example.rw'):
-    body = {'name': 'Aline Uwase', 'email': email, 'password': STRONG, 'invitation': token}
+    body = {'name': 'Aline Uwase', 'email': email, 'password': STRONG, 'invitation': token, 'phone': '0788 000 111'}
     return APIClient().post('/api/auth/register', body, format='json')
 
 

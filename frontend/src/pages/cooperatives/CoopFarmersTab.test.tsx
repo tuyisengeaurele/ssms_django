@@ -21,7 +21,7 @@ vi.mock('../../services/team.service', () => ({
 import CoopFarmersTab from './CoopFarmersTab';
 
 const farmers = [
-  { id: 'f1', name: 'Bruce Ishimwe', email: 'bruce@gmail.com', joinedAt: '2026-05-01T10:00:00Z', farmCount: 2, allowance: { boxes: 3, source: 'set' } },
+  { id: 'f1', name: 'Bruce Ishimwe', email: 'bruce@gmail.com', phone: '+250788123456', joinedAt: '2026-05-01T10:00:00Z', farmCount: 2, allowance: { boxes: 3, source: 'set' } },
   { id: 'f2', name: 'Gad Anaclet', email: 'gad@ssms.com', joinedAt: '2026-06-10T10:00:00Z', farmCount: 1, allowance: { boxes: 2, source: 'default' } },
 ];
 const invitations = [
@@ -57,6 +57,16 @@ beforeEach(() => {
 });
 
 describe('The farmers of my cooperative', () => {
+  it('shows a farmer\'s number with a call and a WhatsApp link, and nothing for a farmer the answer sent no number for', async () => {
+    open();
+    const bruce = await rowOf('Bruce Ishimwe');
+    expect(within(bruce).getByText('0788 123 456')).toBeInTheDocument();
+    expect(within(bruce).getByRole('link', { name: 'Call Bruce Ishimwe' })).toHaveAttribute('href', 'tel:+250788123456');
+    expect(within(bruce).getByRole('link', { name: 'Message Bruce Ishimwe on WhatsApp' })).toHaveAttribute('href', 'https://wa.me/250788123456');
+    const gad = await rowOf('Gad Anaclet');
+    expect(within(gad).queryByRole('link', { name: /Call|WhatsApp/ })).not.toBeInTheDocument();
+  });
+
   it('has an invite button and no title of its own, because the cooperative page has one', async () => {
     open();
     expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();

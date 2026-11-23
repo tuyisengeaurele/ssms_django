@@ -111,7 +111,7 @@ def test_the_evidence_holds_the_card_the_farmer_and_the_rooms(auth_client, super
     room(farmer, 'Gone', is_active=False)
     allowance.ask(farmer, 3, 'I built a second house')
     data = evidence(auth_client(supervisor), farmer.pk).json()['data']
-    assert data['farmer'] == {'id': farmer.pk, 'name': 'Aline Uwase', 'email': farmer.email}
+    assert data['farmer'] == {'id': farmer.pk, 'name': 'Aline Uwase', 'email': farmer.email, 'phone': farmer.phone}
     assert (data['boxes'], data['source']) == (1, 'set')
     assert [h['kind'] for h in data['history']] == ['reduction', 'start']
     assert data['openRequest']['boxesAsked'] == 3

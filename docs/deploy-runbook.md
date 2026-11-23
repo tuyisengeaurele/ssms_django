@@ -628,3 +628,30 @@ Going back: the constraints and the new table can be dropped by migrating `farms
 - The command prints how many rows it removed from each log, and writes a start and an end row to the jobs and devices log, which is how the System page knows the scheduler is alive.
 - To look into something older than the keeping time, the row is gone. Copy what you need before the night it expires.
 - Lowering a number removes the older rows the next night. A backup taken before is the only way back.
+
+## 26. Making the phone number required on a live database (task 4.1)
+
+The migration is `users.0014_phone_unique`. It swaps the rule that only covered confirmed numbers for a plain unique rule on `users.phone`. Empty numbers (`NULL`) never collide, so accounts without a number stay valid.
+
+1. Back up the database.
+2. Check that no number is held twice. It must return no rows, and if it returns some, give one of the accounts a different number first, because the rule would refuse to be added:
+
+```sql
+SELECT phone, count(*) FROM users WHERE phone IS NOT NULL GROUP BY phone HAVING count(*) > 1;
+```
+
+3. See how many people will meet the gate:
+
+```sql
+SELECT role, count(*) FROM users WHERE phone IS NULL AND "isActive" GROUP BY role;
+```
+
+4. Tell those people before the deploy: the next time they sign in they will be asked for a phone number, and cannot use the site until they give one. A short message is enough ("SSMS now needs a phone number on every account. You will be asked for yours when you sign in.").
+5. Deploy. The web page and the API deploy separately. If the API goes first for a minute or two, an account with no number gets "Please enter your phone number." where the page has no gate yet, and a refresh fixes it. If the web page goes first, nothing changes until the API follows. Run `python manage.py migrate`.
+6. Check: `SELECT conname FROM pg_constraint WHERE conname = 'users_phone_unique';` returns a row, and `users_verified_phone_unique` is gone. Sign in as an account with no number: you should see the gate. Sign in as one with a number: you should not.
+
+**A number taken by someone else, or by mistake.** The person cannot be given it until it is free. With an admin sign in, call `PATCH /api/admin/users/<id>/phone` with `{"phone": null}` on the account that holds it, or with the correct number. The change is written to the audit log and to the security log (`phone_changed`, numbers masked). The route is in the API documentation under the admin users.
+
+**Seeing changes.** Security log, kind "Phone number changed". It holds the person, the time and both numbers with the middle hidden.
+
+Going back: migrate `users` back to `0013`. The plain rule is replaced by the conditional one. Numbers already saved stay.

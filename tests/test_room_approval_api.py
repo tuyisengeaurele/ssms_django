@@ -197,7 +197,7 @@ def test_a_supervisor_sees_what_waits_in_their_cooperative(auth_client, world):
     assert rows[new.pk]['kind'] == 'new' and rows[resized.pk]['kind'] == 'size'
     assert rows[resized.pk]['pendingAreaM2'] == 20.0 and rows[resized.pk]['areaM2'] == 10.0
     assert rows[new.pk]['farm'] == {'id': farm.pk, 'name': farm.name}
-    assert rows[new.pk]['owner'] == {'name': farmer.name, 'email': farmer.email}
+    assert rows[new.pk]['owner'] == {'id': farmer.pk, 'name': farmer.name, 'email': farmer.email, 'phone': farmer.phone}
 
 
 def test_a_supervisor_of_another_cooperative_sees_none_of_it(auth_client, world):

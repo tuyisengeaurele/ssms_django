@@ -8,6 +8,7 @@ from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.settings import api_settings
 
 from core.permissions import action_for
+from core.phone_gate import check_phone_on_file
 from core.support_rules import VIEW_ONLY, decide
 from logs.security import record_security_event
 from support_access import services as support
@@ -158,4 +159,7 @@ class ActiveUserJWTAuthentication(JWTAuthentication):
                 raise AuthenticationFailed(IDLE_MESSAGE, code='session_idle')
             if now - session.last_activity_at >= TOUCH_EVERY and request.path_info not in BACKGROUND_PATHS:
                 UserSession.objects.filter(pk=request.session_id, last_activity_at__lt=now - TOUCH_EVERY).update(last_activity_at=now)
+        # Last, so a stale or revoked sign in is still told so first. Support access never gets here: an admin looking at
+        # an account must be able to see it whatever it holds.
+        check_phone_on_file(request, user)
         return user, token

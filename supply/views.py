@@ -14,6 +14,7 @@ from core.permissions import RolePermission
 from core.utils import api_error, api_success
 from farms.models import RearingRoom
 from users.models import User
+from users.phone_visibility import person_row, visible_phone_ids
 
 from . import allowance, notify, nudges, onboarding, tracing
 from .capacity import farmer_capacity_boxes, room_capacity_boxes
@@ -104,11 +105,12 @@ class SuggestionListView(APIView):
         user = request.user
         if user.role == 'SUPERVISOR' and not user.cooperative_id:
             return api_error('You are not part of a cooperative yet.', 403)
-        found = nudges.waiting(user, request.query_params.get('cooperativeId') or None)
+        found = list(nudges.waiting(user, request.query_params.get('cooperativeId') or None))
+        visible = visible_phone_ids(user, [s.farmer_id for s in found])
         rows = [
             {
                 'id': s.pk, 'current_boxes': s.old_boxes, 'suggested_boxes': s.suggested_boxes, 'created_at': s.created_at,
-                'farmer': {'id': s.farmer_id, 'name': s.farmer.name, 'email': s.farmer.email},
+                'farmer': person_row(user, s.farmer, visible),
                 'batch': {'id': s.batch_id, 'lot_code': s.batch.lot_code, 'harvested_at': s.created_at},
             }
             for s in found
@@ -155,7 +157,8 @@ class AllowanceRequestListView(APIView):
         user = request.user
         if user.role == 'SUPERVISOR' and not user.cooperative_id:
             return api_error('You are not part of a cooperative yet.', 403)
-        waiting = allowance.waiting_requests(user, request.query_params.get('cooperativeId') or None)
+        waiting = list(allowance.waiting_requests(user, request.query_params.get('cooperativeId') or None))
+        visible = visible_phone_ids(user, [r.farmer_id for r in waiting])
         rows = [
             {
                 'id': r.pk,
@@ -163,7 +166,7 @@ class AllowanceRequestListView(APIView):
                 'current_boxes': allowance.current(r.farmer)['boxes'],
                 'reason': r.reason,
                 'created_at': r.created_at,
-                'farmer': {'id': r.farmer_id, 'name': r.farmer.name, 'email': r.farmer.email},
+                'farmer': person_row(user, r.farmer, visible),
             }
             for r in waiting
         ]
@@ -243,7 +246,7 @@ class AllowanceFarmerView(APIView):
         rooms = RearingRoom.objects.filter(farm__owner=farmer, farm__is_active=True, is_active=True).order_by('created_at')
         return api_success({
             **_card(farmer),
-            'farmer': {'id': farmer.pk, 'name': farmer.name, 'email': farmer.email},
+            'farmer': person_row(request.user, farmer, visible_phone_ids(request.user, [farmer.pk])),
             'rooms': [
                 {
                     'id': r.pk, 'name': r.name, 'approval_status': r.approval_status, 'area_m2': r.area_m2, 'pending_area_m2': r.pending_area_m2,

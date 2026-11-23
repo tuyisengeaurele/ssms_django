@@ -66,18 +66,18 @@ def test_a_strong_password_passes():
 # ── every place a password is set uses the same rules ───────────────────────────────────────
 
 def test_register_rejects_a_common_password(api_client):
-    response = api_client.post(REGISTER, {'name': 'Aline', 'email': 'aline@example.rw', 'password': 'Password1'}, format='json')
+    response = api_client.post(REGISTER, {'name': 'Aline', 'email': 'aline@example.rw', 'password': 'Password1', 'phone': '0788 000 111'}, format='json')
     assert response.status_code == 422
     assert 'password' in response.json()['errors']
 
 
 def test_register_rejects_a_password_close_to_the_email(api_client):
-    response = api_client.post(REGISTER, {'name': 'Zed', 'email': 'zebraquartz@example.rw', 'password': 'Zebraquartz1'}, format='json')
+    response = api_client.post(REGISTER, {'name': 'Zed', 'email': 'zebraquartz@example.rw', 'password': 'Zebraquartz1', 'phone': '0788 000 111'}, format='json')
     assert response.status_code == 422
 
 
 def test_register_accepts_a_strong_password(api_client):
-    response = api_client.post(REGISTER, {'name': 'Aline', 'email': 'aline@example.rw', 'password': STRONG}, format='json')
+    response = api_client.post(REGISTER, {'name': 'Aline', 'email': 'aline@example.rw', 'password': STRONG, 'phone': '0788 000 111'}, format='json')
     assert response.status_code == 201
 
 

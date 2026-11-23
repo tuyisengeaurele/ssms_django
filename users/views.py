@@ -1,6 +1,8 @@
 import logging
 
 from django.contrib.auth import authenticate
+from django.db import IntegrityError
+from rest_framework.exceptions import ErrorDetail
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -21,7 +23,16 @@ from . import mfa, mfa_challenge
 from .cookie_utils import REFRESH_COOKIE, clear_refresh_cookie, set_refresh_cookie
 from .email_verification_views import _send_verification_email
 from .models import Role, UserSession
-from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
+from .phone_numbers import describe_change, phone_in_use, same_number
+from .serializers import (
+    PHONE_CONFIRM,
+    PHONE_REQUIRED,
+    PHONE_TAKEN,
+    LoginSerializer,
+    ProfileUpdateSerializer,
+    RegisterSerializer,
+    UserSerializer,
+)
 from .sessions import IDLE_MESSAGE, SessionEnded, end_all_but, reissue, revoke, rotate, start_session
 from .signin import finish_sign_in, too_many_attempts
 
@@ -38,7 +49,11 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data, context={'request': request})
         if not serializer.is_valid():
             return api_error('Please check what you entered and try again.', 422, serializer.errors, code='invalid_input')
-        user = serializer.save()
+        try:
+            user = serializer.save()
+        except DRFValidationError as exc:
+            # Raised while saving: a number taken in the same moment, or an invitation used in the same moment.
+            return api_error('Please check what you entered and try again.', 422, exc.detail, code='invalid_input')
         log_action(request, 'CREATE', 'User', user.pk, f'Registered: {user.email}')
         if user.is_email_verified:
             # Joined by a link sent to this very address, so there is nothing left to verify.
@@ -91,22 +106,57 @@ class LoginView(APIView):
         return finish_sign_in(request, user, mfa_verified=False)
 
 
+def _phone_answer(code, text, field='phone'):
+    """A refusal about the number, with the code the page tells cases apart by, on the field it belongs to."""
+    return api_error('Please check what you entered and try again.', 422, {field: [ErrorDetail(text, code=code)]}, code='invalid_input')
+
+
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated, RolePermission]
     resource = 'account'
 
     def get(self, request):
-        return api_success(UserSerializer(request.user).data)
+        return api_success(UserSerializer(request.user, context={'with_supervisor': True}).data)
 
     def patch(self, request):
-        name = request.data.get('name', '').strip()
-        if not name:
+        """Change the name, the phone number, or both. A key that is not sent is left as it is.
+
+        A number is kept in one form (+250 and nine digits), whichever way the person wrote it. It cannot be emptied. Giving a
+        first number needs nothing more. Replacing one needs `confirmPhone`, the current number typed, checked here and not only
+        by the dialog in the page. Nothing is saved unless everything asked for is allowed."""
+        if 'name' not in request.data and 'phone' not in request.data:
             return api_error('Please enter your name.', 422)
-        if len(name) > 100:
-            return api_error('Please keep your name under 100 characters.', 422)
-        request.user.name = name
-        request.user.save(update_fields=['name'])
-        return api_success(UserSerializer(request.user).data, 'Profile updated.')
+        serializer = ProfileUpdateSerializer(data=request.data)
+        if not serializer.is_valid():
+            errors = serializer.errors
+            if 'name' in errors and 'phone' not in errors:
+                return api_error(str(errors['name'][0]), 422, errors)
+            return api_error('Please check what you entered and try again.', 422, errors, code='invalid_input')
+        user, changed, data = request.user, [], serializer.validated_data
+        old_number = user.phone
+        if 'phone' in data:
+            new_number = data['phone']
+            if new_number is None:
+                return _phone_answer('phone_required', PHONE_REQUIRED)
+            if new_number != old_number:
+                if old_number and not same_number(data.get('confirm_phone'), old_number):
+                    return _phone_answer('phone_confirm_mismatch', PHONE_CONFIRM, field='confirm_phone')
+                if phone_in_use(new_number, exclude_user_id=user.pk):
+                    return _phone_answer('phone_taken', PHONE_TAKEN)
+                user.phone = new_number
+                changed.append('phone')
+        if 'name' in data:
+            user.name = data['name']
+            changed.append('name')
+        if changed:
+            try:
+                user.save(update_fields=changed)
+            except IntegrityError:
+                # Someone else saved the same number a moment ago.
+                return _phone_answer('phone_taken', PHONE_TAKEN)
+            if 'phone' in changed:
+                record_security_event('phone_changed', request, user=user, detail=describe_change(old_number, user.phone))
+        return api_success(UserSerializer(user, context={'with_supervisor': True}).data, 'Profile updated.')
 
 
 class LogoutView(APIView):

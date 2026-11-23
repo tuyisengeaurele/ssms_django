@@ -33,6 +33,6 @@ def finish_sign_in(request, user, *, mfa_verified: bool, extra: dict | None = No
     session, access, refresh = start_session(request, user, request.data.get('device'), shared_flag(request), mfa_verified=mfa_verified)
     record_security_event('login_ok', request, user=user, detail=session.device_label)
     log_action(request, 'LOGIN', 'User', user.pk, f'Login: {user.email}', actor=user)
-    response = api_success({'user': UserSerializer(user).data, 'token': access, **(extra or {})}, 'Logged in successfully.')
+    response = api_success({'user': UserSerializer(user, context={'with_supervisor': True}).data, 'token': access, **(extra or {})}, 'Logged in successfully.')
     set_refresh_cookie(response, refresh)
     return response
