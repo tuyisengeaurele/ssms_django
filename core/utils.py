@@ -77,6 +77,8 @@ def _answer(exc, status_code, data, lang):
     if status_code == 403 and _failure_code(exc) == 'mfa_recent_required':
         return 'Please confirm with a code from your authenticator app.', None
     code = _failure_code(exc)
+    if code == 'phone_required':
+        return error_text('phone_required', lang), 'phone_required'
     if code == 'support_ended':
         return 'The support session has ended.', None
     if code == 'support_view_only':
@@ -104,7 +106,7 @@ def _answer(exc, status_code, data, lang):
 def _note_refusal(exc, context, status_code):
     """A refusal for the role, or a slow down, goes in the security log. Only the method and the route pattern, never the query."""
     # Asking for a code, and the refusals of support access (which write their own event), are not a refusal for the role.
-    asking_for_a_code = status_code == 403 and _failure_code(exc) in ('mfa_recent_required', *SUPPORT_CODES)
+    asking_for_a_code = status_code == 403 and _failure_code(exc) in ('mfa_recent_required', 'phone_required', *SUPPORT_CODES)
     kind = 'throttled' if isinstance(exc, Throttled) else 'permission_denied' if status_code == 403 and not asking_for_a_code else None
     request = context.get('request')
     if kind and request is not None:

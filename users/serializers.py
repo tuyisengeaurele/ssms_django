@@ -17,12 +17,13 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     cooperative_name = serializers.SerializerMethodField()
     phone_verified = serializers.SerializerMethodField()
+    phone_required = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             'id', 'name', 'email', 'role', 'cooperative_id', 'cooperative_name', 'is_email_verified', 'is_active',
-            'phone', 'phone_verified', 'photo_url', 'preferred_language', 'created_at', 'updated_at',
+            'phone', 'phone_verified', 'phone_required', 'photo_url', 'preferred_language', 'created_at', 'updated_at',
         ]
         read_only_fields = fields
 
@@ -31,6 +32,10 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_phone_verified(self, obj):
         return obj.phone_verified_at is not None
+
+    def get_phone_required(self, obj):
+        # True for an account with no number: the page then shows the screen that asks for one.
+        return not obj.phone
 
 
 PHONE_REQUIRED = 'Please enter your phone number.'
