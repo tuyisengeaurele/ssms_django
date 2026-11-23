@@ -2,6 +2,24 @@
 
 # Changelog
 
+## A phone number at sign up and in the account (phase 4, task 4.1)
+
+There is no SMS provider yet, so the plan for a confirmation code is on hold. What the owner asked for instead: a person can give a phone number when they register, and everyone who already has an account can add, change or remove theirs.
+
+### Added
+- An optional **Phone number** field on the register page and on the invitation page. It can be left empty.
+- An editable **Phone number** field in Settings, Account. It is saved on its own or together with the name, and only what changed is sent. Emptying the field removes the number.
+- A number is accepted written any usual way (`0788 123 456`, `788123456`, `+250 788 123 456`) and is kept in one form, `+250788123456`. Only a Rwandan mobile is accepted (Airtel 72 and 73, MTN 78 and 79). Anything else is refused beside the field, in the language of the screen, and nothing else in the form is lost. Error code `invalid_phone`.
+- An administrator can give a number when adding a person (`POST /api/admin/users`).
+- The hint under the field says who can see it: only the person and the staff who look after their account. Today that is the person and the administrators. A supervisor does not see a farmer's number yet, and a farmer never sees another farmer's. A test pins that no cooperative list carries a number.
+
+### Changed
+- `PATCH /api/auth/me` takes `name`, `phone` or both. A key that is not sent is left as it is. A request with neither is refused as before.
+
+### Not done on purpose
+- No confirmation code and no "confirmed" state in the screens. The owner will use the number to send SSMS messages by WhatsApp and to call a supervisor or a farmer from the mobile app, and the confirmation comes with the provider. The `phone_verified_at` column, the rule that only a confirmed number is unique and the `phoneVerified` flag in the answer are unchanged from before and wait for that.
+- Two people can hold the same number until then, because anyone can type any number.
+
 ## How long the logs are kept (phase 3, task 3.7)
 
 The nightly `prune_logs` job already existed and ran from `jobs-nightly.yml`, but it had no number the owner had chosen and kept the older logs for longer than needed.

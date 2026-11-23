@@ -111,7 +111,7 @@ These are written down so nobody is surprised. Each is on the backlog or waiting
 - Logs are removed every night by `prune_logs`: request logs after 30 days, security events after 180, jobs and devices after 30 and health check results after 30. The audit log is never removed. Watch the database size on Supabase (500 MB on the free plan).
 - The admin's active batches list is one answer for every active batch (538 KB for 1,000). It takes 200 to 500 ms at that size and wants paging. See `docs/load-profile.md`.
 - Some older alerts have no code ("Batch initialized at EGG stage."). They show their stored English sentence in every language.
-- Saved but not used yet: `preferred_language`, the phone number and the notification preferences. Nothing sends by SMS or WhatsApp, and nothing reads the preferences until messaging is built.
+- Saved but not used yet: `preferred_language`, the phone number and the notification preferences. A person can give a phone number when registering and edit it in Settings, Account, but nothing sends to it: there is no SMS or WhatsApp provider, and nothing reads the preferences until messaging is built. The number is not confirmed with a code. That comes with the provider.
 
 **Language**
 
