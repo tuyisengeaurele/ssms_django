@@ -77,10 +77,23 @@ describe('Account settings', () => {
     expect(screen.getByText('Gatsibo Sericulture 1')).toBeInTheDocument();
   });
 
-  it('keeps the email fixed and explains why', () => {
+  it('keeps the email fixed, with no note about who to contact', () => {
     open();
     expect(screen.getByLabelText('Email address')).toHaveAttribute('readonly');
-    expect(screen.getByText('You cannot change your email here. Contact the SSMS team if it needs to change.')).toBeInTheDocument();
+    expect(screen.queryByText(/Contact the SSMS team/)).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['en', /SSMS team/],
+    ['fr', /l'équipe SSMS/],
+    ['rw', /itsinda rya SSMS/],
+  ])('does not tell the person what the SSMS team sets, or send them to it (%s)', (locale, pattern) => {
+    localStorage.setItem('ssms_locale', locale as string);
+    auth.user.cooperativeId = null;
+    auth.user.role = 'FARMER';
+    const { container } = open();
+    expect(container.textContent).not.toMatch(pattern as RegExp);
+    auth.user.role = 'ADMIN';
   });
 
   it('saves a new name, and only when it changed', async () => {

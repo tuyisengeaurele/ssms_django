@@ -176,6 +176,7 @@ describe('Supervisor dashboard page', () => {
     auth.user = { id: 'u', role: 'SUPERVISOR', cooperativeId: null, cooperativeName: null };
     open();
     expect(await screen.findByText(/not part of a cooperative yet/)).toBeInTheDocument();
+    expect(screen.queryByText(/Ask the SSMS team/)).not.toBeInTheDocument();
   });
 
   it('gives each reading chart a table of its numbers', async () => {

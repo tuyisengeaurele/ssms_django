@@ -98,8 +98,7 @@ export default function AccountSettings() {
 
           <div className="form-group">
             <label className="form-label" htmlFor="pf-email">{t('pfFieldEmail')}</label>
-            <input id="pf-email" className="form-input is-fixed" type="email" value={user?.email ?? ''} readOnly aria-describedby="pf-email-note" />
-            <span id="pf-email-note" className="form-hint">{t('pfEmailNote')}</span>
+            <input id="pf-email" className="form-input is-fixed" type="email" value={user?.email ?? ''} readOnly />
           </div>
 
           {hasPhone ? (
@@ -131,11 +130,6 @@ export default function AccountSettings() {
               <span id="pf-phone-note" className="form-hint">{t('pnHint')}</span>
             </div>
           )}
-
-          <p className="form-hint profile-note">
-            {t('pfRoleNote')}
-            {!user?.cooperativeId && user?.role !== 'ADMIN' ? ` ${t('pfCoopHelp')}` : ''}
-          </p>
 
           <button type="submit" className="btn btn-primary" disabled={saving || !(nameChanged || phoneChanged)}>
             {saving ? <><span className="spinner" />{t('pfSaving')}</> : t('pfSave')}
