@@ -89,3 +89,52 @@ class CooperativeMembership(models.Model):
 
     def __str__(self):
         return f'{self.user_id} in {self.cooperative_id}'
+
+
+class CooperativeChangeRequest(models.Model):
+    """A farmer or supervisor asking to move to another cooperative, or to leave theirs. The SSMS team decides.
+
+    `to_cooperative` empty means leaving, `from_cooperative` empty means the person had none yet.
+    """
+
+    class Status(models.TextChoices):
+        REQUESTED = 'requested'
+        APPROVED = 'approved'
+        DECLINED = 'declined'
+        WITHDRAWN = 'withdrawn'
+
+    id = models.CharField(primary_key=True, max_length=36, default=_generate_id, editable=False)
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, db_column='userId', related_name='cooperative_requests')
+    from_cooperative = models.ForeignKey(
+        Cooperative, on_delete=models.SET_NULL, null=True, blank=True, db_column='fromCooperativeId', related_name='+',
+    )
+    to_cooperative = models.ForeignKey(
+        Cooperative, on_delete=models.SET_NULL, null=True, blank=True, db_column='toCooperativeId', related_name='+',
+    )
+    reason = models.TextField()
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.REQUESTED)
+    decision_note = models.TextField(db_column='decisionNote', blank=True, default='')
+    decided_by = models.ForeignKey(
+        'users.User', on_delete=models.SET_NULL, null=True, blank=True, db_column='decidedById', related_name='+',
+    )
+    created_at = models.DateTimeField(db_column='createdAt', auto_now_add=True)
+    decided_at = models.DateTimeField(db_column='decidedAt', null=True, blank=True)
+
+    class Meta:
+        db_table = 'cooperative_change_requests'
+        ordering = ['-created_at']
+        constraints = [
+            # One open request per person, held by the database so two taps cannot make two.
+            models.UniqueConstraint(
+                fields=['user'], condition=models.Q(status='requested'), name='one_open_cooperative_request_per_user',
+            ),
+            # A move to the cooperative the person is already in is not a move. An empty side is a leave or a first join.
+            models.CheckConstraint(
+                condition=models.Q(from_cooperative__isnull=True) | models.Q(to_cooperative__isnull=True)
+                | ~models.Q(from_cooperative=models.F('to_cooperative')),
+                name='cooperative_request_moves',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.user_id}: {self.from_cooperative_id} to {self.to_cooperative_id} ({self.status})'

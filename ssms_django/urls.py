@@ -3,6 +3,7 @@ from django.conf.urls.static import static
 from django.urls import include, path
 
 from contacts.urls import admin_urlpatterns as contacts_admin_urlpatterns
+from cooperatives.change_request_urls import account_urlpatterns, admin_urlpatterns
 from core.api_docs import asset_view, docs_view, schema_view
 from core.csp import CspReportView
 from core.farm_calendar import CalendarView
@@ -42,6 +43,8 @@ urlpatterns = [
     path('api/harvest', include('harvest.urls')),               # /api/harvest/batch/<id>, /api/harvest/stats
     path('api/devices', include((device_urlpatterns, 'devices'))),          # GET /api/devices, /api/devices/:id
     path('api/contact', include('contacts.urls')),              # POST /api/contact (public)
+    path('api/account', include((account_urlpatterns, 'cooperative_requests_account'))),   # a person's own cooperative request
+    path('api/admin/cooperative-requests', include((admin_urlpatterns, 'cooperative_requests_admin'))),   # the SSMS team decides
     path('api/admin/contacts', include((contacts_admin_urlpatterns, 'contacts_admin'))),  # GET/PATCH admin
     path('api/admin/audit-log', include('audit_log.urls')),  # GET /api/admin/audit-log (admin only)
     path('api/admin/logs/<str:stream>', LogsView.as_view()),    # GET the audit, security, requests or jobs log (admin only)
