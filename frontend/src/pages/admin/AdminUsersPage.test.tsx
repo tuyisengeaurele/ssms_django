@@ -21,6 +21,7 @@ const api = vi.hoisted(() => ({
   updateCooperative: vi.fn(),
   deactivateUser: vi.fn(),
   restoreUser: vi.fn(),
+  setPhone: vi.fn(),
   getCoops: vi.fn(),
 }));
 
@@ -259,6 +260,44 @@ describe('Users page', () => {
     expect(within(bruce).getByRole('link', { name: 'Call Bruce Ishimwe' })).toHaveAttribute('href', 'tel:+250788123456');
     const supervisor = screen.getByText('Coop Supervisor').closest('tr') as HTMLElement;
     expect(within(supervisor).queryByRole('link', { name: /Call|WhatsApp/ })).not.toBeInTheDocument();
+  });
+
+  it('has a Number action on every active account except my own', async () => {
+    open();
+    const bruce = (await screen.findByText('Bruce Ishimwe')).closest('tr') as HTMLElement;
+    expect(within(bruce).getByRole('button', { name: 'Change the number of Bruce Ishimwe' })).toBeInTheDocument();
+    const me = screen.getByText('Auris Tuyisenge').closest('tr') as HTMLElement;
+    expect(within(me).queryByRole('button', { name: /Change the number of/ })).not.toBeInTheDocument();
+    const gone = screen.queryByText('Gad Anaclet');
+    expect(gone).not.toBeInTheDocument();
+  });
+
+  it('sets a new number from the dialog and shows it in the row at once', async () => {
+    api.setPhone.mockResolvedValue({ data: { data: withBase({ ...people[2], phone: '+250733000000' }) } });
+    open();
+    const bruce = (await screen.findByText('Bruce Ishimwe')).closest('tr') as HTMLElement;
+    fireEvent.click(within(bruce).getByRole('button', { name: 'Change the number of Bruce Ishimwe' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Phone number of Bruce Ishimwe' });
+    fireEvent.change(within(dialog).getByLabelText('New phone number'), { target: { value: '0733 000 000' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save number' }));
+    await waitFor(() => expect(api.setPhone).toHaveBeenCalledWith('f1', '0733 000 000'));
+    expect(await screen.findByText('Number saved for Bruce Ishimwe.', {}, { timeout: 5000 })).toBeInTheDocument();
+    const updated = screen.getByText('Bruce Ishimwe').closest('tr') as HTMLElement;
+    expect(within(updated).getByText('0733000000')).toBeInTheDocument();
+  });
+
+  it('clears a number after asking, and the row then shows no number', async () => {
+    api.setPhone.mockResolvedValue({ data: { data: withBase({ ...people[2], phone: null }) } });
+    open();
+    const bruce = (await screen.findByText('Bruce Ishimwe')).closest('tr') as HTMLElement;
+    fireEvent.click(within(bruce).getByRole('button', { name: 'Change the number of Bruce Ishimwe' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Phone number of Bruce Ishimwe' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Clear number' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, clear it' }));
+    await waitFor(() => expect(api.setPhone).toHaveBeenCalledWith('f1', null));
+    expect(await screen.findByText('Number cleared for Bruce Ishimwe.', {}, { timeout: 5000 })).toBeInTheDocument();
+    const updated = screen.getByText('Bruce Ishimwe').closest('tr') as HTMLElement;
+    expect(within(updated).queryByText('0788123456')).not.toBeInTheDocument();
   });
 
   it('asks for a phone number when creating a user, as a required field', async () => {
