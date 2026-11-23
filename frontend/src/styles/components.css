@@ -1465,6 +1465,10 @@ tr.is-off td:last-child { opacity: 1; }
 .form-input--narrow { max-width: 6rem; }
 .form-error { color: var(--tone-red); margin: 0 0 10px; }
 
+/* A value the person reads and cannot type over, with the button that changes it beside it. */
+.form-inline { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.form-static { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
 /* ── Calendar ──────────────────────────────────────────────────────────────── */
 .cal { display: grid; gap: var(--space-4); }
 .cal-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }

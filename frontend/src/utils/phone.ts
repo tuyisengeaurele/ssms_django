@@ -20,3 +20,19 @@ export function phoneFieldError(err: unknown, say: (key: string) => string): str
   const key = body?.code && PHONE_CODES.has(body.code) ? ERROR_CODE_KEY[body.code] : undefined;
   return key ? say(key) : String(sentences[0]);
 }
+
+/** A number written any usual way as +250 and nine digits, or null when it is not a Rwandan mobile. The server's rule, kept in step. */
+function canonical(text: string | null | undefined): string | null {
+  const cleaned = (text ?? '').replace(/[\s\-().]/g, '');
+  const candidate = cleaned.startsWith('+') ? cleaned
+    : cleaned.startsWith('250') ? `+${cleaned}`
+      : cleaned.startsWith('0') ? `+250${cleaned.slice(1)}`
+        : `+250${cleaned}`;
+  return /^\+250(7[2389]\d{7})$/.test(candidate) ? candidate : null;
+}
+
+/** Whether two texts are the same Rwandan mobile number, however each was written. Text that is not a number is never the same. */
+export function samePhone(a: string | null | undefined, b: string | null | undefined): boolean {
+  const first = canonical(a);
+  return first !== null && first === canonical(b);
+}

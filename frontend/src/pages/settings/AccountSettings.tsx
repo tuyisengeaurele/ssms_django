@@ -1,15 +1,15 @@
-import { AxiosError } from 'axios';
 import { FormEvent, useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { useApiError } from '../../hooks/useApiError';
 import { authService } from '../../services/auth.service';
+import ConfirmPhoneChangeDialog from '../../components/ui/ConfirmPhoneChangeDialog';
 import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
 import { initialsOf } from '../../components/ui/Avatar';
 import Panel from '../../components/ui/Panel';
 import { dateFormat } from '../../utils/dateFormat';
-import { formatRwandaMobile } from '../../utils/phone';
+import { formatRwandaMobile, phoneFieldError } from '../../utils/phone';
 
 /** Who the person is, and the two things they can change about it: their name and their phone number. */
 export default function AccountSettings() {
@@ -24,6 +24,7 @@ export default function AccountSettings() {
   // The server's refusal of the number, shown beside the field until the person types again.
   const [phoneError, setPhoneError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [changing, setChanging] = useState(false);
 
   // Fetch the latest details, so the cooperative and name are never stale.
   useEffect(() => {
@@ -39,8 +40,10 @@ export default function AccountSettings() {
     setPhone(formatRwandaMobile(user?.phone));
   }, [user?.phone]);
 
+  // An account that has a number cannot type over it: changing it goes through the dialog that asks for the number to be typed.
+  const hasPhone = !!user?.phone;
   const nameChanged = name !== user?.name;
-  const phoneChanged = phone.trim() !== savedPhone;
+  const phoneChanged = !hasPhone && phone.trim() !== '';
 
   const joined = user?.createdAt
     ? dateFormat(locale, { dateStyle: 'medium' }).format(new Date(user.createdAt))
@@ -52,14 +55,15 @@ export default function AccountSettings() {
     setPhoneError('');
     try {
       // Only what changed is sent, so saving a new number never touches the name, and the other way round.
-      const body: { name?: string; phone?: string | null } = {};
+      const body: { name?: string; phone?: string } = {};
       if (nameChanged) body.name = name;
-      if (phoneChanged) body.phone = phone.trim() || null;
+      if (phoneChanged) body.phone = phone.trim();
       const res = await authService.updateProfile(body);
       updateUser(res.data.data);
       success(t('pfSaved'));
     } catch (err) {
-      if (err instanceof AxiosError && err.response?.data?.code === 'invalid_phone') setPhoneError(getErrorMessage(err));
+      const aboutThePhone = phoneFieldError(err, t);
+      if (aboutThePhone) setPhoneError(aboutThePhone);
       else showError(getErrorMessage(err));
     } finally {
       setSaving(false);
@@ -94,26 +98,35 @@ export default function AccountSettings() {
             <span id="pf-email-note" className="form-hint">{t('pfEmailNote')}</span>
           </div>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="pf-phone">{t('pnLabel')}</label>
-            <input
-              id="pf-phone"
-              className="form-input"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              maxLength={40}
-              placeholder="0788 123 456"
-              value={phone}
-              onChange={(e) => { setPhone(e.target.value); setPhoneError(''); }}
-              aria-invalid={phoneError ? true : undefined}
-              aria-describedby={phoneError ? 'pf-phone-error pf-phone-note' : 'pf-phone-note'}
-            />
-            {phoneError ? <span id="pf-phone-error" className="form-error" role="alert">{phoneError}</span> : null}
-            <span id="pf-phone-note" className="form-hint">
-              {t('pnHint')} {t('pnRemoveNote')}
-            </span>
-          </div>
+          {hasPhone ? (
+            <div className="form-group" role="group" aria-labelledby="pf-phone-label" aria-describedby="pf-phone-note">
+              <span id="pf-phone-label" className="form-label">{t('pnLabel')}</span>
+              <div className="form-inline">
+                <span className="form-static">{savedPhone}</span>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setChanging(true)}>{t('cpChange')}</button>
+              </div>
+              <span id="pf-phone-note" className="form-hint">{t('pnHint')}</span>
+            </div>
+          ) : (
+            <div className="form-group">
+              <label className="form-label" htmlFor="pf-phone">{t('pnLabel')}</label>
+              <input
+                id="pf-phone"
+                className="form-input"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                maxLength={40}
+                placeholder="0788 123 456"
+                value={phone}
+                onChange={(e) => { setPhone(e.target.value); setPhoneError(''); }}
+                aria-invalid={phoneError ? true : undefined}
+                aria-describedby={phoneError ? 'pf-phone-error pf-phone-note' : 'pf-phone-note'}
+              />
+              {phoneError ? <span id="pf-phone-error" className="form-error" role="alert">{phoneError}</span> : null}
+              <span id="pf-phone-note" className="form-hint">{t('pnHint')}</span>
+            </div>
+          )}
 
           <p className="form-hint profile-note">
             {t('pfRoleNote')}
@@ -125,6 +138,15 @@ export default function AccountSettings() {
           </button>
         </form>
       </Panel>
+
+      {user?.phone ? (
+        <ConfirmPhoneChangeDialog
+          open={changing}
+          currentPhone={user.phone}
+          onClose={() => setChanging(false)}
+          onSaved={(saved) => { updateUser(saved); success(t('cpSaved')); setChanging(false); }}
+        />
+      ) : null}
     </div>
   );
 }

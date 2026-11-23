@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatRwandaMobile, phoneFieldError } from './phone';
+import { formatRwandaMobile, phoneFieldError, samePhone } from './phone';
 
 describe('formatRwandaMobile', () => {
   it('writes a stored number the way a person writes it', () => {
@@ -38,5 +38,21 @@ describe('phoneFieldError', () => {
     expect(phoneFieldError(refusal({ message: 'x' }), say)).toBeNull();
     expect(phoneFieldError(new Error('network'), say)).toBeNull();
     expect(phoneFieldError(undefined, say)).toBeNull();
+  });
+});
+
+describe('samePhone', () => {
+  it('is true for one number written two ways', () => {
+    expect(samePhone('0788 123 456', '+250788123456')).toBe(true);
+    expect(samePhone('788123456', '+250788123456')).toBe(true);
+    expect(samePhone(' +250 788-123-456 ', '0788123456')).toBe(true);
+  });
+
+  it('is false for two numbers, for text that is not a number, and for no number', () => {
+    expect(samePhone('0788 123 457', '+250788123456')).toBe(false);
+    expect(samePhone('my number', '+250788123456')).toBe(false);
+    expect(samePhone('', '')).toBe(false);
+    expect(samePhone(null, '+250788123456')).toBe(false);
+    expect(samePhone('0788 123 456', undefined)).toBe(false);
   });
 });
