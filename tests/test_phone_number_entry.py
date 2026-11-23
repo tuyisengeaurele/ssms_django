@@ -1,8 +1,8 @@
 """A person can give a phone number when they register, and add, change or remove it later in their account.
 
 There is no SMS provider yet, so nothing is sent to a number: it is kept in one form (+250 and nine digits), whichever way the person
-wrote it, and is not checked beyond being a Rwandan mobile. Confirming a number with a code, and making a confirmed number unique, come
-when there is a provider to send the code.
+wrote it, and is not checked beyond being a Rwandan mobile. Confirming a number with a code comes when there is a provider to send it.
+A number is required and unique: see tests/test_phone_required.py.
 """
 import pytest
 from rest_framework.test import APIClient
@@ -39,16 +39,6 @@ def test_the_usual_ways_of_writing_a_number_all_give_the_same_one(written):
     assert User.objects.get(email='aline@example.rw').phone == '+250788123456'
 
 
-@pytest.mark.parametrize('empty', [None, '', '   '])
-def test_registering_without_a_number_is_fine(empty):
-    assert register(phone=empty).status_code == 201
-    assert User.objects.get(email='aline@example.rw').phone is None
-
-
-def test_registering_with_no_phone_field_at_all_still_works():
-    assert register().status_code == 201
-
-
 @pytest.mark.parametrize('bad', ['12345', '0788', '+33612345678', '0711234567', 'call me', '078812345678'])
 def test_a_number_that_is_not_a_rwandan_mobile_is_refused_with_a_code_and_the_account_is_not_made(bad):
     response = register(phone=bad)
@@ -80,7 +70,8 @@ def test_a_number_can_be_given_when_joining_by_an_invitation():
 
 @pytest.fixture
 def person():
-    return UserFactory(name='Aline')
+    # No number yet: these tests are about adding, changing and removing one.
+    return UserFactory(name='Aline', phone=None)
 
 
 def edit(person, auth_client, **body):
@@ -146,10 +137,13 @@ def test_an_empty_name_is_still_refused_whatever_the_number(person, auth_client)
     assert person.phone is None
 
 
-def test_two_people_may_hold_the_same_number(auth_client):
-    first, second = UserFactory(), UserFactory()
+def test_two_people_cannot_hold_the_same_number(auth_client):
+    first, second = UserFactory(phone=None), UserFactory(phone=None)
     assert edit(first, auth_client, phone='0788 123 456').status_code == 200
-    assert edit(second, auth_client, phone='0788 123 456').status_code == 200
+    response = edit(second, auth_client, phone='0788 123 456')
+    assert response.status_code == 422 and response.json()['code'] == 'phone_taken'
+    second.refresh_from_db()
+    assert second.phone is None
 
 
 # ── who can see a number ─────────────────────────────────────────────────────────────────────

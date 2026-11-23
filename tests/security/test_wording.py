@@ -42,7 +42,7 @@ def test_no_message_outside_the_admin_code_names_administrators():
 
 def test_the_invitation_email_does_not_mention_an_administrator_to_a_farmer(auth_client):
     admin = auth_client(UserFactory(role='ADMIN'))
-    admin.post('/api/admin/users', {'name': 'Aline Uwase', 'email': 'aline@example.rw', 'role': 'FARMER'}, format='json')
+    admin.post('/api/admin/users', {'name': 'Aline Uwase', 'email': 'aline@example.rw', 'role': 'FARMER', 'phone': '0788 000 111'}, format='json')
     body = mail.outbox[0].body
     assert 'An SSMS account has been created for you as a farmer.' in body
     assert 'administrator' not in body.lower()

@@ -1,7 +1,7 @@
 """The profile fields a person can have: phone, photo, language and the two-step prompt counters. All of them are optional.
 
 A phone number is kept in E.164 (+250 and nine digits) and only a Rwandan mobile number is accepted. Two accounts cannot both hold
-the same number once it is verified: an unverified number can repeat, because anyone can type anyone's number.
+the same number, verified or not: see tests/test_phone_required.py.
 """
 import pytest
 from django.core.exceptions import ValidationError
@@ -57,24 +57,20 @@ def test_an_empty_number_is_stored_as_none_so_it_never_repeats_as_text():
     assert first.phone is None and second.phone is None
 
 
-def test_the_same_number_can_sit_unverified_on_two_accounts():
-    UserFactory(phone='+250788123456')
-    UserFactory(phone='+250788123456')
-
-
 def test_two_accounts_cannot_both_hold_the_same_verified_number():
     UserFactory(phone='+250788123456', phone_verified_at=timezone.now())
     with pytest.raises(IntegrityError), transaction.atomic():
         UserFactory(phone='+250788123456', phone_verified_at=timezone.now())
 
 
-def test_a_verified_number_can_be_held_next_to_an_unverified_copy():
+def test_a_verified_number_cannot_be_held_next_to_an_unverified_copy():
     UserFactory(phone='+250788123456', phone_verified_at=timezone.now())
-    UserFactory(phone='+250788123456')
+    with pytest.raises(IntegrityError), transaction.atomic():
+        UserFactory(phone='+250788123456')
 
 
 def test_a_new_account_has_the_documented_defaults():
-    user = UserFactory()
+    user = UserFactory(phone=None)
     assert user.phone is None and user.phone_verified_at is None
     assert user.photo_url is None
     assert user.preferred_language == 'en'

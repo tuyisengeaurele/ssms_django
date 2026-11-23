@@ -20,7 +20,7 @@ def admin_client(auth_client):
 
 
 def create(client, **body):
-    payload = {'name': 'Aline Uwase', 'email': 'aline@example.rw', **body}
+    payload = {'name': 'Aline Uwase', 'email': 'aline@example.rw', 'phone': '0788 000 111', **body}
     return client.post(URL, payload, format='json')
 
 

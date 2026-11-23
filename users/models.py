@@ -73,8 +73,9 @@ class User(AbstractBaseUser):
     class Meta:
         db_table = 'users'
         constraints = [
-            # Anyone can type anyone's number, so only a verified one is unique.
-            models.UniqueConstraint(fields=['phone'], condition=models.Q(phone_verified_at__isnull=False), name='users_verified_phone_unique'),
+            # One account per number. Nobody can prove a number is theirs until a code can be sent, so the first account to
+            # hold it keeps it, and the SSMS team frees it if it was taken by mistake. Empty is None, and None never repeats.
+            models.UniqueConstraint(fields=['phone'], name='users_phone_unique'),
         ]
 
     def __str__(self):

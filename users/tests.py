@@ -35,7 +35,7 @@ class RegisterViewTests(APITestCase):
     """POST /api/auth/register"""
 
     def test_register_success(self):
-        payload = {'name': 'Alice', 'email': 'alice@test.com', 'password': 'SecurePass1'}
+        payload = {'name': 'Alice', 'email': 'alice@test.com', 'password': 'SecurePass1', 'phone': '0788 000 111'}
         res = self.client.post(REGISTER_URL, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         data = res.json()
@@ -51,41 +51,41 @@ class RegisterViewTests(APITestCase):
 
     def test_register_duplicate_email(self):
         make_user(email='dup@test.com')
-        payload = {'name': 'Bob', 'email': 'dup@test.com', 'password': 'SecurePass1'}
+        payload = {'name': 'Bob', 'email': 'dup@test.com', 'password': 'SecurePass1', 'phone': '0788 000 111'}
         res = self.client.post(REGISTER_URL, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
         self.assertFalse(res.json()['success'])
 
     def test_register_weak_password_no_uppercase(self):
-        payload = {'name': 'Carol', 'email': 'carol@test.com', 'password': 'alllower1'}
+        payload = {'name': 'Carol', 'email': 'carol@test.com', 'password': 'alllower1', 'phone': '0788 000 111'}
         res = self.client.post(REGISTER_URL, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     def test_register_weak_password_no_digit(self):
-        payload = {'name': 'Dave', 'email': 'dave@test.com', 'password': 'NoDigitsHere'}
+        payload = {'name': 'Dave', 'email': 'dave@test.com', 'password': 'NoDigitsHere', 'phone': '0788 000 111'}
         res = self.client.post(REGISTER_URL, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     def test_register_too_short_password(self):
-        payload = {'name': 'Eve', 'email': 'eve@test.com', 'password': 'Ab1'}
+        payload = {'name': 'Eve', 'email': 'eve@test.com', 'password': 'Ab1', 'phone': '0788 000 111'}
         res = self.client.post(REGISTER_URL, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     def test_register_default_role_is_farmer(self):
-        payload = {'name': 'Frank', 'email': 'frank@test.com', 'password': 'SecurePass1'}
+        payload = {'name': 'Frank', 'email': 'frank@test.com', 'password': 'SecurePass1', 'phone': '0788 000 111'}
         res = self.client.post(REGISTER_URL, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(res.json()['data']['user']['role'], 'FARMER')
 
     def test_register_ignores_a_requested_admin_role(self):
-        payload = {'name': 'Grace', 'email': 'grace@test.com', 'password': 'SecurePass1', 'role': 'ADMIN'}
+        payload = {'name': 'Grace', 'email': 'grace@test.com', 'password': 'SecurePass1', 'role': 'ADMIN', 'phone': '0788 000 111'}
         res = self.client.post(REGISTER_URL, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         # Public sign up is always a farmer account, whatever the request asks for.
         self.assertEqual(res.json()['data']['user']['role'], 'FARMER')
 
     def test_register_email_normalised_lowercase(self):
-        payload = {'name': 'Hank', 'email': 'HANK@TEST.COM', 'password': 'SecurePass1'}
+        payload = {'name': 'Hank', 'email': 'HANK@TEST.COM', 'password': 'SecurePass1', 'phone': '0788 000 111'}
         res = self.client.post(REGISTER_URL, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(res.json()['data']['user']['email'], 'hank@test.com')

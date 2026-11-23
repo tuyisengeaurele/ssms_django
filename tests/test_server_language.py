@@ -137,7 +137,7 @@ def test_an_unknown_language_means_english():
 @pytest.mark.django_db
 def test_an_email_that_is_taken_returns_a_code_and_the_field_sentence_in_the_language_asked_for():
     UserFactory(email='taken@example.rw')
-    body = {'name': 'Someone', 'email': 'taken@example.rw', 'password': 'Garden-Tree-4721'}
+    body = {'name': 'Someone', 'email': 'taken@example.rw', 'password': 'Garden-Tree-4721', 'phone': '0788 000 111'}
     response = APIClient().post(REGISTER, body, format='json', HTTP_ACCEPT_LANGUAGE='fr')
     assert response.status_code == 422
     assert response.data['code'] == 'email_taken'
@@ -146,7 +146,7 @@ def test_an_email_that_is_taken_returns_a_code_and_the_field_sentence_in_the_lan
 
 @pytest.mark.django_db
 def test_a_field_error_with_no_case_of_ours_gets_the_general_code_and_keeps_its_own_words():
-    response = APIClient().post(REGISTER, {'name': '', 'email': 'not-an-email', 'password': 'x'}, format='json', HTTP_ACCEPT_LANGUAGE='fr')
+    response = APIClient().post(REGISTER, {'name': '', 'email': 'not-an-email', 'password': 'x', 'phone': '0788 000 111'}, format='json', HTTP_ACCEPT_LANGUAGE='fr')
     assert response.status_code == 422
     assert response.data['code'] == 'invalid_input'
     assert response.data['message'] == t('fr', 'erCheckInput')

@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
@@ -66,7 +67,10 @@ class AdminUserListCreateView(APIView):
         if not serializer.is_valid():
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
         had_password = bool(serializer.validated_data['password'])
-        user = serializer.save()
+        try:
+            user = serializer.save()
+        except DRFValidationError as exc:
+            return api_error('Please check what you entered and try again.', 422, exc.detail, code='invalid_input')
         log_action(request, 'CREATE', 'User', user.pk, f'Admin created user {user.email} with role {user.role}')
 
         message = 'User created.'

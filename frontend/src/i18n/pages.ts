@@ -1049,6 +1049,8 @@ export const pageTranslations = {
   erGeneric: k("Something went wrong. Please try again.", "Une erreur s'est produite. Veuillez réessayer.", "Hari ikitagenze neza. Ongera ugerageze."),
   erBadLogin: k("That email or password doesn't look right. Please try again.", "Cet e-mail ou ce mot de passe semble incorrect. Veuillez réessayer.", "Imeyili cyangwa ijambo ry'ibanga ntibihuye n'ibyo dufite. Ongera ugerageze."),
   erBadPhone: k("Enter a Rwandan mobile number, for example 0788 123 456.", "Saisissez un numéro mobile rwandais, par exemple 0788 123 456.", "Andika nimero ya telefone igendanwa yo mu Rwanda, urugero 0788 123 456."),
+  erPhoneRequired: k("Please enter your phone number.", "Veuillez saisir votre numéro de téléphone.", "Andika nimero yawe ya telefone."),
+  erPhoneTaken: k("This phone number is already used by another account. Contact the SSMS team if it is yours.", "Ce numéro de téléphone est déjà utilisé par un autre compte. Contactez l'équipe SSMS s'il est à vous.", "Iyi nimero ya telefone isanzwe ikoreshwa n'indi konti. Vugana n'itsinda rya SSMS niba ari iyawe."),
   erEmailTaken: k("An account with this email already exists. Try signing in instead.", "Un compte existe déjà avec cet e-mail. Essayez de vous connecter.", "Konti ifite iyi meyili isanzwe ibaho. Gerageza kwinjira."),
   erReference: k("Reference: {ref}", "Référence : {ref}", "Inomero y'icyitonderwa: {ref}"),
   // The server's own sentences, sent in the language the page asks for. The server copies these (scripts/build_doc_text.py).

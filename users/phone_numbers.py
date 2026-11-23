@@ -22,3 +22,17 @@ def normalize_rwanda_mobile(text: str) -> str:
     if not _MOBILE.match(candidate):
         raise ValidationError('Enter a Rwandan mobile number, for example 0788 123 456.', code='invalid_phone')
     return candidate
+
+
+def phone_in_use(number: str, exclude_user_id: str | None = None) -> bool:
+    """Whether another account already holds this number. The database rule is the real guard, this is the friendly check before it."""
+    from django.contrib.auth import get_user_model
+    others = get_user_model().objects.filter(phone=number)
+    if exclude_user_id:
+        others = others.exclude(pk=exclude_user_id)
+    return others.exists()
+
+
+def mask_phone(number: str) -> str:
+    """'+250788123456' becomes '+250*****456', for the logs: enough to tell numbers apart, not enough to call."""
+    return f'{number[:4]}*****{number[-3:]}' if number and len(number) > 7 else '***'

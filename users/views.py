@@ -1,6 +1,8 @@
 import logging
 
 from django.contrib.auth import authenticate
+from django.db import IntegrityError
+from rest_framework.exceptions import ErrorDetail
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -21,7 +23,8 @@ from . import mfa, mfa_challenge
 from .cookie_utils import REFRESH_COOKIE, clear_refresh_cookie, set_refresh_cookie
 from .email_verification_views import _send_verification_email
 from .models import Role, UserSession
-from .serializers import LoginSerializer, ProfileUpdateSerializer, RegisterSerializer, UserSerializer
+from .phone_numbers import phone_in_use
+from .serializers import PHONE_TAKEN, LoginSerializer, ProfileUpdateSerializer, RegisterSerializer, UserSerializer
 from .sessions import IDLE_MESSAGE, SessionEnded, end_all_but, reissue, revoke, rotate, start_session
 from .signin import finish_sign_in, too_many_attempts
 
@@ -38,7 +41,11 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data, context={'request': request})
         if not serializer.is_valid():
             return api_error('Please check what you entered and try again.', 422, serializer.errors, code='invalid_input')
-        user = serializer.save()
+        try:
+            user = serializer.save()
+        except DRFValidationError as exc:
+            # Raised while saving: a number taken in the same moment, or an invitation used in the same moment.
+            return api_error('Please check what you entered and try again.', 422, exc.detail, code='invalid_input')
         log_action(request, 'CREATE', 'User', user.pk, f'Registered: {user.email}')
         if user.is_email_verified:
             # Joined by a link sent to this very address, so there is nothing left to verify.
@@ -91,6 +98,10 @@ class LoginView(APIView):
         return finish_sign_in(request, user, mfa_verified=False)
 
 
+def _phone_taken_answer():
+    return api_error('Please check what you entered and try again.', 422, {'phone': [ErrorDetail(PHONE_TAKEN, code='phone_taken')]}, code='invalid_input')
+
+
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated, RolePermission]
     resource = 'account'
@@ -115,10 +126,17 @@ class ProfileView(APIView):
             user.name = serializer.validated_data['name']
             changed.append('name')
         if 'phone' in serializer.validated_data and serializer.validated_data['phone'] != user.phone:
-            user.phone = serializer.validated_data['phone']
+            new_number = serializer.validated_data['phone']
+            if new_number is not None and phone_in_use(new_number, exclude_user_id=user.pk):
+                return _phone_taken_answer()
+            user.phone = new_number
             changed.append('phone')
         if changed:
-            user.save(update_fields=changed)
+            try:
+                user.save(update_fields=changed)
+            except IntegrityError:
+                # Someone else saved the same number a moment ago.
+                return _phone_taken_answer()
         return api_success(UserSerializer(user).data, 'Profile updated.')
 
 

@@ -12,7 +12,7 @@ User = get_user_model()
 
 
 def register(api_client, **extra):
-    body = {'name': 'Aline Uwase', 'email': 'aline@example.com', 'password': 'Silk2026!x', **extra}
+    body = {'name': 'Aline Uwase', 'email': 'aline@example.com', 'password': 'Silk2026!x', 'phone': '0788 000 111', **extra}
     return api_client.post(URL, body, format='json')
 
 
