@@ -1080,6 +1080,13 @@ export const pageTranslations = {
   erPhoneConfirm: k("Type your current phone number to confirm the change.", "Saisissez votre numéro actuel pour confirmer le changement.", "Andika nimero ya telefone usanzwe ufite kugira ngo wemeze impinduka."),
   erConfirmTyped: k("Type it exactly as shown to confirm.", "Saisissez-le exactement comme indiqué pour confirmer.", "Yandike nk'uko bigaragara kugira ngo wemeze."),
   erWrongPassword: k("That password is not right.", "Ce mot de passe n'est pas correct.", "Ijambo ry'ibanga si ryo."),
+  erEmailSame: k("That is already your email address.", "C'est déjà votre adresse e-mail.", "Iyo ni yo imeyili usanganywe."),
+  erLinkInvalid: k("This link is not valid. Please ask for a new one.", "Ce lien n'est pas valide. Veuillez en demander un nouveau.", "Uyu murongo ntabwo ari wo. Saba undi mushya."),
+  erLinkExpired: k("This link has expired. Please ask for a new one.", "Ce lien a expiré. Veuillez en demander un nouveau.", "Uyu murongo warangiye. Saba undi mushya."),
+  erLinkUsed: k("This link was already used, or is no longer needed.", "Ce lien a déjà été utilisé ou n'est plus nécessaire.", "Uyu murongo warakoreshejwe cyangwa ntukiri ngombwa."),
+  erEmailNotSent: k("We could not send the link. Please try again in a minute.", "Nous n'avons pas pu envoyer le lien. Veuillez réessayer dans une minute.", "Ntitwashoboye kohereza umurongo. Ongera ugerageze nyuma y'umunota."),
+  erNothingToCancel: k("There is nothing to cancel.", "Il n'y a rien à annuler.", "Nta cyo guhagarika gihari."),
+  erUndoBlocked: k("That address is now used by another account, so this cannot be undone here. Please contact the SSMS team.", "Cette adresse est maintenant utilisée par un autre compte, donc cela ne peut pas être annulé ici. Veuillez contacter l'équipe SSMS.", "Iyo imeyili ikoreshwa n'indi konti, bityo ntibishoboka kubihindura hano. Vugana n'itsinda rya SSMS."),
   erEmailTaken: k("An account with this email already exists. Try signing in instead.", "Un compte existe déjà avec cet e-mail. Essayez de vous connecter.", "Konti ifite iyi meyili isanzwe ibaho. Gerageza kwinjira."),
   erReference: k("Reference: {ref}", "Référence : {ref}", "Inomero y'icyitonderwa: {ref}"),
   // The server's own sentences, sent in the language the page asks for. The server copies these (scripts/build_doc_text.py).

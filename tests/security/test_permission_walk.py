@@ -25,6 +25,9 @@ PUBLIC = {
     # An admin's second step, open because the caller holds a challenge from a correct password and no session yet.
     'MfaVerifyView', 'MfaSetupStartView', 'MfaSetupConfirmView',
     'PasswordResetRequestView', 'PasswordResetConfirmView', 'VerifyEmailView', 'ResendVerificationView',
+    # The links in the emails about a change of login email. They may be opened in a browser that holds no sign in, so the
+    # signed token in the link is the proof (users/email_change.py).
+    'EmailChangeConfirmView', 'EmailChangeUndoView',
     'ContactCreateView', 'PublicLotView', 'InvitationDetailView', 'DeviceIngestView',
     # A browser sends this report by itself, without signing in. It keeps one line and always answers 204 (core/csp.py).
     'CspReportView',
@@ -46,6 +49,7 @@ REFUSES_ALLOWED_ROLE = {
     ('AdminMfaResetView', 'post'): 'an admin whose sign in has no recent code from the authenticator app is asked for one first',
     ('SupportRequestView', 'post'): 'an admin whose sign in has no recent code from the authenticator app is asked for one first',
     ('SupportStartView', 'post'): 'an admin whose sign in has no recent code from the authenticator app is asked for one first',
+    ('EmailChangeView', 'post'): 'an admin whose sign in has no recent code from the authenticator app is asked for one first',
 }
 
 
