@@ -39,6 +39,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 PHONE_REQUIRED = 'Please enter your phone number.'
+PHONE_CONFIRM = 'Type your current phone number to confirm the change.'
 PHONE_TAKEN = 'This phone number is already used by another account. Contact the SSMS team if it is yours.'
 
 
@@ -215,9 +216,12 @@ class AdminCreateUserSerializer(serializers.Serializer):
 
 
 class ProfileUpdateSerializer(serializers.Serializer):
-    """What a person can change about themselves: their name and their phone number. Either, or both. An empty number removes it."""
+    """What a person can change about themselves: their name and their phone number. Either, or both.
+
+    A number cannot be emptied here (the view refuses it), and replacing one needs `confirm_phone`: the current number, typed."""
     name = serializers.CharField(required=False, allow_blank=True, max_length=100, error_messages={'max_length': 'Please keep your name under 100 characters.'})
     phone = PhoneField()
+    confirm_phone = serializers.CharField(required=False, allow_blank=True, allow_null=True, max_length=40)
 
     def validate_name(self, value):
         value = value.strip()

@@ -33,6 +33,19 @@ def phone_in_use(number: str, exclude_user_id: str | None = None) -> bool:
     return others.exists()
 
 
+def same_number(typed, stored) -> bool:
+    """Whether what a person typed is the number we hold, whichever way they wrote it. Text that is not a number is not the same."""
+    try:
+        return bool(stored) and normalize_rwanda_mobile(typed) == stored
+    except ValidationError:
+        return False
+
+
+def describe_change(old, new) -> str:
+    """'+250*****456 to +250*****000', for the security log. A missing number reads 'none'."""
+    return f'{mask_phone(old) if old else "none"} to {mask_phone(new) if new else "none"}'
+
+
 def mask_phone(number: str) -> str:
     """'+250788123456' becomes '+250*****456', for the logs: enough to tell numbers apart, not enough to call."""
     return f'{number[:4]}*****{number[-3:]}' if number and len(number) > 7 else '***'

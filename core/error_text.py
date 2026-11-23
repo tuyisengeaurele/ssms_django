@@ -11,6 +11,7 @@ CODE_KEYS = {
     'invalid_phone': 'erBadPhone',
     'phone_required': 'erPhoneRequired',
     'phone_taken': 'erPhoneTaken',
+    'phone_confirm_mismatch': 'erPhoneConfirm',
     'invalid_input': 'erCheckInput',
     'forbidden': 'erForbidden',
     'not_found': 'erNotFound',

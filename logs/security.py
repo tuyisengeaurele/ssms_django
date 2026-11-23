@@ -15,6 +15,7 @@ KINDS = {
     'login_failed': 'Sign in failed',
     'lockout': 'Account locked for a while',
     'password_changed': 'Password changed',
+    'phone_changed': 'Phone number changed',
     'reset_requested': 'Password reset asked for',
     'new_device': 'Signed in on a new device',
     'session_revoked': 'Device signed out',

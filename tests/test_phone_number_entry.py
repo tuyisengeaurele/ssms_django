@@ -66,7 +66,7 @@ def test_a_number_can_be_given_when_joining_by_an_invitation():
     assert user.phone == '+250722000111' and user.cooperative_id == coop.pk
 
 
-# ── changing it later ────────────────────────────────────────────────────────────────────────
+# ── adding one later (replacing and removing are in tests/test_phone_change.py) ────────────────────────────────────────────────────────────────────────
 
 @pytest.fixture
 def person():
@@ -89,18 +89,18 @@ def test_a_person_with_no_number_can_add_one(person, auth_client):
 def test_a_person_can_change_their_number_and_the_name_is_left_alone(person, auth_client):
     person.phone = '+250788123456'
     person.save()
-    edit(person, auth_client, phone='0732 111 222')
+    edit(person, auth_client, phone='0732 111 222', confirm_phone='0788 123 456')
     person.refresh_from_db()
     assert person.phone == '+250732111222' and person.name == 'Aline'
 
 
 @pytest.mark.parametrize('empty', [None, '', '  '])
-def test_a_person_can_remove_their_number(person, auth_client, empty):
+def test_a_person_cannot_remove_their_number(person, auth_client, empty):
     person.phone = '+250788123456'
     person.save()
-    assert edit(person, auth_client, phone=empty).status_code == 200
+    assert edit(person, auth_client, phone=empty).status_code == 422
     person.refresh_from_db()
-    assert person.phone is None
+    assert person.phone == '+250788123456'
 
 
 def test_the_name_and_the_number_can_be_saved_together(person, auth_client):
