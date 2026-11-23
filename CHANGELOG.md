@@ -2,6 +2,13 @@
 
 # Changelog
 
+## Phone numbers without spaces, and no "who can see it" line
+
+### Changed
+- A number is shown as `0792104747`, with no spaces, everywhere: Settings, the call and WhatsApp links, the confirmation line (`Type 0792104747 to confirm`), the placeholders, and the example in the "not a Rwandan mobile" message. A number can still be typed with spaces, dashes or `+250`, and it is still kept as `+250792104747`.
+- The line under the phone field that said who can see the number is gone, in all three languages. The privacy policy says it. The field now only gives the example.
+- The Sign out button on the phone number screen looks like a link (it showed the browser's grey button).
+
 ## A required, unique phone number (phase 4, task 4.1)
 
 Every account has a phone number, no two accounts share one, it shows on the screens where people appear, and changing it needs the current number typed. There is still no SMS provider, so a number is not proven to belong to the person who typed it. The owner will use the numbers to send SSMS messages on WhatsApp and to call a supervisor or a farmer from the mobile app.
