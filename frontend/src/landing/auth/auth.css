@@ -335,6 +335,16 @@
   text-decoration-color: currentColor;
 }
 
+/* A link that is really a button (it does something and goes nowhere), such as Sign out on the phone number screen. */
+.landing button.l-auth__link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .landing .l-field__row .l-auth__link {
   font-size: 0.82rem;
 }
