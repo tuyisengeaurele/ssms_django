@@ -23,7 +23,6 @@ import { attentionFor } from '../../utils/attention';
 import type { StageRange } from '../../services/sensor.service';
 import FarmCalendar from '../../components/calendar/FarmCalendar';
 import QuickActions from '../../components/dashboard/QuickActions';
-import AllowanceCard from '../../components/supply/AllowanceCard';
 import OnboardingCard from '../../components/supply/OnboardingCard';
 import SupplyRoundCard from '../../components/supply/SupplyRoundCard';
 import TodayCard from './TodayCard';
@@ -147,12 +146,6 @@ export default function FarmerDashboard() {
 
         <div className="dash-body">
         <div className="dash-main stagger">
-        <OnboardingCard />
-
-        <AllowanceCard />
-
-        <SupplyRoundCard />
-
         <div className="grid-3">
           <StatTile
             label={t('fhMyFarms')}
@@ -183,7 +176,7 @@ export default function FarmerDashboard() {
           ))}
         </div>}
 
-        <div className="split">
+        <div className="stack-24">
           <Panel
             title={`${t('fhBatches')} (${batches.length})`}
             flush
@@ -229,6 +222,12 @@ export default function FarmerDashboard() {
             )}
           </Panel>
 
+        </div>
+        </div>
+        <aside className="dash-rail">
+          <div className="card"><FarmCalendar /></div>
+          <OnboardingCard />
+          <SupplyRoundCard />
           <Panel
             title={t('svAlertsTitle')}
             flush
@@ -252,10 +251,6 @@ export default function FarmerDashboard() {
               </ul>
             )}
           </Panel>
-        </div>
-        </div>
-        <aside className="dash-rail">
-          <div className="card"><FarmCalendar /></div>
         </aside>
         </div>
       </div>
