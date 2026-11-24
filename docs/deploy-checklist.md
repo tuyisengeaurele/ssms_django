@@ -28,7 +28,7 @@ Work through this top to bottom for every deploy, including a rehearsal on a tes
 | `LOG_LEVEL` | `INFO` (default). Logs are one JSON line each, with the request reference |
 | `REQUEST_LOG_SAMPLE_RATE` | `0.05` (default): every failed request is logged, and this share of the good ones |
 
-Scheduled jobs run from GitHub Actions, not Render: `jobs-frequent.yml` every 5 minutes (`run_health_checks --skip aiService`, `check_log_bursts`, `mark_offline_devices`) and `jobs-nightly.yml` at 02:00 UTC (`rollup_readings`, `cleanup_sensor_readings`, `prune_sessions`, `prune_logs`). GitHub may start a run a few minutes late, and emails the repository owner when a run fails. A scheduler that stopped shows in the System page, Logs, Jobs and devices: each command writes when it starts and ends.
+Scheduled jobs run from GitHub Actions, not Render: `jobs-frequent.yml` every 5 minutes (`run_health_checks --skip aiService`, `check_log_bursts`, `mark_offline_devices`) and `jobs-nightly.yml` at 02:00 UTC (`rollup_readings`, `cleanup_sensor_readings`, `prune_sessions`, `prune_logs`, `anonymise_accounts`). GitHub may start a run a few minutes late, and emails the repository owner when a run fails. A scheduler that stopped shows in the System page, Logs, Jobs and devices: each command writes when it starts and ends.
 
 `build.sh` runs the deploy check, the migrations, the cache table for the sign in lockout and the static files once per deploy, and leaves `.setup_done`. `start.sh` then only starts the API under ASGI, so a wake from sleep is fast. Without the marker (a host whose build cannot reach the database) `start.sh` does those steps itself. Read the build log for the setup and the start log for uvicorn.
 
@@ -112,11 +112,22 @@ These are written down so nobody is surprised. Each is on the backlog or waiting
 - The admin's active batches list is one answer for every active batch (538 KB for 1,000). It takes 200 to 500 ms at that size and wants paging. See `docs/load-profile.md`.
 - Some older alerts have no code ("Batch initialized at EGG stage."). They show their stored English sentence in every language.
 - Saved but not used yet: `preferred_language`, the phone number and the notification preferences. Every account must have a phone number and it is shown by role with Call and WhatsApp links, but nothing sends to it: there is no SMS or WhatsApp provider, and nothing reads the preferences until messaging is built. A number is not confirmed with a code, so the first account to hold a number keeps it until the SSMS team frees it. Every existing account meets an "Add your phone number" screen on its first visit after the deploy (runbook section 26).
-- The admin users page has no button to clear or reassign a phone number. The route exists (`PATCH /api/admin/users/<id>/phone`).
+- The admin Users page has a **Number** action that sets or clears a person's number (`PATCH /api/admin/users/<id>/phone`). Clearing asks once, and the person is asked for a number again at their next visit.
 - The phone number screens (the gate, the change dialog, the call and WhatsApp links) are tested but have not been looked at in a browser, on a phone, yet.
+- **Account self-service** (runbook sections 27 to 29). Known gaps:
+  - Supervisors and admins cannot close their own accounts. Settings tells them to contact the SSMS team.
+  - Batches that are still running when a farmer closes their account stay as history, and nobody takes them over.
+  - The audit log is never pruned and keeps old email addresses in its older lines, including the address before a change and before an account was closed. The privacy draft says so for the owner to approve.
+  - Only the admin restore route refuses an anonymised account. The admin routes for role, cooperative and number do not yet.
+  - The first nightly `anonymise_accounts` run on the live database has not been seen. Nothing is due until 30 days after the first farmer closes an account, so it prints "Anonymised 0 accounts" until then. Read the Jobs and devices log for it finished.
+  - The "30 days" in the close account dialog and the closure screen is fixed text, and the setting `ACCOUNT_DELETION_GRACE_DAYS` can differ from it.
+  - The data download is limited to 3 an hour and a wrong password counts.
+  - The links in the email change mails point at the Vercel address (`FRONTEND_URL`): try them only after both deploys have finished. A real end to end try of the email change, with a real mailbox, has not been done.
+  - The new screens (change email and its two link pages, change cooperative and the Requests page, close account and the closure screen, download my data) are tested but have not been looked at in a browser, on a phone and a laptop, yet.
 
 **Language**
 
+- The French and Kinyarwanda texts of the account self-service work (email change, cooperative requests, closing an account, the data download and their error messages) are a draft until a native speaker has read them.
 - All French and Kinyarwanda is a draft until a native speaker has read it: the plural rule, the offer wording, the meta descriptions, the legal pages, the glossary. Alert sentences write numbers with a point ("22.0 °C") in every language.
 - Server sentences written straight into a view (for example "Please enter your name."), Django REST framework's own field messages and the second factor and support access sentences are still English. They take a code one at a time (`core/error_text.py`).
 - The legal pages are English only.

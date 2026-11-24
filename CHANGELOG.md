@@ -2,6 +2,35 @@
 
 # Changelog
 
+## Account self-service (phase 4b)
+
+A person can look after their own account without writing to the SSMS team: change the login email, ask to move to another cooperative, close the account (farmers), and download what SSMS holds about them. Anything that can lock someone out or cannot be undone asks for the email typed out, and for the password where it matters. A move to another cooperative is a request, because it changes who can see the person's farms.
+
+### Added
+- **Shared pieces.** One typed confirmation on the server (`core/sensitive.py`: the typed text, the password check, one kind of field refusal, a masked email, a throttle of 5 a minute per person) and one on the web (`ConfirmByTypingDialog`, whose button stays off until the named text is typed). The phone change dialog is built on it. New security log kinds (`email_change_asked`, `email_changed`, `email_change_undone`, `deletion_scheduled`, `deletion_cancelled`, `account_anonymised`, `data_exported`). Support access is refused on every new route.
+- **Change email** (migration `users.0015`, table `email_changes`). The person gives the new address, the password and the current address typed. A link goes to the new address and the login changes only when it is opened, within 24 hours. Every device is signed out then. The old address is told at once and after the change, with an undo link for 7 days. Undoing restores the old email, signs everyone out and sends a password reset link, because whoever changed it knew the password. Settings shows a pending notice with **Cancel request**.
+- **Cooperative change requests** (migration `cooperatives.0005`, table `cooperative_change_requests`). A farmer or supervisor asks, with a reason, to move to another cooperative or to leave theirs. One open request each. The SSMS team approves or declines on a new **Requests** page, and a decline needs a note. Approving moves the person and keeps their membership history. For a farmer it also cancels their open egg requests and allowance request in the old cooperative and gives the starting boxes of the new one. Both answers are mailed, and every active admin is mailed when a request arrives.
+- **Close account** (migration `users.0016`). A farmer types their email and gives the password. The removal is scheduled `ACCOUNT_DELETION_GRACE_DAYS` (30) days on, every other device is signed out, their open egg requests, allowance request, cooperative request and pending email change are cancelled, and they are mailed the date. Until then the account reaches only its own details, sign out and **Keep my account** (`deletion_scheduled`, a closure screen on the web). The nightly `anonymise_accounts` command, after `prune_logs`, then removes the name, email, number, photo, sessions, recovery codes, second factor and email changes, closes the membership and turns off the person's sensor devices. Farms, rooms, batches and harvests stay as history without a name. The email becomes `deleted-<id>@deleted.invalid`, so the real email and number are free again. It is safe to run twice, takes `--dry-run`, and one account that fails does not stop the others.
+- **Download my data.** `POST /api/auth/export` with the password gives one JSON file: profile, farms, rooms, batches, harvests, photo check results, allowance and its history, cooperative history, and the last 180 days of security events with emails masked. It holds no photos, password hash, tokens or anyone else's number or email, is built from the person's own records only, and is limited to 3 an hour.
+- The Users page tags an account whose closure is scheduled, and refuses to restore an anonymised one (409 `anonymised`).
+- New error codes in the three languages: `confirm_mismatch`, `wrong_password`, `email_same`, `link_invalid`, `link_expired`, `link_used`, `email_not_sent`, `undo_blocked`, the `coop_` ones, `deletion_scheduled`, `deletion_not_for_staff`, `deletion_nothing_to_cancel`, `anonymised`.
+
+### Changed
+- `core/phone_gate.py` is now `core/account_gate.py` and holds both reasons to stop an account: a scheduled closure first, then a missing phone number. A route with no name is refused like any other that is not listed.
+- A farmer no longer gets other members' emails on the cooperative page. Staff and the SSMS team still do.
+- The Users page has a **Number** action that sets or clears the number of someone else.
+- Three notes in Settings are gone: "Your role and cooperative are set by the SSMS team", "Ask the SSMS team to add you to a cooperative" and "You cannot change your email here".
+
+### Not done on purpose
+- Supervisors and admins do not close their own accounts. Settings tells them to contact the SSMS team, and the route answers `deletion_not_for_staff`.
+- Only the restore route refuses an anonymised account. The admin routes for role, cooperative and number do not yet.
+- The audit log is never pruned and keeps old email sentences. Closing an account does not rewrite it.
+- Batches that are still running when an account is closed stay as history. Nobody takes them over.
+- The dialog says "30 days" as fixed text. Change it together with `ACCOUNT_DELETION_GRACE_DAYS`.
+- A wrong password counts toward the 3 an hour of the download, so three mistakes lock it for an hour.
+- The French and Kinyarwanda texts are a draft until a native speaker has read them.
+- The new screens have not been looked at in a browser, on a phone and a laptop, yet.
+
 ## Phone numbers without spaces, and no "who can see it" line
 
 ### Changed

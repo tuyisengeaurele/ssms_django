@@ -655,3 +655,100 @@ SELECT role, count(*) FROM users WHERE phone IS NULL AND "isActive" GROUP BY rol
 **Seeing changes.** Security log, kind "Phone number changed". It holds the person, the time and both numbers with the middle hidden.
 
 Going back: migrate `users` back to `0013`. The plain rule is replaced by the conditional one. Numbers already saved stay.
+
+## 27. A person changes their email (account self-service)
+
+The migration is `users.0015_email_changes`. It adds the `email_changes` table, with a rule of one pending change per person. It changes no existing row.
+
+**What the person sees.** Settings, Account, **Change** next to the email. They give the new address, their password and their current address typed out. A link goes to the new address and works for 24 hours. The login changes only when it is opened, and every device is signed out then. The old address is told when the request is made and again after the change, and that second mail holds an undo link that works for 7 days. Opening the undo link restores the old email, signs everyone out and sends a password reset link, because whoever changed the email knew the password. The links open without a sign in, on pages named `/confirm-email-change` and `/undo-email-change`. They point at `FRONTEND_URL`, so let both deploys finish before trying it.
+
+**Seeing it.** Security log, kinds "Email change asked for", "Email changed" and "Email change undone". They hold both addresses masked (`a***@example.rw`), never in full.
+
+**Looking at one person's changes.**
+
+```sql
+SELECT id, "oldEmail", "newEmail", status, "createdAt", "confirmedAt" FROM email_changes WHERE "userId" = '<user id>' ORDER BY "createdAt" DESC;
+```
+
+Status is `pending`, `done`, `undone` or `cancelled`.
+
+**Putting an email back by hand.** Only when the person cannot use the undo link (it ran out, or the old address is no longer theirs to read). Check the row first: the person is who they say they are, and the address is not held by another account (`SELECT id FROM users WHERE lower(email) = lower('<address>');` must return no row). Then:
+
+```sql
+UPDATE users SET email = '<address>' WHERE id = '<user id>';
+```
+
+Then sign the person out everywhere from the admin Users page and send them a password reset. A change made in SQL leaves no audit row, so write down why in your own notes.
+
+Going back: migrate `users` back to `0014`. The table is dropped, so pending requests and the undo history are lost. The login emails stay as they are.
+
+## 28. Cooperative change requests
+
+The migration is `cooperatives.0005_change_requests`. It adds `cooperative_change_requests`, with one open request per person, and changes no existing row.
+
+**For the person.** Settings, the cooperative row, **Change**. A farmer or supervisor picks another cooperative, or "No cooperative" to leave theirs, and gives a reason of up to 500 characters. They can withdraw it until it is decided. The answer shows in Settings with its note, until they put it away.
+
+**For the SSMS team.** The **Requests** page lists what waits, the one waiting longest first, with the person's number (call and WhatsApp), where they come from and go to, the reason, and a note when the person is the only supervisor of their cooperative. Every active admin is mailed when a request arrives.
+
+- **Approving** moves the person the same way the Users page does, so the membership history is kept. For a farmer it also cancels their open egg requests in the old cooperative, withdraws their open allowance request there, and gives the starting boxes of the new cooperative. It is refused, and the request stays open so it can still be declined, when the person is no longer active, the new cooperative is no longer active, or the person has already moved.
+- **Declining** needs a note, which the person reads.
+- Both answers are mailed to the person.
+- A decision cannot be taken back. To undo a move, the person makes a new request, or the SSMS team moves them from the Users page.
+
+**Seeing it.** The audit log has the asking, the withdrawing and the deciding, under `CooperativeChangeRequest`.
+
+```sql
+SELECT status, count(*) FROM cooperative_change_requests GROUP BY status;
+```
+
+Going back: migrate `cooperatives` back to `0004`. The table is dropped and the requests are lost. People stay in the cooperatives they were moved to.
+
+## 29. Closing accounts, the nightly removal and the data download
+
+The migration is `users.0016_account_closure`. It adds two empty date columns to `users`: `deletionRequestedAt` and `anonymisedAt`. It changes no existing row.
+
+**The three migrations of this work, in order:** `users.0015`, `cooperatives.0005`, `users.0016`. Render applies them in the build. On another database, back it up, run `python manage.py migrate`, then check:
+
+```sql
+SELECT count(*) FROM email_changes;                                   -- the table exists
+SELECT count(*) FROM cooperative_change_requests;                     -- the table exists
+SELECT count(*) FROM users WHERE "deletionRequestedAt" IS NOT NULL;   -- the column exists, 0 at first
+```
+
+**What a farmer does.** Settings, **Close account**. They read what happens, type their email and give their password. Every other device is signed out, their open egg requests, allowance request, cooperative request and pending email change are cancelled, and they are mailed the removal date. The account then reaches only its own details, sign out and **Keep my account** until that date.
+
+**The grace days.** `ACCOUNT_DELETION_GRACE_DAYS` on the API host, 30 when it is not set. The dialog and the closure texts say "30 days" as fixed words, so change the texts too if you change the number.
+
+**The nightly job.** `python manage.py anonymise_accounts` runs at 02:00 UTC in `jobs-nightly.yml`, after `prune_logs`. It anonymises every account whose closure was asked for more than the grace days ago and not taken back. For each it removes the name, email, number, photo, sessions, recovery codes, second factor, notification preferences and email changes, closes the membership, turns off the person's sensor devices, and writes `account_anonymised` to the security log. The email becomes `deleted-<id>@deleted.invalid` and the number is empty, so both can be used again. Farms, rooms, batches and harvests stay, as history without a name. The Jobs and devices log shows that it started and finished. If one account fails the others are still done and the command ends with an error, so GitHub emails the repository owner. Read the log, then run it again: an account that is done is left alone.
+
+By hand, from the API host or a machine that has the database address:
+
+```
+python manage.py anonymise_accounts --dry-run     # says how many it would do, changes nothing
+python manage.py anonymise_accounts
+```
+
+**Who is waiting.**
+
+```sql
+SELECT id, email, "deletionRequestedAt", "deletionRequestedAt" + interval '30 days' AS removal
+FROM users WHERE "deletionRequestedAt" IS NOT NULL AND "anonymisedAt" IS NULL ORDER BY "deletionRequestedAt";
+```
+
+The admin Users page tags these accounts with their removal day.
+
+**Cancelling for someone.** When the person asks the SSMS team because they cannot sign in to do it, and only before the account is anonymised:
+
+```sql
+UPDATE users SET "deletionRequestedAt" = NULL WHERE id = '<user id>' AND "anonymisedAt" IS NULL;
+```
+
+The devices that were signed out stay signed out, and the person signs in again. After the removal there is nothing to bring back: the admin restore route answers 409 `anonymised`.
+
+**What stays.** Farms, rooms, batches, harvests, photo checks and sensor readings stay, with the farm still pointing at the account row, which now has no name. Batches that were still running stay as they were and nobody takes them over. The audit log is never pruned and keeps the old email in its older lines. Security events keep their time and kind and are pruned after 180 days.
+
+**Supervisors and admins** do not close their own accounts. Settings tells them to contact the SSMS team, and the route answers `deletion_not_for_staff`. To remove one, use the Users page. The admin routes for role, cooperative and number do not refuse an anonymised account yet, so do not use them on one.
+
+**Downloading the data.** Settings, **Your data**, **Download my data**. The person gives their password and gets one JSON file with their own records. It is limited to 3 an hour per person and a wrong password counts, so a person who mistyped three times waits for the hour to pass. Each download writes `data_exported` to the security log, without the content.
+
+Going back: migrate `users` back to `0015`. The two columns are dropped, so a scheduled closure is forgotten and every account works normally. Accounts that were already anonymised stay anonymised.
