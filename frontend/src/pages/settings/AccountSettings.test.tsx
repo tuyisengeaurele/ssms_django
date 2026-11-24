@@ -16,6 +16,8 @@ const api = vi.hoisted(() => ({ updateProfile: vi.fn() }));
 vi.mock('../../services/auth.service', () => ({ authService: api }));
 const account = vi.hoisted(() => ({ getEmailChange: vi.fn(), cancelEmailChange: vi.fn(), startEmailChange: vi.fn(), closeAccount: vi.fn(), uploadPhoto: vi.fn(), removePhoto: vi.fn() }));
 vi.mock('../../services/account.service', () => ({ accountService: account }));
+const crop = vi.hoisted(() => ({ loadImage: vi.fn(), cropToFile: vi.fn() }));
+vi.mock('../../utils/photoCrop', async () => ({ ...(await vi.importActual<object>('../../utils/photoCrop')), loadImage: crop.loadImage, cropToFile: crop.cropToFile }));
 const farms = vi.hoisted(() => ({ getAll: vi.fn() }));
 vi.mock('../../services/farm.service', () => ({ farmService: farms }));
 const coop = vi.hoisted(() => ({ mine: vi.fn(), options: vi.fn(), ask: vi.fn(), withdraw: vi.fn() }));
@@ -253,9 +255,9 @@ describe('Account settings', () => {
       decisionNote: '', createdAt: '2026-11-20T10:00:00Z', decidedAt: null, ...over,
     });
     const asFarmer = () => { auth.user.role = 'FARMER'; auth.user.cooperativeId = 'c1'; auth.user.cooperativeName = 'Old Coop'; };
-    const change = () => screen.queryByRole('button', { name: 'Change cooperative' });
+    const change = () => screen.queryByRole('button', { name: 'Request change' });
 
-    it('has a Change cooperative button for a farmer and for a supervisor, and never for an admin', async () => {
+    it('has a Request change button for a farmer and for a supervisor, and never for an admin', async () => {
       open();
       expect(change()).not.toBeInTheDocument();
       cleanup();
@@ -267,6 +269,23 @@ describe('Account settings', () => {
       open();
       expect(change()).toBeInTheDocument();
       expect(coop.mine).toHaveBeenCalledTimes(2);
+    });
+
+    it('keeps the profile card to facts: no button next to the cooperative, and the request has a section of its own before Close your account', () => {
+      asFarmer();
+      open();
+      const card = screen.getByRole('region', { name: 'About you' });
+      const fact = within(card).getByText('Old Coop').closest('div') as HTMLElement;
+      expect(within(fact).queryByRole('button')).not.toBeInTheDocument();
+      const section = screen.getByRole('heading', { name: 'Change cooperative' }).closest('section') as HTMLElement;
+      expect(within(section).getByRole('button', { name: 'Request change' })).toBeInTheDocument();
+      const close = screen.getByRole('heading', { name: 'Close your account' }).closest('section') as HTMLElement;
+      expect(section.compareDocumentPosition(close) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('has no cooperative section for an admin', () => {
+      open();
+      expect(screen.queryByRole('heading', { name: 'Change cooperative' })).not.toBeInTheDocument();
     });
 
     it('does not ask the server for a request when the person is an admin', () => {
@@ -378,16 +397,27 @@ describe('Account settings', () => {
       withPhoto(null);
       const answered = { ...auth.user, photoUrl: '/api/photos/new' };
       account.uploadPhoto.mockResolvedValue({ data: { data: answered } });
+      crop.loadImage.mockResolvedValue({ naturalWidth: 800, naturalHeight: 400, src: 'blob:http://localhost/3f2c1d2e-1111-4222-8333-444455556666' });
+      crop.cropToFile.mockResolvedValue(new File(['x'], 'photo.jpg', { type: 'image/jpeg' }));
       URL.createObjectURL = vi.fn(() => 'blob:http://localhost/3f2c1d2e-1111-4222-8333-444455556666');
       URL.revokeObjectURL = vi.fn();
       open();
       fireEvent.click(screen.getByRole('button', { name: 'Add photo' }));
-      const dialog = await screen.findByRole('dialog', { name: 'Your photo' });
-      fireEvent.change(within(dialog).getByLabelText('Choose a photo'), { target: { files: [new File(['x'], 'me.png', { type: 'image/png' })] } });
-      fireEvent.click(within(dialog).getByRole('button', { name: 'Save photo' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Profile photo' });
+      fireEvent.change(within(dialog).getByLabelText('Choose photo'), { target: { files: [new File(['x'], 'me.png', { type: 'image/png' })] } });
+      await within(dialog).findByRole('group', { name: 'Adjust photo' });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
       await waitFor(() => expect(auth.updateUser).toHaveBeenCalledWith(answered));
-      expect(await screen.findByText('Your photo was saved.', {}, { timeout: 5000 })).toBeInTheDocument();
+      expect(await screen.findByText('Photo saved', {}, { timeout: 5000 })).toBeInTheDocument();
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    });
+
+    it('shows Add photo as a button with a camera before the words', () => {
+      withPhoto(null);
+      open();
+      const button = screen.getByRole('button', { name: 'Add photo' });
+      expect(button).toHaveClass('btn');
+      expect(button.querySelector('svg')).not.toBeNull();
     });
   });
 

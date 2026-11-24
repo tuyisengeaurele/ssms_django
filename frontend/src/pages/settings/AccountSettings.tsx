@@ -15,6 +15,7 @@ import EmailChangeDialog from '../../components/ui/EmailChangeDialog';
 import PhoneLink from '../../components/ui/PhoneLink';
 import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
 import Avatar from '../../components/ui/Avatar';
+import { Icon } from '../../components/ui/Icon';
 import ProfilePhotoDialog from '../../components/ui/ProfilePhotoDialog';
 import Panel from '../../components/ui/Panel';
 import { dateFormat } from '../../utils/dateFormat';
@@ -171,7 +172,7 @@ export default function AccountSettings() {
         <h2 className="identity-name">{user?.name}</h2>
         <p className="identity-email">{user?.email}</p>
         {user && <span className="badge badge-ink">{t(ROLE_LABEL_KEY[user.role])}</span>}
-        {user && <button type="button" className="btn btn-ghost btn-xs identity-photo-btn" onClick={() => setEditingPhoto(true)}>{user.photoUrl ? t('ppChange') : t('ppAdd')}</button>}
+        {user && <button type="button" className="btn btn-secondary btn-sm identity-photo-btn" onClick={() => setEditingPhoto(true)}><Icon name="camera" size={15} />{user.photoUrl ? t('ppChange') : t('ppAdd')}</button>}
 
         <dl className="identity-facts">
           <div><dt>{t('pfSince')}</dt><dd>{joined}</dd></div>
@@ -179,25 +180,7 @@ export default function AccountSettings() {
           <div>
             <dt>{t('pfCooperative')}</dt>
             <dd>
-              <span className="cell-stack">
-                <span>{user?.cooperativeName ?? t('pfNotAssigned')}</span>
-                {canAskCooperative && coopRequest?.status !== 'requested' ? (
-                  <button type="button" className="btn btn-ghost btn-xs" aria-label={t('cqChangeAria')} onClick={() => setAskingCooperative(true)}>{t('cpChange')}</button>
-                ) : null}
-                {coopRequest?.status === 'requested' ? (
-                  <span className="form-hint">
-                    <span>{coopRequest.to ? fill(t('cqWaiting'), { date: day(coopRequest.createdAt), name: coopRequest.to.name }) : fill(t('cqWaitingLeave'), { date: day(coopRequest.createdAt) })}</span>{' '}
-                    <button type="button" className="btn btn-ghost btn-xs" onClick={withdrawCooperativeRequest}>{t('cqWithdraw')}</button>
-                  </span>
-                ) : null}
-                {answered ? (
-                  <span className="form-hint">
-                    <span>{answerText(answered)}</span>
-                    {answered.decisionNote ? <span> {fill(t('cqNote'), { note: answered.decisionNote })}</span> : null}{' '}
-                    <button type="button" className="btn btn-ghost btn-xs" onClick={() => putAwayAnswer(answered.id)}>{t('cqGotIt')}</button>
-                  </span>
-                ) : null}
-              </span>
+              {user?.cooperativeName ?? t('pfNotAssigned')}
             </dd>
           </div>
           {user?.supervisor ? (
@@ -222,7 +205,7 @@ export default function AccountSettings() {
             {pendingEmail ? (
               <div className="form-hint">
                 <span>{fill(t('ecPending'), { email: pendingEmail.newEmail })}</span>{' '}
-                <button type="button" className="btn btn-ghost btn-xs" onClick={cancelEmailChange}>{t('ecCancel')}</button>
+                <button type="button" className="btn btn-secondary btn-xs" onClick={cancelEmailChange}>{t('ecCancel')}</button>
               </div>
             ) : null}
           </div>
@@ -273,6 +256,41 @@ export default function AccountSettings() {
         </div>
       </section>
 
+      {canAskCooperative ? (
+        <section className="panel" aria-labelledby="pf-coop-title">
+          <header className="panel-head">
+            <div><h2 id="pf-coop-title" className="panel-title">{t('cqSection')}</h2></div>
+          </header>
+          <div className="panel-body">
+            {coopRequest?.status === 'requested' ? (
+              <>
+                <p className="form-hint form-hint--gap">
+                  {coopRequest.to
+                    ? fill(t('cqWaiting'), { date: day(coopRequest.createdAt), name: coopRequest.to.name })
+                    : fill(t('cqWaitingLeave'), { date: day(coopRequest.createdAt) })}
+                </p>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={withdrawCooperativeRequest}>{t('cqWithdraw')}</button>
+              </>
+            ) : (
+              <>
+                {answered ? (
+                  <p className="form-hint form-hint--gap">
+                    <span>{answerText(answered)}</span>
+                    {answered.decisionNote ? <span> {fill(t('cqNote'), { note: answered.decisionNote })}</span> : null}
+                  </p>
+                ) : null}
+                <div className="section-actions">
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => setAskingCooperative(true)}>
+                    <Icon name="cooperatives" size={15} />{t('cqRequest')}
+                  </button>
+                  {answered ? <button type="button" className="btn btn-secondary btn-sm" onClick={() => putAwayAnswer(answered.id)}>{t('cqGotIt')}</button> : null}
+                </div>
+              </>
+            )}
+          </div>
+        </section>
+      ) : null}
+
       <section className="panel" aria-labelledby="pf-close-title">
         <header className="panel-head">
           <div><h2 id="pf-close-title" className="panel-title">{t('caSection')}</h2></div>
@@ -286,7 +304,7 @@ export default function AccountSettings() {
           ) : (
             <>
               <p className="form-hint form-hint--gap">{t('caStaff')}</p>
-              <a className="link" href="/#contact">{t('caStaffLink')}</a>
+              <a className="btn btn-secondary btn-sm" href="/#contact"><Icon name="messages" size={15} />{t('caStaffLink')}</a>
             </>
           )}
         </div>
