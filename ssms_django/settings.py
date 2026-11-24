@@ -233,6 +233,8 @@ REST_FRAMEWORK = {
         'invitation': '20/minute',
         'sessions': '30/minute',   # signed in devices: list and sign out
         'sensitive': '5/minute',   # email change and closing an account, per person
+        'photo_upload': '20/hour',   # profile photos, per person
+        'photo_file': '300/minute',   # the picture behind a photo address, per visitor address
         'account_export': '3/hour',   # downloading all of one's data, per person
         'health_test': '5/minute',   # the test buttons on the Health tab
         'mfa': '10/minute',   # second factor codes and set-up, per address

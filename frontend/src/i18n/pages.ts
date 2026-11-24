@@ -1118,6 +1118,10 @@ export const pageTranslations = {
   erDeletionNotForStaff: k("To close this account, please contact the SSMS team.", "Pour fermer ce compte, veuillez contacter l'équipe SSMS.", "Kugira ngo iyi konti ifungwe, nyabuneka vugana n'ikipe ya SSMS."),
   erDeletionNothingToCancel: k("Your account is not scheduled to be removed.", "La suppression de votre compte n'est pas programmée.", "Konti yawe nta gahunda yo gusibwa ifite."),
   erAnonymised: k("This account was removed and cannot be restored.", "Ce compte a été supprimé et ne peut pas être restauré.", "Iyi konti yarasibwe kandi ntishobora gusubizwaho."),
+  erPhotoNotImage: k("Please choose a JPEG, PNG or WebP photo.", "Veuillez choisir une photo JPEG, PNG ou WebP.", "Hitamo ifoto ya JPEG, PNG cyangwa WebP."),
+  erPhotoTooLarge: k("That photo is too large. Please choose one under 2 MB.", "Cette photo est trop grande. Choisissez-en une de moins de 2 Mo.", "Iyi foto ni nini cyane. Hitamo iri munsi ya 2 MB."),
+  erPhotoMissing: k("Please choose a photo.", "Veuillez choisir une photo.", "Hitamo ifoto."),
+  erPhotoNone: k("There is no photo to remove.", "Il n'y a aucune photo à supprimer.", "Nta foto yo gukuraho ihari."),
   erEmailTaken: k("An account with this email already exists. Try signing in instead.", "Un compte existe déjà avec cet e-mail. Essayez de vous connecter.", "Konti ifite iyi meyili isanzwe ibaho. Gerageza kwinjira."),
   erReference: k("Reference: {ref}", "Référence : {ref}", "Inomero y'icyitonderwa: {ref}"),
   // The server's own sentences, sent in the language the page asks for. The server copies these (scripts/build_doc_text.py).

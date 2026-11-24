@@ -19,7 +19,7 @@ from core.mail import Email, send_email_async
 from logs.security import record_security_event
 
 from . import email_change
-from .models import EmailChange, NotificationPreference, RecoveryCode, Role, SecondFactor, User, UserSession
+from .models import EmailChange, NotificationPreference, RecoveryCode, Role, SecondFactor, User, UserPhoto, UserSession
 
 logger = logging.getLogger(__name__)
 
@@ -176,6 +176,7 @@ def anonymise(user, request=None) -> User:
         SecondFactor.objects.filter(user=person).delete()
         NotificationPreference.objects.filter(user=person).delete()
         EmailChange.objects.filter(user=person).delete()
+        UserPhoto.objects.filter(user=person).delete()
         _forget_the_tokens(person)
         IoTDevice.objects.filter(farm__owner=person).update(is_active=False)
     _event('account_anonymised', person, request)

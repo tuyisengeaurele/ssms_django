@@ -14,6 +14,7 @@ from .mfa_views import (
 )
 from .notification_views import NotificationPreferencesView
 from .password_reset_views import PasswordResetConfirmView, PasswordResetRequestView
+from .photo_views import PhotoView
 from .session_views import SessionDetailView, SessionListView, SessionPingView, SessionRevokeOthersView
 from .views import ChangePasswordView, CookieTokenRefreshView, LoginView, LogoutView, ProfileView, RegisterView
 
@@ -28,6 +29,7 @@ urlpatterns = [
     path('mfa/setup/start',   MfaSetupStartView.as_view(),    name='auth_mfa_setup_start'),
     path('mfa/setup/confirm', MfaSetupConfirmView.as_view(),  name='auth_mfa_setup_confirm'),
     path('me',                ProfileView.as_view(),          name='auth_me'),
+    path('me/photo',          PhotoView.as_view(),            name='auth_photo'),
     path('me/notifications',  NotificationPreferencesView.as_view(), name='auth_me_notifications'),
     path('change-password',   ChangePasswordView.as_view(),   name='auth_change_password'),
     path('email-change',            EmailChangeView.as_view(),        name='auth_email_change'),

@@ -12,6 +12,7 @@ from core.utils import health_check
 from logs.views import LogsView
 from reports.health_views import SystemHealthHistoryView, SystemHealthTestView, SystemHealthView
 from sensors.urls import device_urlpatterns
+from users.photo_views import PhotoFileView
 
 handler404 = 'core.utils.not_found'
 handler500 = 'core.utils.server_error'
@@ -27,6 +28,7 @@ urlpatterns = [
     path('api/docs/', docs_view),
     path('api/docs', docs_view),
     path('api/docs/assets/<str:name>', asset_view),
+    path('api/photos/<str:token>', PhotoFileView.as_view(), name='photo_file'),   # the picture itself, for an image tag
     path('api/auth/', include('users.urls')),          # /api/auth/register, /api/auth/login, /api/auth/me
     path('api/farms', include('farms.urls')),          # /api/farms, /api/farms/<id>
     path('api/batches', include('batches.urls')),      # /api/batches, /api/batches/<id>, ...
