@@ -8,6 +8,7 @@ import { authService } from '../../services/auth.service';
 import { CooperativeRequest, cooperativeRequestService } from '../../services/cooperativeRequest.service';
 import { farmService } from '../../services/farm.service';
 import CloseAccountDialog from '../../components/ui/CloseAccountDialog';
+import DownloadDataButton from '../../components/ui/DownloadDataButton';
 import ConfirmPhoneChangeDialog from '../../components/ui/ConfirmPhoneChangeDialog';
 import CooperativeRequestModal from '../../components/ui/CooperativeRequestModal';
 import EmailChangeDialog from '../../components/ui/EmailChangeDialog';
@@ -258,6 +259,16 @@ export default function AccountSettings() {
           </button>
         </form>
       </Panel>
+
+      <section className="panel" aria-labelledby="pf-data-title">
+        <header className="panel-head">
+          <div><h2 id="pf-data-title" className="panel-title">{t('ddSection')}</h2></div>
+        </header>
+        <div className="panel-body">
+          <p className="form-hint form-hint--gap">{t('ddBody')}</p>
+          <DownloadDataButton />
+        </div>
+      </section>
 
       <section className="panel" aria-labelledby="pf-close-title">
         <header className="panel-head">

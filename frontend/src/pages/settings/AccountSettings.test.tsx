@@ -335,6 +335,25 @@ describe('Account settings', () => {
     });
   });
 
+  describe('your data', () => {
+    it('gives every role a Your data section with a Download my data button', () => {
+      for (const role of ['FARMER', 'SUPERVISOR', 'ADMIN']) {
+        auth.user.role = role;
+        open();
+        const section = screen.getByRole('heading', { name: 'Your data' }).closest('section') as HTMLElement;
+        expect(within(section).getByText(/Download a copy of what SSMS holds about you/)).toBeInTheDocument();
+        expect(within(section).getByRole('button', { name: 'Download my data' })).toBeInTheDocument();
+        cleanup();
+      }
+    });
+
+    it('opens the password dialog from the button', async () => {
+      open();
+      fireEvent.click(screen.getByRole('button', { name: 'Download my data' }));
+      expect(await screen.findByRole('dialog', { name: 'Download your data' })).toBeInTheDocument();
+    });
+  });
+
   describe('closing the account', () => {
     const asFarmer = () => { auth.user.role = 'FARMER'; auth.user.cooperativeId = 'c1'; auth.user.cooperativeName = 'Old Coop'; };
     const closeButton = () => screen.queryByRole('button', { name: 'Close account' });

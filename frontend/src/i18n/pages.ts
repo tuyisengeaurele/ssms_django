@@ -2220,7 +2220,7 @@ export const pageTranslations = {
   caWhat5: k("{n} of your batches are still running. They stay as history, and nobody takes over their care.", "{n} de vos lots sont encore en cours. Ils restent comme historique, et personne n'en prend la charge.", "Ibyiciro {n} byawe biracyakomeje. Bisigara nk'amateka kandi nta wundi uzabyitaho."),
   caWhat5One: k("{n} of your batches is still running. It stays as history, and nobody takes over its care.", "{n} de vos lots est encore en cours. Il reste comme historique, et personne n'en prend la charge.", "Icyiciro {n} cyawe kiracyakomeje. Gisigara nk'amateka kandi nta wundi uzakigiraho."),
   caTyped: k("Type your email, {email}, to confirm", "Saisissez votre e-mail, {email}, pour confirmer", "Andika imeyili yawe, {email}, kugira ngo wemeze"),
-  caPassword: k("Your password", "Votre mot de passe", "Ijambobanga ryawe"),
+  caPassword: k("Your password", "Votre mot de passe", "Ijambo ryawe ry'ibanga"),
   caSubmit: k("Close my account", "Fermer mon compte", "Funga konti yanjye"),
   caBusy: k("Closing your account", "Fermeture du compte", "Turimo gufunga konti"),
   caNote: k("You can change your mind until the date we show you. Nothing is removed before then.", "Vous pouvez changer d'avis jusqu'à la date indiquée. Rien n'est supprimé avant.", "Ushobora guhindura ibyemezo kugeza ku munsi tuzakwereka. Nta kintu gisibwa mbere yaho."),
@@ -2231,6 +2231,15 @@ export const pageTranslations = {
   csKeep: k("Keep my account", "Conserver mon compte", "Gumana konti yanjye"),
   csKept: k("Your account is kept.", "Votre compte est conservé.", "Konti yawe irasigaye."),
   usRemoval: k("Removal on {date}", "Suppression le {date}", "Izasibwa ku wa {date}"),
+  ddSection: k("Your data", "Vos données", "Amakuru yawe"),
+  ddBody: k("Download a copy of what SSMS holds about you, as one file.", "Téléchargez une copie de ce que SSMS conserve sur vous, dans un seul fichier.", "Kuramo kopi y'ibyo SSMS ibitse kuri wowe, mu dosiye imwe."),
+  ddOpen: k("Download my data", "Télécharger mes données", "Kuramo amakuru yanjye"),
+  ddTitle: k("Download your data", "Télécharger vos données", "Kuramo amakuru yawe"),
+  ddIntro: k("You get one file with your profile, farms, rooms, batches, harvests, photo check results, allowance and cooperative history, and recent security events. It holds no photos and no password.", "Vous recevez un fichier avec votre profil, vos fermes, salles, lots, récoltes, résultats de contrôle photo, historique d'allocation et de coopérative, et les événements de sécurité récents. Il ne contient ni photo ni mot de passe.", "Uhabwa dosiye imwe irimo umwirondoro wawe, imirima, ibyumba, ibyiciro, isarura, ibisubizo byo gusuzuma amafoto, amateka y'ibyo wemerewe n'ay'amakoperative, n'ibyabaye vuba ku mutekano. Ntirimo amafoto cyangwa ijambo ry'ibanga."),
+  ddPassword: k("Your password", "Votre mot de passe", "Ijambo ryawe ry'ibanga"),
+  ddSubmit: k("Download", "Télécharger", "Kuramo"),
+  ddBusy: k("Preparing your file", "Préparation de votre fichier", "Turimo gutegura dosiye yawe"),
+  ddDone: k("Your file was downloaded.", "Votre fichier a été téléchargé.", "Dosiye yawe yarakuwe."),
 } satisfies Record<string, Entry>;
 
 export type PageKey = keyof typeof pageTranslations;
