@@ -88,6 +88,10 @@ class SensitiveRateThrottle(UserRateThrottle):
     scope = 'sensitive'   # changing an email, closing an account, downloading the data: 5 a minute per person, so a stolen session cannot guess a password
 
 
+class AccountExportThrottle(UserRateThrottle):
+    scope = 'account_export'   # a person downloading all their data, 3 an hour. A wrong password counts too, so a stolen session cannot guess one
+
+
 class SessionsRateThrottle(UserRateThrottle):
     scope = 'sessions'   # a person looking at, renaming or signing out their devices, 30 a minute
 

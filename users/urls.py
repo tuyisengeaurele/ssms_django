@@ -3,6 +3,7 @@ from django.urls import path
 from .closure_views import CancelDeleteAccountView, DeleteAccountView
 from .email_change_views import EmailChangeConfirmView, EmailChangeUndoView, EmailChangeView
 from .email_verification_views import ResendVerificationView, VerifyEmailView
+from .export_views import ExportView
 from .mfa_views import (
     MfaRecoveryCodesView,
     MfaSetupConfirmView,
@@ -34,6 +35,7 @@ urlpatterns = [
     path('email-change/undo',       EmailChangeUndoView.as_view(),     name='auth_email_change_undo'),      # public: the undo link
     path('delete-account',          DeleteAccountView.as_view(),       name='auth_delete_account'),
     path('delete-account/cancel',   CancelDeleteAccountView.as_view(), name='auth_delete_account_cancel'),
+    path('export',                  ExportView.as_view(),              name='auth_export'),
     path('session/ping',           SessionPingView.as_view(),         name='auth_session_ping'),
     path('sessions',                SessionListView.as_view(),         name='auth_sessions'),
     path('sessions/revoke-others',  SessionRevokeOthersView.as_view(), name='auth_sessions_revoke_others'),
