@@ -1,4 +1,5 @@
 import api from './api';
+import { fileNameFrom, readRefusedFile, saveBlob } from './download';
 import { ApiResponse } from '../types';
 
 /** A request to change the login email that has not been confirmed yet. The new address is masked: a***@example.rw. */
@@ -27,6 +28,18 @@ export const accountService = {
   /** A farmer closes their own account: the typed email and the password. The removal is scheduled, thirty days on. */
   closeAccount: (data: { confirmEmail: string; password: string }) =>
     api.post<ApiResponse<{ deletionDate: string }>>('/auth/delete-account', data),
+
+  /** Everything SSMS holds about the person, as one JSON file the browser saves. The password is in the body, never in an address. */
+  downloadMyData: async (password: string): Promise<void> => {
+    try {
+      const res = await api.post('/auth/export', { password }, { responseType: 'blob' });
+      const fallback = `ssms-my-data-${new Date().toISOString().slice(0, 10)}.json`;
+      saveBlob(res.data as Blob, fileNameFrom(res.headers?.['content-disposition'] as string | undefined, fallback));
+    } catch (err) {
+      await readRefusedFile(err);
+      throw err;
+    }
+  },
 
   /** The farmer keeps the account. Open to an account that is scheduled to be removed. */
   cancelClosure: () => api.post<ApiResponse<null>>('/auth/delete-account/cancel'),
