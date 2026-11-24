@@ -456,7 +456,8 @@ td .cell-muted { color: var(--text-muted); }
  
   }
 
-  .table-stack td[data-label=''],
+  /* Only the empty label goes. The cell holds the buttons of the row. */
+  .table-stack td[data-label='']::before,
   .table-stack td:not([data-label])::before { display: none; }
 
   .table-stack td.cell-trim,
@@ -475,7 +476,10 @@ td .cell-muted { color: var(--text-muted); }
 
   .table-stack td.cell-lead::before { display: none; }
 
-  .table-stack .table-actions { justify-content: flex-start; }
+  /* Four buttons do not fit one line of a phone, so they wrap. */
+  .table-stack .table-actions { flex-wrap: wrap; justify-content: flex-start; }
+  /* A finger needs more than the small button of a laptop row. */
+  .table-stack .table-actions .btn { min-height: 36px; }
 }
 
 
@@ -513,7 +517,8 @@ td .cell-muted { color: var(--text-muted); }
  
 }
 
-.table-wrapper[data-cramped] .table-stack td[data-label=''],
+/* Only the empty label goes. The cell holds the buttons of the row. */
+.table-wrapper[data-cramped] .table-stack td[data-label='']::before,
 .table-wrapper[data-cramped] .table-stack td:not([data-label])::before { display: none; }
 
 .table-wrapper[data-cramped] .table-stack td.cell-trim,
@@ -532,7 +537,8 @@ td .cell-muted { color: var(--text-muted); }
 
 .table-wrapper[data-cramped] .table-stack td.cell-lead::before { display: none; }
 
-.table-wrapper[data-cramped] .table-stack .table-actions { justify-content: flex-start; }
+.table-wrapper[data-cramped] .table-stack .table-actions { flex-wrap: wrap; justify-content: flex-start; }
+.table-wrapper[data-cramped] .table-stack .table-actions .btn { min-height: 36px; }
 
 /* Rows inside a table cell */
 .cell-link { color: var(--ink); font-weight: 600; border-bottom: 1px solid transparent; transition: border-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out); }
