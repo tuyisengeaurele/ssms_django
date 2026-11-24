@@ -52,7 +52,8 @@ export default function Modal({ open, onClose, title, children, maxWidth = 480, 
     const box = boxRef.current;
     const wanted = initialFocus ? box?.querySelector<HTMLElement>(initialFocus) : null;
     const first = wanted ?? box?.querySelector<HTMLElement>('input, select, textarea') ?? box?.querySelector<HTMLElement>(FOCUSABLE);
-    (first ?? box)?.focus();
+    // Without scrolling: on a phone the field can be far down a long dialog, and a jump to it would hide what the dialog says.
+    (first ?? box)?.focus({ preventScroll: true });
     return () => before?.focus?.();
     // The target is read once, when the dialog opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
