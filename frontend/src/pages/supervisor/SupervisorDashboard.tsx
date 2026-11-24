@@ -12,6 +12,7 @@ import { fill } from '../../utils/fill';
 import { timeAgo } from '../../utils/timeAgo';
 import FarmCalendar from '../../components/calendar/FarmCalendar';
 import QuickActions from '../../components/dashboard/QuickActions';
+import AlertsPanel from '../../components/dashboard/AlertsPanel';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
 import DecisionsCard from '../../components/supply/DecisionsCard';
@@ -22,7 +23,6 @@ import { SkeletonStatCard } from '../../components/ui/SkeletonLoader';
 import StageBadge from '../../components/ui/StageBadge';
 import StatTile from '../../components/ui/StatTile';
 import FarmRiskPanel from './FarmRiskPanel';
-import { alertText } from '../../utils/alertText';
 import { dateFormat } from '../../utils/dateFormat';
 import { resultLabel } from '../../utils/resultLabel';
 
@@ -182,65 +182,42 @@ export default function SupervisorDashboard() {
         ))}
       </div>
 
-      <div className="grid-2 admin-split">
-        <Panel
-          title={`${t('svBatchesTitle')} (${batches.length})`}
-          flush
-          actions={<Link to="/batches/compare" className="btn btn-secondary btn-sm">{t('ptCompare')}<Icon name="forward" size={14} /></Link>}
-        >
-          {batches.length === 0 ? (
-            <EmptyState icon={<Icon name="batches" size={22} />} title={t('svNoBatches')} />
-          ) : (
-            <div className="table-wrapper">
-              <table className="table-stack">
-                <thead>
-                  <tr>
-                    <th>{t('svColFarm')}</th>
-                    <th>{t('svColStage')}</th>
-                    <th>{t('svColChecks')}</th>
-                    <th><span className="sr-only">{t('svOpen')}</span></th>
+      <Panel
+        title={`${t('svBatchesTitle')} (${batches.length})`}
+        flush
+        actions={<Link to="/batches/compare" className="btn btn-secondary btn-sm">{t('ptCompare')}<Icon name="forward" size={14} /></Link>}
+      >
+        {batches.length === 0 ? (
+          <EmptyState icon={<Icon name="batches" size={22} />} title={t('svNoBatches')} />
+        ) : (
+          <div className="table-wrapper">
+            <table className="table-stack">
+              <thead>
+                <tr>
+                  <th>{t('svColFarm')}</th>
+                  <th>{t('svColStage')}</th>
+                  <th>{t('svColChecks')}</th>
+                  <th><span className="sr-only">{t('svOpen')}</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {batches.slice(0, 7).map((b) => (
+                  <tr key={b.id} className="tbody-row">
+                    <td className="cell-lead cell-strong">{b.farm?.name ?? '-'}</td>
+                    <td data-label={t('svColStage')}><StageBadge stage={b.stage} /></td>
+                    <td data-label={t('svColChecks')} className="cell-strong">{b.detectionCount ?? 0}</td>
+                    <td data-label="">
+                      <div className="table-actions">
+                        <Link to={`/batches/${b.id}`} className="btn btn-secondary btn-xs" aria-label={`${t('svOpen')} ${b.farm?.name ?? ''}`}><Icon name="open" size={13} />{t('svOpen')}</Link>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {batches.slice(0, 7).map((b) => (
-                    <tr key={b.id} className="tbody-row">
-                      <td className="cell-lead cell-strong">{b.farm?.name ?? '-'}</td>
-                      <td data-label={t('svColStage')}><StageBadge stage={b.stage} /></td>
-                      <td data-label={t('svColChecks')} className="cell-strong">{b.detectionCount ?? 0}</td>
-                      <td data-label="">
-                        <div className="table-actions">
-                          <Link to={`/batches/${b.id}`} className="btn btn-secondary btn-xs" aria-label={`${t('svOpen')} ${b.farm?.name ?? ''}`}><Icon name="open" size={13} />{t('svOpen')}</Link>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Panel>
-
-        <Panel
-          title={t('svAlertsTitle')}
-          flush
-          actions={<Link to="/alerts" className="btn btn-secondary btn-sm">{t('svAllAlerts')}<Icon name="forward" size={14} /></Link>}
-        >
-          {alerts.length === 0 ? (
-            <EmptyState icon={<Icon name="alerts" size={22} />} title={t('svNoAlerts')} description={t('svNoAlertsBody')} />
-          ) : (
-            <ul className="alert-feed alert-feed--short" aria-label={t('svAlertsTitle')}>
-              {alerts.slice(0, 8).map((a) => (
-                <li key={a.id} className={a.isRead ? 'is-read' : ''}>
-                  <div className="alert-feed-main">
-                    <p className="alert-feed-message">{alertText(t, a)}</p>
-                    <p className="alert-feed-meta"><span>{timeAgo(a.createdAt, locale)}</span></p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
-      </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Panel>
 
       <Panel
         title={t('svChecksTitle')}
@@ -281,6 +258,7 @@ export default function SupervisorDashboard() {
       </div>
       <aside className="dash-rail">
         <div className="card"><FarmCalendar staff /></div>
+        <AlertsPanel alerts={alerts} limit={8} />
       </aside>
       </div>
       </div>

@@ -35,7 +35,7 @@ beforeEach(() => {
   localStorage.clear();
   setReducedMotion(true);
   getFarms.mockResolvedValue({ data: { data: farms } });
-  getAlerts.mockResolvedValue({ data: { data: [{ id: 'a1' }, { id: 'a2' }, { id: 'a3' }] } });
+  getAlerts.mockResolvedValue({ data: { data: [1, 2, 3].map((n) => ({ id: `a${n}`, type: 'TEMPERATURE', message: `Temperature too low: ${20 + n} C`, isRead: false, createdAt: new Date(Date.now() - n * 600_000).toISOString(), batchId: 'b1' })) } });
   getEvents.mockResolvedValue({ data: { data: { events: [], from: '', to: '', truncated: false } } });
   getDecisions.mockResolvedValue({ data: { data: { count: 2, rooms: 1, allowance: 1 } } });
 });
@@ -55,6 +55,14 @@ describe('Admin dashboard, decisions', () => {
 });
 
 describe('Admin dashboard', () => {
+  it('keeps the recent alerts in the rail under the calendar, and the farm list in the main column', async () => {
+    const { container } = open();
+    const alerts = await screen.findByRole('list', { name: 'Recent alerts' });
+    expect(within(alerts).getByText('Temperature too low: 21 C')).toBeInTheDocument();
+    expect(container.querySelector('.dash-rail')!.contains(alerts)).toBe(true);
+    expect(container.querySelector('.dash-main')!.contains(alerts)).toBe(false);
+  });
+
   it('has one title and offers each place once, as a quick action', async () => {
     open();
     expect(screen.getByRole('heading', { level: 1, name: 'Admin Dashboard' })).toBeInTheDocument();
