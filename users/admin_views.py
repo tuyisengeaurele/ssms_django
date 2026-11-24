@@ -148,6 +148,9 @@ class AdminUserRestoreView(APIView):
         except User.DoesNotExist:
             return api_error("We couldn't find that user.", 404)
 
+        if user.anonymised_at is not None:
+            # What said who the person was is gone, so there is nothing to bring back.
+            return api_error('This account was removed and cannot be restored.', 409, code='anonymised')
         if not user.is_active:
             user.is_active = True
             user.save(update_fields=['is_active'])

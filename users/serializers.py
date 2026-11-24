@@ -19,12 +19,14 @@ class UserSerializer(serializers.ModelSerializer):
     phone_verified = serializers.SerializerMethodField()
     phone_required = serializers.SerializerMethodField()
     supervisor = serializers.SerializerMethodField()
+    deletion_date = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             'id', 'name', 'email', 'role', 'cooperative_id', 'cooperative_name', 'is_email_verified', 'is_active',
-            'phone', 'phone_verified', 'phone_required', 'supervisor', 'photo_url', 'preferred_language', 'created_at', 'updated_at',
+            'phone', 'phone_verified', 'phone_required', 'supervisor', 'deletion_date',
+            'photo_url', 'preferred_language', 'created_at', 'updated_at',
         ]
         read_only_fields = fields
 
@@ -33,6 +35,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_phone_verified(self, obj):
         return obj.phone_verified_at is not None
+
+    def get_deletion_date(self, obj):
+        """The day the account is removed, as a date, while a closure is scheduled. Otherwise None."""
+        from .closure import removal_date
+        when = removal_date(obj)
+        return when.date().isoformat() if when else None
 
     def get_supervisor(self, obj):
         """The supervisor of a farmer's cooperative, for the farmer's own screen, or None. Only asked for with

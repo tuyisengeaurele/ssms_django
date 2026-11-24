@@ -8,8 +8,9 @@ import re
 
 import pytest
 from django.urls import URLPattern, URLResolver, get_resolver
+from django.utils import timezone
 
-from core.account_gate import OPEN_URL_NAMES
+from core.account_gate import DELETION_OPEN_URL_NAMES, OPEN_URL_NAMES
 from core.jwt_authentication import ActiveUserJWTAuthentication
 from tests.factories import UserFactory
 from tests.support_helpers import acting, admin_and_person
@@ -153,3 +154,91 @@ def test_the_gate_adds_no_database_query(jwt_client):
         jwt_client(with_number).get(ME)
     assert len(without) <= len(withn)
 
+
+# ── a closure that is scheduled ──────────────────────────────────────────────────────────────
+
+def scheduled(**fields):
+    """A person who asked to close their account a day ago."""
+    person = UserFactory(**fields)
+    type(person).objects.filter(pk=person.pk).update(deletion_requested_at=timezone.now())
+    person.refresh_from_db()
+    return person
+
+
+def closing(response):
+    assert response.status_code == 403, response.content
+    assert response.json()['code'] == 'deletion_scheduled'
+
+
+def test_a_scheduled_account_is_refused_with_deletion_scheduled_on_every_route_but_the_open_ones(jwt_client):
+    client = jwt_client(scheduled())
+    seen_open, checked = set(), 0
+    for route, pattern in routes():
+        if not uses_the_session_login(pattern):
+            continue
+        response = client.get(concrete(route))
+        if pattern.name in DELETION_OPEN_URL_NAMES:
+            seen_open.add(pattern.name)
+            assert response.json().get('code') != 'deletion_scheduled', route
+        else:
+            assert response.status_code == 403 and response.json().get('code') == 'deletion_scheduled', (route, pattern.name, response.status_code)
+        checked += 1
+    assert checked > 30
+    assert seen_open == set(DELETION_OPEN_URL_NAMES)
+
+
+def test_the_open_list_for_a_scheduled_account_is_exactly_what_its_screen_needs():
+    assert DELETION_OPEN_URL_NAMES == frozenset({'auth_me', 'auth_logout', 'auth_session_ping', 'auth_delete_account_cancel'})
+
+
+def test_the_deletion_reason_comes_before_the_phone_reason(jwt_client):
+    closing(jwt_client(scheduled(phone=None)).get('/api/farms'))
+
+
+def test_the_cancel_route_answers_a_scheduled_account(jwt_client):
+    person = scheduled()
+    response = jwt_client(person).post('/api/auth/delete-account/cancel')
+    assert response.status_code == 200, response.content
+    person.refresh_from_db()
+    assert person.deletion_requested_at is None
+
+
+def test_a_scheduled_account_can_read_itself_and_sign_out(jwt_client):
+    client = jwt_client(scheduled())
+    assert client.get(ME).status_code == 200
+    assert client.post('/api/auth/logout').status_code == 200
+
+
+def test_the_answer_says_deletion_scheduled_in_the_language_asked_for(jwt_client):
+    from core.doc_text import t
+    response = jwt_client(scheduled()).get('/api/farms', HTTP_ACCEPT_LANGUAGE='fr')
+    closing(response)
+    assert response.json()['message'] == t('fr', 'erDeletionScheduled')
+
+
+def test_support_access_is_not_stopped_by_a_scheduled_closure(jwt_client):
+    from rest_framework.test import APIClient
+    admin, person = admin_and_person()
+    type(person).objects.filter(pk=person.pk).update(deletion_requested_at=timezone.now())
+    token, _ = acting(admin, person)
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
+    assert client.get('/api/farms').status_code == 200
+
+
+def test_the_deletion_refusal_is_not_logged_as_a_refusal_for_the_role(jwt_client):
+    from logs.models import SecurityEvent
+    closing(jwt_client(scheduled()).get('/api/farms'))
+    assert not SecurityEvent.objects.filter(kind='permission_denied').exists()
+
+
+def test_a_scheduled_account_adds_no_database_query(jwt_client):
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+    person = scheduled()
+    with CaptureQueriesContext(connection) as closed:
+        jwt_client(person).get(ME)
+    other = UserFactory()
+    with CaptureQueriesContext(connection) as normal:
+        jwt_client(other).get(ME)
+    assert len(closed) <= len(normal)

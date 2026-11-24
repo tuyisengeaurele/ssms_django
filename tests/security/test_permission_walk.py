@@ -50,6 +50,7 @@ REFUSES_ALLOWED_ROLE = {
     ('SupportRequestView', 'post'): 'an admin whose sign in has no recent code from the authenticator app is asked for one first',
     ('SupportStartView', 'post'): 'an admin whose sign in has no recent code from the authenticator app is asked for one first',
     ('EmailChangeView', 'post'): 'an admin whose sign in has no recent code from the authenticator app is asked for one first',
+    ('DeleteAccountView', 'post'): 'a supervisor or an admin is told, in a sentence about the SSMS team, that the team closes their account',
 }
 
 
