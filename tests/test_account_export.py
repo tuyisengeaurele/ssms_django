@@ -215,3 +215,30 @@ def test_a_scheduled_account_cannot_use_it(jwt_client, farmer):
 
 def test_a_visitor_with_no_sign_in_is_refused():
     assert APIClient().post(EXPORT, {'password': PASSWORD}, format='json').status_code == 401
+
+
+# ── masking an email in a line of the log ───────────────────────────────────────────────────
+
+def test_masking_hides_each_email_and_leaves_the_rest_of_the_line():
+    from users.export import _masked
+    assert _masked('aline@example.rw to n***@example.rw, again aline@example.rw.') == 'a***@example.rw to n***@example.rw, again a***@example.rw.'
+    assert _masked('Changed in settings') == 'Changed in settings'
+    assert _masked('') == '' and _masked(None) == ''
+
+
+LONG = {
+    'pluses': lambda: '+' * 40000,
+    'pluses then at': lambda: 'a' + '+' * 40000 + '@',
+    'dashes after at': lambda: 'a@' + '-' * 40000,
+    'many dots': lambda: 'a@b' + '.b' * 20000 + '!',
+}
+
+
+@pytest.mark.parametrize('kind', sorted(LONG))
+def test_masking_is_quick_on_a_line_built_to_make_a_pattern_slow(kind):
+    import time
+    from users.export import _masked
+    line = LONG[kind]()
+    started = time.perf_counter()
+    _masked(line)
+    assert time.perf_counter() - started < 0.5

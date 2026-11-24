@@ -4,7 +4,6 @@ It is built from the person's own rows only: the farms they own, and what hangs 
 view of the data, so an admin who downloads gets their own records too, not everybody's. Deleted records are included and say so,
 because the rows are kept. It holds no password hash, no token, no photo address and nobody else's number or email.
 """
-import re
 from datetime import timedelta
 
 from django.utils import timezone
@@ -12,7 +11,6 @@ from django.utils import timezone
 from core.sensitive import mask_email
 
 SECURITY_DAYS = 180
-_EMAIL = re.compile(r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+')
 
 
 def _when(value):
@@ -25,8 +23,10 @@ def _text(value):
 
 
 def _masked(detail: str) -> str:
-    """An email in a line of the log is shown masked, as the log itself shows it."""
-    return _EMAIL.sub(lambda m: mask_email(m.group(0)), detail or '')
+    """An email in a line of the log is shown masked, as the log itself shows it. Words are looked at one by one, with no
+    pattern to run slow on a line built for it."""
+    words = (detail or '').split(' ')
+    return ' '.join(mask_email(w) if w.count('@') == 1 and '***' not in w else w for w in words)
 
 
 def _profile(user) -> dict:
