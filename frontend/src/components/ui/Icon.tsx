@@ -1,6 +1,6 @@
 import {
   Activity, ArrowLeft, ArrowRight, ArrowUpRight, Ban, Bell, Building2, Calendar, Camera, ChartNoAxesColumn, Check,
-  ChevronDown, ChevronRight, CircleCheck, Cpu, Download, Droplets, Eye, EyeOff, Gauge, ImagePlus, Info, Inbox, KeyRound,
+  ChevronDown, ChevronRight, CircleCheck, Cpu, Download, Droplets, Eye, EyeOff, Gauge, ImagePlus, Info, Inbox, KeyRound, MessageCircle, Phone,
   LayoutDashboard, Leaf, Lock, LogOut, Mail, MapPin, Microscope, PanelLeft, Pencil, Plus, Printer, RefreshCw,
   ScrollText, Search, Settings, ShieldCheck, ShoppingBasket, Thermometer, Trash2, TriangleAlert, UserCheck,
   UserRound, Users, UserX, Warehouse, Worm, X,
@@ -62,6 +62,8 @@ const ICONS = {
   deactivate: UserX,
   key: KeyRound,
   camera: Camera,
+  call: Phone,
+  chat: MessageCircle,
   photo: ImagePlus,
 } satisfies Record<string, LucideIcon>;
 

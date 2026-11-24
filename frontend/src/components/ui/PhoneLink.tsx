@@ -1,5 +1,6 @@
 import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
+import { Icon } from './Icon';
 import { formatRwandaMobile } from '../../utils/phone';
 
 interface Props {
@@ -19,15 +20,17 @@ export default function PhoneLink({ phone, name }: Props) {
   return (
     <span className="phone-link">
       <span className="phone-link__number">{formatRwandaMobile(phone)}</span>
-      <a className="phone-link__action" href={`tel:${phone}`} aria-label={name ? fill(t('plCallName'), { name }) : undefined}>{t('plCall')}</a>
+      <a className="btn btn-secondary btn-xs phone-link__action" href={`tel:${phone}`} aria-label={name ? fill(t('plCallName'), { name }) : undefined}>
+        <Icon name="call" size={13} />{t('plCall')}
+      </a>
       <a
-        className="phone-link__action"
+        className="btn btn-secondary btn-xs phone-link__action"
         href={`https://wa.me/250${match[1]}`}
         target="_blank"
         rel="noopener noreferrer"
         aria-label={name ? fill(t('plChatName'), { name }) : undefined}
       >
-        {t('plChat')}
+        <Icon name="chat" size={13} />{t('plChat')}
       </a>
     </span>
   );

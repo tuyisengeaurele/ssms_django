@@ -13,6 +13,15 @@ describe('PhoneLink', () => {
     expect(screen.getByText('0788123456')).toBeInTheDocument();
   });
 
+  it('shows Call and WhatsApp as buttons with an icon before the words, not as plain links', () => {
+    open({ phone: '+250788123456', name: 'Aline Uwase' });
+    for (const name of ['Call Aline Uwase', 'Message Aline Uwase on WhatsApp']) {
+      const action = screen.getByRole('link', { name });
+      expect(action).toHaveClass('btn');
+      expect(action.querySelector('svg')).not.toBeNull();
+    }
+  });
+
   it('links to a call and to WhatsApp, with the exact numbers', () => {
     open({ phone: '+250788123456', name: 'Aline Uwase' });
     expect(screen.getByRole('link', { name: 'Call Aline Uwase' })).toHaveAttribute('href', 'tel:+250788123456');

@@ -812,8 +812,17 @@ tr.is-off td:last-child { opacity: 1; }
 .row-avatar img, .identity-avatar img, .topbar-avatar img, .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
 .identity-photo-btn { margin-top: 4px; }
 /* The picker in the photo dialog: what the picture will look like, then the file field. */
-.photo-picker { display: grid; gap: 16px; justify-items: start; }
-.photo-picker .form-group { width: 100%; margin: 0; }
+.photo-picker { display: grid; gap: 16px; justify-items: center; }
+.photo-picker__choose { display: grid; gap: 6px; justify-items: center; text-align: center; }
+/* The picture behind a round window. It is dragged and zoomed, so the browser must not scroll or select on it. */
+.photo-crop { display: grid; justify-items: center; gap: 8px; }
+.photo-crop__window { position: relative; overflow: hidden; border-radius: 50%; background: var(--ink); cursor: grab; touch-action: none; outline-offset: 3px; }
+.photo-crop__window:active { cursor: grabbing; }
+.photo-crop__window img { position: absolute; left: 50%; top: 50%; max-width: none; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+.photo-crop__zoom { width: 240px; max-width: 100%; accent-color: var(--primary); }
+/* The file field is hidden and the label is the button, so the keyboard focus has to show on the label. */
+.sr-only:focus-visible + .file-button,
+.photo-crop__window:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .photo-preview { display: grid; place-items: center; width: 96px; height: 96px; border-radius: 50%; background: var(--ink); color: var(--ivory); font: 450 2rem var(--font-display); }
 .identity-name { font: 450 1.45rem var(--font-display); color: var(--ink); overflow-wrap: anywhere; }
 .identity-email { margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem; overflow-wrap: anywhere; }
@@ -1622,5 +1631,5 @@ a.cal-ev-link:focus-visible { outline: 2px solid var(--gold); outline-offset: 1p
 /* A phone number with the two ways to reach it. Sits under a name, in the small grey line. */
 .phone-link { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; font-size: 0.8rem; color: var(--ink-soft); }
 .phone-link__number { font-variant-numeric: tabular-nums; }
-.phone-link__action { color: var(--ink); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; padding: 2px 0; }
-.phone-link__action:hover { text-decoration-thickness: 2px; }
+/* Call and WhatsApp are buttons with an icon (btn btn-secondary btn-xs), so they only need room to sit in a row. */
+.phone-link__action { gap: 5px; }
