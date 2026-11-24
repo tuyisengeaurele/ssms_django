@@ -19,7 +19,7 @@ ALLOWED = {'JPEG', 'MPO', 'PNG', 'WEBP'}   # MPO is how some phones label an ord
 PATH = '/api/photos/'
 
 NOT_AN_IMAGE = 'Please choose a JPEG, PNG or WebP photo.'
-TOO_LARGE = 'That photo is too large. Please choose one under 2 MB.'
+TOO_LARGE = 'That photo is too large.'
 NOTHING_CHOSEN = 'Please choose a photo.'
 NOTHING_TO_REMOVE = 'There is no photo to remove.'
 

@@ -1,14 +1,18 @@
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useApiError } from '../../hooks/useApiError';
 import { accountService } from '../../services/account.service';
 import { User } from '../../types';
+import { CropState, cropToFile, loadImage } from '../../utils/photoCrop';
 import Avatar from './Avatar';
+import { Icon } from './Icon';
 import Modal from './Modal';
+import PhotoCropper, { CROP_WINDOW } from './PhotoCropper';
 
-/** The same limits as the server, so a file that would be refused is stopped before it is sent. */
-const MAX_BYTES = 2 * 1024 * 1024;
+/** What can be chosen. The upload is the cropped square, a small file, so the original may be a full size phone photo. */
 const TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_ORIGINAL = 25 * 1024 * 1024;
+const FRESH: CropState = { zoom: 1, x: 0, y: 0 };
 
 interface Props {
   open: boolean;
@@ -20,36 +24,49 @@ interface Props {
   onChanged: (user: User) => void;
 }
 
-/** Add, replace or remove the profile photo. What is chosen is shown first, and nothing is sent until the person saves. */
+/** Add, replace or remove the profile photo. The person picks a picture, moves and zooms it inside a round window, and saves. */
 export default function ProfilePhotoDialog({ open, name, photoUrl, onClose, onChanged }: Props) {
   const { t } = useLanguage();
   const { getErrorMessage } = useApiError();
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const [crop, setCrop] = useState<CropState>(FRESH);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const address = useRef<string | null>(null);
 
-  // A dialog opened again starts empty. The preview address is given back when it is no longer shown.
+  const forget = () => {
+    if (address.current) URL.revokeObjectURL(address.current);
+    address.current = null;
+  };
+
+  // A dialog opened again starts empty. The address of the chosen file is given back when it is no longer shown.
   useEffect(() => {
     if (!open) return;
-    setFile(null);
-    setPreview(null);
+    forget();
+    setImage(null);
+    setCrop(FRESH);
     setError('');
     setBusy(false);
   }, [open]);
+  useEffect(() => forget, []);
 
-  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
-
-  const choose = (e: ChangeEvent<HTMLInputElement>) => {
+  const choose = async (e: ChangeEvent<HTMLInputElement>) => {
     const picked = e.target.files?.[0] ?? null;
-    setFile(null);
-    setPreview(null);
+    e.target.value = '';   // so the same file can be chosen again
+    forget();
+    setImage(null);
+    setCrop(FRESH);
     setError('');
     if (!picked) return;
     if (!TYPES.includes(picked.type)) { setError(t('erPhotoNotImage')); return; }
-    if (picked.size > MAX_BYTES) { setError(t('erPhotoTooLarge')); return; }
-    setFile(picked);
-    setPreview(URL.createObjectURL(picked));
+    if (picked.size > MAX_ORIGINAL) { setError(t('erPhotoTooLarge')); return; }
+    address.current = URL.createObjectURL(picked);
+    try {
+      setImage(await loadImage(address.current));
+    } catch {
+      forget();
+      setError(t('erPhotoNotImage'));
+    }
   };
 
   const run = async (job: () => Promise<{ data: { data: User } }>) => {
@@ -64,7 +81,9 @@ export default function ProfilePhotoDialog({ open, name, photoUrl, onClose, onCh
     }
   };
 
-  const shown = preview ?? photoUrl ?? null;
+  const save = () => {
+    if (image) run(async () => accountService.uploadPhoto(await cropToFile(image, crop, CROP_WINDOW)));
+  };
 
   return (
     <Modal
@@ -77,27 +96,27 @@ export default function ProfilePhotoDialog({ open, name, photoUrl, onClose, onCh
             <button type="button" className="btn btn-ghost btn-quiet-danger" onClick={() => run(() => accountService.removePhoto())} disabled={busy}>{t('ppRemove')}</button>
           ) : null}
           <button type="button" className="btn btn-secondary" onClick={onClose} disabled={busy}>{t('btnCancel')}</button>
-          <button type="button" className="btn btn-primary" onClick={() => file && run(() => accountService.uploadPhoto(file))} disabled={!file || busy}>
+          <button type="button" className="btn btn-primary" onClick={save} disabled={!image || busy}>
             {busy ? <><span className="spinner" aria-hidden="true" />{t('ppBusy')}</> : t('ppSave')}
           </button>
         </>
       )}
     >
       <div className="photo-picker">
-        <Avatar name={name} photoUrl={shown} className="photo-preview" />
-        <div className="form-group">
-          <label className="form-label" htmlFor="pp-file">{t('ppChoose')}</label>
+        {image ? <PhotoCropper image={image} state={crop} onChange={setCrop} /> : <Avatar name={name} photoUrl={photoUrl} className="photo-preview" />}
+        <div className="photo-picker__choose">
           <input
             id="pp-file"
-            className="form-input"
+            className="sr-only"
             type="file"
             accept={TYPES.join(',')}
             onChange={choose}
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? 'pp-error pp-hint' : 'pp-hint'}
           />
-          {error ? <span id="pp-error" className="form-error" role="alert">{error}</span> : null}
+          <label htmlFor="pp-file" className="btn btn-secondary btn-sm file-button"><Icon name="camera" size={15} />{t('ppChoose')}</label>
           <span id="pp-hint" className="form-hint">{t('ppHint')}</span>
+          {error ? <span id="pp-error" className="form-error" role="alert">{error}</span> : null}
         </div>
       </div>
     </Modal>
