@@ -47,6 +47,25 @@ describe('Tables', () => {
     expect(css).toMatch(/\.table-wrapper\[data-cramped\] \.table-stack td\.cell-detail[^{]*\{[^}]*overflow-wrap:\s*anywhere/);
   });
 
+  // A cell with an empty label is the one that holds the buttons of a row (Edit, Delete, Open). On a phone only its empty label is
+  // dropped, because there is nothing to print before the buttons. Hiding the cell itself took the buttons off the phone.
+  it('hides only the empty label of a cell with no label, never the cell itself', () => {
+    const hiding = [...css.matchAll(/([^{}]+)\{\s*display:\s*none;\s*\}/g)].flatMap((m) => m[1].split(',').map((s) => s.trim()));
+    const aboutEmptyLabels = hiding.filter((selector) => selector.includes("[data-label='']"));
+    expect(aboutEmptyLabels.length).toBeGreaterThanOrEqual(2);
+    for (const selector of aboutEmptyLabels) expect(selector).toMatch(/::before$/);
+  });
+
+  // The buttons of a row (Edit access, Number, Support access, Delete) are four across on a laptop. On a phone they wrap, and each
+  // is tall enough for a finger.
+  it('wraps the buttons of a row and makes them finger sized, in a phone card and in a cramped table card', () => {
+    const phone = css.match(/@media \(max-width: 720px\) \{[\s\S]*?\r?\n\}\r?\n/)![0];
+    expect(phone).toMatch(/\.table-stack \.table-actions \{[^}]*flex-wrap:\s*wrap/);
+    expect(phone).toMatch(/\.table-stack \.table-actions \.btn \{[^}]*min-height:\s*36px/);
+    expect(css).toMatch(/\.table-wrapper\[data-cramped\] \.table-stack \.table-actions \{[^}]*flex-wrap:\s*wrap/);
+    expect(css).toMatch(/\.table-wrapper\[data-cramped\] \.table-stack \.table-actions \.btn \{[^}]*min-height:\s*36px/);
+  });
+
   it('wraps a long detail in a wide table instead of cutting it with dots', () => {
     expect(block(css, '\n.cell-detail')).toMatch(/overflow-wrap:\s*anywhere/);
   });
