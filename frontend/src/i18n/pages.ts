@@ -2225,7 +2225,7 @@ export const pageTranslations = {
   caBusy: k("Closing your account", "Fermeture du compte", "Turimo gufunga konti"),
   caNote: k("You can change your mind until the date we show you. Nothing is removed before then.", "Vous pouvez changer d'avis jusqu'à la date indiquée. Rien n'est supprimé avant.", "Ushobora guhindura ibyemezo kugeza ku munsi tuzakwereka. Nta kintu gisibwa mbere yaho."),
   caStaff: k("To close your account, contact the SSMS team.", "Pour fermer votre compte, contactez l'équipe SSMS.", "Kugira ngo ufunge konti yawe, vugana n'ikipe ya SSMS."),
-  caStaffLink: k("Contact the SSMS team", "Contacter l'équipe SSMS", "Vugana n'ikipe ya SSMS"),
+  caStaffLink: k("Send us a message", "Envoyez-nous un message", "Twandikire ubutumwa"),
   csTitle: k("Your account will be removed", "Votre compte va être supprimé", "Konti yawe igiye gusibwa"),
   csBody: k("You asked to close this account. It will be removed on {date}. Keep it if you changed your mind.", "Vous avez demandé la fermeture de ce compte. Il sera supprimé le {date}. Conservez-le si vous avez changé d'avis.", "Wasabye ko iyi konti ifungwa. Izasibwa ku wa {date}. Yigumane niba wahinduye ibyemezo."),
   csKeep: k("Keep my account", "Conserver mon compte", "Gumana konti yanjye"),

@@ -281,7 +281,10 @@ export default function AccountSettings() {
               <button type="button" className="btn btn-secondary btn-sm" onClick={() => setClosing(true)}>{t('caOpen')}</button>
             </>
           ) : (
-            <p className="form-hint">{t('caStaff')} <a href="/#contact">{t('caStaffLink')}</a></p>
+            <>
+              <p className="form-hint form-hint--gap">{t('caStaff')}</p>
+              <a className="link" href="/#contact">{t('caStaffLink')}</a>
+            </>
           )}
         </div>
       </section>

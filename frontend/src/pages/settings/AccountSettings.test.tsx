@@ -371,7 +371,9 @@ describe('Account settings', () => {
         auth.user.role = role;
         open();
         expect(screen.getByText('To close your account, contact the SSMS team.')).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Contact the SSMS team' })).toHaveAttribute('href', '/#contact');
+        expect(screen.getByRole('link', { name: 'Send us a message' })).toHaveAttribute('href', '/#contact');
+        // The sentence says who to contact once, and the link says what to do, so the same words are not read twice.
+        expect(screen.getAllByText(/contact the SSMS team/i)).toHaveLength(1);
         expect(closeButton()).not.toBeInTheDocument();
         cleanup();
       }
