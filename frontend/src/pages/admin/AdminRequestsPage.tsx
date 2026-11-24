@@ -111,7 +111,7 @@ export default function AdminRequestsPage() {
         <EmptyState
           icon={<Icon name="alerts" size={22} />}
           title={t('arqLoadFailed')}
-          action={{ label: t('arqRetry'), onClick: () => { setStatus('loading'); load(); } }}
+          action={{ icon: 'refresh', label: t('arqRetry'), onClick: () => { setStatus('loading'); load(); } }}
         />
       ) : requests.length === 0 ? (
         <EmptyState icon={<Icon name="inbox" size={22} />} title={t('arqEmpty')} description={t('arqEmptyBody')} />

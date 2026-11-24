@@ -200,12 +200,12 @@ export default function AccountSettings() {
             <label className="form-label" htmlFor="pf-email">{t('pfFieldEmail')}</label>
             <div className="form-inline">
               <input id="pf-email" className="form-input is-fixed" type="email" value={user?.email ?? ''} readOnly />
-              <button type="button" className="btn btn-secondary btn-sm" aria-label={t('ecChangeAria')} onClick={() => setChangingEmail(true)}>{t('cpChange')}</button>
+              <button type="button" className="btn btn-secondary btn-sm" aria-label={t('ecChangeAria')} onClick={() => setChangingEmail(true)}><Icon name="edit" size={15} />{t('cpChange')}</button>
             </div>
             {pendingEmail ? (
               <div className="form-hint">
                 <span>{fill(t('ecPending'), { email: pendingEmail.newEmail })}</span>{' '}
-                <button type="button" className="btn btn-secondary btn-xs" onClick={cancelEmailChange}>{t('ecCancel')}</button>
+                <button type="button" className="btn btn-secondary btn-xs" onClick={cancelEmailChange}><Icon name="close" size={13} />{t('ecCancel')}</button>
               </div>
             ) : null}
           </div>
@@ -215,7 +215,7 @@ export default function AccountSettings() {
               <span id="pf-phone-label" className="form-label">{t('pnLabel')}</span>
               <div className="form-inline">
                 <span className="form-static">{savedPhone}</span>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setChanging(true)}>{t('cpChange')}</button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setChanging(true)}><Icon name="edit" size={15} />{t('cpChange')}</button>
               </div>
               <span id="pf-phone-note" className="form-hint">{t('pnHint')}</span>
             </div>
@@ -269,7 +269,7 @@ export default function AccountSettings() {
                     ? fill(t('cqWaiting'), { date: day(coopRequest.createdAt), name: coopRequest.to.name })
                     : fill(t('cqWaitingLeave'), { date: day(coopRequest.createdAt) })}
                 </p>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={withdrawCooperativeRequest}>{t('cqWithdraw')}</button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={withdrawCooperativeRequest}><Icon name="close" size={15} />{t('cqWithdraw')}</button>
               </>
             ) : (
               <>
@@ -284,7 +284,7 @@ export default function AccountSettings() {
                   <button type="button" className="btn btn-secondary btn-sm" onClick={() => setAskingCooperative(true)}>
                     <Icon name="cooperatives" size={15} />{t('cqRequest')}
                   </button>
-                  {answered ? <button type="button" className="btn btn-secondary btn-sm" onClick={() => putAwayAnswer(answered.id)}>{t('cqGotIt')}</button> : null}
+                  {answered ? <button type="button" className="btn btn-secondary btn-sm" onClick={() => putAwayAnswer(answered.id)}><Icon name="check" size={15} />{t('cqGotIt')}</button> : null}
                 </div>
               </>
             )}
@@ -300,7 +300,7 @@ export default function AccountSettings() {
           {isFarmer ? (
             <>
               <p className="form-hint form-hint--gap">{t('caSectionBody')}</p>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setClosing(true)}>{t('caOpen')}</button>
+              <button type="button" className="btn btn-secondary btn-quiet-danger btn-sm" onClick={() => setClosing(true)}><Icon name="deactivate" size={15} />{t('caOpen')}</button>
             </>
           ) : (
             <>

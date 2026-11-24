@@ -22,6 +22,18 @@ describe('PhoneLink', () => {
     }
   });
 
+  it('draws the WhatsApp logo for WhatsApp and a phone for Call', () => {
+    open({ phone: '+250788123456', name: 'Aline Uwase' });
+    expect(screen.getByRole('link', { name: 'Message Aline Uwase on WhatsApp' }).querySelector('svg[data-icon="whatsapp"]')).not.toBeNull();
+    expect(screen.getByRole('link', { name: 'Call Aline Uwase' }).querySelector('svg[data-icon="whatsapp"]')).toBeNull();
+  });
+
+  it('keeps the words in a span the phone layout can hide, and a name for a screen reader when no person is named', () => {
+    open({ phone: '+250788123456' });
+    expect(screen.getByRole('link', { name: 'Call' }).querySelector('.phone-link__text')).toHaveTextContent('Call');
+    expect(screen.getByRole('link', { name: 'WhatsApp' }).querySelector('.phone-link__text')).toHaveTextContent('WhatsApp');
+  });
+
   it('links to a call and to WhatsApp, with the exact numbers', () => {
     open({ phone: '+250788123456', name: 'Aline Uwase' });
     expect(screen.getByRole('link', { name: 'Call Aline Uwase' })).toHaveAttribute('href', 'tel:+250788123456');

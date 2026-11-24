@@ -50,7 +50,7 @@ export default function SupplyLotPage() {
     return (
       <div>
         <PageHeader title={title} showTitle />
-        <EmptyState icon={<Icon name="alerts" size={22} />} title={t('trcLoadFailed')} action={{ label: t('dcsRetry'), onClick: load }} />
+        <EmptyState icon={<Icon name="alerts" size={22} />} title={t('trcLoadFailed')} action={{ icon: 'refresh', label: t('dcsRetry'), onClick: load }} />
       </div>
     );
   }

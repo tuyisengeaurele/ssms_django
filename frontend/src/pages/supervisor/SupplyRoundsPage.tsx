@@ -47,7 +47,7 @@ export default function SupplyRoundsPage() {
       {status === 'loading' ? (
         <SkeletonTable rows={3} cols={5} />
       ) : status === 'failed' ? (
-        <EmptyState icon={<Icon name="alerts" size={22} />} title={t('rsLoadFailed')} action={{ label: t('dcsRetry'), onClick: load }} />
+        <EmptyState icon={<Icon name="alerts" size={22} />} title={t('rsLoadFailed')} action={{ icon: 'refresh', label: t('dcsRetry'), onClick: load }} />
       ) : rounds.length === 0 ? (
         <EmptyState icon={<Icon name="batches" size={22} />} title={t('rsEmpty')} description={t('rsEmptyBody')} />
       ) : (

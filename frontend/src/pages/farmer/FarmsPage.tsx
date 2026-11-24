@@ -92,7 +92,7 @@ export default function FarmsPage() {
             icon={<Icon name="search" size={22} />}
             title={t('fmNoMatch')}
             description={fill(t('fmNoMatchBody'), { q: search.trim() })}
-            action={{ label: t('fmClear'), onClick: () => setSearch('') }}
+            action={{ icon: 'close', label: t('fmClear'), onClick: () => setSearch('') }}
           />
         </div>
       ) : (
