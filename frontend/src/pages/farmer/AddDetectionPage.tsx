@@ -131,7 +131,7 @@ export default function AddDetectionPage() {
       <PageHeader
         title={t('ptDetect')}
         actions={
-          <Link to={`/batches/${batchId}`} className="btn btn-ghost btn-sm">
+          <Link to={`/batches/${batchId}`} className="btn btn-secondary btn-sm">
             <Icon name="back" size={15} />
             {t('ckBack')}
           </Link>
@@ -173,7 +173,7 @@ export default function AddDetectionPage() {
                 <Icon name="refresh" size={15} />
                 {t('ckAnother')}
               </button>
-              <Link to={`/batches/${batchId}`} className="btn btn-ghost">{t('ckBack')}</Link>
+              <Link to={`/batches/${batchId}`} className="btn btn-secondary"><Icon name="back" size={15} />{t('ckBack')}</Link>
             </div>
           </div>
         </>
@@ -191,7 +191,7 @@ export default function AddDetectionPage() {
               <Icon name="refresh" size={15} />
               {t('ckAnother')}
             </button>
-            <Link to={`/batches/${batchId}`} className="btn btn-ghost">{t('ckBack')}</Link>
+            <Link to={`/batches/${batchId}`} className="btn btn-secondary"><Icon name="back" size={15} />{t('ckBack')}</Link>
           </div>
         </div>
       ) : (
@@ -206,7 +206,7 @@ export default function AddDetectionPage() {
                 {file && originalSize > file.size && (
                   <p className="form-hint">{fill(t('phReadySmaller'), { size: briefSize(file.size), was: briefSize(originalSize) })}</p>
                 )}
-                <button type="button" className="btn btn-ghost btn-sm" onClick={reset}>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={reset}>
                   <Icon name="close" size={15} />
                   {t('ckChange')}
                 </button>

@@ -492,12 +492,12 @@ export default function BatchDetailPage() {
               {t('ptBatchReport')}
             </Link>
             {canEdit && (
-              <button onClick={() => setShowArchive(true)} className="btn btn-ghost btn-sm btn-quiet-danger">
+              <button onClick={() => setShowArchive(true)} className="btn btn-secondary btn-sm btn-quiet-danger">
                 <Icon name="remove" size={15} />
                 {t('bdArchive')}
               </button>
             )}
-            <Link to={`/farms/${batch.farmId}`} className="btn btn-ghost btn-sm">
+            <Link to={`/farms/${batch.farmId}`} className="btn btn-secondary btn-sm">
               <Icon name="back" size={15} />
               {t('bdBackFarm')}
             </Link>
@@ -527,9 +527,9 @@ export default function BatchDetailPage() {
             actions={canEdit ? (
               <>
                 {farmRooms.some((r) => r.id !== batch.room?.id) && (
-                  <button className="btn btn-ghost btn-sm" onClick={openMove}>{t('bdMoveRoom')}</button>
+                  <button className="btn btn-secondary btn-sm" onClick={openMove}><Icon name="location" size={15} />{t('bdMoveRoom')}</button>
                 )}
-                <button className="btn btn-ghost btn-sm" onClick={openEdit}>{t('bdEditDetails')}</button>
+                <button className="btn btn-secondary btn-sm" onClick={openEdit}><Icon name="edit" size={15} />{t('bdEditDetails')}</button>
               </>
             ) : undefined}
           >
@@ -654,7 +654,7 @@ export default function BatchDetailPage() {
                     <span className="deaths-count">{number.format(entry.count)}</span>
                     <span className="deaths-note">{entry.note}</span>
                     {canEdit && (
-                      <button className="btn btn-ghost btn-xs btn-quiet-danger" onClick={() => setEntryToDelete(entry)}>{t('bdDeathDelete')}</button>
+                      <button className="btn btn-secondary btn-xs btn-quiet-danger" onClick={() => setEntryToDelete(entry)}><Icon name="remove" size={13} />{t('bdDeathDelete')}</button>
                     )}
                   </li>
                 ))}

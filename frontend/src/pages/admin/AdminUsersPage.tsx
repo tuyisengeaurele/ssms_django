@@ -492,29 +492,29 @@ export default function AdminUsersPage() {
                         <div className="table-actions">
                           {!isMe && active && (
                             <>
-                              <button className="btn btn-ghost btn-xs" aria-label={fill(t('usEditFor'), { name: u.name })} onClick={() => openEdit(u)}>
+                              <button className="btn btn-secondary btn-xs" aria-label={fill(t('usEditFor'), { name: u.name })} onClick={() => openEdit(u)}><Icon name="edit" size={13} />
                                 {t('usEdit')}
                               </button>
-                              <button className="btn btn-ghost btn-xs" aria-label={fill(t('usNumberFor'), { name: u.name })} onClick={() => setNumberFor(u)}>
+                              <button className="btn btn-secondary btn-xs" aria-label={fill(t('usNumberFor'), { name: u.name })} onClick={() => setNumberFor(u)}><Icon name="call" size={13} />
                                 {t('usActNumber')}
                               </button>
                               {u.role !== 'ADMIN' && (
-                                <button className="btn btn-ghost btn-xs" aria-label={fill(t('adSupportActionFor'), { name: u.name })} onClick={() => setAskSupport(u)}>
+                                <button className="btn btn-secondary btn-xs" aria-label={fill(t('adSupportActionFor'), { name: u.name })} onClick={() => setAskSupport(u)}><Icon name="view" size={13} />
                                   {t('adSupportAction')}
                                 </button>
                               )}
                               {u.role === 'ADMIN' && (
-                                <button className="btn btn-ghost btn-xs" aria-label={fill(t('adMfaResetFor'), { name: u.name })} onClick={() => setConfirmReset(u)}>
+                                <button className="btn btn-secondary btn-xs" aria-label={fill(t('adMfaResetFor'), { name: u.name })} onClick={() => setConfirmReset(u)}><Icon name="key" size={13} />
                                   {t('adMfaResetAction')}
                                 </button>
                               )}
-                              <button className="btn btn-ghost btn-xs btn-quiet-danger" aria-label={`${t('usDelete')} ${u.name}`} onClick={() => setConfirmDelete(u)}>
+                              <button className="btn btn-secondary btn-xs btn-quiet-danger" aria-label={`${t('usDelete')} ${u.name}`} onClick={() => setConfirmDelete(u)}><Icon name="remove" size={13} />
                                 {t('usDelete')}
                               </button>
                             </>
                           )}
                           {!isMe && !active && (
-                            <button className="btn btn-ghost btn-xs" aria-label={`${t('usRestore')} ${u.name}`} onClick={() => setConfirmRestore(u)}>
+                            <button className="btn btn-secondary btn-xs" aria-label={`${t('usRestore')} ${u.name}`} onClick={() => setConfirmRestore(u)}><Icon name="activate" size={13} />
                               {t('usRestore')}
                             </button>
                           )}

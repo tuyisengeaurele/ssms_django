@@ -102,7 +102,7 @@ export default function DetectionReportsPage() {
               <Icon name="download" size={15} />
               {exporting ? t('drExporting') : t('drExport')}
             </button>
-            <Link to={HOME[me?.role ?? 'FARMER'] ?? '/farmer'} className="btn btn-ghost btn-sm">
+            <Link to={HOME[me?.role ?? 'FARMER'] ?? '/farmer'} className="btn btn-secondary btn-sm">
               <Icon name="back" size={15} />
               {t('drBackDash')}
             </Link>
@@ -132,7 +132,7 @@ export default function DetectionReportsPage() {
             </label>
             {changed && (
               <div className="filter-buttons">
-                <button type="button" className="btn btn-ghost btn-sm" onClick={reset}>{t('drReset')}</button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={reset}><Icon name="close" size={15} />{t('drReset')}</button>
               </div>
             )}
           </form>

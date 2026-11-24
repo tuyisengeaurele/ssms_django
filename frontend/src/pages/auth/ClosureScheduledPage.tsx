@@ -6,6 +6,7 @@ import { AuthAlert, AuthButton, AuthShell } from '../../landing/auth/AuthShell';
 import { accountService } from '../../services/account.service';
 import { dateFormat } from '../../utils/dateFormat';
 import { fill } from '../../utils/fill';
+import { Icon } from '../../components/ui/Icon';
 
 /**
  * Shown instead of the app to a farmer whose account is scheduled to be removed. The server refuses everything else to such
@@ -39,7 +40,7 @@ export default function ClosureScheduledPage() {
       {error ? <AuthAlert>{error}</AuthAlert> : null}
       <AuthButton type="button" loading={busy} loadingLabel={t('csKeep')} onClick={keep}>{t('csKeep')}</AuthButton>
       <p className="l-auth__alt">
-        <button type="button" className="l-auth__link" onClick={logout}>{t('sdSignOut')}</button>
+        <button type="button" className="l-auth__ghost" onClick={logout}><Icon name="logout" size={18} />{t('sdSignOut')}</button>
       </p>
     </AuthShell>
   );

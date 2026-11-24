@@ -7,6 +7,7 @@ import { fill } from '../../utils/fill';
 import Panel from '../ui/Panel';
 import { localDay } from './SupplyRoundCard';
 import { dateFormat } from '../../utils/dateFormat';
+import { Icon } from '../../components/ui/Icon';
 
 type Mark = 'done' | 'next' | 'waiting' | 'later';
 
@@ -30,15 +31,15 @@ export default function OnboardingCard() {
     const d = step.detail;
     switch (`${step.key}:${step.state}`) {
       case 'cooperative:todo': return t('onbCoopTodo');
-      case 'farm:todo': return <Link to="/farms/new" className="link">{t('onbFarmLink')}</Link>;
+      case 'farm:todo': return <Link to="/farms/new" className="btn btn-secondary btn-xs"><Icon name="forward" size={13} />{t('onbFarmLink')}</Link>;
       case 'room:todo': return farm?.detail.farmId
-        ? <Link to={`/farms/${farm.detail.farmId}`} className="link">{t('onbRoomLink')}</Link>
+        ? <Link to={`/farms/${farm.detail.farmId}`} className="btn btn-secondary btn-xs"><Icon name="forward" size={13} />{t('onbRoomLink')}</Link>
         : t('onbNeedFarm');
       case 'room:waiting': return fill(t('onbRoomWaiting'), { names: names(d.waitingFor) });
       case 'room:rejected': {
         const why = d.note ? fill(t('onbRoomRejected'), { note: d.note }) : t('onbRoomRejectedNoNote');
         if (!farm?.detail.farmId) return why;
-        return <>{why} <Link to={`/farms/${farm.detail.farmId}`} className="link">{t('onbRoomOpenFarm')}</Link></>;
+        return <>{why} <Link to={`/farms/${farm.detail.farmId}`} className="btn btn-secondary btn-xs"><Icon name="forward" size={13} />{t('onbRoomOpenFarm')}</Link></>;
       }
       case 'eggs:no_round': return t('onbEggsNoRound');
       case 'eggs:needs_room': return fill(t('onbEggsNeedsRoom'), { round: d.roundName ?? '' });

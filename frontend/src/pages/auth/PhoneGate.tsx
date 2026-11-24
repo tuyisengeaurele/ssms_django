@@ -5,6 +5,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useApiError } from '../../hooks/useApiError';
 import { AuthAlert, AuthButton, AuthField, AuthShell } from '../../landing/auth/AuthShell';
 import { phoneFieldError } from '../../utils/phone';
+import { Icon } from '../../components/ui/Icon';
 
 /**
  * Shown instead of the app to a person whose account has no phone number: accounts made before the number was required, and
@@ -61,7 +62,7 @@ export default function PhoneGate() {
         <AuthButton loading={busy} loadingLabel={t('gateSave')}>{t('gateSave')}</AuthButton>
       </form>
       <p className="l-auth__alt">
-        <button type="button" className="l-auth__link" onClick={logout}>{t('sdSignOut')}</button>
+        <button type="button" className="l-auth__ghost" onClick={logout}><Icon name="logout" size={18} />{t('sdSignOut')}</button>
       </p>
     </AuthShell>
   );

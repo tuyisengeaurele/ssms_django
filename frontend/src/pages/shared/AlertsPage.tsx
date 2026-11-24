@@ -208,22 +208,22 @@ export default function AlertsPage() {
                 <div className="alert-feed-actions">
                   {canAcknowledge && (
                     a.acknowledgedBy?.id === user?.id ? (
-                      <button className="btn btn-ghost btn-xs" onClick={() => handleAcknowledge(a.id, true)}>{t('acUndo')}</button>
+                      <button className="btn btn-secondary btn-xs" onClick={() => handleAcknowledge(a.id, true)}><Icon name="refresh" size={13} />{t('acUndo')}</button>
                     ) : (
-                      <button className="btn btn-ghost btn-xs" onClick={() => handleAcknowledge(a.id)}>
+                      <button className="btn btn-secondary btn-xs" onClick={() => handleAcknowledge(a.id)}>
                         {t(a.acknowledgedBy ? 'acTakeOver' : 'acAcknowledge')}
                       </button>
                     )
                   )}
                   <button
-                    className="btn btn-ghost btn-xs"
+                    className="btn btn-secondary btn-xs"
                     aria-expanded={!!openThreads[a.id]}
                     onClick={() => setOpenThreads((prev) => ({ ...prev, [a.id]: !prev[a.id] }))}
-                  >
+                  ><Icon name="messages" size={13} />
                     {openThreads[a.id] ? t('acHide') : fill(t('acComments'), { n: a.commentCount ?? 0 })}
                   </button>
                   {!a.isRead && (
-                    <button className="btn btn-ghost btn-xs" onClick={() => handleMarkRead(a.id)}>{t('alMarkRead')}</button>
+                    <button className="btn btn-secondary btn-xs" onClick={() => handleMarkRead(a.id)}><Icon name="check" size={13} />{t('alMarkRead')}</button>
                   )}
                 </div>
                 </div>

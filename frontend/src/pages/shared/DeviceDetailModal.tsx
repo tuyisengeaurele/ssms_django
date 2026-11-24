@@ -195,7 +195,7 @@ export default function DeviceDetailModal({ device, canManage, onClose, onRemove
                 </div>
               </>
             ) : (
-              <button className="btn btn-ghost btn-sm btn-quiet-danger" onClick={() => setAsking(true)}>
+              <button className="btn btn-secondary btn-sm btn-quiet-danger" onClick={() => setAsking(true)}>
                 <Icon name="remove" size={15} />
                 {t('dvRemove')}
               </button>

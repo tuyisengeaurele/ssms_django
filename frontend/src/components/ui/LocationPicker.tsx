@@ -138,7 +138,7 @@ export default function LocationPicker({ value, onChange, legacyText, idPrefix =
       {hasPosition && (
         <p className="form-hint place-pinned">
           {fill(t('lcPinned'), { lat: value.latitude!.toFixed(5), lng: value.longitude!.toFixed(5) })}{' '}
-          <button type="button" className="btn btn-ghost btn-xs" onClick={() => onChange({ ...value, latitude: null, longitude: null })}>
+          <button type="button" className="btn btn-secondary btn-xs" onClick={() => onChange({ ...value, latitude: null, longitude: null })}><Icon name="remove" size={13} />
             {t('lcPinRemove')}
           </button>
         </p>
@@ -150,7 +150,7 @@ export default function LocationPicker({ value, onChange, legacyText, idPrefix =
       {failed && (
         <div className="alert alert-error" role="alert">
           {t('lcLoadError')}{' '}
-          <button type="button" className="btn btn-ghost btn-xs" onClick={() => setAttempt((n) => n + 1)}>{t('lcRetry')}</button>
+          <button type="button" className="btn btn-secondary btn-xs" onClick={() => setAttempt((n) => n + 1)}><Icon name="refresh" size={13} />{t('lcRetry')}</button>
         </div>
       )}
 

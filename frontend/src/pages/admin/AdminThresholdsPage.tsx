@@ -9,6 +9,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import { dateFormat } from '../../utils/dateFormat';
+import { Icon } from '../../components/ui/Icon';
 
 /** What a stage needs when nobody has chosen otherwise. It is also what the server starts with. */
 const USUAL = { tempMin: 22, tempMax: 28, humMin: 70, humMax: 85 };
@@ -144,9 +145,9 @@ export default function AdminThresholdsPage({ embedded = false }: { embedded?: b
                             {t('thSave')}
                           </button>
                           <button
-                            type="button" className="btn btn-ghost btn-xs" aria-label={fill(t('thUsualFor'), { stage: stageName })}
+                            type="button" className="btn btn-secondary btn-xs" aria-label={fill(t('thUsualFor'), { stage: stageName })}
                             onClick={() => edit(row.stage, toDraft({ ...row, ...USUAL }))} disabled={isUsual}
-                          >
+                          ><Icon name="check" size={13} />
                             {t('thUsual')}
                           </button>
                         </div>

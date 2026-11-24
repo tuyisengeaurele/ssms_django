@@ -90,7 +90,7 @@ export default function FarmRiskPanel() {
           )}
           {toggle && (
             <div className="risk-foot">
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAll((v) => !v)}>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setAll((v) => !v)}><Icon name="down" size={15} />
                 {all ? t('fkShowLess') : tn(rows.length, 'fkShowOne', 'fkShowAll')}
               </button>
             </div>

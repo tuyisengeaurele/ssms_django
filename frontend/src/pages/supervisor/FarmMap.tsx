@@ -98,7 +98,7 @@ export default function FarmMap({ rows }: { rows: FarmRisk[] }) {
         <>
           <div className="farm-map-bar">
             <p className="form-hint">{t('mpKeys')}</p>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setWhole((v) => !v)}>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setWhole((v) => !v)}><Icon name="location" size={15} />
               {whole ? t('mpFit') : t('mpWhole')}
             </button>
           </div>

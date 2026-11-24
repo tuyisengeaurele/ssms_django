@@ -131,7 +131,7 @@ export default function AddBatchPage() {
               <button type="submit" className="btn btn-primary" disabled={loading || rooms?.length === 0}>
                 {loading ? <><span className="spinner" />{t('abCreating')}</> : t('abCreate')}
               </button>
-              <Link to={`/farms/${farmId}`} className="btn btn-ghost">{t('btnCancel')}</Link>
+              <Link to={`/farms/${farmId}`} className="btn btn-secondary"><Icon name="close" size={15} />{t('btnCancel')}</Link>
             </div>
           </form>
       </Panel>

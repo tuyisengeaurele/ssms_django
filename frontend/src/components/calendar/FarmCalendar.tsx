@@ -7,6 +7,7 @@ import { fill } from '../../utils/fill';
 import { addDays, addMonths, fetchWindow, gridDays, localIsoDay, weekdayIndex } from './calendarDays';
 import { dateFormat } from '../../utils/dateFormat';
 import { resultLabel } from '../../utils/resultLabel';
+import { Icon } from '../../components/ui/Icon';
 
 /** The date of a whole day written like 2026-11-05, as a local date to format. */
 const asDate = (iso: string) => {
@@ -135,11 +136,11 @@ export default function FarmCalendar({ staff = false }: { staff?: boolean }) {
       <header className="cal-head">
         <h2 className="cal-title">{monthTitle}</h2>
         <div className="cal-nav">
-          <button type="button" className="btn btn-ghost btn-xs" onClick={() => setSelected(addMonths(selected, -1))}>
+          <button type="button" className="btn btn-secondary btn-xs" onClick={() => setSelected(addMonths(selected, -1))}>
             <span aria-hidden="true">‹</span><span className="sr-only">{t('calPrev')}</span>
           </button>
-          <button type="button" className="btn btn-ghost btn-xs" onClick={() => setSelected(today)}>{t('calToday')}</button>
-          <button type="button" className="btn btn-ghost btn-xs" onClick={() => setSelected(addMonths(selected, 1))}>
+          <button type="button" className="btn btn-secondary btn-xs" onClick={() => setSelected(today)}><Icon name="calendar" size={13} />{t('calToday')}</button>
+          <button type="button" className="btn btn-secondary btn-xs" onClick={() => setSelected(addMonths(selected, 1))}>
             <span aria-hidden="true">›</span><span className="sr-only">{t('calNext')}</span>
           </button>
         </div>

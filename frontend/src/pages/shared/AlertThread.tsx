@@ -6,6 +6,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { fill } from '../../utils/fill';
 import { timeAgo } from '../../utils/timeAgo';
+import { Icon } from '../../components/ui/Icon';
 
 const MAX_LENGTH = 1000;
 
@@ -96,11 +97,11 @@ export default function AlertThread({ alertId, onCountChange }: Props) {
                 asking === c.id ? (
                   <p className="thread-confirm">
                     <span>{t('acDeleteAsk')}</span>
-                    <button type="button" className="btn btn-ghost btn-xs btn-quiet-danger" onClick={() => remove(c.id)}>{t('acDeleteYes')}</button>
-                    <button type="button" className="btn btn-ghost btn-xs" onClick={() => setAsking(null)}>{t('acKeep')}</button>
+                    <button type="button" className="btn btn-secondary btn-xs btn-quiet-danger" onClick={() => remove(c.id)}><Icon name="remove" size={13} />{t('acDeleteYes')}</button>
+                    <button type="button" className="btn btn-secondary btn-xs" onClick={() => setAsking(null)}><Icon name="check" size={13} />{t('acKeep')}</button>
                   </p>
                 ) : (
-                  <button type="button" className="btn btn-ghost btn-xs" onClick={() => setAsking(c.id)}>{t('acDelete')}</button>
+                  <button type="button" className="btn btn-secondary btn-xs" onClick={() => setAsking(c.id)}><Icon name="remove" size={13} />{t('acDelete')}</button>
                 )
               )}
             </li>

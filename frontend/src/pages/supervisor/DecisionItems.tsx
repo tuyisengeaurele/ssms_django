@@ -9,6 +9,7 @@ import { fill } from '../../utils/fill';
 import Avatar from '../../components/ui/Avatar';
 import PhoneLink from '../../components/ui/PhoneLink';
 import { AmountDialog, NoteDialog } from './DecisionDialogs';
+import { Icon } from '../../components/ui/Icon';
 
 /** Each action returns a message to show in a dialog, or null when it worked. Direct approvals report errors themselves. */
 export interface RoomActions {
@@ -198,12 +199,12 @@ export function RequestItem({ request, actions }: { request: WaitingAllowanceReq
         <span className="badge badge-gray">{t('dcsKindAllowance')}</span>
         <p className="decision-title">{fill(t('dcsAsk'), { asked: boxesText(tn, request.boxesAsked), current: boxesText(tn, request.currentBoxes) })}</p>
         <p className="decision-reason">{request.reason}</p>
-        <button type="button" className="btn btn-ghost btn-xs" aria-expanded={open} aria-controls={open ? moreId : undefined} onClick={toggle}>{open ? t('dcsDetailsHide') : t('dcsDetails')}</button>
+        <button type="button" className="btn btn-secondary btn-xs" aria-expanded={open} aria-controls={open ? moreId : undefined} onClick={toggle}><Icon name="view" size={13} />{open ? t('dcsDetailsHide') : t('dcsDetails')}</button>
       </div>
       <div className="decision-actions">
         <button className="btn btn-primary btn-sm" onClick={approve} disabled={busy}>{fill(t('dcsApproveBoxes'), { boxes: boxesText(tn, request.boxesAsked) })}</button>
         <button className="btn btn-secondary btn-sm" onClick={() => setOther(true)}>{t('dcsApproveOther')}</button>
-        <button className="btn btn-ghost btn-sm btn-quiet-danger" onClick={() => setDeclining(true)}>{t('dcsDecline')}</button>
+        <button className="btn btn-secondary btn-sm btn-quiet-danger" onClick={() => setDeclining(true)}><Icon name="close" size={15} />{t('dcsDecline')}</button>
       </div>
       {/* On a row of its own under the words and the buttons, so it has the width of the card and not of one column. */}
       {open && (

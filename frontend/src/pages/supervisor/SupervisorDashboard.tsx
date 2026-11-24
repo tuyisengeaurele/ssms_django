@@ -186,7 +186,7 @@ export default function SupervisorDashboard() {
         <Panel
           title={`${t('svBatchesTitle')} (${batches.length})`}
           flush
-          actions={<Link to="/batches/compare" className="btn btn-ghost btn-sm">{t('ptCompare')}<Icon name="forward" size={14} /></Link>}
+          actions={<Link to="/batches/compare" className="btn btn-secondary btn-sm">{t('ptCompare')}<Icon name="forward" size={14} /></Link>}
         >
           {batches.length === 0 ? (
             <EmptyState icon={<Icon name="batches" size={22} />} title={t('svNoBatches')} />
@@ -209,7 +209,7 @@ export default function SupervisorDashboard() {
                       <td data-label={t('svColChecks')} className="cell-strong">{b.detectionCount ?? 0}</td>
                       <td data-label="">
                         <div className="table-actions">
-                          <Link to={`/batches/${b.id}`} className="btn btn-ghost btn-xs" aria-label={`${t('svOpen')} ${b.farm?.name ?? ''}`}>{t('svOpen')}</Link>
+                          <Link to={`/batches/${b.id}`} className="btn btn-secondary btn-xs" aria-label={`${t('svOpen')} ${b.farm?.name ?? ''}`}><Icon name="open" size={13} />{t('svOpen')}</Link>
                         </div>
                       </td>
                     </tr>
@@ -223,7 +223,7 @@ export default function SupervisorDashboard() {
         <Panel
           title={t('svAlertsTitle')}
           flush
-          actions={<Link to="/alerts" className="btn btn-ghost btn-sm">{t('svAllAlerts')}<Icon name="forward" size={14} /></Link>}
+          actions={<Link to="/alerts" className="btn btn-secondary btn-sm">{t('svAllAlerts')}<Icon name="forward" size={14} /></Link>}
         >
           {alerts.length === 0 ? (
             <EmptyState icon={<Icon name="alerts" size={22} />} title={t('svNoAlerts')} description={t('svNoAlertsBody')} />
@@ -245,7 +245,7 @@ export default function SupervisorDashboard() {
       <Panel
         title={t('svChecksTitle')}
         flush
-        actions={<Link to="/detections/reports" className="btn btn-ghost btn-sm">{t('svFullReport')}<Icon name="forward" size={14} /></Link>}
+        actions={<Link to="/detections/reports" className="btn btn-secondary btn-sm">{t('svFullReport')}<Icon name="forward" size={14} /></Link>}
       >
         {recent.length === 0 ? (
           <EmptyState icon={<Icon name="detections" size={22} />} title={t('svNoChecks')} description={t('svNoChecksBody')} />

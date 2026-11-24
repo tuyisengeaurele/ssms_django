@@ -201,7 +201,7 @@ export default function HarvestsPage() {
                           </td>
                           <td data-label={t('hpColNotes')} className="cell-muted">{r.notes ?? '-'}</td>
                           <td data-label="">
-                            <Link to={`/batches/${r.batchId}/harvest`} className="btn btn-ghost btn-xs" aria-label={`${t('hvOpen')} ${farm}`}>
+                            <Link to={`/batches/${r.batchId}/harvest`} className="btn btn-secondary btn-xs" aria-label={`${t('hvOpen')} ${farm}`}>
                               {t('hvOpen')}
                               <Icon name="forward" size={13} />
                             </Link>

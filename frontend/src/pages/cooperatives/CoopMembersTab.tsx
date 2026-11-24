@@ -100,11 +100,11 @@ export default function CoopMembersTab() {
               <span className="badge badge-gray">{t(ROLE_LABEL_KEY[m.role])}</span>
               <button
                 type="button"
-                className="btn btn-ghost btn-xs btn-quiet-danger"
+                className="btn btn-secondary btn-xs btn-quiet-danger"
                 disabled={busy}
                 aria-label={fill(t('coRemoveFor'), { name: m.name })}
                 onClick={() => askRemove(m.id)}
-              >
+              ><Icon name="remove" size={13} />
                 {t('coRemove')}
               </button>
             </li>

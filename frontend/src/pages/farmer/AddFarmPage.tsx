@@ -61,7 +61,7 @@ export default function AddFarmPage() {
               <button type="submit" className="btn btn-primary" disabled={loading}>
                 {loading ? <><span className="spinner" />{t('afCreating')}</> : t('afCreate')}
               </button>
-              <Link to="/farms" className="btn btn-ghost">{t('btnCancel')}</Link>
+              <Link to="/farms" className="btn btn-secondary"><Icon name="close" size={15} />{t('btnCancel')}</Link>
             </div>
           </form>
       </Panel>

@@ -155,7 +155,7 @@ export default function AdminAuditLogPage() {
 
           {changed && (
             <div className="filter-buttons">
-              <button type="button" className="btn btn-ghost btn-sm" onClick={reset}>{t('auClear')}</button>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={reset}><Icon name="close" size={15} />{t('auClear')}</button>
             </div>
           )}
         </form>

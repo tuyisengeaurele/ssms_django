@@ -88,7 +88,7 @@ export default function BatchReportPage() {
   };
 
   const back = (
-    <Link to={`/batches/${id}`} className="btn btn-ghost btn-sm">
+    <Link to={`/batches/${id}`} className="btn btn-secondary btn-sm">
       <Icon name="back" size={15} />
       {t('hpBack')}
     </Link>

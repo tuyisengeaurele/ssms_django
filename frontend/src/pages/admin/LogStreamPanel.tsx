@@ -156,7 +156,7 @@ export default function LogStreamPanel({ stream }: Props) {
 
           {changed && (
             <div className="filter-buttons">
-              <button type="button" className="btn btn-ghost btn-sm" onClick={reset}>{t('lgClear')}</button>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={reset}><Icon name="close" size={15} />{t('lgClear')}</button>
             </div>
           )}
         </form>

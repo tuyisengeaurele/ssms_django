@@ -11,7 +11,7 @@ export default function DecisionsCard() {
   return (
     <div className="alert alert-info" role="status">
       <Icon name="inbox" size={18} />
-      <Link to="/decisions" className="link">{tn(count, 'dcsCardOne', 'dcsCardMany')}</Link>
+      <Link to="/decisions" className="btn btn-secondary btn-xs"><Icon name="forward" size={13} />{tn(count, 'dcsCardOne', 'dcsCardMany')}</Link>
     </div>
   );
 }
