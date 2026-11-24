@@ -189,7 +189,7 @@ describe('Use my location', () => {
   it('says what it fills in, and that the person should check it', async () => {
     geolocation((ok) => ok({ coords: { latitude: -1.9536, longitude: 30.0925 } } as GeolocationPosition));
     render(<Harness />);
-    expect(await screen.findByText('Fills in the province, district, sector, cell and village where it can, and saves your exact position with the farm so your cooperative can see it on a map. Please check the place.')).toBeInTheDocument();
+    expect(await screen.findByText('Fills the place below.')).toBeInTheDocument();
   });
 
   it('keeps the street when the village is filled in', async () => {
@@ -199,6 +199,26 @@ describe('Use my location', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
     await waitFor(() => expect(latest.villageCode).toBe('102130307'));
     expect(latest.street).toBe('Near the church');
+  });
+
+  describe('the buttons', () => {
+    it('show Use my location as the main button, and Remove location beside it once a position is saved', async () => {
+      geolocation(() => undefined);
+      render(<Harness start={{ ...EMPTY_PLACE, latitude: -1.9536, longitude: 30.0925 }} />);
+      const use = await screen.findByRole('button', { name: 'Use my location' });
+      const remove = screen.getByRole('button', { name: 'Remove location' });
+      expect(use).toHaveClass('btn', 'btn-primary');
+      expect(remove).toHaveClass('btn', 'btn-secondary', 'btn-quiet-danger');
+      expect(remove.querySelector('svg')).not.toBeNull();
+      expect(use.parentElement).toBe(remove.parentElement);
+    });
+
+    it('show no Remove location button while there is no saved position', async () => {
+      geolocation(() => undefined);
+      render(<Harness />);
+      await screen.findByRole('button', { name: 'Use my location' });
+      expect(screen.queryByRole('button', { name: 'Remove location' })).not.toBeInTheDocument();
+    });
   });
 
   describe('the exact position', () => {
@@ -226,20 +246,20 @@ describe('Use my location', () => {
 
     it('says that the position is saved with the farm and who sees it, with the numbers', () => {
       render(<Harness start={pinned} />);
-      expect(screen.getByText('The exact position of the farm is saved with it, so your cooperative can see it on the map: -1.95360, 30.09250')).toBeInTheDocument();
+      expect(screen.getByText('Saved: -1.95360, 30.09250')).toBeInTheDocument();
     });
 
     it('says nothing about a position when there is none', () => {
       render(<Harness />);
-      expect(screen.queryByText(/The exact position of the farm/)).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Remove the position' })).not.toBeInTheDocument();
+      expect(screen.queryByText(/^Saved: /)).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Remove location' })).not.toBeInTheDocument();
     });
 
     it('removes the position and keeps the place', async () => {
       render(<Harness start={pinned} />);
-      fireEvent.click(screen.getByRole('button', { name: 'Remove the position' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Remove location' }));
       expect(latest).toMatchObject({ latitude: null, longitude: null, villageCode: '102130307', street: 'Near the church' });
-      expect(screen.queryByText(/The exact position of the farm/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/^Saved: /)).not.toBeInTheDocument();
     });
 
     it('lets go of the position when the person chooses another place, because it no longer matches', async () => {
@@ -276,7 +296,7 @@ describe('Use my location', () => {
     it('reads in French', async () => {
       localStorage.setItem('ssms_locale', 'fr');
       render(<Harness start={pinned} />);
-      expect(screen.getByText('La position exacte de la ferme est enregistrée avec elle, pour que votre coopérative la voie sur la carte : -1.95360, 30.09250')).toBeInTheDocument();
+      expect(screen.getByText('Enregistré : -1.95360, 30.09250')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Retirer la position' })).toBeInTheDocument();
     });
   });

@@ -1228,6 +1228,8 @@ tr.is-off td:last-child { opacity: 1; }
 .place-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
 .place-locate { margin-bottom: 8px; }
 .place-locate .form-hint { margin-top: 6px; }
+/* Use my location and Remove location sit side by side, and wrap on a narrow screen. */
+.place-locate__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .place-notice { min-height: 1.4em; margin-bottom: 8px; font-size: 0.9rem; color: var(--text-muted); }
 .place-notice.is-problem { color: var(--text); }
 .place-legacy { margin-bottom: 12px; }

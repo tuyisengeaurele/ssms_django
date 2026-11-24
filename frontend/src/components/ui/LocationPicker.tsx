@@ -127,21 +127,23 @@ export default function LocationPicker({ value, onChange, legacyText, idPrefix =
         </p>
       )}
 
-      {canLocate && (
+      {(canLocate || hasPosition) && (
         <div className="place-locate">
-          <button type="button" className="btn btn-secondary btn-sm" onClick={useMyLocation} disabled={working}>
-            {working ? <><span className="spinner" />{t('lcLocating')}</> : <><Icon name="location" size={15} />{t('lcUse')}</>}
-          </button>
-          <p className="form-hint" id={`${idPrefix}-locate-hint`}>{t('lcUseHint')}</p>
+          <div className="place-locate__actions">
+            {canLocate && (
+              <button type="button" className="btn btn-primary btn-sm" onClick={useMyLocation} disabled={working}>
+                {working ? <><span className="spinner" />{t('lcLocating')}</> : <><Icon name="location" size={15} />{t('lcUse')}</>}
+              </button>
+            )}
+            {hasPosition && (
+              <button type="button" className="btn btn-secondary btn-quiet-danger btn-sm" onClick={() => onChange({ ...value, latitude: null, longitude: null })}>
+                <Icon name="remove" size={15} />{t('lcPinRemove')}
+              </button>
+            )}
+          </div>
+          {canLocate && <p className="form-hint" id={`${idPrefix}-locate-hint`}>{t('lcUseHint')}</p>}
+          {hasPosition && <p className="form-hint place-pinned">{fill(t('lcPinned'), { lat: value.latitude!.toFixed(5), lng: value.longitude!.toFixed(5) })}</p>}
         </div>
-      )}
-      {hasPosition && (
-        <p className="form-hint place-pinned">
-          {fill(t('lcPinned'), { lat: value.latitude!.toFixed(5), lng: value.longitude!.toFixed(5) })}{' '}
-          <button type="button" className="btn btn-secondary btn-xs" onClick={() => onChange({ ...value, latitude: null, longitude: null })}><Icon name="remove" size={13} />
-            {t('lcPinRemove')}
-          </button>
-        </p>
       )}
       <div role="status" className={`place-notice${notice?.kind === 'problem' ? ' is-problem' : ''}`}>
         {notice && notice.kind !== 'working' ? notice.text : ''}
