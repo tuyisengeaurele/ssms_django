@@ -6,6 +6,14 @@ export function initialsOf(name: string): string {
   return letters.length ? letters.join('').toUpperCase() : '?';
 }
 
+/** A picture of ours (`/api/photos/<token>`), the preview of a file the person just chose (`blob:`), or a picture on https. Anything else is not drawn. */
+const SAFE_SOURCE = /^(?:\/api\/photos\/[\w-]+|blob:https?:\/\/[\w.:-]+\/[\w-]+|https:\/\/[\w.-]+(?::\d+)?\/[\w./%-]*)$/;
+
+/** The address to draw, or null. The address comes from the server and from the browser, and an image tag is only given one that is known to be a picture. */
+export function safePhotoSource(url?: string | null): string | null {
+  return url && SAFE_SOURCE.test(url) ? url : null;
+}
+
 interface Props {
   name: string;
   /** The person's photo, when they have one and the viewer may see it. */
@@ -24,9 +32,11 @@ export default function Avatar({ name, photoUrl, className = 'row-avatar' }: Pro
   // A new photo gets another chance, after one that could not be loaded.
   useEffect(() => { setFailed(false); }, [photoUrl]);
 
+  const source = safePhotoSource(photoUrl);
+
   return (
     <span className={className} aria-hidden="true">
-      {photoUrl && !failed ? <img src={photoUrl} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} /> : initialsOf(name)}
+      {source && !failed ? <img src={source} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} /> : initialsOf(name)}
     </span>
   );
 }

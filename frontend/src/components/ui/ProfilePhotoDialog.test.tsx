@@ -33,7 +33,7 @@ beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
   setReducedMotion(true);
-  URL.createObjectURL = vi.fn(() => 'blob:preview');
+  URL.createObjectURL = vi.fn(() => 'blob:http://localhost/3f2c1d2e-1111-4222-8333-444455556666');
   URL.revokeObjectURL = vi.fn();
   api.uploadPhoto.mockResolvedValue({ data: { data: saved } });
   api.removePhoto.mockResolvedValue({ data: { data: { ...saved, photoUrl: null } } });
@@ -62,7 +62,7 @@ describe('The profile photo dialog', () => {
     expect(save()).toBeDisabled();
     choose(file());
     expect(save()).toBeEnabled();
-    expect(document.querySelector('.modal-body .photo-preview img')).toHaveAttribute('src', 'blob:preview');
+    expect(document.querySelector('.modal-body .photo-preview img')).toHaveAttribute('src', 'blob:http://localhost/3f2c1d2e-1111-4222-8333-444455556666');
     expect(api.uploadPhoto).not.toHaveBeenCalled();
   });
 

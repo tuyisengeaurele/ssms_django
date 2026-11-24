@@ -46,3 +46,25 @@ describe('An avatar with a photo', () => {
     expect(container.querySelector('img')).toBeNull();
   });
 });
+
+describe('an avatar is only given an address that is a picture of ours or a preview', () => {
+  it.each([
+    ['a script address', 'javascript:alert(1)'],
+    ['a data address', 'data:text/html;base64,PHNjcmlwdD4='],
+    ['an address with markup in it', '/api/photos/"><script>x</script>'],
+    ['a protocol relative address to another site', '//evil.example/photo.webp'],
+  ])('shows the initials for %s', (_label, url) => {
+    const { container } = render(<Avatar name="Aline Uwase" photoUrl={url} />);
+    expect(container.querySelector('img')).toBeNull();
+    expect(circle(container)).toHaveTextContent('AU');
+  });
+
+  it.each([
+    ['one of our photo addresses', '/api/photos/AbC-123_xyz'],
+    ['a preview of a chosen file', 'blob:http://localhost:5173/3f2c1d2e-1111-4222-8333-444455556666'],
+    ['a photo on https', 'https://example.rw/a.webp'],
+  ])('shows %s', (_label, url) => {
+    const { container } = render(<Avatar name="Aline Uwase" photoUrl={url} />);
+    expect(container.querySelector('img')).toHaveAttribute('src', url);
+  });
+});
