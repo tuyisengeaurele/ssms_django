@@ -1471,6 +1471,8 @@ tr.is-off td:last-child { opacity: 1; }
 /* The line that opens a typed confirmation dialog keeps a gap under it, so the first label does not touch it. */
 .cbt-intro { margin-bottom: 16px; }
 .cbt-intro > :last-child { margin-bottom: 0; }
+/* What closing an account does, one line each. Plain bullets: this is a list to read, not a form. */
+.cbt-list { margin: 8px 0 12px; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; line-height: 1.5; }
 .form-static { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 
 /* ── Calendar ──────────────────────────────────────────────────────────────── */

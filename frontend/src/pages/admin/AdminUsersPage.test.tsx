@@ -441,3 +441,13 @@ describe('Users page when the people cannot be loaded', () => {
     expect(api.getUsers).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('Users page and a closure that is scheduled', () => {
+  it('tags a person whose account is scheduled to be removed, with the day, and nobody else', async () => {
+    api.getUsers.mockResolvedValue({ data: { data: people.map((p) => withBase(p.id === 'f1' ? { ...p, deletionDate: '2026-12-24' } : p)) } });
+    open();
+    const row = (await screen.findByText('Bruce Ishimwe')).closest('tr') as HTMLElement;
+    expect(within(row).getByText('Removal on Dec 24, 2026')).toBeInTheDocument();
+    expect(screen.getAllByText(/^Removal on /)).toHaveLength(1);
+  });
+});
