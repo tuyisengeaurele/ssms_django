@@ -32,6 +32,7 @@ export default function ProfilePhotoDialog({ open, name, photoUrl, onClose, onCh
   const [crop, setCrop] = useState<CropState>(FRESH);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const address = useRef<string | null>(null);
 
   const forget = () => {
@@ -47,6 +48,7 @@ export default function ProfilePhotoDialog({ open, name, photoUrl, onClose, onCh
     setCrop(FRESH);
     setError('');
     setBusy(false);
+    setRemoving(false);
   }, [open]);
   useEffect(() => forget, []);
 
@@ -90,10 +92,17 @@ export default function ProfilePhotoDialog({ open, name, photoUrl, onClose, onCh
       open={open}
       onClose={onClose}
       title={t('ppTitle')}
-      footer={(
+      footer={removing ? (
+        <>
+          <button type="button" className="btn btn-secondary" onClick={() => setRemoving(false)} disabled={busy}>{t('btnCancel')}</button>
+          <button type="button" className="btn btn-danger" onClick={() => run(() => accountService.removePhoto())} disabled={busy}>
+            {busy ? <><span className="spinner" aria-hidden="true" />{t('ppBusy')}</> : <><Icon name="remove" size={15} />{t('ppRemove')}</>}
+          </button>
+        </>
+      ) : (
         <>
           {photoUrl ? (
-            <button type="button" className="btn btn-secondary btn-quiet-danger" onClick={() => run(() => accountService.removePhoto())} disabled={busy}><Icon name="remove" size={15} />{t('ppRemove')}</button>
+            <button type="button" className="btn btn-secondary btn-quiet-danger" onClick={() => setRemoving(true)} disabled={busy}><Icon name="remove" size={15} />{t('ppRemove')}</button>
           ) : null}
           <button type="button" className="btn btn-secondary" onClick={onClose} disabled={busy}>{t('btnCancel')}</button>
           <button type="button" className="btn btn-primary" onClick={save} disabled={!image || busy}>
@@ -102,6 +111,13 @@ export default function ProfilePhotoDialog({ open, name, photoUrl, onClose, onCh
         </>
       )}
     >
+      {removing ? (
+        <div className="photo-picker">
+          <Avatar name={name} photoUrl={photoUrl} className="photo-preview" />
+          <p className="modal-text">{t('ppRemoveAsk')}</p>
+          {error ? <span className="form-error" role="alert">{error}</span> : null}
+        </div>
+      ) : (
       <div className="photo-picker">
         {image ? <PhotoCropper image={image} state={crop} onChange={setCrop} /> : <Avatar name={name} photoUrl={photoUrl} className="photo-preview" />}
         <div className="photo-picker__choose">
@@ -119,6 +135,7 @@ export default function ProfilePhotoDialog({ open, name, photoUrl, onClose, onCh
           {error ? <span id="pp-error" className="form-error" role="alert">{error}</span> : null}
         </div>
       </div>
+      )}
     </Modal>
   );
 }

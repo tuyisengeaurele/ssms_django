@@ -122,7 +122,7 @@ describe('Account settings', () => {
     it('says where the link went when a request is pending, with a way to cancel it', async () => {
       account.getEmailChange.mockResolvedValue({ data: { data: pending } });
       open();
-      expect(await screen.findByText('We sent a link to n***@example.rw. Your email changes when you open it.')).toBeInTheDocument();
+      expect(await screen.findByText('Link sent to n***@example.rw. Open it to change your email.')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Cancel request' })).toBeInTheDocument();
     });
 
@@ -130,6 +130,9 @@ describe('Account settings', () => {
       account.getEmailChange.mockResolvedValue({ data: { data: pending } });
       open();
       fireEvent.click(await screen.findByRole('button', { name: 'Cancel request' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Cancel the email change?' });
+      expect(account.cancelEmailChange).not.toHaveBeenCalled();
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel request' }));
       await waitFor(() => expect(account.cancelEmailChange).toHaveBeenCalled());
       await waitFor(() => expect(screen.queryByText(/We sent a link to/)).not.toBeInTheDocument());
       expect(await screen.findByText('The request was cancelled.', {}, { timeout: 5000 })).toBeInTheDocument();
@@ -144,7 +147,7 @@ describe('Account settings', () => {
       fireEvent.change(within(dialog).getByLabelText('Your password'), { target: { value: 'Secret123' } });
       fireEvent.change(within(dialog).getByLabelText('Type auris@ssms.com to confirm'), { target: { value: 'auris@ssms.com' } });
       fireEvent.click(within(dialog).getByRole('button', { name: 'Send the link' }));
-      expect(await screen.findByText('We sent a link to n***@example.rw. Your email changes when you open it.', {}, { timeout: 5000 })).toBeInTheDocument();
+      expect(await screen.findByText('Link sent to n***@example.rw. Open it to change your email.', {}, { timeout: 5000 })).toBeInTheDocument();
       expect(await screen.findByText('We sent a link to n***@example.rw.', {}, { timeout: 5000 })).toBeInTheDocument();
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     });
@@ -201,7 +204,7 @@ describe('Account settings', () => {
       fireEvent.click(within(dialog).getByRole('button', { name: 'Change number' }));
       await waitFor(() => expect(api.updateProfile).toHaveBeenCalledWith({ phone: '0733 000 000', confirmPhone: '0788 123 456' }));
       await waitFor(() => expect(auth.updateUser).toHaveBeenCalledWith(expect.objectContaining({ phone: '+250733000000' })));
-      expect(await screen.findByText('Your phone number is changed.', {}, { timeout: 5000 })).toBeInTheDocument();
+      expect(await screen.findByText('Phone number changed.', {}, { timeout: 5000 })).toBeInTheDocument();
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     });
 
@@ -347,6 +350,9 @@ describe('Account settings', () => {
       coop.mine.mockResolvedValue({ data: { data: asked() } });
       open();
       fireEvent.click(await screen.findByRole('button', { name: 'Withdraw' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Withdraw your request?' });
+      expect(coop.withdraw).not.toHaveBeenCalled();
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Withdraw' }));
       await waitFor(() => expect(coop.withdraw).toHaveBeenCalled());
       await waitFor(() => expect(screen.queryByText(/Request waiting since/)).not.toBeInTheDocument());
       expect(change()).toBeInTheDocument();
@@ -357,26 +363,26 @@ describe('Account settings', () => {
       asFarmer();
       coop.mine.mockResolvedValue({ data: { data: asked({ status: 'declined', decisionNote: 'Please talk to your supervisor first.', decidedAt: '2026-11-21T10:00:00Z' }) } });
       open();
-      expect(await screen.findByText(/Your request was not approved on /)).toBeInTheDocument();
+      expect(await screen.findByText(/Request not approved on /)).toBeInTheDocument();
       expect(screen.getByText('Note from the SSMS team: Please talk to your supervisor first.')).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'Got it' }));
-      expect(screen.queryByText(/Your request was not approved on /)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Request not approved on /)).not.toBeInTheDocument();
       cleanup();
       open();
       await waitFor(() => expect(coop.mine).toHaveBeenCalledTimes(2));
-      expect(screen.queryByText(/Your request was not approved on /)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Request not approved on /)).not.toBeInTheDocument();
     });
 
     it('shows an approval in the words of a move, or of a leave', async () => {
       asFarmer();
       coop.mine.mockResolvedValue({ data: { data: asked({ status: 'approved', decidedAt: '2026-11-21T10:00:00Z' }) } });
       open();
-      expect(await screen.findByText(/Your request to join New Coop was approved on /)).toBeInTheDocument();
+      expect(await screen.findByText(/Request to join New Coop approved on /)).toBeInTheDocument();
       cleanup();
       localStorage.clear();
       coop.mine.mockResolvedValue({ data: { data: asked({ id: 'r2', status: 'approved', to: null, decidedAt: '2026-11-21T10:00:00Z' }) } });
       open();
-      expect(await screen.findByText(/Your request to leave your cooperative was approved on /)).toBeInTheDocument();
+      expect(await screen.findByText(/Request to leave approved on /)).toBeInTheDocument();
     });
   });
 
@@ -386,7 +392,7 @@ describe('Account settings', () => {
         auth.user.role = role;
         open();
         const section = screen.getByRole('heading', { name: 'Your data' }).closest('section') as HTMLElement;
-        expect(within(section).getByText(/Download a copy of what SSMS holds about you/)).toBeInTheDocument();
+        expect(within(section).getByText(/Download a copy of your data/)).toBeInTheDocument();
         expect(within(section).getByRole('button', { name: 'Download my data' })).toBeInTheDocument();
         cleanup();
       }
@@ -479,7 +485,7 @@ describe('Account settings', () => {
       asFarmer();
       open();
       const section = screen.getByRole('heading', { name: 'Close your account' }).closest('section') as HTMLElement;
-      expect(within(section).getByText(/You can close your account yourself/)).toBeInTheDocument();
+      expect(within(section).getByText(/Your account is removed after 30 days/)).toBeInTheDocument();
       expect(closeButton()).toBeInTheDocument();
     });
 
@@ -503,7 +509,7 @@ describe('Account settings', () => {
       await waitFor(() => expect(farms.getAll).toHaveBeenCalled());
       fireEvent.click(closeButton() as HTMLElement);
       const dialog = await screen.findByRole('dialog', { name: 'Close your account?' });
-      expect(await within(dialog).findByText(/^3 of your batches are still running/)).toBeInTheDocument();
+      expect(await within(dialog).findByText(/^3 running batches stay as history/)).toBeInTheDocument();
     });
 
     it('does not ask the farms of someone who is not a farmer', () => {
