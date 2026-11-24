@@ -819,6 +819,16 @@ tr.is-off td:last-child { opacity: 1; }
 .row-avatar, .identity-avatar, .topbar-avatar, .photo-preview { overflow: hidden; }
 .row-avatar img, .identity-avatar img, .topbar-avatar img, .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
 .identity-photo-btn { margin-top: 4px; }
+/* The photo on the account card is the way to see it larger, so it is a button with a visible focus and a hint on hover. */
+.identity-avatar-btn { display: grid; margin: 0 0 10px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: zoom-in; }
+.identity-avatar-btn:hover .identity-avatar { box-shadow: 0 0 0 3px var(--btn-soft-line); }
+.identity-avatar-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.identity-avatar-btn .identity-avatar { margin-bottom: 0; }
+/* The photo, larger, in a square with the pencil on its corner. */
+.photo-large-wrap { position: relative; width: min(100%, 360px); margin: 0 auto; }
+.photo-large { display: grid; width: 100%; aspect-ratio: 1; place-items: center; overflow: hidden; border-radius: var(--radius-lg); background: var(--ink); color: var(--ivory); font: 450 4rem var(--font-display); }
+.photo-large img { width: 100%; height: 100%; object-fit: cover; }
+.photo-large__edit { position: absolute; right: 12px; bottom: 12px; width: 44px; height: 44px; border-radius: 50%; box-shadow: var(--shadow-md); }
 /* The picker in the photo dialog: what the picture will look like, then the file field. */
 .photo-picker { display: grid; gap: 16px; justify-items: center; }
 .photo-picker__choose { display: grid; gap: 6px; justify-items: center; text-align: center; }
@@ -842,6 +852,7 @@ tr.is-off td:last-child { opacity: 1; }
 .identity-facts .cell-stack > .btn { align-self: flex-start; }
 /* Inside Settings the card is wide, so it reads as a row: the avatar, then the name and the facts. */
 .settings-body .identity { grid-template-columns: auto minmax(0, 1fr); justify-items: start; column-gap: 18px; padding: 20px 24px; text-align: left; }
+.settings-body .identity-avatar-btn { grid-row: span 4; align-self: center; margin: 0; }
 .settings-body .identity-avatar { grid-row: span 4; width: 64px; height: 64px; margin: 0; align-self: center; font-size: 1.5rem; }
 .settings-body .identity-email { margin-bottom: 0; }
 .settings-body .identity-facts { grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }

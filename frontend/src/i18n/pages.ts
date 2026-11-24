@@ -2259,6 +2259,8 @@ export const pageTranslations = {
   ppRemoved: k("Photo removed", "Photo supprimée", "Ifoto yakuweho"),
   ppAdd: k("Add photo", "Ajouter une photo", "Ongeraho ifoto"),
   ppChange: k("Change photo", "Changer la photo", "Hindura ifoto"),
+  ppView: k("View photo", "Voir la photo", "Reba ifoto"),
+  ppViewTitle: k("Your photo", "Votre photo", "Ifoto yawe"),
 } satisfies Record<string, Entry>;
 
 export type PageKey = keyof typeof pageTranslations;

@@ -410,12 +410,36 @@ describe('Account settings', () => {
       expect(within(card).getByRole('button', { name: 'Add photo' })).toBeInTheDocument();
     });
 
-    it('shows the photo and a Change photo button when there is one', () => {
+    it('shows the photo as a button that opens a larger view, with no text button beside it', () => {
       withPhoto('/api/photos/mine');
       open();
       const card = screen.getByRole('region', { name: 'About you' });
       expect(card.querySelector('.identity-avatar img')).toHaveAttribute('src', '/api/photos/mine');
-      expect(within(card).getByRole('button', { name: 'Change photo' })).toBeInTheDocument();
+      expect(within(card).getByRole('button', { name: 'View photo' })).toBeInTheDocument();
+      expect(within(card).queryByRole('button', { name: 'Change photo' })).not.toBeInTheDocument();
+      expect(within(card).queryByRole('button', { name: 'Add photo' })).not.toBeInTheDocument();
+      withPhoto(null);
+    });
+
+    it('does not make the initials a button when there is no photo to view', () => {
+      withPhoto(null);
+      open();
+      expect(screen.queryByRole('button', { name: 'View photo' })).not.toBeInTheDocument();
+    });
+
+    it('shows the photo larger, with a pencil button and no words on it, and the pencil opens the change dialog', async () => {
+      withPhoto('/api/photos/mine');
+      open();
+      fireEvent.click(screen.getByRole('button', { name: 'View photo' }));
+      const viewer = await screen.findByRole('dialog', { name: 'Your photo' });
+      expect(viewer.querySelector('.photo-large img')).toHaveAttribute('src', '/api/photos/mine');
+      const pencil = within(viewer).getByRole('button', { name: 'Change photo' });
+      expect(pencil.textContent).toBe('');
+      expect(pencil.querySelector('svg')).not.toBeNull();
+      expect(pencil).toHaveClass('btn');
+      fireEvent.click(pencil);
+      expect(await screen.findByRole('dialog', { name: 'Profile photo' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Your photo' })).not.toBeInTheDocument());
       withPhoto(null);
     });
 
