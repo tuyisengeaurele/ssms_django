@@ -11,6 +11,7 @@ import { useCoop } from './coopContext';
 import CooperativeFormModal from './CooperativeFormModal';
 import CoopSupplySettings from './CoopSupplySettings';
 import { dateFormat } from '../../utils/dateFormat';
+import { Icon } from '../../components/ui/Icon';
 
 /** Where the cooperative is and what it is for, and the way for an admin to change it or delete it. */
 export default function CoopDetailsTab() {
@@ -49,7 +50,7 @@ export default function CoopDetailsTab() {
       actions={
         <>
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditing(true)}>{t('coEdit')}</button>
-          <button type="button" className="btn btn-ghost btn-sm btn-quiet-danger" onClick={() => setAsking(true)}>{t('coDelete')}</button>
+          <button type="button" className="btn btn-secondary btn-sm btn-quiet-danger" onClick={() => setAsking(true)}><Icon name="remove" size={15} />{t('coDelete')}</button>
         </>
       }
     >

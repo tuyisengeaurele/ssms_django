@@ -130,8 +130,8 @@ export default function BatchesPage() {
                     </td>
                     <td data-label="">
                       <div className="table-actions">
-                        <Link to={`/batches/${b.id}`} className="btn btn-ghost btn-xs" aria-label={`${t('btDetails')} ${b.farm?.name ?? ''}`}>{t('btDetails')}</Link>
-                        <Link to={`/batches/${b.id}/detect`} className="btn btn-ghost btn-xs" aria-label={`${t('btCheck')} ${b.farm?.name ?? ''}`}>
+                        <Link to={`/batches/${b.id}`} className="btn btn-secondary btn-xs" aria-label={`${t('btDetails')} ${b.farm?.name ?? ''}`}><Icon name="view" size={13} />{t('btDetails')}</Link>
+                        <Link to={`/batches/${b.id}/detect`} className="btn btn-secondary btn-xs" aria-label={`${t('btCheck')} ${b.farm?.name ?? ''}`}>
                           <Icon name="detections" size={14} />
                           {t('btCheck')}
                         </Link>

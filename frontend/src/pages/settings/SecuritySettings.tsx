@@ -9,6 +9,7 @@ import Panel from '../../components/ui/Panel';
 import SignedInDevices from '../shared/SignedInDevices';
 import MfaSettings from './MfaSettings';
 import SupportHistory from './SupportHistory';
+import { Icon } from '../../components/ui/Icon';
 
 /** The password, and the places the account is signed in. */
 export default function SecuritySettings() {
@@ -85,7 +86,7 @@ export default function SecuritySettings() {
               <button type="submit" className="btn btn-primary" disabled={changing}>
                 {changing ? <><span className="spinner" />{t('pfUpdating')}</> : t('pfUpdatePassword')}
               </button>
-              <button type="button" className="btn btn-ghost" onClick={closePassword}>{t('btnCancel')}</button>
+              <button type="button" className="btn btn-secondary" onClick={closePassword}><Icon name="close" size={15} />{t('btnCancel')}</button>
             </div>
           </form>
         ) : null}

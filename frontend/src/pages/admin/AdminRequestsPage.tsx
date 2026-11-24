@@ -141,7 +141,7 @@ export default function AdminRequestsPage() {
               </div>
               <div className="decision-actions">
                 <button type="button" className="btn btn-primary btn-sm" onClick={() => setApproving(r)}>{t('arqApprove')}</button>
-                <button type="button" className="btn btn-ghost btn-sm btn-quiet-danger" onClick={() => setDeclining(r)}>{t('arqDecline')}</button>
+                <button type="button" className="btn btn-secondary btn-sm btn-quiet-danger" onClick={() => setDeclining(r)}><Icon name="close" size={15} />{t('arqDecline')}</button>
               </div>
             </li>
           ))}

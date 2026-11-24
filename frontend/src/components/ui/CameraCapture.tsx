@@ -129,7 +129,7 @@ export default function CameraCapture({ onCapture, onClose }: Props) {
           <Icon name="detections" size={16} />
           {t('phTake')}
         </button>
-        <button type="button" className="btn btn-ghost" onClick={close}>{t('btnCancel')}</button>
+        <button type="button" className="btn btn-secondary" onClick={close}><Icon name="close" size={15} />{t('btnCancel')}</button>
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import { lotService } from '../../services/lot.service';
 import type { HarvestRecord } from '../../types';
 import { fill } from '../../utils/fill';
 import { dateFormat } from '../../utils/dateFormat';
+import { Icon } from '../../components/ui/Icon';
 
 interface LotQrModalProps {
   record: HarvestRecord | null;
@@ -173,7 +174,7 @@ export default function LotQrModal({ record, onClose, onChange }: LotQrModalProp
               >
                 {t('lotDownload')}
               </button>
-              <button type="button" className="btn btn-ghost btn-sm btn-quiet-danger" onClick={() => setConfirmStop(true)}>{t('lotStop')}</button>
+              <button type="button" className="btn btn-secondary btn-sm btn-quiet-danger" onClick={() => setConfirmStop(true)}><Icon name="block" size={15} />{t('lotStop')}</button>
             </div>
           )}
         </>

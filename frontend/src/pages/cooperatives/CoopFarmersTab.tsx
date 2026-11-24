@@ -366,15 +366,15 @@ export default function CoopFarmersTab() {
                       <td data-label="">
                         <div className="table-actions">
                           {f.allowance.boxes > 0 && (
-                            <button className="btn btn-ghost btn-xs" aria-label={fill(t('alwLowerFor'), { name: f.name })} onClick={() => openLower(f)}>
+                            <button className="btn btn-secondary btn-xs" aria-label={fill(t('alwLowerFor'), { name: f.name })} onClick={() => openLower(f)}><Icon name="down" size={13} />
                               {t('alwLowerShort')}
                             </button>
                           )}
                           <button
-                            className="btn btn-ghost btn-xs btn-quiet-danger"
+                            className="btn btn-secondary btn-xs btn-quiet-danger"
                             aria-label={fill(t('tmRemoveFor'), { name: f.name })}
                             onClick={() => setToRemove(f)}
-                          >
+                          ><Icon name="remove" size={13} />
                             {t('tmRemove')}
                           </button>
                         </div>
@@ -423,10 +423,10 @@ export default function CoopFarmersTab() {
                         <div className="table-actions">
                           {i.status === 'pending' && (
                             <button
-                              className="btn btn-ghost btn-xs btn-quiet-danger"
+                              className="btn btn-secondary btn-xs btn-quiet-danger"
                               aria-label={`${t('tmRevoke')} ${i.email || t('tmLinkOnly')}`}
                               onClick={() => setToRevoke(i)}
-                            >
+                            ><Icon name="block" size={13} />
                               {t('tmRevoke')}
                             </button>
                           )}

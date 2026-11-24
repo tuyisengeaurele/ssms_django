@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
 import Modal from '../ui/Modal';
+import { Icon } from '../../components/ui/Icon';
 
 interface Props {
   open: boolean;
@@ -35,7 +36,7 @@ export default function IdleWarningModal({ open, secondsLeft, onStay, onSignOut 
       maxWidth={440}
       footer={
         <>
-          <button type="button" className="btn btn-ghost" onClick={onSignOut}>{t('idSignOut')}</button>
+          <button type="button" className="btn btn-secondary" onClick={onSignOut}><Icon name="logout" size={15} />{t('idSignOut')}</button>
           <button type="button" className="btn btn-primary" onClick={onStay} data-autofocus>{t('idStay')}</button>
         </>
       }

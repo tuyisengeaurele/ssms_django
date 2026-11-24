@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { detectionService } from '../../services/detection.service';
 import { useApiError } from '../../hooks/useApiError';
 import { useLanguage } from '../../context/LanguageContext';
+import { Icon } from '../../components/ui/Icon';
 
 // What the worm can be said to have really been. These are the two results of the check, and "something else".
 const RESULTS = ['Healthy', 'Grasserie'] as const;
@@ -50,7 +51,7 @@ export default function DetectionFeedback({ detectionId, initial }: Props) {
     return (
       <div className="feedback">
         <p role="status" className="feedback-thanks">{t('fbThanks')}</p>
-        <button type="button" className="btn btn-ghost btn-xs" onClick={change}>{t('fbChange')}</button>
+        <button type="button" className="btn btn-secondary btn-xs" onClick={change}><Icon name="edit" size={13} />{t('fbChange')}</button>
       </div>
     );
   }

@@ -76,7 +76,7 @@ export default function SupplyRoundsPage() {
                     <td data-label={t('rsColDeadline')} className="cell-muted cell-nowrap">{day.format(new Date(r.requestDeadline))}</td>
                     <td data-label={t('rsColRequests')}>{r.requestCount ?? 0}</td>
                     <td data-label="">
-                      <Link to={`/supply/${r.id}`} className="btn btn-ghost btn-xs" aria-label={fill(t('rsOpenFor'), { name: r.name })}>{t('dcsOpenRound')}</Link>
+                      <Link to={`/supply/${r.id}`} className="btn btn-secondary btn-xs" aria-label={fill(t('rsOpenFor'), { name: r.name })}><Icon name="open" size={13} />{t('dcsOpenRound')}</Link>
                     </td>
                   </tr>
                 ))}

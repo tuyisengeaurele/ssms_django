@@ -102,7 +102,7 @@ export default function HarvestPage() {
   };
 
   const back = (
-    <Link to={`/batches/${batchId}`} className="btn btn-ghost btn-sm">
+    <Link to={`/batches/${batchId}`} className="btn btn-secondary btn-sm">
       <Icon name="back" size={15} />
       {t('hpBack')}
     </Link>
@@ -287,10 +287,10 @@ export default function HarvestPage() {
                           <td data-label="">
                             <div className="table-actions">
                               {r.isShared && <span className="cell-muted">{t('lotSharedTag')}</span>}
-                              <button className="btn btn-ghost btn-xs" aria-label={`${t('lotQrButton')} ${when}`} onClick={() => setQrFor({ ...r, farmName: r.farmName ?? batch?.farm?.name })}>
+                              <button className="btn btn-secondary btn-xs" aria-label={`${t('lotQrButton')} ${when}`} onClick={() => setQrFor({ ...r, farmName: r.farmName ?? batch?.farm?.name })}><Icon name="open" size={13} />
                                 {t('lotQrButton')}
                               </button>
-                              <button className="btn btn-ghost btn-xs btn-quiet-danger" aria-label={`${t('hpDelete')} ${when}`} onClick={() => setToDelete(r)}>
+                              <button className="btn btn-secondary btn-xs btn-quiet-danger" aria-label={`${t('hpDelete')} ${when}`} onClick={() => setToDelete(r)}><Icon name="remove" size={13} />
                                 {t('hpDelete')}
                               </button>
                             </div>

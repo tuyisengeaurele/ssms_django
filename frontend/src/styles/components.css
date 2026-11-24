@@ -594,6 +594,8 @@ tr.is-off td:last-child { opacity: 1; }
 
 .btn-quiet-danger { color: var(--danger-ink); }
 .btn-quiet-danger:hover:not(:disabled) { background: var(--danger-wash); color: var(--danger-ink-2); }
+/* A destructive action is a button like the others, outlined in red. */
+.btn-secondary.btn-quiet-danger { border-color: currentColor; }
 
 /* The switch between the logs of the System page */
 .stream-switch { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 18px; }

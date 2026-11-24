@@ -187,7 +187,7 @@ export default function FarmerDashboard() {
           <Panel
             title={`${t('fhBatches')} (${batches.length})`}
             flush
-            actions={<Link to="/batches" className="btn btn-ghost btn-sm">{t('fhViewAll')}<Icon name="forward" size={14} /></Link>}
+            actions={<Link to="/batches" className="btn btn-secondary btn-sm">{t('fhViewAll')}<Icon name="forward" size={14} /></Link>}
           >
             {batches.length === 0 ? (
               <EmptyState
@@ -215,8 +215,8 @@ export default function FarmerDashboard() {
                         <td data-label={t('fhColStarted')} className="cell-muted cell-nowrap">{date.format(new Date(b.startDate))}</td>
                         <td data-label="">
                           <div className="table-actions">
-                            <Link to={`/batches/${b.id}`} className="btn btn-ghost btn-xs" aria-label={`${t('btDetails')} ${b.farm?.name ?? ''}`}>{t('btDetails')}</Link>
-                            <Link to={`/batches/${b.id}/detect`} className="btn btn-ghost btn-xs" aria-label={`${t('btCheck')} ${b.farm?.name ?? ''}`} title={t('btCheck')}>
+                            <Link to={`/batches/${b.id}`} className="btn btn-secondary btn-xs" aria-label={`${t('btDetails')} ${b.farm?.name ?? ''}`}><Icon name="view" size={13} />{t('btDetails')}</Link>
+                            <Link to={`/batches/${b.id}/detect`} className="btn btn-secondary btn-xs" aria-label={`${t('btCheck')} ${b.farm?.name ?? ''}`} title={t('btCheck')}>
                               <Icon name="detections" size={15} />
                             </Link>
                           </div>
@@ -232,7 +232,7 @@ export default function FarmerDashboard() {
           <Panel
             title={t('svAlertsTitle')}
             flush
-            actions={<Link to="/alerts" className="btn btn-ghost btn-sm">{t('svAllAlerts')}<Icon name="forward" size={14} /></Link>}
+            actions={<Link to="/alerts" className="btn btn-secondary btn-sm">{t('svAllAlerts')}<Icon name="forward" size={14} /></Link>}
           >
             {alerts.length === 0 ? (
               <EmptyState icon={<Icon name="alerts" size={22} />} title={t('fhNoAlerts')} description={t('fhNoAlertsBody')} />
@@ -245,7 +245,7 @@ export default function FarmerDashboard() {
                       <p className="alert-feed-meta"><span>{timeAgo(a.createdAt, locale)}</span></p>
                     </div>
                     {!a.isRead && (
-                      <button className="btn btn-ghost btn-xs" onClick={() => markRead(a.id)}>{t('alMarkRead')}</button>
+                      <button className="btn btn-secondary btn-xs" onClick={() => markRead(a.id)}><Icon name="check" size={13} />{t('alMarkRead')}</button>
                     )}
                   </li>
                 ))}

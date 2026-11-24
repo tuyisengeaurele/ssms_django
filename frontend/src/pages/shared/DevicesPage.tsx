@@ -151,7 +151,7 @@ export default function DevicesPage() {
                     <td data-label={t('dvColSeen')} className="cell-muted cell-nowrap">{d.lastSeen ? timeAgo(d.lastSeen, locale) : t('dvNever')}</td>
                     <td data-label="">
                       <div className="table-actions">
-                        <button className="btn btn-ghost btn-xs" aria-label={`${t('dvDetails')} ${d.name}`} onClick={() => setSelected(d)}>
+                        <button className="btn btn-secondary btn-xs" aria-label={`${t('dvDetails')} ${d.name}`} onClick={() => setSelected(d)}><Icon name="view" size={13} />
                           {t('dvDetails')}
                         </button>
                       </div>

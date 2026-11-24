@@ -6,6 +6,7 @@ import type { User } from '../../types';
 import { fill } from '../../utils/fill';
 import { formatRwandaMobile, phoneFieldError, samePhone } from '../../utils/phone';
 import Modal from './Modal';
+import { Icon } from '../../components/ui/Icon';
 
 interface Props {
   open: boolean;
@@ -81,7 +82,7 @@ export default function AdminPhoneDialog({ open, user, onClose, onSaved }: Props
       ) : (
         <>
           {user.phone ? (
-            <button type="button" className="btn btn-ghost btn-quiet-danger" onClick={() => setAsking(true)} disabled={busy}>{t('apClear')}</button>
+            <button type="button" className="btn btn-secondary btn-quiet-danger" onClick={() => setAsking(true)} disabled={busy}><Icon name="remove" size={15} />{t('apClear')}</button>
           ) : null}
           <button type="button" className="btn btn-secondary" onClick={onClose} disabled={busy}>{t('btnCancel')}</button>
           <button type="submit" form="ap-form" className="btn btn-primary" disabled={!next.trim() || busy}>

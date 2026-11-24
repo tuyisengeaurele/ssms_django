@@ -166,7 +166,7 @@ export default function AdminCooperativesPage() {
                     <td data-label={t('coColCreated')} className="cell-muted">-</td>
                     <td data-label="">
                       <div className="table-actions">
-                        <Link to="/admin/cooperatives/all" className="btn btn-ghost btn-xs" aria-label={`${t('coView')} ${t('crAll')}`}>{t('coView')}</Link>
+                        <Link to="/admin/cooperatives/all" className="btn btn-secondary btn-xs" aria-label={`${t('coView')} ${t('crAll')}`}><Icon name="view" size={13} />{t('coView')}</Link>
                       </div>
                     </td>
                   </tr>
@@ -189,9 +189,9 @@ export default function AdminCooperativesPage() {
                     <td data-label="">
                       <div className="table-actions">
                         {tab === 'active' ? (
-                          <Link to={`/admin/cooperatives/${c.id}`} className="btn btn-ghost btn-xs" aria-label={`${t('coView')} ${c.name}`}>{t('coView')}</Link>
+                          <Link to={`/admin/cooperatives/${c.id}`} className="btn btn-secondary btn-xs" aria-label={`${t('coView')} ${c.name}`}><Icon name="view" size={13} />{t('coView')}</Link>
                         ) : (
-                          <button className="btn btn-ghost btn-xs" aria-label={`${t('coRestore')} ${c.name}`} onClick={() => setConfirmRestore(c)}>{t('coRestore')}</button>
+                          <button className="btn btn-secondary btn-xs" aria-label={`${t('coRestore')} ${c.name}`} onClick={() => setConfirmRestore(c)}><Icon name="refresh" size={13} />{t('coRestore')}</button>
                         )}
                       </div>
                     </td>

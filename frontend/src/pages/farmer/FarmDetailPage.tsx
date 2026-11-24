@@ -365,8 +365,8 @@ export default function FarmDetailPage() {
               {downloading ? t('reportExporting') : t('fdSummaryPdf')}
             </button>
             {canEdit && <button onClick={openEdit} className="btn btn-secondary btn-sm"><Icon name="edit" size={15} />{t('fdEdit')}</button>}
-            {canEdit && <button onClick={() => setShowDelete(true)} className="btn btn-ghost btn-sm btn-quiet-danger"><Icon name="remove" size={15} />{t('fdDelete')}</button>}
-            <Link to="/farms" className="btn btn-ghost btn-sm"><Icon name="back" size={15} />{t('afBack')}</Link>
+            {canEdit && <button onClick={() => setShowDelete(true)} className="btn btn-secondary btn-sm btn-quiet-danger"><Icon name="remove" size={15} />{t('fdDelete')}</button>}
+            <Link to="/farms" className="btn btn-secondary btn-sm"><Icon name="back" size={15} />{t('afBack')}</Link>
           </>
         }
       />
@@ -427,8 +427,8 @@ export default function FarmDetailPage() {
                   </div>
                   {canEdit && (
                     <div className="table-actions">
-                      <button className="btn btn-ghost btn-xs" aria-label={fill(t('rmEditFor'), { name: room.name })} onClick={() => openRoomDialog(room)}>{t('coEdit')}</button>
-                      <button className="btn btn-ghost btn-xs btn-quiet-danger" aria-label={fill(t('rmDeleteFor'), { name: room.name })} onClick={() => setRoomToDelete(room)}>{t('bdDeathDelete')}</button>
+                      <button className="btn btn-secondary btn-xs" aria-label={fill(t('rmEditFor'), { name: room.name })} onClick={() => openRoomDialog(room)}><Icon name="edit" size={13} />{t('coEdit')}</button>
+                      <button className="btn btn-secondary btn-xs btn-quiet-danger" aria-label={fill(t('rmDeleteFor'), { name: room.name })} onClick={() => setRoomToDelete(room)}><Icon name="remove" size={13} />{t('bdDeathDelete')}</button>
                     </div>
                   )}
                 </li>
@@ -483,7 +483,7 @@ export default function FarmDetailPage() {
                       <span className="cell-muted">{t('fdNoReading')}</span>
                     )}
                   </div>
-                  <button className="btn btn-ghost btn-xs" aria-label={`${t('fdDetails')} ${d.name}`} onClick={() => setOpenDevice(d)}>
+                  <button className="btn btn-secondary btn-xs" aria-label={`${t('fdDetails')} ${d.name}`} onClick={() => setOpenDevice(d)}><Icon name="view" size={13} />
                     {t('fdDetails')}
                   </button>
                 </li>
@@ -535,8 +535,8 @@ export default function FarmDetailPage() {
                       <td data-label={t('fdColChecks')} className="cell-strong">{b.counts?.diseaseDetections ?? 0}</td>
                       <td data-label="">
                         <div className="table-actions">
-                          <Link to={`/batches/${b.id}`} className="btn btn-ghost btn-xs" aria-label={`${t('fdDetails')} #${b.id.slice(-8).toUpperCase()}`}>{t('fdDetails')}</Link>
-                          <Link to={`/batches/${b.id}/detect`} className="btn btn-ghost btn-xs" aria-label={`${t('fdCheck')} #${b.id.slice(-8).toUpperCase()}`}>
+                          <Link to={`/batches/${b.id}`} className="btn btn-secondary btn-xs" aria-label={`${t('fdDetails')} #${b.id.slice(-8).toUpperCase()}`}><Icon name="view" size={13} />{t('fdDetails')}</Link>
+                          <Link to={`/batches/${b.id}/detect`} className="btn btn-secondary btn-xs" aria-label={`${t('fdCheck')} #${b.id.slice(-8).toUpperCase()}`}>
                             <Icon name="detections" size={14} />
                             {t('fdCheck')}
                           </Link>

@@ -152,7 +152,7 @@ export default function SupplyRoundPage() {
                   {round.paused ? t('rsResume') : t('rsPause')}
                 </button>
               )}
-              {running && <button className="btn btn-ghost btn-sm btn-quiet-danger" onClick={() => setDialog('cancel')}>{t('rsCancelRound')}</button>}
+              {running && <button className="btn btn-secondary btn-sm btn-quiet-danger" onClick={() => setDialog('cancel')}><Icon name="block" size={15} />{t('rsCancelRound')}</button>}
             </>
           }
         >
@@ -217,7 +217,7 @@ export default function SupplyRoundPage() {
                           {handing && (q.status === 'approved' || q.status === 'part_approved') && (
                             <div className="table-actions">
                               <button className="btn btn-primary btn-xs" aria-label={fill(t('rsRecordFor'), { name: q.farmer.name })} onClick={() => setDialog({ receipt: q })}>{t('rsRecord')}</button>
-                              <button className="btn btn-ghost btn-xs" aria-label={fill(t('rsNotCollectedFor'), { name: q.farmer.name })} onClick={() => setDialog({ notCollected: q })}>{t('rsNotCollectedYes')}</button>
+                              <button className="btn btn-secondary btn-xs" aria-label={fill(t('rsNotCollectedFor'), { name: q.farmer.name })} onClick={() => setDialog({ notCollected: q })}><Icon name="close" size={13} />{t('rsNotCollectedYes')}</button>
                             </div>
                           )}
                         </td>
