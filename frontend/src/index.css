@@ -138,6 +138,19 @@
   --danger-ink:   #9b3526;
   --danger-ink-2: #7f2a1e;
   --danger-wash:  #fbefec;
+
+  /* Buttons. The main action is solid green, every other action is soft green with a green edge, and a destructive one is red.
+     Each darkens on hover and darker still when pressed. */
+  --btn-primary-bg:    #2D6A4F;
+  --btn-primary-hover: #234D37;
+  --btn-primary-fg:    #FBF9F4;
+  --btn-soft-bg:       #E4F1EA;
+  --btn-soft-fg:       #1B5A3E;
+  --btn-soft-line:     #5D9A7E;
+  --btn-soft-hover:    #CFE6D9;
+  --btn-soft-active:   #BEDDCB;
+  --btn-danger-bg:     #FBEFEC;
+  --btn-danger-fg:     #9B3526;
   --alert-error-bg: #fbefec;  --alert-error-fg: #8a2c20;  --alert-error-line: rgba(160, 52, 40, 0.25);
   --alert-ok-bg:    #e8f2ec;  --alert-ok-fg:    #1f5a3f;  --alert-ok-line:    rgba(45, 106, 79, 0.25);
   --alert-warn-bg:  #faf1de;  --alert-warn-fg:  #7a5010;  --alert-warn-line:  rgba(200, 146, 58, 0.35);
@@ -264,6 +277,17 @@
   --danger-ink:   #F08A76;
   --danger-ink-2: #F6A595;
   --danger-wash:  rgba(240, 138, 118, 0.14);
+
+  --btn-primary-bg:    #2F7D5C;
+  --btn-primary-hover: #286B4E;
+  --btn-primary-fg:    #FBF9F4;
+  --btn-soft-bg:       #1B3326;
+  --btn-soft-fg:       #A5DCBD;
+  --btn-soft-line:     #3F8F69;
+  --btn-soft-hover:    #24432F;
+  --btn-soft-active:   #2C5239;
+  --btn-danger-bg:     #3A1F1B;
+  --btn-danger-fg:     #F08A76;
   --alert-error-bg: #3A1F1B;  --alert-error-fg: #F4B3A5;  --alert-error-line: rgba(240, 138, 118, 0.35);
   --alert-ok-bg:    #1B3326;  --alert-ok-fg:    #A5DCBD;  --alert-ok-line:    rgba(82, 183, 136, 0.35);
   --alert-warn-bg:  #3A2E12;  --alert-warn-fg:  #EBC779;  --alert-warn-line:  rgba(224, 169, 59, 0.4);

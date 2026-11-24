@@ -156,13 +156,13 @@
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; box-shadow: none; }
 
-.btn-primary { background: var(--ink); color: var(--ivory); }
-.btn-primary:hover:not(:disabled) { background: var(--primary-fill); color: var(--on-fill); box-shadow: var(--shadow-md); }
-.btn-primary:active:not(:disabled) { background: var(--brand-700); color: var(--on-fill); box-shadow: none; }
+.btn-primary { background: var(--btn-primary-bg); color: var(--btn-primary-fg); box-shadow: var(--shadow-xs); }
+.btn-primary:hover:not(:disabled) { background: var(--btn-primary-hover); color: var(--btn-primary-fg); box-shadow: var(--shadow-md); }
+.btn-primary:active:not(:disabled) { background: var(--brand-700); color: var(--btn-primary-fg); box-shadow: none; }
 
-.btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--border); }
-.btn-secondary:hover:not(:disabled) { border-color: var(--ink); background: var(--surface); box-shadow: var(--shadow-xs); }
-.btn-secondary:active:not(:disabled) { background: var(--tint); box-shadow: none; }
+.btn-secondary { background: var(--btn-soft-bg); color: var(--btn-soft-fg); border-color: var(--btn-soft-line); }
+.btn-secondary:hover:not(:disabled) { border-color: var(--btn-soft-fg); background: var(--btn-soft-hover); box-shadow: var(--shadow-sm); }
+.btn-secondary:active:not(:disabled) { background: var(--btn-soft-active); box-shadow: none; }
 
 .btn-ghost { background: transparent; color: var(--text-2); }
 .btn-ghost:hover:not(:disabled) { background: var(--tint); color: var(--ink); }
@@ -173,6 +173,7 @@
 
 /* Pressing a button moves it in a little. This is motion, so it is only for people who have not asked for less. */
 @media (prefers-reduced-motion: no-preference) {
+  .btn:hover:not(:disabled) { transform: translateY(-1px); }
   .btn:active:not(:disabled) { transform: scale(0.98); }
 }
 
@@ -594,8 +595,10 @@ tr.is-off td:last-child { opacity: 1; }
 
 .btn-quiet-danger { color: var(--danger-ink); }
 .btn-quiet-danger:hover:not(:disabled) { background: var(--danger-wash); color: var(--danger-ink-2); }
-/* A destructive action is a button like the others, outlined in red. */
-.btn-secondary.btn-quiet-danger { border-color: currentColor; }
+/* A destructive action is a button like the others: soft red with a red edge, solid red when the pointer is on it. */
+.btn-secondary.btn-quiet-danger { background: var(--btn-danger-bg); color: var(--btn-danger-fg); border-color: currentColor; }
+.btn-secondary.btn-quiet-danger:hover:not(:disabled) { background: var(--danger-fill); color: var(--on-danger); border-color: var(--danger-fill); box-shadow: var(--shadow-sm); }
+.btn-secondary.btn-quiet-danger:active:not(:disabled) { background: var(--danger-fill-hover); border-color: var(--danger-fill-hover); box-shadow: none; }
 
 /* The switch between the logs of the System page */
 .stream-switch { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 18px; }
@@ -1635,7 +1638,13 @@ a.cal-ev-link:focus-visible { outline: 2px solid var(--gold); outline-offset: 1p
 }
 
 /* A phone number with the two ways to reach it. Sits under a name, in the small grey line. */
-.phone-link { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; font-size: 0.8rem; color: var(--ink-soft); }
+.phone-link { display: inline-flex; align-items: center; flex-wrap: nowrap; gap: 6px 8px; font-size: 0.8rem; color: var(--ink-soft); }
 .phone-link__number { font-variant-numeric: tabular-nums; }
 /* Call and WhatsApp are buttons with an icon (btn btn-secondary btn-xs), so they only need room to sit in a row. */
 .phone-link__action { gap: 5px; }
+/* On a small phone the number and both buttons stay on one line, so the buttons keep their icons and give up their words. The
+   words stay for a screen reader. */
+@media (max-width: 430px) {
+  .phone-link__text { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+  .phone-link__action { padding-inline: 0.55rem; }
+}
