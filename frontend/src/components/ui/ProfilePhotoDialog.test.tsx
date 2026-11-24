@@ -181,6 +181,13 @@ describe('The profile photo dialog', () => {
     await waitFor(() => expect(onChanged).toHaveBeenCalledWith({ ...saved, photoUrl: null }));
   });
 
+  it('shows Remove as a button with a bin before the word, like the other buttons, not as plain red text', () => {
+    open('/api/photos/old');
+    const button = screen.getByRole('button', { name: 'Remove' });
+    expect(button).toHaveClass('btn', 'btn-secondary');
+    expect(button.querySelector('svg')).not.toBeNull();
+  });
+
   it('closes with Escape and Cancel, and starts empty when opened again', async () => {
     const { rerender } = open();
     choose(file());

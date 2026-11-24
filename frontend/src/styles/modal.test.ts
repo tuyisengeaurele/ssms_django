@@ -74,6 +74,28 @@ describe('the dialog box', () => {
   });
 });
 
+describe('the buttons of a dialog', () => {
+  // The buttons share the whole width of the footer in equal parts, so they do not huddle at the right with an empty left. A
+  // destructive one is outlined in red, so it reads as a button like the others and not as a link.
+  it('share the width of the footer in equal columns', () => {
+    const footer = rules(css, '.modal-footer');
+    expect(footer).toMatch(/display:\s*grid/);
+    expect(footer).toMatch(/grid-auto-flow:\s*column/);
+    expect(footer).toMatch(/grid-auto-columns:\s*minmax\(0,\s*1fr\)/);   // minmax(0, ...) lets a column shrink below its words, which then wrap
+    expect(footer).not.toMatch(/justify-content:\s*flex-end/);
+  });
+
+  it('centre their words and may wrap them, so a long label stays inside its column', () => {
+    const buttons = rules(css, '.modal-footer .btn');
+    expect(buttons).toMatch(/justify-content:\s*center/);
+    expect(buttons).toMatch(/white-space:\s*normal/);
+  });
+
+  it('outline a destructive one in red', () => {
+    expect(rules(css, '.modal-footer .btn-quiet-danger')).toMatch(/border-color:\s*currentColor/);
+  });
+});
+
 describe('the dialog on a phone', () => {
   it('is a sheet from the bottom, sized by the visible height', () => {
     expect(phone).toMatch(/\.modal-box\s*\{[^}]*max-height:\s*min\(92vh,\s*92dvh\)/);
