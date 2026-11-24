@@ -1,4 +1,5 @@
-"""An account with no phone number can sign in, but can reach nothing until it gives one.
+"""An account with no phone number can sign in, but can reach nothing until it gives one. An account that is scheduled to be
+closed can reach nothing until its owner keeps it or signs out.
 
 The check runs in the authentication class, so it covers every view whatever permission classes the view sets for itself.
 The tests sign in with a real token, because force_authenticate skips the authentication class.
@@ -8,8 +9,8 @@ import re
 import pytest
 from django.urls import URLPattern, URLResolver, get_resolver
 
+from core.account_gate import OPEN_URL_NAMES
 from core.jwt_authentication import ActiveUserJWTAuthentication
-from core.phone_gate import OPEN_URL_NAMES
 from tests.factories import UserFactory
 from tests.support_helpers import acting, admin_and_person
 
@@ -151,3 +152,4 @@ def test_the_gate_adds_no_database_query(jwt_client):
     with CaptureQueriesContext(connection) as withn:
         jwt_client(with_number).get(ME)
     assert len(without) <= len(withn)
+

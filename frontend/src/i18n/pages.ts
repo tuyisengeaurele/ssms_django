@@ -1114,6 +1114,10 @@ export const pageTranslations = {
   erCoopCooperativeInactive: k("That cooperative is no longer active.", "Cette coopérative n'est plus active.", "Iyo koperative ntigikora."),
   erCoopAlreadyMoved: k("This person is no longer in the cooperative they asked to leave.", "Cette personne n'est plus dans la coopérative qu'elle voulait quitter.", "Uyu muntu ntakiri muri koperative yasabye kuvamo."),
   erCoopNothingToWithdraw: k("There is no request to withdraw.", "Il n'y a aucune demande à retirer.", "Nta cyifuzo cyo gukuramo gihari."),
+  erDeletionScheduled: k("This account is scheduled to be removed. Keep it to continue.", "La suppression de ce compte est programmée. Conservez-le pour continuer.", "Iyi konti iteganyirijwe gusibwa. Yigumane kugira ngo ukomeze."),
+  erDeletionNotForStaff: k("To close this account, please contact the SSMS team.", "Pour fermer ce compte, veuillez contacter l'équipe SSMS.", "Kugira ngo iyi konti ifungwe, nyabuneka vugana n'ikipe ya SSMS."),
+  erDeletionNothingToCancel: k("Your account is not scheduled to be removed.", "La suppression de votre compte n'est pas programmée.", "Konti yawe nta gahunda yo gusibwa ifite."),
+  erAnonymised: k("This account was removed and cannot be restored.", "Ce compte a été supprimé et ne peut pas être restauré.", "Iyi konti yarasibwe kandi ntishobora gusubizwaho."),
   erEmailTaken: k("An account with this email already exists. Try signing in instead.", "Un compte existe déjà avec cet e-mail. Essayez de vous connecter.", "Konti ifite iyi meyili isanzwe ibaho. Gerageza kwinjira."),
   erReference: k("Reference: {ref}", "Référence : {ref}", "Inomero y'icyitonderwa: {ref}"),
   // The server's own sentences, sent in the language the page asks for. The server copies these (scripts/build_doc_text.py).
