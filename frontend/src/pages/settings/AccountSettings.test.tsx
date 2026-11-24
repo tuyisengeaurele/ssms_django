@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { AxiosError } from 'axios';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
@@ -16,6 +16,8 @@ const api = vi.hoisted(() => ({ updateProfile: vi.fn() }));
 vi.mock('../../services/auth.service', () => ({ authService: api }));
 const account = vi.hoisted(() => ({ getEmailChange: vi.fn(), cancelEmailChange: vi.fn(), startEmailChange: vi.fn() }));
 vi.mock('../../services/account.service', () => ({ accountService: account }));
+const coop = vi.hoisted(() => ({ mine: vi.fn(), options: vi.fn(), ask: vi.fn(), withdraw: vi.fn() }));
+vi.mock('../../services/cooperativeRequest.service', () => ({ cooperativeRequestService: coop }));
 
 import AccountSettings from './AccountSettings';
 
@@ -43,6 +45,10 @@ beforeEach(() => {
   api.updateProfile.mockResolvedValue({ data: { data: { ...auth.user, name: 'Auris T' } } });
   account.getEmailChange.mockResolvedValue({ data: { data: null } });
   account.cancelEmailChange.mockResolvedValue({ data: { data: null } });
+  auth.user.role = 'ADMIN';
+  coop.mine.mockResolvedValue({ data: { data: null } });
+  coop.options.mockResolvedValue({ data: { data: [{ id: 'c1', name: 'Old Coop' }, { id: 'c2', name: 'New Coop' }] } });
+  coop.withdraw.mockResolvedValue({ data: { data: null } });
 });
 
 describe('Account settings', () => {
@@ -233,6 +239,94 @@ describe('Account settings', () => {
       expect(auth.updateUser).not.toHaveBeenCalled();
       fireEvent.change(field, { target: { value: '0788 123 456' } });
       expect(field).not.toHaveAttribute('aria-invalid', 'true');
+    });
+  });
+
+  describe('the cooperative', () => {
+    const asked = (over = {}) => ({
+      id: 'r1', status: 'requested', reason: 'Closer to my farm', from: { id: 'c1', name: 'Old Coop' }, to: { id: 'c2', name: 'New Coop' },
+      decisionNote: '', createdAt: '2026-11-20T10:00:00Z', decidedAt: null, ...over,
+    });
+    const asFarmer = () => { auth.user.role = 'FARMER'; auth.user.cooperativeId = 'c1'; auth.user.cooperativeName = 'Old Coop'; };
+    const change = () => screen.queryByRole('button', { name: 'Change cooperative' });
+
+    it('has a Change cooperative button for a farmer and for a supervisor, and never for an admin', async () => {
+      open();
+      expect(change()).not.toBeInTheDocument();
+      cleanup();
+      asFarmer();
+      open();
+      expect(change()).toBeInTheDocument();
+      cleanup();
+      auth.user.role = 'SUPERVISOR';
+      open();
+      expect(change()).toBeInTheDocument();
+      expect(coop.mine).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not ask the server for a request when the person is an admin', () => {
+      open();
+      expect(coop.mine).not.toHaveBeenCalled();
+    });
+
+    it('opens the modal from the button', async () => {
+      asFarmer();
+      open();
+      fireEvent.click(change()!);
+      expect(await screen.findByRole('dialog', { name: 'Ask to change cooperative' })).toBeInTheDocument();
+    });
+
+    it('shows a waiting request with its date and the cooperative, and a way to withdraw it', async () => {
+      asFarmer();
+      coop.mine.mockResolvedValue({ data: { data: asked() } });
+      open();
+      expect(await screen.findByText(/Request waiting since .+, to join New Coop\./)).toBeInTheDocument();
+      expect(change()).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Withdraw' })).toBeInTheDocument();
+    });
+
+    it('says a request to leave in its own words', async () => {
+      asFarmer();
+      coop.mine.mockResolvedValue({ data: { data: asked({ to: null }) } });
+      open();
+      expect(await screen.findByText(/Request waiting since .+, to leave your cooperative\./)).toBeInTheDocument();
+    });
+
+    it('withdraws the request, says so, and brings the button back', async () => {
+      asFarmer();
+      coop.mine.mockResolvedValue({ data: { data: asked() } });
+      open();
+      fireEvent.click(await screen.findByRole('button', { name: 'Withdraw' }));
+      await waitFor(() => expect(coop.withdraw).toHaveBeenCalled());
+      await waitFor(() => expect(screen.queryByText(/Request waiting since/)).not.toBeInTheDocument());
+      expect(change()).toBeInTheDocument();
+      expect(await screen.findByText('Your request was withdrawn.', {}, { timeout: 5000 })).toBeInTheDocument();
+    });
+
+    it('shows a refusal with its note once, and Got it takes it away for good', async () => {
+      asFarmer();
+      coop.mine.mockResolvedValue({ data: { data: asked({ status: 'declined', decisionNote: 'Please talk to your supervisor first.', decidedAt: '2026-11-21T10:00:00Z' }) } });
+      open();
+      expect(await screen.findByText(/Your request was not approved on /)).toBeInTheDocument();
+      expect(screen.getByText('Note from the SSMS team: Please talk to your supervisor first.')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Got it' }));
+      expect(screen.queryByText(/Your request was not approved on /)).not.toBeInTheDocument();
+      cleanup();
+      open();
+      await waitFor(() => expect(coop.mine).toHaveBeenCalledTimes(2));
+      expect(screen.queryByText(/Your request was not approved on /)).not.toBeInTheDocument();
+    });
+
+    it('shows an approval in the words of a move, or of a leave', async () => {
+      asFarmer();
+      coop.mine.mockResolvedValue({ data: { data: asked({ status: 'approved', decidedAt: '2026-11-21T10:00:00Z' }) } });
+      open();
+      expect(await screen.findByText(/Your request to join New Coop was approved on /)).toBeInTheDocument();
+      cleanup();
+      localStorage.clear();
+      coop.mine.mockResolvedValue({ data: { data: asked({ id: 'r2', status: 'approved', to: null, decidedAt: '2026-11-21T10:00:00Z' }) } });
+      open();
+      expect(await screen.findByText(/Your request to leave your cooperative was approved on /)).toBeInTheDocument();
     });
   });
 
