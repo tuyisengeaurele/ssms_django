@@ -283,6 +283,13 @@ describe('Account settings', () => {
       expect(section.compareDocumentPosition(close) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
+    it('says in one short line what the section is for, when no request is waiting', () => {
+      asFarmer();
+      open();
+      const section = screen.getByRole('heading', { name: 'Change cooperative' }).closest('section') as HTMLElement;
+      expect(within(section).getByText('Ask to join another cooperative.')).toBeInTheDocument();
+    });
+
     it('has no cooperative section for an admin', () => {
       open();
       expect(screen.queryByRole('heading', { name: 'Change cooperative' })).not.toBeInTheDocument();

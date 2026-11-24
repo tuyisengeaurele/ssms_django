@@ -93,7 +93,7 @@ export default function ProfilePhotoDialog({ open, name, photoUrl, onClose, onCh
       footer={(
         <>
           {photoUrl ? (
-            <button type="button" className="btn btn-ghost btn-quiet-danger" onClick={() => run(() => accountService.removePhoto())} disabled={busy}>{t('ppRemove')}</button>
+            <button type="button" className="btn btn-secondary btn-quiet-danger" onClick={() => run(() => accountService.removePhoto())} disabled={busy}><Icon name="remove" size={15} />{t('ppRemove')}</button>
           ) : null}
           <button type="button" className="btn btn-secondary" onClick={onClose} disabled={busy}>{t('btnCancel')}</button>
           <button type="button" className="btn btn-primary" onClick={save} disabled={!image || busy}>
