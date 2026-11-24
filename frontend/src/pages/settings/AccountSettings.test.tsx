@@ -14,7 +14,7 @@ vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
 
 const api = vi.hoisted(() => ({ updateProfile: vi.fn() }));
 vi.mock('../../services/auth.service', () => ({ authService: api }));
-const account = vi.hoisted(() => ({ getEmailChange: vi.fn(), cancelEmailChange: vi.fn(), startEmailChange: vi.fn(), closeAccount: vi.fn() }));
+const account = vi.hoisted(() => ({ getEmailChange: vi.fn(), cancelEmailChange: vi.fn(), startEmailChange: vi.fn(), closeAccount: vi.fn(), uploadPhoto: vi.fn(), removePhoto: vi.fn() }));
 vi.mock('../../services/account.service', () => ({ accountService: account }));
 const farms = vi.hoisted(() => ({ getAll: vi.fn() }));
 vi.mock('../../services/farm.service', () => ({ farmService: farms }));
@@ -351,6 +351,43 @@ describe('Account settings', () => {
       open();
       fireEvent.click(screen.getByRole('button', { name: 'Download my data' }));
       expect(await screen.findByRole('dialog', { name: 'Download your data' })).toBeInTheDocument();
+    });
+  });
+
+  describe('your photo', () => {
+    const withPhoto = (url: string | null) => { (auth.user as Record<string, unknown>).photoUrl = url; };
+
+    it('shows the initials and an Add photo button when there is no photo', () => {
+      withPhoto(null);
+      open();
+      const card = screen.getByRole('region', { name: 'About you' });
+      expect(card.querySelector('.identity-avatar img')).toBeNull();
+      expect(within(card).getByRole('button', { name: 'Add photo' })).toBeInTheDocument();
+    });
+
+    it('shows the photo and a Change photo button when there is one', () => {
+      withPhoto('/api/photos/mine');
+      open();
+      const card = screen.getByRole('region', { name: 'About you' });
+      expect(card.querySelector('.identity-avatar img')).toHaveAttribute('src', '/api/photos/mine');
+      expect(within(card).getByRole('button', { name: 'Change photo' })).toBeInTheDocument();
+      withPhoto(null);
+    });
+
+    it('opens the photo dialog, and hands the account the server answers with to the app when it is saved', async () => {
+      withPhoto(null);
+      const answered = { ...auth.user, photoUrl: '/api/photos/new' };
+      account.uploadPhoto.mockResolvedValue({ data: { data: answered } });
+      URL.createObjectURL = vi.fn(() => 'blob:preview');
+      URL.revokeObjectURL = vi.fn();
+      open();
+      fireEvent.click(screen.getByRole('button', { name: 'Add photo' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Your photo' });
+      fireEvent.change(within(dialog).getByLabelText('Choose a photo'), { target: { files: [new File(['x'], 'me.png', { type: 'image/png' })] } });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Save photo' }));
+      await waitFor(() => expect(auth.updateUser).toHaveBeenCalledWith(answered));
+      expect(await screen.findByText('Your photo was saved.', {}, { timeout: 5000 })).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     });
   });
 

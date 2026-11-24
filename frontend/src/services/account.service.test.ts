@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const post = vi.hoisted(() => vi.fn());
-vi.mock('./api', () => ({ default: { post } }));
+const patch = vi.hoisted(() => vi.fn());
+const del = vi.hoisted(() => vi.fn());
+vi.mock('./api', () => ({ default: { post, patch, delete: del } }));
 
 import { accountService } from './account.service';
 
@@ -15,6 +17,8 @@ beforeEach(() => {
     clicked.push(this);
   });
   post.mockReset();
+  patch.mockReset();
+  del.mockReset();
 });
 
 afterEach(() => vi.restoreAllMocks());
@@ -53,5 +57,25 @@ describe('downloadMyData', () => {
     const error = Object.assign(new Error('Network Error'), { isAxiosError: true });
     post.mockRejectedValue(error);
     await expect(accountService.downloadMyData('x')).rejects.toBe(error);
+  });
+});
+
+describe('the profile photo', () => {
+  it('sends the chosen file as a form field named photo and returns the account the server answers with', async () => {
+    patch.mockResolvedValue({ data: { data: { id: 'u1' } } });
+    const picked = new File(['x'], 'me.png', { type: 'image/png' });
+    const res = await accountService.uploadPhoto(picked);
+    expect(patch).toHaveBeenCalledTimes(1);
+    const [url, body] = patch.mock.calls[0];
+    expect(url).toBe('/auth/me/photo');
+    expect(body).toBeInstanceOf(FormData);
+    expect((body as FormData).get('photo')).toBe(picked);
+    expect(res.data.data).toEqual({ id: 'u1' });
+  });
+
+  it('removes the photo with a delete', async () => {
+    del.mockResolvedValue({ data: { data: { id: 'u1', photoUrl: null } } });
+    await accountService.removePhoto();
+    expect(del).toHaveBeenCalledWith('/auth/me/photo');
   });
 });

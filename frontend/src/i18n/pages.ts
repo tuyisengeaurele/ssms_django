@@ -2244,6 +2244,16 @@ export const pageTranslations = {
   ddSubmit: k("Download", "Télécharger", "Kuramo"),
   ddBusy: k("Preparing your file", "Préparation de votre fichier", "Turimo gutegura dosiye yawe"),
   ddDone: k("Your file was downloaded.", "Votre fichier a été téléchargé.", "Dosiye yawe yarakuwe."),
+  ppTitle: k("Your photo", "Votre photo", "Ifoto yawe"),
+  ppChoose: k("Choose a photo", "Choisir une photo", "Hitamo ifoto"),
+  ppHint: k("JPEG, PNG or WebP, up to 2 MB. It is cropped to a square, and your location and camera details are removed.", "JPEG, PNG ou WebP, jusqu'à 2 Mo. Elle est recadrée en carré, et votre position et les détails de l'appareil sont supprimés.", "JPEG, PNG cyangwa WebP, kugeza kuri 2 MB. Ikatwa ikaba kare, kandi aho uri n'amakuru y'ikamera birakurwaho."),
+  ppSave: k("Save photo", "Enregistrer la photo", "Bika ifoto"),
+  ppBusy: k("Saving your photo", "Enregistrement de la photo", "Turimo kubika ifoto"),
+  ppRemove: k("Remove photo", "Supprimer la photo", "Kuraho ifoto"),
+  ppSaved: k("Your photo was saved.", "Votre photo a été enregistrée.", "Ifoto yawe yabitswe."),
+  ppRemoved: k("Your photo was removed.", "Votre photo a été supprimée.", "Ifoto yawe yakuweho."),
+  ppAdd: k("Add photo", "Ajouter une photo", "Ongeraho ifoto"),
+  ppChange: k("Change photo", "Changer la photo", "Hindura ifoto"),
 } satisfies Record<string, Entry>;
 
 export type PageKey = keyof typeof pageTranslations;

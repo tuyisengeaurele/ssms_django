@@ -14,7 +14,8 @@ import CooperativeRequestModal from '../../components/ui/CooperativeRequestModal
 import EmailChangeDialog from '../../components/ui/EmailChangeDialog';
 import PhoneLink from '../../components/ui/PhoneLink';
 import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
-import { initialsOf } from '../../components/ui/Avatar';
+import Avatar from '../../components/ui/Avatar';
+import ProfilePhotoDialog from '../../components/ui/ProfilePhotoDialog';
 import Panel from '../../components/ui/Panel';
 import { dateFormat } from '../../utils/dateFormat';
 import { fill } from '../../utils/fill';
@@ -55,6 +56,7 @@ export default function AccountSettings() {
   // Only a farmer closes their own account here. The SSMS team does it for a supervisor or an admin.
   const isFarmer = user?.role === 'FARMER';
   const [closing, setClosing] = useState(false);
+  const [editingPhoto, setEditingPhoto] = useState(false);
   // How many batches are still running, so the dialog can say they stay as history. Nothing is said when it is not known.
   const [runningBatches, setRunningBatches] = useState(0);
 
@@ -165,10 +167,11 @@ export default function AccountSettings() {
   return (
     <div className="profile-stack">
       <section className="panel identity" aria-label={t('pfAbout')}>
-        <span className="identity-avatar" aria-hidden="true">{initialsOf(user?.name ?? '')}</span>
+        <Avatar name={user?.name ?? ''} photoUrl={user?.photoUrl} className="identity-avatar" />
         <h2 className="identity-name">{user?.name}</h2>
         <p className="identity-email">{user?.email}</p>
         {user && <span className="badge badge-ink">{t(ROLE_LABEL_KEY[user.role])}</span>}
+        {user && <button type="button" className="btn btn-ghost btn-xs identity-photo-btn" onClick={() => setEditingPhoto(true)}>{user.photoUrl ? t('ppChange') : t('ppAdd')}</button>}
 
         <dl className="identity-facts">
           <div><dt>{t('pfSince')}</dt><dd>{joined}</dd></div>
@@ -288,6 +291,16 @@ export default function AccountSettings() {
           )}
         </div>
       </section>
+
+      {user ? (
+        <ProfilePhotoDialog
+          open={editingPhoto}
+          name={user.name}
+          photoUrl={user.photoUrl}
+          onClose={() => setEditingPhoto(false)}
+          onChanged={(changed) => { updateUser(changed); success(t(changed.photoUrl ? 'ppSaved' : 'ppRemoved')); setEditingPhoto(false); }}
+        />
+      ) : null}
 
       {user && isFarmer ? (
         <CloseAccountDialog
