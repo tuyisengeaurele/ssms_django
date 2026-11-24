@@ -34,7 +34,7 @@ export interface WaitingAllowanceRequest {
   currentBoxes: number;
   reason: string;
   createdAt: string;
-  farmer: { id: string; name: string; email: string; phone?: string | null };
+  farmer: { id: string; name: string; email: string; phone?: string | null; photoUrl?: string | null };
 }
 
 /** One more box, suggested because a farmer finished a lot from a supply round in good order. */
@@ -43,13 +43,13 @@ export interface EarnedAllowance {
   currentBoxes: number;
   suggestedBoxes: number;
   createdAt: string;
-  farmer: { id: string; name: string; email: string; phone?: string | null };
+  farmer: { id: string; name: string; email: string; phone?: string | null; photoUrl?: string | null };
   batch: { id: string; lotCode: string; harvestedAt: string };
 }
 
 /** What a supervisor looks at before deciding about a request: the farmer's card and their rooms. */
 export interface AllowanceEvidence extends Allowance {
-  farmer: { id: string; name: string; email: string; phone?: string | null };
+  farmer: { id: string; name: string; email: string; phone?: string | null; photoUrl?: string | null };
   rooms: {
     id: string;
     name: string;
@@ -107,7 +107,7 @@ export interface EggRequestRow {
   receivedAt: string | null;
   batchId: string | null;
   createdAt: string;
-  farmer: { id: string; name: string; email: string; phone?: string | null };
+  farmer: { id: string; name: string; email: string; phone?: string | null; photoUrl?: string | null };
   room: { id: string; name: string };
   farm: { id: string; name: string };
 }
@@ -134,7 +134,7 @@ export interface CurrentRound {
 /** One line of the split the system proposes, which the supervisor may edit. */
 export interface SplitRow {
   id: string;
-  farmer: { id: string; name: string; email: string; phone?: string | null };
+  farmer: { id: string; name: string; email: string; phone?: string | null; photoUrl?: string | null };
   room: { id: string; name: string };
   asked: number;
   allowance: number;

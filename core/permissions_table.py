@@ -104,6 +104,8 @@ PERMISSIONS: dict[str, dict[str, frozenset]] = {
     # What a person does to their own account and has to prove: a new email, closing it, downloading their data. Closing is
     # open to every role at the door, and the route tells staff, in plain words, to ask the SSMS team.
     'account_security': {'email_change': ALL, 'delete': ALL, 'export': ALL},
+    # A person's own profile photo. The file itself is served by a public route (users/photo_views.py).
+    'account_photo': {'update': ALL, 'delete': ALL},
     # A farmer or supervisor asking to move to another cooperative, and the SSMS team deciding. Only the names of the
     # cooperatives are listed to the person asking.
     'cooperative_requests': {

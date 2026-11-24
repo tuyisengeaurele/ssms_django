@@ -201,7 +201,7 @@ export default function SupplyRoundPage() {
                       <tr key={q.id} className="tbody-row">
                         <td className="cell-lead">
                           <div className="cell-person">
-                            <Avatar name={q.farmer.name} />
+                            <Avatar name={q.farmer.name} photoUrl={q.farmer.photoUrl} />
                             <div className="cell-stack">
                               <span className="cell-strong">{q.farmer.name}</span>
                               <span className="cell-sub">{q.farmer.email}</span>

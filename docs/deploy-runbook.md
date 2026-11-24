@@ -752,3 +752,28 @@ The devices that were signed out stay signed out, and the person signs in again.
 **Downloading the data.** Settings, **Your data**, **Download my data**. The person gives their password and gets one JSON file with their own records. It is limited to 3 an hour per person and a wrong password counts, so a person who mistyped three times waits for the hour to pass. Each download writes `data_exported` to the security log, without the content.
 
 Going back: migrate `users` back to `0015`. The two columns are dropped, so a scheduled closure is forgotten and every account works normally. Accounts that were already anonymised stay anonymised.
+
+## 30. Profile photos
+
+The migration is `users.0017_user_photos`. It adds the `user_photos` table (one row per person, the WebP bytes and a random token) and changes no existing row.
+
+**What a person does.** Settings, Account, **Add photo**. The file is checked by what is in it, turned upright, cropped square, made at most 512 px and saved as WebP without any camera or location data. The address is `/api/photos/<token>`; a new photo gets a new token, and the old address stops working at once.
+
+**Who is sent the address.** The same people as the phone number (the person, the SSMS team, a supervisor for the farmers of their cooperative, a farmer for their own supervisor). The picture itself is served without a sign in, so anyone who is given the address can open it.
+
+**Size.** About 30 KB a photo. Watch it with:
+
+```sql
+SELECT count(*), pg_size_pretty(sum(length(data))) FROM user_photos;
+```
+
+**Taking one away by hand.** Delete the row and clear the address:
+
+```sql
+DELETE FROM user_photos WHERE "userId" = '<user id>';
+UPDATE users SET "photoUrl" = NULL WHERE id = '<user id>';
+```
+
+Closing an account and the nightly anonymising remove the photo too.
+
+Going back: migrate `users` back to `0016`. The table is dropped, so every photo is lost, and the `photoUrl` of those people points at nothing until they add one again (the screens fall back to the initials).

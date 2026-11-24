@@ -808,6 +808,13 @@ tr.is-off td:last-child { opacity: 1; }
 
 .identity { display: grid; justify-items: center; gap: 6px; padding: 32px 24px; text-align: center; }
 .identity-avatar { display: grid; width: 84px; height: 84px; margin-bottom: 10px; place-items: center; border-radius: 50%; background: var(--ink); color: var(--ivory); font: 450 1.9rem var(--font-display); }
+.row-avatar, .identity-avatar, .topbar-avatar, .photo-preview { overflow: hidden; }
+.row-avatar img, .identity-avatar img, .topbar-avatar img, .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+.identity-photo-btn { margin-top: 4px; }
+/* The picker in the photo dialog: what the picture will look like, then the file field. */
+.photo-picker { display: grid; gap: 16px; justify-items: start; }
+.photo-picker .form-group { width: 100%; margin: 0; }
+.photo-preview { display: grid; place-items: center; width: 96px; height: 96px; border-radius: 50%; background: var(--ink); color: var(--ivory); font: 450 2rem var(--font-display); }
 .identity-name { font: 450 1.45rem var(--font-display); color: var(--ink); overflow-wrap: anywhere; }
 .identity-email { margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem; overflow-wrap: anywhere; }
 .identity-facts { display: grid; gap: 12px; width: 100%; margin: 20px 0 0; padding-top: 18px; border-top: 1px solid var(--border-light); text-align: left; }
@@ -818,7 +825,7 @@ tr.is-off td:last-child { opacity: 1; }
 .identity-facts .cell-stack > .btn { align-self: flex-start; }
 /* Inside Settings the card is wide, so it reads as a row: the avatar, then the name and the facts. */
 .settings-body .identity { grid-template-columns: auto minmax(0, 1fr); justify-items: start; column-gap: 18px; padding: 20px 24px; text-align: left; }
-.settings-body .identity-avatar { grid-row: span 3; width: 64px; height: 64px; margin: 0; align-self: center; font-size: 1.5rem; }
+.settings-body .identity-avatar { grid-row: span 4; width: 64px; height: 64px; margin: 0; align-self: center; font-size: 1.5rem; }
 .settings-body .identity-email { margin-bottom: 0; }
 .settings-body .identity-facts { grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .settings-body .identity-facts > div { display: grid; gap: 2px; }

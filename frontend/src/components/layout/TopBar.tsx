@@ -9,6 +9,7 @@ import { ALERT_TYPE_KEY } from '../../utils/alertTypes';
 import { alertText } from '../../utils/alertText';
 import { usePageTitle } from '../../utils/pageTitle';
 import { timeAgo } from '../../utils/timeAgo';
+import Avatar from '../ui/Avatar';
 import { Icon } from '../ui/Icon';
 import LanguageSwitcher from '../ui/LanguageSwitcher';
 import { ROLE_LABEL_KEY } from './Sidebar';
@@ -136,9 +137,6 @@ export default function TopBar({ onMenuToggle, onSearch, alertCount = 0 }: TopBa
     };
   }, []);
 
-  const initials = user?.name
-    ? user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
-    : 'U';
   const bellLabel = alertCount > 0 ? `${t('shellNotifications')}, ${alertCount}` : t('shellNotifications');
 
   return (
@@ -184,7 +182,7 @@ export default function TopBar({ onMenuToggle, onSearch, alertCount = 0 }: TopBa
           </div>
 
           <Link to="/settings/account" className="topbar-user" aria-label={`${user?.name ?? ''}, ${t('btnSettings')}`}>
-            <span className="topbar-avatar" aria-hidden="true">{initials}</span>
+            <Avatar name={user?.name || 'U'} photoUrl={user?.photoUrl} className="topbar-avatar" />
             <span className="topbar-user-info">
               <span className="t-name">{user?.name}</span>
               <span className="t-role">{user ? t(ROLE_LABEL_KEY[user.role]) : ''}</span>

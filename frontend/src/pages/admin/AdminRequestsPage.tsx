@@ -120,7 +120,7 @@ export default function AdminRequestsPage() {
           {requests.map((r) => (
             <li key={r.id} className="decision">
               <div className="cell-person">
-                <Avatar name={r.person.name} />
+                <Avatar name={r.person.name} photoUrl={r.person.photoUrl} />
                 <div className="cell-stack">
                   <span className="cell-strong">{r.person.name}</span>
                   <span className="cell-sub">{r.person.email}</span>

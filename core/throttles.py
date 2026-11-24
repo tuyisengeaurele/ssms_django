@@ -92,6 +92,14 @@ class AccountExportThrottle(UserRateThrottle):
     scope = 'account_export'   # a person downloading all their data, 3 an hour. A wrong password counts too, so a stolen session cannot guess one
 
 
+class PhotoUploadThrottle(UserRateThrottle):
+    scope = 'photo_upload'   # adding or replacing a profile photo, 20 an hour per person
+
+
+class PhotoFileThrottle(AnonRateThrottle):
+    scope = 'photo_file'   # the picture behind a photo address, 300 a minute per address
+
+
 class SessionsRateThrottle(UserRateThrottle):
     scope = 'sessions'   # a person looking at, renaming or signing out their devices, 30 a minute
 

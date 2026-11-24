@@ -7,6 +7,8 @@ export interface TeamFarmer {
   email: string;
   /** Only when the person asking may see it: the farmers of their own cooperative. */
   phone?: string | null;
+  /** The photo, to the same people as the number. */
+  photoUrl?: string | null;
   joinedAt: string;
   farmCount: number;
   /** What the farmer may take per round. `default` means nothing was set yet and the cooperative's default applies. */

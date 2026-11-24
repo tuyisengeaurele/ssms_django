@@ -250,3 +250,19 @@ class EmailChange(models.Model):
             # One open request per person, held by the database so two taps cannot make two.
             models.UniqueConstraint(fields=['user'], condition=models.Q(status='pending'), name='one_pending_email_change_per_user'),
         ]
+
+
+class UserPhoto(models.Model):
+    """A person's profile photo, as WebP bytes. It lives in its own table so loading a person never loads an image.
+
+    `token` is a random secret that is part of the address the photo is served at (`/api/photos/<token>`). A new photo gets a
+    new token, and deleting the row ends the address at once.
+    """
+    user = models.OneToOneField(User, primary_key=True, on_delete=models.CASCADE, related_name='photo', db_column='userId')
+    token = models.CharField(max_length=64, unique=True)
+    data = models.BinaryField()
+    content_type = models.CharField(max_length=40, default='image/webp', db_column='contentType')
+    updated_at = models.DateTimeField(auto_now=True, db_column='updatedAt')
+
+    class Meta:
+        db_table = 'user_photos'

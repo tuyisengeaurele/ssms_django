@@ -28,7 +28,7 @@ PUBLIC = {
     # The links in the emails about a change of login email. They may be opened in a browser that holds no sign in, so the
     # signed token in the link is the proof (users/email_change.py).
     'EmailChangeConfirmView', 'EmailChangeUndoView',
-    'ContactCreateView', 'PublicLotView', 'InvitationDetailView', 'DeviceIngestView',
+    'ContactCreateView', 'PublicLotView', 'PhotoFileView', 'InvitationDetailView', 'DeviceIngestView',
     # A browser sends this report by itself, without signing in. It keeps one line and always answers 204 (core/csp.py).
     'CspReportView',
 }

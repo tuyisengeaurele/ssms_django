@@ -45,4 +45,7 @@ def person_row(viewer, person, visible, with_email: bool = True, **row) -> dict:
         out['email'] = person.email
     if str(person.pk) in visible and person.phone:
         out['phone'] = person.phone
+    # The photo goes to the same people as the number, because it shows the same person to the same viewers.
+    if str(person.pk) in visible and person.photo_url:
+        out['photo_url'] = person.photo_url
     return out

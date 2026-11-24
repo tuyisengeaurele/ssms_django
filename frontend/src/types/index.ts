@@ -18,7 +18,7 @@ export interface Cooperative {
 
 export interface CooperativeDetail extends Cooperative {
   /** A farmer is not sent anyone's email, so it is optional. */
-  members: Array<{ id: string; name: string; email?: string; phone?: string | null; role: Role; createdAt: string }>;
+  members: Array<{ id: string; name: string; email?: string; phone?: string | null; photoUrl?: string | null; role: Role; createdAt: string }>;
   farms: Array<{ id: string; name: string; location: string; ownerId: string; ownerName: string }>;
 }
 
@@ -40,7 +40,7 @@ export interface User {
   /** The day the account is removed, while its owner's closure is scheduled (YYYY-MM-DD). Otherwise null. */
   deletionDate?: string | null;
   /** A farmer's own answer only: the supervisor of their cooperative, to call for help. */
-  supervisor?: { id: string; name: string; phone?: string | null } | null;
+  supervisor?: { id: string; name: string; phone?: string | null; photoUrl?: string | null } | null;
   photoUrl?: string | null;
   preferredLanguage?: 'en' | 'fr' | 'rw';
   createdAt: string;

@@ -50,7 +50,10 @@ class UserSerializer(serializers.ModelSerializer):
         found = User.objects.filter(role='SUPERVISOR', cooperative_id=obj.cooperative_id, is_active=True).order_by('name').first()
         if found is None:
             return None
-        return {'id': found.pk, 'name': found.name, 'phone': found.phone}
+        block = {'id': found.pk, 'name': found.name, 'phone': found.phone}
+        if found.photo_url:
+            block['photo_url'] = found.photo_url   # left out when there is none, as in every other list of people
+        return block
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

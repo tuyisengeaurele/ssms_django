@@ -1,6 +1,6 @@
 import api from './api';
 import { fileNameFrom, readRefusedFile, saveBlob } from './download';
-import { ApiResponse } from '../types';
+import { ApiResponse, User } from '../types';
 
 /** A request to change the login email that has not been confirmed yet. The new address is masked: a***@example.rw. */
 export interface EmailChangePending {
@@ -40,6 +40,16 @@ export const accountService = {
       throw err;
     }
   },
+
+  /** Add or replace the profile photo, as the same kind of upload the disease check makes. */
+  uploadPhoto: (file: File) => {
+    const form = new FormData();
+    form.append('photo', file);
+    return api.patch<ApiResponse<User>>('/auth/me/photo', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+
+  /** Take the profile photo away. */
+  removePhoto: () => api.delete<ApiResponse<User>>('/auth/me/photo'),
 
   /** The farmer keeps the account. Open to an account that is scheduled to be removed. */
   cancelClosure: () => api.post<ApiResponse<null>>('/auth/delete-account/cancel'),

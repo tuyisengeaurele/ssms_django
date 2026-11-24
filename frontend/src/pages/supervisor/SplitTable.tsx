@@ -35,7 +35,7 @@ export default function SplitTable({ rows, values, notes, onValue, onNote }: Pro
             <tr key={r.id} className="tbody-row">
               <td className="cell-lead">
                 <div className="cell-person">
-                  <Avatar name={r.farmer.name} />
+                  <Avatar name={r.farmer.name} photoUrl={r.farmer.photoUrl} />
                   <div className="cell-stack">
                     <span className="cell-strong">{r.farmer.name}</span>
                     <span className="cell-sub">{r.farmer.email}</span>

@@ -347,7 +347,7 @@ export default function CoopFarmersTab() {
                     <tr key={f.id} className="tbody-row">
                       <td className="cell-lead">
                         <div className="cell-person">
-                          <Avatar name={f.name} />
+                          <Avatar name={f.name} photoUrl={f.photoUrl} />
                           <div className="cell-stack">
                             <span className="cell-strong">{f.name}</span>
                             <span className="cell-sub">{f.email}</span>
