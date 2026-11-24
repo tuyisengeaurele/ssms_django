@@ -273,6 +273,7 @@ export default function AccountSettings() {
               </>
             ) : (
               <>
+                <p className="form-hint form-hint--gap">{t('cqSectionBody')}</p>
                 {answered ? (
                   <p className="form-hint form-hint--gap">
                     <span>{answerText(answered)}</span>

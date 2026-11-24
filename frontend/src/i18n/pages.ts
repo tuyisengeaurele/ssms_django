@@ -2166,6 +2166,7 @@ export const pageTranslations = {
     "{name} azongera gushyiraho porogaramu yemeza umwirondoro igihe azinjirira.",
   ),
   cqSection: k("Change cooperative", "Changer de coopérative", "Guhindura koperative"),
+  cqSectionBody: k("Ask to join another cooperative.", "Demandez à rejoindre une autre coopérative.", "Saba kujya mu yindi koperative."),
   cqRequest: k("Request change", "Demander le changement", "Saba guhinduka"),
   cqTitle: k("Ask to change cooperative", "Demander à changer de coopérative", "Gusaba guhindura koperative"),
   cqIntro: k("The SSMS team decides. You stay where you are until then.", "L'équipe SSMS décide. Vous restez où vous êtes d'ici là.", "Itsinda rya SSMS ni ryo ritanga umwanzuro. Uguma aho uri kugeza icyo gihe."),
