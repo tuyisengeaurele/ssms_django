@@ -22,6 +22,8 @@ const farms = vi.hoisted(() => ({ getAll: vi.fn() }));
 vi.mock('../../services/farm.service', () => ({ farmService: farms }));
 const coop = vi.hoisted(() => ({ mine: vi.fn(), options: vi.fn(), ask: vi.fn(), withdraw: vi.fn() }));
 vi.mock('../../services/cooperativeRequest.service', () => ({ cooperativeRequestService: coop }));
+const supply = vi.hoisted(() => ({ getAllowance: vi.fn() }));
+vi.mock('../../services/supply.service', () => ({ supplyService: supply }));
 
 import AccountSettings from './AccountSettings';
 
@@ -54,6 +56,7 @@ beforeEach(() => {
   coop.options.mockResolvedValue({ data: { data: [{ id: 'c1', name: 'Old Coop' }, { id: 'c2', name: 'New Coop' }] } });
   coop.withdraw.mockResolvedValue({ data: { data: null } });
   farms.getAll.mockResolvedValue({ data: { data: [] } });
+  supply.getAllowance.mockResolvedValue({ data: { data: { boxes: 4, source: 'default', since: null, history: [], openRequest: null } } });
 });
 
 describe('Account settings', () => {
@@ -281,6 +284,22 @@ describe('Account settings', () => {
       expect(within(section).getByRole('button', { name: 'Request change' })).toBeInTheDocument();
       const close = screen.getByRole('heading', { name: 'Close your account' }).closest('section') as HTMLElement;
       expect(section.compareDocumentPosition(close) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('shows a farmer the allowance in its own section, above Change cooperative', async () => {
+      asFarmer();
+      open();
+      const allowance = (await screen.findByRole('heading', { name: 'Your allowance' })).closest('section') as HTMLElement;
+      expect(within(allowance).getByRole('button', { name: /Ask for a different amount/ })).toBeInTheDocument();
+      const section = screen.getByRole('heading', { name: 'Change cooperative' }).closest('section') as HTMLElement;
+      expect(allowance.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('shows no allowance to a supervisor or an admin, and does not ask for it', () => {
+      auth.user.role = 'SUPERVISOR';
+      open();
+      expect(screen.queryByRole('heading', { name: 'Your allowance' })).not.toBeInTheDocument();
+      expect(supply.getAllowance).not.toHaveBeenCalled();
     });
 
     it('says in one short line what the section is for, when no request is waiting', () => {

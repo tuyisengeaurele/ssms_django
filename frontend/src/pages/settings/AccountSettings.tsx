@@ -11,6 +11,7 @@ import CloseAccountDialog from '../../components/ui/CloseAccountDialog';
 import DownloadDataButton from '../../components/ui/DownloadDataButton';
 import ConfirmPhoneChangeDialog from '../../components/ui/ConfirmPhoneChangeDialog';
 import CooperativeRequestModal from '../../components/ui/CooperativeRequestModal';
+import AllowanceCard from '../../components/supply/AllowanceCard';
 import EmailChangeDialog from '../../components/ui/EmailChangeDialog';
 import PhoneLink from '../../components/ui/PhoneLink';
 import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
@@ -255,6 +256,8 @@ export default function AccountSettings() {
           <DownloadDataButton />
         </div>
       </section>
+
+      {isFarmer ? <AllowanceCard /> : null}
 
       {canAskCooperative ? (
         <section className="panel" aria-labelledby="pf-coop-title">
