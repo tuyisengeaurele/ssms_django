@@ -56,7 +56,7 @@ describe('Waiting for the person to answer', () => {
     open();
     await tick(0);
     expect(screen.getByRole('dialog', { name: 'Waiting for Aline Uwase' })).toBeInTheDocument();
-    expect(screen.getByText('Aline Uwase has 5 minutes to answer. You can leave this open.')).toBeInTheDocument();
+    expect(screen.getByText('Aline Uwase has 5 minutes to answer.')).toBeInTheDocument();
     expect(support.get).toHaveBeenCalledWith('a1');
   });
 

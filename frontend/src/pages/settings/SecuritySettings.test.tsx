@@ -50,7 +50,7 @@ describe('Security settings, SSMS support visits', () => {
     who.role = role;
     open();
     expect(await screen.findByRole('heading', { level: 2, name: 'SSMS support visits' })).toBeInTheDocument();
-    expect(await screen.findByText('No one from SSMS support has asked to view your account.')).toBeInTheDocument();
+    expect(await screen.findByText('No support request to view your account.')).toBeInTheDocument();
   });
 
   it('does not show the list while an admin acts as the person, because the server refuses it to them', async () => {

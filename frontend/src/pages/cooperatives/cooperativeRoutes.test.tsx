@@ -114,7 +114,7 @@ describe('A cooperative, for an admin', () => {
   it('says so, with a way back, when the cooperative does not exist', async () => {
     api.getById.mockRejectedValue(new Error('404'));
     renderCoop('/admin/cooperatives/nope');
-    expect(await screen.findByText("We couldn't find that cooperative.")).toBeInTheDocument();
+    expect(await screen.findByText("Cooperative not found.")).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Cooperatives' })).toHaveAttribute('href', '/admin/cooperatives');
     expect(screen.queryByRole('navigation', { name: 'Cooperative sections' })).not.toBeInTheDocument();
   });

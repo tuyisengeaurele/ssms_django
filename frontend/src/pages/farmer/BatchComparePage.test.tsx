@@ -87,7 +87,7 @@ describe('choosing batches to compare', () => {
     for (const n of [1, 2, 3, 4]) fireEvent.click(await screen.findByRole('checkbox', { name: new RegExp(`Farm ${n}\\b`) }));
     const fifth = screen.getByRole('checkbox', { name: /Farm 5/ });
     expect(fifth).toBeDisabled();
-    expect(screen.getByText('You can compare up to 4 batches.')).toBeInTheDocument();
+    expect(screen.getByText('Compare up to 4 batches.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('checkbox', { name: /Farm 4/ }));
     expect(fifth).toBeEnabled();
   });
@@ -264,7 +264,7 @@ describe('the comparison', () => {
     api.compare.mockRejectedValue(Object.assign(new Error('not found'), { response: { status: 404 } }));
     open(`/batches/compare${IDS}`);
     expect(await screen.findByText('We could not load this comparison')).toBeInTheDocument();
-    expect(screen.getByText('One of the batches may have been deleted, or is not one you can see.')).toBeInTheDocument();
+    expect(screen.getByText('A batch may have been deleted, or you cannot see it.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Choose other batches' })).toBeInTheDocument();
   });
 
@@ -275,7 +275,7 @@ describe('the comparison', () => {
     api.compare.mockRejectedValue(error);
     open(`/batches/compare${IDS}`);
     expect(await screen.findByText('We could not load this comparison')).toBeInTheDocument();
-    expect(screen.getByText('Something went wrong on our side. Please try again in a moment.')).toBeInTheDocument();
+    expect(screen.getByText('Something went wrong. Try again in a moment.')).toBeInTheDocument();
     expect(screen.queryByText(/may have been deleted/)).not.toBeInTheDocument();
   });
 });

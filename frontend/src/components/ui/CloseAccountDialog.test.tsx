@@ -26,7 +26,7 @@ const change = (field: HTMLElement, value: string) => fireEvent.change(field, { 
 
 function refused(code: string, field: string, message: string) {
   return new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, {
-    status: 422, data: { code, message: 'Please check what you entered and try again.', errors: { [field]: [message] } },
+    status: 422, data: { code, message: 'Check what you entered and try again.', errors: { [field]: [message] } },
   } as never);
 }
 
@@ -42,14 +42,14 @@ describe('The close account dialog', () => {
     open();
     const dialog = screen.getByRole('dialog', { name: 'Close your account?' });
     for (const line of [
-      'You are signed out on every device.',
-      'Your account is removed after 30 days. Until then you can sign in and keep it.',
+      'Signed out on every device.',
+      'Removed after 30 days. Until then you can sign in and keep it.',
       'Your farms and batches stay as history, without your name.',
       'Your open egg requests are cancelled.',
     ]) {
       expect(within(dialog).getByText(line)).toBeInTheDocument();
     }
-    expect(within(dialog).getByText(/You can change your mind until the date we show you/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/You can still change your mind until that date/)).toBeInTheDocument();
   });
 
   it('is a red panel with a red button', () => {
@@ -62,10 +62,10 @@ describe('The close account dialog', () => {
     expect(screen.queryByText(/still running/)).not.toBeInTheDocument();
     unmount();
     open(1);
-    expect(screen.getByText('1 of your batches is still running. It stays as history, and nobody takes over its care.')).toBeInTheDocument();
+    expect(screen.getByText('1 running batch stays as history. No one takes it over.')).toBeInTheDocument();
     unmount();
     open(3);
-    expect(screen.getByText(/^3 of your batches are still running/)).toBeInTheDocument();
+    expect(screen.getByText(/^3 running batches stay as history/)).toBeInTheDocument();
   });
 
   it('keeps the button off until the email is typed and the password is given', () => {

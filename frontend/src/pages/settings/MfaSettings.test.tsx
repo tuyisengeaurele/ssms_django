@@ -65,7 +65,7 @@ describe('MfaSettings', () => {
   it('says plainly when the status cannot be read', async () => {
     mfa.status.mockRejectedValue(refused(500, { message: 'broken' }));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent('We could not read the authenticator app status.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not read the authenticator status.');
   });
 
   it('asks for a code, then shows the new recovery codes and the new count', async () => {

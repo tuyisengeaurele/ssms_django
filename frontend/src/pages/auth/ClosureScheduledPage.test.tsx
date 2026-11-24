@@ -35,7 +35,7 @@ describe('The closure screen', () => {
   it('says the account will be removed, and on which day', () => {
     open();
     expect(screen.getByRole('heading', { level: 1, name: 'Your account will be removed' })).toBeInTheDocument();
-    expect(screen.getByText(/It will be removed on Dec 24, 2026\./)).toBeInTheDocument();
+    expect(screen.getByText(/This account is removed on Dec 24, 2026\./)).toBeInTheDocument();
   });
 
   it('offers to keep the account and to sign out, and nothing else', () => {

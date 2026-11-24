@@ -109,7 +109,7 @@ describe('Location picker', () => {
   it('says so and lets the person try again when a list cannot be loaded', async () => {
     api.getPlaces.mockRejectedValueOnce(new AxiosError('offline'));
     render(<Harness />);
-    expect(await screen.findByText('We could not load the list of places. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not load the places. Try again.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await within(field(/^Province/)).findByRole('option', { name: 'Kigali City' })).toBeInTheDocument();
   });
@@ -117,7 +117,7 @@ describe('Location picker', () => {
   it('shows the old text of a farm that has no place yet and asks for a place to replace it', async () => {
     render(<Harness legacyText="Near the old market, Gatsibo" />);
     expect(await screen.findByText(/Near the old market, Gatsibo/)).toBeInTheDocument();
-    expect(screen.getByText(/added before places could be chosen/)).toBeInTheDocument();
+    expect(screen.getByText(/Added before places could be chosen/)).toBeInTheDocument();
   });
 
   it('does not show the old text once a place is chosen', async () => {
@@ -144,7 +144,7 @@ describe('Use my location', () => {
     await waitFor(() => expect(api.locate).toHaveBeenCalledWith(-1.9536, 30.0925));
     await waitFor(() => expect(field(/^Sector/)).toHaveValue('010213'));
     expect(latest).toMatchObject({ provinceCode: '1', districtCode: '102', sectorCode: '010213', cellCode: '', villageCode: '' });
-    expect(screen.getByRole('status')).toHaveTextContent('We found your province, district and sector. Please choose your cell and village.');
+    expect(screen.getByRole('status')).toHaveTextContent('Province, district and sector found. Choose your cell and village.');
     expect(field(/^Cell/)).toBeEnabled();
   });
 
@@ -162,7 +162,7 @@ describe('Use my location', () => {
     await waitFor(() => expect(field(/^Village/)).toHaveValue('102130307'));
     expect(field(/^Cell/)).toHaveValue('1021303');
     expect(latest).toMatchObject({ provinceCode: '1', districtCode: '102', sectorCode: '010213', cellCode: '1021303', villageCode: '102130307' });
-    expect(screen.getByRole('status')).toHaveTextContent('We filled in your place down to the village. Please check it and add the street if you like.');
+    expect(screen.getByRole('status')).toHaveTextContent('Filled in down to the village. Check it.');
   });
 
   it('fills the cell and asks for the village when the server knows only the cell', async () => {
@@ -173,7 +173,7 @@ describe('Use my location', () => {
     await waitFor(() => expect(field(/^Cell/)).toHaveValue('1021303'));
     expect(latest.cellCode).toBe('1021303');
     expect(latest.villageCode).toBe('');
-    expect(screen.getByRole('status')).toHaveTextContent('We found your place down to the cell. Please choose your village.');
+    expect(screen.getByRole('status')).toHaveTextContent('Found down to the cell. Choose your village.');
   });
 
   it('empties a cell and village chosen earlier when the new place has none', async () => {
@@ -286,10 +286,10 @@ describe('Use my location', () => {
 
     it('saves no position when the spot is not in Rwanda', async () => {
       fixes(0.3476, 32.5825);
-      api.locate.mockRejectedValue(new AxiosError('x', '404', undefined, undefined, { status: 404, data: { message: 'That spot is not inside a Rwanda sector.' } } as never));
+      api.locate.mockRejectedValue(new AxiosError('x', '404', undefined, undefined, { status: 404, data: { message: 'That spot is outside Rwanda.' } } as never));
       render(<Harness />);
       fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
-      expect(await screen.findByRole('status')).toHaveTextContent('That spot is not inside a Rwanda sector.');
+      expect(await screen.findByRole('status')).toHaveTextContent('That spot is outside Rwanda.');
       expect(latest.latitude).toBeUndefined();
     });
 
@@ -314,7 +314,7 @@ describe('Use my location', () => {
     geolocation((_ok, fail) => fail({ code: 1, message: 'denied' } as GeolocationPositionError));
     render(<Harness />);
     fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
-    expect(await screen.findByRole('status')).toHaveTextContent('Your location was not shared. You can choose the place yourself.');
+    expect(await screen.findByRole('status')).toHaveTextContent('Location not shared. Choose the place yourself.');
     expect(api.locate).not.toHaveBeenCalled();
   });
 
@@ -322,15 +322,15 @@ describe('Use my location', () => {
     geolocation((_ok, fail) => fail({ code: 2, message: 'unavailable' } as GeolocationPositionError));
     render(<Harness />);
     fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
-    expect(await screen.findByRole('status')).toHaveTextContent('We could not find where you are. You can choose the place yourself.');
+    expect(await screen.findByRole('status')).toHaveTextContent('Could not find you. Choose the place yourself.');
   });
 
   it('says so when the spot is not in Rwanda', async () => {
     geolocation((ok) => ok({ coords: { latitude: 0.3476, longitude: 32.5825 } } as GeolocationPosition));
-    api.locate.mockRejectedValue(new AxiosError('x', '404', undefined, undefined, { status: 404, data: { message: 'That spot is not inside a Rwanda sector.' } } as never));
+    api.locate.mockRejectedValue(new AxiosError('x', '404', undefined, undefined, { status: 404, data: { message: 'That spot is outside Rwanda.' } } as never));
     render(<Harness />);
     fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
-    expect(await screen.findByRole('status')).toHaveTextContent('That spot is not inside a Rwanda sector. You can choose the place yourself.');
+    expect(await screen.findByRole('status')).toHaveTextContent('That spot is outside Rwanda. Choose the place yourself.');
     expect(latest.provinceCode).toBe('');
   });
 

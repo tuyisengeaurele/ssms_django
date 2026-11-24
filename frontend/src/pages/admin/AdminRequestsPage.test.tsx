@@ -84,7 +84,7 @@ describe('The cooperative requests page', () => {
   it('says so, with a way to try again, when the list cannot be loaded', async () => {
     api.list.mockRejectedValueOnce(new Error('offline'));
     open();
-    expect(await screen.findByText('We could not load the requests.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not load the requests.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('Aline Uwase')).toBeInTheDocument();
   });
@@ -94,7 +94,7 @@ describe('The cooperative requests page', () => {
     fireEvent.click(within(await card('Aline Uwase')).getByRole('button', { name: 'Approve' }));
     const dialog = await screen.findByRole('dialog', { name: 'Approve this request?' });
     expect(within(dialog).getByText('Aline Uwase will move from Old Coop to New Coop.')).toBeInTheDocument();
-    expect(within(dialog).getByText(/open egg requests of this farmer in Old Coop are cancelled/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Open egg requests in Old Coop are cancelled/)).toBeInTheDocument();
     fireEvent.change(within(dialog).getByLabelText('Note for the person (optional)'), { target: { value: 'Welcome.' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Approve' }));
     await waitFor(() => expect(api.decide).toHaveBeenCalledWith('r1', { decision: 'approve', note: 'Welcome.' }));

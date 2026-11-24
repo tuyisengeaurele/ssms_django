@@ -204,7 +204,7 @@ describe('System health page', () => {
   it('says it could not load and offers to try again', async () => {
     api.get.mockRejectedValueOnce(new Error('down'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't check the system. Please try again.");
+    expect(await screen.findByRole('alert')).toHaveTextContent("Could not check the system. Try again.");
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('Disease check service')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
@@ -215,7 +215,7 @@ describe('System health page', () => {
     await screen.findByText('Disease check service');
     api.get.mockRejectedValueOnce(new Error('down'));
     fireEvent.click(screen.getByRole('button', { name: 'Check again' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't check the system. Please try again.");
+    expect(await screen.findByRole('alert')).toHaveTextContent("Could not check the system. Try again.");
     expect(screen.getByText('The database answered in 12 ms.')).toBeInTheDocument();
   });
 
@@ -249,13 +249,13 @@ describe('The services added with the history', () => {
   it('says a service has no address to ask when it is not set up', async () => {
     api.get.mockResolvedValue(reply(withCheck('web', 'notSetUp', {})));
     open();
-    expect(within(await rowOf('Web API')).getByText(/not set, so it cannot ask itself/)).toBeInTheDocument();
+    expect(within(await rowOf('Web API')).getByText(/cannot check itself/)).toBeInTheDocument();
   });
 
   it('says the scheduler may have stopped when no job finished for a long time', async () => {
     api.get.mockResolvedValue(reply(withCheck('jobs', 'problem', { hours: 30 })));
     open();
-    expect(within(await rowOf('Scheduled jobs')).getByText(/No scheduled job has finished for 30 hr/)).toBeInTheDocument();
+    expect(within(await rowOf('Scheduled jobs')).getByText(/No scheduled job finished for 30 hr/)).toBeInTheDocument();
   });
 
   it('says why the website did not answer', async () => {
@@ -366,7 +366,7 @@ describe('The test buttons', () => {
     fireEvent.click(within(row).getByRole('button', { name: 'Run test' }));
     expect(await within(row).findByRole('button', { name: 'Running' })).toBeDisabled();
     finish({ data: { data: { name: 'email', ok: true, outcome: 'printed', milliseconds: 5, ranAt: '2026-10-28T09:31:00+00:00' } } });
-    expect(await within(row).findByText(/printed instead of sent/)).toBeInTheDocument();
+    expect(await within(row).findByText(/printed, not sent/)).toBeInTheDocument();
   });
 
   it('says a test did not work, and why, in words', async () => {
@@ -383,7 +383,7 @@ describe('The test buttons', () => {
     open();
     const row = await rowOf('Email');
     fireEvent.click(within(row).getByRole('button', { name: 'Run test' }));
-    expect(await within(row).findByText('The test could not be run. Please try again in a moment.')).toBeInTheDocument();
+    expect(await within(row).findByText('Could not run the test. Try again.')).toBeInTheDocument();
   });
 
   it('keeps the result of one service apart from another', async () => {

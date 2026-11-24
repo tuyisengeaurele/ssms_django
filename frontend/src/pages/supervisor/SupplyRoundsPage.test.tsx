@@ -61,7 +61,7 @@ describe('Supply rounds', () => {
   it('says it could not load, with a way to try again', async () => {
     api.list.mockRejectedValueOnce(new Error('down'));
     open();
-    expect(await screen.findByText('We could not load the supply rounds.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not load the supply rounds.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('November round')).toBeInTheDocument();
   });
@@ -112,13 +112,13 @@ describe('Supply rounds', () => {
     });
 
     it.each([
-      [{ Name: '   ' }, 'Please give the round a name.'],
-      [{ 'Boxes in the round': '-1' }, 'Please enter the boxes in the round as a whole number from 0 to 100000.'],
-      [{ 'Boxes in the round': '2.5' }, 'Please enter the boxes in the round as a whole number from 0 to 100000.'],
-      [{ 'Boxes in the round': '' }, 'Please enter the boxes in the round as a whole number from 0 to 100000.'],
-      [{ 'Ask before': '' }, 'Please give the request deadline.'],
-      [{ Place: ' ' }, 'Please say where the eggs are handed over.'],
-      [{ 'Handed over on': '2030-12-01' }, 'The eggs cannot be handed over before the request deadline.'],
+      [{ Name: '   ' }, 'Enter a name for the round.'],
+      [{ 'Boxes in the round': '-1' }, 'Enter a whole number from 0 to 100000.'],
+      [{ 'Boxes in the round': '2.5' }, 'Enter a whole number from 0 to 100000.'],
+      [{ 'Boxes in the round': '' }, 'Enter a whole number from 0 to 100000.'],
+      [{ 'Ask before': '' }, 'Enter the request deadline.'],
+      [{ Place: ' ' }, 'Enter where the eggs are handed over.'],
+      [{ 'Handed over on': '2030-12-01' }, 'Delivery cannot be before the request deadline.'],
       [{ 'Expected harvest': '2030-12-14' }, 'The expected harvest must come after the delivery day.'],
     ])('refuses %o before sending', async (over, message) => {
       const dialog = await openForm();

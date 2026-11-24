@@ -30,7 +30,7 @@ describe('alertText', () => {
 
   it('says what the old English message said', () => {
     expect(alertText(say('en'), { code: 'temperature_low', params: { value: 19.5, min: 22 }, message: '' }))
-      .toBe('Temperature too low: 19.5 °C (safe min is 22 °C). Check heating.');
+      .toBe('Temperature too low: 19.5 °C (min 22 °C). Check heating.');
   });
 
   it('names the stage in the language of the screen', () => {

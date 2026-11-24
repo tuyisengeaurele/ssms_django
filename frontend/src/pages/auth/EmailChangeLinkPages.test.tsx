@@ -41,18 +41,18 @@ describe('The page behind the link that confirms a new email', () => {
 
   it('opens the link once, even when the page is drawn twice, and says the address changed', async () => {
     page();
-    expect(await screen.findByRole('heading', { level: 1, name: 'Your email address is changed' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Email changed' })).toBeInTheDocument();
     expect(api.confirmEmailChange).toHaveBeenCalledTimes(1);
     expect(api.confirmEmailChange).toHaveBeenCalledWith('abc:def');
-    expect(screen.getByText(/Please sign in with your new address/)).toBeInTheDocument();
+    expect(screen.getByText(/Sign in with your new address/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
   });
 
   it('says in plain words why a link could not be used, in the language of the screen', async () => {
-    api.confirmEmailChange.mockRejectedValue(refused('link_expired', 'This link has expired. Please ask for a new one.'));
+    api.confirmEmailChange.mockRejectedValue(refused('link_expired', 'This link expired. Ask for a new one.'));
     page();
     expect(await screen.findByRole('heading', { level: 1, name: 'We could not use this link' })).toBeInTheDocument();
-    expect(screen.getByText('This link has expired. Please ask for a new one.')).toBeInTheDocument();
+    expect(screen.getByText('This link expired. Ask for a new one.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
   });
 
@@ -67,7 +67,7 @@ describe('The page behind the link that confirms a new email', () => {
     open('/confirm-email-change', <ConfirmEmailChangePage />, '/confirm-email-change');
     expect(await screen.findByRole('heading', { level: 1, name: 'We could not use this link' })).toBeInTheDocument();
     expect(api.confirmEmailChange).not.toHaveBeenCalled();
-    expect(screen.getByText('This link is not valid. Please ask for a new one.')).toBeInTheDocument();
+    expect(screen.getByText('This link is not valid. Ask for a new one.')).toBeInTheDocument();
   });
 
   it('shows a waiting state first', () => {
@@ -92,13 +92,13 @@ describe('The page behind the link that undoes a change of email', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'The change was undone' })).toBeInTheDocument();
     expect(api.undoEmailChange).toHaveBeenCalledTimes(1);
     expect(api.undoEmailChange).toHaveBeenCalledWith('xyz:123');
-    expect(screen.getByText(/choose a new password/)).toBeInTheDocument();
+    expect(screen.getByText(/set a new password/)).toBeInTheDocument();
   });
 
   it('says when the old address is taken, in plain words', async () => {
-    api.undoEmailChange.mockRejectedValue(refused('undo_blocked', 'That address is now used by another account, so this cannot be undone here. Please contact the SSMS team.'));
+    api.undoEmailChange.mockRejectedValue(refused('undo_blocked', 'Another account uses that address, so this cannot be undone. Contact the SSMS team.'));
     page();
-    expect(await screen.findByText(/now used by another account/)).toBeInTheDocument();
+    expect(await screen.findByText(/Another account uses that address/)).toBeInTheDocument();
   });
 
   it('does not call the server when the address has no token', async () => {

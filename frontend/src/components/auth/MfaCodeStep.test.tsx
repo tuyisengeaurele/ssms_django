@@ -107,15 +107,15 @@ describe('MfaCodeStep', () => {
     type('6 digit code', '123456');
     submit();
     await waitFor(() => expect(onExpired).toHaveBeenCalledTimes(1));
-    expect(onExpired.mock.calls[0][0]).toMatch(/took too long/i);
+    expect(onExpired.mock.calls[0][0]).toMatch(/timed out/i);
   });
 
   it('says to wait, in the language chosen, when too many codes were tried', async () => {
-    mfa.verify.mockRejectedValue(fail(429, { message: 'Too many attempts. Please try again in 15 minutes.' }));
+    mfa.verify.mockRejectedValue(fail(429, { message: 'Too many attempts. Try again in 15 minutes.' }));
     open();
     type('6 digit code', '123456');
     submit();
-    expect(await screen.findByRole('alert')).toHaveTextContent('Too many requests. Please wait a moment and try again.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Too many requests. Wait a moment and try again.');
   });
 
   it('can use a recovery code instead, and sends it under its own name', async () => {

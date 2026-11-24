@@ -86,7 +86,7 @@ describe('OnboardingCard', () => {
   it('shows the reason a room was not approved as plain text, and what to do', async () => {
     answer(steps({ room: { key: 'room', state: 'rejected', detail: { note: '<b>Too</b> small' } } }));
     const { container } = show();
-    expect(await screen.findByText('Not approved: <b>Too</b> small. Change the size and send it again.')).toBeInTheDocument();
+    expect(await screen.findByText('Not approved: <b>Too</b> small. Change the size and send again.')).toBeInTheDocument();
     expect(container.querySelector('b')).toBeNull();
   });
 
@@ -104,7 +104,7 @@ describe('OnboardingCard', () => {
   });
 
   it.each([
-    [{ state: 'no_round', detail: {} }, 'Waiting for your supervisor to open a supply round.'],
+    [{ state: 'no_round', detail: {} }, 'Waiting for your supervisor to open a round.'],
     [{ state: 'needs_room', detail: { roundName: 'November round' } }, 'November round is open. You need an approved room to ask.'],
     [{ state: 'ready', detail: { roundName: 'November round' } }, 'November round is open. Request eggs on the card below.'],
     [{ state: 'waiting', detail: { roundName: 'November round', waitingFor: ['Claire Uwimana'] } }, 'Your request in November round is waiting for Claire Uwimana.'],

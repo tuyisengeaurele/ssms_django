@@ -63,7 +63,7 @@ describe('Camera capture', () => {
     expect(video()).toHaveAttribute('playsinline');
     expect(video()).toHaveProperty('muted', true);
     expect(screen.getByTestId('frame-guide')).toHaveAttribute('aria-hidden', 'true');
-    expect(screen.getByText('Fill the square with one worm or leaf. Only what is inside it is sent.')).toBeInTheDocument();
+    expect(screen.getByText('Fill the square with one worm or leaf. Only the square is sent.')).toBeInTheDocument();
   });
 
   it('keeps the shutter off until the camera is showing a picture', async () => {
@@ -140,7 +140,7 @@ describe('Camera capture', () => {
     it('says it is blocked and offers the file picker instead', async () => {
       fails('NotAllowedError');
       const { onClose } = open();
-      expect(await screen.findByRole('alert')).toHaveTextContent('The camera is blocked. Allow it in your browser, or choose a photo instead.');
+      expect(await screen.findByRole('alert')).toHaveTextContent('Camera blocked. Allow it in your browser, or choose a photo.');
       expect(screen.queryByLabelText('Camera view')).not.toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'Choose a photo instead' }));
       expect(onClose).toHaveBeenCalled();
@@ -149,19 +149,19 @@ describe('Camera capture', () => {
     it('says when there is no camera', async () => {
       fails('NotFoundError');
       open();
-      expect(await screen.findByRole('alert')).toHaveTextContent('No camera was found on this device. You can choose a photo instead.');
+      expect(await screen.findByRole('alert')).toHaveTextContent('No camera found. Choose a photo instead.');
     });
 
     it('says something plain for anything else', async () => {
       fails('AbortError');
       open();
-      expect(await screen.findByRole('alert')).toHaveTextContent('The camera could not start. You can choose a photo instead.');
+      expect(await screen.findByRole('alert')).toHaveTextContent('The camera could not start. Choose a photo instead.');
     });
 
     it('says so when the device has no camera support at all', async () => {
       Reflect.deleteProperty(navigator, 'mediaDevices');
       open();
-      expect(await screen.findByRole('alert')).toHaveTextContent('The camera could not start. You can choose a photo instead.');
+      expect(await screen.findByRole('alert')).toHaveTextContent('The camera could not start. Choose a photo instead.');
     });
   });
 });

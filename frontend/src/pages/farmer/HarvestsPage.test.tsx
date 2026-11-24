@@ -195,7 +195,7 @@ describe('Harvests page', () => {
     api.page.mockRejectedValueOnce(new Error('x'));
     open();
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent("We couldn't load the harvest records");
+    expect(alert).toHaveTextContent('Could not load the harvest records');
     fireEvent.click(within(alert).getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('First picking')).toBeInTheDocument();
   });

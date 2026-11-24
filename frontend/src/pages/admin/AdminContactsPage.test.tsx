@@ -131,7 +131,7 @@ describe('Messages page', () => {
     api.getAll.mockResolvedValue({ data: { data: [] } });
     open();
     expect(await screen.findByText('No messages yet')).toBeInTheDocument();
-    expect(screen.getByText(/contact form on the public site/)).toBeInTheDocument();
+    expect(screen.getByText(/Messages from the contact form/)).toBeInTheDocument();
   });
 
   it('keeps the old coloured tiles and blue links out', async () => {
@@ -182,7 +182,7 @@ describe('Messages page', () => {
       open();
       fireEvent.click(await rowFor('Visit to our farm'));
       const dialog = await screen.findByRole('dialog', { name: 'Visit to our farm' });
-      expect(within(dialog).getByText('After you have sent your answer, mark the message as answered.')).toBeInTheDocument();
+      expect(within(dialog).getByText('After replying, mark the message as answered.')).toBeInTheDocument();
     });
 
     it('marks a message answered, shows who, and counts it', async () => {
@@ -258,7 +258,7 @@ describe('Messages page when the messages cannot be loaded', () => {
   it('says so, and does not show the empty inbox', async () => {
     api.getAll.mockRejectedValueOnce(new Error('boom'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load this page');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load this page');
     expect(screen.queryByText('No messages yet')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());

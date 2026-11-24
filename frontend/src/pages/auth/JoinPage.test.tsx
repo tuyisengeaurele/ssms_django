@@ -118,7 +118,7 @@ describe('Join page, signed out', () => {
     fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Zebra-Quartz-84' } });
     fireEvent.click(screen.getByRole('checkbox', { name: /I agree to the/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Create account and join' }));
-    const message = await screen.findByText('Please enter your phone number.');
+    const message = await screen.findByText('Enter your phone number.');
     expect(message).toHaveAttribute('role', 'alert');
     expect(screen.getByLabelText('Phone number')).toHaveAttribute('aria-invalid', 'true');
     expect(api.register).not.toHaveBeenCalled();
@@ -126,7 +126,7 @@ describe('Join page, signed out', () => {
 
   it('shows a number that is already taken beside the field', async () => {
     api.register.mockRejectedValue(new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, {
-      status: 422, data: { code: 'phone_taken', message: 'x', errors: { phone: ['This phone number is already used by another account. Contact the SSMS team if it is yours.'] } },
+      status: 422, data: { code: 'phone_taken', message: 'x', errors: { phone: ['This number belongs to another account. Contact the SSMS team if it is yours.'] } },
     } as never));
     open();
     await screen.findByRole('heading', { level: 1, name: 'Join Gatsibo Silk' });
@@ -137,7 +137,7 @@ describe('Join page, signed out', () => {
     fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Zebra-Quartz-84' } });
     fireEvent.click(screen.getByRole('checkbox', { name: /I agree to the/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Create account and join' }));
-    const message = await screen.findByText('This phone number is already used by another account. Contact the SSMS team if it is yours.');
+    const message = await screen.findByText('This number belongs to another account. Contact the SSMS team if it is yours.');
     expect(message.id).toBe('join-phone-error');
     expect(screen.getByLabelText('Phone number')).toHaveAttribute('aria-invalid', 'true');
   });
@@ -190,7 +190,7 @@ describe('Join page, signed out', () => {
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Zebra-Quartz-84' } });
     fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Zebra-Quartz-84' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create account and join' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Please tick the box to accept the terms.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Tick the box to accept the terms.');
     expect(api.register).not.toHaveBeenCalled();
   });
 
@@ -225,7 +225,7 @@ describe('Join page, signed in', () => {
     signIn(farmer({ cooperativeName: 'Nyamagabe Silk' }));
     api.accept.mockResolvedValue({ data: { data: null } });
     open();
-    expect(await screen.findByText('You are in Nyamagabe Silk now. Joining Gatsibo Silk takes you out of it.')).toBeInTheDocument();
+    expect(await screen.findByText('You are in Nyamagabe Silk. Joining Gatsibo Silk moves you out of it.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Join Gatsibo Silk' }));
     // An inline question, because this public page does not load the app's pop-up styles.
     const question = await screen.findByRole('group', { name: 'Leave Nyamagabe Silk and join Gatsibo Silk?' });

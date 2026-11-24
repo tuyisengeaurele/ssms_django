@@ -114,7 +114,7 @@ describe('The farms of a cooperative', () => {
   it('shows an error and a way to try again', async () => {
     api.get.mockRejectedValueOnce(new Error('x'));
     renderCoop(PATH);
-    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't load the report. Please try again.");
+    expect(await screen.findByRole('alert')).toHaveTextContent("Could not load the report. Try again.");
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await loaded();
   });

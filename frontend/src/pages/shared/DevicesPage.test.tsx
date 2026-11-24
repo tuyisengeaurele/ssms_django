@@ -129,7 +129,7 @@ describe('Devices page', () => {
     const dialog = await screen.findByRole('dialog', { name: 'DHT22-Bruce' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Remove device' }));
     expect(api.remove).not.toHaveBeenCalled();
-    expect(within(dialog).getByText(/Historical readings are kept/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Past readings are kept/)).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, remove it' }));
     await waitFor(() => expect(api.remove).toHaveBeenCalledWith('d1'));
     await waitFor(() => expect(screen.queryByText('DHT22-Bruce')).not.toBeInTheDocument());
@@ -201,7 +201,7 @@ describe('Devices page', () => {
       const dialog = await openAdd();
       fireEvent.change(within(dialog).getByLabelText(/^Device name/), { target: { value: 'New sensor' } });
       fireEvent.change(within(dialog).getByLabelText(/^Farm/), { target: { value: 'f3' } });
-      expect(await within(dialog).findByText(/no rooms yet/)).toBeInTheDocument();
+      expect(await within(dialog).findByText(/No rooms on this farm yet/)).toBeInTheDocument();
       expect(within(dialog).queryByLabelText(/^Room/)).not.toBeInTheDocument();
       fireEvent.click(within(dialog).getByRole('button', { name: 'Register device' }));
       await waitFor(() => expect(api.create).toHaveBeenCalled());
@@ -321,7 +321,7 @@ describe('Devices page when the devices cannot be loaded', () => {
   it('says so, and does not claim that no device is registered', async () => {
     api.getAll.mockRejectedValue(new Error('boom'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load this page');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load this page');
     expect(screen.queryByText(/0 devices registered/)).not.toBeInTheDocument();
   });
 

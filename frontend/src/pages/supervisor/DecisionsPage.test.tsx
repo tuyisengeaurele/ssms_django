@@ -268,7 +268,7 @@ describe('Decisions', () => {
   it('says it could not load and offers to try again, instead of showing a blank page', async () => {
     api.rooms.mockRejectedValueOnce(new Error('down'));
     open();
-    expect(await screen.findByText('We could not load your decisions.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not load your decisions.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('Gad Anaclet')).toBeInTheDocument();
   });
@@ -377,7 +377,7 @@ describe('Decisions', () => {
       const dialog = await screen.findByRole('dialog', { name: 'Approve another amount' });
       fireEvent.change(within(dialog).getByLabelText('Boxes to grant'), { target: { value: boxes } });
       fireEvent.click(within(dialog).getByRole('button', { name: 'Approve amount' }));
-      expect(await within(dialog).findByRole('alert')).toHaveTextContent('Please enter a whole number of boxes from 0 to 100.');
+      expect(await within(dialog).findByRole('alert')).toHaveTextContent('Enter a whole number of boxes, 0 to 100.');
       expect(api.decide).not.toHaveBeenCalled();
     });
 
@@ -462,7 +462,7 @@ describe('Decisions', () => {
       open();
       const ask = await item('Gad Anaclet');
       fireEvent.click(within(ask).getByRole('button', { name: 'See details' }));
-      expect(await within(ask).findByText('We could not load the details.')).toBeInTheDocument();
+      expect(await within(ask).findByText('Could not load the details.')).toBeInTheDocument();
       expect(within(ask).getByRole('button', { name: 'Approve 4 boxes' })).toBeEnabled();
     });
   });

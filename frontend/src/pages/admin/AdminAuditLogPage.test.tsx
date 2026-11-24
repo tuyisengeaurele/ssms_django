@@ -154,7 +154,7 @@ describe('Audit log page', () => {
     open();
     await screen.findByText('Bruce Ishimwe');
     fireEvent.click(screen.getByRole('button', { name: 'Export PDF' }));
-    expect(await screen.findByText("We couldn't create the file. Please try again.", {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(await screen.findByText("Could not create the file. Try again.", {}, { timeout: 5000 })).toBeInTheDocument();
   });
 
   it('holds both buttons while a file is being made', async () => {
@@ -174,7 +174,7 @@ describe('Audit log page', () => {
     open();
     await screen.findByText('Bruce Ishimwe');
     fireEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
-    expect(await screen.findByText("We couldn't create the file. Please try again.", {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(await screen.findByText("Could not create the file. Try again.", {}, { timeout: 5000 })).toBeInTheDocument();
   });
 
   it('says so when nothing matches', async () => {
@@ -187,6 +187,6 @@ describe('Audit log page', () => {
   it('shows a calm message when the log cannot be loaded', async () => {
     api.getList.mockRejectedValue(new Error('x'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't load the audit log. Please try again.");
+    expect(await screen.findByRole('alert')).toHaveTextContent("Could not load the audit log. Try again.");
   });
 });

@@ -28,7 +28,7 @@ describe('ErrorBoundary', () => {
   it('says plainly that the page ran into a problem and what to do', () => {
     boundary(<Broken />);
     expect(screen.getByRole('heading', { level: 1, name: 'This page ran into a problem' })).toBeInTheDocument();
-    expect(screen.getByText("We're sorry. Please refresh the page.")).toBeInTheDocument();
+    expect(screen.getByText("Something went wrong. Refresh the page.")).toBeInTheDocument();
   });
 
   it('does not send the person to a dashboard they may not be able to reach', () => {

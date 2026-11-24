@@ -187,7 +187,7 @@ describe('New batch page', () => {
     open();
     fireEvent.change(screen.getByLabelText(/^Expected harvest date/), { target: { value: '2030-01-15' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create batch' }));
-    expect(await screen.findByText('Your first batch is created. It starts at the egg stage. Open it any day to see how it is doing.')).toBeInTheDocument();
+    expect(await screen.findByText('Your first batch is created, at the egg stage.')).toBeInTheDocument();
     expect(screen.queryByText('Batch created. It starts at the egg stage.')).not.toBeInTheDocument();
   });
 
@@ -203,7 +203,7 @@ describe('New batch page', () => {
 
   it('blocks the batch with a clear message when the farm has no room', async () => {
     open();
-    expect(await screen.findByText('Add a room and wait for your supervisor to approve it before you add a batch.')).toBeInTheDocument();
+    expect(await screen.findByText('Add a room and wait for approval before adding a batch.')).toBeInTheDocument();
     expect(screen.queryByLabelText(/^Room/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create batch' })).toBeDisabled();
     expect(api.rooms).toHaveBeenCalledWith('f1');
@@ -212,7 +212,7 @@ describe('New batch page', () => {
   it('gives the same message when the only room still waits for approval', async () => {
     api.rooms.mockResolvedValue({ data: { data: [room('r1', 'Rearing house 1', 'pending'), room('r2', 'Old room', 'rejected')] } });
     open();
-    expect(await screen.findByText('Add a room and wait for your supervisor to approve it before you add a batch.')).toBeInTheDocument();
+    expect(await screen.findByText('Add a room and wait for approval before adding a batch.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create batch' })).toBeDisabled();
   });
 
@@ -304,7 +304,7 @@ describe('Batches page when the batches cannot be loaded', () => {
   it('says so, and does not claim there are no active batches', async () => {
     api.active.mockRejectedValue(new Error('boom'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load this page');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load this page');
     expect(screen.queryByText(/active batches across/)).not.toBeInTheDocument();
   });
 

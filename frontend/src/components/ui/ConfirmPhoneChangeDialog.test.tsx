@@ -9,7 +9,7 @@ vi.mock('../../services/auth.service', () => ({ authService: api }));
 
 import ConfirmPhoneChangeDialog from './ConfirmPhoneChangeDialog';
 
-const TAKEN = 'This phone number is already used by another account. Contact the SSMS team if it is yours.';
+const TAKEN = 'This number belongs to another account. Contact the SSMS team if it is yours.';
 const saved = { id: 'u1', name: 'Aline', email: 'a@b.rw', role: 'FARMER', phone: '+250733000000' };
 
 const onClose = vi.fn();
@@ -29,7 +29,7 @@ const type = (field: HTMLElement, value: string) => fireEvent.change(field, { ta
 
 function refused(code: string, field: string, message: string) {
   return new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, {
-    status: 422, data: { code, message: 'Please check what you entered and try again.', errors: { [field]: [message] } },
+    status: 422, data: { code, message: 'Check what you entered and try again.', errors: { [field]: [message] } },
   } as never);
 }
 
@@ -87,7 +87,7 @@ describe('The change phone number dialog', () => {
     open();
     type(confirm(), '0788 123 456');
     fireEvent.click(change());
-    const message = await screen.findByText('Please enter your phone number.');
+    const message = await screen.findByText('Enter your phone number.');
     expect(message).toHaveAttribute('role', 'alert');
     expect(newNumber()).toHaveAttribute('aria-invalid', 'true');
     expect(api.updateProfile).not.toHaveBeenCalled();
@@ -125,12 +125,12 @@ describe('The change phone number dialog', () => {
   });
 
   it('shows a confirmation the server did not accept beside the confirmation field', async () => {
-    api.updateProfile.mockRejectedValue(refused('phone_confirm_mismatch', 'confirmPhone', 'Type your current phone number to confirm the change.'));
+    api.updateProfile.mockRejectedValue(refused('phone_confirm_mismatch', 'confirmPhone', 'Type your current number to confirm.'));
     open();
     type(newNumber(), '0733 000 000');
     type(confirm(), '0788 123 456');
     fireEvent.click(change());
-    const message = await screen.findByText('Type your current phone number to confirm the change.');
+    const message = await screen.findByText('Type your current number to confirm.');
     expect(confirm()).toHaveAttribute('aria-invalid', 'true');
     expect(confirm().getAttribute('aria-describedby')).toContain(message.id);
   });

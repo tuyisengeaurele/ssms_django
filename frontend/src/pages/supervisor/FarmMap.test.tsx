@@ -104,13 +104,13 @@ describe('Farm map', () => {
   it('says plainly that a farm is placed at its village, not exactly', () => {
     const { container } = open();
     fireEvent.click(pins(container).find((p) => p.getAttribute('aria-label')?.startsWith('River Farm')) as HTMLElement);
-    expect(within(screen.getByRole('region', { name: 'River Farm' })).getByText('Placed at the middle of its village. The farmer has not saved an exact position.')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'River Farm' })).getByText('Placed at the middle of its village. No exact position saved.')).toBeInTheDocument();
   });
 
   it('says plainly that a farm is placed at its sector', () => {
     const { container } = open();
     fireEvent.click(pins(container).find((p) => p.getAttribute('aria-label')?.startsWith('Quiet Farm')) as HTMLElement);
-    expect(within(screen.getByRole('region', { name: 'Quiet Farm' })).getByText('Placed at the middle of its sector. The farmer has not saved an exact position.')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Quiet Farm' })).getByText('Placed at the middle of its sector. No exact position saved.')).toBeInTheDocument();
   });
 
   it('chooses a farm with the Enter key', () => {
@@ -147,7 +147,7 @@ describe('Farm map', () => {
     open();
     const list = screen.getByRole('list', { name: 'Not on the map' });
     expect(within(list).getByRole('link', { name: 'Old Farm' })).toHaveAttribute('href', '/farms/f4');
-    expect(screen.getByText('These farms have no place chosen yet, so they cannot be shown on the map.')).toBeInTheDocument();
+    expect(screen.getByText('These farms have no place yet, so they are not on the map.')).toBeInTheDocument();
   });
 
   it('has no "not on the map" list when every farm has a place', () => {

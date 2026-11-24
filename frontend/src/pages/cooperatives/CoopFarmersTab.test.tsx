@@ -94,7 +94,7 @@ describe('The farmers of my cooperative', () => {
     api.farmers.mockResolvedValue({ data: { data: [] } });
     open();
     expect(await screen.findByText('No farmers yet')).toBeInTheDocument();
-    expect(screen.getByText('Invite a farmer with a link, and they appear here when they join.')).toBeInTheDocument();
+    expect(screen.getByText('Invite a farmer with a link. They appear here once they join.')).toBeInTheDocument();
   });
 
   // ── removing ──
@@ -104,7 +104,7 @@ describe('The farmers of my cooperative', () => {
     const row = await rowOf('Bruce Ishimwe');
     fireEvent.click(within(row).getByRole('button', { name: 'Remove Bruce Ishimwe' }));
     const dialog = await screen.findByRole('dialog', { name: 'Remove Bruce Ishimwe from the cooperative?' });
-    expect(dialog).toHaveTextContent('keeps their farms');
+    expect(dialog).toHaveTextContent('keeps their account and farms');
     expect(api.remove).not.toHaveBeenCalled();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, remove' }));
     await waitFor(() => expect(api.remove).toHaveBeenCalledWith('f1'));
@@ -217,7 +217,7 @@ describe('The farmers of my cooperative', () => {
     it('starts at the cooperative default and says what it is', async () => {
       const dialog = await openInvite();
       await waitFor(() => expect(within(dialog).getByLabelText('Boxes per round')).toHaveValue(2));
-      expect(within(dialog).getByText('What this farmer may take in one round. You can lower it later.')).toBeInTheDocument();
+      expect(within(dialog).getByText('What this farmer may take per round. You can lower it later.')).toBeInTheDocument();
     });
 
     it('sends the amount that was typed', async () => {
@@ -243,7 +243,7 @@ describe('The farmers of my cooperative', () => {
       await waitFor(() => expect(within(dialog).getByLabelText('Boxes per round')).toHaveValue(2));
       fireEvent.change(within(dialog).getByLabelText('Boxes per round'), { target: { value: boxes } });
       fireEvent.click(within(dialog).getByRole('button', { name: 'Create link' }));
-      expect(await within(dialog).findByRole('alert')).toHaveTextContent('Please enter a whole number of boxes from 0 to 100.');
+      expect(await within(dialog).findByRole('alert')).toHaveTextContent('Enter a whole number of boxes, 0 to 100.');
       expect(api.create).not.toHaveBeenCalled();
     });
 
@@ -305,7 +305,7 @@ describe('The farmers of my cooperative', () => {
       const dialog = await openLower();
       fillIn(dialog, boxes, 'Outbreak last month');
       fireEvent.click(within(dialog).getByRole('button', { name: 'Lower allowance' }));
-      expect(await within(dialog).findByRole('alert')).toHaveTextContent('Please enter a whole number below 3.');
+      expect(await within(dialog).findByRole('alert')).toHaveTextContent('Enter a whole number below 3.');
       expect(api.setBoxes).not.toHaveBeenCalled();
     });
 
@@ -313,7 +313,7 @@ describe('The farmers of my cooperative', () => {
       const dialog = await openLower();
       fillIn(dialog, '1', 'short');
       fireEvent.click(within(dialog).getByRole('button', { name: 'Lower allowance' }));
-      expect(await within(dialog).findByRole('alert')).toHaveTextContent('Please say why, in 10 to 500 characters.');
+      expect(await within(dialog).findByRole('alert')).toHaveTextContent('Say why, in 10 to 500 characters.');
       expect(api.setBoxes).not.toHaveBeenCalled();
     });
 
@@ -342,7 +342,7 @@ describe('The farmers of my cooperative when they cannot be loaded', () => {
   it('says so, and does not claim there are no farmers', async () => {
     api.farmers.mockRejectedValueOnce(new Error('boom'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load this page');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load this page');
     expect(screen.queryByText('No farmers yet')).not.toBeInTheDocument();
     expect(screen.queryByText(/Farmers \(0\)/)).not.toBeInTheDocument();
   });

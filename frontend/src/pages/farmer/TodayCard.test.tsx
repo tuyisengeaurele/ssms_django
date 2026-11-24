@@ -22,7 +22,7 @@ describe('Today card', () => {
     show([]);
     expect(screen.getByRole('heading', { name: 'Needs attention today' })).toBeInTheDocument();
     expect(screen.getByText('Everything is in order today.')).toBeInTheDocument();
-    expect(screen.getByText('Readings are in the safe range and no harvest is due in the next 3 days.')).toBeInTheDocument();
+    expect(screen.getByText('Readings are in range and no harvest is due in 3 days.')).toBeInTheDocument();
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 

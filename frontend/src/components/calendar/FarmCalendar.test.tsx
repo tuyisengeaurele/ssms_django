@@ -227,11 +227,11 @@ describe('FarmCalendar, when something goes wrong', () => {
   it('says it could not load, offers to try again, and then shows the events', async () => {
     api.events.mockRejectedValueOnce(new Error('down'));
     open();
-    expect(await screen.findByText('We could not load the calendar.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not load the calendar.')).toBeInTheDocument();
     answer([{ id: 'a', date: '2026-11-12', kind: 'disease_check', detail: { result: 'Healthy' } }]);
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await within(screen.getByTestId('day-list')).findByText('Disease check: Healthy')).toBeInTheDocument();
-    expect(screen.queryByText('We could not load the calendar.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Could not load the calendar.')).not.toBeInTheDocument();
   });
 
   it('tells a person when there were more events than it shows', async () => {

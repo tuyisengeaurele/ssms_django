@@ -115,7 +115,7 @@ describe('The members of a cooperative', () => {
     await ready();
     fireEvent.click(screen.getByRole('button', { name: 'Remove Bruce Ishimwe' }));
     const ask = await screen.findByRole('dialog', { name: 'Remove Bruce Ishimwe from Gatsibo Sericulture 1?' });
-    expect(ask).toHaveTextContent('Their account and farms stay in the system.');
+    expect(ask).toHaveTextContent('Their account and farms stay.');
     expect(api.updateCooperative).not.toHaveBeenCalled();
     fireEvent.click(within(ask).getByRole('button', { name: 'Yes, remove' }));
     await waitFor(() => expect(api.updateCooperative).toHaveBeenCalledWith('m1', null));
@@ -156,7 +156,7 @@ describe('The members of a cooperative when the people to add cannot be loaded',
     renderCoop(PATH);
     await ready();
     expect(screen.getByText('Bruce Ishimwe')).toBeInTheDocument();
-    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load the people you can add');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load the people you can add');
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByRole('combobox', { name: 'Person to add' })).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();

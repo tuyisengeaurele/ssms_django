@@ -25,7 +25,7 @@ const send = () => screen.getByRole('button', { name: 'Download' });
 
 function refused(code: string, message: string, status = 422) {
   return new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, {
-    status, data: { code, message: 'Please check what you entered and try again.', errors: code === 'wrong_password' ? { password: [message] } : undefined },
+    status, data: { code, message: 'Check what you entered and try again.', errors: code === 'wrong_password' ? { password: [message] } : undefined },
   } as never);
 }
 
@@ -46,7 +46,7 @@ describe('The download my data button', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     openDialog();
     const dialog = screen.getByRole('dialog', { name: 'Download your data' });
-    expect(within(dialog).getByText(/It holds no photos and no password/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/No photos or password/)).toBeInTheDocument();
     expect(password()).toHaveFocus();
   });
 

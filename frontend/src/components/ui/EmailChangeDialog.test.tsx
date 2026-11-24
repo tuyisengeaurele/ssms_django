@@ -33,7 +33,7 @@ const fillAll = () => {
 
 function refused(code: string, field: string, message: string) {
   return new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, {
-    status: 422, data: { code, message: 'Please check what you entered and try again.', errors: { [field]: [message] } },
+    status: 422, data: { code, message: 'Check what you entered and try again.', errors: { [field]: [message] } },
   } as never);
 }
 
@@ -48,7 +48,7 @@ describe('The change email dialog', () => {
   it('is a dialog that says what happens, and puts the focus on the new address', () => {
     open();
     expect(screen.getByRole('dialog', { name: 'Change your email address' })).toBeInTheDocument();
-    expect(screen.getByText(/Your email changes only when you open it/)).toBeInTheDocument();
+    expect(screen.getByText(/Opening it signs out every device/)).toBeInTheDocument();
     expect(newEmail()).toHaveFocus();
   });
 
@@ -138,12 +138,12 @@ describe('The change email dialog', () => {
 
   it('says so in an alert when the link could not be sent, and stays open', async () => {
     api.startEmailChange.mockRejectedValue(new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, {
-      status: 422, data: { code: 'email_not_sent', message: 'We could not send the link. Please try again in a minute.' },
+      status: 422, data: { code: 'email_not_sent', message: 'Could not send the link. Try again in a minute.' },
     } as never));
     open();
     fillAll();
     fireEvent.click(send());
-    expect(await screen.findByText('We could not send the link. Please try again in a minute.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not send the link. Try again in a minute.')).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
   });
 

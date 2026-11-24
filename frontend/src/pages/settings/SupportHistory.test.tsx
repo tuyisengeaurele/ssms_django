@@ -55,7 +55,7 @@ describe('SSMS support visits', () => {
   it('says so when nobody has asked', async () => {
     support.history.mockResolvedValue({ data: { data: [] } });
     open();
-    expect(await screen.findByText('No one from SSMS support has asked to view your account.')).toBeInTheDocument();
+    expect(await screen.findByText('No support request to view your account.')).toBeInTheDocument();
     expect(screen.queryByRole('listitem')).not.toBeInTheDocument();
   });
 

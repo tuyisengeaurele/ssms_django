@@ -188,7 +188,7 @@ describe('Disease checks page', () => {
     api.history.mockRejectedValueOnce(new Error('x'));
     open();
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent("We couldn't load the reports");
+    expect(alert).toHaveTextContent('Could not load the reports');
     fireEvent.click(within(alert).getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText("Serge's farm", { selector: 'a' })).toBeInTheDocument();
   });

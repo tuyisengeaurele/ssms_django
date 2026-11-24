@@ -109,7 +109,7 @@ describe('Supervisor dashboard, the layout', () => {
   });
 
   it('puts the calendar in a rail beside the data and links a round for staff', async () => {
-    api.events.mockResolvedValue({ data: { data: { events: [{ id: 'e1', date: new Date().toISOString().slice(0, 10), kind: 'round_deadline', expected: false, batchId: null, farmId: null, farmName: '', detail: { name: 'November round', roundId: 'r1' } }], from: '', to: '', truncated: false } } });
+    api.events.mockResolvedValue({ data: { data: { events: [{ id: 'e1', date: new Date().toLocaleDateString('en-CA'), kind: 'round_deadline', expected: false, batchId: null, farmId: null, farmName: '', detail: { name: 'November round', roundId: 'r1' } }], from: '', to: '', truncated: false } } });
     const { container } = open();
     const agenda = within(await screen.findByTestId('agenda'));
     expect(await agenda.findByRole('link', { name: /November round: requests close/ })).toHaveAttribute('href', '/supply/r1');
@@ -120,7 +120,7 @@ describe('Supervisor dashboard, the layout', () => {
   it('still shows the rest when the calendar cannot load', async () => {
     api.events.mockRejectedValue(new Error('down'));
     open();
-    expect(await screen.findByText('We could not load the calendar.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not load the calendar.')).toBeInTheDocument();
     expect(screen.getByText('Active batches')).toBeInTheDocument();
   });
 });
@@ -161,7 +161,7 @@ describe('Supervisor dashboard page', () => {
   it('keeps the rest of the page when the ranking cannot be loaded', async () => {
     api.risk.mockRejectedValue(new Error('x'));
     open();
-    expect(await screen.findByText("We couldn't load the farm ranking. Please try again.")).toBeInTheDocument();
+    expect(await screen.findByText("Could not load the farm ranking. Try again.")).toBeInTheDocument();
     expect(await screen.findByText('Total farms')).toBeInTheDocument();
   });
 
@@ -169,13 +169,13 @@ describe('Supervisor dashboard page', () => {
     auth.user = { id: 'u', role: 'SUPERVISOR', cooperativeId: 'c1', cooperativeName: 'Gatsibo 1' };
     open();
     expect(await screen.findByText(/Numbers from Gatsibo 1\./)).toBeInTheDocument();
-    expect(screen.queryByText(/not part of a cooperative yet/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/not in a cooperative yet/)).not.toBeInTheDocument();
   });
 
   it('tells a supervisor with no cooperative what to do', async () => {
     auth.user = { id: 'u', role: 'SUPERVISOR', cooperativeId: null, cooperativeName: null };
     open();
-    expect(await screen.findByText(/not part of a cooperative yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/not in a cooperative yet/)).toBeInTheDocument();
     expect(screen.queryByText(/Ask the SSMS team/)).not.toBeInTheDocument();
   });
 
