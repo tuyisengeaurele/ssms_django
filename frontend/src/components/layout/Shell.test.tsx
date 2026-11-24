@@ -5,7 +5,7 @@ import { LanguageProvider } from '../../context/LanguageContext';
 
 const auth = vi.hoisted(() => ({
   value: { user: { name: 'Auris Tuyisenge', role: 'ADMIN', email: 'auris@ssms.com' }, logout: vi.fn() } as {
-    user: { name: string; role: string; email: string } | null;
+    user: { name: string; role: string; email: string; photoUrl?: string | null } | null;
     logout: ReturnType<typeof vi.fn>;
   },
 }));
@@ -377,5 +377,19 @@ describe('The menu drawer on a phone', () => {
     const onClose = drawer(false);
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).not.toHaveBeenCalled();
+  });
+});
+
+describe('The photo in the top bar', () => {
+  it('shows the initials when the person has no photo', () => {
+    const { container } = renderAt('/farms', <TopBar onMenuToggle={() => undefined} alertCount={0} />);
+    expect(container.querySelector('.topbar-avatar')).toHaveTextContent('AT');
+    expect(container.querySelector('.topbar-avatar img')).toBeNull();
+  });
+
+  it('shows the photo in the circle when the person has one', () => {
+    auth.value = { user: { name: 'Auris Tuyisenge', role: 'ADMIN', email: 'auris@ssms.com', photoUrl: '/api/photos/mine' }, logout: vi.fn() };
+    const { container } = renderAt('/farms', <TopBar onMenuToggle={() => undefined} alertCount={0} />);
+    expect(container.querySelector('.topbar-avatar img')).toHaveAttribute('src', '/api/photos/mine');
   });
 });

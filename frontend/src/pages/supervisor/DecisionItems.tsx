@@ -27,10 +27,10 @@ export interface EarnedActions {
   dismiss: () => Promise<void>;
 }
 
-function Person({ name, email, phone }: { name: string; email: string; phone?: string | null }) {
+function Person({ name, email, phone, photoUrl }: { name: string; email: string; phone?: string | null; photoUrl?: string | null }) {
   return (
     <div className="cell-person">
-      <Avatar name={name} />
+      <Avatar name={name} photoUrl={photoUrl} />
       <div className="cell-stack">
         <span className="cell-strong">{name}</span>
         <span className="cell-sub">{email}</span>
@@ -62,7 +62,7 @@ export function RoomItem({ room, actions }: { room: WaitingRoom; actions: RoomAc
 
   return (
     <li className="decision">
-      <Person name={room.owner.name} email={room.owner.email} phone={room.owner.phone} />
+      <Person name={room.owner.name} email={room.owner.email} phone={room.owner.phone} photoUrl={room.owner.photoUrl} />
       <div className="decision-body">
         <span className="badge badge-gray">{t('dcsKindRoom')}</span>
         <p className="decision-title">{title}</p>
@@ -129,7 +129,7 @@ export function EarnedItem({ earned, actions }: { earned: EarnedAllowance; actio
   };
   return (
     <li className="decision">
-      <Person name={earned.farmer.name} email={earned.farmer.email} phone={earned.farmer.phone} />
+      <Person name={earned.farmer.name} email={earned.farmer.email} phone={earned.farmer.phone} photoUrl={earned.farmer.photoUrl} />
       <div className="decision-body">
         <span className="badge badge-gray">{t('dcsKindAllowance')}</span>
         <p className="decision-title">{fill(t('dcsNudgeTitle'), { name: earned.farmer.name })}</p>
@@ -193,7 +193,7 @@ export function RequestItem({ request, actions }: { request: WaitingAllowanceReq
 
   return (
     <li className="decision">
-      <Person name={request.farmer.name} email={request.farmer.email} phone={request.farmer.phone} />
+      <Person name={request.farmer.name} email={request.farmer.email} phone={request.farmer.phone} photoUrl={request.farmer.photoUrl} />
       <div className="decision-body">
         <span className="badge badge-gray">{t('dcsKindAllowance')}</span>
         <p className="decision-title">{fill(t('dcsAsk'), { asked: boxesText(tn, request.boxesAsked), current: boxesText(tn, request.currentBoxes) })}</p>

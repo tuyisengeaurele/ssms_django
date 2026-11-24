@@ -22,7 +22,7 @@ export interface CooperativeRequest {
 
 /** A request as the SSMS team sees it: who asked, and whether leaving empties the cooperative of supervisors. */
 export interface AdminCooperativeRequest extends CooperativeRequest {
-  person: { id: string; name: string; email: string; phone?: string; role: 'FARMER' | 'SUPERVISOR' | 'ADMIN' };
+  person: { id: string; name: string; email: string; phone?: string; photoUrl?: string | null; role: 'FARMER' | 'SUPERVISOR' | 'ADMIN' };
   onlySupervisor: boolean;
   decidedBy: string | null;
 }

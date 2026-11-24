@@ -242,7 +242,7 @@ describe('Users page', () => {
     await waitFor(() => expect(api.restoreUser).toHaveBeenCalledWith('f2'));
     await waitFor(() => expect(screen.queryByText('Gad Anaclet')).not.toBeInTheDocument());
     fireEvent.click(screen.getByRole('tab', { name: /Active/ }));
-    expect(await screen.findByText('Gad Anaclet')).toBeInTheDocument();
+    expect(await screen.findByText('Coop Supervisor')).toBeInTheDocument();
   });
 
   it('says so when nobody has been deleted', async () => {
@@ -449,5 +449,17 @@ describe('Users page and a closure that is scheduled', () => {
     const row = (await screen.findByText('Bruce Ishimwe')).closest('tr') as HTMLElement;
     expect(within(row).getByText('Removal on Dec 24, 2026')).toBeInTheDocument();
     expect(screen.getAllByText(/^Removal on /)).toHaveLength(1);
+  });
+});
+
+describe('Users page and photos', () => {
+  it('shows the photo of a person who has one in place of the initials, and the initials for the others', async () => {
+    api.getUsers.mockResolvedValue({ data: { data: people.map((p) => withBase(p.id === 'f1' ? { ...p, photoUrl: '/api/photos/bruce' } : p)) } });
+    open();
+    const row = (await screen.findByText('Bruce Ishimwe')).closest('tr') as HTMLElement;
+    expect(row.querySelector('.row-avatar img')).toHaveAttribute('src', '/api/photos/bruce');
+    const other = (await screen.findByText('Coop Supervisor')).closest('tr') as HTMLElement;
+    expect(other.querySelector('.row-avatar img')).toBeNull();
+    expect(other.querySelector('.row-avatar')).toHaveTextContent('CS');
   });
 });

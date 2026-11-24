@@ -465,7 +465,7 @@ export default function AdminUsersPage() {
                     <tr key={u.id} className={`tbody-row${active ? '' : ' is-off'}`}>
                       <td className="cell-lead">
                         <div className="cell-person">
-                          <Avatar name={u.name} />
+                          <Avatar name={u.name} photoUrl={u.photoUrl} />
                           <div className="cell-stack">
                             <span className="cell-strong">
                               {u.name}

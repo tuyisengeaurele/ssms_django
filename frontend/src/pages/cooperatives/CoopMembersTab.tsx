@@ -91,7 +91,7 @@ export default function CoopMembersTab() {
         <ul className="people-list people-list--open">
           {detail.members.map((m) => (
             <li key={m.id}>
-              <Avatar name={m.name} />
+              <Avatar name={m.name} photoUrl={m.photoUrl} />
               <span className="cell-stack">
                 <span className="cell-strong">{m.name}</span>
                 {m.email ? <span className="cell-sub">{m.email}</span> : null}
