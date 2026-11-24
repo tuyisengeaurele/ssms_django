@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .closure_views import CancelDeleteAccountView, DeleteAccountView
 from .email_change_views import EmailChangeConfirmView, EmailChangeUndoView, EmailChangeView
 from .email_verification_views import ResendVerificationView, VerifyEmailView
 from .mfa_views import (
@@ -31,7 +32,9 @@ urlpatterns = [
     path('email-change',            EmailChangeView.as_view(),        name='auth_email_change'),
     path('email-change/confirm',    EmailChangeConfirmView.as_view(),  name='auth_email_change_confirm'),   # public: the link in the email
     path('email-change/undo',       EmailChangeUndoView.as_view(),     name='auth_email_change_undo'),      # public: the undo link
-    path('session/ping',            SessionPingView.as_view(),         name='auth_session_ping'),
+    path('delete-account',          DeleteAccountView.as_view(),       name='auth_delete_account'),
+    path('delete-account/cancel',   CancelDeleteAccountView.as_view(), name='auth_delete_account_cancel'),
+    path('session/ping',           SessionPingView.as_view(),         name='auth_session_ping'),
     path('sessions',                SessionListView.as_view(),         name='auth_sessions'),
     path('sessions/revoke-others',  SessionRevokeOthersView.as_view(), name='auth_sessions_revoke_others'),
     path('sessions/<str:pk>',       SessionDetailView.as_view(),       name='auth_session'),

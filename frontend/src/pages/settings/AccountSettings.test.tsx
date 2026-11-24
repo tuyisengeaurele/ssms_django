@@ -14,8 +14,10 @@ vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
 
 const api = vi.hoisted(() => ({ updateProfile: vi.fn() }));
 vi.mock('../../services/auth.service', () => ({ authService: api }));
-const account = vi.hoisted(() => ({ getEmailChange: vi.fn(), cancelEmailChange: vi.fn(), startEmailChange: vi.fn() }));
+const account = vi.hoisted(() => ({ getEmailChange: vi.fn(), cancelEmailChange: vi.fn(), startEmailChange: vi.fn(), closeAccount: vi.fn() }));
 vi.mock('../../services/account.service', () => ({ accountService: account }));
+const farms = vi.hoisted(() => ({ getAll: vi.fn() }));
+vi.mock('../../services/farm.service', () => ({ farmService: farms }));
 const coop = vi.hoisted(() => ({ mine: vi.fn(), options: vi.fn(), ask: vi.fn(), withdraw: vi.fn() }));
 vi.mock('../../services/cooperativeRequest.service', () => ({ cooperativeRequestService: coop }));
 
@@ -49,6 +51,7 @@ beforeEach(() => {
   coop.mine.mockResolvedValue({ data: { data: null } });
   coop.options.mockResolvedValue({ data: { data: [{ id: 'c1', name: 'Old Coop' }, { id: 'c2', name: 'New Coop' }] } });
   coop.withdraw.mockResolvedValue({ data: { data: null } });
+  farms.getAll.mockResolvedValue({ data: { data: [] } });
 });
 
 describe('Account settings', () => {
@@ -94,7 +97,9 @@ describe('Account settings', () => {
       open();
       expect(screen.getByLabelText('Email address')).toHaveAttribute('readonly');
       expect(screen.getByRole('button', { name: 'Change email address' })).toBeInTheDocument();
-      expect(screen.queryByText(/Contact the SSMS team/)).not.toBeInTheDocument();
+      // Closing the account says who to contact, further down. The email field itself says nothing about it.
+      const field = screen.getByLabelText('Email address').closest('.form-group') as HTMLElement;
+      expect(within(field).queryByText(/Contact the SSMS team/)).not.toBeInTheDocument();
     });
 
     it('opens the dialog from the button', async () => {
@@ -327,6 +332,58 @@ describe('Account settings', () => {
       coop.mine.mockResolvedValue({ data: { data: asked({ id: 'r2', status: 'approved', to: null, decidedAt: '2026-11-21T10:00:00Z' }) } });
       open();
       expect(await screen.findByText(/Your request to leave your cooperative was approved on /)).toBeInTheDocument();
+    });
+  });
+
+  describe('closing the account', () => {
+    const asFarmer = () => { auth.user.role = 'FARMER'; auth.user.cooperativeId = 'c1'; auth.user.cooperativeName = 'Old Coop'; };
+    const closeButton = () => screen.queryByRole('button', { name: 'Close account' });
+
+    it('gives a farmer a Close account section', async () => {
+      asFarmer();
+      open();
+      const section = screen.getByRole('heading', { name: 'Close your account' }).closest('section') as HTMLElement;
+      expect(within(section).getByText(/You can close your account yourself/)).toBeInTheDocument();
+      expect(closeButton()).toBeInTheDocument();
+    });
+
+    it('tells a supervisor and an admin to contact the SSMS team, with a link, and gives them no button', () => {
+      for (const role of ['SUPERVISOR', 'ADMIN']) {
+        auth.user.role = role;
+        open();
+        expect(screen.getByText('To close your account, contact the SSMS team.')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Contact the SSMS team' })).toHaveAttribute('href', '/#contact');
+        expect(closeButton()).not.toBeInTheDocument();
+        cleanup();
+      }
+    });
+
+    it('opens the dialog, and names the batches that are still running', async () => {
+      asFarmer();
+      farms.getAll.mockResolvedValue({ data: { data: [{ id: 'f1', counts: { batches: 2 } }, { id: 'f2', counts: { batches: 1 } }, { id: 'f3' }] } });
+      open();
+      await waitFor(() => expect(farms.getAll).toHaveBeenCalled());
+      fireEvent.click(closeButton() as HTMLElement);
+      const dialog = await screen.findByRole('dialog', { name: 'Close your account?' });
+      expect(await within(dialog).findByText(/^3 of your batches are still running/)).toBeInTheDocument();
+    });
+
+    it('does not ask the farms of someone who is not a farmer', () => {
+      open();
+      expect(farms.getAll).not.toHaveBeenCalled();
+    });
+
+    it('hands the account with its date to the app when the closure is scheduled, which shows the closure screen', async () => {
+      asFarmer();
+      account.closeAccount.mockResolvedValue({ data: { data: { deletionDate: '2026-12-24' } } });
+      open();
+      fireEvent.click(closeButton() as HTMLElement);
+      const dialog = await screen.findByRole('dialog', { name: 'Close your account?' });
+      fireEvent.change(within(dialog).getByLabelText('Your password'), { target: { value: 'Secret123' } });
+      fireEvent.change(within(dialog).getByLabelText(/^Type your email, /), { target: { value: auth.user.email } });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Close my account' }));
+      await waitFor(() => expect(account.closeAccount).toHaveBeenCalledWith({ confirmEmail: auth.user.email, password: 'Secret123' }));
+      await waitFor(() => expect(auth.updateUser).toHaveBeenCalledWith(expect.objectContaining({ id: auth.user.id, deletionDate: '2026-12-24' })));
     });
   });
 

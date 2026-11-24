@@ -59,6 +59,11 @@ class User(AbstractBaseUser):
     mfa_prompt_snoozed_until = models.DateTimeField(db_column='mfaPromptSnoozedUntil', null=True, blank=True)
     mfa_prompt_dismissals = models.PositiveSmallIntegerField(db_column='mfaPromptDismissals', default=0)
     mfa_prompted_at = models.DateTimeField(db_column='mfaPromptedAt', null=True, blank=True)
+    # A farmer asked to close the account at this time. The account is removed ACCOUNT_DELETION_GRACE_DAYS later, unless they
+    # take it back first, and meanwhile it reaches nothing but its closure screen (core/account_gate.py).
+    deletion_requested_at = models.DateTimeField(db_column='deletionRequestedAt', null=True, blank=True)
+    # When what says who the person was was removed. The row stays, because farms and batches point at it.
+    anonymised_at = models.DateTimeField(db_column='anonymisedAt', null=True, blank=True)
     created_at = models.DateTimeField(db_column='createdAt', auto_now_add=True)
     updated_at = models.DateTimeField(db_column='updatedAt', auto_now=True)
 

@@ -37,6 +37,8 @@ export interface User {
   phoneVerified?: boolean;
   /** True for an account with no phone number: the page then asks for one before anything else. */
   phoneRequired?: boolean;
+  /** The day the account is removed, while its owner's closure is scheduled (YYYY-MM-DD). Otherwise null. */
+  deletionDate?: string | null;
   /** A farmer's own answer only: the supervisor of their cooperative, to call for help. */
   supervisor?: { id: string; name: string; phone?: string | null } | null;
   photoUrl?: string | null;

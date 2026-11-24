@@ -11,6 +11,7 @@ import { mfaService } from '../../services/mfa.service';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
+import { dateFormat } from '../../utils/dateFormat';
 import { fill } from '../../utils/fill';
 import Avatar from '../../components/ui/Avatar';
 import AdminPhoneDialog from '../../components/ui/AdminPhoneDialog';
@@ -34,7 +35,7 @@ const isActive = (u: User) => u.isActive !== false;
 
 export default function AdminUsersPage() {
   const { user: me } = useAuth();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { getErrorMessage } = useApiError();
   const { success, error: showError } = useToast();
 
@@ -483,6 +484,9 @@ export default function AdminUsersPage() {
                         <span className={`badge ${active ? 'badge-green' : 'badge-gray'}`}>
                           {active ? t('usActive') : t('usGone')}
                         </span>
+                        {u.deletionDate ? (
+                          <span className="cell-sub">{fill(t('usRemoval'), { date: dateFormat(locale, { dateStyle: 'medium' }).format(new Date(`${u.deletionDate}T12:00:00`)) })}</span>
+                        ) : null}
                       </td>
                       <td data-label="">
                         <div className="table-actions">

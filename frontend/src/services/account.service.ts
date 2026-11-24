@@ -9,7 +9,7 @@ export interface EmailChangePending {
   expiresAt: string;
 }
 
-/** What a person does to their own account and has to prove: a new login email. */
+/** What a person does to their own account and has to prove: a new login email, closing the account. */
 export const accountService = {
   startEmailChange: (data: { newEmail: string; confirmEmail: string; password: string }) =>
     api.post<ApiResponse<EmailChangePending>>('/auth/email-change', data),
@@ -23,4 +23,11 @@ export const accountService = {
 
   /** The link in the email sent to the old address, good for seven days. Public too. */
   undoEmailChange: (token: string) => api.post<ApiResponse<null>>('/auth/email-change/undo', { token }),
+
+  /** A farmer closes their own account: the typed email and the password. The removal is scheduled, thirty days on. */
+  closeAccount: (data: { confirmEmail: string; password: string }) =>
+    api.post<ApiResponse<{ deletionDate: string }>>('/auth/delete-account', data),
+
+  /** The farmer keeps the account. Open to an account that is scheduled to be removed. */
+  cancelClosure: () => api.post<ApiResponse<null>>('/auth/delete-account/cancel'),
 };

@@ -293,6 +293,9 @@ REQUEST_LOG_KEEP_DAYS = config('REQUEST_LOG_KEEP_DAYS', default=30, cast=int)
 SECURITY_LOG_KEEP_DAYS = config('SECURITY_LOG_KEEP_DAYS', default=180, cast=int)
 JOB_LOG_KEEP_DAYS = config('JOB_LOG_KEEP_DAYS', default=30, cast=int)
 HEALTH_LOG_KEEP_DAYS = config('HEALTH_LOG_KEEP_DAYS', default=30, cast=int)
+# A farmer who closes their account has this many days to change their mind. Then the nightly `anonymise_accounts` removes what
+# says who they were.
+ACCOUNT_DELETION_GRACE_DAYS = config('ACCOUNT_DELETION_GRACE_DAYS', default=30, cast=int)
 # The public address of the API itself, so the health check can ask it from outside. Empty on a local machine.
 HEALTH_API_URL = config('HEALTH_API_URL', default='')
 # A nightly command that has not finished for this long means the scheduler has stopped.

@@ -2,7 +2,8 @@ name: Nightly jobs
 
 # Once a night at 02:00 UTC: summarise sensor readings by the hour and remove the raw ones older than 30 days that have a summary,
 # remove the readings from before rooms older than 90 days, ended sign ins older than 30 days, and the logs past their keeping time
-# (request logs 30 days, security events 180, jobs and devices 30, health checks 30; the audit log is never removed).
+# (request logs 30 days, security events 180, jobs and devices 30, health checks 30; the audit log is never removed), then anonymise
+# the accounts whose closure was asked for more than 30 days ago and not taken back.
 
 on:
   schedule:
@@ -52,3 +53,6 @@ jobs:
 
       - name: Remove old logs
         run: python manage.py prune_logs
+
+      - name: Anonymise accounts whose closure is due
+        run: python manage.py anonymise_accounts

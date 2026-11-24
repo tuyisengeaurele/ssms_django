@@ -32,7 +32,7 @@ AI_TIMEOUT = 3.0
 WEBSITE_TIMEOUT = 3.0
 STREAM_WAIT_SECONDS = 3.0
 # The commands the scheduler runs every night. One of them finishing lately says the scheduler is alive.
-NIGHTLY_COMMANDS = ('rollup_readings', 'cleanup_sensor_readings', 'prune_sessions', 'prune_logs')
+NIGHTLY_COMMANDS = ('rollup_readings', 'cleanup_sensor_readings', 'prune_sessions', 'prune_logs', 'anonymise_accounts')
 logger = logging.getLogger(__name__)
 OK, PROBLEM, NOT_SET_UP = 'ok', 'problem', 'notSetUp'
 

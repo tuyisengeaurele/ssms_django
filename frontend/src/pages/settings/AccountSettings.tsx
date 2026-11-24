@@ -6,6 +6,8 @@ import { useApiError } from '../../hooks/useApiError';
 import { accountService, EmailChangePending } from '../../services/account.service';
 import { authService } from '../../services/auth.service';
 import { CooperativeRequest, cooperativeRequestService } from '../../services/cooperativeRequest.service';
+import { farmService } from '../../services/farm.service';
+import CloseAccountDialog from '../../components/ui/CloseAccountDialog';
 import ConfirmPhoneChangeDialog from '../../components/ui/ConfirmPhoneChangeDialog';
 import CooperativeRequestModal from '../../components/ui/CooperativeRequestModal';
 import EmailChangeDialog from '../../components/ui/EmailChangeDialog';
@@ -49,6 +51,11 @@ export default function AccountSettings() {
   const [coopRequest, setCoopRequest] = useState<CooperativeRequest | null>(null);
   const [askingCooperative, setAskingCooperative] = useState(false);
   const [seenRequest, setSeenRequest] = useState(readSeen);
+  // Only a farmer closes their own account here. The SSMS team does it for a supervisor or an admin.
+  const isFarmer = user?.role === 'FARMER';
+  const [closing, setClosing] = useState(false);
+  // How many batches are still running, so the dialog can say they stay as history. Nothing is said when it is not known.
+  const [runningBatches, setRunningBatches] = useState(0);
 
   // Fetch the latest details, so the cooperative and name are never stale.
   useEffect(() => {
@@ -76,6 +83,15 @@ export default function AccountSettings() {
       .catch(() => undefined);
     return () => { live = false; };
   }, [canAskCooperative]);
+
+  useEffect(() => {
+    if (!isFarmer) return;
+    let live = true;
+    farmService.getAll()
+      .then((res) => { if (live) setRunningBatches(res.data.data.reduce((sum, farm) => sum + (farm.counts?.batches ?? 0), 0)); })
+      .catch(() => undefined);
+    return () => { live = false; };
+  }, [isFarmer]);
 
   const withdrawCooperativeRequest = async () => {
     try {
@@ -242,6 +258,32 @@ export default function AccountSettings() {
           </button>
         </form>
       </Panel>
+
+      <section className="panel" aria-labelledby="pf-close-title">
+        <header className="panel-head">
+          <div><h2 id="pf-close-title" className="panel-title">{t('caSection')}</h2></div>
+        </header>
+        <div className="panel-body">
+          {isFarmer ? (
+            <>
+              <p className="form-hint form-hint--gap">{t('caSectionBody')}</p>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setClosing(true)}>{t('caOpen')}</button>
+            </>
+          ) : (
+            <p className="form-hint">{t('caStaff')} <a href="/#contact">{t('caStaffLink')}</a></p>
+          )}
+        </div>
+      </section>
+
+      {user && isFarmer ? (
+        <CloseAccountDialog
+          open={closing}
+          email={user.email}
+          openBatches={runningBatches}
+          onClose={() => setClosing(false)}
+          onClosed={(deletionDate) => { setClosing(false); updateUser({ ...user, deletionDate }); }}
+        />
+      ) : null}
 
       {user ? (
         <EmailChangeDialog
