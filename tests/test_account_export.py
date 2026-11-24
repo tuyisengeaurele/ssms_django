@@ -237,6 +237,7 @@ LONG = {
 @pytest.mark.parametrize('kind', sorted(LONG))
 def test_masking_is_quick_on_a_line_built_to_make_a_pattern_slow(kind):
     import time
+
     from users.export import _masked
     line = LONG[kind]()
     started = time.perf_counter()
