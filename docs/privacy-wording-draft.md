@@ -14,6 +14,10 @@ For the owner to read and approve before anything goes on the privacy page. Lega
 
 **Your data.** You can download a copy of what SSMS holds about you in Settings, Your data. It is one file with your profile, farms, rooms, batches, harvests, photo check results, allowance and cooperative history, and the security events about your account from the last 180 days. It does not hold your photos or your password. You need your password to download it, and you can download it 3 times an hour.
 
+## Suggested English text: your photo
+
+**Your photo.** You can add a photo to your account in Settings. We keep it as a small square picture, and we remove the place and the camera details that photos carry. Only you, your supervisor and the SSMS team (and, for a supervisor, the farmers of the cooperative) are shown it. Anyone who is given the address of the picture can open it, so we change the address each time you change the photo. You can remove it at any time, and closing your account removes it.
+
 ## Suggested English text: records we keep
 
 **Records we keep.** Security events about your account (signing in, changing your email or password, closing your account) are kept for 180 days. Our log of who changed what is kept without a time limit, so it can still hold the email address you had before you changed it or closed your account.
@@ -24,6 +28,7 @@ For the owner to read and approve before anything goes on the privacy page. Lega
 - Whether "30 days" is the right time. It is the setting `ACCOUNT_DELETION_GRACE_DAYS`, and the dialog says it as fixed text.
 - Whether farms, rooms, batches and harvests staying "as history, without your name" is how the owner wants to say it, and whether the cooperative may need to be told.
 - Whether supervisors and administrators should be able to close their own accounts. Today they ask the SSMS team.
+- Whether "anyone who is given the address can open it" is acceptable for a profile photo, or whether it has to be behind a sign in (that needs a different way of showing it, and every list would fetch each photo with the token).
 - Whether WhatsApp messages are really planned for this year, or only calls.
 - The French and Kinyarwanda versions need a native speaker. They are not written here on purpose.
 - Rwandan law on personal data (Law No. 058/2021) may need the purpose and the right to ask for deletion to be named. The owner decides the wording.

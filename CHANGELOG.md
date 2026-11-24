@@ -2,6 +2,25 @@
 
 # Changelog
 
+## Profile photo (phase 4, tasks 4.2 and 4.3)
+
+A person can add a photo in Settings. It replaces the initials circle wherever the people who may see them see them.
+
+### Added
+- **Settings, Account:** an **Add photo** or **Change photo** button under the role. A dialog shows what was chosen before anything is sent, refuses a file that is not a JPEG, PNG or WebP or is over 2 MB before it is sent, and has **Remove photo** when there is one.
+- **The server** (`PATCH` and `DELETE /api/auth/me/photo`, migration `users.0017`, table `user_photos`). The file is judged by what is in it, not by its name. It is turned upright, cropped to a square, made at most 512 px, rebuilt from its pixels alone so location and camera details cannot come along, and saved as WebP. A file that claims a huge picture is refused before it is decoded. 20 an hour per person.
+- **The address** of a photo is `/api/photos/<token>`, with a random token that changes with every new photo. It needs no sign in, so a plain image tag shows it, and deleting the row ends it at once. It is served with a private day-long cache and no sniffing.
+- **Who is sent the address** follows the phone number rule: the person, the SSMS team, a supervisor for the farmers of their cooperative, and a farmer for their own supervisor. Nobody else.
+- **Shown** in the top bar, the Settings card, the Users page, the cooperative's farmers and members, the decisions, the supply rounds and the Requests page. A photo that cannot be loaded falls back to the initials.
+- Closing an account removes the photo, and the address stops working.
+- Support access cannot add or remove a photo.
+
+### Not done on purpose
+- The photo is stored in our database, not on Cloudinary: the Cloudinary upload uses an unsigned preset with no secret, so a photo could never be deleted there. About 30 KB each.
+- The address is unguessable but public to anyone who has it, like the share link of a harvest lot.
+- No photo in messages yet (phase 6). The lot page owner rows still show initials.
+- The French and Kinyarwanda texts are a draft until a native speaker has read them.
+
 ## Account self-service (phase 4b)
 
 A person can look after their own account without writing to the SSMS team: change the login email, ask to move to another cooperative, close the account (farmers), and download what SSMS holds about them. Anything that can lock someone out or cannot be undone asks for the email typed out, and for the password where it matters. A move to another cooperative is a request, because it changes who can see the person's farms.
