@@ -808,6 +808,8 @@ tr.is-off td:last-child { opacity: 1; }
 .identity-facts > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .identity-facts dt { color: var(--text-muted); font-size: 0.84rem; }
 .identity-facts dd { margin: 0; color: var(--ink); font-weight: 600; font-size: 0.88rem; text-align: right; overflow-wrap: anywhere; }
+/* A button under a value in the facts keeps its own width and lines up with the value, instead of stretching across the cell. */
+.identity-facts .cell-stack > .btn { align-self: flex-start; }
 /* Inside Settings the card is wide, so it reads as a row: the avatar, then the name and the facts. */
 .settings-body .identity { grid-template-columns: auto minmax(0, 1fr); justify-items: start; column-gap: 18px; padding: 20px 24px; text-align: left; }
 .settings-body .identity-avatar { grid-row: span 3; width: 64px; height: 64px; margin: 0; align-self: center; font-size: 1.5rem; }
@@ -1238,7 +1240,8 @@ tr.is-off td:last-child { opacity: 1; }
 .onboarding-steps > li[data-mark='next'] .onboarding-mark,
 .onboarding-steps > li[data-mark='waiting'] .onboarding-mark { background: var(--primary-fill); border-color: var(--primary-fill); color: var(--on-fill); }
 .onboarding-steps > li[data-mark='later'] { opacity: 0.85; }
-@media (max-width: 480px) { .onboarding-steps > li { grid-template-columns: 1fr; gap: 4px; } }
+/* One column on a phone. The mark is a grid item, so it would stretch across the row unless it is told to keep its own width. */
+@media (max-width: 480px) { .onboarding-steps > li { grid-template-columns: 1fr; gap: 4px; } .onboarding-mark { justify-self: start; } }
 
 /* ── Farm risk ranking (supervisor dashboard) ─────────────────────────────── */
 .risk-list { list-style: none; margin: 0; padding: 0; }
