@@ -1604,7 +1604,7 @@ a.cal-ev-link:focus-visible { outline: 2px solid var(--gold); outline-offset: 1p
 
 /* ── Dashboard layout and quick actions ────────────────────────────────────── */
 .dash-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
-.dash-main { display: grid; gap: var(--space-6); min-width: 0; }
+.dash-main { display: grid; align-content: start; gap: var(--space-6); min-width: 0; }
 .dash-rail { display: grid; gap: var(--space-6); align-content: start; order: -1; }
 @media (min-width: 1100px) {
   .dash-body { grid-template-columns: minmax(0, 1fr) 340px; }
