@@ -34,12 +34,10 @@ describe('Settings tabs', () => {
     expect(rule(components, '.settings-layout')).not.toMatch(/max-width/);
   });
 
-  it('lays the sections out in two columns on a wide screen, the account card across both, and one column on a phone', () => {
+  it('puts every section on its own full width row, never two side by side', () => {
     expect(rule(components, '.profile-stack')).not.toMatch(/grid-template-columns/);
-    const wide = components.match(/@media \(min-width: 1000px\)\s*\{[^@]*?\.profile-stack\s*\{([^}]*)\}[^@]*?\}/);
-    expect(wide?.[1]).toMatch(/grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
-    expect(wide?.[1]).toMatch(/align-items:\s*start/);
-    expect(components).toMatch(/@media \(min-width: 1000px\)[^@]*\.profile-stack > \.identity\s*\{[^}]*grid-column:\s*1 \/ -1/);
+    expect(components).not.toMatch(/\.profile-stack\s*\{[^}]*repeat\(2/);
+    expect(components).not.toMatch(/\.profile-stack > \.identity/);
   });
 
   it('keeps the account card compact', () => {

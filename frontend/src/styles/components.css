@@ -809,10 +809,6 @@ tr.is-off td:last-child { opacity: 1; }
 .section-sub { margin: 4px 0 0; color: var(--text-muted); font-size: 0.9rem; }
 .section-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .profile-stack { display: grid; gap: 20px; }
-@media (min-width: 1000px) {
-  .profile-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
-  .profile-stack > .identity { grid-column: 1 / -1; }
-}
 
 .identity { display: grid; justify-items: center; gap: 6px; padding: 32px 24px; text-align: center; }
 .identity-avatar { display: grid; width: 84px; height: 84px; margin-bottom: 10px; place-items: center; border-radius: 50%; background: var(--ink); color: var(--ivory); font: 450 1.9rem var(--font-display); }
