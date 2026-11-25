@@ -317,8 +317,8 @@ describe('Supervisor dashboard, decisions', () => {
 });
 
 describe('Supervisor dashboard, layout', () => {
-  // The calendar and the alerts are a short column. Anything long beside them leaves an empty strip once they scroll away.
-  it('keeps only the summary beside the calendar, and the charts and tables under both columns at full width', async () => {
+  // The calendar and the alerts are a short column. The long tables sit under both columns, so nothing long runs beside them.
+  it('keeps the numbers, the farms and the charts beside the calendar, and the two tables under both columns at full width', async () => {
     const { container } = open();
     await screen.findByText('Total farms');
     const body = container.querySelector('.dash-body') as HTMLElement;
@@ -326,9 +326,12 @@ describe('Supervisor dashboard, layout', () => {
     expect(below).not.toBeNull();
     expect(body.contains(below)).toBe(false);
     expect(body.querySelector('.dash-rail')).not.toBeNull();
-    for (const title of ['Temperature, last 24 hours', 'Humidity, last 24 hours', 'Active batches (2)']) {
+    for (const title of ['Active batches (2)', 'Recent disease checks']) {
       expect(within(below).getByRole('heading', { name: title })).toBeInTheDocument();
       expect(within(body).queryByRole('heading', { name: title })).toBeNull();
+    }
+    for (const title of ['Temperature, last 24 hours', 'Humidity, last 24 hours']) {
+      expect(within(body.querySelector('.dash-main') as HTMLElement).getByRole('heading', { name: title })).toBeInTheDocument();
     }
   });
 });
