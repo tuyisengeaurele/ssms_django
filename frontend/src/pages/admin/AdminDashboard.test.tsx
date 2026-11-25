@@ -117,7 +117,7 @@ describe('Admin dashboard', () => {
   it('still shows the numbers and the farms when the calendar cannot load', async () => {
     getEvents.mockRejectedValue(new Error('down'));
     open();
-    expect(await screen.findByText('We could not load the calendar.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not load the calendar.')).toBeInTheDocument();
     expect(screen.getByText('Total farms')).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: "Serge's farm" })).toBeInTheDocument();
   });
@@ -138,6 +138,6 @@ describe('Admin dashboard', () => {
   it('shows a calm message when the farms cannot be loaded', async () => {
     getFarms.mockRejectedValue(new Error('x'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't load the farms. Please try again.");
+    expect(await screen.findByRole('alert')).toHaveTextContent("Could not load the farms. Try again.");
   });
 });

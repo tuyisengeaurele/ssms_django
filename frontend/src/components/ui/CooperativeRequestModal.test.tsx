@@ -91,7 +91,7 @@ describe('The change cooperative modal', () => {
   });
 
   it('shows a refusal as a plain message and keeps what was typed', async () => {
-    api.ask.mockRejectedValue(refused('coop_request_open', 'You already have a request waiting. Withdraw it first to ask again.'));
+    api.ask.mockRejectedValue(refused('coop_request_open', 'You already have a request waiting. Withdraw it to ask again.'));
     open();
     await screen.findByRole('option', { name: 'New Coop' });
     fireEvent.change(choice(), { target: { value: 'c2' } });
@@ -105,7 +105,7 @@ describe('The change cooperative modal', () => {
   it('says so when the cooperatives cannot be loaded', async () => {
     api.options.mockRejectedValue(new Error('offline'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load the cooperatives');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load the cooperatives');
   });
 
   it('closes with Escape', async () => {

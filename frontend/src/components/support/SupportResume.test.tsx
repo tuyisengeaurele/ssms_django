@@ -46,7 +46,7 @@ describe('A visit that is still open after a reload', () => {
     mine(row());
     open();
     await settle();
-    expect(screen.getByText('You have an open support session with Aline Uwase, 12 minutes left.')).toBeInTheDocument();
+    expect(screen.getByText('Support session with Aline Uwase is open, 12 minutes left.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'End' })).toBeInTheDocument();
   });

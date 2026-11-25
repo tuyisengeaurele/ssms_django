@@ -154,7 +154,7 @@ describe('Login page', () => {
       await passwordStep('code');
       fireEvent.change(await screen.findByLabelText('6 digit code'), { target: { value: '123456' } });
       fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
-      expect(await screen.findByRole('alert')).toHaveTextContent('That sign in took too long. Please start again.');
+      expect(await screen.findByRole('alert')).toHaveTextContent('Sign in timed out. Start again.');
       expect(screen.getByLabelText('Email address')).toHaveValue('boss@example.rw');
       expect(screen.getByLabelText('Password')).toHaveValue('Secret123');
       expect(login).not.toHaveBeenCalled();
@@ -252,7 +252,7 @@ describe('Login page', () => {
       fill('Email address', 'a@b.rw');
       fill('Password', 'Secret123');
       fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
-      return screen.findByText(/Your email address is not verified yet/);
+      return screen.findByText(/Your email is not verified/);
     };
 
     it('stays on the page and says so, with the values still in the boxes', async () => {
@@ -276,7 +276,7 @@ describe('Login page', () => {
       api.resendVerification.mockRejectedValue(apiError('x'));
       await tryToSignIn();
       fireEvent.click(screen.getByRole('button', { name: 'Send a new link' }));
-      expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't send the link. Please try again.");
+      expect(await screen.findByRole('alert')).toHaveTextContent("Could not send the link. Try again.");
       expect(screen.getByRole('button', { name: 'Send a new link' })).toBeEnabled();
     });
 
@@ -291,7 +291,7 @@ describe('Login page', () => {
     it('is forgotten when the email is changed, because it was about the old one', async () => {
       await tryToSignIn();
       fill('Email address', 'other@b.rw');
-      expect(screen.queryByText(/Your email address is not verified yet/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Your email is not verified/)).not.toBeInTheDocument();
     });
 
     it('is forgotten at the next attempt', async () => {
@@ -299,7 +299,7 @@ describe('Login page', () => {
       api.login.mockRejectedValue(apiError('Wrong email or password'));
       fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
       expect(await screen.findByRole('alert')).toHaveTextContent('Wrong email or password');
-      expect(screen.queryByText(/Your email address is not verified yet/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Your email is not verified/)).not.toBeInTheDocument();
     });
 
     it('is not shown for any other failure', async () => {
@@ -341,14 +341,14 @@ describe('Login page', () => {
   it('explains why the person was sent back when their session ended', () => {
     sessionStorage.setItem('ssms_notice', 'session_ended');
     open();
-    expect(screen.getByRole('status')).toHaveTextContent('Your session ended, so we signed you out. Please sign in again.');
+    expect(screen.getByRole('status')).toHaveTextContent('Session expired.');
     expect(sessionStorage.getItem('ssms_notice')).toBeNull();
   });
 
   it('says so when the person was signed out for sitting idle', () => {
     sessionStorage.setItem('ssms_notice', 'session_idle');
     open();
-    expect(screen.getByRole('status')).toHaveTextContent('You were signed out because nobody used this page for a while. Please sign in again.');
+    expect(screen.getByRole('status')).toHaveTextContent('Session timed out.');
     expect(sessionStorage.getItem('ssms_notice')).toBeNull();
   });
 
@@ -367,7 +367,7 @@ describe('Login page', () => {
         </MemoryRouter>
       </StrictMode>,
     );
-    expect(screen.getByRole('status')).toHaveTextContent('nobody used this page');
+    expect(screen.getByRole('status')).toHaveTextContent('Session timed out');
     expect(sessionStorage.getItem('ssms_notice')).toBeNull();
   });
 
@@ -379,7 +379,7 @@ describe('Login page', () => {
   it('tells a farmer who just joined through an invitation that the account is ready', () => {
     sessionStorage.setItem('ssms_notice', 'account_ready');
     open();
-    expect(screen.getByRole('status')).toHaveTextContent('Your account is ready. Sign in to continue.');
+    expect(screen.getByRole('status')).toHaveTextContent('Account ready. Sign in.');
     expect(sessionStorage.getItem('ssms_notice')).toBeNull();
   });
 
@@ -454,36 +454,36 @@ describe('Register page', () => {
     open();
     fillAll({ phone: empty });
     submit();
-    const message = await screen.findByText('Please enter your phone number.');
+    const message = await screen.findByText('Enter your phone number.');
     expect(message).toHaveAttribute('role', 'alert');
     const field = screen.getByLabelText('Phone number');
     expect(field).toHaveAttribute('aria-invalid', 'true');
     expect(field.getAttribute('aria-describedby')).toContain(message.id);
     expect(api.register).not.toHaveBeenCalled();
     fill('Phone number', '0788 123 456');
-    expect(screen.queryByText('Please enter your phone number.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Enter your phone number.')).not.toBeInTheDocument();
     expect(field).not.toHaveAttribute('aria-invalid', 'true');
   });
 
   it('shows the server refusal of the number beside the field, and keeps the rest of the form', async () => {
     api.register.mockRejectedValue(new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, {
-      status: 422, data: { code: 'phone_taken', message: 'Please check what you entered and try again.', errors: { phone: ['This phone number is already used by another account. Contact the SSMS team if it is yours.'] } },
+      status: 422, data: { code: 'phone_taken', message: 'Check what you entered and try again.', errors: { phone: ['This number belongs to another account. Contact the SSMS team if it is yours.'] } },
     } as never));
     open();
     fillAll();
     submit();
-    const message = await screen.findByText('This phone number is already used by another account. Contact the SSMS team if it is yours.');
+    const message = await screen.findByText('This number belongs to another account. Contact the SSMS team if it is yours.');
     expect(message.id).toBe('reg-phone-error');
     expect(screen.getByLabelText('Phone number')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByLabelText('Full name')).toHaveValue('Aline U');
-    expect(screen.queryByText('Please check what you entered and try again.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Check what you entered and try again.')).not.toBeInTheDocument();
   });
 
   it('writes the missing number message in French', async () => {
     localStorage.setItem('ssms_locale', 'fr');
     const { container } = open();
     fireEvent.submit(container.querySelector('form')!);
-    expect(await screen.findByText('Veuillez saisir votre numéro de téléphone.')).toBeInTheDocument();
+    expect(await screen.findByText('Saisissez votre numéro de téléphone.')).toBeInTheDocument();
   });
 
   it('does not send a role, because the server decides it', async () => {
@@ -527,7 +527,7 @@ describe('Register page', () => {
     open();
     fillAll({ password: 'secret' });
     submit();
-    expect(await screen.findByRole('alert')).toHaveTextContent('Please choose a password that meets every rule.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Choose a password that meets every rule.');
     expect(api.register).not.toHaveBeenCalled();
   });
 
@@ -543,7 +543,7 @@ describe('Register page', () => {
     open();
     fillAll({ terms: false });
     submit();
-    expect(await screen.findByRole('alert')).toHaveTextContent('Please tick the box to accept the terms.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Tick the box to accept the terms.');
     expect(api.register).not.toHaveBeenCalled();
   });
 
@@ -659,7 +659,7 @@ describe('Check email page', () => {
 
   it('does not stop mid sentence, or offer a resend, when it is opened without an address', () => {
     renderAt('/check-email', <CheckEmailPage />, '/check-email');
-    expect(screen.getByText('We sent a verification link to your email address.')).toBeInTheDocument();
+    expect(screen.getByText('Verification link sent to your email.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Resend verification email' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Sign in' })).toBeInTheDocument();
   });
@@ -668,7 +668,7 @@ describe('Check email page', () => {
     api.resendVerification.mockRejectedValue(new Error('x'));
     renderAt('/check-email?email=a%40b.rw', <CheckEmailPage />, '/check-email');
     fireEvent.click(screen.getByRole('button', { name: 'Resend verification email' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't resend the email");
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not resend the email');
   });
 });
 
@@ -698,8 +698,8 @@ describe('Verify email page', () => {
 
   it('explains a bad link and offers a new one', async () => {
     renderAt('/verify-email', <VerifyEmailPage />, '/verify-email');
-    expect(await screen.findByRole('heading', { level: 1, name: "We couldn't verify your email" })).toBeInTheDocument();
-    expect(screen.getByText("This verification link isn't valid. Please request a new one.")).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: "Could not verify your email" })).toBeInTheDocument();
+    expect(screen.getByText("This link is not valid. Request a new one.")).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Request new link' })).toHaveAttribute('href', '/check-email');
   });
 });

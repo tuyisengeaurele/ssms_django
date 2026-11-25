@@ -152,7 +152,7 @@ def test_batches_with_different_ranges_share_the_range_they_agree_on(farm, room)
     # 23 is fine for the pupa (22 to 28) but too cold for the larva (24 to 27).
     created = check_room_alerts(room.pk, 23.0, 78.0)
     assert [a.type for a in created] == ['TEMPERATURE']
-    assert 'safe min is 24.0' in created[0].message
+    assert 'min 24.0' in created[0].message
 
 
 def test_batches_that_agree_on_nothing_use_the_youngest_stage(farm, room):
@@ -163,7 +163,7 @@ def test_batches_that_agree_on_nothing_use_the_youngest_stage(farm, room):
     created = check_room_alerts(room.pk, 25.0, 78.0)
     assert [a.type for a in created] == ['TEMPERATURE']
     assert 'Temperature too high: 25.0' in created[0].message
-    assert 'safe max is 24.0' in created[0].message
+    assert 'max 24.0' in created[0].message
 
 
 def test_a_batch_at_harvest_does_not_change_the_range(farm, room):
@@ -192,7 +192,7 @@ def test_the_message_names_the_range_that_was_used(farm, room):
     StageThreshold.objects.filter(stage='PUPA').update(hum_min=60.0, hum_max=75.0)
     put(farm, room, 'PUPA')
     check_room_alerts(room.pk, 25.0, 80.0)
-    assert 'safe max is 75.0%' in alerts(room).get().message
+    assert 'max 75.0%' in alerts(room).get().message
 
 
 # ── a room that is not judged ───────────────────────────────────────────────

@@ -71,7 +71,7 @@ describe('The details of a cooperative', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Edit cooperative' });
     fireEvent.change(within(dialog).getByLabelText(/^Name/), { target: { value: '  ' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
-    expect(within(dialog).getByRole('alert')).toHaveTextContent('Please enter a name for the cooperative.');
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Enter a name for the cooperative.');
     expect(api.update).not.toHaveBeenCalled();
   });
 
@@ -158,7 +158,7 @@ describe('The details of a cooperative', () => {
       await settingsReady();
       fireEvent.change(field('Default boxes for a new farmer'), { target: { value } });
       save();
-      expect(await screen.findByText('Please enter a whole number of boxes from 0 to 100.')).toBeInTheDocument();
+      expect(await screen.findByText('Enter a whole number of boxes, 0 to 100.')).toBeInTheDocument();
       expect(api.saveSettings).not.toHaveBeenCalled();
     });
 
@@ -167,7 +167,7 @@ describe('The details of a cooperative', () => {
       await settingsReady();
       fireEvent.change(field('Space one box needs (m²)'), { target: { value } });
       save();
-      expect(await screen.findByText('Please enter a number above 0 and up to 1000, with at most two decimals, or leave it empty.')).toBeInTheDocument();
+      expect(await screen.findByText('Use a number above 0, up to 1000, with 2 decimals at most.')).toBeInTheDocument();
       expect(api.saveSettings).not.toHaveBeenCalled();
     });
 

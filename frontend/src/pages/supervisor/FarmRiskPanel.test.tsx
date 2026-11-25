@@ -79,7 +79,7 @@ describe('Farm risk panel', () => {
   it('explains the rule in one sentence', async () => {
     open();
     await screen.findByText('Hill Farm');
-    expect(screen.getByText(/High means a disease alert in the last 14 days or an open temperature or humidity problem\. Medium means a sensor is offline\./)).toBeInTheDocument();
+    expect(screen.getByText(/High: disease alert in 14 days, or open temperature or humidity problem\. Medium: sensor offline\./)).toBeInTheDocument();
   });
 
   it('shows every farm on request, and fewer again', async () => {
@@ -126,7 +126,7 @@ describe('Farm risk panel', () => {
   it('shows an error and a way to try again', async () => {
     api.getRisk.mockRejectedValueOnce(new Error('x'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't load the farm ranking. Please try again.");
+    expect(await screen.findByRole('alert')).toHaveTextContent("Could not load the farm ranking. Try again.");
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('Hill Farm')).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());

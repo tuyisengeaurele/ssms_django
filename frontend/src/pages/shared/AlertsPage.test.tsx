@@ -60,10 +60,10 @@ describe('Alerts page: the words of an alert', () => {
   it('writes an alert that has a code in the language of the screen, not in the English that was stored', async () => {
     localStorage.setItem('ssms_locale', 'fr');
     api.getAll.mockResolvedValue({
-      data: { data: [makeAlert(1, { code: 'humidity_high', params: { value: 92, max: 85 }, type: 'HUMIDITY', message: 'Humidity too high: 92% (safe max is 85%). Improve air circulation.' })] },
+      data: { data: [makeAlert(1, { code: 'humidity_high', params: { value: 92, max: 85 }, type: 'HUMIDITY', message: 'Humidity too high: 92% (max 85%). Improve air flow.' })] },
     });
     open();
-    expect(await screen.findByText("Humidité trop élevée : 92 % (maximum sûr : 85 %). Améliorez la circulation de l'air.")).toBeInTheDocument();
+    expect(await screen.findByText("Humidité trop élevée : 92 % (max 85 %). Aérez davantage.")).toBeInTheDocument();
     expect(screen.queryByText(/Humidity too high/)).not.toBeInTheDocument();
   });
 
@@ -210,7 +210,7 @@ describe('Alerts page', () => {
     api.getAll.mockResolvedValue({ data: { data: [] } });
     open();
     expect(await screen.findByText('No alerts')).toBeInTheDocument();
-    expect(screen.getByText(/let you know here when something needs attention/)).toBeInTheDocument();
+    expect(screen.getByText(/Alerts show here/)).toBeInTheDocument();
   });
 
   it('keeps the old purple and blue pills out', async () => {
@@ -340,7 +340,7 @@ describe('Alerts page when the alerts cannot be loaded', () => {
   it('says so, and does not say the person is all caught up', async () => {
     api.getAll.mockRejectedValue(new Error('boom'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load this page');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load this page');
     expect(screen.queryByText('You are all caught up.')).not.toBeInTheDocument();
   });
 

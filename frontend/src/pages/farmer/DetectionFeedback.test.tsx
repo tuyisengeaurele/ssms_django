@@ -36,7 +36,7 @@ describe('Detection feedback', () => {
     show();
     fireEvent.click(within(group()).getByRole('button', { name: 'Yes' }));
     await waitFor(() => expect(api.sendFeedback).toHaveBeenCalledWith('d1', { isCorrect: true }));
-    expect(await screen.findByText('Thank you. Your answer was saved.')).toBeInTheDocument();
+    expect(await screen.findByText('Thanks. Your answer was saved.')).toBeInTheDocument();
   });
 
   it('asks what it really was after a no, and sends it', async () => {
@@ -50,7 +50,7 @@ describe('Detection feedback', () => {
     fireEvent.change(select, { target: { value: 'Grasserie' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send my answer' }));
     await waitFor(() => expect(api.sendFeedback).toHaveBeenCalledWith('d1', { isCorrect: false, actualResult: 'Grasserie' }));
-    expect(await screen.findByText('Thank you. Your answer was saved.')).toBeInTheDocument();
+    expect(await screen.findByText('Thanks. Your answer was saved.')).toBeInTheDocument();
   });
 
   it('accepts a no without saying what it was', async () => {
@@ -73,12 +73,12 @@ describe('Detection feedback', () => {
     fireEvent.click(within(group()).getByRole('button', { name: 'Yes' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Change my answer' }));
     expect(within(group()).getByRole('button', { name: 'No' })).toBeEnabled();
-    expect(screen.queryByText('Thank you. Your answer was saved.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Thanks. Your answer was saved.')).not.toBeInTheDocument();
   });
 
   it('shows an answer that was given before', () => {
     show({ initial: { isCorrect: false, actualResult: 'Grasserie' } });
-    expect(screen.getByText('Thank you. Your answer was saved.')).toBeInTheDocument();
+    expect(screen.getByText('Thanks. Your answer was saved.')).toBeInTheDocument();
   });
 
   it('says what went wrong and keeps the question open when saving fails', async () => {
@@ -87,7 +87,7 @@ describe('Detection feedback', () => {
     fireEvent.click(within(group()).getByRole('button', { name: 'Yes' }));
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     expect(within(group()).getByRole('button', { name: 'Yes' })).toBeEnabled();
-    expect(screen.queryByText('Thank you. Your answer was saved.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Thanks. Your answer was saved.')).not.toBeInTheDocument();
   });
 
   it('cannot be pressed twice while it is saving', async () => {
@@ -98,7 +98,7 @@ describe('Detection feedback', () => {
     expect(within(group()).getByRole('button', { name: 'Yes' })).toBeDisabled();
     expect(within(group()).getByRole('button', { name: 'No' })).toBeDisabled();
     finish({ data: { data: {} } });
-    await screen.findByText('Thank you. Your answer was saved.');
+    await screen.findByText('Thanks. Your answer was saved.');
     expect(api.sendFeedback).toHaveBeenCalledTimes(1);
   });
 });

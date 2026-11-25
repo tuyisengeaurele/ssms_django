@@ -10,7 +10,7 @@ vi.mock('../../services/admin.service', () => ({ adminService: api }));
 
 import AdminPhoneDialog from './AdminPhoneDialog';
 
-const TAKEN = 'This phone number is already used by another account. Contact the SSMS team if it is yours.';
+const TAKEN = 'This number belongs to another account. Contact the SSMS team if it is yours.';
 const aline = { id: 'u1', name: 'Aline Uwase', email: 'aline@example.rw', role: 'FARMER', phone: '+250788123456' } as User;
 const nobody = { ...aline, phone: null } as User;
 const saved = { ...aline, phone: '+250733000000' } as User;
@@ -31,7 +31,7 @@ const type = (value: string) => fireEvent.change(field(), { target: { value } })
 
 function refused(code: string, message: string) {
   return new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, {
-    status: 422, data: { code, message: 'Please check what you entered and try again.', errors: { phone: [message] } },
+    status: 422, data: { code, message: 'Check what you entered and try again.', errors: { phone: [message] } },
   } as never);
 }
 
@@ -113,7 +113,7 @@ describe('The dialog for the number of someone else', () => {
   it('asks before clearing, and Keep it goes back without sending anything', () => {
     open();
     fireEvent.click(screen.getByRole('button', { name: 'Clear number' }));
-    expect(screen.getByText('Clear the number of Aline Uwase? They will be asked for one the next time they sign in.')).toBeInTheDocument();
+    expect(screen.getByText('Clear the number of Aline Uwase? They will be asked for one at next sign in.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Keep it' }));
     expect(screen.queryByText(/Clear the number of/)).not.toBeInTheDocument();
     expect(api.setPhone).not.toHaveBeenCalled();

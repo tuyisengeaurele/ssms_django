@@ -107,7 +107,7 @@ describe('Farms page when the farms cannot be loaded', () => {
   it('says so, and does not claim there are no farms or count zero', async () => {
     getAll.mockRejectedValue(new Error('boom'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load this page');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load this page');
     expect(screen.queryByText('No farms yet')).not.toBeInTheDocument();
     expect(screen.queryByText(/0 farms registered/)).not.toBeInTheDocument();
   });

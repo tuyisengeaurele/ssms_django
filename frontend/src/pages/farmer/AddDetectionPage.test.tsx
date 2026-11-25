@@ -90,7 +90,7 @@ describe('Disease check page', () => {
   it('refuses a file that is not a photo and says what to do', () => {
     open();
     choose(photo('notes.pdf', 'application/pdf'));
-    expect(screen.getByRole('alert')).toHaveTextContent('Please choose a JPEG, PNG or WebP photo.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Choose a JPEG, PNG or WebP photo.');
     expect(screen.getByRole('button', { name: 'Check this photo' })).toBeDisabled();
   });
 
@@ -110,7 +110,7 @@ describe('Disease check page', () => {
     open();
     await chooseReady(photo());
     fireEvent.click(screen.getByRole('button', { name: 'Check this photo' }));
-    expect(await screen.findByText(/This photo looks like a case of grasserie\. Consider keeping this batch apart/)).toBeInTheDocument();
+    expect(await screen.findByText(/This photo looks like grasserie\. Keep the batch apart/)).toBeInTheDocument();
     expect(screen.queryByText(/may be present/)).not.toBeInTheDocument();
   });
 
@@ -142,7 +142,7 @@ describe('Disease check page', () => {
 
     it('says an alert was added when the check raised one', async () => {
       await checked({ alertRaised: true });
-      expect(screen.getByText('An alert was added to this batch, so your supervisor can see it too.')).toBeInTheDocument();
+      expect(screen.getByText('An alert was added so your supervisor can see it too.')).toBeInTheDocument();
     });
 
     it('says nothing about an alert when none was raised', async () => {
@@ -165,7 +165,7 @@ describe('Disease check page', () => {
       await checked();
       fireEvent.click(within(screen.getByRole('group', { name: 'Was this result correct?' })).getByRole('button', { name: 'Yes' }));
       await waitFor(() => expect(api.sendFeedback).toHaveBeenCalledWith('d1', { isCorrect: true }));
-      expect(await screen.findByText('Thank you. Your answer was saved.')).toBeInTheDocument();
+      expect(await screen.findByText('Thanks. Your answer was saved.')).toBeInTheDocument();
     });
 
     it('starts the next check with no card and a fresh question', async () => {
@@ -223,7 +223,7 @@ describe('Disease check page', () => {
       fireEvent.change(screen.getByLabelText(/^Choisir une photo/), { target: { files: [photo()] } });
       await screen.findByRole('img', { name: 'La photo choisie' });
       fireEvent.click(screen.getByRole('button', { name: /Vérifier cette photo/ }));
-      expect(await screen.findByText(/Cette photo ressemble à un cas de grasserie/)).toBeInTheDocument();
+      expect(await screen.findByText(/Cette photo ressemble à : grasserie/)).toBeInTheDocument();
       expect(screen.queryByText(/de certitude/)).not.toBeInTheDocument();
       expect(screen.queryByText(/peut se tromper/)).not.toBeInTheDocument();
     });
@@ -238,8 +238,8 @@ describe('Disease check page', () => {
     };
 
     it.each([
-      ['NotSilkworm', 'This does not look like a silkworm', /Take a photo of the silkworms themselves/],
-      ['Uncertain', 'The check is not sure about this photo', /Take another photo with the worms in focus/],
+      ['NotSilkworm', 'This does not look like a silkworm', /Photograph the silkworms up close/],
+      ['Uncertain', 'The check is not sure about this photo', /Take another photo, worms in focus/],
     ])('says so plainly for %s', async (result, title, advice) => {
       await run(result);
       expect(await screen.findByRole('heading', { level: 2, name: title })).toBeInTheDocument();
@@ -363,7 +363,7 @@ describe('Disease check page', () => {
       open();
       choose(big());
       expect(await screen.findByText('IMG_2201.jpg (180.0 KB)')).toBeInTheDocument();
-      expect(screen.getByText('Photo ready, 180 KB. It was 5.0 MB, and was made smaller to send faster.')).toBeInTheDocument();
+      expect(screen.getByText('Photo ready, 180 KB (was 5.0 MB).')).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'Check this photo' }));
       await waitFor(() => expect(api.create).toHaveBeenCalledWith('b1', expect.objectContaining({ size: 180 * 1024 }), undefined));
     });
@@ -408,7 +408,7 @@ describe('Disease check page', () => {
     it('no longer promises 10 MB, which the server would refuse', () => {
       open();
       expect(screen.queryByText(/10 MB/)).not.toBeInTheDocument();
-      expect(screen.getByText(/A large photo is made smaller for you/)).toBeInTheDocument();
+      expect(screen.getByText(/JPEG, PNG or WebP/)).toBeInTheDocument();
     });
   });
 

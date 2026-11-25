@@ -121,7 +121,7 @@ describe('Cooperatives page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'New cooperative' }));
     const dialog = await screen.findByRole('dialog', { name: 'New cooperative' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Create' }));
-    expect(within(dialog).getByRole('alert')).toHaveTextContent('Please enter a name for the cooperative.');
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Enter a name for the cooperative.');
     expect(api.create).not.toHaveBeenCalled();
   });
 
@@ -173,7 +173,7 @@ describe('Cooperatives page when the cooperatives cannot be loaded', () => {
   it('says so, and loads again with Try again', async () => {
     api.getAll.mockRejectedValueOnce(new Error('boom'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load this page');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load this page');
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
     expect(api.getAll).toHaveBeenCalledTimes(2);

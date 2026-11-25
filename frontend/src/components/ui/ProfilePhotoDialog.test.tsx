@@ -118,7 +118,7 @@ describe('The profile photo dialog', () => {
   it('refuses a file that is not a JPEG, a PNG or a WebP', () => {
     open();
     choose(file('notes.txt', 'text/plain'));
-    expect(screen.getByText('Please choose a JPEG, PNG or WebP photo.')).toHaveAttribute('role', 'alert');
+    expect(screen.getByText('Choose a JPEG, PNG or WebP photo.')).toHaveAttribute('role', 'alert');
     expect(cropper()).toBeNull();
     expect(save()).toBeDisabled();
   });
@@ -127,7 +127,7 @@ describe('The profile photo dialog', () => {
     crop.loadImage.mockRejectedValue(new Error('x'));
     open();
     choose(file());
-    expect(await screen.findByText('Please choose a JPEG, PNG or WebP photo.')).toBeInTheDocument();
+    expect(await screen.findByText('Choose a JPEG, PNG or WebP photo.')).toBeInTheDocument();
     expect(save()).toBeDisabled();
   });
 
@@ -155,7 +155,7 @@ describe('The profile photo dialog', () => {
     choose(file());
     await screen.findByRole('group', { name: 'Adjust photo' });
     fireEvent.click(save());
-    expect(await screen.findByText('Please choose a JPEG, PNG or WebP photo.')).toBeInTheDocument();
+    expect(await screen.findByText('Choose a JPEG, PNG or WebP photo.')).toBeInTheDocument();
     expect(onChanged).not.toHaveBeenCalled();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
@@ -171,14 +171,30 @@ describe('The profile photo dialog', () => {
     expect(save()).toBeEnabled();
   });
 
-  it('removes the photo, and offers that only when there is one', async () => {
-    const { unmount } = open();
+  it('offers Remove only when there is a photo', () => {
+    open();
     expect(screen.queryByRole('button', { name: 'Remove' })).not.toBeInTheDocument();
-    unmount();
+  });
+
+  it('asks before it removes the photo, and removes it only on the second Remove', async () => {
     open('/api/photos/old');
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    expect(screen.getByText('Remove your photo?')).toBeInTheDocument();
+    expect(api.removePhoto).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
     await waitFor(() => expect(api.removePhoto).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(onChanged).toHaveBeenCalledWith({ ...saved, photoUrl: null }));
+  });
+
+  it('keeps the photo and goes back to the picker when the question is cancelled', () => {
+    open('/api/photos/old');
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByText('Remove your photo?')).not.toBeInTheDocument();
+    expect(api.removePhoto).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
+    expect(save()).toBeInTheDocument();
   });
 
   it('shows Remove as a button with a bin before the word, like the other buttons, not as plain red text', () => {

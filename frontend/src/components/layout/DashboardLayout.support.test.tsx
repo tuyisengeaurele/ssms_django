@@ -80,7 +80,7 @@ describe('The layout during support access', () => {
     support.mine.mockResolvedValue({ data: { data: { open: active, recent: [active] } } });
     open();
     await settle();
-    expect(screen.getByText(/You have an open support session with Aline Uwase/)).toBeInTheDocument();
+    expect(screen.getByText(/Support session with Aline Uwase is open/)).toBeInTheDocument();
   });
 
   it('shows neither to a farmer, and asks the server nothing about a visit to continue', async () => {

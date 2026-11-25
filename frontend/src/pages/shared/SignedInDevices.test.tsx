@@ -123,7 +123,7 @@ describe('Signed in devices', () => {
   it('says so when the devices cannot be loaded, and lets the person try again', async () => {
     api.list.mockRejectedValueOnce(new Error('offline'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load your devices.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load your devices.');
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('Chrome on Windows')).toBeInTheDocument();
   });

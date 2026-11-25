@@ -51,7 +51,7 @@ describe('Safe ranges page', () => {
   it('has one title and says what a range is for', async () => {
     open();
     expect(screen.getByRole('heading', { level: 1, name: 'Safe ranges' })).toBeInTheDocument();
-    expect(await screen.findByText(/The temperature and humidity each stage of a batch should stay between/)).toBeInTheDocument();
+    expect(await screen.findByText(/Safe temperature and humidity for each stage/)).toBeInTheDocument();
   });
 
   it('lists the five stages in order with their numbers', async () => {
@@ -74,7 +74,7 @@ describe('Safe ranges page', () => {
 
   it('says that a new range applies to new readings, and that open alerts stay open until a good reading', async () => {
     open();
-    expect(await screen.findByText(/judged by the new range right away/)).toBeInTheDocument();
+    expect(await screen.findByText(/New ranges apply at once/)).toBeInTheDocument();
   });
 
   describe('changing a range', () => {
@@ -130,7 +130,7 @@ describe('Safe ranges page', () => {
       const row = await rowOf('Egg');
       change(row, /highest temperature/, '29');
       fireEvent.click(within(row).getByRole('button', { name: 'Save Egg' }));
-      expect(await screen.findByText("We couldn't save the range. Please try again.", {}, { timeout: 5000 })).toBeInTheDocument();
+      expect(await screen.findByText("Could not save the range. Try again.", {}, { timeout: 5000 })).toBeInTheDocument();
       expect(box(row, /highest temperature/).value).toBe('29');
       expect(within(row).getByRole('button', { name: 'Save Egg' })).toBeEnabled();
     });
@@ -141,7 +141,7 @@ describe('Safe ranges page', () => {
       open();
       const row = await rowOf('Egg');
       change(row, /highest temperature/, '20');
-      expect(within(row).getByText('Please set the highest temperature above the lowest.')).toBeInTheDocument();
+      expect(within(row).getByText('The highest temperature must be above the lowest.')).toBeInTheDocument();
       expect(within(row).getByRole('button', { name: 'Save Egg' })).toBeDisabled();
     });
 
@@ -149,7 +149,7 @@ describe('Safe ranges page', () => {
       open();
       const row = await rowOf('Egg');
       change(row, /highest humidity/, '60');
-      expect(within(row).getByText('Please set the highest humidity above the lowest.')).toBeInTheDocument();
+      expect(within(row).getByText('The highest humidity must be above the lowest.')).toBeInTheDocument();
     });
 
     it('refuses numbers outside what a room can be', async () => {
@@ -166,7 +166,7 @@ describe('Safe ranges page', () => {
       open();
       const row = await rowOf('Egg');
       change(row, /lowest humidity/, '');
-      expect(within(row).getByText('Please enter a number for each box.')).toBeInTheDocument();
+      expect(within(row).getByText('Enter a number in each box.')).toBeInTheDocument();
       expect(within(row).getByRole('button', { name: 'Save Egg' })).toBeDisabled();
     });
 
@@ -199,7 +199,7 @@ describe('Safe ranges page', () => {
   it('shows an error and a way to try again when the ranges cannot be loaded', async () => {
     api.getThresholds.mockRejectedValueOnce(new Error('x'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't load the safe ranges. Please try again.");
+    expect(await screen.findByRole('alert')).toHaveTextContent("Could not load the safe ranges. Try again.");
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await rowOf('Egg')).toBeInTheDocument();
   });

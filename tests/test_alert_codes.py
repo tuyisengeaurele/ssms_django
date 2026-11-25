@@ -75,12 +75,12 @@ def test_the_three_languages_are_different_texts():
         assert len(texts) == 3, code
 
 
-def test_english_is_what_the_old_messages_said():
+def test_english_is_the_short_wording():
     safe = SafeRange()
-    assert render_alert('temperature_low', {'value': 19.5, 'min': 22.0}) == 'Temperature too low: 19.5 °C (safe min is 22.0 °C). Check heating.'
-    assert render_alert('temperature_high', {'value': 31.0, 'max': 28.0}) == 'Temperature too high: 31.0 °C (safe max is 28.0 °C). Improve ventilation.'
-    assert render_alert('humidity_low', {'value': 60.0, 'min': 70.0}) == 'Humidity too low: 60.0% (safe min is 70.0%). Add moisture.'
-    assert render_alert('humidity_high', {'value': 92.0, 'max': 85.0}) == 'Humidity too high: 92.0% (safe max is 85.0%). Improve air circulation.'
+    assert render_alert('temperature_low', {'value': 19.5, 'min': 22.0}) == 'Temperature too low: 19.5 °C (min 22.0 °C). Check heating.'
+    assert render_alert('temperature_high', {'value': 31.0, 'max': 28.0}) == 'Temperature too high: 31.0 °C (max 28.0 °C). Improve ventilation.'
+    assert render_alert('humidity_low', {'value': 60.0, 'min': 70.0}) == 'Humidity too low: 60.0% (min 70.0%). Add moisture.'
+    assert render_alert('humidity_high', {'value': 92.0, 'max': 85.0}) == 'Humidity too high: 92.0% (max 85.0%). Improve air flow.'
     assert temperature_problem(19.5, safe) == render_alert('temperature_low', {'value': 19.5, 'min': 22.0})
     assert humidity_problem(92.0, safe) == render_alert('humidity_high', {'value': 92.0, 'max': 85.0})
     assert temperature_problem(25.0, safe) is None and humidity_problem(78.0, safe) is None

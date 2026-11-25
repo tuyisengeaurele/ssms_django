@@ -136,7 +136,7 @@ describe('a link that does not work', () => {
   it('does not say the link is dead when the server had a problem', async () => {
     api.get.mockRejectedValue(Object.assign(new Error('boom'), { response: { status: 500 } }));
     open();
-    expect(await screen.findByText(/Something went wrong on our side/)).toBeInTheDocument();
+    expect(await screen.findByText(/Something went wrong/)).toBeInTheDocument();
     expect(screen.queryByText('This link is no longer valid.')).not.toBeInTheDocument();
   });
 

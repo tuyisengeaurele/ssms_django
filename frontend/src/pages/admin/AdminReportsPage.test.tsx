@@ -175,7 +175,7 @@ describe('System report page', () => {
     open();
     await screen.findByText('Total users');
     fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }));
-    expect(await screen.findByText("We couldn't create the PDF file. Please try again.", {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(await screen.findByText("Could not create the PDF. Try again.", {}, { timeout: 5000 })).toBeInTheDocument();
   });
 
   it('tells the person kindly when the CSV cannot be made', async () => {
@@ -183,13 +183,13 @@ describe('System report page', () => {
     open();
     await screen.findByText('Total users');
     fireEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
-    expect(await screen.findByText("We couldn't create the CSV file. Please try again.", {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(await screen.findByText("Could not create the CSV. Try again.", {}, { timeout: 5000 })).toBeInTheDocument();
   });
 
   it('tells the person kindly when the report cannot be loaded', async () => {
     api.getSummary.mockRejectedValue(new Error('x'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't load the report data. Please try again.");
+    expect(await screen.findByRole('alert')).toHaveTextContent("Could not load the report data. Try again.");
   });
 
   it('keeps the old rainbow colours out', async () => {

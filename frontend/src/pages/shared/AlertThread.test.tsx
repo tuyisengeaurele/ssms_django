@@ -70,7 +70,7 @@ describe('Alert thread', () => {
   it('shows an error and a way to try again when the comments cannot be loaded', async () => {
     api.getComments.mockRejectedValueOnce(new Error('x'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't load the comments. Please try again.");
+    expect(await screen.findByRole('alert')).toHaveTextContent("Could not load the comments. Try again.");
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('Please open the windows.')).toBeInTheDocument();
   });
@@ -113,7 +113,7 @@ describe('Alert thread', () => {
       await screen.findByText('Please open the windows.');
       fireEvent.change(screen.getByLabelText('Write a comment'), { target: { value: 'Thank you.' } });
       fireEvent.click(screen.getByRole('button', { name: 'Add comment' }));
-      expect(await screen.findByText("We couldn't add your comment. Please try again.", {}, { timeout: 5000 })).toBeInTheDocument();
+      expect(await screen.findByText("Could not add your comment. Try again.", {}, { timeout: 5000 })).toBeInTheDocument();
       expect(screen.getByLabelText('Write a comment')).toHaveValue('Thank you.');
       expect(onCount).not.toHaveBeenCalled();
     });
@@ -181,7 +181,7 @@ describe('Alert thread', () => {
       const second = (await screen.findByText('Done, thank you.')).closest('li') as HTMLElement;
       fireEvent.click(within(second).getByRole('button', { name: 'Delete' }));
       fireEvent.click(within(second).getByRole('button', { name: 'Yes, delete' }));
-      expect(await screen.findByText("We couldn't delete the comment. Please try again.", {}, { timeout: 5000 })).toBeInTheDocument();
+      expect(await screen.findByText("Could not delete the comment. Try again.", {}, { timeout: 5000 })).toBeInTheDocument();
       expect(screen.getByText('Done, thank you.')).toBeInTheDocument();
     });
   });

@@ -135,7 +135,7 @@ describe('Batch report', () => {
       const s = within(section('Conditions in the last 30 days'));
       expect(await s.findByText(/Temperature: lowest 20 °C, average 25 °C, highest 30 °C/)).toBeInTheDocument();
       expect(s.getByText(/Humidity: lowest 70 %, average 76.3 %, highest 80 %/)).toBeInTheDocument();
-      expect(s.getByText(/50 % of the 24 hours were inside the usual range for the Larva stage \(22 to 28 °C, 70 to 85 %\)/)).toBeInTheDocument();
+      expect(s.getByText(/50 % of 24 hours were in the usual range for Larva \(22 to 28 °C, 70 to 85 %\)/)).toBeInTheDocument();
     });
 
     it('says so when there are no readings', async () => {
@@ -268,7 +268,7 @@ describe('Batch report', () => {
       open();
       await screen.findByText("Batch #9SIEO7CV on Serge's farm");
       fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }));
-      expect(await screen.findByText("We couldn't create the PDF. Please try again.", {}, { timeout: 5000 })).toBeInTheDocument();
+      expect(await screen.findByText("Could not create the PDF. Try again.", {}, { timeout: 5000 })).toBeInTheDocument();
     });
   });
 
@@ -296,14 +296,14 @@ describe('Batch report', () => {
     api.batch.mockRejectedValue(new Error('x'));
     open();
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent("We couldn't load this report. Please try again.");
+    expect(alert).toHaveTextContent("Could not load this report. Try again.");
     expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument();
   });
 
   it.each(['mortality', 'detections', 'harvest', 'series'])('shows an error, not a report with a gap, when %s cannot be loaded', async (which) => {
     api[which as 'mortality'].mockRejectedValue(new Error('x'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't load this report. Please try again.");
+    expect(await screen.findByRole('alert')).toHaveTextContent("Could not load this report. Try again.");
     expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument();
     expect(screen.queryByText('No readings in the last 30 days.')).not.toBeInTheDocument();
   });

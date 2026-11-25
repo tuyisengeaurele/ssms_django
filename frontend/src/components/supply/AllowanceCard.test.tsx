@@ -84,10 +84,13 @@ describe('AllowanceCard', () => {
     answer(card({ openRequest: { id: 'q1', boxesAsked: 4, reason: 'I built a second house', createdAt: '2026-11-06T10:00:00Z' } }));
     api.withdraw.mockResolvedValue({ data: { data: null } });
     show();
-    expect(await screen.findByText('Your request for 4 boxes is waiting for your supervisor.')).toBeInTheDocument();
+    expect(await screen.findByText('Request for 4 boxes waiting for your supervisor.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Ask for a different amount' })).not.toBeInTheDocument();
     answer(card());
     fireEvent.click(screen.getByRole('button', { name: 'Withdraw request' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Withdraw your request?' });
+    expect(api.withdraw).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Withdraw' }));
     await waitFor(() => expect(api.withdraw).toHaveBeenCalledWith('q1'));
     expect(await screen.findByText('Request withdrawn.')).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Ask for a different amount' })).toBeInTheDocument();
@@ -127,7 +130,7 @@ describe('asking for a different amount', () => {
     const dialog = await openModal();
     fillIn(dialog, boxes, 'I built a second house');
     send(dialog);
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Please enter a whole number of boxes from 0 to 100.');
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Enter a whole number of boxes, 0 to 100.');
     expect(api.ask).not.toHaveBeenCalled();
   });
 
@@ -143,7 +146,7 @@ describe('asking for a different amount', () => {
     const dialog = await openModal();
     fillIn(dialog, '4', reason);
     send(dialog);
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Please say why, in 10 to 500 characters.');
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Say why, in 10 to 500 characters.');
     expect(api.ask).not.toHaveBeenCalled();
   });
 
@@ -155,11 +158,11 @@ describe('asking for a different amount', () => {
     send(dialog);
     await waitFor(() => expect(api.ask).toHaveBeenCalledWith({ boxesAsked: 4, reason: 'I built a second house' }));
     expect(await screen.findByText('Request sent. Your supervisor will decide.')).toBeInTheDocument();
-    expect(await screen.findByText('Your request for 4 boxes is waiting for your supervisor.')).toBeInTheDocument();
+    expect(await screen.findByText('Request for 4 boxes waiting for your supervisor.')).toBeInTheDocument();
   });
 
   it('shows the answer of the server inside the dialog and keeps what was typed', async () => {
-    api.ask.mockRejectedValue(new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, { status: 409, data: { message: 'You already have a request waiting. Withdraw it first to ask again.' } } as never));
+    api.ask.mockRejectedValue(new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, { status: 409, data: { message: 'You already have a request waiting. Withdraw it to ask again.' } } as never));
     const dialog = await openModal();
     fillIn(dialog, '4', 'I built a second house');
     send(dialog);

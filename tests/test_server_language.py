@@ -124,7 +124,7 @@ def test_a_wrong_password_returns_a_code_and_the_sentence_in_the_language_asked_
 def test_a_missing_language_header_means_english():
     UserFactory(email='real@example.rw')
     response = APIClient().post(LOGIN, {'email': 'real@example.rw', 'password': 'Wrong1234'}, format='json')
-    assert response.data['message'] == "That email or password doesn't look right. Please try again."
+    assert response.data['message'] == "Wrong email or password. Try again."
     assert response.data['code'] == 'bad_login'
 
 

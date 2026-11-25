@@ -135,7 +135,7 @@ describe('Harvest page', () => {
   it('says a quiet word on the first harvest the farmer has recorded', async () => {
     api.create.mockResolvedValue({ data: { data: { ...record('r9', '6.00', null, 'B', '2026-10-05'), milestone: 'FIRST_HARVEST' } } });
     await logOne();
-    expect(await screen.findByText('Your first harvest is recorded. The totals are on the Harvests page.')).toBeInTheDocument();
+    expect(await screen.findByText('Your first harvest is recorded. Totals are on the Harvests page.')).toBeInTheDocument();
     expect(screen.queryByText('Harvest record saved.')).not.toBeInTheDocument();
   });
 
@@ -202,7 +202,7 @@ describe('Harvest page', () => {
       atStage(stage);
       api.list.mockResolvedValue({ data: { data: [] } });
       open();
-      expect(await screen.findByText('You can log a harvest once the batch has reached the cocoon stage.')).toBeInTheDocument();
+      expect(await screen.findByText('Log a harvest once the batch reaches the cocoon stage.')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Log harvest' })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Log the first harvest' })).not.toBeInTheDocument();
     });

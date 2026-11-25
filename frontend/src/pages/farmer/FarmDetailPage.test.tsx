@@ -126,7 +126,7 @@ describe('Farm details page', () => {
       open();
       await screen.findByRole('heading', { level: 1, name: "Serge's farm" });
       fireEvent.click(screen.getByRole('button', { name: 'Summary (PDF)' }));
-      expect(await screen.findByText("We couldn't create the summary. Please try again.", {}, { timeout: 5000 })).toBeInTheDocument();
+      expect(await screen.findByText("Could not create the summary. Try again.", {}, { timeout: 5000 })).toBeInTheDocument();
     });
   });
 
@@ -262,7 +262,7 @@ describe('Farm details page', () => {
         api.roomCreate.mockResolvedValue({ data: { data: room('r9', 'North house', { approvalStatus: 'pending' }) } });
         const dialog = await openAdd();
         expect(within(dialog).getByLabelText(/^Size in square metres/)).toBeRequired();
-        expect(within(dialog).getByText('Your supervisor will check this room. It can hold batches and sensors once it is approved.')).toBeInTheDocument();
+        expect(within(dialog).getByText('Your supervisor checks the room before it can hold batches.')).toBeInTheDocument();
         fillIn(dialog, 'North house', '14.5');
         fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
         await waitFor(() => expect(api.roomCreate).toHaveBeenCalledWith('f1', { name: 'North house', notes: undefined, areaM2: 14.5 }));
@@ -273,7 +273,7 @@ describe('Farm details page', () => {
         const dialog = await openAdd();
         fillIn(dialog, 'North house', area);
         fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
-        expect(await within(dialog).findByRole('alert')).toHaveTextContent('Please enter a size between 1 and 5000 square metres.');
+        expect(await within(dialog).findByRole('alert')).toHaveTextContent('Enter a size from 1 to 5000 square metres.');
         expect(api.roomCreate).not.toHaveBeenCalled();
       });
 
@@ -411,7 +411,7 @@ describe('Farm details page', () => {
     await screen.findByText('Mugisha Serge');
     fireEvent.click(screen.getByRole('button', { name: 'Delete farm' }));
     const dialog = await screen.findByRole('dialog', { name: 'Delete this farm?' });
-    expect(dialog).toHaveTextContent("Serge's farm and everything recorded for it will be deleted. This cannot be undone.");
+    expect(dialog).toHaveTextContent("Serge's farm and all its records are deleted for good.");
     expect(api.remove).not.toHaveBeenCalled();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, delete' }));
     await waitFor(() => expect(api.remove).toHaveBeenCalledWith('f1'));

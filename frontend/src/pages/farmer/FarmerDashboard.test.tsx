@@ -99,7 +99,7 @@ describe('Farmer dashboard, the layout', () => {
   });
 
   it('asks the calendar for the farmer, who gets no link to a supply round', async () => {
-    api.events.mockResolvedValue({ data: { data: { events: [{ id: 'e1', date: new Date().toISOString().slice(0, 10), kind: 'round_deadline', expected: false, batchId: null, farmId: null, farmName: '', detail: { name: 'November round', roundId: 'r1' } }], from: '', to: '', truncated: false } } });
+    api.events.mockResolvedValue({ data: { data: { events: [{ id: 'e1', date: new Date().toLocaleDateString('en-CA'), kind: 'round_deadline', expected: false, batchId: null, farmId: null, farmName: '', detail: { name: 'November round', roundId: 'r1' } }], from: '', to: '', truncated: false } } });
     open();
     const agenda = await screen.findByTestId('agenda');
     expect(await within(agenda).findByText(/November round: requests close/)).toBeInTheDocument();
@@ -109,7 +109,7 @@ describe('Farmer dashboard, the layout', () => {
   it('still shows everything else when the calendar cannot load', async () => {
     api.events.mockRejectedValue(new Error('down'));
     open();
-    expect(await screen.findByText('We could not load the calendar.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not load the calendar.')).toBeInTheDocument();
     expect(screen.getByText('Active batches')).toBeInTheDocument();
     expect(screen.getByText('Temperature too low: 21 C')).toBeInTheDocument();
   });

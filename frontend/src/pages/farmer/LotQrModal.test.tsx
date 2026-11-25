@@ -61,7 +61,7 @@ describe('a lot that is not shared yet', () => {
     open();
     const d = within(await dialog());
     expect(await d.findByText(/farm name and district, the dates, the weight and the grade/)).toBeInTheDocument();
-    expect(d.getByText(/never shows your name, your contact details, the street, the exact position of the farm or your notes/)).toBeInTheDocument();
+    expect(d.getByText(/never shows your name, contacts, street, exact position or notes/)).toBeInTheDocument();
     expect(d.queryByTestId('qr')).not.toBeInTheDocument();
   });
 
@@ -142,8 +142,8 @@ describe('stopping the sharing', () => {
   it('asks first, and says what happens to codes that were printed', async () => {
     open();
     fireEvent.click(await screen.findByRole('button', { name: 'Stop sharing' }));
-    expect(screen.getByText(/Anyone who has this QR code will see a page that no longer works/)).toBeInTheDocument();
-    expect(screen.getByText(/printed codes stop working/)).toBeInTheDocument();
+    expect(screen.getByText(/The QR code stops working/)).toBeInTheDocument();
+    expect(screen.getByText(/printed ones too/)).toBeInTheDocument();
     expect(api.stop).not.toHaveBeenCalled();
   });
 
@@ -179,7 +179,7 @@ describe('when things go wrong', () => {
   it('says so when the link cannot be read', async () => {
     api.get.mockRejectedValue(new Error('down'));
     open();
-    expect(await screen.findByText('We could not load the QR code. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not load the QR code. Try again.')).toBeInTheDocument();
   });
 
   it('closes', async () => {

@@ -100,7 +100,7 @@ describe('SupplyRoundCard', () => {
     it('says what the farmer can ask for and why, for each bound', async () => {
       answer({ round: round(), rooms: [room({ binding: 'allowance' })] });
       const dialog = await openDialog();
-      expect(within(dialog).getByText('You can ask for up to 2 boxes. Your allowance is 2.')).toBeInTheDocument();
+      expect(within(dialog).getByText('Ask for up to 2 boxes. Your allowance is 2.')).toBeInTheDocument();
       fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     });
@@ -108,13 +108,13 @@ describe('SupplyRoundCard', () => {
     it('names the room as the reason when the room sets the limit', async () => {
       answer({ round: round(), rooms: [room({ limit: 1, roomFree: 1, binding: 'room' })] });
       const dialog = await openDialog();
-      expect(within(dialog).getByText('You can ask for up to 1 box. Room A has space for 1.')).toBeInTheDocument();
+      expect(within(dialog).getByText('Ask for up to 1 box. Room A has space for 1.')).toBeInTheDocument();
     });
 
     it('names the stock as the reason when the stock sets the limit', async () => {
       answer({ round: round(), rooms: [room({ limit: 3, stock: 3, binding: 'stock' })] });
       const dialog = await openDialog();
-      expect(within(dialog).getByText('You can ask for up to 3 boxes. Only 3 boxes are in this round.')).toBeInTheDocument();
+      expect(within(dialog).getByText('Ask for up to 3 boxes. Only 3 boxes are in this round.')).toBeInTheDocument();
     });
 
     it('says when the space of the room is not counted yet', async () => {
@@ -129,14 +129,14 @@ describe('SupplyRoundCard', () => {
       const choice = within(dialog).getByLabelText('Room') as HTMLSelectElement;
       expect(choice.value).toBe('');
       fireEvent.change(choice, { target: { value: 'room2' } });
-      expect(within(dialog).getByText('You can ask for up to 1 box. Room B has space for 1.')).toBeInTheDocument();
+      expect(within(dialog).getByText('Ask for up to 1 box. Room B has space for 1.')).toBeInTheDocument();
     });
 
     it.each([['0'], ['3'], ['-1'], ['1.5'], ['']])('refuses %s boxes before sending', async (boxes) => {
       const dialog = await openDialog();
       fireEvent.change(within(dialog).getByLabelText('Boxes'), { target: { value: boxes } });
       fireEvent.click(within(dialog).getByRole('button', { name: 'Send request' }));
-      expect(await within(dialog).findByRole('alert')).toHaveTextContent('Please ask for a whole number of boxes from 1 up to 2.');
+      expect(await within(dialog).findByRole('alert')).toHaveTextContent('Ask for a whole number of boxes, 1 to 2.');
       expect(api.request).not.toHaveBeenCalled();
     });
 
@@ -207,7 +207,7 @@ describe('SupplyRoundCard', () => {
       show();
       fireEvent.click(await screen.findByRole('button', { name: 'Cancel request' }));
       const dialog = await screen.findByRole('dialog', { name: 'Cancel this request?' });
-      expect(within(dialog).getByText(/You can ask again while the round takes requests/)).toBeInTheDocument();
+      expect(within(dialog).getByText(/You can ask again until the round closes/)).toBeInTheDocument();
     });
 
     it('says plainly that it cannot be asked again once the requests are closed, for eggs that were approved', async () => {
@@ -215,7 +215,7 @@ describe('SupplyRoundCard', () => {
       show();
       fireEvent.click(await screen.findByRole('button', { name: 'Cancel request' }));
       const dialog = await screen.findByRole('dialog', { name: 'Cancel this request?' });
-      expect(within(dialog).getByText(/You cannot ask again once requests are closed/)).toBeInTheDocument();
+      expect(within(dialog).getByText(/You cannot ask again, requests are closed/)).toBeInTheDocument();
       expect(api.cancel).not.toHaveBeenCalled();
     });
 
@@ -318,7 +318,7 @@ describe('SupplyRoundCard', () => {
       const dialog = await openReceipt();
       fireEvent.change(within(dialog).getByLabelText('Boxes received'), { target: { value: boxes } });
       fireEvent.click(within(dialog).getByRole('button', { name: 'Confirm' }));
-      expect(await within(dialog).findByRole('alert')).toHaveTextContent('Please enter the boxes you received, from 1 up to 3.');
+      expect(await within(dialog).findByRole('alert')).toHaveTextContent('Enter the boxes you received, 1 to 3.');
       expect(api.receive).not.toHaveBeenCalled();
     });
 

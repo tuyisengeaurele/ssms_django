@@ -76,7 +76,7 @@ describe('New farm page', () => {
     expect(screen.getByLabelText(/^Farm name/)).toBeRequired();
     for (const label of ['Province', 'District', 'Sector', 'Cell', 'Village']) expect(screen.getByLabelText(new RegExp(`^${label}`))).toBeRequired();
     expect(screen.getByLabelText(/^Street or landmark/)).not.toBeRequired();
-    expect(screen.getByLabelText(/^Farm name/)).toHaveAccessibleDescription(/A name you will recognise/);
+    expect(screen.getByLabelText(/^Farm name/)).toHaveAccessibleDescription(/A name you recognise/);
     expect(await within(screen.getByLabelText(/^Province/)).findByRole('option', { name: 'Eastern Province' })).toBeInTheDocument();
   });
 

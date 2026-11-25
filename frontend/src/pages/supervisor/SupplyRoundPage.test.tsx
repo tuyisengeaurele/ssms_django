@@ -82,7 +82,7 @@ describe('A supply round', () => {
   it('says it could not load, with a way to try again', async () => {
     api.get.mockRejectedValueOnce(new Error('down'));
     open();
-    expect(await screen.findByText('We could not load this round.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not load this round.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByRole('heading', { level: 2, name: 'November round' })).toBeInTheDocument();
   });
@@ -90,7 +90,7 @@ describe('A supply round', () => {
   it('says a round that is not there is not found', async () => {
     api.get.mockRejectedValue(new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, { status: 404, data: { message: 'We could not find that round.' } } as never));
     open();
-    expect(await screen.findByText('We could not load this round.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not load this round.')).toBeInTheDocument();
   });
 
   describe('a draft', () => {

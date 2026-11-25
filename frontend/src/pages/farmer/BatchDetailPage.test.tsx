@@ -172,7 +172,7 @@ describe('Batch details page', () => {
     open();
     fireEvent.click(await screen.findByRole('button', { name: 'Move to Pupa' }));
     const dialog = await screen.findByRole('dialog', { name: 'Move this batch to Pupa?' });
-    expect(dialog).toHaveTextContent('cannot be moved back');
+    expect(dialog).toHaveTextContent('cannot go back');
     expect(api.updateStage).not.toHaveBeenCalled();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, move it' }));
     await waitFor(() => expect(api.updateStage).toHaveBeenCalledWith('b1-9sieo7cv', 'PUPA'));
@@ -300,7 +300,7 @@ describe('Batch timeline and charts', () => {
 
   it('tells the safe range of the current stage from the server, not from a fixed number', async () => {
     open();
-    expect(await screen.findByText('In Larva, keep the temperature between 24 and 27 °C and the humidity between 75 and 85 %.')).toBeInTheDocument();
+    expect(await screen.findByText('Larva: keep 24 to 27 °C and 75 to 85 % humidity.')).toBeInTheDocument();
     expect(screen.getAllByText('Safe range: 24 to 27 °C').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Safe range: 75 to 85 %').length).toBeGreaterThan(0);
   });
@@ -308,7 +308,7 @@ describe('Batch timeline and charts', () => {
   it('uses the usual range when the stage ranges cannot be fetched', async () => {
     api.thresholds.mockRejectedValue(new Error('nope'));
     open();
-    expect(await screen.findByText('In Larva, keep the temperature between 22 and 28 °C and the humidity between 70 and 85 %.')).toBeInTheDocument();
+    expect(await screen.findByText('Larva: keep 22 to 28 °C and 70 to 85 % humidity.')).toBeInTheDocument();
   });
 
   it('judges the readings table by the range of the stage', async () => {
@@ -417,7 +417,7 @@ describe('Breed, quantity and deaths', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Record deaths' }));
     const dialog = await screen.findByRole('dialog', { name: 'Record deaths' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
-    expect(within(dialog).getByRole('alert')).toHaveTextContent('Please enter how many worms died.');
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Enter how many worms died.');
     expect(api.addDeaths).not.toHaveBeenCalled();
   });
 

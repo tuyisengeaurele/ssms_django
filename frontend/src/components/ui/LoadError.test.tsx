@@ -13,7 +13,7 @@ const open = (onRetry = vi.fn()) => {
 describe('LoadError', () => {
   it('says the page could not be loaded and is not mistaken for an empty list', () => {
     open();
-    expect(screen.getByRole('alert')).toHaveTextContent('We could not load this page. Check your connection and try again.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not load this page. Check your connection and try again.');
   });
 
   it('offers Try again, which asks for the data once more', () => {

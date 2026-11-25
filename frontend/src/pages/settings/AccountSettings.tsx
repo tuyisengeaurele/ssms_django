@@ -12,6 +12,7 @@ import DownloadDataButton from '../../components/ui/DownloadDataButton';
 import ConfirmPhoneChangeDialog from '../../components/ui/ConfirmPhoneChangeDialog';
 import CooperativeRequestModal from '../../components/ui/CooperativeRequestModal';
 import AllowanceCard from '../../components/supply/AllowanceCard';
+import ConfirmModal from '../../components/ui/ConfirmModal';
 import EmailChangeDialog from '../../components/ui/EmailChangeDialog';
 import PhoneLink from '../../components/ui/PhoneLink';
 import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
@@ -61,6 +62,7 @@ export default function AccountSettings() {
   const [closing, setClosing] = useState(false);
   const [editingPhoto, setEditingPhoto] = useState(false);
   const [viewingPhoto, setViewingPhoto] = useState(false);
+  const [asking, setAsking] = useState<'coop' | 'email' | null>(null);
   // How many batches are still running, so the dialog can say they stay as history. Nothing is said when it is not known.
   const [runningBatches, setRunningBatches] = useState(0);
 
@@ -214,7 +216,7 @@ export default function AccountSettings() {
             {pendingEmail ? (
               <div className="form-hint">
                 <span>{fill(t('ecPending'), { email: pendingEmail.newEmail })}</span>{' '}
-                <button type="button" className="btn btn-secondary btn-xs" onClick={cancelEmailChange}><Icon name="close" size={13} />{t('ecCancel')}</button>
+                <button type="button" className="btn btn-secondary btn-xs" onClick={() => setAsking('email')}><Icon name="close" size={13} />{t('ecCancel')}</button>
               </div>
             ) : null}
           </div>
@@ -280,7 +282,7 @@ export default function AccountSettings() {
                     ? fill(t('cqWaiting'), { date: day(coopRequest.createdAt), name: coopRequest.to.name })
                     : fill(t('cqWaitingLeave'), { date: day(coopRequest.createdAt) })}
                 </p>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={withdrawCooperativeRequest}><Icon name="close" size={15} />{t('cqWithdraw')}</button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setAsking('coop')}><Icon name="close" size={15} />{t('cqWithdraw')}</button>
               </>
             ) : (
               <>
@@ -321,6 +323,21 @@ export default function AccountSettings() {
           )}
         </div>
       </section>
+
+      <ConfirmModal
+        open={asking === 'coop'}
+        title={t('rqWithdrawAsk')}
+        confirmLabel={t('cqWithdraw')}
+        onClose={() => setAsking(null)}
+        onConfirm={() => { setAsking(null); withdrawCooperativeRequest(); }}
+      />
+      <ConfirmModal
+        open={asking === 'email'}
+        title={t('ecCancelAsk')}
+        confirmLabel={t('ecCancel')}
+        onClose={() => setAsking(null)}
+        onConfirm={() => { setAsking(null); cancelEmailChange(); }}
+      />
 
       {user ? (
         <PhotoViewer

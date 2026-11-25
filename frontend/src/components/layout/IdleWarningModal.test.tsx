@@ -40,12 +40,12 @@ describe('IdleWarningModal', () => {
   it('says how long is left and asks the question', () => {
     show(42);
     const dialog = screen.getByRole('alertdialog');
-    expect(within(dialog).getByText('You will be signed out in 42 seconds because nobody used this page. Stay signed in?')).toBeInTheDocument();
+    expect(within(dialog).getByText('Signing you out in 42 seconds. Stay signed in?')).toBeInTheDocument();
   });
 
   it('says one second in the singular', () => {
     show(1);
-    expect(screen.getByText(/in 1 second because/)).toBeInTheDocument();
+    expect(screen.getByText(/in 1 second\./)).toBeInTheDocument();
   });
 
   it('puts the focus on Stay signed in, so Enter keeps the person signed in', () => {

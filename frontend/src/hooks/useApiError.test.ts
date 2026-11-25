@@ -21,12 +21,12 @@ describe('getErrorMessage', () => {
 
   it('says when the server cannot be reached', () => {
     const err = new AxiosError('Network Error', 'ERR_NETWORK');
-    expect(getErrorMessage(err)).toBe("We can't reach the server. Check your internet connection and try again.");
+    expect(getErrorMessage(err)).toBe("Can't reach the server. Check your connection and try again.");
   });
 
   it('says when a request takes too long', () => {
     const err = new AxiosError('timeout of 10000ms exceeded', 'ECONNABORTED');
-    expect(getErrorMessage(err)).toBe('That took too long. Please try again.');
+    expect(getErrorMessage(err)).toBe('That took too long. Try again.');
   });
 
   it('shows the first problem from a form that did not pass checks', () => {
@@ -39,18 +39,18 @@ describe('getErrorMessage', () => {
 
   it('asks the person to check the form when no detail comes back', () => {
     expect(getErrorMessage(withResponse(422, {}))).toBe(
-      'Please check what you entered and try again.',
+      'Check what you entered and try again.',
     );
   });
 
   it.each([500, 502, 503])('apologises for a server problem (%i)', (status) => {
     expect(getErrorMessage(withResponse(status, '<html>oops</html>'))).toBe(
-      'Our server hit a problem. Please try again in a moment.',
+      'Server problem. Try again in a moment.',
     );
   });
 
   it('asks for patience when there are too many requests and no wait time is known', () => {
-    expect(getErrorMessage(withResponse(429, {}))).toBe('Too many requests. Please wait a moment and try again.');
+    expect(getErrorMessage(withResponse(429, {}))).toBe('Too many requests. Wait a moment and try again.');
   });
 
   describe('after too many requests', () => {
@@ -69,20 +69,20 @@ describe('getErrorMessage', () => {
     });
 
     it('never shows the words the server sent', () => {
-      const body = { message: 'Too many attempts. Please try again in 12 seconds.', retryAfter: 12 };
+      const body = { message: 'Too many attempts. Try again in 12 seconds.', retryAfter: 12 };
       expect(getErrorMessage(withResponse(429, body))).not.toContain('attempts');
     });
 
     it('ignores a wait that is not a sensible number', () => {
       for (const bad of ['soon', '-5', '0', '99999999']) {
-        expect(getErrorMessage(withResponse(429, {}, { 'retry-after': bad }))).toBe('Too many requests. Please wait a moment and try again.');
+        expect(getErrorMessage(withResponse(429, {}, { 'retry-after': bad }))).toBe('Too many requests. Wait a moment and try again.');
       }
     });
 
     it('speaks French', () => {
       localStorage.setItem('ssms_locale', 'fr');
       expect(getErrorMessage(withResponse(429, {}, { 'retry-after': '12' }))).toBe('Trop de demandes. Réessayez dans 12 secondes.');
-      expect(getErrorMessage(withResponse(429, {}))).toBe('Trop de demandes. Patientez un instant puis réessayez.');
+      expect(getErrorMessage(withResponse(429, {}))).toBe('Trop de demandes. Patientez puis réessayez.');
     });
 
     it('speaks Kinyarwanda', () => {
@@ -96,13 +96,13 @@ describe('getErrorMessage', () => {
     afterEach(() => localStorage.clear());
 
     it('is shown after the message, from the body', () => {
-      const message = getErrorMessage(withResponse(500, { message: 'Something went wrong on our side. Please try again in a moment.', reference: 'A1B2C3D4E5F6' }));
-      expect(message).toBe('Something went wrong on our side. Please try again in a moment. Reference: A1B2C3D4E5F6');
+      const message = getErrorMessage(withResponse(500, { message: 'Something went wrong. Try again in a moment.', reference: 'A1B2C3D4E5F6' }));
+      expect(message).toBe('Something went wrong. Try again in a moment. Reference: A1B2C3D4E5F6');
     });
 
     it('is read from the header when the body has none', () => {
       expect(getErrorMessage(withResponse(502, '<html>bad gateway</html>', { 'x-request-id': 'ABCDEF123456' }))).toBe(
-        'Our server hit a problem. Please try again in a moment. Reference: ABCDEF123456',
+        'Server problem. Try again in a moment. Reference: ABCDEF123456',
       );
     });
 
@@ -112,7 +112,7 @@ describe('getErrorMessage', () => {
     });
 
     it('is never shown when it does not look like one', () => {
-      expect(getErrorMessage(withResponse(500, { reference: '<b>bad</b>' }))).toBe('Our server hit a problem. Please try again in a moment.');
+      expect(getErrorMessage(withResponse(500, { reference: '<b>bad</b>' }))).toBe('Server problem. Try again in a moment.');
     });
 
     it('is worded in French', () => {
@@ -126,9 +126,9 @@ describe('getErrorMessage', () => {
   });
 
   it('handles errors that are not from the network', () => {
-    expect(getErrorMessage(new Error('x is undefined'))).toBe('Something went wrong. Please try again.');
-    expect(getErrorMessage('boom')).toBe('Something went wrong. Please try again.');
-    expect(getErrorMessage(undefined)).toBe('Something went wrong. Please try again.');
+    expect(getErrorMessage(new Error('x is undefined'))).toBe('Something went wrong. Try again.');
+    expect(getErrorMessage('boom')).toBe('Something went wrong. Try again.');
+    expect(getErrorMessage(undefined)).toBe('Something went wrong. Try again.');
   });
 
   it('uses no dashes', () => {
@@ -145,8 +145,8 @@ describe('getErrorMessage in French and Kinyarwanda', () => {
 
   it('says in French that the server cannot be reached, and that the session ended', () => {
     localStorage.setItem('ssms_locale', 'fr');
-    expect(getErrorMessage(new AxiosError('Network Error', 'ERR_NETWORK'))).toBe('Impossible de joindre le serveur. Vérifiez votre connexion internet puis réessayez.');
-    expect(getErrorMessage(withResponse(401, {}))).toBe('Votre session est terminée. Veuillez vous reconnecter.');
+    expect(getErrorMessage(new AxiosError('Network Error', 'ERR_NETWORK'))).toBe('Serveur injoignable. Vérifiez votre connexion puis réessayez.');
+    expect(getErrorMessage(withResponse(401, {}))).toBe('Session expirée. Reconnectez-vous.');
   });
 
   it('translates the other sentences the app writes itself', () => {
@@ -168,15 +168,15 @@ describe('getErrorMessage in French and Kinyarwanda', () => {
     const server = { message: "That email or password doesn't look right. Please try again." };
     expect(getErrorMessage(withResponse(400, server))).not.toContain('password');
     localStorage.setItem('ssms_locale', 'fr');
-    expect(getErrorMessage(withResponse(400, server))).toBe('Cet e-mail ou ce mot de passe semble incorrect. Veuillez réessayer.');
+    expect(getErrorMessage(withResponse(400, server))).toBe('E-mail ou mot de passe incorrect. Réessayez.');
   });
 
   it('goes by the code the server sends, in the language of the screen, whatever language the sentence came in', () => {
     localStorage.setItem('ssms_locale', 'fr');
     expect(getErrorMessage(withResponse(401, { code: 'bad_login', message: 'Words in some other language.' })))
-      .toBe('Cet e-mail ou ce mot de passe semble incorrect. Veuillez réessayer.');
+      .toBe('E-mail ou mot de passe incorrect. Réessayez.');
     expect(getErrorMessage(withResponse(422, { code: 'email_taken', message: 'Please check what you entered.', errors: { email: ['x'] } })))
-      .toContain('Un compte existe déjà');
+      .toContain('a déjà un compte');
   });
 
   it.each(Object.keys(ERROR_CODE_KEY))('has a sentence for the code %s in all three languages', (code) => {
@@ -198,7 +198,7 @@ describe('getErrorMessage in French and Kinyarwanda', () => {
 
   it('says the general sentence of an invalid form when no field gives one', () => {
     localStorage.setItem('ssms_locale', 'fr');
-    expect(getErrorMessage(withResponse(422, { code: 'invalid_input', message: 'x' }))).toBe('Vérifiez ce que vous avez saisi puis réessayez.');
+    expect(getErrorMessage(withResponse(422, { code: 'invalid_input', message: 'x' }))).toBe('Vérifiez votre saisie puis réessayez.');
   });
 
   it('leaves the codes that belong to a flow alone, and shows the message the server sent', () => {
@@ -212,7 +212,7 @@ describe('getErrorMessage in French and Kinyarwanda', () => {
 
   it('translates an email that is already taken, and leaves other server words as they are', () => {
     localStorage.setItem('ssms_locale', 'fr');
-    expect(getErrorMessage(withResponse(422, { errors: { email: ['An account with this email already exists. Try signing in instead.'] } }))).toContain('Un compte existe déjà');
+    expect(getErrorMessage(withResponse(422, { errors: { email: ['An account with this email already exists. Try signing in instead.'] } }))).toContain('a déjà un compte');
     expect(getErrorMessage(withResponse(400, { message: 'Some sentence only the server knows.' }))).toBe('Some sentence only the server knows.');
   });
 });

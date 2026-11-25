@@ -213,8 +213,8 @@ describe('Users page', () => {
     const row = await rowOf('Bruce Ishimwe');
     fireEvent.click(within(row).getByRole('button', { name: 'Delete Bruce Ishimwe' }));
     const dialog = await screen.findByRole('dialog', { name: 'Delete this user?' });
-    expect(dialog).toHaveTextContent('Bruce Ishimwe (bruce@gmail.com) will not be able to sign in any more.');
-    expect(dialog).toHaveTextContent('you can restore the account');
+    expect(dialog).toHaveTextContent('Bruce Ishimwe (bruce@gmail.com) can no longer sign in.');
+    expect(dialog).toHaveTextContent('You can restore the account');
     expect(api.deactivateUser).not.toHaveBeenCalled();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, delete' }));
     await waitFor(() => expect(api.deactivateUser).toHaveBeenCalledWith('f1'));
@@ -328,7 +328,7 @@ describe('Users page', () => {
     fireEvent.change(within(dialog).getByLabelText('Phone number'), { target: { value: '0788 123 456' } });
     fireEvent.change(within(dialog).getByLabelText('Password'), { target: { value: 'Secret123' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Create user' }));
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('This phone number is already used by another account.');
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('This number belongs to another account.');
   });
 
   it('creates a user and adds them to the list', async () => {
@@ -389,7 +389,7 @@ describe('Users page', () => {
       open();
       fireEvent.click(await within(await rowOf('Second Admin')).findByRole('button', { name: /Reset the authenticator app of/ }));
       const dialog = await screen.findByRole('dialog', { name: 'Reset authenticator app' });
-      expect(dialog).toHaveTextContent('Second Admin (second@ssms.com) will be signed out everywhere');
+      expect(dialog).toHaveTextContent('Second Admin (second@ssms.com) is signed out everywhere');
       fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
       expect(mfa.resetFor).not.toHaveBeenCalled();
@@ -402,7 +402,7 @@ describe('Users page', () => {
       const dialog = await screen.findByRole('dialog', { name: 'Reset authenticator app' });
       fireEvent.click(within(dialog).getByRole('button', { name: 'Reset' }));
       await waitFor(() => expect(mfa.resetFor).toHaveBeenCalledWith('a2'));
-      expect(await screen.findByText('Second Admin will set up the authenticator app again at their next sign in.', {}, { timeout: 5000 })).toBeInTheDocument();
+      expect(await screen.findByText('Second Admin sets up the authenticator again at next sign in.', {}, { timeout: 5000 })).toBeInTheDocument();
     });
 
     it('asks for a fresh code when the server wants one, then resets', async () => {
@@ -418,7 +418,7 @@ describe('Users page', () => {
       fireEvent.click(within(prompt).getByRole('button', { name: 'Confirm' }));
       await waitFor(() => expect(mfa.resetFor).toHaveBeenCalledTimes(2));
       expect(mfa.stepUp).toHaveBeenCalledWith('123456');
-      expect(await screen.findByText('Second Admin will set up the authenticator app again at their next sign in.', {}, { timeout: 5000 })).toBeInTheDocument();
+      expect(await screen.findByText('Second Admin sets up the authenticator again at next sign in.', {}, { timeout: 5000 })).toBeInTheDocument();
     });
 
     it('shows what the server said when there is nothing to reset', async () => {
@@ -435,7 +435,7 @@ describe('Users page when the people cannot be loaded', () => {
   it('says so, and loads again with Try again', async () => {
     api.getUsers.mockRejectedValueOnce(new Error('boom'));
     open();
-    expect(await screen.findByRole('alert')).toHaveTextContent('We could not load this page');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load this page');
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
     expect(api.getUsers).toHaveBeenCalledTimes(2);

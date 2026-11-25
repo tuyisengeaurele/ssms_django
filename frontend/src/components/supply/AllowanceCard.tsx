@@ -9,6 +9,7 @@ import Panel from '../ui/Panel';
 import AllowanceRequestModal from './AllowanceRequestModal';
 import { dateFormat } from '../../utils/dateFormat';
 import { Icon } from '../../components/ui/Icon';
+import ConfirmModal from '../ui/ConfirmModal';
 
 /** What a farmer may take per round, where it came from, and the one thing they can do about it. */
 export default function AllowanceCard() {
@@ -18,6 +19,7 @@ export default function AllowanceCard() {
   const [allowance, setAllowance] = useState<Allowance | null>(null);
   const [asking, setAsking] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   const load = useCallback(() => {
     // A card that cannot load stays out of the way, so the dashboard around it is never blanked.
@@ -61,12 +63,19 @@ export default function AllowanceCard() {
         {waiting ? (
           <>
             <p role="status">{fill(t('alwWaiting'), { boxes: boxesText(tn, waiting.boxesAsked) })}</p>
-            <button className="btn btn-secondary btn-sm" onClick={withdraw} disabled={withdrawing}><Icon name="close" size={15} />{t('alwWithdraw')}</button>
+            <button className="btn btn-secondary btn-sm" onClick={() => setConfirming(true)} disabled={withdrawing}><Icon name="close" size={15} />{t('alwWithdraw')}</button>
           </>
         ) : (
           <button className="btn btn-primary btn-sm" onClick={() => setAsking(true)}><Icon name="edit" size={15} />{t('alwAsk')}</button>
         )}
       </div>
+      <ConfirmModal
+        open={confirming}
+        title={t('rqWithdrawAsk')}
+        confirmLabel={t('cqWithdraw')}
+        onClose={() => setConfirming(false)}
+        onConfirm={() => { setConfirming(false); withdraw(); }}
+      />
       {asking && <AllowanceRequestModal allowance={allowance} onClose={() => setAsking(false)} onSent={load} />}
     </Panel>
   );

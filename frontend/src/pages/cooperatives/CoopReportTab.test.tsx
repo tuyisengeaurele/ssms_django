@@ -121,7 +121,7 @@ describe('The report of a cooperative', () => {
   it('shows an error and a way to try again when the report cannot be loaded', async () => {
     api.get.mockRejectedValueOnce(new Error('x'));
     renderCoop(PATH);
-    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't load the report. Please try again.");
+    expect(await screen.findByRole('alert')).toHaveTextContent("Could not load the report. Try again.");
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await loaded();
   });
@@ -160,7 +160,7 @@ describe('The report of a cooperative', () => {
       renderCoop(PATH);
       await loaded();
       fireEvent.change(screen.getByLabelText('From'), { target: { value: '' } });
-      expect(await screen.findByText('Please choose a start date and an end date.')).toBeInTheDocument();
+      expect(await screen.findByText('Choose a start and an end date.')).toBeInTheDocument();
     });
 
     it('offers Reset only after a change, and puts the last thirty days back', async () => {
@@ -232,7 +232,7 @@ describe('The report of a cooperative', () => {
       renderCoop(PATH);
       await loaded();
       fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }));
-      expect(await screen.findByText("We couldn't create the file. Please try again.", {}, { timeout: 5000 })).toBeInTheDocument();
+      expect(await screen.findByText("Could not create the file. Try again.", {}, { timeout: 5000 })).toBeInTheDocument();
     });
 
     it('asks for French when the screen is French', async () => {

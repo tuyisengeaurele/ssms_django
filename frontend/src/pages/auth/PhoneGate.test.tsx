@@ -16,7 +16,7 @@ vi.mock('../../services/auth.service', () => ({ authService: api }));
 
 import PhoneGate from './PhoneGate';
 
-const TAKEN = 'This phone number is already used by another account. Contact the SSMS team if it is yours.';
+const TAKEN = 'This number belongs to another account. Contact the SSMS team if it is yours.';
 
 const open = () => render(
   <MemoryRouter>
@@ -30,7 +30,7 @@ const save = () => fireEvent.click(screen.getByRole('button', { name: 'Save and 
 
 function refused(code: string, field: string, message: string) {
   return new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, {
-    status: 422, data: { code, message: 'Please check what you entered and try again.', errors: { [field]: [message] } },
+    status: 422, data: { code, message: 'Check what you entered and try again.', errors: { [field]: [message] } },
   } as never);
 }
 
@@ -44,7 +44,7 @@ describe('The phone number gate', () => {
   it('says what is needed and why, with one field', () => {
     open();
     expect(screen.getByRole('heading', { level: 1, name: 'Add your phone number' })).toBeInTheDocument();
-    expect(screen.getByText(/Every SSMS account has a phone number/)).toBeInTheDocument();
+    expect(screen.getByText(/call or WhatsApp you/)).toBeInTheDocument();
     expect(phone()).toHaveAttribute('type', 'tel');
     expect(phone()).toHaveAttribute('autocomplete', 'tel');
     expect(phone()).toHaveAttribute('aria-required', 'true');
@@ -64,12 +64,12 @@ describe('The phone number gate', () => {
     open();
     fireEvent.change(phone(), { target: { value: empty } });
     save();
-    const message = await screen.findByText('Please enter your phone number.');
+    const message = await screen.findByText('Enter your phone number.');
     expect(message).toHaveAttribute('role', 'alert');
     expect(phone()).toHaveAttribute('aria-invalid', 'true');
     expect(api.updateProfile).not.toHaveBeenCalled();
     fireEvent.change(phone(), { target: { value: '0788' } });
-    expect(screen.queryByText('Please enter your phone number.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Enter your phone number.')).not.toBeInTheDocument();
   });
 
   it('shows a number that is not a Rwandan mobile beside the field and keeps what was typed', async () => {
@@ -97,7 +97,7 @@ describe('The phone number gate', () => {
     open();
     fireEvent.change(screen.getByLabelText('Numéro de téléphone'), { target: { value: '0788 123 456' } });
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer et continuer' }));
-    expect(await screen.findByText(/Ce numéro de téléphone est déjà utilisé/)).toBeInTheDocument();
+    expect(await screen.findByText(/Ce numéro appartient à un autre compte/)).toBeInTheDocument();
   });
 
   it('lets the person sign out instead', () => {

@@ -171,7 +171,7 @@ describe('The security stream', () => {
     show();
     await screen.findByText('Signed in');
     fireEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
-    expect(await screen.findByText("We couldn't export the log. Please try again.")).toBeInTheDocument();
+    expect(await screen.findByText("Could not export the log. Try again.")).toBeInTheDocument();
   });
 
   it('moves between pages', async () => {

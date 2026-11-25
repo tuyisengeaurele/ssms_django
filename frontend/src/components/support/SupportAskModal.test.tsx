@@ -35,7 +35,7 @@ describe('Ask for support access', () => {
 
   it('tells the admin that the person will read the reason', () => {
     open();
-    expect(screen.getByText(/Aline Uwase will read this/)).toBeInTheDocument();
+    expect(screen.getByText(/Aline Uwase reads this/)).toBeInTheDocument();
   });
 
   it('keeps Send off until the reason has 10 characters', () => {

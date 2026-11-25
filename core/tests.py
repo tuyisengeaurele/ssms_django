@@ -51,7 +51,7 @@ class PublicEndpointsIgnoreStaleTokens(APITestCase):
             '/api/auth/login', {'email': 'farmer@test.com', 'password': 'nope'}, format='json', **STALE,
         )
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(res.json()['message'], "That email or password doesn't look right. Please try again.")
+        self.assertEqual(res.json()['message'], "Wrong email or password. Try again.")
 
     def test_register_works_with_a_stale_token(self):
         res = self.client.post(
@@ -81,7 +81,7 @@ class PublicEndpointsIgnoreStaleTokens(APITestCase):
     def test_private_pages_still_need_a_real_token(self):
         res = self.client.get('/api/auth/me', **STALE)
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(res.json()['message'], 'Your session has ended. Please sign in again.')
+        self.assertEqual(res.json()['message'], 'Session expired. Sign in again.')
 
 
 class FriendlyErrorMessages(SimpleTestCase):
@@ -93,30 +93,30 @@ class FriendlyErrorMessages(SimpleTestCase):
 
     def test_expired_session(self):
         from rest_framework_simplejwt.exceptions import InvalidToken
-        self.assertEqual(self.message(InvalidToken()), 'Your session has ended. Please sign in again.')
+        self.assertEqual(self.message(InvalidToken()), 'Session expired. Sign in again.')
 
     def test_deleted_account_keeps_its_own_message(self):
         exc = AuthenticationFailed('x', code='user_inactive')
         self.assertEqual(
             self.message(exc),
-            'This account has been deleted. Please contact the SSMS team.',
+            'This account was deleted. Contact the SSMS team.',
         )
 
     def test_no_permission(self):
         self.assertEqual(self.message(PermissionDenied()), "You don't have permission to do that.")
 
     def test_not_found(self):
-        self.assertEqual(self.message(NotFound()), "We couldn't find what you were looking for.")
-        self.assertEqual(self.message(Http404()), "We couldn't find what you were looking for.")
+        self.assertEqual(self.message(NotFound()), "Not found.")
+        self.assertEqual(self.message(Http404()), "Not found.")
 
     def test_unreadable_request(self):
-        self.assertEqual(self.message(ParseError()), "We couldn't read that request. Please check it and try again.")
+        self.assertEqual(self.message(ParseError()), "Check the request and try again.")
 
     def test_too_many_requests_says_how_long_to_wait(self):
-        self.assertEqual(self.message(Throttled(wait=42)), 'Too many attempts. Please try again in 42 seconds.')
+        self.assertEqual(self.message(Throttled(wait=42)), 'Too many attempts. Try again in 42 seconds.')
 
     def test_too_many_requests_without_a_time(self):
-        self.assertEqual(self.message(Throttled()), 'Too many attempts. Please wait a moment and try again.')
+        self.assertEqual(self.message(Throttled()), 'Too many attempts. Wait a moment and try again.')
 
     def test_messages_have_no_dashes_or_jargon(self):
         for exc in (NotAuthenticated(), PermissionDenied(), NotFound(), ParseError(), Throttled(wait=3)):
