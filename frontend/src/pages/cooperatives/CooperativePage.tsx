@@ -47,8 +47,11 @@ export default function CooperativePage({ scope }: { scope: CoopScope }) {
     return () => { live = false; };
   }, [scope, id]);
 
+  // The server refuses a report to a supervisor who is in no cooperative, so none is asked for.
+  const noCoop = scope === 'mine' && !user?.cooperativeId;
+
   // The report is built only while a section shows it, and Report and Farms share one answer.
-  const period = useCoopReport(scope === 'one' ? id : undefined, !missing && (tab === 'report' || tab === 'farms'));
+  const period = useCoopReport(scope === 'one' ? id : undefined, !missing && !noCoop && (tab === 'report' || tab === 'farms'));
 
   const back = (
     <Link to={LIST} className="back-link">
@@ -62,6 +65,18 @@ export default function CooperativePage({ scope }: { scope: CoopScope }) {
       <div>
         {back}
         <EmptyState icon={<Icon name="cooperatives" size={22} />} title={t('cpNotFound')} />
+      </div>
+    );
+  }
+
+  if (noCoop) {
+    return (
+      <div>
+        <PageHeader title={t('ptMyCooperative')} subtitle={t('cpMineSubtitle')} showTitle />
+        <div className="alert alert-warning" role="note">
+          <Icon name="warning" size={18} />
+          <span>{t('svNoCoop')}</span>
+        </div>
       </div>
     );
   }

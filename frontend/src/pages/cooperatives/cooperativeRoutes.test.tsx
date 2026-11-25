@@ -2,10 +2,10 @@ import { configure, fireEvent, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setReducedMotion } from '../../test/setup';
 
-const auth = vi.hoisted(() => ({ role: 'ADMIN' }));
+const auth = vi.hoisted(() => ({ role: 'ADMIN', cooperativeId: 'c1' as string | null }));
 vi.mock('../../context/AuthContext', () => ({
   useAuth: () => ({
-    user: { id: 'me', name: 'Someone', role: auth.role, cooperativeId: 'c1', cooperativeName: 'Gatsibo Silk' },
+    user: { id: 'me', name: 'Someone', role: auth.role, cooperativeId: auth.cooperativeId, cooperativeName: auth.cooperativeId ? 'Gatsibo Silk' : null },
     isAuthenticated: true,
     isLoading: false,
   }),
@@ -40,6 +40,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   setReducedMotion(true);
   auth.role = 'ADMIN';
+  auth.cooperativeId = 'c1';
   api.report.mockResolvedValue({ data: { data: report() } });
   api.getById.mockResolvedValue({ data: { data: detail() } });
   api.getAll.mockResolvedValue({ data: { data: [] } });
@@ -176,6 +177,17 @@ describe('My cooperative, for a supervisor', () => {
     renderCoop('/supervisor/cooperative');
     await screen.findByText('Total cocoons');
     expect(api.report).toHaveBeenCalledWith({ from: '2026-09-29', to: '2026-10-28' });
+  });
+
+  // The server refuses a report to someone in no cooperative, so asking would only end in a red error that Try again cannot clear.
+  it('says so calmly, and asks for no report, when the supervisor is in no cooperative yet', async () => {
+    auth.cooperativeId = null;
+    renderCoop('/supervisor/cooperative');
+    expect(await screen.findByRole('heading', { level: 1, name: 'My cooperative' })).toBeInTheDocument();
+    expect(await screen.findByRole('note')).toHaveTextContent('You are not in a cooperative yet.');
+    expect(screen.queryByText(/Could not load the report/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Cooperative sections' })).not.toBeInTheDocument();
+    expect(api.report).not.toHaveBeenCalled();
   });
 
   it('reads in Kinyarwanda', async () => {
