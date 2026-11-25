@@ -59,6 +59,16 @@ describe('dashboard layout', () => {
     expect(rules('.dash-main')).toMatch(/align-content:\s*start/);
   });
 
+  it('spaces the full width section under the two columns like the rest of the page', () => {
+    expect(rules('.dash-below')).toMatch(/display:\s*grid/);
+    expect(rules('.dash-below')).toMatch(/gap:\s*var\(--space-6\)/);
+    expect(rules('.dash-below')).toMatch(/min-width:\s*0/);
+  });
+
+  it('keeps an empty card in the side column short', () => {
+    expect(rules('.dash-rail .empty-state')).toMatch(/padding:\s*(2\d|3\d)px/);
+  });
+
   it('lets a column shrink instead of pushing the page sideways', () => {
     expect(rules('.dash-body')).toMatch(/minmax\(0,\s*1fr\)/);
     expect(rules('.dash-main')).toMatch(/min-width:\s*0/);

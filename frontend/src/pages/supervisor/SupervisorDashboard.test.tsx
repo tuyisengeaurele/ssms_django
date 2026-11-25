@@ -210,14 +210,14 @@ describe('Supervisor dashboard page', () => {
     expect(within(panel).queryByRole('link', { name: /View farms/ })).not.toBeInTheDocument();
   });
 
-  it('keeps the alerts in the rail under the calendar, and the numbers and the lists in the main column', async () => {
+  it('keeps the alerts in the rail under the calendar, and the numbers in the main column', async () => {
     const { container } = open();
     const alerts = await screen.findByRole('list', { name: 'Recent alerts' });
     const rail = container.querySelector('.dash-rail')!;
     const main = container.querySelector('.dash-main')!;
     expect(rail.contains(alerts)).toBe(true);
     expect(main.contains(alerts)).toBe(false);
-    expect(main.contains(screen.getByRole('heading', { name: 'Active batches (2)' }))).toBe(true);
+    expect(main.contains(screen.getByText('Total farms'))).toBe(true);
   });
 
   it('lists recent alerts with plain times', async () => {
@@ -313,5 +313,22 @@ describe('Supervisor dashboard, decisions', () => {
     open();
     // A whole dashboard is drawn first, and under a full test run one second is not always enough to find the link.
     expect(await screen.findByRole('link', { name: '1 decision waits for you' }, { timeout: 5000 })).toHaveAttribute('href', '/decisions');
+  });
+});
+
+describe('Supervisor dashboard, layout', () => {
+  // The calendar and the alerts are a short column. Anything long beside them leaves an empty strip once they scroll away.
+  it('keeps only the summary beside the calendar, and the charts and tables under both columns at full width', async () => {
+    const { container } = open();
+    await screen.findByText('Total farms');
+    const body = container.querySelector('.dash-body') as HTMLElement;
+    const below = container.querySelector('.dash-below') as HTMLElement;
+    expect(below).not.toBeNull();
+    expect(body.contains(below)).toBe(false);
+    expect(body.querySelector('.dash-rail')).not.toBeNull();
+    for (const title of ['Temperature, last 24 hours', 'Humidity, last 24 hours', 'Active batches (2)']) {
+      expect(within(below).getByRole('heading', { name: title })).toBeInTheDocument();
+      expect(within(body).queryByRole('heading', { name: title })).toBeNull();
+    }
   });
 });
