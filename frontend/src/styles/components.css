@@ -723,7 +723,9 @@ tr.is-off td:last-child { opacity: 1; }
 
 .barlist { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
 .barlist li { display: grid; grid-template-columns: minmax(84px, 140px) minmax(0, 1fr) auto; align-items: center; gap: 14px; }
+@media (min-width: 700px) { .barlist li { grid-template-columns: minmax(84px, 220px) minmax(0, 1fr) auto; } }
 .barlist-label { overflow: hidden; color: var(--text-2); font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 699px) { .barlist-label { white-space: normal; overflow-wrap: anywhere; } }
 .barlist-track { display: block; height: 14px; border-radius: 4px; background: var(--tint); overflow: hidden; }
 .barlist-bar { display: block; height: 100%; border-radius: 0 4px 4px 0; min-width: 0; transition: width var(--duration-slow) var(--ease-out); }
 .barlist-value { min-width: 28px; color: var(--ink); font-weight: 600; font-size: 0.92rem; text-align: right; font-variant-numeric: tabular-nums; }

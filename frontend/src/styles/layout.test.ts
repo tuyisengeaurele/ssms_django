@@ -96,6 +96,14 @@ describe('spacing that stays tidy when the content is short', () => {
     expect(rules('.table-actions')).toMatch(/gap:\s*(8|10)px/);
   });
 
+  it('gives the label of a bar enough room for a farm name on a wide screen, so it is not cut to three dots', () => {
+    expect(css).toMatch(/@media \(min-width: 700px\)\s*\{[^@]*\.barlist li\s*\{[^}]*minmax\(\d+px,\s*2\d\dpx\)/);
+  });
+
+  it('lets the label of a bar wrap on a phone, so a farm name is shown whole', () => {
+    expect(css).toMatch(/@media \(max-width: 699px\)\s*\{[^@]*\.barlist-label\s*\{[^}]*white-space:\s*normal/);
+  });
+
   it('keeps an empty card from being taller than it needs to be', () => {
     expect(rules('.empty-state')).toMatch(/padding:\s*clamp\(\d+px,\s*[\d.]+vw,\s*(2\d|3\d|4[0-8])px\)/);
   });
