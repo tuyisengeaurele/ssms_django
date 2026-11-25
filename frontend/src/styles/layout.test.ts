@@ -86,6 +86,21 @@ describe('dashboard layout', () => {
   });
 });
 
+describe('spacing that stays tidy when the content is short', () => {
+  it('stretches the two cards of a pair to the same height, so no hole is left under the shorter one', () => {
+    expect(rules('.split')).toMatch(/align-items:\s*stretch/);
+    expect(rules('.report-grid')).toMatch(/align-items:\s*stretch/);
+  });
+
+  it('keeps the buttons of a table row a hand apart, not touching', () => {
+    expect(rules('.table-actions')).toMatch(/gap:\s*(8|10)px/);
+  });
+
+  it('keeps an empty card from being taller than it needs to be', () => {
+    expect(rules('.empty-state')).toMatch(/padding:\s*clamp\(\d+px,\s*[\d.]+vw,\s*(2\d|3\d|4[0-8])px\)/);
+  });
+});
+
 describe('the narrow main column', () => {
   // Two short charts side by side bring the main column close to the height of the rail. Stacked, they leave the rail short.
   it('keeps two-up panels side by side beside the rail, on a laptop too', () => {
