@@ -118,9 +118,14 @@ export default function AdminDashboard() {
       </div>
       <aside className="dash-rail">
         <div className="card"><FarmCalendar staff /></div>
-        {alerts && <AlertsPanel alerts={alerts} />}
       </aside>
       </div>
+
+      {alerts && (
+        <div className="dash-below">
+          <AlertsPanel alerts={alerts} />
+        </div>
+      )}
       </div>
     </div>
   );
