@@ -55,12 +55,14 @@ describe('Admin dashboard, decisions', () => {
 });
 
 describe('Admin dashboard', () => {
-  it('keeps the recent alerts in the rail under the calendar, and the farm list in the main column', async () => {
+  // The calendar alone is about as tall as the numbers and a short farm list, so the two columns end together. The alerts are a
+  // list of rows, so they run the full width under both.
+  it('keeps the recent alerts under both columns, and the farm list in the main column', async () => {
     const { container } = open();
     const alerts = await screen.findByRole('list', { name: 'Recent alerts' });
     expect(within(alerts).getByText('Temperature too low: 21 C')).toBeInTheDocument();
-    expect(container.querySelector('.dash-rail')!.contains(alerts)).toBe(true);
-    expect(container.querySelector('.dash-main')!.contains(alerts)).toBe(false);
+    expect(container.querySelector('.dash-below')!.contains(alerts)).toBe(true);
+    expect(container.querySelector('.dash-body')!.contains(alerts)).toBe(false);
   });
 
   it('has one title and offers each place once, as a quick action', async () => {

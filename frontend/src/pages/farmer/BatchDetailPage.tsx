@@ -521,117 +521,115 @@ export default function BatchDetailPage() {
           <StageStepper current={batch.stage} canAdvance={canEdit} busy={moving} onAdvance={setPendingStage} />
         </Panel>
 
-        <div className="split">
-          <Panel
-            title={t('bdDetails')}
-            actions={canEdit ? (
-              <>
-                {farmRooms.some((r) => r.id !== batch.room?.id) && (
-                  <button className="btn btn-secondary btn-sm" onClick={openMove}><Icon name="location" size={15} />{t('bdMoveRoom')}</button>
-                )}
-                <button className="btn btn-secondary btn-sm" onClick={openEdit}><Icon name="edit" size={15} />{t('bdEditDetails')}</button>
-              </>
-            ) : undefined}
-          >
-            <dl className="facts facts--pairs">
+        <Panel
+          title={t('bdDetails')}
+          actions={canEdit ? (
+            <>
+              {farmRooms.some((r) => r.id !== batch.room?.id) && (
+                <button className="btn btn-secondary btn-sm" onClick={openMove}><Icon name="location" size={15} />{t('bdMoveRoom')}</button>
+              )}
+              <button className="btn btn-secondary btn-sm" onClick={openEdit}><Icon name="edit" size={15} />{t('bdEditDetails')}</button>
+            </>
+          ) : undefined}
+        >
+          <dl className="facts facts--row facts--pairs">
+            <div>
+              <dt>{t('bdStage')}</dt>
+              <dd>{stageLabel(t, batch.stage)}</dd>
+            </div>
+            <div>
+              <dt>{t('bdFarm')}</dt>
+              <dd><Link to={`/farms/${batch.farmId}`} className="link">{batch.farm?.name ?? '-'}</Link></dd>
+            </div>
+            {batch.farm?.location && (
               <div>
-                <dt>{t('bdStage')}</dt>
-                <dd>{stageLabel(t, batch.stage)}</dd>
+                <dt>{t('bdPlace')}</dt>
+                <dd>{batch.farm.location}</dd>
+              </div>
+            )}
+            <div>
+              <dt>{t('bdStarted')}</dt>
+              <dd>{date.format(new Date(batch.startDate))}</dd>
+            </div>
+            <div>
+              <dt>{t('bdExpected')}</dt>
+              <dd>{date.format(new Date(batch.expectedHarvestDate))}</dd>
+            </div>
+            {batch.room && (
+              <div>
+                <dt>{t('bdRoom')}</dt>
+                <dd>{batch.room.name}</dd>
+              </div>
+            )}
+            {batch.lotCode && (
+              <div>
+                <dt>{t('trcLotWord')}</dt>
+                <dd>{isStaff ? <Link to={`/supply/lots/${encodeURIComponent(batch.lotCode)}`} className="link">{batch.lotCode}</Link> : batch.lotCode}</dd>
+              </div>
+            )}
+            {batch.breed && (
+              <div>
+                <dt>{t('bdBreed')}</dt>
+                <dd>{batch.breed}</dd>
+              </div>
+            )}
+            {quantityText && (
+              <div>
+                <dt>{t('bdQuantity')}</dt>
+                <dd>{quantityText}</dd>
+              </div>
+            )}
+            {batch.notes && (
+              <div>
+                <dt>{t('bdNotes')}</dt>
+                <dd>{batch.notes}</dd>
+              </div>
+            )}
+          </dl>
+          {(batch.roomStays?.length ?? 0) > 1 && (
+            <ul className="room-history" aria-label={t('bdRoomHistory')}>
+              {batch.roomStays!.map((stay) => (
+                <li key={`${stay.roomId}-${stay.startedAt}`}>
+                  {stay.endedAt
+                    ? fill(t('bdRoomStay'), { room: stay.roomName, from: date.format(new Date(stay.startedAt)), to: date.format(new Date(stay.endedAt)) })
+                    : fill(t('bdRoomStayNow'), { room: stay.roomName, from: date.format(new Date(stay.startedAt)) })}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+
+        <Panel title={t('bdActivity')}>
+          <div role="region" aria-label={t('bdActivity')}>
+            <dl className="facts facts--three">
+              <div>
+                <dt>{t('bdChecks')}</dt>
+                <dd>{counts.diseaseDetections}</dd>
               </div>
               <div>
-                <dt>{t('bdFarm')}</dt>
-                <dd><Link to={`/farms/${batch.farmId}`} className="link">{batch.farm?.name ?? '-'}</Link></dd>
-              </div>
-              {batch.farm?.location && (
-                <div>
-                  <dt>{t('bdPlace')}</dt>
-                  <dd>{batch.farm.location}</dd>
-                </div>
-              )}
-              <div>
-                <dt>{t('bdStarted')}</dt>
-                <dd>{date.format(new Date(batch.startDate))}</dd>
+                <dt>{t('bdReadings')}</dt>
+                <dd>{counts.sensorReadings}</dd>
               </div>
               <div>
-                <dt>{t('bdExpected')}</dt>
-                <dd>{date.format(new Date(batch.expectedHarvestDate))}</dd>
+                <dt>{t('bdUnread')}</dt>
+                <dd>{unread}</dd>
               </div>
-              {batch.room && (
-                <div>
-                  <dt>{t('bdRoom')}</dt>
-                  <dd>{batch.room.name}</dd>
-                </div>
-              )}
-              {batch.lotCode && (
-                <div>
-                  <dt>{t('trcLotWord')}</dt>
-                  <dd>{isStaff ? <Link to={`/supply/lots/${encodeURIComponent(batch.lotCode)}`} className="link">{batch.lotCode}</Link> : batch.lotCode}</dd>
-                </div>
-              )}
-              {batch.breed && (
-                <div>
-                  <dt>{t('bdBreed')}</dt>
-                  <dd>{batch.breed}</dd>
-                </div>
-              )}
-              {quantityText && (
-                <div>
-                  <dt>{t('bdQuantity')}</dt>
-                  <dd>{quantityText}</dd>
-                </div>
-              )}
-              {batch.notes && (
-                <div>
-                  <dt>{t('bdNotes')}</dt>
-                  <dd>{batch.notes}</dd>
-                </div>
-              )}
             </dl>
-            {(batch.roomStays?.length ?? 0) > 1 && (
-              <ul className="room-history" aria-label={t('bdRoomHistory')}>
-                {batch.roomStays!.map((stay) => (
-                  <li key={`${stay.roomId}-${stay.startedAt}`}>
-                    {stay.endedAt
-                      ? fill(t('bdRoomStay'), { room: stay.roomName, from: date.format(new Date(stay.startedAt)), to: date.format(new Date(stay.endedAt)) })
-                      : fill(t('bdRoomStayNow'), { room: stay.roomName, from: date.format(new Date(stay.startedAt)) })}
+          </div>
+          {alerts.length > 0 && (
+            <>
+              <h3 className="subhead">{t('bdLatestAlerts')}</h3>
+              <ul className="batch-alerts">
+                {alerts.slice(0, 3).map((a) => (
+                  <li key={a.id}>
+                    <span>{alertText(t, a)}</span>
+                    <span className="batch-alerts-time">{timeAgo(a.createdAt, locale)}</span>
                   </li>
                 ))}
               </ul>
-            )}
-          </Panel>
-
-          <Panel title={t('bdActivity')}>
-            <div role="region" aria-label={t('bdActivity')}>
-              <dl className="facts facts--three">
-                <div>
-                  <dt>{t('bdChecks')}</dt>
-                  <dd>{counts.diseaseDetections}</dd>
-                </div>
-                <div>
-                  <dt>{t('bdReadings')}</dt>
-                  <dd>{counts.sensorReadings}</dd>
-                </div>
-                <div>
-                  <dt>{t('bdUnread')}</dt>
-                  <dd>{unread}</dd>
-                </div>
-              </dl>
-            </div>
-            {alerts.length > 0 && (
-              <>
-                <h3 className="subhead">{t('bdLatestAlerts')}</h3>
-                <ul className="batch-alerts">
-                  {alerts.slice(0, 3).map((a) => (
-                    <li key={a.id}>
-                      <span>{alertText(t, a)}</span>
-                      <span className="batch-alerts-time">{timeAgo(a.createdAt, locale)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </Panel>
-        </div>
+            </>
+          )}
+        </Panel>
 
         <Panel
           title={t('bdDeathsTitle')}

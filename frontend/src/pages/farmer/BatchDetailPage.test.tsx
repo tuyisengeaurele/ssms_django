@@ -121,6 +121,16 @@ describe('Stage stepper', () => {
 });
 
 describe('Batch details page', () => {
+  // Beside the long details card the short activity card left a hole, so each of the two has its own full width row.
+  it('gives the details and the activity each a full width row, not two cards side by side', async () => {
+    const { container } = open();
+    const details = (await screen.findByRole('heading', { name: 'Batch details' })).closest('.panel') as HTMLElement;
+    const activity = screen.getByRole('region', { name: 'Activity' }).closest('.panel') as HTMLElement;
+    expect(details.closest('.split')).toBeNull();
+    expect(activity.closest('.split')).toBeNull();
+    expect(container.querySelector('.facts--row')).not.toBeNull();
+  });
+
   it('names the batch and links to its farm, and sets the tab title', async () => {
     open();
     expect(await screen.findByRole('heading', { level: 1, name: 'Batch #9SIEO7CV' })).toBeInTheDocument();

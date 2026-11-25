@@ -56,7 +56,18 @@ describe('dashboard layout', () => {
   });
 
   it('keeps the tiles at their own height instead of stretching them to the height of the rail', () => {
-    expect(rules('.dash-main')).toMatch(/align-content:\s*start/);
+    expect(rules('.dash-main')).toMatch(/display:\s*flex/);
+    expect(rules('.dash-main')).toMatch(/flex-direction:\s*column/);
+    expect(rules('.dash-main')).not.toMatch(/align-content:\s*stretch/);
+  });
+
+  // Two columns of different length leave a hole under the shorter one. The last card of each column takes the spare
+  // height, so both columns end on the same line and the hole is gone.
+  it('lets the last card of each column fill the spare height, so both columns end on the same line', () => {
+    expect(rules('.dash-rail')).toMatch(/display:\s*flex/);
+    expect(rules('.dash-rail')).toMatch(/flex-direction:\s*column/);
+    expect(rules('.dash-main > :last-child')).toMatch(/flex:\s*1/);
+    expect(rules('.dash-rail > :last-child')).toMatch(/flex:\s*1/);
   });
 
   it('spaces the full width section under the two columns like the rest of the page', () => {
@@ -75,10 +86,25 @@ describe('dashboard layout', () => {
   });
 });
 
+describe('spacing that stays tidy when the content is short', () => {
+  it('stretches the two cards of a pair to the same height, so no hole is left under the shorter one', () => {
+    expect(rules('.split')).toMatch(/align-items:\s*stretch/);
+    expect(rules('.report-grid')).toMatch(/align-items:\s*stretch/);
+  });
+
+  it('keeps the buttons of a table row a hand apart, not touching', () => {
+    expect(rules('.table-actions')).toMatch(/gap:\s*(8|10)px/);
+  });
+
+  it('keeps an empty card from being taller than it needs to be', () => {
+    expect(rules('.empty-state')).toMatch(/padding:\s*clamp\(\d+px,\s*[\d.]+vw,\s*(2\d|3\d|4[0-8])px\)/);
+  });
+});
+
 describe('the narrow main column', () => {
-  it('stacks two-up pairs beside the rail on a laptop, and lets them sit side by side on a wide screen', () => {
-    expect(css).toMatch(/@media \(min-width: 1100px\) and \(max-width: 1599px\)\s*\{[^@]*\.dash-main \.grid-2[^{]*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*;/);
-    expect(css).toMatch(/@media \(min-width: 1100px\) and \(max-width: 1599px\)\s*\{[^@]*\.dash-main \.split/);
+  // Two short charts side by side bring the main column close to the height of the rail. Stacked, they leave the rail short.
+  it('keeps two-up panels side by side beside the rail, on a laptop too', () => {
+    expect(css).not.toMatch(/@media \(min-width: 1100px\) and \(max-width: 1599px\)\s*\{[^@]*\.dash-main \.(split|grid-2)/);
   });
 });
 

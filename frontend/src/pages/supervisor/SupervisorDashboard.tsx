@@ -169,14 +169,7 @@ export default function SupervisorDashboard() {
       </div>
 
       <FarmRiskPanel />
-      </div>
-      <aside className="dash-rail">
-        <div className="card"><FarmCalendar staff /></div>
-        <AlertsPanel alerts={alerts} limit={8} />
-      </aside>
-      </div>
 
-      <div className="dash-below stagger">
       <div className="grid-2">
         {charts.map((c) => (
           <Panel key={c.key} title={c.label} note={c.range}>
@@ -188,6 +181,14 @@ export default function SupervisorDashboard() {
           </Panel>
         ))}
       </div>
+      </div>
+      <aside className="dash-rail">
+        <div className="card"><FarmCalendar staff /></div>
+        <AlertsPanel alerts={alerts} limit={4} />
+      </aside>
+      </div>
+
+      <div className="dash-below stagger">
 
       <Panel
         title={`${t('svBatchesTitle')} (${batches.length})`}
