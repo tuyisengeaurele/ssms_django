@@ -4,6 +4,7 @@ import { useToast } from '../../context/ToastContext';
 import { useApiError } from '../../hooks/useApiError';
 import { accountService } from '../../services/account.service';
 import Modal from './Modal';
+import { Icon } from '../../components/ui/Icon';
 
 /** What the server said about the password, in the language of the screen, or '' when it said nothing about it. */
 function aboutPassword(err: unknown): string {
@@ -51,7 +52,7 @@ export default function DownloadDataButton() {
 
   return (
     <>
-      <button type="button" className="btn btn-secondary btn-sm" onClick={show}>{t('ddOpen')}</button>
+      <button type="button" className="btn btn-secondary btn-sm" onClick={show}><Icon name="download" size={15} />{t('ddOpen')}</button>
       <Modal
         open={open}
         onClose={() => setOpen(false)}

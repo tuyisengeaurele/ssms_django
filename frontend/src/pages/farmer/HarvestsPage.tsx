@@ -169,7 +169,7 @@ export default function HarvestsPage() {
                 icon={<Icon name="search" size={22} />}
                 title={t('hvNoMatch')}
                 description={t('hvNoMatchBody')}
-                action={{ label: t('hvClear'), onClick: clearSearch }}
+                action={{ icon: 'close', label: t('hvClear'), onClick: clearSearch }}
               />
             ) : (
               <div className="table-wrapper">

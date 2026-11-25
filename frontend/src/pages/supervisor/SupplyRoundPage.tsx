@@ -107,7 +107,7 @@ export default function SupplyRoundPage() {
     return (
       <div>
         <PageHeader title={t('ptSupply')} />
-        <EmptyState icon={<Icon name="alerts" size={22} />} title={t('rsRoundLoadFailed')} action={{ label: t('dcsRetry'), onClick: () => { setStatus('loading'); load(); } }} />
+        <EmptyState icon={<Icon name="alerts" size={22} />} title={t('rsRoundLoadFailed')} action={{ icon: 'refresh', label: t('dcsRetry'), onClick: () => { setStatus('loading'); load(); } }} />
       </div>
     );
   }

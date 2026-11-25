@@ -194,7 +194,7 @@ export default function FarmerDashboard() {
                 icon={<Icon name="batches" size={22} />}
                 title={t('fhNoBatches')}
                 description={t('fhNoBatchesBody')}
-                action={{ label: t('btGoFarms'), to: '/farms' }}
+                action={{ icon: 'farms', label: t('btGoFarms'), to: '/farms' }}
               />
             ) : (
               <div className="table-wrapper">

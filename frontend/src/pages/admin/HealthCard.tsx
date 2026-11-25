@@ -4,6 +4,7 @@ import { HealthCheck, HealthStatus, HealthTestName, healthService, HealthTestRes
 import { fill } from '../../utils/fill';
 import TimeSeries from '../../components/ui/TimeSeries';
 import { dateFormat } from '../../utils/dateFormat';
+import { Icon } from '../../components/ui/Icon';
 
 const STATUS_WORDS: Record<HealthStatus, { text: string; badge: string }> = {
   ok: { text: 'hlOk', badge: 'badge-green' },
@@ -105,7 +106,7 @@ export default function HealthCard({ check, title, message, history }: Props) {
       {test && (
         <div className="health-test">
           <button type="button" className="btn btn-secondary btn-sm" onClick={run} disabled={running} aria-busy={running}>
-            {t(running ? 'hlRunning' : 'hlRunTest')}
+            <Icon name="activity" size={15} />{t(running ? 'hlRunning' : 'hlRunTest')}
           </button>
           {result === 'error' && <p role="status" className="health-test-result">{t('hlTestError')}</p>}
           {result && result !== 'error' && (

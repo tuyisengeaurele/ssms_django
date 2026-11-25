@@ -7,6 +7,7 @@ import Panel from '../../components/ui/Panel';
 import { SkeletonTable } from '../../components/ui/SkeletonLoader';
 import HealthCard from './HealthCard';
 import { dateFormat } from '../../utils/dateFormat';
+import { Icon } from '../../components/ui/Icon';
 
 const TITLES: Record<HealthCheck['key'], string> = {
   web: 'hlWeb', database: 'hlDatabase', aiService: 'hlAi', email: 'hlEmail', errorMonitoring: 'hlErrors',
@@ -89,7 +90,7 @@ export default function AdminHealthPage() {
 
   const again = (
     <button type="button" className="btn btn-secondary" onClick={() => setAttempt((n) => n + 1)} disabled={checking} aria-busy={checking}>
-      {t(checking ? 'hlChecking' : 'hlAgain')}
+      <Icon name="refresh" size={15} />{t(checking ? 'hlChecking' : 'hlAgain')}
     </button>
   );
 

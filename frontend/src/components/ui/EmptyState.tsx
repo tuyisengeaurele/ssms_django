@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ReactNode } from 'react';
-import { Icon } from './Icon';
+import { Icon, IconName } from './Icon';
 
 interface EmptyStateProps {
   icon?: ReactNode;
@@ -8,6 +8,8 @@ interface EmptyStateProps {
   description?: string;
   action?: {
     label: string;
+    /** An icon before the words, so the next step reads as a button. */
+    icon?: IconName;
     to?: string;
     onClick?: () => void;
   };
@@ -24,11 +26,11 @@ export default function EmptyState({ icon, title, description, action }: EmptySt
         <div style={{ marginTop: 20 }}>
           {action.to ? (
             <Link to={action.to} className="btn btn-primary btn-sm">
-              {action.label}
+              {action.icon ? <Icon name={action.icon} size={15} /> : null}{action.label}
             </Link>
           ) : (
             <button type="button" onClick={action.onClick} className="btn btn-secondary btn-sm">
-              {action.label}
+              {action.icon ? <Icon name={action.icon} size={15} /> : null}{action.label}
             </button>
           )}
         </div>

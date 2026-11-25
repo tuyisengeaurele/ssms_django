@@ -63,7 +63,7 @@ function Picker() {
         icon={<Icon name="batches" size={22} />}
         title={t('cmpFewTitle')}
         description={t('cmpFewBody')}
-        action={{ label: t('btGoFarms'), to: '/farms' }}
+        action={{ icon: 'farms', label: t('btGoFarms'), to: '/farms' }}
       />
     );
   }
@@ -193,7 +193,7 @@ function Result({ ids }: { ids: string[] }) {
         icon={<Icon name="batches" size={22} />}
         title={t('cmpErrorTitle')}
         description={t(state === 'missing' ? 'cmpErrorBody' : 'cmpErrorTryAgain')}
-        action={{ label: t('cmpChange'), to: '/batches/compare' }}
+        action={{ icon: 'edit', label: t('cmpChange'), to: '/batches/compare' }}
       />
     );
   }
@@ -271,7 +271,7 @@ function Result({ ids }: { ids: string[] }) {
 
   return (
     <>
-      <Panel title={t('ptCompare')} flush actions={<Link to="/batches/compare" className="btn btn-secondary btn-sm">{t('cmpChange')}</Link>}>
+      <Panel title={t('ptCompare')} flush actions={<Link to="/batches/compare" className="btn btn-secondary btn-sm"><Icon name="edit" size={15} />{t('cmpChange')}</Link>}>
         <div className="table-wrapper">
           <table className="compare-table">
             <caption className="sr-only">{t('ptCompare')}</caption>

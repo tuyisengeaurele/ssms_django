@@ -328,7 +328,7 @@ export default function CoopFarmersTab() {
               icon={<Icon name="users" size={22} />}
               title={t('tmNoFarmers')}
               description={t('tmNoFarmersBody')}
-              action={{ label: t('tmInvite'), onClick: openInvite }}
+              action={{ icon: 'add', label: t('tmInvite'), onClick: openInvite }}
             />
           ) : (
             <div className="table-wrapper">

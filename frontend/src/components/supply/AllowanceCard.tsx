@@ -8,6 +8,7 @@ import { fill } from '../../utils/fill';
 import Panel from '../ui/Panel';
 import AllowanceRequestModal from './AllowanceRequestModal';
 import { dateFormat } from '../../utils/dateFormat';
+import { Icon } from '../../components/ui/Icon';
 
 /** What a farmer may take per round, where it came from, and the one thing they can do about it. */
 export default function AllowanceCard() {
@@ -60,10 +61,10 @@ export default function AllowanceCard() {
         {waiting ? (
           <>
             <p role="status">{fill(t('alwWaiting'), { boxes: boxesText(tn, waiting.boxesAsked) })}</p>
-            <button className="btn btn-secondary btn-sm" onClick={withdraw} disabled={withdrawing}>{t('alwWithdraw')}</button>
+            <button className="btn btn-secondary btn-sm" onClick={withdraw} disabled={withdrawing}><Icon name="close" size={15} />{t('alwWithdraw')}</button>
           </>
         ) : (
-          <button className="btn btn-primary btn-sm" onClick={() => setAsking(true)}>{t('alwAsk')}</button>
+          <button className="btn btn-primary btn-sm" onClick={() => setAsking(true)}><Icon name="edit" size={15} />{t('alwAsk')}</button>
         )}
       </div>
       {asking && <AllowanceRequestModal allowance={allowance} onClose={() => setAsking(false)} onSent={load} />}

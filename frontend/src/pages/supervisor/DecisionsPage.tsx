@@ -139,7 +139,7 @@ export default function DecisionsPage() {
         <EmptyState
           icon={<Icon name="alerts" size={22} />}
           title={t('dcsLoadFailed')}
-          action={{ label: t('dcsRetry'), onClick: () => { setStatus('loading'); load(); } }}
+          action={{ icon: 'refresh', label: t('dcsRetry'), onClick: () => { setStatus('loading'); load(); } }}
         />
       ) : items.length === 0 ? (
         <EmptyState icon={<Icon name="alerts" size={22} />} title={t('dcsEmpty')} description={t('dcsEmptyBody')} />

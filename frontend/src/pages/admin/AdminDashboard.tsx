@@ -84,7 +84,7 @@ export default function AdminDashboard() {
             <EmptyState
               title={t('adNoFarms')}
               description={t('adNoFarmsHint')}
-              action={{ label: t('adAddFarm'), to: '/farms/new' }}
+              action={{ icon: 'add', label: t('adAddFarm'), to: '/farms/new' }}
             />
           ) : (
             <div className="table-wrapper">

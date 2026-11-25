@@ -52,7 +52,7 @@ export default function BatchesPage() {
         subtitle={loading || failed ? undefined : tn(batches.length, 'btSubtitleOne', 'btSubtitleMany')}
         actions={
           <>
-            <Link to="/batches/compare" className="btn btn-secondary btn-sm">{t('ptCompare')}</Link>
+            <Link to="/batches/compare" className="btn btn-secondary btn-sm"><Icon name="overview" size={15} />{t('ptCompare')}</Link>
             <Link to="/farms" className="btn btn-primary btn-sm">
               <Icon name="add" size={15} />
               {t('btNew')}
@@ -88,7 +88,7 @@ export default function BatchesPage() {
             icon={<Icon name="batches" size={22} />}
             title={t('btNone')}
             description={t('btNoneBody')}
-            action={{ label: t('btGoFarms'), to: '/farms' }}
+            action={{ icon: 'farms', label: t('btGoFarms'), to: '/farms' }}
           />
         ) : visible.length === 0 ? (
           <EmptyState
