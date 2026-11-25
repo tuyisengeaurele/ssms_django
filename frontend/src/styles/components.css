@@ -1604,8 +1604,11 @@ a.cal-ev-link:focus-visible { outline: 2px solid var(--gold); outline-offset: 1p
 
 /* ── Dashboard layout and quick actions ────────────────────────────────────── */
 .dash-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
-.dash-main { display: grid; align-content: start; gap: var(--space-6); min-width: 0; }
-.dash-rail { display: grid; gap: var(--space-6); align-content: start; order: -1; }
+.dash-main { display: flex; flex-direction: column; gap: var(--space-6); min-width: 0; }
+.dash-rail { display: flex; flex-direction: column; gap: var(--space-6); order: -1; }
+/* Two columns are rarely the same length. The last card of each takes the spare height, so both end on the same line and
+   no hole is left under the shorter one. */
+.dash-main > :last-child, .dash-rail > :last-child { flex: 1; }
 /* Charts and tables are long, so they sit under both columns. Beside the calendar they left an empty strip once the calendar scrolled away. */
 .dash-below { display: grid; gap: var(--space-6); min-width: 0; }
 .dash-rail .empty-state { padding: 28px 24px; }
@@ -1645,11 +1648,6 @@ a.cal-ev-link:focus-visible { outline: 2px solid var(--gold); outline-offset: 1p
 @media (prefers-reduced-motion: no-preference) {
   .qa-card:hover { transform: translateY(-1px); }
   .qa-card:active { transform: translateY(0); }
-}
-
-/* Beside the rail the main column is narrow, so pairs stack until the screen is wide enough for them. */
-@media (min-width: 1100px) and (max-width: 1599px) {
-  .dash-main .grid-2, .dash-main .split { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* A phone number with the two ways to reach it. Sits under a name, in the small grey line. */
