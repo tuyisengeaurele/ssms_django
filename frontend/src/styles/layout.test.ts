@@ -55,6 +55,10 @@ describe('dashboard layout', () => {
     expect(rules('.dash-rail')).not.toMatch(/position:\s*sticky/);
   });
 
+  it('keeps the tiles at their own height instead of stretching them to the height of the rail', () => {
+    expect(rules('.dash-main')).toMatch(/align-content:\s*start/);
+  });
+
   it('lets a column shrink instead of pushing the page sideways', () => {
     expect(rules('.dash-body')).toMatch(/minmax\(0,\s*1fr\)/);
     expect(rules('.dash-main')).toMatch(/min-width:\s*0/);
