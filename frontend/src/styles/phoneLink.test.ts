@@ -19,6 +19,16 @@ describe('the phone number and its buttons', () => {
     expect(rules('.phone-link')).toMatch(/flex-wrap:\s*nowrap/);
   });
 
+  it('never break the number apart, however narrow the room is', () => {
+    expect(rules('.phone-link__number')).toMatch(/white-space:\s*nowrap/);
+  });
+
+  it('give up the words when the cell they sit in is narrow, on any screen', () => {
+    expect(rules('.identity-facts > div')).toMatch(/container-type:\s*inline-size/);
+    const narrow = css.match(/@container \(max-width: \d+px\)\s*\{((?:[^{}]|\{[^{}]*\})*)\}/)?.[1] ?? '';
+    expect(narrow).toMatch(/\.phone-link__text\s*\{[^}]*clip:\s*rect\(0, 0, 0, 0\)/);
+  });
+
   it('keep the icons and hide the words on a small phone, without taking the words from a screen reader', () => {
     const phone = css.match(/@media \(max-width: 430px\)\s*\{((?:[^{}]|\{[^{}]*\})*)\}/)?.[1] ?? '';
     expect(phone).toMatch(/\.phone-link__text\s*\{[^}]*clip:\s*rect\(0, 0, 0, 0\)/);
