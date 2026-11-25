@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { alertService } from '../../services/alert.service';
 import { farmService } from '../../services/farm.service';
-import { Farm } from '../../types';
+import { AlertLog, Farm } from '../../types';
 import EmptyState from '../../components/ui/EmptyState';
 import { Icon } from '../../components/ui/Icon';
 import FarmCalendar from '../../components/calendar/FarmCalendar';
 import QuickActions from '../../components/dashboard/QuickActions';
+import AlertsPanel from '../../components/dashboard/AlertsPanel';
 import DecisionsCard from '../../components/supply/DecisionsCard';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
@@ -17,7 +18,8 @@ import StatTile from '../../components/ui/StatTile';
 export default function AdminDashboard() {
   const { t } = useLanguage();
   const [farms, setFarms] = useState<Farm[]>([]);
-  const [unread, setUnread] = useState<number | null>(null);
+  const [alerts, setAlerts] = useState<AlertLog[] | null>(null);
+  const unread = alerts ? alerts.length : null;
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
@@ -28,7 +30,7 @@ export default function AdminDashboard() {
       .then(([farmResult, alertResult]) => {
         if (farmResult.status === 'fulfilled') setFarms(farmResult.value.data.data);
         else setFailed(true);
-        if (alertResult.status === 'fulfilled') setUnread(alertResult.value.data.data.length);
+        if (alertResult.status === 'fulfilled') setAlerts(alertResult.value.data.data);
       })
       .finally(() => setLoading(false));
   };
@@ -116,6 +118,7 @@ export default function AdminDashboard() {
       </div>
       <aside className="dash-rail">
         <div className="card"><FarmCalendar staff /></div>
+        {alerts && <AlertsPanel alerts={alerts} />}
       </aside>
       </div>
       </div>

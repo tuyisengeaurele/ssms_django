@@ -210,6 +210,16 @@ describe('Supervisor dashboard page', () => {
     expect(within(panel).queryByRole('link', { name: /View farms/ })).not.toBeInTheDocument();
   });
 
+  it('keeps the alerts in the rail under the calendar, and the numbers and the lists in the main column', async () => {
+    const { container } = open();
+    const alerts = await screen.findByRole('list', { name: 'Recent alerts' });
+    const rail = container.querySelector('.dash-rail')!;
+    const main = container.querySelector('.dash-main')!;
+    expect(rail.contains(alerts)).toBe(true);
+    expect(main.contains(alerts)).toBe(false);
+    expect(main.contains(screen.getByRole('heading', { name: 'Active batches (2)' }))).toBe(true);
+  });
+
   it('lists recent alerts with plain times', async () => {
     open();
     const alerts = await screen.findByRole('list', { name: 'Recent alerts' });

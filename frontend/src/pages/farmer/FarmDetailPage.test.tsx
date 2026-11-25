@@ -388,7 +388,7 @@ describe('Farm details page', () => {
 
     it('shows the saved position in the editor', async () => {
       const dialog = await openEditor();
-      expect(within(dialog).getByText('The exact position of the farm is saved with it, so your cooperative can see it on the map: -1.60120, 30.40120')).toBeInTheDocument();
+      expect(within(dialog).getByText('Saved: -1.60120, 30.40120')).toBeInTheDocument();
     });
 
     it('sends the position back when the farm is saved, so it is not lost', async () => {
@@ -399,7 +399,7 @@ describe('Farm details page', () => {
 
     it('sends nulls when the person removes the position', async () => {
       const dialog = await openEditor();
-      fireEvent.click(within(dialog).getByRole('button', { name: 'Remove the position' }));
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Remove location' }));
       fireEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
       await waitFor(() => expect(api.update).toHaveBeenCalledWith('f1', { ...whole, latitude: null, longitude: null }));
     });

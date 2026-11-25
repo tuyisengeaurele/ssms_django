@@ -11,12 +11,14 @@ import CloseAccountDialog from '../../components/ui/CloseAccountDialog';
 import DownloadDataButton from '../../components/ui/DownloadDataButton';
 import ConfirmPhoneChangeDialog from '../../components/ui/ConfirmPhoneChangeDialog';
 import CooperativeRequestModal from '../../components/ui/CooperativeRequestModal';
+import AllowanceCard from '../../components/supply/AllowanceCard';
 import EmailChangeDialog from '../../components/ui/EmailChangeDialog';
 import PhoneLink from '../../components/ui/PhoneLink';
 import { ROLE_LABEL_KEY } from '../../components/layout/Sidebar';
 import Avatar from '../../components/ui/Avatar';
 import { Icon } from '../../components/ui/Icon';
 import ProfilePhotoDialog from '../../components/ui/ProfilePhotoDialog';
+import PhotoViewer from '../../components/ui/PhotoViewer';
 import Panel from '../../components/ui/Panel';
 import { dateFormat } from '../../utils/dateFormat';
 import { fill } from '../../utils/fill';
@@ -58,6 +60,7 @@ export default function AccountSettings() {
   const isFarmer = user?.role === 'FARMER';
   const [closing, setClosing] = useState(false);
   const [editingPhoto, setEditingPhoto] = useState(false);
+  const [viewingPhoto, setViewingPhoto] = useState(false);
   // How many batches are still running, so the dialog can say they stay as history. Nothing is said when it is not known.
   const [runningBatches, setRunningBatches] = useState(0);
 
@@ -168,11 +171,17 @@ export default function AccountSettings() {
   return (
     <div className="profile-stack">
       <section className="panel identity" aria-label={t('pfAbout')}>
-        <Avatar name={user?.name ?? ''} photoUrl={user?.photoUrl} className="identity-avatar" />
+        {user?.photoUrl ? (
+          <button type="button" className="identity-avatar-btn" aria-label={t('ppView')} onClick={() => setViewingPhoto(true)}>
+            <Avatar name={user.name} photoUrl={user.photoUrl} className="identity-avatar" />
+          </button>
+        ) : (
+          <Avatar name={user?.name ?? ''} photoUrl={user?.photoUrl} className="identity-avatar" />
+        )}
         <h2 className="identity-name">{user?.name}</h2>
         <p className="identity-email">{user?.email}</p>
         {user && <span className="badge badge-ink">{t(ROLE_LABEL_KEY[user.role])}</span>}
-        {user && <button type="button" className="btn btn-secondary btn-sm identity-photo-btn" onClick={() => setEditingPhoto(true)}><Icon name="camera" size={15} />{user.photoUrl ? t('ppChange') : t('ppAdd')}</button>}
+        {user && !user.photoUrl && <button type="button" className="btn btn-secondary btn-sm identity-photo-btn" onClick={() => setEditingPhoto(true)}><Icon name="camera" size={15} />{t('ppAdd')}</button>}
 
         <dl className="identity-facts">
           <div><dt>{t('pfSince')}</dt><dd>{joined}</dd></div>
@@ -256,6 +265,8 @@ export default function AccountSettings() {
         </div>
       </section>
 
+      {isFarmer ? <AllowanceCard /> : null}
+
       {canAskCooperative ? (
         <section className="panel" aria-labelledby="pf-coop-title">
           <header className="panel-head">
@@ -310,6 +321,16 @@ export default function AccountSettings() {
           )}
         </div>
       </section>
+
+      {user ? (
+        <PhotoViewer
+          open={viewingPhoto}
+          name={user.name}
+          photoUrl={user.photoUrl}
+          onClose={() => setViewingPhoto(false)}
+          onChange={() => { setViewingPhoto(false); setEditingPhoto(true); }}
+        />
+      ) : null}
 
       {user ? (
         <ProfilePhotoDialog

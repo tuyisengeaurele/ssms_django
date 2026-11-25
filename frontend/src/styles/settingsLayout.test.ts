@@ -30,8 +30,16 @@ describe('Settings tabs', () => {
     expect(open).not.toMatch(/background/);
   });
 
-  it('keeps the content at a readable width', () => {
-    expect(rule(components, '.settings-layout')).toMatch(/max-width:\s*\d+px/);
+  it('uses the whole width of the page like the other pages, not a narrow strip on the left', () => {
+    expect(rule(components, '.settings-layout')).not.toMatch(/max-width/);
+  });
+
+  it('lays the sections out in two columns on a wide screen, the account card across both, and one column on a phone', () => {
+    expect(rule(components, '.profile-stack')).not.toMatch(/grid-template-columns/);
+    const wide = components.match(/@media \(min-width: 1000px\)\s*\{[^@]*?\.profile-stack\s*\{([^}]*)\}[^@]*?\}/);
+    expect(wide?.[1]).toMatch(/grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
+    expect(wide?.[1]).toMatch(/align-items:\s*start/);
+    expect(components).toMatch(/@media \(min-width: 1000px\)[^@]*\.profile-stack > \.identity\s*\{[^}]*grid-column:\s*1 \/ -1/);
   });
 
   it('keeps the account card compact', () => {

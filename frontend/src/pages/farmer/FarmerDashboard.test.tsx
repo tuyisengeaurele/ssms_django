@@ -60,18 +60,12 @@ beforeEach(() => {
 });
 
 describe('Farmer dashboard, the allowance', () => {
-  it('shows the allowance card with the amount and the way to ask for another', async () => {
-    open();
-    expect(await screen.findByRole('heading', { level: 2, name: 'Your allowance' }, { timeout: 5000 })).toBeInTheDocument();
-    expect(screen.getByText('2 boxes')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Ask for a different amount' })).toBeInTheDocument();
-  });
-
-  it('still shows the rest of the page when the allowance cannot be loaded', async () => {
-    api.allowance.mockRejectedValue(new Error('down'));
+  it('does not show the allowance: it is in the profile, in Settings', async () => {
     open();
     expect(await screen.findByText('Active batches')).toBeInTheDocument();
-    expect(screen.queryByText('Your allowance')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Your allowance' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ask for a different amount' })).not.toBeInTheDocument();
+    expect(api.allowance).not.toHaveBeenCalled();
   });
 });
 
@@ -86,6 +80,22 @@ describe('Farmer dashboard, the layout', () => {
     expect(body.querySelector('.dash-rail')).not.toBeNull();
     expect(body.querySelector('.dash-main')!.contains(screen.getByText('Active batches'))).toBe(true);
     expect(body.querySelector('.dash-rail')!.contains(screen.getByRole('region', { name: 'Calendar' }))).toBe(true);
+  });
+
+  it('fills the rail under the calendar with what a farmer needs next, and keeps the numbers and the lists in the main column', async () => {
+    api.onboarding.mockResolvedValue({ data: { data: { complete: false, steps: [
+      { key: 'cooperative', state: 'done', detail: {} }, { key: 'farm', state: 'todo', detail: {} },
+      { key: 'room', state: 'todo', detail: {} }, { key: 'eggs', state: 'no_round', detail: {} },
+    ] } } });
+    const { container } = open();
+    await screen.findByText('Active batches');
+    const rail = container.querySelector('.dash-rail')!;
+    const main = container.querySelector('.dash-main')!;
+    expect(rail.contains(await screen.findByRole('heading', { name: 'Getting started' }))).toBe(true);
+    expect(rail.contains(screen.getByRole('heading', { name: 'Recent alerts' }))).toBe(true);
+    expect(main.contains(screen.getByText('Active batches'))).toBe(true);
+    expect(main.contains(screen.getByRole('heading', { name: /^Active batches/ }))).toBe(true);
+    expect(main.contains(screen.getByRole('heading', { name: 'Recent alerts' }))).toBe(false);
   });
 
   it('asks the calendar for the farmer, who gets no link to a supply round', async () => {

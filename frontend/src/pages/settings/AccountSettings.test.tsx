@@ -22,6 +22,8 @@ const farms = vi.hoisted(() => ({ getAll: vi.fn() }));
 vi.mock('../../services/farm.service', () => ({ farmService: farms }));
 const coop = vi.hoisted(() => ({ mine: vi.fn(), options: vi.fn(), ask: vi.fn(), withdraw: vi.fn() }));
 vi.mock('../../services/cooperativeRequest.service', () => ({ cooperativeRequestService: coop }));
+const supply = vi.hoisted(() => ({ getAllowance: vi.fn() }));
+vi.mock('../../services/supply.service', () => ({ supplyService: supply }));
 
 import AccountSettings from './AccountSettings';
 
@@ -54,6 +56,7 @@ beforeEach(() => {
   coop.options.mockResolvedValue({ data: { data: [{ id: 'c1', name: 'Old Coop' }, { id: 'c2', name: 'New Coop' }] } });
   coop.withdraw.mockResolvedValue({ data: { data: null } });
   farms.getAll.mockResolvedValue({ data: { data: [] } });
+  supply.getAllowance.mockResolvedValue({ data: { data: { boxes: 4, source: 'default', since: null, history: [], openRequest: null } } });
 });
 
 describe('Account settings', () => {
@@ -283,6 +286,22 @@ describe('Account settings', () => {
       expect(section.compareDocumentPosition(close) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
+    it('shows a farmer the allowance in its own section, above Change cooperative', async () => {
+      asFarmer();
+      open();
+      const allowance = (await screen.findByRole('heading', { name: 'Your allowance' })).closest('section') as HTMLElement;
+      expect(within(allowance).getByRole('button', { name: /Ask for a different amount/ })).toBeInTheDocument();
+      const section = screen.getByRole('heading', { name: 'Change cooperative' }).closest('section') as HTMLElement;
+      expect(allowance.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('shows no allowance to a supervisor or an admin, and does not ask for it', () => {
+      auth.user.role = 'SUPERVISOR';
+      open();
+      expect(screen.queryByRole('heading', { name: 'Your allowance' })).not.toBeInTheDocument();
+      expect(supply.getAllowance).not.toHaveBeenCalled();
+    });
+
     it('says in one short line what the section is for, when no request is waiting', () => {
       asFarmer();
       open();
@@ -391,12 +410,36 @@ describe('Account settings', () => {
       expect(within(card).getByRole('button', { name: 'Add photo' })).toBeInTheDocument();
     });
 
-    it('shows the photo and a Change photo button when there is one', () => {
+    it('shows the photo as a button that opens a larger view, with no text button beside it', () => {
       withPhoto('/api/photos/mine');
       open();
       const card = screen.getByRole('region', { name: 'About you' });
       expect(card.querySelector('.identity-avatar img')).toHaveAttribute('src', '/api/photos/mine');
-      expect(within(card).getByRole('button', { name: 'Change photo' })).toBeInTheDocument();
+      expect(within(card).getByRole('button', { name: 'View photo' })).toBeInTheDocument();
+      expect(within(card).queryByRole('button', { name: 'Change photo' })).not.toBeInTheDocument();
+      expect(within(card).queryByRole('button', { name: 'Add photo' })).not.toBeInTheDocument();
+      withPhoto(null);
+    });
+
+    it('does not make the initials a button when there is no photo to view', () => {
+      withPhoto(null);
+      open();
+      expect(screen.queryByRole('button', { name: 'View photo' })).not.toBeInTheDocument();
+    });
+
+    it('shows the photo larger, with a pencil button and no words on it, and the pencil opens the change dialog', async () => {
+      withPhoto('/api/photos/mine');
+      open();
+      fireEvent.click(screen.getByRole('button', { name: 'View photo' }));
+      const viewer = await screen.findByRole('dialog', { name: 'Your photo' });
+      expect(viewer.querySelector('.photo-large img')).toHaveAttribute('src', '/api/photos/mine');
+      const pencil = within(viewer).getByRole('button', { name: 'Change photo' });
+      expect(pencil.textContent).toBe('');
+      expect(pencil.querySelector('svg')).not.toBeNull();
+      expect(pencil).toHaveClass('btn');
+      fireEvent.click(pencil);
+      expect(await screen.findByRole('dialog', { name: 'Profile photo' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Your photo' })).not.toBeInTheDocument());
       withPhoto(null);
     });
 
