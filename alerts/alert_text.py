@@ -9,29 +9,29 @@ import re
 # The code is stored on the alert, so a code is never renamed or reused for another meaning.
 TEXTS = {
     'temperature_low': {
-        'en': 'Temperature too low: {value} °C (safe min is {min} °C). Check heating.',
-        'fr': 'Température trop basse : {value} °C (minimum sûr : {min} °C). Vérifiez le chauffage.',
-        'rw': "Ubushyuhe buri hasi cyane: {value} °C (urugero rwiza rwo hasi ni {min} °C). Genzura uburyo bwo gushyushya.",
+        'en': 'Temperature too low: {value} °C (min {min} °C). Check heating.',
+        'fr': 'Température trop basse : {value} °C (min {min} °C). Vérifiez le chauffage.',
+        'rw': 'Ubushyuhe buri hasi: {value} °C (ntarengwa {min} °C). Reba uburyo bwo gushyushya.',
     },
     'temperature_high': {
-        'en': 'Temperature too high: {value} °C (safe max is {max} °C). Improve ventilation.',
-        'fr': 'Température trop élevée : {value} °C (maximum sûr : {max} °C). Améliorez la ventilation.',
-        'rw': "Ubushyuhe buri hejuru cyane: {value} °C (urugero rwiza rwo hejuru ni {max} °C). Ongera umwuka uhinduka mu cyumba.",
+        'en': 'Temperature too high: {value} °C (max {max} °C). Improve ventilation.',
+        'fr': 'Température trop élevée : {value} °C (max {max} °C). Aérez davantage.',
+        'rw': 'Ubushyuhe buri hejuru: {value} °C (ntarengwa {max} °C). Ongera umwuka mu cyumba.',
     },
     'humidity_low': {
-        'en': 'Humidity too low: {value}% (safe min is {min}%). Add moisture.',
-        'fr': "Humidité trop basse : {value} % (minimum sûr : {min} %). Ajoutez de l'humidité.",
-        'rw': "Ubuhehere buri hasi cyane: {value}% (urugero rwiza rwo hasi ni {min}%). Ongeramo ubuhehere.",
+        'en': 'Humidity too low: {value}% (min {min}%). Add moisture.',
+        'fr': "Humidité trop basse : {value} % (min {min} %). Ajoutez de l'humidité.",
+        'rw': 'Ubuhehere buri hasi: {value}% (ntarengwa {min}%). Ongeramo ubuhehere.',
     },
     'humidity_high': {
-        'en': 'Humidity too high: {value}% (safe max is {max}%). Improve air circulation.',
-        'fr': "Humidité trop élevée : {value} % (maximum sûr : {max} %). Améliorez la circulation de l'air.",
-        'rw': "Ubuhehere buri hejuru cyane: {value}% (urugero rwiza rwo hejuru ni {max}%). Ongera umwuka uhinduka mu cyumba.",
+        'en': 'Humidity too high: {value}% (max {max}%). Improve air flow.',
+        'fr': 'Humidité trop élevée : {value} % (max {max} %). Aérez davantage.',
+        'rw': 'Ubuhehere buri hejuru: {value}% (ntarengwa {max}%). Ongera umwuka.',
     },
     'disease_suspected': {
-        'en': '{disease} suspected in this batch ({confidence}% confidence). Check the batch and ask your supervisor to take a look.',
-        'fr': "{disease} suspectée dans ce lot ({confidence} % de confiance). Vérifiez le lot et demandez à votre superviseur de l'examiner.",
-        'rw': "Hakekwa ko {disease} iri muri iri tsinda (icyizere {confidence}%). Reba itsinda unasabe umugenzuzi wawe kuryirebera.",
+        'en': '{disease} suspected in this batch ({confidence}%). Check it and tell your supervisor.',
+        'fr': '{disease} suspectée dans ce lot ({confidence} %). Vérifiez-le et prévenez votre superviseur.',
+        'rw': 'Hakekwa {disease} muri iri tsinda ({confidence}%). Rirebe ubwire umugenzuzi wawe.',
     },
     'stage_changed': {
         'en': 'Batch stage updated to {stage}.',
@@ -39,9 +39,9 @@ TEXTS = {
         'rw': "Icyiciro cy'itsinda cyahindutse kiba {stage}.",
     },
     'device_offline': {
-        'en': 'Device {device} has not sent data for {minutes} minutes. Check its power and connection.',
-        'fr': "L'appareil {device} n'a pas envoyé de données depuis {minutes} minutes. Vérifiez son alimentation et sa connexion.",
-        'rw': "Igikoresho {device} nticyohereje amakuru mu minota {minutes}. Genzura amashanyarazi n'umuyoboro wacyo.",
+        'en': 'Device {device} sent no data for {minutes} minutes. Check power and connection.',
+        'fr': "L'appareil {device} n'a rien envoyé depuis {minutes} minutes. Vérifiez l'alimentation et la connexion.",
+        'rw': "Igikoresho {device} nticyohereje amakuru mu minota {minutes}. Reba amashanyarazi n'umuyoboro.",
     },
 }
 

@@ -115,7 +115,7 @@ def test_the_share_of_hours_inside_the_range_uses_the_range_for_the_stage(auth_c
     reading(batch, 25.0, 78.0, 20)
     reading(batch, 30.0, 78.0, 8)
     text = text_of(report(auth_client(owner), batch))
-    assert '50 % of the 12 hours were inside the usual range for the Pupa stage (23 to 27 °C, 72 to 82 %).' in text
+    assert '50 % of 12 hours were in the usual range for Pupa (23 to 27 °C, 72 to 82 %).' in text
 
 
 def test_a_batch_with_no_readings_says_so(auth_client, owner, batch):

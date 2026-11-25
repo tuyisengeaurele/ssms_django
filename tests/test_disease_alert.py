@@ -59,7 +59,7 @@ def test_grasserie_raises_an_alert_on_the_batch(auth_client, owner, batch, ai, e
     assert check(auth_client, owner, batch, ai, disease, 0.83).status_code == 201
     alert = disease_alerts(batch).get()
     assert alert.room_id is None and alert.is_read is False and alert.resolved_at is None
-    assert alert.message == f'{disease} suspected in this batch (83% confidence). Check the batch and ask your supervisor to take a look.'
+    assert alert.message == f'{disease} suspected in this batch (83%). Check it and tell your supervisor.'
 
 
 def test_a_healthy_result_raises_nothing(auth_client, owner, batch, ai, email):

@@ -81,7 +81,7 @@ def test_the_job_opens_one_system_alert_on_the_room_and_not_a_second_on_the_next
     mark_offline_devices()
     alert = AlertLog.objects.get(room=device.room, type='SYSTEM')
     assert (alert.batch_id, alert.resolved_at) == (None, None)
-    assert alert.message.startswith('Device Shed 1 has not sent data for 30 minutes')
+    assert alert.message.startswith('Device Shed 1 sent no data for 30 minutes')
 
 
 def test_a_room_with_several_batches_gets_one_alert_not_one_each():
