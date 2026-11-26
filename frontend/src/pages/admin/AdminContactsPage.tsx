@@ -34,7 +34,6 @@ export default function AdminContactsPage() {
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [marking, setMarking] = useState(false);
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const [askAll, setAskAll] = useState(false);
@@ -71,20 +70,6 @@ export default function AdminContactsPage() {
 
   // The open message is read from the list, so a change made while it is open shows at once.
   const selected = messages.find((m) => m.id === selectedId) ?? null;
-
-  const handleAnswered = async (m: ContactMessage, undo: boolean) => {
-    setMarking(true);
-    try {
-      const res = await (undo ? contactsService.unmarkReplied(m.id) : contactsService.markReplied(m.id));
-      const { isRead, repliedAt, repliedBy } = res.data.data;
-      setMessages((prev) => prev.map((x) => (x.id === m.id ? { ...x, isRead: isRead ?? x.isRead, repliedAt: repliedAt ?? null, repliedBy: repliedBy ?? null } : x)));
-      success(t(undo ? 'msUnmarkedAnswered' : 'msMarkedAnswered'));
-    } catch {
-      showError(t('msAnswerError'));
-    } finally {
-      setMarking(false);
-    }
-  };
 
   const leaveReply = () => {
     setComposing(false);
@@ -172,7 +157,7 @@ export default function AdminContactsPage() {
     if (filter === 'read' && !m.isRead) return false;
     if (filter === 'unanswered' && m.repliedAt) return false;
     if (filter === 'answered' && !m.repliedAt) return false;
-    return !query || [m.name, m.email, m.subject, m.message].some((v) => v.toLowerCase().includes(query));
+    return !query || [m.name, m.email, m.message, ...m.replies.map((r) => r.body)].some((v) => v.toLowerCase().includes(query));
   });
 
   const tabs: Array<{ id: Filter; label: string; count: number }> = [
@@ -202,16 +187,6 @@ export default function AdminContactsPage() {
             </>
           ) : (
             <>
-              {selected.replies.length === 0 && (
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => handleAnswered(selected, !!selected.repliedAt)}
-                  disabled={marking}
-                >
-                  <Icon name="check" size={15} />
-                  {t(selected.repliedAt ? 'msUnmarkAnswered' : 'msMarkAnswered')}
-                </button>
-              )}
               <button className="btn btn-secondary" onClick={closeMessage}>{t('msClose')}</button>
               {selected.replies.length === 0 && (
                 <button ref={replyButton} className="btn btn-primary" onClick={() => startReply(selected.id)}>
@@ -230,11 +205,10 @@ export default function AdminContactsPage() {
               <div><dt>{t('msEmail')}</dt><dd className="cell-trim">{selected.email}</dd></div>
             </dl>
             <p className="message-date">{when.format(new Date(selected.createdAt))}</p>
-            {selected.replies.length === 0 && (selected.repliedAt && selected.repliedBy ? (
+            {/* A message marked answered by hand, before replies were sent from the app, still says who and when. */}
+            {selected.replies.length === 0 && selected.repliedAt && selected.repliedBy && (
               <p className="message-answered">{fill(t('msAnsweredBy'), { name: selected.repliedBy.name, when: when.format(new Date(selected.repliedAt)) })}</p>
-            ) : (
-              <p className="form-hint">{t('msAnswerHint')}</p>
-            ))}
+            )}
             <p className="message-body">{selected.message}</p>
             {takenId === selected.id && <div className="alert alert-warning reply-error" role="status"><span>{t('msTaken')}</span></div>}
             {selected.replies.map((reply) => (
@@ -339,10 +313,7 @@ export default function AdminContactsPage() {
               <li key={m.id}>
                 <button type="button" className={`inbox-row${m.isRead ? '' : ' is-unread'}`} onClick={() => openMessage(m)}>
                   <span className="inbox-who">{m.name}</span>
-                  <span className="inbox-text">
-                    <span className="inbox-subject">{m.subject}</span>
-                    <span className="inbox-preview">{previewOf(m.message)}</span>
-                  </span>
+                  <span className="inbox-preview">{previewOf(m.message)}</span>
                   <span className="inbox-when">{when.format(new Date(m.createdAt))}</span>
                   {(!m.isRead || m.repliedAt) && (
                     <span className="inbox-badges">

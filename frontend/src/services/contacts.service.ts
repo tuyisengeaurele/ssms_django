@@ -20,11 +20,4 @@ export const contactsService = {
   reply: (id: string, sent: { body: string; language: ContactMessage['language'] }) =>
     api.post<ApiResponse<ContactMessage>>(`/admin/contacts/${id}/replies`, sent),
 
-  /** POST /api/admin/contacts/<id>/replied, says the message was answered. It also marks it read. */
-  markReplied: (id: string) =>
-    api.post<ApiResponse<ContactMessage>>(`/admin/contacts/${id}/replied`),
-
-  /** DELETE /api/admin/contacts/<id>/replied, the undo of markReplied */
-  unmarkReplied: (id: string) =>
-    api.delete<ApiResponse<ContactMessage>>(`/admin/contacts/${id}/replied`),
 };

@@ -18,6 +18,7 @@ vi.mock('../../services/contacts.service', () => ({
   contactsService: { getUnread: vi.fn().mockResolvedValue({ data: { data: { messages: [], count: 0 } } }) },
 }));
 
+import { contactsService } from '../../services/contacts.service';
 import { reloadThemeChoice } from '../../utils/theme';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
@@ -393,3 +394,22 @@ describe('The photo in the top bar', () => {
     expect(container.querySelector('.topbar-avatar img')).toHaveAttribute('src', '/api/photos/mine');
   });
 });
+
+describe('The bell and contact messages', () => {
+  it('shows who wrote and the start of the message, not the subject that every message shares', async () => {
+    const long = 'We are twelve farmers in Gatsibo. '.repeat(60);
+    vi.mocked(contactsService.getUnread).mockResolvedValueOnce({
+      data: { data: { count: 1, messages: [{ id: 'c1', name: 'Aline Uwase', email: 'aline@coop.rw', subject: 'Message to SSMS', message: `First line.\n\n${long}`, isRead: false, createdAt: '2026-10-07T09:30:00Z', language: 'en', replies: [] }] } },
+    } as never);
+    renderAt('/admin', <TopBar onMenuToggle={() => {}} onSearch={() => {}} alertCount={0} />);
+    fireEvent.click(screen.getByRole('button', { name: /Notifications/ }));
+    const panel = await screen.findByRole('region', { name: 'Notifications' });
+    fireEvent.click(await within(panel).findByRole('tab', { name: /Messages/ }));
+    const preview = await within(panel).findByText(/First line\. We are twelve farmers/);
+    expect(preview).toHaveClass('note-preview');
+    expect(preview.textContent!.length).toBeLessThanOrEqual(160);
+    expect(within(panel).getByText(/Aline Uwase/)).toBeInTheDocument();
+    expect(within(panel).queryByText('Message to SSMS')).not.toBeInTheDocument();
+  });
+});
+

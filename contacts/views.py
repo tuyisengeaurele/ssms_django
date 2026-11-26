@@ -120,46 +120,6 @@ class ContactListView(APIView):
         return api_success({'id': msg.id, 'isRead': True})
 
 
-class ContactRepliedView(APIView):
-    """POST /api/admin/contacts/<id>/replied says the message has been answered, and by whom. DELETE takes that back.
-
-    The reply itself is sent from the admin's own mail app, so this is a mark made by hand. Answering also marks the
-    message read. Marking it again keeps the first answer, so the record says who really answered first.
-    """
-    permission_classes = [IsAuthenticated, RolePermission]
-    resource = 'contacts'
-
-    def _message(self, request, pk):
-        msg = ContactMessage.objects.select_related('replied_by').filter(pk=pk).first()
-        if msg is None:
-            return None, api_error("We couldn't find that message.", 404)
-        return msg, None
-
-    def post(self, request, pk):
-        msg, problem = self._message(request, pk)
-        if problem:
-            return problem
-        if msg.replied_at is None:
-            msg.replied_by = request.user
-            msg.replied_at = timezone.now()
-            msg.is_read = True
-            msg.save(update_fields=['replied_by', 'replied_at', 'is_read'])
-            # The words of the message stay out of the audit log. They were written to us, not to the log.
-            log_action(request, 'UPDATE', 'ContactMessage', msg.pk, f'Marked contact message {msg.pk} as answered')
-        return api_success(_serialize_message(msg), 'Marked as answered.')
-
-    def delete(self, request, pk):
-        msg, problem = self._message(request, pk)
-        if problem:
-            return problem
-        if msg.replied_at is not None:
-            msg.replied_by = None
-            msg.replied_at = None
-            msg.save(update_fields=['replied_by', 'replied_at'])
-            log_action(request, 'UPDATE', 'ContactMessage', msg.pk, f'Removed the answered mark of contact message {msg.pk}')
-        return api_success(_serialize_message(msg), 'Answered mark removed.')
-
-
 class ContactReplyView(APIView):
     """POST /api/admin/contacts/<id>/replies sends an admin's answer to the address on the message.
 
