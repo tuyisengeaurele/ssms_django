@@ -89,8 +89,12 @@ services:
       - key: DEFAULT_FROM_EMAIL
         value: "SSMS <smartsericulturerw@gmail.com>"
 
-      # The free plan cannot reach Gmail's ports, so mail can be handed to the website's sender instead
+      # The free plan cannot reach Gmail's ports, so mail is handed to the website's sender instead
       # (docs/deploy-runbook.md, section 31). The same secret is typed into the Vercel project.
+      # On a paid plan, remove EMAIL_BACKEND here and on the dashboard to send straight to Gmail again.
+      - key: EMAIL_BACKEND
+        value: "core.mail_relay.RelayEmailBackend"
+
       - key: MAIL_RELAY_URL
         value: "https://ssms-django.vercel.app/api/send-mail"
 

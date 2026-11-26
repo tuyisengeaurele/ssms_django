@@ -107,9 +107,9 @@ def test_the_websites_mail_sender_has_its_address_and_a_secret_set_by_hand():
     assert secret.get('sync') is False and 'value' not in secret
 
 
-def test_the_merge_alone_does_not_change_how_the_live_api_sends_mail():
-    # The sender is switched on by hand on Render, after one real email has gone through it. The file says so only then.
-    assert 'EMAIL_BACKEND' not in env_of(render_services()['ssms-api'])
+def test_the_live_api_sends_its_mail_through_the_websites_sender():
+    # The free plan cannot reach a mail server, so a deploy from this file must not fall back to sending straight to one.
+    assert env_of(render_services()['ssms-api'])['EMAIL_BACKEND']['value'] == 'core.mail_relay.RelayEmailBackend'
 
 
 def test_the_disease_check_service_checks_the_model_it_downloads():

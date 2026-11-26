@@ -795,9 +795,10 @@ use (https://vercel.com/legal/terms). Read it again before real use.
 | Vercel, Production | `MAIL_RELAY_SECRET` | a new random secret, at least 32 characters |
 | Render, `ssms-api` | `MAIL_RELAY_SECRET` | the same secret |
 | Render, `ssms-api` | `MAIL_RELAY_URL` | `https://ssms-django.vercel.app/api/send-mail` |
-| Render, `ssms-api` | `EMAIL_BACKEND` | `core.mail_relay.RelayEmailBackend`, last, after the test below |
+| Render, `ssms-api` | `EMAIL_BACKEND` | `core.mail_relay.RelayEmailBackend` (also in `render.yaml`). On a new setup, add it last, after the test below |
 
-**Switching on.** Nothing changes for users until step 5.
+**Switching on.** The live site was switched on 2026-11-26: the Health email test and a password reset both arrived.
+These steps are for setting it up again, for example in a new project. Nothing changes for users until step 5.
 
 1. Make the secret in your own terminal:
 
@@ -823,9 +824,10 @@ use (https://vercel.com/legal/terms). Read it again before real use.
 6. On the live site: System, Health, run the email test. Then use **Forgot password**. Both emails must arrive. Read
    Logs, Jobs for `email_failed`. Try once more after the API has slept, when both services start cold.
 
-**Going back.** Delete `EMAIL_BACKEND` on Render. The API then sends straight to Gmail, which the free plan blocks. It
-is also the setting to remove on a paid Render service, where those ports are open again. The function can then be
-deleted.
+**Going back.** Remove `EMAIL_BACKEND` from `render.yaml` (and change its test in
+`tests/security/test_deploy_config.py`), then delete it on the Render dashboard and deploy. Deleting it on the dashboard
+alone is not enough: a later sync from the file can put it back. The API then sends straight to Gmail, which the free
+plan blocks, so do this only on a paid service, where those ports are open again. The function can then be deleted.
 
 **Error codes.** They appear in Logs, Jobs as `email_failed`, as `RelayError: <code>`.
 

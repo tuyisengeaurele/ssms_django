@@ -13,7 +13,8 @@ function that runs with the website, which sends it through Gmail with the same 
 - **Health.** The Health tab and its email test know the new way out. A failed send is recorded in Logs, Jobs with a short code.
 
 ### Switching on
-Nothing changes until the values in runbook section 31 are set. No migration.
+The values are set by hand (runbook section 31). The live API has used the sender since 2026-11-26, when the Health
+email test and a password reset both arrived, and `render.yaml` now says so. No migration.
 
 ## Profile photo (phase 4, tasks 4.2 and 4.3)
 
