@@ -89,6 +89,14 @@ services:
       - key: DEFAULT_FROM_EMAIL
         value: "SSMS <smartsericulturerw@gmail.com>"
 
+      # The free plan cannot reach Gmail's ports, so mail can be handed to the website's sender instead
+      # (docs/deploy-runbook.md, section 31). The same secret is typed into the Vercel project.
+      - key: MAIL_RELAY_URL
+        value: "https://ssms-django.vercel.app/api/send-mail"
+
+      - key: MAIL_RELAY_SECRET
+        sync: false
+
       # ── Cloudinary ───────────────────────────────────────────────────────────
       - key: CLOUDINARY_CLOUD_NAME
         value: "dsmpn69ux"

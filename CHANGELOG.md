@@ -2,6 +2,19 @@
 
 # Changelog
 
+## Email through the website's sender
+
+Render's free plan cannot reach Gmail's sending ports. The API can now hand each finished email, signed, to a small
+function that runs with the website, which sends it through Gmail with the same app password.
+
+### Added
+- **The sender** (`frontend/api/send-mail.ts`). It takes only recent requests signed with a shared secret, always sends from the SSMS Gmail account, takes up to 20 recipients in a request, and answers success only when Gmail took the message for all of them. It logs nothing.
+- **The mail backend** (`core/mail_relay.py`). The email is built as before, so the template, reply-to and logo do not change. A longer list of recipients goes in groups of 20. It never sends a message twice by itself.
+- **Health.** The Health tab and its email test know the new way out. A failed send is recorded in Logs, Jobs with a short code.
+
+### Switching on
+Nothing changes until the values in runbook section 31 are set. No migration.
+
 ## Profile photo (phase 4, tasks 4.2 and 4.3)
 
 A person can add a photo in Settings. It replaces the initials circle wherever the people who may see them see them.
