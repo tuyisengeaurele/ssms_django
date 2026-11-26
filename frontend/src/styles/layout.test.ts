@@ -96,6 +96,10 @@ describe('spacing that stays tidy when the content is short', () => {
     expect(rules('.table-actions')).toMatch(/gap:\s*(8|10)px/);
   });
 
+  it('lets the buttons of a table row wrap, so a long label does not push the whole table into cards', () => {
+    expect(rules('.table-actions')).toMatch(/flex-wrap:\s*wrap/);
+  });
+
   it('gives the label of a bar enough room for a farm name on a wide screen, so it is not cut to three dots', () => {
     expect(css).toMatch(/@media \(min-width: 700px\)\s*\{[^@]*\.barlist li\s*\{[^}]*minmax\(\d+px,\s*2\d\dpx\)/);
   });
