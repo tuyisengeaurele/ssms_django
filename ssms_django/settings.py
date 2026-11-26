@@ -363,6 +363,12 @@ EMAIL_USE_TLS       = True
 EMAIL_HOST_USER     = config('EMAIL_HOST_USER',     default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL  = config('DEFAULT_FROM_EMAIL',  default='SSMS <smartsericulturerw@gmail.com>')
+# A host that cannot reach a mail server (Render's free plan blocks the ports) hands finished mail to the website's sender
+# instead: set EMAIL_BACKEND=core.mail_relay.RelayEmailBackend and both values below. See core/mail_relay.py.
+MAIL_RELAY_URL      = config('MAIL_RELAY_URL',      default='')
+MAIL_RELAY_SECRET   = config('MAIL_RELAY_SECRET',   default='')
+# Longer than the sender is allowed to run (frontend/vercel.json), so the API does not give up while it may still send.
+MAIL_RELAY_TIMEOUT  = 35.0
 FRONTEND_URL        = config('FRONTEND_URL',        default='http://localhost:5173')
 # Shown in the footer of every email and on every formal document. Change them here, not in the templates.
 SUPPORT_EMAIL       = config('SUPPORT_EMAIL',       default='smartsericulturerw@gmail.com')

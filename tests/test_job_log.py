@@ -9,6 +9,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from core.mail import Email, send_email
+from core.mail_relay import RelayError
 from logs.jobs import LoggedCommand, record_job
 from logs.models import JobLog
 from tests.factories import FarmFactory, IoTDeviceFactory, UserFactory
@@ -56,6 +57,21 @@ def test_mail_that_could_not_be_sent_is_logged_and_still_raises_when_it_should()
     assert kinds() == ['email_failed']
     assert last().subject == 'Welcome to SSMS'
     assert 'SMTPException' in last().detail
+
+
+def test_a_failure_of_the_websites_sender_is_logged_with_its_short_code():
+    with mock.patch('core.mail.EmailMultiAlternatives.send', side_effect=RelayError('timeout')):
+        send_email('Welcome to SSMS', ['someone@example.rw'], a_message(), fail_silently=True)
+    assert last().detail == 'RelayError: timeout'
+
+
+def test_another_errors_own_code_is_not_written_down():
+    # Other libraries keep numbers or the server's words in `code`, and those words can hold the address.
+    error = SMTPException('connection refused')
+    error.code = '550 someone@example.rw does not exist'
+    with mock.patch('core.mail.EmailMultiAlternatives.send', side_effect=error):
+        send_email('Welcome to SSMS', ['someone@example.rw'], a_message(), fail_silently=True)
+    assert last().detail == 'SMTPException'
 
 
 def test_mail_that_fails_quietly_is_logged_so_it_is_not_lost():

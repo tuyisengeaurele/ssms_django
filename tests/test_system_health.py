@@ -166,6 +166,26 @@ def test_email_that_is_only_printed_is_not_set_up(auth_client, admin, settings):
     assert check(health(auth_client(admin)), 'email')['status'] == 'notSetUp'
 
 
+RELAY = 'core.mail_relay.RelayEmailBackend'
+
+
+def test_email_through_the_websites_sender_is_set_up_with_its_address_and_secret(auth_client, admin, settings):
+    settings.EMAIL_BACKEND = RELAY
+    settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD = '', ''
+    settings.MAIL_RELAY_URL, settings.MAIL_RELAY_SECRET = 'https://site.example/api/send-mail', 'a' * 32
+    found = check(health(auth_client(admin)), 'email')
+    assert found['status'] == 'ok' and found['values']['sends'] is True
+
+
+@pytest.mark.parametrize('url, secret', [('', 'a' * 32), ('https://site.example/api/send-mail', ''), ('https://site.example/api/send-mail', 'a' * 31)])
+def test_email_through_a_sender_with_a_value_missing_is_not_set_up(auth_client, admin, settings, url, secret):
+    settings.EMAIL_BACKEND = RELAY
+    settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD = 'team@example.rw', 'hunter2-secret'
+    settings.MAIL_RELAY_URL, settings.MAIL_RELAY_SECRET = url, secret
+    found = check(health(auth_client(admin)), 'email')
+    assert found['status'] == 'notSetUp' and found['values']['sends'] is False
+
+
 def test_error_reporting_is_on_when_it_has_an_address(auth_client, admin, settings):
     settings.SENTRY_DSN = 'https://key@sentry.example/1'
     assert check(health(auth_client(admin)), 'errorMonitoring')['status'] == 'ok'

@@ -777,3 +777,75 @@ UPDATE users SET "photoUrl" = NULL WHERE id = '<user id>';
 Closing an account and the nightly anonymising remove the photo too.
 
 Going back: migrate `users` back to `0016`. The table is dropped, so every photo is lost, and the `photoUrl` of those people points at nothing until they add one again (the screens fall back to the initials).
+
+## 31. Email through the website's sender
+
+**Why.** Render's free web services cannot send on ports 25, 465 and 587 (https://render.com/docs/free), and the API
+sends through Gmail on one of them. So the API builds each email, signs it and posts it to a small function that runs
+with the website on Vercel (`frontend/api/send-mail.ts`). The function sends it through Gmail with the app password.
+Scheduled jobs run on GitHub and keep sending straight to Gmail. Vercel's free plan is for personal or non-commercial
+use (https://vercel.com/legal/terms). Read it again before real use.
+
+**Settings.** You type every secret yourself. None goes into a file, a commit or a chat.
+
+| Where | Name | Value |
+|---|---|---|
+| Vercel, Production | `GMAIL_USER` | the SSMS Gmail address |
+| Vercel, Production | `GMAIL_APP_PASSWORD` | its app password |
+| Vercel, Production | `MAIL_RELAY_SECRET` | a new random secret, at least 32 characters |
+| Render, `ssms-api` | `MAIL_RELAY_SECRET` | the same secret |
+| Render, `ssms-api` | `MAIL_RELAY_URL` | `https://ssms-django.vercel.app/api/send-mail` |
+| Render, `ssms-api` | `EMAIL_BACKEND` | `core.mail_relay.RelayEmailBackend`, last, after the test below |
+
+**Switching on.** Nothing changes for users until step 5.
+
+1. Make the secret in your own terminal:
+
+   ```powershell
+   venv/Scripts/python.exe -c "import secrets; print(secrets.token_urlsafe(48))"
+   ```
+
+2. Add the three Vercel values, then redeploy: new values reach only new deployments.
+3. Open `https://ssms-django.vercel.app/api/send-mail`. It must answer `{"ok":false,"error":"method"}`. A page, or an
+   answer from the API, means the function is not being served: stop.
+4. Send one real email to yourself through the live function, from your own terminal. Render is not touched:
+
+   ```powershell
+   $env:EMAIL_BACKEND = 'core.mail_relay.RelayEmailBackend'
+   $env:MAIL_RELAY_URL = 'https://ssms-django.vercel.app/api/send-mail'
+   $env:MAIL_RELAY_SECRET = Read-Host 'Mail relay secret'
+   venv/Scripts/python.exe manage.py sendtestemail (Read-Host 'Your email address')
+   Remove-Item Env:EMAIL_BACKEND, Env:MAIL_RELAY_URL, Env:MAIL_RELAY_SECRET
+   ```
+
+   If it does not arrive, read the error code below and stop.
+5. Set the three Render values and wait for the deploy.
+6. On the live site: System, Health, run the email test. Then use **Forgot password**. Both emails must arrive. Read
+   Logs, Jobs for `email_failed`. Try once more after the API has slept, when both services start cold.
+
+**Going back.** Delete `EMAIL_BACKEND` on Render. The API then sends straight to Gmail, which the free plan blocks. It
+is also the setting to remove on a paid Render service, where those ports are open again. The function can then be
+deleted.
+
+**Error codes.** They appear in Logs, Jobs as `email_failed`, as `RelayError: <code>`.
+
+| Code | Meaning | Look at |
+|---|---|---|
+| `not_set_up` | a value is missing or the secret is shorter than 32 characters, on either side | the settings table |
+| `unauthorized` | the two secrets differ, or a clock is more than 5 minutes off | both `MAIL_RELAY_SECRET` values |
+| `send_failed` | Gmail did not take the message for every recipient | the app password, Gmail's daily limit |
+| `too_large` | the email is over 1,000,000 bytes | what was added to the email |
+| `bad_request` | the function did not accept the recipients or the message | that the website and the API run the same version |
+| `timeout` | no answer in 35 seconds. The email may have left | the Vercel function log |
+| `unreachable` | the website could not be reached | `MAIL_RELAY_URL`, the Vercel status |
+| `refused` | an answer that is not the sender's, for example a page | `MAIL_RELAY_URL`, the Vercel deployment |
+
+**Changing the secret.** Make a new one, set it in Vercel and redeploy, then set it on Render. Mail sent in between fails
+with `unauthorized`.
+
+**After a Gmail password change.** Google cancels app passwords then
+(https://support.google.com/mail/answer/185833). Make a new one and put it in Vercel (then redeploy), in Render
+(`EMAIL_HOST_PASSWORD`) and in the GitHub secrets.
+
+**Limit.** A personal Gmail account stops sending at about 500 emails a day. The function takes 20 recipients in a
+request, and the API splits a longer list.

@@ -2,7 +2,7 @@
 
 Two kinds of check sit side by side:
 * live checks ask: the database and the disease check service answer, and sensors have reported lately;
-* set-up checks look at the settings: email can log in, error reporting has an address, photo storage has a name.
+* set-up checks look at the settings: email has a way out, error reporting has an address, photo storage has a name.
   They say a thing is set up. They do not send a test message or upload a test photo.
 
 "Not set up" is not a problem. A local machine is meant to print its emails and keep its errors to itself.
@@ -24,6 +24,7 @@ from django.utils import timezone
 
 from alerts.models import AlertLog, AlertType
 from contacts.models import ContactMessage
+from core.mail import is_set_up_to_send
 from logs.models import JobLog
 from sensors.devices import effective_status, offline_after
 from sensors.models import IoTDevice, SensorReading
@@ -70,7 +71,7 @@ def check_ai_service() -> dict:
 
 
 def check_email() -> dict:
-    sends = 'smtp' in settings.EMAIL_BACKEND.lower() and bool(settings.EMAIL_HOST_USER) and bool(settings.EMAIL_HOST_PASSWORD)
+    sends = is_set_up_to_send()
     return {'key': 'email', 'status': OK if sends else NOT_SET_UP, 'values': {'sends': sends}}
 
 

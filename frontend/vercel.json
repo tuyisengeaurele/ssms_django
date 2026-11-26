@@ -1,4 +1,7 @@
 {
+  "functions": {
+    "api/send-mail.ts": { "maxDuration": 30 }
+  },
   "redirects": [
     {
       "source": "/en",
