@@ -48,6 +48,15 @@ describe('dashboard layout', () => {
     expect(rules('.dash-rail')).toMatch(/order:\s*-1/);
   });
 
+  // On a phone a person looks for the numbers first. The two columns become one list there: the numbers, then the calendar
+  // column, then the charts and lists.
+  it('shows the numbers above the calendar below 1100 px, and the rest after it', () => {
+    const narrow = css.match(/@media \(max-width: 1099px\)\s*\{\s*\.dash-main[\s\S]*?\n\}/)?.[0] ?? '';
+    expect(narrow).toMatch(/\.dash-main\s*\{[^}]*display:\s*contents/);
+    expect(narrow).toMatch(/\.dash-main > :first-child\s*\{[^}]*order:\s*-2/);
+    expect(narrow).toMatch(/\.dash-main > \*\s*\{[^}]*min-width:\s*0/);
+  });
+
   it('puts the rail beside the data from 1100 px, and keeps it in view only there', () => {
     expect(wide).toMatch(/\.dash-body\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*340px/);
     expect(wide).toMatch(/\.dash-rail\s*\{[^}]*order:\s*0/);
