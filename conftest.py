@@ -1,3 +1,6 @@
+import logging
+from types import SimpleNamespace
+
 import pytest
 from cryptography.fernet import Fernet
 from django.core.cache import cache, caches
@@ -38,6 +41,27 @@ def _quiet_settings(request, settings):
     _clear_cache()
     yield
     _clear_cache()
+
+
+class _InLineSend:
+    """Stands in for the thread of a background send. It runs as soon as it is started, and what goes wrong stays inside,
+    as it would on a thread."""
+
+    def __init__(self, target, args=(), kwargs=None, daemon=None):
+        self._run = lambda: target(*args, **(kwargs or {}))
+
+    def start(self):
+        try:
+            self._run()
+        except Exception:
+            logging.getLogger(__name__).exception('A background send failed')
+
+
+@pytest.fixture(autouse=True)
+def _background_mail_arrives_first(monkeypatch):
+    """Many emails are sent on a thread of their own. A test that reads the outbox straight after a request would race that
+    thread and fail on a busy machine, so under test the send is finished before the call returns."""
+    monkeypatch.setattr('core.mail.threading', SimpleNamespace(Thread=_InLineSend))
 
 
 @pytest.fixture
