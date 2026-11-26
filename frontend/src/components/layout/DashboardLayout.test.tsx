@@ -1,13 +1,17 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 import { setPrefersDark, setReducedMotion } from '../../test/setup';
 import { reloadThemeChoice, setThemeChoice } from '../../utils/theme';
 
-vi.mock('../../context/AuthContext', () => ({
-  useAuth: () => ({ user: { name: 'Auris Tuyisenge', role: 'ADMIN', email: 'a@x.rw' }, logout: vi.fn() }),
+const auth = vi.hoisted(() => ({
+  user: { name: 'Auris Tuyisenge', role: 'ADMIN', email: 'a@x.rw', cooperativeId: null as string | null },
+  logout: () => {},
 }));
+const decisionCount = vi.hoisted(() => vi.fn());
+vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
+vi.mock('../../services/supply.service', () => ({ supplyService: { decisionCount } }));
 vi.mock('../../services/alert.service', () => ({ alertService: { getAll: vi.fn().mockResolvedValue({ data: { data: [] } }) } }));
 vi.mock('../../services/contacts.service', () => ({
   contactsService: { getUnread: vi.fn().mockResolvedValue({ data: { data: { messages: [], count: 0 } } }) },
@@ -35,6 +39,9 @@ const width = (px: number) => Object.defineProperty(window, 'innerWidth', { valu
 const rail = (container: HTMLElement) => container.querySelector('.app-sidebar')?.classList.contains('collapsed');
 
 beforeEach(() => {
+  decisionCount.mockReset();
+  decisionCount.mockResolvedValue({ data: { data: { count: 0, rooms: 0, allowance: 0 } } });
+  auth.user = { name: 'Auris Tuyisenge', role: 'ADMIN', email: 'a@x.rw', cooperativeId: null };
   localStorage.clear();
   reloadThemeChoice();
   document.documentElement.removeAttribute('data-theme');
@@ -188,5 +195,23 @@ describe('Theme', () => {
     expect(attr()).toBe('dark');
     unmount();
     expect(attr()).toBeNull();
+  });
+});
+
+describe('Decisions count in the menu', () => {
+  it('is asked for by an admin and by a supervisor in a cooperative', async () => {
+    open().unmount();
+    await waitFor(() => expect(decisionCount).toHaveBeenCalledTimes(1));
+    auth.user = { name: 'S', role: 'SUPERVISOR', email: 's@x.rw', cooperativeId: 'c1' };
+    open();
+    await waitFor(() => expect(decisionCount).toHaveBeenCalledTimes(2));
+  });
+
+  it('is not asked for by a supervisor in no cooperative, the server would refuse', async () => {
+    auth.user = { name: 'S', role: 'SUPERVISOR', email: 's@x.rw', cooperativeId: null };
+    open();
+    await screen.findByText('Page body');
+    await new Promise((r) => setTimeout(r, 20));
+    expect(decisionCount).not.toHaveBeenCalled();
   });
 });

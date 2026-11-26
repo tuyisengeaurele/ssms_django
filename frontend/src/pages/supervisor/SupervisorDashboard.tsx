@@ -148,7 +148,7 @@ export default function SupervisorDashboard() {
       />
 
       <div className="stack-24">
-      <DecisionsCard />
+      {(user?.role === 'ADMIN' || user?.cooperativeId) && <DecisionsCard />}
 
       {user?.role === 'SUPERVISOR' && !user.cooperativeId && (
         <div className="alert alert-warning" role="note">

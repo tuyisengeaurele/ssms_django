@@ -79,8 +79,9 @@ export default function DashboardLayout() {
       .catch(() => {});
   }, [location.pathname]);
 
-  // Only a supervisor or an admin has decisions to make. The count is taken again as the page changes.
-  const decisionCount = useDecisionCount(user?.role === 'SUPERVISOR' || user?.role === 'ADMIN', location.pathname);
+  // Only an admin or a supervisor in a cooperative has decisions to make. A supervisor in none is refused by the server,
+  // so no request is made. The count is taken again as the page changes.
+  const decisionCount = useDecisionCount(user?.role === 'ADMIN' || (user?.role === 'SUPERVISOR' && !!user.cooperativeId), location.pathname);
 
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
