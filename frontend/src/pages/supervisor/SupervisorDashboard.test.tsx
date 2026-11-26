@@ -179,6 +179,13 @@ describe('Supervisor dashboard page', () => {
     expect(screen.queryByText(/Ask the SSMS team/)).not.toBeInTheDocument();
   });
 
+  it('asks for no decisions when the supervisor is in no cooperative, the server would refuse', async () => {
+    auth.user = { id: 'u', role: 'SUPERVISOR', cooperativeId: null, cooperativeName: null };
+    open();
+    await screen.findByText(/not in a cooperative yet/);
+    expect(api.decisions).not.toHaveBeenCalled();
+  });
+
   it('gives each reading chart a table of its numbers', async () => {
     open();
     await screen.findByText('Total farms');
