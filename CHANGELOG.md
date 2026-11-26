@@ -2,6 +2,24 @@
 
 # Changelog
 
+## Replying to contact messages, the server (roadmap 4.4, part 1)
+
+### Changed
+- **The contact form no longer needs a subject.** Every new message has the subject "Message to SSMS". A subject that is sent is ignored, so the form that is live today keeps working.
+- **The team notice** has the same subject and an **Open messages** button. It has no reply-to and does not give the sender's address, so answers are written in the app.
+- **The confirmation** the sender gets is now in the language of their message, footer lines included. In English it reads as before.
+
+### Added
+- **The language of a message** (`contacts/language.py`), worked out from its words: English, French or Kinyarwanda. Unclear words follow the language of the page, then English. No outside service.
+- **Replying** (`POST /api/admin/contacts/<id>/replies`, admins only, 30 an hour each). The email goes to the address on the message, in its language, which the admin may change. The reply is saved only when the email went, and a message takes one reply from the app. The audit log keeps who and which, never the words.
+- **Reply email.** The usual SSMS email with its whole footer, subject "Re: Message to SSMS". It holds the admin's words and the date the person wrote, and nothing the person typed. Other emails look exactly as before.
+
+### Database
+Migration `contacts.0003` adds the column `contact_messages.language` and the table `contact_replies`.
+
+### Not yet
+The messages page and the contact form change in part 2. French and Kinyarwanda are drafts until a native speaker reads them.
+
 ## Email through the website's sender
 
 Render's free plan cannot reach Gmail's sending ports. The API can now hand each finished email, signed, to a small

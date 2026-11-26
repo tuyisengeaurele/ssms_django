@@ -851,3 +851,37 @@ with `unauthorized`.
 
 **Limit.** A personal Gmail account stops sending at about 500 emails a day. The function takes 20 recipients in a
 request, and the API splits a longer list.
+
+## 32. Replying to contact messages
+
+**What happens.** A message from the contact form is stored with the subject "Message to SSMS" and its language. The
+sender gets a confirmation in that language. The team address gets a notice with a button to the messages page. An admin
+answers from the app: the email goes to the address on the message, and the reply is saved only when the email went.
+The app sends one reply to a message. If the person answers that email, it arrives in the SSMS mailbox and the talk goes
+on there. The app does not read the mailbox.
+
+**The database.** Migration `contacts.0003` adds `contact_messages.language` and the table `contact_replies`. It only
+adds, so the code from before it keeps working. `build.sh` runs `migrate`, so **merging the change migrates the live
+database**. For a local database with real data, take a backup into `backups/` first.
+
+**The language.** Common words of each language are counted (`contacts/language.py`). It is right for most sentences and
+often unsure about very short ones, which then follow the language of the page. The admin sees the language before
+sending and can change it. Messages from before this change have none stored: it is worked out when needed.
+
+**When a reply does not go.** The admin is told, nothing is saved, and the message stays unanswered. Logs, Jobs shows
+`email_failed` with the subject "Re: Message to SSMS" (the codes are in section 31). If the code is `timeout`, the email
+may have left: look in the Sent folder of the SSMS mailbox before sending again.
+
+**Limits.** 30 replies an hour for each admin. Every reply, confirmation and notice counts toward Gmail's daily limit
+(section 31). A new message sends two emails.
+
+**Seeing it.**
+
+```sql
+SELECT m.id, m.language, m."replied_at", r."sent_at", r."sent_by_id"
+FROM contact_messages m LEFT JOIN contact_replies r ON r.message_id = m.id
+ORDER BY m.created_at DESC LIMIT 20;
+```
+
+**Going back.** `python manage.py migrate contacts 0002` drops the table and the column, so **the stored replies are
+lost**. The marks that say who answered and when stay. Do it before deploying the older code.
