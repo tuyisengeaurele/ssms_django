@@ -12,7 +12,7 @@ const phone = Array.from(css.matchAll(/@media \(max-width: 760px\)\s*\{[\s\S]*?\
 describe('the contact inbox', () => {
   // Two lines a message on a phone: the name with the date, then the start of the message with its mark. Left to place
   // themselves, the four parts took four lines, with the date alone on one and the mark alone on another.
-  const placed = (name: string) => phone.match(new RegExp(`\.${name} \{[^}]*\}`))?.[0] ?? '';
+  const placed = (name: string) => phone.match(new RegExp(`\\.${name} \\{[^}]*\\}`))?.[0] ?? '';
 
   it('keeps a message to two lines on a phone: name and date, then its start and its mark', () => {
     expect(phone).not.toMatch(/\.badge[^{]*\{[^}]*display:\s*none/);
