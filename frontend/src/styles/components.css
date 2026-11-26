@@ -697,10 +697,12 @@ tr.is-off td:last-child { opacity: 1; }
 
 @media (max-width: 760px) {
   .inbox-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px; padding: 14px 16px; }
-  .inbox-who { grid-column: 1; }
-  .inbox-when { grid-column: 2; }
-  .inbox-preview { grid-column: 1 / 3; }
-  .inbox-badges { grid-column: 1 / 3; margin-top: 4px; }
+  /* Each part has its place. Left to themselves they took a line each. */
+  .inbox-who { grid-area: 1 / 1; }
+  .inbox-when { grid-area: 1 / 2; justify-self: end; }
+  .inbox-preview { grid-area: 2 / 1 / 3 / 3; }
+  .inbox-row.has-marks .inbox-preview { grid-column-end: 2; }
+  .inbox-badges { grid-area: 2 / 2; justify-self: end; }
 }
 
 /* Filter bar above a table */

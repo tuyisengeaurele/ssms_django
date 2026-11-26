@@ -10,9 +10,17 @@ const shell = readFileSync(join(__dirname, 'shell.css'), 'utf8').replace(/\/\*[\
 const phone = Array.from(css.matchAll(/@media \(max-width: 760px\)\s*\{[\s\S]*?\n\}/g), (m) => m[0]).find((part) => part.includes('.inbox-row')) ?? '';
 
 describe('the contact inbox', () => {
-  it('shows the New and Answered marks on a phone, on a line of their own', () => {
+  // Two lines a message on a phone: the name with the date, then the start of the message with its mark. Left to place
+  // themselves, the four parts took four lines, with the date alone on one and the mark alone on another.
+  const placed = (name: string) => phone.match(new RegExp(`\.${name} \{[^}]*\}`))?.[0] ?? '';
+
+  it('keeps a message to two lines on a phone: name and date, then its start and its mark', () => {
     expect(phone).not.toMatch(/\.badge[^{]*\{[^}]*display:\s*none/);
-    expect(phone).toMatch(/\.inbox-badges\s*\{[^}]*grid-column:\s*1 \/ 3/);
+    expect(placed('inbox-who')).toMatch(/grid-area:\s*1 \/ 1/);
+    expect(placed('inbox-when')).toMatch(/grid-area:\s*1 \/ 2/);
+    expect(placed('inbox-preview')).toMatch(/grid-area:\s*2 \/ 1 \/ 3 \/ 3/);
+    expect(placed('inbox-badges')).toMatch(/grid-area:\s*2 \/ 2/);
+    expect(phone).toMatch(/\.inbox-row\.has-marks \.inbox-preview\s*\{[^}]*grid-column-end:\s*2/);
   });
 
   it('makes the start of an unread message stand out, now that no subject does', () => {

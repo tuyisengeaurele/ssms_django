@@ -89,6 +89,12 @@ describe('Messages page', () => {
     expect(screen.getByText('No messages match')).toBeInTheDocument();
   });
 
+  it('says which rows carry a mark, so a phone can make room for it beside the start of the message', async () => {
+    open();
+    expect(await rowFor(VISIT)).toHaveClass('has-marks');
+    expect(await rowFor(PRICE)).not.toHaveClass('has-marks');
+  });
+
   it('shows no subject in the list, because every new message has the same one', async () => {
     open();
     const row = await rowFor(VISIT);

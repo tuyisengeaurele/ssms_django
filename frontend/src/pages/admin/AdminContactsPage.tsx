@@ -311,7 +311,7 @@ export default function AdminContactsPage() {
           <ul className="inbox">
             {visible.map((m) => (
               <li key={m.id}>
-                <button type="button" className={`inbox-row${m.isRead ? '' : ' is-unread'}`} onClick={() => openMessage(m)}>
+                <button type="button" className={`inbox-row${m.isRead ? '' : ' is-unread'}${!m.isRead || m.repliedAt ? ' has-marks' : ''}`} onClick={() => openMessage(m)}>
                   <span className="inbox-who">{m.name}</span>
                   <span className="inbox-preview">{previewOf(m.message)}</span>
                   <span className="inbox-when">{when.format(new Date(m.createdAt))}</span>
