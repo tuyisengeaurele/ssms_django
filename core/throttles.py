@@ -54,6 +54,10 @@ class ContactRateThrottle(AnonRateThrottle):
     scope = 'contact'   # 5 messages an hour per address
 
 
+class ContactReplyThrottle(UserRateThrottle):
+    scope = 'contact_reply'   # each reply is an email to an outside address, 30 an hour per admin
+
+
 class InvitationRateThrottle(AnonRateThrottle):
     scope = 'invitation'   # a stranger asking about invitation links, 20 a minute per address
 

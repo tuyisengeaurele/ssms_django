@@ -21,6 +21,7 @@ from PIL import Image
 from rest_framework.test import APIClient
 
 from alerts.models import AlertLog
+from contacts.models import ContactMessage
 from tests.security.world import ACTORS, FARMERS, SCOPE, SUPERVISORS
 
 pytestmark = pytest.mark.django_db
@@ -68,6 +69,11 @@ class Row:
     expected: dict
     body: Callable = field(default=lambda w: None)
     fmt: str = 'json'
+
+
+def a_contact_message():
+    # A fresh one for every caller, because a message takes one reply.
+    return ContactMessage.objects.create(name='A', email='a@example.rw', subject='Message to SSMS', message='Hello there, SSMS.')
 
 
 def reading_row(name, url):
@@ -272,6 +278,8 @@ ROWS = [
     Row('audit log', 'GET', lambda w: '/api/admin/audit-log', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
     Row('system report', 'GET', lambda w: '/api/admin/reports', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
     Row('contact messages', 'GET', lambda w: '/api/admin/contacts', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
+    Row('answer a contact message', 'POST', lambda w: f'/api/admin/contacts/{a_contact_message().pk}/replies',
+        expect({'admin'}, role_denied=STAFF_ONLY_DENIED, allowed_code=201), body=lambda w: {'body': 'Hello'}),
     Row('system health', 'GET', lambda w: '/api/admin/health', expect({'admin'}, role_denied=STAFF_ONLY_DENIED)),
     Row('create a cooperative', 'POST', lambda w: '/api/cooperatives',
         expect({'admin'}, role_denied=STAFF_ONLY_DENIED, allowed_code=201), body=lambda w: {'name': 'Brand new'}),
