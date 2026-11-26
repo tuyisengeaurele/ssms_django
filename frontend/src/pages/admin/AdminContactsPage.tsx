@@ -202,7 +202,7 @@ export default function AdminContactsPage() {
           <div>
             <dl className="facts">
               <div><dt>{t('msFrom')}</dt><dd>{selected.name}</dd></div>
-              <div><dt>{t('msEmail')}</dt><dd className="cell-trim">{selected.email}</dd></div>
+              <div><dt>{t('msEmail')}</dt><dd className="message-address">{selected.email}</dd></div>
             </dl>
             <p className="message-date">{when.format(new Date(selected.createdAt))}</p>
             {/* A message marked answered by hand, before replies were sent from the app, still says who and when. */}

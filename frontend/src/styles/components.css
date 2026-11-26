@@ -667,6 +667,7 @@ tr.is-off td:last-child { opacity: 1; }
 .inbox-when { color: var(--text-muted); font-size: 0.82rem; white-space: nowrap; }
 .inbox-badges { display: flex; gap: 6px; }
 
+.message-address { overflow-wrap: anywhere; }
 .message-date { margin: 0 0 14px; color: var(--text-muted); font-size: 0.82rem; }
 .message-answered { margin: 0 0 14px; color: var(--primary); font-size: 0.9rem; font-weight: 600; }
 .message-body { color: var(--ink); font-size: 0.98rem; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }

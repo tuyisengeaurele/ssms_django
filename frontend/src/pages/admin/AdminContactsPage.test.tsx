@@ -145,6 +145,18 @@ describe('Messages page', () => {
     expect(screen.queryByRole('button', { name: 'Mark all as read' })).not.toBeInTheDocument();
   });
 
+  it('shows the whole address of the sender in the opened message, however long it is', async () => {
+    const long = { ...inbox[0], email: 'jean.de.dieu.nsengiyumva.habyarimana@cooperative-silk.example.test' };
+    api.getAll.mockResolvedValue({ data: { data: [long] } });
+    open();
+    fireEvent.click(await rowFor(VISIT));
+    const dialog = await screen.findByRole('dialog');
+    const address = within(dialog).getByText(long.email);
+    // Wrapped, never cut to three dots: once a reply is sent this is the one place the address shows.
+    expect(address).toHaveClass('message-address');
+    expect(address).not.toHaveClass('cell-trim');
+  });
+
   it('explains where messages come from when there are none', async () => {
     api.getAll.mockResolvedValue({ data: { data: [] } });
     open();
