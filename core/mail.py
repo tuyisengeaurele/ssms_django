@@ -13,6 +13,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
 from core import mail_relay
+from core.mail_words import WORDS
 
 LOGO = Path(__file__).parent / 'assets' / 'logo-mark.png'
 LOGO_CID = 'ssms-logo'
@@ -29,11 +30,15 @@ class Email:
     facts: tuple = ()               # (label, value) pairs
     button: tuple | None = None     # (label, url)
     closing: tuple = ()
+    lang: str = 'en'                # the template's own lines follow it; the fields above are written by the caller
 
     def _context(self):
         site = settings.FRONTEND_URL.rstrip('/')
+        lang = self.lang if self.lang in WORDS else 'en'
         return {
             'email': self,
+            'lang': lang,
+            'words': WORDS[lang],
             'org_name': ORG_NAME,
             'org_address': settings.ORG_ADDRESS,
             'support_email': settings.SUPPORT_EMAIL,

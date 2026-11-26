@@ -11,7 +11,7 @@
 {% endif %}{% for line in email.closing %}
 {{ line }}
 {% endfor %}
-The SSMS team
+{{ words.sign_off }}
 
 --
 {{ org_name }} (SSMS)
@@ -20,6 +20,6 @@ The SSMS team
 {{ site_url }}
 
 {{ email.reason }}
-Privacy: {{ privacy_url }}
-Terms: {{ terms_url }}
+{{ words.privacy }}: {{ privacy_url }}
+{{ words.terms }}: {{ terms_url }}
 {% endautoescape %}
