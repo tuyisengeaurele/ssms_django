@@ -399,9 +399,20 @@ export interface ContactMessage {
   message: string;
   isRead: boolean;
   createdAt: string;
-  /** The admin who sent an answer, and when. Marked by hand, because the reply goes out from their own mail app. */
+  /** The language of the message, which a reply goes out in unless the admin changes it. */
+  language: 'en' | 'fr' | 'rw';
+  /** The reply sent from the app. There is at most one for now. */
+  replies: ContactReply[];
+  /** The admin who answered, and when: by sending a reply, or on older messages by a mark made by hand. */
   repliedAt?: string | null;
   repliedBy?: { id: string; name: string } | null;
+}
+
+export interface ContactReply {
+  id: string;
+  body: string;
+  sentAt: string;
+  sentBy: { id: string; name: string } | null;
 }
 
 export interface ApiResponse<T> {

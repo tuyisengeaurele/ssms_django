@@ -16,6 +16,10 @@ export const contactsService = {
   markRead: (id: string) =>
     api.patch<ApiResponse<{ id: string; isRead: boolean }>>(`/admin/contacts/${id}/read`),
 
+  /** POST /api/admin/contacts/<id>/replies, sends the reply to the address on the message and answers with the message. */
+  reply: (id: string, sent: { body: string; language: ContactMessage['language'] }) =>
+    api.post<ApiResponse<ContactMessage>>(`/admin/contacts/${id}/replies`, sent),
+
   /** POST /api/admin/contacts/<id>/replied, says the message was answered. It also marks it read. */
   markReplied: (id: string) =>
     api.post<ApiResponse<ContactMessage>>(`/admin/contacts/${id}/replied`),

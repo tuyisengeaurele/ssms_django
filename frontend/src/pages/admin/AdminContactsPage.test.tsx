@@ -5,12 +5,12 @@ import { ToastProvider } from '../../context/ToastContext';
 import { setReducedMotion } from '../../test/setup';
 
 const inbox = vi.hoisted(() => [
-  { id: 'm1', name: 'Aline Uwase', email: 'aline@coop.rw', subject: 'Visit to our farm', message: 'Can someone visit our farm next week?\nThank you.', isRead: false, createdAt: '2026-10-07T09:30:00Z' },
-  { id: 'm2', name: 'Jean Bosco', email: 'jean@x.rw', subject: 'Pricing question', message: 'Is the platform free for cooperatives?', isRead: true, createdAt: '2026-10-05T14:10:00Z' },
-  { id: 'm3', name: 'Chantal M', email: 'chantal@x.rw', subject: 'Photos not loading', message: 'The disease photos do not upload.', isRead: false, createdAt: '2026-10-06T08:00:00Z' },
+  { id: 'm1', language: 'en', replies: [], name: 'Aline Uwase', email: 'aline@coop.rw', subject: 'Visit to our farm', message: 'Can someone visit our farm next week?\nThank you.', isRead: false, createdAt: '2026-10-07T09:30:00Z' },
+  { id: 'm2', language: 'en', replies: [], name: 'Jean Bosco', email: 'jean@x.rw', subject: 'Pricing question', message: 'Is the platform free for cooperatives?', isRead: true, createdAt: '2026-10-05T14:10:00Z' },
+  { id: 'm3', language: 'en', replies: [], name: 'Chantal M', email: 'chantal@x.rw', subject: 'Photos not loading', message: 'The disease photos do not upload.', isRead: false, createdAt: '2026-10-06T08:00:00Z' },
 ]);
 
-const api = vi.hoisted(() => ({ getAll: vi.fn(), markRead: vi.fn(), markReplied: vi.fn(), unmarkReplied: vi.fn() }));
+const api = vi.hoisted(() => ({ getAll: vi.fn(), markRead: vi.fn(), markReplied: vi.fn(), unmarkReplied: vi.fn(), reply: vi.fn() }));
 vi.mock('../../services/contacts.service', () => ({ contactsService: api }));
 
 import AdminContactsPage from './AdminContactsPage';
@@ -35,7 +35,7 @@ beforeEach(() => {
   api.unmarkReplied.mockImplementation((id: string) => Promise.resolve({ data: { data: { ...inbox.find((m) => m.id === id), repliedAt: null, repliedBy: null } } }));
 });
 
-const answeredByEric = { id: 'm4', name: 'Chantal M', email: 'chantal@x.rw', subject: 'Training request', message: 'Can you train our group?', isRead: true, createdAt: '2026-10-04T10:00:00Z', repliedAt: '2026-10-08T10:00:00Z', repliedBy: { id: 'u1', name: 'Eric Niyonzima' } };
+const answeredByEric = { id: 'm4', language: 'en', replies: [], name: 'Chantal M', email: 'chantal@x.rw', subject: 'Training request', message: 'Can you train our group?', isRead: true, createdAt: '2026-10-04T10:00:00Z', repliedAt: '2026-10-08T10:00:00Z', repliedBy: { id: 'u1', name: 'Eric Niyonzima' } };
 
 const rowFor = async (subject: string) => (await screen.findByText(subject)).closest('button') as HTMLElement;
 
@@ -105,14 +105,6 @@ describe('Messages page', () => {
     fireEvent.click(await rowFor('Pricing question'));
     await screen.findByRole('dialog', { name: 'Pricing question' });
     expect(api.markRead).not.toHaveBeenCalled();
-  });
-
-  it('offers a reply by email that keeps the subject', async () => {
-    open();
-    fireEvent.click(await rowFor('Visit to our farm'));
-    const dialog = await screen.findByRole('dialog', { name: 'Visit to our farm' });
-    const reply = within(dialog).getByRole('link', { name: 'Reply by email' });
-    expect(reply).toHaveAttribute('href', 'mailto:aline@coop.rw?subject=Re%3A%20Visit%20to%20our%20farm');
   });
 
   it('asks, then marks everything read in one go', async () => {

@@ -674,6 +674,28 @@ tr.is-off td:last-child { opacity: 1; }
 .message-body { color: var(--ink); font-size: 0.98rem; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
 .form-hint + .message-body { margin-top: 14px; }
 
+/* A reply under its message, and the box where one is written. */
+.reply-sent { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-light); }
+.reply-sent .message-answered { margin-bottom: 8px; }
+.reply-after { margin-top: 14px; }
+.reply-error { margin-top: 12px; }
+.reply-box { display: grid; grid-template-rows: 1fr; margin-top: 20px; }
+/* The padding leaves room for the focus ring, which hiding the overflow for the slide would cut off. */
+.reply-box-inner { min-height: 0; overflow: hidden; padding: 16px 4px 4px; margin: 0 -4px; border-top: 1px solid var(--border-light); }
+.reply-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 14px; }
+.reply-to { min-width: 0; color: var(--text-2); font-size: 0.9rem; overflow-wrap: anywhere; }
+.reply-lang { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.82rem; }
+.reply-lang .form-select { width: auto; padding-block: 0.4rem; font-size: 0.88rem; }
+.reply-box .form-label { display: block; margin-bottom: 6px; }
+.reply-box .form-textarea { width: 100%; }
+.reply-count { margin-top: 6px; text-align: right; }
+@media (prefers-reduced-motion: no-preference) {
+  .reply-box { animation: reply-open var(--duration-fast) var(--ease-out); }
+  .reply-box[data-leaving] { animation: reply-close var(--duration-fast) var(--ease-out) forwards; }
+}
+@keyframes reply-open { from { grid-template-rows: 0fr; opacity: 0; } to { grid-template-rows: 1fr; opacity: 1; } }
+@keyframes reply-close { from { grid-template-rows: 1fr; opacity: 1; } to { grid-template-rows: 0fr; opacity: 0; } }
+
 @media (max-width: 760px) {
   .inbox-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px; padding: 14px 16px; }
   .inbox-who { grid-column: 1; }
