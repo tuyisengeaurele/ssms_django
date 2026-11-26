@@ -12,6 +12,8 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
+from core import mail_relay
+
 LOGO = Path(__file__).parent / 'assets' / 'logo-mark.png'
 LOGO_CID = 'ssms-logo'
 ORG_NAME = 'Smart Sericulture Management System'
@@ -48,6 +50,19 @@ class Email:
         return render_to_string('email/message.html', self._context())
 
 
+def leaves_this_machine() -> bool:
+    """True when the chosen backend hands mail on, to a mail server or the website's sender, and does not only print it."""
+    backend = settings.EMAIL_BACKEND.lower()
+    return 'smtp' in backend or 'mail_relay' in backend
+
+
+def is_set_up_to_send() -> bool:
+    """True when the chosen way out has what it needs: a login for a mail server, an address and secret for the sender."""
+    if 'mail_relay' in settings.EMAIL_BACKEND:
+        return mail_relay.is_set_up()
+    return leaves_this_machine() and bool(settings.EMAIL_HOST_USER) and bool(settings.EMAIL_HOST_PASSWORD)
+
+
 def send_email(subject: str, recipient_list: list, email: Email, fail_silently: bool = False, reply_to: list | None = None) -> None:
     message = EmailMultiAlternatives(subject, email.plain(), settings.DEFAULT_FROM_EMAIL, recipient_list, reply_to=reply_to)
     message.attach_alternative(email.html(), 'text/html')
@@ -63,7 +78,9 @@ def send_email(subject: str, recipient_list: list, email: Email, fail_silently: 
         # Only the subject and the kind of failure are kept. The address the mail was for, which a mail server's own
         # complaint often repeats, never is.
         from logs.jobs import record_job
-        record_job('email_failed', subject, type(exc).__name__)
+        # The sender's own code is a short fixed word. Other errors keep only their type.
+        kind = type(exc).__name__
+        record_job('email_failed', subject, f'{kind}: {exc.code}' if isinstance(exc, mail_relay.RelayError) else kind)
         if not fail_silently:
             raise
 

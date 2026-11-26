@@ -94,6 +94,22 @@ def test_an_email_that_goes_to_a_real_mail_server_says_sent(client, settings):
     assert answer['outcome'] == 'sent'
 
 
+def test_an_email_handed_to_the_websites_sender_says_sent(client, settings):
+    settings.EMAIL_BACKEND = 'core.mail_relay.RelayEmailBackend'
+    settings.MAIL_RELAY_URL, settings.MAIL_RELAY_SECRET = 'https://site.example/api/send-mail', 'a' * 32
+    with mock.patch('core.mail_relay.httpx.post', return_value=httpx.Response(200, json={'ok': True})) as post:
+        answer = run(client, 'email')
+    post.assert_called_once()
+    assert answer['ok'] is True and answer['outcome'] == 'sent'
+
+
+def test_a_sender_that_is_chosen_but_not_set_up_says_failed_and_never_printed(client, settings):
+    settings.EMAIL_BACKEND = 'core.mail_relay.RelayEmailBackend'
+    settings.MAIL_RELAY_URL, settings.MAIL_RELAY_SECRET = '', ''
+    answer = run(client, 'email')
+    assert answer['ok'] is False and answer['outcome'] == 'failed'
+
+
 def test_an_email_that_only_prints_says_so(client):
     assert run(client, 'email')['outcome'] == 'printed'
 

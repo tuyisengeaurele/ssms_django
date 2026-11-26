@@ -23,7 +23,7 @@ from django.db import transaction
 from django.utils import timezone
 from PIL import Image
 
-from core.mail import Email, send_email
+from core.mail import Email, leaves_this_machine, send_email
 from farms.models import Farm, RearingRoom
 from logs.models import HealthCheckResult
 from sensors.devices import record_device_reading
@@ -55,7 +55,7 @@ def test_email(user) -> dict:
         logger.exception('The email test could not send')
         return {'ok': False, 'outcome': 'failed'}
     # A local machine prints its mail instead of sending it. That works, and it is said plainly.
-    return {'ok': True, 'outcome': 'sent' if 'smtp' in settings.EMAIL_BACKEND.lower() else 'printed'}
+    return {'ok': True, 'outcome': 'sent' if leaves_this_machine() else 'printed'}
 
 
 def test_storage(user) -> dict:
