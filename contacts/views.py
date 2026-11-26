@@ -1,36 +1,38 @@
+import logging
+
 from django.conf import settings
+from django.db import transaction
+from django.db.models import Prefetch
 from django.utils import timezone
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 
 from audit_log.utils import log_action
-from core.mail import Email
+from core.mail import Email, send_email
 from core.mail import send_email_async as _send_mail_async
 from core.permissions import RolePermission
-from core.throttles import ContactRateThrottle
+from core.throttles import ContactRateThrottle, ContactReplyThrottle
 from core.utils import api_error, api_success
 
-from .models import ContactMessage
-from .serializers import ContactSerializer
+from .language import detect_language
+from .models import ContactMessage, ContactReply
+from .reply_email import REPLY_SUBJECT, confirmation_email, reply_email
+from .serializers import ContactReplySerializer, ContactSerializer
+
+logger = logging.getLogger(__name__)
 
 RECEIVED = 'Your message has been received. We will get back to you soon.'
-
-# The reply to the sender is fixed text. Nothing the sender typed goes into it, so the form cannot
-# be used to send a stranger an email with words of the attacker's choosing.
-REPLY_SUBJECT = 'We received your message'
-REPLY = Email(
-    heading='We received your message',
-    intro=('Thank you for contacting SSMS. We have received your message and will get back to you shortly.',),
-    closing=('If you did not send a message to us, you can ignore this email.',),
-    reason='You received this because this address was used on the SSMS contact form.',
-)
+# Every message from the form has this subject. A visitor is not asked for one, and one that is sent is ignored.
+SUBJECT = 'Message to SSMS'
 
 
 def _team_note(data, message_id):
+    # Answers are written in the app, so the note has no reply-to and does not give the sender's address.
     return Email(
         heading='New contact message',
         intro=('Someone wrote to the SSMS contact form.',),
-        facts=(('Name', data['name']), ('Email', data['email']), ('Subject', data['subject']), ('Message', f'#{message_id}')),
+        facts=(('Name', data['name']), ('Message', f'#{message_id}')),
+        button=('Open messages', f"{settings.FRONTEND_URL.rstrip('/')}/admin/contacts"),
         closing=(data['message'],),
         reason='You received this because this is the SSMS contact address.',
     )
@@ -53,21 +55,33 @@ class ContactCreateView(APIView):
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
         data = serializer.validated_data
 
-        msg = ContactMessage.objects.create(**data)
+        # The words of the message say which language to answer in. The page's language only settles unclear words.
+        language = detect_language(data['message'], fallback=request.data.get('language'))
+        msg = ContactMessage.objects.create(**data, subject=SUBJECT, language=language)
 
-        _send_mail_async(REPLY_SUBJECT, [data['email']], REPLY)
+        subject, confirmation = confirmation_email(language)
+        _send_mail_async(subject, [data['email']], confirmation)
 
         # The team sees everything that was written.
         admin_email = getattr(settings, 'EMAIL_HOST_USER', None)
         if admin_email:
-            _send_mail_async(
-                f"[SSMS Contact] {data['subject']} from {data['name']}",
-                [admin_email],
-                _team_note(data, msg.id),
-                reply_to=[data['email']],
-            )
+            _send_mail_async(SUBJECT, [admin_email], _team_note(data, msg.id))
 
         return api_success({'id': msg.id}, RECEIVED, 201)
+
+
+def _person(user_id, user):
+    return {'id': user_id, 'name': user.name or user.email} if user_id else None
+
+
+def _serialize_reply(r):
+    return {'id': r.pk, 'body': r.body, 'sentAt': r.sent_at.isoformat(), 'sentBy': _person(r.sent_by_id, r.sent_by)}
+
+
+def _messages():
+    """Messages with everything the list shows, in the same number of questions however many there are."""
+    replies = Prefetch('replies', queryset=ContactReply.objects.select_related('sent_by'))
+    return ContactMessage.objects.select_related('replied_by').prefetch_related(replies)
 
 
 def _serialize_message(m):
@@ -77,10 +91,12 @@ def _serialize_message(m):
         'email':     m.email,
         'subject':   m.subject,
         'message':   m.message,
+        'language':  m.language or detect_language(m.message),
+        'replies':   [_serialize_reply(r) for r in m.replies.all()],
         'isRead':    m.is_read,
         'createdAt': m.created_at.isoformat(),
         'repliedAt': m.replied_at.isoformat() if m.replied_at else None,
-        'repliedBy': {'id': m.replied_by_id, 'name': m.replied_by.name or m.replied_by.email} if m.replied_by_id else None,
+        'repliedBy': _person(m.replied_by_id, m.replied_by),
     }
 
 
@@ -90,7 +106,7 @@ class ContactListView(APIView):
     resource = 'contacts'
 
     def get(self, request):
-        messages = ContactMessage.objects.select_related('replied_by').order_by('-created_at')
+        messages = _messages().order_by('-created_at')
         return api_success([_serialize_message(m) for m in messages])
 
     def patch(self, request, pk):
@@ -144,6 +160,50 @@ class ContactRepliedView(APIView):
         return api_success(_serialize_message(msg), 'Answered mark removed.')
 
 
+class ContactReplyView(APIView):
+    """POST /api/admin/contacts/<id>/replies sends an admin's answer to the address on the message.
+
+    The answer is saved only when the email went. The app sends one for a message: the person can answer the email, and the
+    talk goes on in the SSMS mailbox.
+    """
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'contacts'
+    throttle_classes = [ContactReplyThrottle]
+
+    def post(self, request, pk):
+        serializer = ContactReplySerializer(data=request.data)
+        if not serializer.is_valid():
+            return api_error('Please check what you wrote and try again.', 422, serializer.errors)
+        body = serializer.validated_data['body']
+
+        sent = False
+        with transaction.atomic():
+            # The row stays locked while the email goes, so a second admin answering this message waits and is then told.
+            msg = ContactMessage.objects.select_for_update().filter(pk=pk).first()
+            if msg is None:
+                return api_error("We couldn't find that message.", 404)
+            if msg.replies.exists():
+                return api_error('Someone already replied to this message.', 409, code='already_replied')
+            language = serializer.validated_data.get('language') or msg.language or detect_language(msg.message)
+            try:
+                send_email(REPLY_SUBJECT, [msg.email], reply_email(body, msg.created_at, language))
+            except Exception as exc:
+                # Caught here, inside the transaction, so that the job log line send_email wrote is kept. Only the kind of
+                # failure is logged: a mail server's own words often repeat the address.
+                logger.warning('The reply to contact message %s was not sent: %s', msg.pk, type(exc).__name__)
+            else:
+                ContactReply.objects.create(message=msg, body=body, sent_by=request.user)
+                msg.language, msg.is_read = language, True
+                msg.replied_by, msg.replied_at = request.user, timezone.now()
+                msg.save(update_fields=['language', 'is_read', 'replied_by', 'replied_at'])
+                log_action(request, 'UPDATE', 'ContactMessage', msg.pk, f'Replied to contact message {msg.pk}')
+                sent = True
+
+        if not sent:
+            return api_error('The reply was not sent. Please try again.', 502, code='reply_not_sent')
+        return api_success(_serialize_message(_messages().get(pk=pk)), 'Reply sent.', 201)
+
+
 class ContactUnreadView(APIView):
     """
     GET /api/admin/contacts/unread
@@ -153,7 +213,7 @@ class ContactUnreadView(APIView):
     resource = 'contacts'
 
     def get(self, request):
-        unread = ContactMessage.objects.filter(is_read=False).select_related('replied_by').order_by('-created_at')
+        unread = _messages().filter(is_read=False).order_by('-created_at')
         data = {
             'count':    unread.count(),
             'messages': [_serialize_message(m) for m in unread[:5]],

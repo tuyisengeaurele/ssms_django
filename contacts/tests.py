@@ -14,7 +14,6 @@ URL = '/api/contact'
 GOOD = {
     'name': 'Aline Uwase',
     'email': 'aline@example.rw',
-    'subject': 'Setting up our cooperative',
     'message': 'We would like to start with twelve farmers in Gatsibo.',
 }
 
@@ -48,11 +47,37 @@ def test_the_sender_gets_a_fixed_reply_that_repeats_nothing_they_wrote(api_clien
         assert typed not in reply.subject
 
 
-def test_the_team_still_sees_everything_that_was_written(api_client):
+def test_every_message_gets_the_same_subject(api_client):
+    assert post(api_client).status_code == 201
+    assert ContactMessage.objects.get().subject == 'Message to SSMS'
+
+
+@pytest.mark.parametrize('typed', [
+    pytest.param('Training', id='an ordinary one'),
+    pytest.param('', id='empty'),
+    pytest.param('x' * 500, id='very long'),
+    pytest.param('Hello\r\nBcc: victim@example.rw', id='with a line break'),
+])
+def test_the_old_form_still_works_and_its_subject_is_ignored(api_client, typed):
+    # The website and the API are deployed apart, so for a while the old form, with its subject box, talks to the new API.
+    assert post(api_client, subject=typed).status_code == 201
+    assert ContactMessage.objects.get().subject == 'Message to SSMS'
+    assert all('Bcc' not in m.subject and not m.bcc for m in mail.outbox)
+
+
+def test_the_team_notice_leads_into_the_app_and_gives_no_way_to_answer_from_a_mailbox(api_client, settings):
+    settings.FRONTEND_URL = 'https://ssms.example/'
     post(api_client)
     note = next(m for m in mail.outbox if m.to == ['admin@example.rw'])
-    assert 'twelve farmers in Gatsibo' in note.body
-    assert 'aline@example.rw' in note.body
+    assert note.subject == 'Message to SSMS'
+    assert note.reply_to == []
+    html = note.alternatives[0][0]
+    for part in (note.body, html):
+        assert 'Aline Uwase' in part
+        assert 'twelve farmers in Gatsibo' in part
+        assert 'Open messages' in part
+        assert 'https://ssms.example/admin/contacts' in part
+        assert 'aline@example.rw' not in part
 
 
 def test_a_filled_honeypot_looks_like_success_but_stores_and_sends_nothing(api_client):
@@ -71,11 +96,9 @@ def test_the_sixth_message_in_an_hour_is_refused(api_client):
 @pytest.mark.parametrize('field, value', [
     pytest.param('email', 'not-an-email', id='email is not an address'),
     pytest.param('name', 'x' * 121, id='name too long'),
-    pytest.param('subject', 'x' * 201, id='subject too long'),
     pytest.param('message', 'x' * 5001, id='message too long'),
     pytest.param('message', 'too short', id='message too short'),
     pytest.param('name', '', id='name empty'),
-    pytest.param('subject', '', id='subject empty'),
 ])
 def test_bad_input_is_a_422_and_nothing_is_stored(api_client, field, value):
     assert post(api_client, **{field: value}).status_code == 422
@@ -84,11 +107,11 @@ def test_bad_input_is_a_422_and_nothing_is_stored(api_client, field, value):
 
 
 def test_a_missing_field_is_a_422(api_client):
-    body = {k: v for k, v in GOOD.items() if k != 'subject'}
+    body = {k: v for k, v in GOOD.items() if k != 'name'}
     assert api_client.post(URL, body, format='json').status_code == 422
 
 
-@pytest.mark.parametrize('field', ['name', 'subject', 'email'])
+@pytest.mark.parametrize('field', ['name', 'email'])
 def test_line_breaks_cannot_be_used_to_inject_mail_headers(api_client, field):
     value = 'aline@example.rw\r\nBcc: victim@example.rw' if field == 'email' else 'Hello\r\nBcc: victim@example.rw'
     assert post(api_client, **{field: value}).status_code == 422
