@@ -856,7 +856,8 @@ request, and the API splits a longer list.
 
 **What happens.** A message from the contact form is stored with the subject "Message to SSMS" and its language. The
 sender gets a confirmation in that language. The team address gets a notice with a button to the messages page. An admin
-answers from the app: the email goes to the address on the message, and the reply is saved only when the email went.
+answers from the app (Messages, open a message, **Reply**): the email goes to the address on the message, and the reply is
+saved only when the email went.
 The app sends one reply to a message. If the person answers that email, it arrives in the SSMS mailbox and the talk goes
 on there. The app does not read the mailbox.
 
