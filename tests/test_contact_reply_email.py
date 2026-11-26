@@ -4,6 +4,7 @@ import html as html_escapes
 from datetime import datetime, timezone
 
 import pytest
+from django.core import mail
 
 from core.mail import Email
 
@@ -106,3 +107,72 @@ def test_an_older_database_time_without_a_zone_is_taken_as_utc():
     from contacts.reply_email import reply_email
 
     assert '26/11/2026' in reply_email('x', datetime(2026, 11, 25, 23, 30), 'en').plain()
+
+
+# The confirmation the sender gets as soon as the form is sent
+
+MESSAGES = {
+    'en': 'Hello, I would like to know how SSMS can help our farms.',
+    'fr': 'Bonjour, je voudrais savoir comment SSMS peut nous aider.',
+    'rw': 'Muraho, ndashaka kumenya uko mwadufasha mu bworozi bwacu.',
+}
+RECEIVED_SUBJECT = {'en': 'We received your message', 'fr': 'Nous avons reçu votre message', 'rw': 'Twakiriye ubutumwa bwawe'}
+THANKS = {
+    'en': 'Thank you for contacting SSMS. We have received your message and will get back to you shortly.',
+    'fr': "Merci d'avoir contacté SSMS. Nous avons reçu votre message et nous vous répondrons bientôt.",
+    'rw': 'Murakoze kwandikira SSMS. Twakiriye ubutumwa bwawe kandi tuzabasubiza vuba.',
+}
+NOT_YOU = {
+    'en': 'If you did not send a message to us, you can ignore this email.',
+    'fr': 'Si vous ne nous avez pas écrit, vous pouvez ignorer cet e-mail.',
+    'rw': 'Niba utarigeze utwandikira, ushobora kwirengagiza iyi imeri.',
+}
+WHY = {
+    'en': 'You received this because this address was used on the SSMS contact form.',
+    'fr': 'Vous recevez ce message parce que cette adresse a été utilisée dans le formulaire de contact de SSMS.',
+    'rw': 'Wakiriye ubu butumwa kubera ko iyi aderesi yakoreshejwe mu ifishi yo kutwandikira ya SSMS.',
+}
+
+
+def send_form(api_client, message, **extra):
+    body = {'name': 'Zebedee Typedname', 'email': 'aline@example.rw', 'message': message, **extra}
+    response = api_client.post('/api/contact', body, format='json')
+    assert response.status_code == 201, response.content
+    return next(m for m in mail.outbox if m.to == ['aline@example.rw'])
+
+
+def assert_confirmation(sent, lang):
+    assert sent.subject == RECEIVED_SUBJECT[lang]
+    html, plain = html_escapes.unescape(sent.alternatives[0][0]), sent.body
+    assert f'<html lang="{lang}">' in html
+    for part in (html, plain):
+        for words in (RECEIVED_SUBJECT, THANKS, NOT_YOU, WHY, SIGN_OFF, PRIVACY):
+            assert words[lang] in part, words[lang]
+        assert 'Zebedee' not in part
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('lang', ['en', 'fr', 'rw'])
+def test_the_confirmation_comes_in_the_language_of_the_message(api_client, lang):
+    sent = send_form(api_client, MESSAGES[lang])
+    assert_confirmation(sent, lang)
+    assert MESSAGES[lang] not in sent.body
+
+
+@pytest.mark.django_db
+def test_a_kinyarwanda_message_from_the_english_page_is_confirmed_in_kinyarwanda(api_client):
+    assert_confirmation(send_form(api_client, MESSAGES['rw'], language='en'), 'rw')
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('posted, expected', [
+    pytest.param('fr', 'fr', id='the page was French'),
+    pytest.param('rw', 'rw', id='the page was Kinyarwanda'),
+    pytest.param(None, 'en', id='no page language'),
+    pytest.param('de', 'en', id='a language we do not have'),
+    pytest.param({'x': 1}, 'en', id='not even text'),
+])
+def test_unclear_words_follow_the_language_of_the_page(api_client, posted, expected):
+    extra = {} if posted is None else {'language': posted}
+    assert_confirmation(send_form(api_client, 'Demo please', **extra), expected)
+

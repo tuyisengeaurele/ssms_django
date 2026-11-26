@@ -10,23 +10,14 @@ from core.permissions import RolePermission
 from core.throttles import ContactRateThrottle
 from core.utils import api_error, api_success
 
+from .language import detect_language
 from .models import ContactMessage
+from .reply_email import confirmation_email
 from .serializers import ContactSerializer
 
 RECEIVED = 'Your message has been received. We will get back to you soon.'
 # Every message from the form has this subject. A visitor is not asked for one, and one that is sent is ignored.
 SUBJECT = 'Message to SSMS'
-
-# The reply to the sender is fixed text. Nothing the sender typed goes into it, so the form cannot
-# be used to send a stranger an email with words of the attacker's choosing.
-REPLY_SUBJECT = 'We received your message'
-REPLY = Email(
-    heading='We received your message',
-    intro=('Thank you for contacting SSMS. We have received your message and will get back to you shortly.',),
-    closing=('If you did not send a message to us, you can ignore this email.',),
-    reason='You received this because this address was used on the SSMS contact form.',
-)
-
 
 def _team_note(data, message_id):
     # Answers are written in the app, so the note has no reply-to and does not give the sender's address.
@@ -59,7 +50,10 @@ class ContactCreateView(APIView):
 
         msg = ContactMessage.objects.create(**data, subject=SUBJECT)
 
-        _send_mail_async(REPLY_SUBJECT, [data['email']], REPLY)
+        # The words of the message say which language to answer in. The page's language only settles unclear words.
+        language = detect_language(data['message'], fallback=request.data.get('language'))
+        subject, confirmation = confirmation_email(language)
+        _send_mail_async(subject, [data['email']], confirmation)
 
         # The team sees everything that was written.
         admin_email = getattr(settings, 'EMAIL_HOST_USER', None)

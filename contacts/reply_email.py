@@ -1,7 +1,7 @@
-"""The email that carries an admin's reply to a contact message.
+"""The two emails a person who used the contact form gets: the confirmation at once, and later an admin's reply.
 
-It holds the admin's words and the day the person wrote, and nothing the person typed. The form is open to anyone, so
-repeating a typed name or message would let it send a stranger words of an attacker's choosing.
+Neither repeats anything the person typed. The form is open to anyone, so repeating a typed name or message would let it
+send a stranger words of an attacker's choosing. The reply holds the admin's words and the day the person wrote.
 """
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -16,6 +16,18 @@ KIGALI = ZoneInfo('Africa/Kigali')
 
 def _words(lang):
     return (lang, WORDS[lang]) if lang in WORDS else ('en', WORDS['en'])
+
+
+def confirmation_email(lang: str | None) -> tuple[str, Email]:
+    """The subject and the email that tell the sender their message arrived. Every word of it is fixed."""
+    lang, words = _words(lang)
+    return words['ack_subject'], Email(
+        lang=lang,
+        heading=words['ack_subject'],
+        intro=(words['ack_intro'],),
+        closing=(words['ack_closing'],),
+        reason=words['ack_reason'],
+    )
 
 
 def reply_email(body: str, written_at: datetime, lang: str | None) -> Email:

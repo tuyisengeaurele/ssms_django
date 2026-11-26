@@ -15,6 +15,10 @@ WORDS = {
         'reply_greeting': 'Hello,',
         'reply_wrote': 'You wrote to us on {date}.',
         'reply_reason': 'You received this because you wrote to us on the SSMS contact form.',
+        'ack_subject': 'We received your message',
+        'ack_intro': 'Thank you for contacting SSMS. We have received your message and will get back to you shortly.',
+        'ack_closing': 'If you did not send a message to us, you can ignore this email.',
+        'ack_reason': 'You received this because this address was used on the SSMS contact form.',
     },
     'fr': {
         'sign_off': "L'équipe SSMS",
@@ -25,6 +29,10 @@ WORDS = {
         'reply_greeting': 'Bonjour,',
         'reply_wrote': 'Vous nous avez écrit le {date}.',
         'reply_reason': 'Vous recevez ce message parce que vous nous avez écrit avec le formulaire de contact de SSMS.',
+        'ack_subject': 'Nous avons reçu votre message',
+        'ack_intro': "Merci d'avoir contacté SSMS. Nous avons reçu votre message et nous vous répondrons bientôt.",
+        'ack_closing': 'Si vous ne nous avez pas écrit, vous pouvez ignorer cet e-mail.',
+        'ack_reason': 'Vous recevez ce message parce que cette adresse a été utilisée dans le formulaire de contact de SSMS.',
     },
     'rw': {
         'sign_off': 'Itsinda rya SSMS',
@@ -35,5 +43,9 @@ WORDS = {
         'reply_greeting': 'Muraho,',
         'reply_wrote': 'Watwandikiye ku wa {date}.',
         'reply_reason': 'Wakiriye ubu butumwa kubera ko watwandikiye ukoresheje ifishi yo kutwandikira ya SSMS.',
+        'ack_subject': 'Twakiriye ubutumwa bwawe',
+        'ack_intro': 'Murakoze kwandikira SSMS. Twakiriye ubutumwa bwawe kandi tuzabasubiza vuba.',
+        'ack_closing': 'Niba utarigeze utwandikira, ushobora kwirengagiza iyi imeri.',
+        'ack_reason': 'Wakiriye ubu butumwa kubera ko iyi aderesi yakoreshejwe mu ifishi yo kutwandikira ya SSMS.',
     },
 }
