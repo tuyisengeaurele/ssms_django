@@ -25,6 +25,7 @@ RECEIVED = 'Your message has been received. We will get back to you soon.'
 # Every message from the form has this subject. A visitor is not asked for one, and one that is sent is ignored.
 SUBJECT = 'Message to SSMS'
 
+
 def _team_note(data, message_id):
     # Answers are written in the app, so the note has no reply-to and does not give the sender's address.
     return Email(
