@@ -7,8 +7,9 @@ import './contact.css';
 export interface ContactPayload {
   name: string;
   email: string;
-  subject: string;
   message: string;
+  /** The language of the page. The server only uses it when the words of the message do not settle theirs. */
+  language: string;
   /** Hidden trap field. People leave it empty. */
   website: string;
 }
@@ -38,14 +39,14 @@ export async function submitContact(
   }
 }
 
-type FieldName = 'name' | 'email' | 'subject' | 'message';
+type FieldName = 'name' | 'email' | 'message';
 type Errors = Partial<Record<FieldName, string>>;
-const FIELDS: FieldName[] = ['name', 'email', 'subject', 'message'];
+const FIELDS: FieldName[] = ['name', 'email', 'message'];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function Contact() {
-  const { t } = useLanguage();
-  const [values, setValues] = useState({ name: '', email: '', subject: '', message: '', website: '' });
+  const { t, locale } = useLanguage();
+  const [values, setValues] = useState({ name: '', email: '', message: '', website: '' });
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState('');
   const [sending, setSending] = useState(false);
@@ -84,7 +85,7 @@ export function Contact() {
     busy.current = true;
     setSending(true);
     const result = await submitContact(
-      { ...values, name: values.name.trim(), email: values.email.trim(), subject: values.subject.trim(), message: values.message.trim() },
+      { name: values.name.trim(), email: values.email.trim(), message: values.message.trim(), language: locale, website: values.website },
       token.current,
     );
     busy.current = false;
@@ -166,7 +167,6 @@ export function Contact() {
             <form onSubmit={onSubmit} noValidate>
               {field('name', t('lpFormName'), 'text', 'name')}
               {field('email', t('lpFormEmail'), 'email', 'email')}
-              {field('subject', t('lpFormSubject'), 'text')}
               {field('message', t('lpFormMessage'))}
 
               <div className="l-visually-hidden" aria-hidden="true">
