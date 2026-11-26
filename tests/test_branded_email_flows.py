@@ -74,15 +74,6 @@ def test_the_contact_reply_and_the_team_note(api_client, mail_now):
     assert_branded(note, 'You received this because this is the SSMS contact address.')
 
 
-def test_the_team_can_answer_the_sender_with_one_click(api_client, mail_now):
-    api_client.post('/api/contact', {
-        'name': 'Aline', 'email': 'aline@example.rw', 'subject': 'Training',
-        'message': 'We are twelve farmers in Gatsibo and would like a visit.',
-    }, format='json')
-    note = next(m for m in mail.outbox if m.to == ['team@example.rw'])
-    assert note.reply_to == ['aline@example.rw']
-
-
 def test_a_message_with_line_breaks_keeps_them_in_the_html(api_client, mail_now):
     api_client.post('/api/contact', {
         'name': 'Aline', 'email': 'aline@example.rw', 'subject': 'Training',

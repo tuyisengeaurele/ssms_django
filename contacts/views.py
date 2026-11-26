@@ -14,6 +14,8 @@ from .models import ContactMessage
 from .serializers import ContactSerializer
 
 RECEIVED = 'Your message has been received. We will get back to you soon.'
+# Every message from the form has this subject. A visitor is not asked for one, and one that is sent is ignored.
+SUBJECT = 'Message to SSMS'
 
 # The reply to the sender is fixed text. Nothing the sender typed goes into it, so the form cannot
 # be used to send a stranger an email with words of the attacker's choosing.
@@ -27,10 +29,12 @@ REPLY = Email(
 
 
 def _team_note(data, message_id):
+    # Answers are written in the app, so the note has no reply-to and does not give the sender's address.
     return Email(
         heading='New contact message',
         intro=('Someone wrote to the SSMS contact form.',),
-        facts=(('Name', data['name']), ('Email', data['email']), ('Subject', data['subject']), ('Message', f'#{message_id}')),
+        facts=(('Name', data['name']), ('Message', f'#{message_id}')),
+        button=('Open messages', f"{settings.FRONTEND_URL.rstrip('/')}/admin/contacts"),
         closing=(data['message'],),
         reason='You received this because this is the SSMS contact address.',
     )
@@ -53,19 +57,14 @@ class ContactCreateView(APIView):
             return api_error('Please check what you entered and try again.', 422, serializer.errors)
         data = serializer.validated_data
 
-        msg = ContactMessage.objects.create(**data)
+        msg = ContactMessage.objects.create(**data, subject=SUBJECT)
 
         _send_mail_async(REPLY_SUBJECT, [data['email']], REPLY)
 
         # The team sees everything that was written.
         admin_email = getattr(settings, 'EMAIL_HOST_USER', None)
         if admin_email:
-            _send_mail_async(
-                f"[SSMS Contact] {data['subject']} from {data['name']}",
-                [admin_email],
-                _team_note(data, msg.id),
-                reply_to=[data['email']],
-            )
+            _send_mail_async(SUBJECT, [admin_email], _team_note(data, msg.id))
 
         return api_success({'id': msg.id}, RECEIVED, 201)
 
