@@ -136,6 +136,7 @@
 
 .landing .how--stacked .l-how__title {
   max-width: 14ch;
+  margin-bottom: clamp(40px, 5vw, 64px);
 }
 
 .landing .how--stacked .l-how__steps {
@@ -143,7 +144,9 @@
   gap: clamp(32px, 5vw, 64px) clamp(24px, 4vw, 48px);
 }
 
+/* A step is as tall as its row. Without this the shorter of two steps spreads its number, title and text apart. */
 .landing .how--stacked .l-how__step {
+  align-content: start;
   opacity: 1;
 }
 
