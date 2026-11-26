@@ -218,4 +218,9 @@
   .landing .l-feat--disease {
     grid-column: span 12;
   }
+
+  /* One column: nothing to line up with, so no card is taller than its content. */
+  .landing .l-feat__inner {
+    min-height: 0;
+  }
 }
