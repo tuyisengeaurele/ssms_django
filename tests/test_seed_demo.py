@@ -6,6 +6,7 @@ from django.core.management import call_command
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from alerts.alert_text import render_alert
 from alerts.models import AlertLog
 from batches.models import Batch, BatchRoomStay
 from cooperatives.models import Cooperative
@@ -202,3 +203,16 @@ def test_every_demo_farm_stands_in_a_real_village_of_its_district():
     for farm in farms:
         assert registry.chain(farm.village_code) is not None
         assert farm.location.endswith('Eastern Province')
+
+
+def test_every_demo_alert_has_a_code_so_it_reads_in_the_readers_language():
+    seed()
+    alerts = list(AlertLog.objects.all())
+    assert alerts
+    assert all(a.code for a in alerts)
+    assert all(a.message == render_alert(a.code, a.params) for a in alerts)
+    assert all('{' not in render_alert(a.code, a.params, 'rw') for a in alerts)
+    codes = {a.code for a in alerts}
+    assert {'stage_changed', 'disease_suspected'} <= codes
+    assert codes & {'temperature_low', 'temperature_high', 'humidity_low', 'humidity_high'}
+

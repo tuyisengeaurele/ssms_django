@@ -396,6 +396,7 @@ td .cell-muted { color: var(--text-muted); }
 
 .table-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
@@ -1614,6 +1615,12 @@ a.cal-ev-link:focus-visible { outline: 2px solid var(--gold); outline-offset: 1p
 /* Charts and tables are long, so they sit under both columns. Beside the calendar they left an empty strip once the calendar scrolled away. */
 .dash-below { display: grid; gap: var(--space-6); min-width: 0; }
 .dash-rail .empty-state { padding: 28px 24px; }
+/* One column on a small screen: the numbers, then the calendar column, then the charts and lists. */
+@media (max-width: 1099px) {
+  .dash-main { display: contents; }
+  .dash-main > * { min-width: 0; }
+  .dash-main > :first-child { order: -2; }
+}
 @media (min-width: 1100px) {
   .dash-body { grid-template-columns: minmax(0, 1fr) 340px; }
   .dash-rail { order: 0; position: sticky; top: calc(var(--topbar-height) + var(--space-4)); }

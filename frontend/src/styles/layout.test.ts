@@ -48,6 +48,15 @@ describe('dashboard layout', () => {
     expect(rules('.dash-rail')).toMatch(/order:\s*-1/);
   });
 
+  // On a phone a person looks for the numbers first. The two columns become one list there: the numbers, then the calendar
+  // column, then the charts and lists.
+  it('shows the numbers above the calendar below 1100 px, and the rest after it', () => {
+    const narrow = css.match(/@media \(max-width: 1099px\)\s*\{\s*\.dash-main[\s\S]*?\n\}/)?.[0] ?? '';
+    expect(narrow).toMatch(/\.dash-main\s*\{[^}]*display:\s*contents/);
+    expect(narrow).toMatch(/\.dash-main > :first-child\s*\{[^}]*order:\s*-2/);
+    expect(narrow).toMatch(/\.dash-main > \*\s*\{[^}]*min-width:\s*0/);
+  });
+
   it('puts the rail beside the data from 1100 px, and keeps it in view only there', () => {
     expect(wide).toMatch(/\.dash-body\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*340px/);
     expect(wide).toMatch(/\.dash-rail\s*\{[^}]*order:\s*0/);
@@ -94,6 +103,10 @@ describe('spacing that stays tidy when the content is short', () => {
 
   it('keeps the buttons of a table row a hand apart, not touching', () => {
     expect(rules('.table-actions')).toMatch(/gap:\s*(8|10)px/);
+  });
+
+  it('lets the buttons of a table row wrap, so a long label does not push the whole table into cards', () => {
+    expect(rules('.table-actions')).toMatch(/flex-wrap:\s*wrap/);
   });
 
   it('gives the label of a bar enough room for a farm name on a wide screen, so it is not cut to three dots', () => {

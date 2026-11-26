@@ -24,7 +24,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from alerts.models import AlertLog
-from alerts.utils import humidity_problem, safe_range_for, temperature_problem
+from alerts.utils import coded, humidity_alert, safe_range_for, temperature_alert
 from batches.models import Batch
 from batches.placement import place_batch
 from cooperatives.models import Cooperative
@@ -198,11 +198,11 @@ class Command(BaseCommand):
 
             stage = stage_at((moment - batch.start_date).total_seconds() / 86400)
             safe = ranges.setdefault(stage, safe_range_for(stage))
-            for kind, message in (('TEMPERATURE', temperature_problem(temperature, safe)), ('HUMIDITY', humidity_problem(humidity, safe))):
-                if message is None and kind in open_alerts:
+            for kind, problem in (('TEMPERATURE', temperature_alert(temperature, safe)), ('HUMIDITY', humidity_alert(humidity, safe))):
+                if problem is None and kind in open_alerts:
                     open_alerts.pop(kind).resolved_at = moment
-                elif message is not None and kind not in open_alerts:
-                    alert = AlertLog(room=room, type=kind, message=message, created_at=moment, is_read=moment < now - timedelta(days=2))
+                elif problem is not None and kind not in open_alerts:
+                    alert = AlertLog(room=room, type=kind, **coded(*problem), created_at=moment, is_read=moment < now - timedelta(days=2))
                     open_alerts[kind] = alert
                     alerts.append(alert)
             moment += timedelta(hours=1)
@@ -244,7 +244,7 @@ class Command(BaseCommand):
             if age >= start:
                 when = batch.start_date + timedelta(days=start)
                 moves.append(AlertLog(
-                    batch=batch, type='STAGE_CHANGE', message=f'Batch stage updated to {stage}.',
+                    batch=batch, type='STAGE_CHANGE', **coded('stage_changed', {'stage': stage}),
                     created_at=when, is_read=when < now - timedelta(days=2),
                 ))
         self._save_alerts(moves)
@@ -270,6 +270,7 @@ class Command(BaseCommand):
         if sick and checks:
             when = now - timedelta(days=1)
             checks[0] = DiseaseDetection(batch=batch, image_url=PICTURE, result='Grasserie', confidence=0.78, detected_at=when)
-            alerts.append(AlertLog(batch=batch, type='DISEASE', message='Grasserie suspected in this batch (78% confidence).', created_at=when))
+            problem = coded('disease_suspected', {'disease': 'Grasserie', 'confidence': 78})
+            alerts.append(AlertLog(batch=batch, type='DISEASE', **problem, created_at=when))
         self._save_with_dates(DiseaseDetection, checks, 'detected_at')
         self._save_alerts(alerts)

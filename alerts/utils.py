@@ -153,17 +153,6 @@ def humidity_alert(value: float, safe: SafeRange) -> tuple[str, dict] | None:
     return None
 
 
-def temperature_problem(value: float, safe: SafeRange) -> str | None:
-    """The English sentence for a temperature out of range, or None. Seeding uses it; alerts use temperature_alert."""
-    found = temperature_alert(value, safe)
-    return render_alert(*found) if found else None
-
-
-def humidity_problem(value: float, safe: SafeRange) -> str | None:
-    found = humidity_alert(value, safe)
-    return render_alert(*found) if found else None
-
-
 def settle_room_alerts(room_id: str) -> None:
     """Resolve what a room with nothing running in it can no longer have: its air problems and its sensor outages.
     Call it after a batch leaves the room, is deleted or reaches harvest."""

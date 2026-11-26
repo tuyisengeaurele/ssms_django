@@ -14,7 +14,7 @@ from alerts.disease import raise_disease_alert
 from alerts.models import AlertLog
 from alerts.serializers import AlertLogSerializer
 from alerts.sse_view import _payload
-from alerts.utils import SafeRange, check_room_alerts, humidity_problem, temperature_problem
+from alerts.utils import SafeRange, check_room_alerts, humidity_alert, temperature_alert
 from batches.placement import place_batch
 from farms.models import RearingRoom
 from sensors.devices import mark_offline_devices, record_device_reading
@@ -81,9 +81,9 @@ def test_english_is_the_short_wording():
     assert render_alert('temperature_high', {'value': 31.0, 'max': 28.0}) == 'Temperature too high: 31.0 °C (max 28.0 °C). Improve ventilation.'
     assert render_alert('humidity_low', {'value': 60.0, 'min': 70.0}) == 'Humidity too low: 60.0% (min 70.0%). Add moisture.'
     assert render_alert('humidity_high', {'value': 92.0, 'max': 85.0}) == 'Humidity too high: 92.0% (max 85.0%). Improve air flow.'
-    assert temperature_problem(19.5, safe) == render_alert('temperature_low', {'value': 19.5, 'min': 22.0})
-    assert humidity_problem(92.0, safe) == render_alert('humidity_high', {'value': 92.0, 'max': 85.0})
-    assert temperature_problem(25.0, safe) is None and humidity_problem(78.0, safe) is None
+    assert temperature_alert(19.5, safe) == ('temperature_low', {'value': 19.5, 'min': 22.0})
+    assert humidity_alert(92.0, safe) == ('humidity_high', {'value': 92.0, 'max': 85.0})
+    assert temperature_alert(25.0, safe) is None and humidity_alert(78.0, safe) is None
 
 
 def test_an_unknown_code_gives_the_stored_message_and_an_unknown_language_gives_english():
