@@ -28,6 +28,7 @@ export default function ReplyBox({ email, draft, language, error, sending, leavi
   const id = useId();
   const box = useRef<HTMLDivElement>(null);
   const text = useRef<HTMLTextAreaElement>(null);
+  const problem = useRef<HTMLDivElement>(null);
 
   const bringIntoView = () => box.current?.scrollIntoView?.({ block: 'nearest' });
 
@@ -37,6 +38,11 @@ export default function ReplyBox({ email, draft, language, error, sending, leavi
     bringIntoView();
     // Once, as the box opens.
   }, []);
+
+  // The dialog may be longer than the screen, and an error below its edge would go unseen.
+  useEffect(() => {
+    if (error) problem.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [error]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
@@ -84,7 +90,7 @@ export default function ReplyBox({ email, draft, language, error, sending, leavi
           onChange={(e) => onDraft(e.target.value)}
         />
         {draft.length > COUNT_FROM && <p className="form-hint reply-count">{fill(t('msCount'), { n: String(draft.length) })}</p>}
-        {error && <div className="alert alert-error reply-error" role="alert"><span>{error}</span></div>}
+        {error && <div ref={problem} className="alert alert-error reply-error" role="alert"><span>{error}</span></div>}
       </div>
     </div>
   );

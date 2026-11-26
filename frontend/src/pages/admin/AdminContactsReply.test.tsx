@@ -235,6 +235,26 @@ describe('sending', () => {
     expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
   });
 
+  it('brings the error into sight, because the dialog may be longer than the screen', async () => {
+    const brought: string[] = [];
+    // jsdom has no scrolling, so this stands in for it and notes what was asked to come into sight.
+    Element.prototype.scrollIntoView = function scrollIntoView(this: Element) {
+      brought.push(this.className);
+    };
+    try {
+      api.reply.mockRejectedValueOnce(failure(502));
+      open();
+      const dialog = await startReply();
+      type(dialog, 'Thank you.');
+      brought.length = 0;
+      fireEvent.click(button(dialog, 'Send reply'));
+      await within(dialog).findByRole('alert');
+      expect(brought.some((name) => name.includes('reply-error'))).toBe(true);
+    } finally {
+      delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    }
+  });
+
   it('says when too many replies went out', async () => {
     api.reply.mockRejectedValueOnce(failure(429));
     open();

@@ -20,6 +20,11 @@ describe('the contact inbox', () => {
     expect(css).not.toMatch(/\.inbox-subject/);
   });
 
+  it('keeps the dates in one column, with or without a mark beside them', () => {
+    // Each row is a grid of its own. A mark column as wide as its mark, or gone without one, moved the date from row to row.
+    expect(css).toMatch(/\.inbox-row \{[^}]*grid-template-columns:\s*160px minmax\(0, 1fr\) auto minmax\(\d{2,3}px, auto\)/);
+  });
+
   it('keeps a long message to two lines in the bell', () => {
     expect(shell).toMatch(/\.note-preview\s*\{[^}]*-webkit-line-clamp:\s*2/);
     expect(shell).toMatch(/\.note-preview\s*\{[^}]*overflow-wrap:\s*anywhere/);
