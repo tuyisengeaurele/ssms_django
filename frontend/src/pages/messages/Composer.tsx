@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { Icon } from '../../components/ui/Icon';
 import { useLanguage } from '../../context/LanguageContext';
 import { fill } from '../../utils/fill';
@@ -15,6 +15,7 @@ export default function Composer({ closed, onSend }: { closed: boolean; onSend: 
   const { t } = useLanguage();
   const [words, setWords] = useState('');
   const id = useId();
+  const input = useRef<HTMLTextAreaElement>(null);
   const length = words.trim().length;
   const ready = length > 0 && length <= LONGEST;
   const note = length > LONGEST
@@ -40,6 +41,8 @@ export default function Composer({ closed, onSend }: { closed: boolean; onSend: 
     if (!ready) return;
     onSend(words.trim());
     setWords('');
+    // Send turns off with an empty box and would drop the focus. On a phone this also keeps the keyboard up.
+    input.current?.focus();
   };
 
   // Enter makes a new line, as people expect on a phone. Ctrl or Cmd with Enter sends.
@@ -52,6 +55,7 @@ export default function Composer({ closed, onSend }: { closed: boolean; onSend: 
       <div className="msg-composer-box">
         <label className="sr-only" htmlFor={id}>{t('msgYourMessage')}</label>
         <textarea
+          ref={input}
           id={id}
           className="form-textarea msg-input"
           rows={2}

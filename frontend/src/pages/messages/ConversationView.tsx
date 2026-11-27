@@ -8,7 +8,7 @@ import type { ChatMessage } from '../../types';
 import { dateFormat } from '../../utils/dateFormat';
 import { fill } from '../../utils/fill';
 import Composer from './Composer';
-import { useConversation } from './useConversation';
+import { useConversation, type Pending } from './useConversation';
 
 /** Closer to the end than this counts as reading the newest message. */
 const NEAR_END_PX = 40;
@@ -88,6 +88,12 @@ export default function ConversationView({ conversationId, target, asFarmer, bac
     }
   };
 
+  // The button goes with the failure. The messages take the focus, because the box would bring up a phone's keyboard.
+  const again = (item: Pending) => {
+    box.current?.focus();
+    retry(item);
+  };
+
   const earlier = async () => {
     const el = box.current!;
     keepPlace.current = { height: el.scrollHeight, top: el.scrollTop };
@@ -158,7 +164,7 @@ export default function ConversationView({ conversationId, target, asFarmer, bac
                     <div className="msg-failed" role="alert">
                       <span className="msg-failed-word">{t('msgNotSent')}</span>
                       <span className="msg-problem">{item.problem}</span>
-                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => retry(item)}>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => again(item)}>
                         <Icon name="refresh" size={14} />{t('btnRetry')}
                       </button>
                     </div>

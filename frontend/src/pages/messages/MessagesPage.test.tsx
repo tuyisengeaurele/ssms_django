@@ -597,6 +597,21 @@ describe('With a keyboard alone', () => {
     expect(sendButton()).toHaveFocus();
     await user.keyboard('{Enter}');
     expect(api.send).toHaveBeenCalledWith(expect.objectContaining({ body: 'On my way.', conversationId: 'c1' }));
+    // Send turns off once the box is empty, and a button that is off cannot keep the focus.
+    expect(box()).toHaveFocus();
   });
 
+  it('is still in the conversation after Try again takes its own button away', async () => {
+    api.send.mockRejectedValueOnce(new AxiosError('x', 'ERR_NETWORK'));
+    const user = userEvent.setup();
+    await open('/messages/c1');
+    write('Are you there?');
+    await press();
+    api.send.mockResolvedValue(sentAs(message('m3', 'Are you there?', { createdAt: '2026-11-27T09:10:00+00:00' })));
+    screen.getByRole('button', { name: 'Try again' }).focus();
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(screen.queryByText('Not sent')).not.toBeInTheDocument());
+    // The messages, not the box: on a phone the box would bring the keyboard up over them.
+    expect(scroller()).toHaveFocus();
+  });
 });
