@@ -11,7 +11,12 @@
 }
 
 .landing section[id] {
-  scroll-margin-top: 24px;
+  scroll-margin-top: calc(24px + var(--announcement-height, 0px));
+}
+
+/* The header is fixed, so the page makes room for the banners in it (SiteAnnouncements sets the height). */
+.landing .l-nav ~ main {
+  margin-top: var(--announcement-height, 0px);
 }
 
 .landing .l-skip {

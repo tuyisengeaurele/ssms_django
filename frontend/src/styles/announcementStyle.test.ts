@@ -28,6 +28,35 @@ function rule(selector: string): string {
   return found.map((m) => m[3]).join('\n');
 }
 
+const read = (path: string) => readFileSync(join(__dirname, path), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+
+describe('announcements in the fixed public header', () => {
+  const nav = read('../landing/nav.css');
+  const landing = read('../landing/landing.css');
+
+  // A margin, because the legal, lot and status pages already use the top padding of `main` to clear the menu.
+  it('push the page down by their own height, so nothing hides under them', () => {
+    expect(landing).toMatch(/\.landing \.l-nav ~ main\s*\{\s*margin-top:\s*var\(--announcement-height, 0px\);\s*\}/);
+    for (const page of ['../landing/legal/legal.css', '../landing/lot.css', '../landing/status.css']) {
+      const ownMain = [...read(page).matchAll(/\bmain\s*\{([^}]*)\}/g)].map((m) => m[1]).join('');
+      expect(ownMain, page).not.toMatch(/margin/);
+    }
+    expect(landing).toMatch(/section\[id\]\s*\{[^}]*scroll-margin-top:\s*calc\(24px \+ var\(--announcement-height, 0px\)\)/);
+  });
+
+  // The header does not scroll away, so on a small phone two long banners must not cover the page.
+  it('never take more than part of the screen, and can be clicked', () => {
+    const block = /\.landing \.l-nav__announcements\s*\{([^}]*)\}/.exec(nav)?.[1] ?? '';
+    expect(block).toMatch(/max-height:\s*\d+(svh|vh)/);
+    expect(block).toMatch(/overflow-y:\s*auto/);
+    expect(block).toMatch(/pointer-events:\s*auto/);
+  });
+
+  it('step aside while the phone menu is open', () => {
+    expect(nav).toMatch(/\.l-nav\.is-open \.l-nav__announcements\s*\{[^}]*visibility:\s*hidden/);
+  });
+});
+
 describe('announcement styles', () => {
   it('wrap a long unbroken word, and let the words shrink beside the icon', () => {
     expect(rule('.announcement-text')).toMatch(/overflow-wrap:\s*anywhere/);

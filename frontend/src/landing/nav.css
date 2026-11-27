@@ -33,13 +33,29 @@
   inset: 0 0 auto 0;
   z-index: 50;
   display: flex;
-  justify-content: center;
-  padding: 16px var(--l-gutter) 0;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 var(--l-gutter);
   pointer-events: none;
+}
+
+/* The team's banners run the full width, above the menu. The header stays put while the page scrolls, so they may never
+   take more than part of the screen: longer than that, they scroll inside their own space. */
+.landing .l-nav__announcements {
+  align-self: stretch;
+  max-height: 35svh;
+  margin-inline: calc(-1 * var(--l-gutter));
+  overflow-y: auto;
+  pointer-events: auto;
+}
+
+.landing .l-nav.is-open .l-nav__announcements {
+  visibility: hidden;
 }
 
 .landing .l-nav__pill {
   pointer-events: auto;
+  margin-top: 16px;
   display: flex;
   align-items: center;
   gap: 20px;

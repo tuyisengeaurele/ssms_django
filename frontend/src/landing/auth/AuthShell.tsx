@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { useLanguagePicker } from '../../hooks/useLanguagePicker';
 import { LOCALE_LABELS, type Locale } from '../../i18n/locales';
+import LazyAnnouncements from '../../components/announcements/LazyAnnouncements';
 import './auth.css';
 
 interface AuthShellProps {
@@ -47,6 +48,7 @@ export function AuthShell({ title, subtitle, children }: AuthShellProps) {
       </aside>
 
       <div className="l-auth__side">
+        <LazyAnnouncements mode="visitor-live" />
         <div className="l-auth__bar">
           <Link to="/" className="l-auth__back">
             <span aria-hidden="true">&larr;</span> {t('lpAuthBack')}

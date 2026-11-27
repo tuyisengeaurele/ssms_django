@@ -9,6 +9,7 @@ import TopBar from './TopBar';
 import BottomNav from './BottomNav';
 import QuickSearch from './QuickSearch';
 import IdleWarningModal from './IdleWarningModal';
+import SiteAnnouncements from '../announcements/SiteAnnouncements';
 import MfaReminderProvider from '../auth/MfaReminderProvider';
 import ActingBanner from '../support/ActingBanner';
 import SupportActiveBanner from '../support/SupportActiveBanner';
@@ -130,6 +131,8 @@ export default function DashboardLayout() {
           <SupportResume />
           <SupportActiveBanner active={support.active} onEnded={support.refresh} />
           <TopBar onMenuToggle={toggleMenu} onSearch={() => setSearchOpen(true)} alertCount={alertCount} />
+          {/* After the bar, so nothing comes between the bar and a support banner. */}
+          <SiteAnnouncements mode="app" />
 
           {/* A new key is a new page: it fades in (shell.css). */}
           <div key={`${location.pathname}:${user?.id ?? ''}`} className="app-content">
