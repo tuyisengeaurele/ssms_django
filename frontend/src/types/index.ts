@@ -24,6 +24,8 @@ export interface CooperativeDetail extends Cooperative {
 
 export interface User {
   id: string;
+  /** Only in the admin's list of people: whether two-step sign in is on. */
+  mfaEnabled?: boolean;
   name: string;
   email: string;
   role: Role;
@@ -424,6 +426,8 @@ export interface ApiResponse<T> {
 export interface AuthResponse {
   user: User;
   token: string;
+  /** True when this account had not signed in from this kind of device before. */
+  newDevice?: boolean;
 }
 
 /** What an admin gets for a correct password: not a sign in yet, but the next step and the challenge that goes with it. */
@@ -435,11 +439,19 @@ export function isMfaRequired(data: AuthResponse | MfaRequired): data is MfaRequ
   return 'mfa' in data;
 }
 
-/** An admin's authenticator app. Nothing secret is in it. See users/mfa_views.py. */
+/** The moments at which a farmer or supervisor may be reminded about two-step sign in. See core/mfa_prompt.py. */
+export type MfaTrigger = 'login' | 'password_changed' | 'new_device' | 'sensitive_action';
+
+/** A person's own two-step sign in. Nothing secret is in it. See users/mfa_views.py. */
 export interface MfaStatus {
   enabled: boolean;
+  /** True for an admin, who cannot turn it off. */
+  required: boolean;
   enabledAt: string | null;
   recoveryCodesLeft: number;
+  prompt: { show: boolean; trigger: MfaTrigger | null };
+  /** The quiet "Secure your account" line: off, and the reminder was put off at least once. */
+  reminderLine: boolean;
 }
 
 /** One batch of the side by side comparison, from GET /api/batches/compare. */

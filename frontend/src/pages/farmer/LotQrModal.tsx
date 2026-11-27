@@ -1,5 +1,6 @@
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useRef, useState } from 'react';
+import { useMfaReminder } from '../../components/auth/mfaReminderContext';
 import Modal from '../../components/ui/Modal';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
@@ -59,12 +60,19 @@ export default function LotQrModal({ record, onClose, onChange }: LotQrModalProp
   const { t, locale } = useLanguage();
   const { success, error: showError } = useToast();
   const { getErrorMessage } = useApiError();
+  const reminder = useMfaReminder();
   const [view, setView] = useState<View>('loading');
   const [token, setToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmStop, setConfirmStop] = useState(false);
   const sheet = useRef<HTMLDivElement>(null);
   const id = record?.id;
+  // The lot this dialog is showing right now, or null once the page has gone. Read after a wait.
+  const showing = useRef<string | null>(null);
+  useEffect(() => {
+    showing.current = id ?? null;
+    return () => { showing.current = null; };
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -85,6 +93,10 @@ export default function LotQrModal({ record, onClose, onChange }: LotQrModalProp
   const create = async () => {
     setBusy(true);
     try {
+      // Sharing a first lot is a moment to suggest two-step sign in. It never stops the share.
+      await reminder.ask('sensitive_action');
+      // The farmer may have left while it was up. Nothing is published from a page they walked away from.
+      if (showing.current !== record.id) return;
       const res = await lotService.createShare(record.id);
       setToken(res.data.data.token);
       onChange?.(record.id, true);
@@ -121,7 +133,8 @@ export default function LotQrModal({ record, onClose, onChange }: LotQrModalProp
   };
 
   return (
-    <Modal open onClose={onClose} title={t('lotQrTitle')} maxWidth={460}>
+    // Out of the way while the reminder is up, so two dialogs never stack.
+    <Modal open={!reminder.open} onClose={onClose} title={t('lotQrTitle')} maxWidth={460}>
       {view === 'loading' && <p role="status" className="modal-text">{t('jnLoading')}</p>}
       {view === 'failed' && <div className="alert alert-error" role="alert">{t('lotLoadError')}</div>}
 

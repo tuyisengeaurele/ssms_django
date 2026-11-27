@@ -21,6 +21,9 @@ vi.mock('../../services/sessions.service', () => ({
   sessionsService: { list: vi.fn().mockResolvedValue({ data: { data: [] } }) },
 }));
 
+const reminder = vi.hoisted(() => ({ ask: vi.fn(), refresh: vi.fn(), setUp: vi.fn(), open: false, line: false }));
+vi.mock('../../components/auth/mfaReminderContext', () => ({ useMfaReminder: () => reminder }));
+
 import SecuritySettings from './SecuritySettings';
 
 function open() {
@@ -93,6 +96,7 @@ describe('Security settings', () => {
     await waitFor(() => expect(screen.queryByLabelText('Current password')).not.toBeInTheDocument());
     // The server ended every other session, so this device keeps the fresh one it was given.
     expect(getAccessToken()).toBe('fresh-jwt');
+    expect(reminder.ask).toHaveBeenCalledWith('password_changed');
     expect(JSON.stringify({ ...localStorage, ...sessionStorage })).not.toContain('fresh-jwt');
   });
 
@@ -104,16 +108,17 @@ describe('Security settings', () => {
     expect(api.changePassword).not.toHaveBeenCalled();
   });
 
-  it('shows an admin the authenticator app next to the password', async () => {
-    who.role = 'ADMIN';
-    open();
-    expect(await screen.findByRole('heading', { level: 2, name: 'Authenticator app' })).toBeInTheDocument();
-  });
-
-  it.each(['FARMER', 'SUPERVISOR'])('does not show a %s the authenticator app', async (role) => {
+  it.each(['ADMIN', 'FARMER', 'SUPERVISOR'])('shows a %s two-step sign in next to the password', async (role) => {
     who.role = role;
     open();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Two-step sign in' })).toBeInTheDocument();
+  });
+
+  it('keeps two-step sign in away from an admin acting as the person: it is theirs alone', async () => {
+    who.acting = true;
+    open();
     await screen.findByRole('heading', { level: 2, name: 'Signed in devices' });
-    expect(screen.queryByRole('heading', { name: 'Authenticator app' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Two-step sign in' })).not.toBeInTheDocument();
+    who.acting = false;
   });
 });

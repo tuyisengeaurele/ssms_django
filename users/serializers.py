@@ -66,6 +66,20 @@ class UserSerializer(serializers.ModelSerializer):
         return not obj.phone
 
 
+class AdminUserSerializer(UserSerializer):
+    """What the admin's list of people also says: who has two-step sign in on, so it can be reset for them."""
+
+    mfa_enabled = serializers.SerializerMethodField()
+
+    class Meta(UserSerializer.Meta):
+        fields = [*UserSerializer.Meta.fields, 'mfa_enabled']
+        read_only_fields = fields
+
+    def get_mfa_enabled(self, obj):
+        # Asked for the whole list in one go (see the view), never one person at a time.
+        return obj.mfa_on
+
+
 PHONE_REQUIRED = 'Please enter your phone number.'
 PHONE_CONFIRM = 'Type your current phone number to confirm the change.'
 PHONE_TAKEN = 'This phone number is already used by another account. Contact the SSMS team if it is yours.'

@@ -93,7 +93,8 @@ export default function AdminUsersPage() {
       .finally(() => setLoading(false));
   }, [attempt]);
 
-  const replaceUser = (updated: User) => setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+  // Merged, not replaced: the answer to a change leaves out what only the list says, such as two-step sign in.
+  const replaceUser = (updated: User) => setUsers((prev) => prev.map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
 
   const openEdit = (u: User) => {
     setEditing(u);
@@ -178,7 +179,8 @@ export default function AdminUsersPage() {
     setConfirmReset(null);
     try {
       await runWithCode(() => mfaService.resetFor(target.id));
-      success(fill(t('adMfaResetDone'), { name: target.name }));
+      success(fill(t(target.role === 'ADMIN' ? 'adMfaResetDone' : 'adMfaResetDoneOther'), { name: target.name }));
+      replaceUser({ ...target, mfaEnabled: false });
     } catch (e) {
       // Cancelling the request for a code is a choice, not a failure.
       if (!needsRecentCode(e)) showError(getErrorMessage(e));
@@ -313,7 +315,9 @@ export default function AdminUsersPage() {
         }
       >
         <p className="modal-text">
-          {confirmReset ? fill(t('adMfaResetBody'), { name: confirmReset.name, email: confirmReset.email }) : ''}
+          {confirmReset
+            ? fill(t(confirmReset.role === 'ADMIN' ? 'adMfaResetBody' : 'adMfaResetBodyOther'), { name: confirmReset.name, email: confirmReset.email })
+            : ''}
         </p>
       </Modal>
 
@@ -503,7 +507,7 @@ export default function AdminUsersPage() {
                                   {t('adSupportAction')}
                                 </button>
                               )}
-                              {u.role === 'ADMIN' && (
+                              {u.mfaEnabled && (
                                 <button className="btn btn-secondary btn-xs" aria-label={fill(t('adMfaResetFor'), { name: u.name })} onClick={() => setConfirmReset(u)}><Icon name="key" size={13} />
                                   {t('adMfaResetAction')}
                                 </button>

@@ -59,12 +59,6 @@ def test_the_status_shows_no_secret_and_no_code():
     assert secret not in body and 'secret' not in body.lower() and 'hash' not in body.lower()
 
 
-@pytest.mark.parametrize('role', ['FARMER', 'SUPERVISOR'])
-def test_only_an_admin_may_read_the_status(role):
-    user = UserFactory(role=role)
-    assert client_with(user, session_for(user)).get(STATUS).status_code == 403
-
-
 def test_a_stranger_is_told_to_sign_in_for_the_status():
     assert APIClient().get(STATUS).status_code == 401
 
@@ -108,12 +102,6 @@ def test_the_same_app_code_cannot_ask_twice():
     code = totp(secret)
     assert client.post(NEW_CODES, {'code': code}, format='json').status_code == 200
     assert client.post(NEW_CODES, {'code': code}, format='json').status_code == 422
-
-
-@pytest.mark.parametrize('role', ['FARMER', 'SUPERVISOR'])
-def test_only_an_admin_may_ask_for_new_recovery_codes(role):
-    user = UserFactory(role=role)
-    assert client_with(user, session_for(user)).post(NEW_CODES, {'code': '123456'}, format='json').status_code == 403
 
 
 # ── resetting another admin ─────────────────────────────────────────────────────────────────

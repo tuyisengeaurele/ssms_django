@@ -3,6 +3,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import { useApiError } from '../../hooks/useApiError';
+import { useMfaReminder } from '../../components/auth/mfaReminderContext';
 import { authService } from '../../services/auth.service';
 import { setAccessToken } from '../../services/session';
 import Panel from '../../components/ui/Panel';
@@ -17,6 +18,7 @@ export default function SecuritySettings() {
   const { getErrorMessage } = useApiError();
   const { t } = useLanguage();
   const { user, acting } = useAuth();
+  const reminder = useMfaReminder();
 
   const [showPassword, setShowPassword] = useState(false);
   const [current, setCurrent] = useState('');
@@ -47,6 +49,7 @@ export default function SecuritySettings() {
       if (res.data.data?.token) setAccessToken(res.data.data.token);
       success(t('pfPasswordChanged'));
       closePassword();
+      void reminder.ask('password_changed');
     } catch (err) {
       setPasswordError(getErrorMessage(err));
     } finally {
@@ -92,7 +95,8 @@ export default function SecuritySettings() {
         ) : null}
       </Panel>
 
-      {user?.role === 'ADMIN' ? <MfaSettings /> : null}
+      {/* Not while an admin acts as the person: how they sign in is theirs alone, and the server refuses it. */}
+      {user && !acting ? <MfaSettings /> : null}
 
       {/* Not while an admin acts as the person: the server refuses the list to them, and it is the person's to read. */}
       {user && user.role !== 'ADMIN' && !acting ? <SupportHistory /> : null}

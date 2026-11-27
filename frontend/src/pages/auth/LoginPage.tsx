@@ -4,6 +4,7 @@ import { authService } from '../../services/auth.service';
 import { collectDeviceHints } from '../../services/clientHints';
 import MfaCodeStep from '../../components/auth/MfaCodeStep';
 import MfaSetup from '../../components/auth/MfaSetup';
+import { PROMPT_KEY } from '../../components/auth/mfaReminderContext';
 import type { SignInDetails } from '../../services/mfa.service';
 import { isMfaRequired, type MfaRequired, type User } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -108,6 +109,11 @@ export default function LoginPage() {
         setCarried({ device, sharedDevice: shared });
         setSecond(data.mfa);
         return;
+      }
+      try {
+        sessionStorage.setItem(PROMPT_KEY, data.newDevice ? 'new_device' : 'login');
+      } catch {
+        // Without it there is no reminder this time, which is harmless.
       }
       finishSignIn(data.user, data.token);
     } catch (err: unknown) {

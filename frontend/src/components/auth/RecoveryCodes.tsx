@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 
 /**
- * The recovery codes of an admin, shown once, with a way to copy them and to keep them in a file.
+ * Recovery codes, shown once, with a way to copy them, to keep them in a file and to print them.
  * `public` is for the sign in pages (styled in landing/auth/auth.css), `app` for the signed in app (styles/components.css).
  */
 export default function RecoveryCodes({ codes, variant = 'public' }: { codes: string[]; variant?: 'public' | 'app' }) {
@@ -31,9 +31,21 @@ export default function RecoveryCodes({ codes, variant = 'public' }: { codes: st
     URL.revokeObjectURL(url);
   };
 
+  const print = () => {
+    // The class leaves only the codes on the paper (styles/components.css). It stays until printing is over, because
+    // some phones print after this call has returned.
+    const done = () => {
+      document.body.classList.remove('printing-codes');
+      window.removeEventListener('afterprint', done);
+    };
+    document.body.classList.add('printing-codes');
+    window.addEventListener('afterprint', done);
+    window.print();
+  };
+
   return (
     <div className={app ? 'mfa-codes' : 'l-mfa__codes'}>
-      <ul className={app ? 'mfa-codes__list' : 'l-mfa__codelist'}>
+      <ul className={app ? 'mfa-codes__list print-codes' : 'l-mfa__codelist print-codes'}>
         {codes.map((code) => (
           <li key={code}>{code}</li>
         ))}
@@ -44,6 +56,9 @@ export default function RecoveryCodes({ codes, variant = 'public' }: { codes: st
         </button>
         <button type="button" className={app ? 'btn btn-secondary btn-sm' : 'l-auth__ghost'} onClick={download}>
           {t('adMfaDownload')}
+        </button>
+        <button type="button" className={app ? 'btn btn-secondary btn-sm' : 'l-auth__ghost'} onClick={print}>
+          {t('adMfaPrint')}
         </button>
         <span role="status" className={app ? 'mfa-codes__copied' : 'l-mfa__copied'}>
           {copied ? t('adMfaCopied') : ''}

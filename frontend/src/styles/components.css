@@ -1505,6 +1505,39 @@ tr.is-off td:last-child { opacity: 1; }
   font-size: 1rem;
 }
 
+/* Turning two-step sign in on and off, inside a dialog */
+.two-step { display: grid; gap: 12px; }
+.two-step h3 { margin: 0; font-size: 1rem; }
+.two-step .form-group { margin: 0; }
+.two-step .modal-text { margin: 0; }
+.two-step__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.two-step__qr { justify-self: center; padding: 6px; border: 1px solid var(--border-light); border-radius: 16px; background: #fff; line-height: 0; }
+.two-step__qr svg { max-width: 100%; height: auto; }
+.two-step__keylabel { margin: 0; color: var(--text-muted); font-size: 0.85rem; text-align: center; }
+.two-step__key { margin: -8px 0 0; color: var(--text); font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 0.95rem; letter-spacing: 0.04em; text-align: center; overflow-wrap: anywhere; }
+.two-step__tick { display: flex; align-items: center; gap: 10px; min-height: 44px; color: var(--text); font-weight: 600; cursor: pointer; }
+.two-step__tick input { width: 20px; height: 20px; flex: none; accent-color: var(--primary); }
+.two-step__switch { justify-self: start; }
+
+/* The reminder about two-step sign in, and the quiet line a dashboard keeps after it is put off */
+.two-step-remind { display: grid; justify-items: center; gap: 10px; text-align: center; }
+.two-step-remind p { margin: 0; color: var(--text); line-height: 1.5; }
+.two-step-remind__mark { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--tint); color: var(--primary); }
+.two-step-remind .two-step-remind__how { color: var(--text-muted); font-size: 0.9rem; }
+.two-step-line { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 12px 16px; border: 1px solid var(--border-light); border-radius: 16px; background: var(--tint); color: var(--text); }
+.two-step-line > span { flex: 1; min-width: 160px; font-weight: 600; }
+.two-step-line > svg { flex: none; color: var(--primary); }
+
+/* Printing the recovery codes: only the list is left on the paper. */
+@media print {
+  body.printing-codes * { visibility: hidden; }
+  body.printing-codes .modal-overlay { position: static; background: none; backdrop-filter: none; }
+  body.printing-codes .modal-box { animation: none; transform: none; box-shadow: none; overflow: visible; }
+  body.printing-codes .print-codes,
+  body.printing-codes .print-codes * { visibility: visible; color: #000; }
+  body.printing-codes .print-codes { position: fixed; top: 0; left: 0; right: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 24px; padding: 0; border: 0; background: none; list-style: none; font-size: 14pt; }
+}
+
 /* The allowance card on the farmer's dashboard */
 .allowance-amount { font-family: var(--font-display); font-size: 2rem; line-height: 1.1; margin: 0 0 4px; }
 .allowance-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 14px; }

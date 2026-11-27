@@ -46,6 +46,19 @@ describe('RecoveryCodes', () => {
     expect(urls[0].type).toBe('text/plain');
   });
 
+  // Only the codes go to paper, and the page prints as usual afterwards.
+  it('prints the codes alone', () => {
+    let during = false;
+    window.print = vi.fn(() => { during = document.body.classList.contains('printing-codes'); });
+    const { container } = open();
+    fireEvent.click(screen.getByRole('button', { name: 'Print' }));
+    expect(window.print).toHaveBeenCalledTimes(1);
+    expect(during).toBe(true);
+    expect(container.querySelector('.print-codes')).toHaveTextContent(CODES[0]);
+    window.dispatchEvent(new Event('afterprint'));
+    expect(document.body.classList.contains('printing-codes')).toBe(false);
+  });
+
   it('speaks French when the person chose French', () => {
     localStorage.setItem('ssms_locale', 'fr');
     open();

@@ -5,13 +5,17 @@ import { LanguageProvider } from '../../context/LanguageContext';
 import { ToastProvider } from '../../context/ToastContext';
 import { setReducedMotion } from '../../test/setup';
 
-const mfa = vi.hoisted(() => ({ status: vi.fn(), newRecoveryCodes: vi.fn() }));
+const mfa = vi.hoisted(() => ({ status: vi.fn(), newRecoveryCodes: vi.fn(), enrollStart: vi.fn(), enrollConfirm: vi.fn(), disable: vi.fn() }));
 vi.mock('../../services/mfa.service', () => ({ mfaService: mfa }));
+
+const reminder = vi.hoisted(() => ({ ask: vi.fn(), refresh: vi.fn(), setUp: vi.fn(), open: false, line: false }));
+vi.mock('../../components/auth/mfaReminderContext', () => ({ useMfaReminder: () => reminder }));
 
 import MfaSettings from './MfaSettings';
 
 const CODES = ['AAAAA-BBBBB', 'CCCCC-DDDDD', 'EEEEE-FFFFF', 'GGGGG-HHHHH', 'JJJJJ-KKKKK', 'MMMMM-NNNNN', 'PPPPP-QQQQQ', 'RRRRR-SSSSS'];
-const on = (recoveryCodesLeft: number) => ({ data: { data: { enabled: true, enabledAt: '2026-11-05T10:00:00Z', recoveryCodesLeft } } });
+const on = (recoveryCodesLeft: number, required = false) => ({ data: { data: { enabled: true, required, enabledAt: '2026-11-05T10:00:00Z', recoveryCodesLeft } } });
+const off = () => ({ data: { data: { enabled: false, required: false, enabledAt: null, recoveryCodesLeft: 0 } } });
 
 function refused(status: number, data: object) {
   return new AxiosError('failed', 'ERR_BAD_REQUEST', undefined, undefined, {
@@ -43,7 +47,7 @@ async function askForNewCodes(code = '123456') {
 describe('MfaSettings', () => {
   it('says it is on, since when, and how many recovery codes are left', async () => {
     open();
-    expect(await screen.findByRole('heading', { level: 2, name: 'Authenticator app' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Two-step sign in' })).toBeInTheDocument();
     expect(await screen.findByText('On')).toBeInTheDocument();
     expect(screen.getByText(/On since .*2026/)).toBeInTheDocument();
     expect(screen.getByText('8 recovery codes left')).toBeInTheDocument();
@@ -56,7 +60,7 @@ describe('MfaSettings', () => {
   });
 
   it('says it is off, and offers nothing to renew, when there is no app', async () => {
-    mfa.status.mockResolvedValue({ data: { data: { enabled: false, enabledAt: null, recoveryCodesLeft: 0 } } });
+    mfa.status.mockResolvedValue(off());
     open();
     expect(await screen.findByText('Off')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'New recovery codes' })).not.toBeInTheDocument();
@@ -112,5 +116,59 @@ describe('MfaSettings', () => {
     localStorage.setItem('ssms_locale', 'fr');
     open();
     expect(await screen.findByText('8 codes de récupération restants')).toBeInTheDocument();
+  });
+});
+
+describe('MfaSettings, turning it on and off', () => {
+  it('offers to turn it on while it is off', async () => {
+    mfa.status.mockResolvedValue(off());
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Turn on' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Turn on two-step sign in' });
+    expect(within(dialog).getByLabelText('Your password')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Turn off' })).not.toBeInTheDocument();
+  });
+
+  it('reads the status again once it is on, and the codes dialog cannot be closed before they are kept', async () => {
+    mfa.status.mockResolvedValueOnce(off()).mockResolvedValue(on(8));
+    mfa.enrollStart.mockResolvedValue({ data: { data: { secret: 'ABCDEFGH', otpauthUri: 'otpauth://totp/x?secret=ABCDEFGH' } } });
+    mfa.enrollConfirm.mockResolvedValue({ data: { data: { recoveryCodes: CODES } } });
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Turn on' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Turn on two-step sign in' });
+    fireEvent.change(within(dialog).getByLabelText('Your password'), { target: { value: 'my password' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Continue' }));
+    fireEvent.change(await within(dialog).findByLabelText('6 digit code'), { target: { value: '123456' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Turn on' }));
+    await within(dialog).findByText(CODES[0]);
+    expect(within(dialog).queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.getByRole('dialog', { name: 'Turn on two-step sign in' })).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'I saved these codes' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Done' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(await screen.findByText('8 recovery codes left')).toBeInTheDocument();
+    expect(reminder.refresh).toHaveBeenCalled();
+  });
+
+  it('offers to turn it off while it is on, and reads the status again after', async () => {
+    mfa.status.mockResolvedValueOnce(on(8)).mockResolvedValue(off());
+    mfa.disable.mockResolvedValue({ data: { data: null } });
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Turn off' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Turn off two-step sign in' });
+    fireEvent.change(within(dialog).getByLabelText('Your password'), { target: { value: 'my password' } });
+    fireEvent.change(within(dialog).getByLabelText('6 digit code'), { target: { value: '123456' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Turn off' }));
+    expect(await screen.findByText('Off')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Turn on' })).toBeInTheDocument();
+    expect(reminder.refresh).toHaveBeenCalled();
+  });
+
+  it('never offers an admin to turn it off', async () => {
+    mfa.status.mockResolvedValue(on(8, true));
+    open();
+    await screen.findByRole('button', { name: 'New recovery codes' });
+    expect(screen.queryByRole('button', { name: 'Turn off' })).not.toBeInTheDocument();
   });
 });

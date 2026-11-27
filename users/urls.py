@@ -4,6 +4,13 @@ from .closure_views import CancelDeleteAccountView, DeleteAccountView
 from .email_change_views import EmailChangeConfirmView, EmailChangeUndoView, EmailChangeView
 from .email_verification_views import ResendVerificationView, VerifyEmailView
 from .export_views import ExportView
+from .mfa_enroll_views import (
+    MfaDisableView,
+    MfaEnrollConfirmView,
+    MfaEnrollStartView,
+    MfaPromptSeenView,
+    MfaPromptView,
+)
 from .mfa_views import (
     MfaRecoveryCodesView,
     MfaSetupConfirmView,
@@ -24,6 +31,11 @@ urlpatterns = [
     path('logout',            LogoutView.as_view(),           name='auth_logout'),
     path('mfa',               MfaStatusView.as_view(),        name='auth_mfa_status'),
     path('mfa/recovery-codes', MfaRecoveryCodesView.as_view(), name='auth_mfa_recovery_codes'),
+    path('mfa/enroll/start',   MfaEnrollStartView.as_view(),   name='auth_mfa_enroll_start'),
+    path('mfa/enroll/confirm', MfaEnrollConfirmView.as_view(), name='auth_mfa_enroll_confirm'),
+    path('mfa/disable',        MfaDisableView.as_view(),       name='auth_mfa_disable'),
+    path('mfa/prompt',         MfaPromptView.as_view(),        name='auth_mfa_prompt'),
+    path('mfa/prompt/seen',    MfaPromptSeenView.as_view(),    name='auth_mfa_prompt_seen'),
     path('mfa/verify',        MfaVerifyView.as_view(),        name='auth_mfa_verify'),
     path('mfa/step-up',       MfaStepUpView.as_view(),        name='auth_mfa_step_up'),
     path('mfa/setup/start',   MfaSetupStartView.as_view(),    name='auth_mfa_setup_start'),

@@ -76,6 +76,14 @@ describe('Privacy policy page', () => {
     expect(section).not.toHaveTextContent(/only these two things/);
   });
 
+  it('says what two-step sign in keeps, and that recovery codes are kept only as fingerprints', () => {
+    renderPage(<PrivacyPolicyPage />, '/privacy');
+    const section = screen.getByRole('heading', { level: 2, name: /Information we collect/ }).closest('section') as HTMLElement;
+    expect(section).toHaveTextContent(
+      'Two-step sign in: if you start setting it up, we keep the key for your authenticator app, encrypted. Of your recovery codes we keep only fingerprints, which cannot be turned back into the codes. We also keep when we last showed the reminder and when you asked to be reminded later.',
+    );
+  });
+
   it('is dated the day of its latest change', () => {
     renderPage(<PrivacyPolicyPage />, '/privacy');
     expect(screen.getByText(/November 27, 2026/)).toBeInTheDocument();

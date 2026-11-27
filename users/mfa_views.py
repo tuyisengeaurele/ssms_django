@@ -1,4 +1,5 @@
-"""The code step of an admin's sign in, and the first time set-up of the authenticator app.
+"""The code step of a sign in, for an admin and for anyone who turned two-step sign in on, and an admin's first set-up of
+the authenticator app.
 
 None of these needs a session: the caller holds a challenge (users/mfa_challenge.py) from a correct password. They are
 open to anyone on purpose, throttled per address, and add no detail about why a challenge is refused.
@@ -15,14 +16,17 @@ from rest_framework.views import APIView
 
 from audit_log.utils import log_action
 from core import lockout
-from core.mail import Email, send_email
+from core.mail import send_email
 from core.mfa_guard import require_recent_mfa
+from core.mfa_prompt import may_be_reminded, should_prompt
 from core.permissions import RolePermission
-from core.throttles import MfaRateThrottle
+from core.throttles import MfaAccountThrottle, MfaRateThrottle, UserRateThrottle
 from core.utils import api_error, api_success
+from harvest.models import HarvestRecord
 from logs.security import record_security_event
 
 from . import mfa, mfa_challenge
+from .mfa_mail import mfa_email
 from .models import Role, SecondFactor, UserSession
 from .signin import finish_sign_in, too_many_attempts
 
@@ -41,13 +45,16 @@ def _start_over(message: str = CHALLENGE_GONE):
 
 
 def _open(request, step: str):
-    """The challenge in the request and the admin it names. Returns (held, user, None) or (None, None, answer)."""
+    """The challenge in the request and the person it names. Returns (held, user, None) or (None, None, answer).
+
+    The code step is for anyone with the app on. Setting it up from a sign in is for admins alone: everyone else sets it
+    up from inside the app, where the password is asked again."""
     try:
         held = mfa_challenge.read(request.data.get('challenge'))
     except mfa_challenge.ChallengeError:
         return None, None, _start_over()
-    user = User.objects.filter(pk=held.user_id, is_active=True, role=Role.ADMIN).first()
-    if held.step != step or user is None:
+    user = User.objects.filter(pk=held.user_id, is_active=True).first()
+    if held.step != step or user is None or (step == 'setup' and user.role != Role.ADMIN):
         return None, None, _start_over()
     return held, user, None
 
@@ -75,7 +82,7 @@ class _MfaView(APIView):
 
 class MfaVerifyView(_MfaView):
     def post(self, request):
-        """POST /api/auth/mfa/verify: a code from the app, or a recovery code, finishes an admin's sign in."""
+        """POST /api/auth/mfa/verify: a code from the app, or a recovery code, finishes a sign in."""
         held, user, problem = _open(request, 'code')
         if problem:
             return problem
@@ -84,7 +91,7 @@ class MfaVerifyView(_MfaView):
             return too_many_attempts(request, user.email, wait)
         factor = SecondFactor.objects.filter(user=user, enabled_at__isnull=False).first()
         if factor is None:
-            # Reset while the admin was typing. Starting over leads to set-up.
+            # Reset while the person was typing. Starting over leads an admin to set-up, and signs anyone else in.
             return _start_over()
 
         recovery = request.data.get('recovery_code')
@@ -188,18 +195,37 @@ class MfaStatusView(APIView):
     resource = 'second_factor'
 
     def get(self, request):
-        """GET /api/auth/mfa: is the app on, since when, and how many recovery codes are left. Nothing secret."""
-        factor = SecondFactor.objects.filter(user=request.user, enabled_at__isnull=False).first()
+        """GET /api/auth/mfa: is the app on and must it be, since when, and how many recovery codes are left. Nothing secret.
+
+        With `?trigger=` it also says whether to show the reminder at that moment. Asking changes nothing."""
+        user = request.user
+        factor = SecondFactor.objects.filter(user=user, enabled_at__isnull=False).first()
+        trigger = request.query_params.get('trigger')
+        session = UserSession.objects.filter(pk=getattr(request, 'session_id', None) or '', user=user).first()
+        who = {
+            'enabled': factor is not None,
+            'shared_device': bool(session and session.is_shared_device),
+            'acting': getattr(request, 'acting_admin', None) is not None,
+        }
+        show = bool(trigger) and should_prompt(user, trigger, timezone.now(), **who)
+        if show and trigger == 'sensitive_action':
+            # The moment is the first lot a farmer shares, not each one after it.
+            show = not HarvestRecord.objects.filter(batch__farm__owner=user, shared_at__isnull=False).exists()
         return api_success({
             'enabled': factor is not None,
+            'required': user.role == Role.ADMIN,
             'enabled_at': factor.enabled_at if factor else None,
-            'recovery_codes_left': mfa.recovery_codes_left(request.user) if factor else 0,
+            'recovery_codes_left': mfa.recovery_codes_left(user) if factor else 0,
+            'prompt': {'show': show, 'trigger': trigger if show else None},
+            # The quiet line on a dashboard: for somebody who has put the reminder off at least once.
+            'reminder_line': may_be_reminded(user, **who) and user.mfa_prompt_dismissals > 0,
         })
 
 
 class MfaRecoveryCodesView(APIView):
     permission_classes = [IsAuthenticated, RolePermission]
     resource = 'second_factor'
+    throttle_classes = [UserRateThrottle, MfaAccountThrottle]
 
     def post(self, request):
         """POST /api/auth/mfa/recovery-codes: a current app code replaces all eight recovery codes. They are shown once."""
@@ -213,7 +239,7 @@ class MfaRecoveryCodesView(APIView):
 
 
 class AdminMfaResetView(APIView):
-    """Another admin resets an admin's authenticator app, for a lost phone and lost recovery codes."""
+    """An admin resets somebody's authenticator app, for a lost phone and lost recovery codes."""
     permission_classes = [IsAuthenticated, RolePermission]
     resource = 'second_factor'
     actions = {'post': 'reset'}
@@ -223,7 +249,7 @@ class AdminMfaResetView(APIView):
         require_recent_mfa(request)
         if user_id == request.user.pk:
             return api_error("You can't reset your own authenticator app here. Ask another admin.", 400)
-        target = User.objects.filter(pk=user_id, role=Role.ADMIN).first()
+        target = User.objects.filter(pk=user_id).first()
         if target is None or not SecondFactor.objects.filter(user=target).exists():
             return api_error("We couldn't find an authenticator app to reset for that person.", 404)
 
@@ -231,17 +257,11 @@ class AdminMfaResetView(APIView):
         record_security_event('mfa_reset', request, user=target, detail=f'Reset by {request.user.email}')
         log_action(request, 'UPDATE', 'User', target.pk, f'Reset the second factor of {target.email}')
         try:
-            send_email('Your authenticator app was reset', [target.email], Email(
-                heading='Your authenticator app was reset',
-                greeting=f'Hi {target.name},',
-                intro=(
-                    f'{request.user.name} ({request.user.email}) reset the authenticator app on your SSMS account.',
-                    'You will be asked to set it up again the next time you sign in.',
-                ),
-                closing=('If you did not expect this, please contact the SSMS team.',),
-                reason='You received this because the sign in protection on your SSMS account was changed.',
-            ))
+            subject, email = mfa_email('reset', target, by=request.user)
+            send_email(subject, [target.email], email)
         except Exception:
             # A mail problem never undoes a reset.
             logger.exception('Could not tell %s that their authenticator app was reset', target.email)
-        return api_success(None, 'Authenticator app reset. They will set it up again at their next sign in.')
+        after = ('They will set it up again at their next sign in.' if target.role == Role.ADMIN
+                 else 'They can sign in with their password.')
+        return api_success(None, f'Authenticator app reset. {after}')

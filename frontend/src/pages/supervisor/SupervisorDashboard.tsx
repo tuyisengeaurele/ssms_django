@@ -1,3 +1,4 @@
+import TwoStepLine from '../../components/auth/TwoStepLine';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -156,6 +157,8 @@ export default function SupervisorDashboard() {
           <span>{t('svNoCoop')}</span>
         </div>
       )}
+
+      <TwoStepLine />
 
       <QuickActions role={user?.role === 'ADMIN' ? 'ADMIN_MONITOR' : 'SUPERVISOR'} counts={{ alerts: unread }} />
 

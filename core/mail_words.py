@@ -1,8 +1,9 @@
-"""The words an email has in the language of its reader: the fixed lines of the template, and the contact emails.
+"""The words an email has in the language of its reader: the fixed lines of the template, the contact emails, and the
+emails about two-step sign in.
 
-Only the emails that answer the contact form are sent in French or Kinyarwanda. Every other email is English and uses the
-English words here, which are the lines the template always had. French and Kinyarwanda are drafts until a native speaker
-has read them, like every other text in those languages.
+Only those are sent in French or Kinyarwanda. Every other email is English and uses the English words here, which are the
+lines the template always had. French and Kinyarwanda are drafts until a native speaker has read them, like every other
+text in those languages.
 """
 
 WORDS = {
@@ -19,6 +20,19 @@ WORDS = {
         'ack_intro': 'Thank you for contacting SSMS. We have received your message and will get back to you shortly.',
         'ack_closing': 'If you did not send a message to us, you can ignore this email.',
         'ack_reason': 'You received this because this address was used on the SSMS contact form.',
+        'mfa_greeting': 'Hello {name},',
+        'mfa_reason': 'You received this because the sign in protection on your SSMS account was changed.',
+        'mfa_on_subject': 'Two-step sign in is on',
+        'mfa_on_intro': 'Two-step sign in was turned on for your SSMS account. Your other devices were signed out.',
+        'mfa_on_closing': 'If this was not you, contact the SSMS team right away and reset your password.',
+        'mfa_off_subject': 'Two-step sign in is off',
+        'mfa_off_intro': 'Two-step sign in was turned off for your SSMS account. Your password alone now signs you in. Your other devices were signed out.',
+        'mfa_off_closing': 'If this was not you, change your password now.',
+        'mfa_reset_subject': 'Your authenticator app was reset',
+        'mfa_reset_intro': '{name} ({email}) reset the authenticator app on your SSMS account.',
+        'mfa_reset_again': 'You can sign in with your password and turn two-step sign in on again in Settings.',
+        'mfa_reset_admin': 'You will be asked to set it up again the next time you sign in.',
+        'mfa_reset_closing': 'If you did not expect this, please contact the SSMS team.',
     },
     'fr': {
         'sign_off': "L'équipe SSMS",
@@ -33,6 +47,19 @@ WORDS = {
         'ack_intro': "Merci d'avoir contacté SSMS. Nous avons reçu votre message et nous vous répondrons bientôt.",
         'ack_closing': 'Si vous ne nous avez pas écrit, vous pouvez ignorer cet e-mail.',
         'ack_reason': 'Vous recevez ce message parce que cette adresse a été utilisée dans le formulaire de contact de SSMS.',
+        'mfa_greeting': 'Bonjour {name},',
+        'mfa_reason': 'Vous recevez ce message parce que la protection de la connexion à votre compte SSMS a changé.',
+        'mfa_on_subject': 'La connexion en deux étapes est activée',
+        'mfa_on_intro': 'La connexion en deux étapes a été activée sur votre compte SSMS. Vos autres appareils ont été déconnectés.',
+        'mfa_on_closing': "Si ce n'était pas vous, contactez vite l'équipe SSMS et réinitialisez votre mot de passe.",
+        'mfa_off_subject': 'La connexion en deux étapes est désactivée',
+        'mfa_off_intro': 'La connexion en deux étapes a été désactivée sur votre compte SSMS. Votre mot de passe suffit désormais pour vous connecter. Vos autres appareils ont été déconnectés.',
+        'mfa_off_closing': "Si ce n'était pas vous, changez votre mot de passe maintenant.",
+        'mfa_reset_subject': "Votre application d'authentification a été réinitialisée",
+        'mfa_reset_intro': "{name} ({email}) a réinitialisé l'application d'authentification de votre compte SSMS.",
+        'mfa_reset_again': 'Vous pouvez vous connecter avec votre mot de passe et réactiver la connexion en deux étapes dans les paramètres.',
+        'mfa_reset_admin': 'Vous devrez la configurer à nouveau à votre prochaine connexion.',
+        'mfa_reset_closing': "Si vous ne vous y attendiez pas, contactez l'équipe SSMS.",
     },
     'rw': {
         'sign_off': 'Itsinda rya SSMS',
@@ -47,5 +74,18 @@ WORDS = {
         'ack_intro': 'Murakoze kwandikira SSMS. Twakiriye ubutumwa bwawe kandi tuzabasubiza vuba.',
         'ack_closing': 'Niba utarigeze utwandikira, ushobora kwirengagiza iyi imeri.',
         'ack_reason': 'Wakiriye ubu butumwa kubera ko iyi aderesi yakoreshejwe mu ifishi yo kutwandikira ya SSMS.',
+        'mfa_greeting': 'Muraho {name},',
+        'mfa_reason': 'Wakiriye ubu butumwa kubera ko uburinzi bwo kwinjira kuri konti yawe ya SSMS bwahindutse.',
+        'mfa_on_subject': 'Kwinjira mu ntambwe ebyiri byafunguwe',
+        'mfa_on_intro': 'Kwinjira mu ntambwe ebyiri byafunguwe kuri konti yawe ya SSMS. Ibindi bikoresho byawe byasohowe.',
+        'mfa_on_closing': "Niba atari wowe, hamagara itsinda rya SSMS vuba kandi uhindure ijambobanga ryawe.",
+        'mfa_off_subject': 'Kwinjira mu ntambwe ebyiri byafunzwe',
+        'mfa_off_intro': 'Kwinjira mu ntambwe ebyiri byafunzwe kuri konti yawe ya SSMS. Ubu ijambobanga ryawe rirahagije kugira ngo winjire. Ibindi bikoresho byawe byasohowe.',
+        'mfa_off_closing': 'Niba atari wowe, hindura ijambobanga ryawe nonaha.',
+        'mfa_reset_subject': 'Porogaramu yawe yo kwemeza yasubijwe ku ntangiriro',
+        'mfa_reset_intro': '{name} ({email}) yasubije ku ntangiriro porogaramu yo kwemeza ya konti yawe ya SSMS.',
+        'mfa_reset_again': 'Ushobora kwinjira ukoresheje ijambobanga ryawe, ukongera gufungura kwinjira mu ntambwe ebyiri mu Igenamiterere.',
+        'mfa_reset_admin': 'Uzasabwa kongera kuyishyiraho ubutaha winjira.',
+        'mfa_reset_closing': "Niba utari ubyiteze, vugana n'itsinda rya SSMS.",
     },
 }
