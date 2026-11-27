@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useId, useState } from 'react';
+import { FormEvent, useId, useState } from 'react';
 import axios from 'axios';
 import { useLanguage } from '../../context/LanguageContext';
 import { useApiError } from '../../hooks/useApiError';
@@ -25,14 +25,18 @@ export default function CodeModal({ open, title, body, confirmLabel, onSubmit, o
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  // Each time it opens it starts clean, so an old code or an old complaint is never shown.
-  useEffect(() => {
+  // Each time it opens it starts clean, so an old code or an old complaint is never shown. This is done while rendering and
+  // not in an effect: an effect runs after the dialog is drawn, so the last use would be on screen first. Nothing is cleared
+  // on the way out, so it fades as it was.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) {
       setCode('');
       setError('');
       setBusy(false);
     }
-  }, [open]);
+  }
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
