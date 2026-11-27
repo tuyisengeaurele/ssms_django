@@ -68,6 +68,19 @@ def test_every_kind_has_a_plain_label():
             'session_revoked', 'session_reused', 'session_idle', 'permission_denied', 'throttled'} <= set(KINDS)
 
 
+def test_every_two_step_event_has_words_on_the_screen_and_can_be_filtered_by():
+    # Without them the admin's Logs page shows the code name, and the kind is missing from its filter.
+    from pathlib import Path
+
+    web = Path(__file__).resolve().parents[1] / 'frontend' / 'src'
+    words = (web / 'i18n' / 'pages.ts').read_text(encoding='utf-8')
+    panel = (web / 'pages' / 'admin' / 'LogStreamPanel.tsx').read_text(encoding='utf-8')
+    kinds = [kind for kind in KINDS if kind.startswith('mfa_')]
+    assert 'mfa_disabled' in kinds
+    assert [kind for kind in kinds if f'lgKind_{kind}: k(' not in words] == []
+    assert [kind for kind in kinds if f"'{kind}'" not in panel] == []
+
+
 # ── the places that write ───────────────────────────────────────────────────────────────────
 
 def test_signing_in_is_recorded():

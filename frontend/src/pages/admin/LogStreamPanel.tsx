@@ -16,6 +16,7 @@ type Row = SecurityRow | RequestRow | JobRow;
 const SECURITY_KINDS = [
   'login_ok', 'login_failed', 'lockout', 'password_changed', 'reset_requested', 'new_device',
   'session_revoked', 'session_reused', 'session_idle', 'permission_denied', 'throttled',
+  'mfa_enrolled', 'mfa_disabled', 'mfa_ok', 'mfa_failed', 'mfa_recovery_used', 'mfa_recovery_regenerated', 'mfa_reset',
   'support_requested', 'support_allowed', 'support_rejected', 'support_started', 'support_ended', 'support_expired', 'support_refused',
   'csp_violation',
 ];
