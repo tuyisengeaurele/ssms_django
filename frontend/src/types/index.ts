@@ -437,11 +437,19 @@ export function isMfaRequired(data: AuthResponse | MfaRequired): data is MfaRequ
   return 'mfa' in data;
 }
 
-/** An admin's authenticator app. Nothing secret is in it. See users/mfa_views.py. */
+/** The moments at which a farmer or supervisor may be reminded about two-step sign in. See core/mfa_prompt.py. */
+export type MfaTrigger = 'login' | 'password_changed' | 'new_device' | 'sensitive_action';
+
+/** A person's own two-step sign in. Nothing secret is in it. See users/mfa_views.py. */
 export interface MfaStatus {
   enabled: boolean;
+  /** True for an admin, who cannot turn it off. */
+  required: boolean;
   enabledAt: string | null;
   recoveryCodesLeft: number;
+  prompt: { show: boolean; trigger: MfaTrigger | null };
+  /** The quiet "Secure your account" line: off, and the reminder was put off at least once. */
+  reminderLine: boolean;
 }
 
 /** One batch of the side by side comparison, from GET /api/batches/compare. */

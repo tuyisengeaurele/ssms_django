@@ -1505,6 +1505,20 @@ tr.is-off td:last-child { opacity: 1; }
   font-size: 1rem;
 }
 
+/* Turning two-step sign in on and off, inside a dialog */
+.two-step { display: grid; gap: 12px; }
+.two-step h3 { margin: 0; font-size: 1rem; }
+.two-step .form-group { margin: 0; }
+.two-step .modal-text { margin: 0; }
+.two-step__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.two-step__qr { justify-self: center; padding: 6px; border: 1px solid var(--border-light); border-radius: 16px; background: #fff; line-height: 0; }
+.two-step__qr svg { max-width: 100%; height: auto; }
+.two-step__keylabel { margin: 0; color: var(--text-muted); font-size: 0.85rem; text-align: center; }
+.two-step__key { margin: -8px 0 0; color: var(--text); font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 0.95rem; letter-spacing: 0.04em; text-align: center; overflow-wrap: anywhere; }
+.two-step__tick { display: flex; align-items: center; gap: 10px; min-height: 44px; color: var(--text); font-weight: 600; cursor: pointer; }
+.two-step__tick input { width: 20px; height: 20px; flex: none; accent-color: var(--primary); }
+.two-step__switch { justify-self: start; }
+
 /* Printing the recovery codes: only the list is left on the paper. */
 @media print {
   body.printing-codes * { visibility: hidden; }

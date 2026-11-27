@@ -92,7 +92,8 @@ export default function SecuritySettings() {
         ) : null}
       </Panel>
 
-      {user?.role === 'ADMIN' ? <MfaSettings /> : null}
+      {/* Not while an admin acts as the person: how they sign in is theirs alone, and the server refuses it. */}
+      {user && !acting ? <MfaSettings /> : null}
 
       {/* Not while an admin acts as the person: the server refuses the list to them, and it is the person's to read. */}
       {user && user.role !== 'ADMIN' && !acting ? <SupportHistory /> : null}

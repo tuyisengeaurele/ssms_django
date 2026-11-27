@@ -1,16 +1,28 @@
 import { useEffect, useState } from 'react';
 import CodeModal from '../../components/auth/CodeModal';
 import RecoveryCodes from '../../components/auth/RecoveryCodes';
+import TurnOffTwoStepDialog from '../../components/auth/TurnOffTwoStepDialog';
+import TwoStepSetup from '../../components/auth/TwoStepSetup';
+import { Icon } from '../../components/ui/Icon';
+import Modal from '../../components/ui/Modal';
 import Panel from '../../components/ui/Panel';
 import { useLanguage } from '../../context/LanguageContext';
+import { useToast } from '../../context/ToastContext';
 import { mfaService } from '../../services/mfa.service';
 import type { MfaStatus } from '../../types';
 import { fill } from '../../utils/fill';
 import { dateFormat } from '../../utils/dateFormat';
 
-/** An admin's authenticator app: is it on, how many recovery codes are left, and a way to make new ones. */
+/** A person's two-step sign in: turn it on or off, see how many recovery codes are left, and make new ones. */
 export default function MfaSettings() {
   const { t, tn, locale } = useLanguage();
+  const { success } = useToast();
+  const [settingUp, setSettingUp] = useState(false);
+  // True once the recovery codes are on screen: from then on the dialog closes only when they are kept.
+  const [mustFinish, setMustFinish] = useState(false);
+  const [turningOff, setTurningOff] = useState(false);
+  // Counted up to read the status again after a change.
+  const [version, setVersion] = useState(0);
   const [status, setStatus] = useState<MfaStatus | null>(null);
   const [failed, setFailed] = useState(false);
   const [asking, setAsking] = useState(false);
@@ -24,7 +36,25 @@ export default function MfaSettings() {
       .then((res) => { if (live) setStatus(res.data.data); })
       .catch(() => { if (live) setFailed(true); });
     return () => { live = false; };
-  }, []);
+  }, [version]);
+
+  const closeSetup = () => {
+    setSettingUp(false);
+    setMustFinish(false);
+  };
+
+  const turnedOn = () => {
+    closeSetup();
+    setVersion((n) => n + 1);
+    success(t('mfaTurnedOn'));
+  };
+
+  const turnedOff = () => {
+    setTurningOff(false);
+    setFresh(null);
+    setVersion((n) => n + 1);
+    success(t('mfaTurnedOff'));
+  };
 
   const makeNewCodes = async (code: string) => {
     const res = await mfaService.newRecoveryCodes(code);
@@ -42,9 +72,16 @@ export default function MfaSettings() {
         title={t('adMfaPanelTitle')}
         note={t('adMfaPanelNote')}
         actions={
-          status?.enabled ? (
-            <button className="btn btn-secondary btn-sm" onClick={() => setAsking(true)}>{t('adMfaNewCodes')}</button>
-          ) : undefined
+          !status ? undefined : status.enabled ? (
+            <>
+              <button className="btn btn-secondary btn-sm" onClick={() => setAsking(true)}><Icon name="refresh" size={13} />{t('adMfaNewCodes')}</button>
+              {status.required ? null : (
+                <button className="btn btn-secondary btn-sm btn-quiet-danger" onClick={() => setTurningOff(true)}><Icon name="deactivate" size={13} />{t('mfaTurnOff')}</button>
+              )}
+            </>
+          ) : (
+            <button className="btn btn-primary btn-sm" onClick={() => setSettingUp(true)}><Icon name="lock" size={13} />{t('mfaTurnOn')}</button>
+          )
         }
       >
         {failed ? <div className="alert alert-error" role="alert">{t('adMfaStatusError')}</div> : null}
@@ -81,6 +118,13 @@ export default function MfaSettings() {
         onSubmit={makeNewCodes}
         onCancel={() => setAsking(false)}
       />
+
+      <Modal open={settingUp} onClose={closeSetup} title={t('mfaTurnOnTitle')} dismissible={!mustFinish}>
+        {/* Drawn only while open, so nothing typed or shown outlives the dialog. */}
+        {settingUp ? <TwoStepSetup onDone={turnedOn} onCancel={closeSetup} onCodesShown={() => setMustFinish(true)} /> : null}
+      </Modal>
+
+      <TurnOffTwoStepDialog open={turningOff} onClose={() => setTurningOff(false)} onDone={turnedOff} />
     </>
   );
 }

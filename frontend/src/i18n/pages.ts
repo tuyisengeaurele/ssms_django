@@ -2049,13 +2049,17 @@ export const pageTranslations = {
   adMfaStartError: k("Could not start set-up. Sign in again.", "Configuration impossible. Reconnectez-vous.", "Ntitwashoboye gutangira. Ongera winjire."),
 
   // Looking after the authenticator app in Settings, asking for a fresh code, and resetting another admin's app.
-  adMfaPanelTitle: k("Authenticator app", "Application d’authentification", "Porogaramu yemeza umwirondoro"),
-  adMfaPanelNote: k(
-    "Admin sign in needs a code from this app.",
-    "La connexion administrateur demande un code de cette application.",
-    "Kwinjira k’ubuyobozi bisaba kode ya porogaramu.",
-  ),
+  adMfaPanelTitle: k("Two-step sign in", "Connexion en deux étapes", "Kwinjira mu ntambwe ebyiri"),
+  adMfaPanelNote: k("A code from your phone each time you sign in.", "Un code de votre téléphone à chaque connexion.", "Kode yo kuri telefoni yawe igihe cyose winjiye."),
   adMfaPrint: k("Print", "Imprimer", "Capa"),
+  mfaTurnOn: k("Turn on", "Activer", "Fungura"),
+  mfaTurnOff: k("Turn off", "Désactiver", "Funga"),
+  mfaTurnOnTitle: k("Turn on two-step sign in", "Activer la connexion en deux étapes", "Fungura kwinjira mu ntambwe ebyiri"),
+  mfaTurnOffTitle: k("Turn off two-step sign in", "Désactiver la connexion en deux étapes", "Funga kwinjira mu ntambwe ebyiri"),
+  mfaTurnedOn: k("Two-step sign in is on.", "La connexion en deux étapes est activée.", "Kwinjira mu ntambwe ebyiri byafunguwe."),
+  mfaTurnedOff: k("Two-step sign in is off.", "La connexion en deux étapes est désactivée.", "Kwinjira mu ntambwe ebyiri byafunzwe."),
+  mfaOthersOut: k("Your other devices will be signed out.", "Vos autres appareils seront déconnectés.", "Ibindi bikoresho byawe bizasohorwa."),
+  mfaPassword: k("Your password", "Votre mot de passe", "Ijambobanga ryawe"),
   mfaLost: k("Lost your phone? Use a recovery code, or ask the SSMS team.", "Téléphone perdu ? Utilisez un code de secours ou demandez à l'équipe SSMS.", "Watakaje telefoni? Koresha kode yo kugarura, cyangwa ubaze itsinda rya SSMS."),
   adMfaOn: k("On", "Activée", "Irakora"),
   adMfaOff: k("Off", "Désactivée", "Ntirakora"),
