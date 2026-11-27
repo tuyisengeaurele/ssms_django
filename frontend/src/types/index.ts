@@ -24,6 +24,8 @@ export interface CooperativeDetail extends Cooperative {
 
 export interface User {
   id: string;
+  /** Only in the admin's list of people: whether two-step sign in is on. */
+  mfaEnabled?: boolean;
   name: string;
   email: string;
   role: Role;

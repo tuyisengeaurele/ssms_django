@@ -16,7 +16,7 @@ from rest_framework.views import APIView
 
 from audit_log.utils import log_action
 from core import lockout
-from core.mail import Email, send_email
+from core.mail import send_email
 from core.mfa_guard import require_recent_mfa
 from core.permissions import RolePermission
 from core.throttles import MfaAccountThrottle, MfaRateThrottle, UserRateThrottle
@@ -24,6 +24,7 @@ from core.utils import api_error, api_success
 from logs.security import record_security_event
 
 from . import mfa, mfa_challenge
+from .mfa_mail import mfa_email
 from .models import Role, SecondFactor, UserSession
 from .signin import finish_sign_in, too_many_attempts
 
@@ -219,7 +220,7 @@ class MfaRecoveryCodesView(APIView):
 
 
 class AdminMfaResetView(APIView):
-    """Another admin resets an admin's authenticator app, for a lost phone and lost recovery codes."""
+    """An admin resets somebody's authenticator app, for a lost phone and lost recovery codes."""
     permission_classes = [IsAuthenticated, RolePermission]
     resource = 'second_factor'
     actions = {'post': 'reset'}
@@ -229,7 +230,7 @@ class AdminMfaResetView(APIView):
         require_recent_mfa(request)
         if user_id == request.user.pk:
             return api_error("You can't reset your own authenticator app here. Ask another admin.", 400)
-        target = User.objects.filter(pk=user_id, role=Role.ADMIN).first()
+        target = User.objects.filter(pk=user_id).first()
         if target is None or not SecondFactor.objects.filter(user=target).exists():
             return api_error("We couldn't find an authenticator app to reset for that person.", 404)
 
@@ -237,17 +238,11 @@ class AdminMfaResetView(APIView):
         record_security_event('mfa_reset', request, user=target, detail=f'Reset by {request.user.email}')
         log_action(request, 'UPDATE', 'User', target.pk, f'Reset the second factor of {target.email}')
         try:
-            send_email('Your authenticator app was reset', [target.email], Email(
-                heading='Your authenticator app was reset',
-                greeting=f'Hi {target.name},',
-                intro=(
-                    f'{request.user.name} ({request.user.email}) reset the authenticator app on your SSMS account.',
-                    'You will be asked to set it up again the next time you sign in.',
-                ),
-                closing=('If you did not expect this, please contact the SSMS team.',),
-                reason='You received this because the sign in protection on your SSMS account was changed.',
-            ))
+            subject, email = mfa_email('reset', target, by=request.user)
+            send_email(subject, [target.email], email)
         except Exception:
             # A mail problem never undoes a reset.
             logger.exception('Could not tell %s that their authenticator app was reset', target.email)
-        return api_success(None, 'Authenticator app reset. They will set it up again at their next sign in.')
+        after = ('They will set it up again at their next sign in.' if target.role == Role.ADMIN
+                 else 'They can sign in with their password.')
+        return api_success(None, f'Authenticator app reset. {after}')

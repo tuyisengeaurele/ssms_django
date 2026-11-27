@@ -363,7 +363,7 @@ describe('Users page', () => {
   });
 
   describe("Resetting another admin's authenticator app", () => {
-    const another = { id: 'a2', name: 'Second Admin', email: 'second@ssms.com', role: 'ADMIN', isActive: true };
+    const another = { id: 'a2', name: 'Second Admin', email: 'second@ssms.com', role: 'ADMIN', isActive: true, mfaEnabled: true };
     const gone = { id: 'a3', name: 'Old Admin', email: 'old@ssms.com', role: 'ADMIN', isActive: false };
     const refusedWith = (status: number, data: object) =>
       new AxiosError('failed', 'ERR_BAD_REQUEST', undefined, undefined, {
@@ -383,6 +383,47 @@ describe('Users page', () => {
       expect(resetButton(await rowOf('Bruce Ishimwe'))).toBeNull();
       fireEvent.click(screen.getByRole('tab', { name: /Deleted/ }));
       expect(resetButton(await rowOf('Old Admin'))).toBeNull();
+    });
+
+    // Farmers and supervisors may turn it on too. The button is for whoever has it on, whatever their role.
+    const onePerson = (id: string, change: object) =>
+      api.getUsers.mockResolvedValue({ data: { data: [...people.map((p) => (p.id === id ? { ...p, ...change } : p)), another].map(withBase) } });
+
+    it('is offered on a farmer who has it on, and not on an admin who has not', async () => {
+      const bare = { id: 'a4', name: 'New Admin', email: 'new@ssms.com', role: 'ADMIN', isActive: true, mfaEnabled: false };
+      api.getUsers.mockResolvedValue({ data: { data: [...people.map((p) => (p.id === 'f1' ? { ...p, mfaEnabled: true } : p)), bare].map(withBase) } });
+      open();
+      expect(resetButton(await rowOf('Bruce Ishimwe'))).not.toBeNull();
+      expect(resetButton(await rowOf('Coop Supervisor'))).toBeNull();
+      expect(resetButton(await rowOf('New Admin'))).toBeNull();
+    });
+
+    it('says a farmer signs in with their password afterwards, and takes the button away', async () => {
+      mfa.resetFor.mockResolvedValue({ data: { data: null } });
+      onePerson('f1', { mfaEnabled: true });
+      open();
+      fireEvent.click(await within(await rowOf('Bruce Ishimwe')).findByRole('button', { name: /Reset the authenticator app of/ }));
+      const dialog = await screen.findByRole('dialog', { name: 'Reset authenticator app' });
+      expect(dialog).toHaveTextContent('Bruce Ishimwe (bruce@gmail.com) is signed out everywhere and can sign in with their password.');
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Reset' }));
+      expect(await screen.findByText('Bruce Ishimwe can sign in with their password.', {}, { timeout: 5000 })).toBeInTheDocument();
+      expect(mfa.resetFor).toHaveBeenCalledWith('f1');
+      await waitFor(async () => expect(resetButton(await rowOf('Bruce Ishimwe'))).toBeNull());
+    });
+
+    it('keeps the button on a person whose role was just changed', async () => {
+      onePerson('f1', { mfaEnabled: true });
+      // The answer to a change says nothing about two-step sign in, so the row keeps what the list said.
+      api.updateRole.mockResolvedValue({ data: { data: withBase({ ...people[2], role: 'SUPERVISOR' }) } });
+      open();
+      fireEvent.click(await within(await rowOf('Bruce Ishimwe')).findByRole('button', { name: /^Edit/ }));
+      const dialog = await screen.findByRole('dialog');
+      fireEvent.change(within(dialog).getByLabelText('Role'), { target: { value: 'SUPERVISOR' } });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Review changes' }));
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Yes, save' }));
+      await waitFor(() => expect(api.updateRole).toHaveBeenCalled());
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(resetButton(await rowOf('Bruce Ishimwe'))).not.toBeNull();
     });
 
     it('asks first, says who and what happens, and does nothing on Cancel', async () => {

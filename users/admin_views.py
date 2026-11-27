@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.db import IntegrityError
+from django.db.models import Exists, OuterRef
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework.exceptions import ErrorDetail
@@ -21,8 +22,9 @@ from core.tokens import revoke_all_refresh_tokens
 from core.utils import api_error, api_success
 from logs.security import record_security_event
 
+from .models import SecondFactor
 from .phone_numbers import describe_change, phone_in_use
-from .serializers import PHONE_TAKEN, AdminCreateUserSerializer, PhoneField, UserSerializer
+from .serializers import PHONE_TAKEN, AdminCreateUserSerializer, AdminUserSerializer, PhoneField, UserSerializer
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -62,8 +64,9 @@ class AdminUserListCreateView(APIView):
     def get(self, request):
         """GET /api/admin/users, list every user."""
         # The cooperative name is read for every row, so it is fetched in the same query instead of once per person.
-        users = User.objects.select_related('cooperative').order_by('role', 'name')
-        return api_success(UserSerializer(users, many=True).data)
+        factor = SecondFactor.objects.filter(user=OuterRef('pk'), enabled_at__isnull=False)
+        users = User.objects.select_related('cooperative').annotate(mfa_on=Exists(factor)).order_by('role', 'name')
+        return api_success(AdminUserSerializer(users, many=True).data)
 
     def post(self, request):
         """POST /api/admin/users, an admin adds a person with the role they choose."""
