@@ -15,6 +15,26 @@ export interface Announcement {
   showUntil: string;
 }
 
+/** An announcement as the admin's page sees it: also when it starts, who sees it and how it stands. */
+export interface AdminAnnouncement extends Announcement {
+  showFrom: string;
+  showPublic: boolean;
+  endedAt: string | null;
+  status: 'scheduled' | 'showing' | 'ended';
+  createdBy: { id: string; name: string } | null;
+}
+
+/** What the admin sends to write one. A change sends only the fields that differ. */
+export interface AnnouncementBody {
+  kind: AnnouncementKind;
+  textEn: string;
+  textFr: string;
+  textRw: string;
+  showPublic: boolean;
+  showFrom: string;
+  showUntil: string;
+}
+
 export type AlertType = 'TEMPERATURE' | 'HUMIDITY' | 'DISEASE' | 'STAGE_CHANGE' | 'SYSTEM';
 
 export interface Cooperative {

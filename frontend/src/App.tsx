@@ -44,6 +44,7 @@ const DevicesPage = lazy(() => import('./pages/shared/DevicesPage'));
 const BatchesPage = lazy(() => import('./pages/farmer/BatchesPage'));
 const AdminContactsPage = lazy(() => import('./pages/admin/AdminContactsPage'));
 const AdminRequestsPage = lazy(() => import('./pages/admin/AdminRequestsPage'));
+const AdminAnnouncementsPage = lazy(() => import('./pages/admin/AdminAnnouncementsPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage'));
 const PublicLotPage = lazy(() => import('./pages/PublicLotPage'));
@@ -119,6 +120,7 @@ export default function App() {
                 <Route path="/admin/users"            element={<AdminUsersPage />} />
                 <Route path="/admin/contacts"         element={<AdminContactsPage />} />
                 <Route path="/admin/requests"         element={<AdminRequestsPage />} />
+                <Route path="/admin/announcements"    element={<AdminAnnouncementsPage />} />
               </Route>
 
             </Route>

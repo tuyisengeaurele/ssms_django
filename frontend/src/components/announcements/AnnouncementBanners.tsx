@@ -5,13 +5,10 @@ import type { Locale } from '../../i18n/locales';
 import type { Announcement, AnnouncementKind } from '../../types';
 import { Icon, type IconName } from '../ui/Icon';
 import './announcements.css';
+import { KIND_WORDS } from './kinds';
 
 // The type is told three ways: the word, the icon and the colour.
-const LOOK: Record<AnnouncementKind, { word: string; icon: IconName }> = {
-  information: { word: 'annInformation', icon: 'info' },
-  maintenance: { word: 'annMaintenance', icon: 'settings' },
-  urgent: { word: 'annUrgent', icon: 'warning' },
-};
+const ICON: Record<AnnouncementKind, IconName> = { information: 'info', maintenance: 'settings', urgent: 'warning' };
 
 interface Props {
   items: Announcement[];
@@ -19,9 +16,11 @@ interface Props {
   onClose?: (item: Announcement) => void;
   /** Draw in this language instead of the screen language, as the admin's preview does. */
   locale?: Locale;
+  /** False where the words change as somebody types, so a screen reader is not told each time. */
+  live?: boolean;
 }
 
-export default function AnnouncementBanners({ items, onClose, locale }: Props) {
+export default function AnnouncementBanners({ items, onClose, locale, live = true }: Props) {
   const screen = useLanguage().locale;
   const shown = locale ?? screen;
   const id = useId();
@@ -34,16 +33,16 @@ export default function AnnouncementBanners({ items, onClose, locale }: Props) {
   if (items.length === 0) return null;
 
   return (
-    <section className="announcements" aria-label={say(shown, 'annRegion')} aria-live="polite" lang={locale}>
+    <section className="announcements" aria-label={say(shown, 'annRegion')} aria-live={live ? 'polite' : undefined} lang={locale}>
       <ul>
         {items.map((item) => {
           const own = item.text[shown];
           const textId = `${id}-${item.id}`;
           return (
             <li key={item.id} className={`announcement announcement--${item.kind}`}>
-              <Icon name={LOOK[item.kind].icon} className="announcement-icon" strokeWidth={2} />
+              <Icon name={ICON[item.kind]} className="announcement-icon" strokeWidth={2} />
               <p className="announcement-body">
-                <strong className="announcement-kind">{say(shown, LOOK[item.kind].word)}</strong>{' '}
+                <strong className="announcement-kind">{say(shown, KIND_WORDS[item.kind])}</strong>{' '}
                 <span id={textId} className="announcement-text" lang={own ? shown : 'en'}>{own || item.text.en}</span>
               </p>
               {onClose && item.kind !== 'urgent' && (

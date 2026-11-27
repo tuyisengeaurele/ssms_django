@@ -1,4 +1,4 @@
-import type { Announcement } from '../types';
+import type { AdminAnnouncement, Announcement, AnnouncementBody, ApiResponse } from '../types';
 import api from './api';
 
 /**
@@ -23,6 +23,12 @@ function rowsOf(body: unknown): Announcement[] | null {
 }
 
 export const announcementService = {
+  // The admin's page. These are ordinary requests that a person made, so they may fail out loud.
+  all: () => api.get<ApiResponse<AdminAnnouncement[]>>('/admin/announcements'),
+  create: (body: AnnouncementBody) => api.post<ApiResponse<AdminAnnouncement>>('/admin/announcements', body),
+  update: (id: number, changes: Partial<AnnouncementBody>) => api.patch<ApiResponse<AdminAnnouncement>>(`/admin/announcements/${id}`, changes),
+  end: (id: number) => api.post<ApiResponse<AdminAnnouncement>>(`/admin/announcements/${id}/end`),
+
   /** For somebody signed in. `silent` keeps the shared client from retrying, speaking or signing out (see api.ts). */
   async current(): Promise<Announcement[] | null> {
     try {

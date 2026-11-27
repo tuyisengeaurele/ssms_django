@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const http = vi.hoisted(() => ({ get: vi.fn() }));
+const http = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), patch: vi.fn() }));
 const ended = vi.hoisted(() => vi.fn());
 vi.mock('./api', () => ({ default: http, endSession: ended }));
 
@@ -69,6 +69,22 @@ describe('Asking as somebody signed in', () => {
     await expect(announcementService.current()).resolves.toBeNull();
     http.get.mockResolvedValue({ data: '<html></html>' });
     await expect(announcementService.current()).resolves.toBeNull();
+  });
+});
+
+describe('The admin\'s side', () => {
+  it('lists, writes, changes and ends through the admin routes', () => {
+    const body = {
+      kind: 'urgent' as const, textEn: 'Now.', textFr: '', textRw: '', showPublic: false,
+      showFrom: '2026-12-05T22:00:00+02:00', showUntil: '2026-12-05T23:00:00+02:00',
+    };
+    announcementService.all();
+    announcementService.create(body);
+    announcementService.update(7, { textEn: 'Later.' });
+    announcementService.end(7);
+    expect(http.get).toHaveBeenCalledWith('/admin/announcements');
+    expect(http.post.mock.calls).toEqual([['/admin/announcements', body], ['/admin/announcements/7/end']]);
+    expect(http.patch).toHaveBeenCalledWith('/admin/announcements/7', { textEn: 'Later.' });
   });
 });
 

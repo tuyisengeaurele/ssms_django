@@ -105,3 +105,67 @@
     display: none;
   }
 }
+
+/* The admin's form and list. */
+.announcement-input {
+  min-height: 64px;
+}
+
+.announcement-times {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0 16px;
+}
+
+.announcement-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 40px;
+  color: var(--text-2);
+  font: 500 var(--text-sm) / 1.5 var(--font-ui);
+  cursor: pointer;
+}
+
+.announcement-check input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.announcement-preview {
+  margin-top: 20px;
+}
+
+.announcement-preview-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* In the dialog the banner is a box of its own, not a strip across a page. */
+.announcement-preview .announcement {
+  padding: 12px 14px;
+  border: 1px solid;
+  border-radius: var(--radius-lg);
+}
+
+.announcement--information.announcement {
+  border-color: var(--info-border);
+}
+
+.announcement--maintenance.announcement {
+  border-color: var(--warning-border);
+}
+
+.announcement--urgent.announcement {
+  border-color: var(--danger-border);
+}
+
+.announcement-quote {
+  overflow-wrap: anywhere;
+}
