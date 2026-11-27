@@ -45,7 +45,7 @@ class AnnouncementSerializer(serializers.Serializer):
         starts = attrs.get('show_from', getattr(self.instance, 'show_from', None))
         ends = attrs.get('show_until', getattr(self.instance, 'show_until', None))
         if ends <= starts:
-            raise serializers.ValidationError({'show_until': ['The end must come after the start.']}, code='announcement_times')
+            raise serializers.ValidationError({'show_until': ['Choose an end time after the start time.']}, code='announcement_times')
         if ends <= timezone.now():
             raise serializers.ValidationError({'show_until': ['Choose an end time that is still to come.']}, code='announcement_past')
         return attrs

@@ -77,7 +77,7 @@ describe('Writing a new announcement', () => {
     type(english(), 'Off on Saturday.');
     type(field('Show until'), end);
     expect(save()).toBeDisabled();
-    if (end) expect(field('Show until')).toHaveAccessibleDescription(/The end must come after the start\./);
+    if (end) expect(field('Show until')).toHaveAccessibleDescription(/Choose an end time after the start time\./);
   });
 
   it('counts each text down from 200 and lets no more be typed', () => {

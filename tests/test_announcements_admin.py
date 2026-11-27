@@ -273,8 +273,8 @@ def test_every_change_is_in_the_audit_log_with_the_old_and_new_words():
 # ── in the reader's language ────────────────────────────────────────────────────────────────
 
 @pytest.mark.parametrize('lang, sentence', [
-    ('fr', 'La fin doit venir après le début.'),
-    ('rw', "Iherezo rigomba kuza nyuma y'itangiriro."),
+    ('fr', 'Choisissez une fin qui vient après le début.'),
+    ('rw', "Hitamo igihe cyo kurangira kiza nyuma y'icyo gutangira."),
 ])
 def test_what_is_wrong_is_said_in_the_screens_language(lang, sentence):
     _, client = admin_client()

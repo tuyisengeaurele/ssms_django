@@ -1076,7 +1076,7 @@ export const pageTranslations = {
   erMfaWrongCode: k("That code is not right.", "Ce code n'est pas correct.", "Iyo kode si yo."),
   erMfaAlreadyOn: k("Two-step sign in is already on.", "La connexion en deux étapes est déjà activée.", "Kwinjira mu ntambwe ebyiri bimaze gufungurwa."),
   erMfaNotOn: k("Two-step sign in is not on.", "La connexion en deux étapes n'est pas activée.", "Kwinjira mu ntambwe ebyiri ntibifunguye."),
-  erAnnouncementTimes: k("The end must come after the start.", "La fin doit venir après le début.", "Iherezo rigomba kuza nyuma y'itangiriro."),
+  erAnnouncementTimes: k("Choose an end time after the start time.", "Choisissez une fin qui vient après le début.", "Hitamo igihe cyo kurangira kiza nyuma y'icyo gutangira."),
   erAnnouncementPast: k("Choose an end time that is still to come.", "Choisissez une fin qui n'est pas encore passée.", "Hitamo igihe cyo kurangira kitaragera."),
   erAnnouncementEnded: k("This announcement has already ended.", "Cette annonce est déjà terminée.", "Iri tangazo ryamaze kurangira."),
   erMfaStartAgain: k("Please start the setup again.", "Veuillez recommencer la configuration.", "Ongera utangire gushyiraho."),
