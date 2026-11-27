@@ -38,9 +38,13 @@ class ConversationListView(APIView):
     resource = 'messages'
 
     def get(self, request):
-        """GET /api/messages/conversations: the person's conversations, the latest first."""
+        """GET /api/messages/conversations?farmer=<id>: the person's conversations, the latest first."""
+        mine = conversations_for(request.user)
+        farmer = request.query_params.get('farmer')
+        if farmer:
+            mine = mine.filter(farmer_id=farmer)   # narrows what the person may see already, never widens it
         found = (
-            with_state(conversations_for(request.user), request.user)
+            with_state(mine, request.user)
             .select_related('farmer', 'cooperative')
             .order_by('-last_message_at', '-pk')
         )

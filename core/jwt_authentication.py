@@ -23,6 +23,8 @@ TOUCH_EVERY = timedelta(seconds=60)
 # on a shared computer would never sign out. The idle limit still applies to them, so they cannot revive a stale sign in.
 BACKGROUND_PATHS = frozenset({
     '/api/support-access/for-me/pending', '/api/announcements', '/api/messages/updates', '/api/messages/read',
+    # The Messages page reads its list again when the count changes. Opening one conversation still counts.
+    '/api/messages/conversations',
 })
 
 MFA_MESSAGE = 'Please sign in again and enter the code from your authenticator app.'

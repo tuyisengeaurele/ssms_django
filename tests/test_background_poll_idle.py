@@ -68,10 +68,12 @@ def signed_in_idle_for(user, minutes):
     return client_with(user, session), session, before
 
 
-# A screen nobody is at keeps asking, and may mark what arrives. Neither may keep the sign in alive.
-@pytest.mark.parametrize('call', ['updates', 'read'])
+# A screen nobody is at keeps asking, may mark what arrives, and reads its list again. None of it may keep the sign in alive.
+@pytest.mark.parametrize('call', ['updates', 'read', 'list'])
 def test_what_the_messages_page_does_by_itself_does_not_move_the_idle_clock_or_revive_a_sign_in(world, call):  # noqa: F811
     def do(browser):
+        if call == 'list':
+            return browser.get('/api/messages/conversations')
         if call == 'updates':
             return browser.get('/api/messages/updates', {'conversation': world.talk.pk, 'since': world.said.created_at.isoformat()})
         return browser.post('/api/messages/read', {'conversation_id': world.talk.pk, 'message_id': world.answer.pk}, format='json')
@@ -83,6 +85,12 @@ def test_what_the_messages_page_does_by_itself_does_not_move_the_idle_clock_or_r
     browser, _, _ = signed_in_idle_for(world.supervisor, 45)
     response = do(browser)
     assert response.status_code == 401 and response.json()['code'] == 'session_idle'
+
+
+def test_opening_a_conversation_is_something_the_person_did(world):  # noqa: F811
+    browser, session, before = signed_in_idle_for(world.supervisor, 10)
+    assert browser.get(f'/api/messages/conversations/{world.talk.pk}').status_code == 200
+    assert last_activity(session) > before
 
 
 def test_sending_a_message_is_something_the_person_did(world):  # noqa: F811

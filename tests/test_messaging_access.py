@@ -125,6 +125,20 @@ def test_each_side_is_told_when_the_other_last_read(world):
     assert page(world.supervisor, world.talk)['other_read_at'] == farmer_read.isoformat()
 
 
+# A supervisor who chooses Message beside a farmer needs that farmer's conversation, however far down the list it is.
+def test_the_list_can_be_asked_for_one_farmers_conversation(world):
+    neighbour = farmer_of(world.coop)
+    say(talk(neighbour), neighbour, 'Another.')
+    found = client(world.supervisor).get(LIST, {'farmer': world.farmer.pk}).data
+    assert [r['id'] for r in found['data']] == [world.talk.pk] and found['pagination']['total_items'] == 1
+    assert client(world.supervisor).get(LIST, {'farmer': 'nothing-here'}).data['data'] == []
+
+
+def test_asking_for_a_farmer_reaches_nothing_new(world):
+    for outsider in (world.other_supervisor, world.other_farmer, farmer_of(world.coop)):
+        assert client(outsider).get(LIST, {'farmer': world.farmer.pk}).data['data'] == []
+
+
 # ── everybody else ──────────────────────────────────────────────────────────────────────────
 
 @pytest.mark.parametrize('who', ['other_supervisor', 'other_farmer', 'loose_supervisor', 'neighbour'])
