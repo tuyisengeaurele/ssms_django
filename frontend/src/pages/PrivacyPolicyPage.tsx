@@ -15,6 +15,7 @@ const sections: LegalSection[] = [
           <li><strong>Usage data:</strong> actions such as batch stage changes and logins are recorded in an audit log for security and accountability.</li>
           <li><strong>Signed in devices:</strong> each time you sign in we keep the name of the device (for example "Chrome on Windows"), the browser's identification text, and when it was last used. This is what Settings, Security shows, so you can sign out a device you do not recognise. A sign in that has ended is deleted after 30 days.</li>
           <li><strong>Technical data:</strong> IP address, browser type and request times, collected automatically for security.</li>
+          <li><strong>Contact messages:</strong> when we answer a message, we keep our reply with it.</li>
         </ul>
       </>
     ),
@@ -111,6 +112,7 @@ const sections: LegalSection[] = [
           <li><strong>Cloudinary:</strong> image storage for disease check uploads.</li>
           <li><strong>Sentry:</strong> anonymous error monitoring. No personal data is sent.</li>
           <li><strong>Our hosting provider:</strong> servers and database.</li>
+          <li><strong>Gmail and Vercel:</strong> SSMS sends email through Gmail. On its way, each email passes through Vercel, which also hosts the website.</li>
         </ul>
         <p>Each service has its own privacy policy. We share personal data with them only where the service needs it to work.</p>
       </>
@@ -138,7 +140,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalLayout
       title="Privacy Policy"
-      updated="November 3, 2026"
+      updated="November 27, 2026"
       intro={
         <>
           This policy explains how the Smart Sericulture Management System (SSMS, we, our) collects, uses and protects information about the people who use the platform. By registering or using SSMS you agree to it.

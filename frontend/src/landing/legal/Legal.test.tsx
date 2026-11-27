@@ -51,6 +51,25 @@ describe('Privacy policy page', () => {
     expect(item).toHaveTextContent(/deleted after 30 days/);
   });
 
+  it('says that email goes out through Gmail and passes through Vercel on its way', () => {
+    renderPage(<PrivacyPolicyPage />, '/privacy');
+    const section = screen.getByRole('heading', { level: 2, name: /Third party services/ }).closest('section') as HTMLElement;
+    expect(section).toHaveTextContent(
+      'Gmail and Vercel: SSMS sends email through Gmail. On its way, each email passes through Vercel, which also hosts the website.',
+    );
+  });
+
+  it('says that a reply to a contact message is kept with the message', () => {
+    renderPage(<PrivacyPolicyPage />, '/privacy');
+    const section = screen.getByRole('heading', { level: 2, name: /Information we collect/ }).closest('section') as HTMLElement;
+    expect(section).toHaveTextContent('Contact messages: when we answer a message, we keep our reply with it.');
+  });
+
+  it('is dated the day of its latest change', () => {
+    renderPage(<PrivacyPolicyPage />, '/privacy');
+    expect(screen.getByText(/November 27, 2026/)).toBeInTheDocument();
+  });
+
   it('explains the QR code on a harvest lot, what a stranger sees, and how to switch it off', () => {
     renderPage(<PrivacyPolicyPage />, '/privacy');
     const section = screen.getByRole('heading', { level: 2, name: /QR codes on harvest lots/ }).closest('section') as HTMLElement;

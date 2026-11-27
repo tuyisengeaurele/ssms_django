@@ -1,5 +1,10 @@
 # Changelog
 
+## Privacy page: email and contact replies
+
+### Changed
+- The privacy page says that SSMS sends email through Gmail, that each email passes through Vercel on its way, and that a reply to a contact message is kept with it. The date at the top is 27 November 2026.
+
 ## Disease check service: uploads (security)
 
 ### Fixed
