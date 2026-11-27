@@ -15,6 +15,7 @@ const sections: LegalSection[] = [
           <li><strong>Usage data:</strong> actions such as batch stage changes and logins are recorded in an audit log for security and accountability.</li>
           <li><strong>Signed in devices:</strong> each time you sign in we keep the name of the device (for example "Chrome on Windows"), the browser's identification text, and when it was last used. This is what Settings, Security shows, so you can sign out a device you do not recognise. A sign in that has ended is deleted after 30 days.</li>
           <li><strong>Technical data:</strong> IP address, browser type and request times, collected automatically for security.</li>
+          <li><strong>Contact messages:</strong> when we answer a message, we keep our reply with it.</li>
         </ul>
       </>
     ),
@@ -73,7 +74,7 @@ const sections: LegalSection[] = [
     title: 'Cookies and local storage',
     body: (
       <p>
-        SSMS keeps your sign in session and your language choice in your browser's local storage. We do not use tracking or advertising cookies. Because we store only these two things, the site does not show a cookie banner. You can clear local storage at any time in your browser settings.
+        SSMS keeps you signed in with a cookie that scripts on the page cannot read, and keeps your language choice in a second cookie. Your browser's storage also keeps small settings, such as your language, light or dark theme and menu layout, and a note that you are signed in. We do not use tracking or advertising cookies, so the site does not show a cookie banner. You can clear all of these in your browser settings.
       </p>
     ),
   },
@@ -111,6 +112,7 @@ const sections: LegalSection[] = [
           <li><strong>Cloudinary:</strong> image storage for disease check uploads.</li>
           <li><strong>Sentry:</strong> anonymous error monitoring. No personal data is sent.</li>
           <li><strong>Our hosting provider:</strong> servers and database.</li>
+          <li><strong>Gmail and Vercel:</strong> SSMS sends email through Gmail. On its way, each email passes through Vercel, which also hosts the website.</li>
         </ul>
         <p>Each service has its own privacy policy. We share personal data with them only where the service needs it to work.</p>
       </>
@@ -138,7 +140,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalLayout
       title="Privacy Policy"
-      updated="November 3, 2026"
+      updated="November 27, 2026"
       intro={
         <>
           This policy explains how the Smart Sericulture Management System (SSMS, we, our) collects, uses and protects information about the people who use the platform. By registering or using SSMS you agree to it.
