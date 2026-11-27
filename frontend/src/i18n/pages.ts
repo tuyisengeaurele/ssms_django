@@ -2209,6 +2209,8 @@ export const pageTranslations = {
   annUrgent: k("Urgent", "Urgent", "Byihutirwa"),
   annClose: k("Close announcement", "Fermer l'annonce", "Funga itangazo"),
   // Messages between farmers and supervisors. Keys start with "msg".
+  msgButton: k("Message", "Message", "Ubutumwa"),
+  msgToName: k("Message {name}", "Envoyer un message à {name}", "Andikira {name}"),
   msgUnread: k("{n} unread", "{n} non lus", "{n} butarasomwa"),
   msgList: k("Conversations", "Conversations", "Ibiganiro"),
   msgBack: k("Back", "Retour", "Subira inyuma"),

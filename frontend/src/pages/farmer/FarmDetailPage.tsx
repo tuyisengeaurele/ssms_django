@@ -8,6 +8,7 @@ import LocationPicker, { EMPTY_PLACE, PlaceValue } from '../../components/ui/Loc
 import { stageLabel } from '../../utils/constants';
 import { Farm, Batch, DeviceStatus, IoTDevice, Room } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import MessageButton from '../../components/ui/MessageButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { useApiError } from '../../hooks/useApiError';
@@ -372,7 +373,13 @@ export default function FarmDetailPage() {
       />
 
       <dl className="facts facts--row">
-        <div><dt>{t('fdOwner')}</dt><dd>{farm.owner?.name ?? '-'}</dd></div>
+        <div>
+          <dt>{t('fdOwner')}</dt>
+          <dd className="person-actions">
+            <span>{farm.owner?.name ?? '-'}</span>
+            {farm.owner ? <MessageButton farmerId={farm.owner.id} name={farm.owner.name} /> : null}
+          </dd>
+        </div>
         <div><dt>{t('fdBatches')}</dt><dd>{batches.length}</dd></div>
         <div><dt>{t('fdDevices')}</dt><dd>{fill(t('fdDevicesValue'), { on: online, n: devices.length })}</dd></div>
         <div><dt>{t('fdCreated')}</dt><dd>{date.format(new Date(farm.createdAt))}</dd></div>
