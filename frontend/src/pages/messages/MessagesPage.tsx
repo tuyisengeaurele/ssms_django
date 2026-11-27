@@ -117,12 +117,18 @@ export default function MessagesPage() {
   const inThread = Boolean(id) || newTarget !== null || (!asFarmer && Boolean(to));
   const noSupervisor = asFarmer && user?.supervisor === null && Boolean(user?.cooperativeId);
 
+  // A farmer with one conversation or none has no use for a list beside it.
+  const withList = !asFarmer || rows.length > 1 || (rows.length === 1 && canStartNew);
+  // Without a list, /messages leads straight back to their one conversation, so Back is only for getting off another address.
+  const back = withList || (Boolean(id) && rows.length === 1 && rows[0].id !== id);
+
   const view = id || newTarget ? (
     <ConversationView
       key={viewKey}
       conversationId={id}
       target={id ? undefined : newTarget ?? undefined}
       asFarmer={asFarmer}
+      back={back}
       note={noSupervisor ? t('msgNoSupervisor') : undefined}
       onChanged={refresh}
       onStarted={(made) => {
@@ -168,9 +174,6 @@ export default function MessagesPage() {
       </div>
     );
   }
-
-  // A farmer with one conversation or none has no use for a list beside it.
-  const withList = !asFarmer || rows.length > 1 || (rows.length === 1 && canStartNew);
 
   return (
     <div>

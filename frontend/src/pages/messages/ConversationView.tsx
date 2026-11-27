@@ -26,13 +26,15 @@ interface Props {
   /** Who it is with, before there is a conversation. */
   target?: Target;
   asFarmer: boolean;
+  /** Whether there is a list to go back to. */
+  back: boolean;
   /** A line above the box, such as that nobody can answer yet. */
   note?: string;
   onStarted: (id: string) => void;
   onChanged: () => void;
 }
 
-export default function ConversationView({ conversationId, target, asFarmer, note, onStarted, onChanged }: Props) {
+export default function ConversationView({ conversationId, target, asFarmer, back, note, onStarted, onChanged }: Props) {
   const { t, locale } = useLanguage();
   const box = useRef<HTMLDivElement>(null);
   const followEnd = useRef(true);
@@ -106,7 +108,7 @@ export default function ConversationView({ conversationId, target, asFarmer, not
   return (
     <div className="msg-view">
       <header className="msg-head">
-        <Link to="/messages" className="btn btn-secondary btn-sm msg-back"><Icon name="back" size={15} />{t('msgBack')}</Link>
+        {back ? <Link to="/messages" className="btn btn-secondary btn-sm msg-back"><Icon name="back" size={15} />{t('msgBack')}</Link> : null}
         {title ? <Avatar name={title} photoUrl={photo} /> : null}
         {title ? <h2 className="msg-title">{title}</h2> : null}
       </header>

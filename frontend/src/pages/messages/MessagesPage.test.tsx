@@ -185,6 +185,24 @@ describe('A farmer', () => {
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 
+  // Back goes to /messages, which takes a farmer with one conversation straight back into it.
+  it('with one conversation, or none yet, is offered no Back', async () => {
+    const view = await open();
+    expect(box()).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Back' })).not.toBeInTheDocument();
+    view.unmount();
+    api.list.mockResolvedValue(listed([]));
+    await open();
+    expect(box()).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Back' })).not.toBeInTheDocument();
+  });
+
+  it('keeps Back at an address that is not their one conversation', async () => {
+    api.one.mockRejectedValue(refused(404, 'not_found'));
+    await open('/messages/other');
+    expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute('href', '/messages');
+  });
+
   it('is told when nobody can answer yet, and not when that is not known', async () => {
     auth.user = { ...FARMER, supervisor: null };
     const view = await open();
@@ -580,4 +598,5 @@ describe('With a keyboard alone', () => {
     await user.keyboard('{Enter}');
     expect(api.send).toHaveBeenCalledWith(expect.objectContaining({ body: 'On my way.', conversationId: 'c1' }));
   });
+
 });
