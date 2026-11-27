@@ -89,10 +89,10 @@ PERMISSIONS: dict[str, dict[str, frozenset]] = {
     'audit_log': {'read': ADMIN_ONLY},
     'logs': {'read': ADMIN_ONLY},
     'contacts': {'read': ADMIN_ONLY, 'update': ADMIN_ONLY, 'create': ADMIN_ONLY, 'delete': ADMIN_ONLY},
+    # The SSMS team's banners. Everybody signed in reads what is showing. Only an admin sees the rest, writes and ends them.
+    'announcements': {'read': ALL, 'list_all': ADMIN_ONLY, 'create': ADMIN_ONLY, 'update': ADMIN_ONLY},
     # The authenticator app. Everyone sees and looks after their own. Only an admin is ever asked for a fresh code before
     # something sensitive, and only an admin resets somebody else's.
-    # The SSMS team's banners. Everybody signed in reads what is showing.
-    'announcements': {'read': ALL},
     'second_factor': {
         'read': ALL, 'create': ALL, 'enroll': ALL, 'disable': NON_ADMIN, 'prompt': NON_ADMIN,
         'step_up': ADMIN_ONLY, 'reset': ADMIN_ONLY,

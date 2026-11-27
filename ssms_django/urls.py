@@ -2,6 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path
 
+from announcements.urls import admin_urlpatterns as announcements_admin_urlpatterns
 from contacts.urls import admin_urlpatterns as contacts_admin_urlpatterns
 from cooperatives.change_request_urls import account_urlpatterns, admin_urlpatterns
 from core.api_docs import asset_view, docs_view, schema_view
@@ -49,6 +50,7 @@ urlpatterns = [
     path('api/account', include((account_urlpatterns, 'cooperative_requests_account'))),   # a person's own cooperative request
     path('api/admin/cooperative-requests', include((admin_urlpatterns, 'cooperative_requests_admin'))),   # the SSMS team decides
     path('api/admin/contacts', include((contacts_admin_urlpatterns, 'contacts_admin'))),  # GET/PATCH admin
+    path('api/admin/announcements', include((announcements_admin_urlpatterns, 'announcements_admin'))),
     path('api/admin/audit-log', include('audit_log.urls')),  # GET /api/admin/audit-log (admin only)
     path('api/admin/logs/<str:stream>', LogsView.as_view()),    # GET the audit, security, requests or jobs log (admin only)
     path('api/admin/reports',   include('reports.urls')),    # GET /api/admin/reports   (admin only)
