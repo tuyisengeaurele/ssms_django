@@ -47,6 +47,7 @@ urlpatterns = [
     path('api/devices', include((device_urlpatterns, 'devices'))),          # GET /api/devices, /api/devices/:id
     path('api/contact', include('contacts.urls')),              # POST /api/contact (public)
     path('api/announcements', include('announcements.urls')),   # the team's banners, signed in and public
+    path('api/messages', include('messaging.urls')),            # farmers and their cooperative's supervisors
     path('api/account', include((account_urlpatterns, 'cooperative_requests_account'))),   # a person's own cooperative request
     path('api/admin/cooperative-requests', include((admin_urlpatterns, 'cooperative_requests_admin'))),   # the SSMS team decides
     path('api/admin/contacts', include((contacts_admin_urlpatterns, 'contacts_admin'))),  # GET/PATCH admin
