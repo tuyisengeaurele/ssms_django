@@ -1,0 +1,107 @@
+/* The SSMS team's banners. They scroll with the page, and take their colours from the theme so dark mode follows. */
+
+.announcements ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.announcement {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px clamp(16px, 3vw, 44px);
+  border-bottom: 1px solid;
+  color: var(--text);
+  font: 400 0.9rem/1.45 var(--font-ui);
+  text-align: left;
+}
+
+.announcement--information {
+  background: var(--info-bg);
+  border-color: var(--info-border);
+}
+
+.announcement--maintenance {
+  background: var(--warning-bg);
+  border-color: var(--warning-border);
+}
+
+.announcement--urgent {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+}
+
+.announcement-icon {
+  flex: none;
+  margin-top: 1px;
+}
+
+.announcement--information .announcement-icon {
+  color: var(--info);
+}
+
+.announcement--maintenance .announcement-icon {
+  color: var(--warning);
+}
+
+.announcement--urgent .announcement-icon {
+  color: var(--danger);
+}
+
+.announcement-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+.announcement-kind {
+  margin-right: 4px;
+  font-weight: 650;
+}
+
+.announcement-text {
+  overflow-wrap: anywhere;
+}
+
+/* A large target that does not make the banner taller: it reaches into the padding. */
+.announcement-close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: -10px -10px -10px 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.announcement-close:hover {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.announcement-close:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .announcement {
+    animation: announcement-in var(--duration-slow) var(--ease-out) both;
+  }
+
+  @keyframes announcement-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+@media print {
+  .announcements {
+    display: none;
+  }
+}

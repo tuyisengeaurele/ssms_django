@@ -2197,6 +2197,13 @@ export const pageTranslations = {
   cfKeep: k("Keep", "Garder", "Komeza"),
   rqWithdrawAsk: k("Withdraw your request?", "Retirer votre demande ?", "Gukuraho icyifuzo cyawe?"),
   ecCancelAsk: k("Cancel the email change?", "Annuler le changement d'e-mail ?", "Guhagarika guhindura imeyili?"),
+
+  // The SSMS team's banners. Keys start with "ann".
+  annRegion: k("Announcements", "Annonces", "Amatangazo ya SSMS"),
+  annInformation: k("Information", "Information", "Amakuru"),
+  annMaintenance: k("Maintenance", "Maintenance", "Gusana"),
+  annUrgent: k("Urgent", "Urgent", "Byihutirwa"),
+  annClose: k("Close announcement", "Fermer l'annonce", "Funga itangazo"),
 } satisfies Record<string, Entry>;
 
 export type PageKey = keyof typeof pageTranslations;

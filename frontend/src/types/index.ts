@@ -2,6 +2,19 @@ export type Role = 'ADMIN' | 'SUPERVISOR' | 'FARMER';
 
 export type BatchStage = 'EGG' | 'LARVA' | 'PUPA' | 'COCOON' | 'HARVEST';
 
+export type AnnouncementKind = 'information' | 'maintenance' | 'urgent';
+
+/** A notice from the SSMS team, drawn as a banner. */
+export interface Announcement {
+  id: number;
+  kind: AnnouncementKind;
+  /** English is always there. French and Kinyarwanda may be empty. */
+  text: { en: string; fr: string; rw: string };
+  /** Goes up when the type or the words change. */
+  version: number;
+  showUntil: string;
+}
+
 export type AlertType = 'TEMPERATURE' | 'HUMIDITY' | 'DISEASE' | 'STAGE_CHANGE' | 'SYSTEM';
 
 export interface Cooperative {
