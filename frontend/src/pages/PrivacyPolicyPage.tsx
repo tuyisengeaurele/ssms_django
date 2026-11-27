@@ -14,7 +14,7 @@ const sections: LegalSection[] = [
           <li><strong>Disease check images:</strong> photos you upload for analysis are stored on Cloudinary and used only to run the disease check.</li>
           <li><strong>Usage data:</strong> actions such as batch stage changes and logins are recorded in an audit log for security and accountability.</li>
           <li><strong>Signed in devices:</strong> each time you sign in we keep the name of the device (for example "Chrome on Windows"), the browser's identification text, and when it was last used. This is what Settings, Security shows, so you can sign out a device you do not recognise. A sign in that has ended is deleted after 30 days.</li>
-          <li><strong>Two-step sign in:</strong> if you turn it on, we keep the key that links your authenticator app, encrypted. Of your recovery codes we keep only fingerprints, which cannot be turned back into the codes. We also keep when you asked to be reminded later.</li>
+          <li><strong>Two-step sign in:</strong> if you start setting it up, we keep the key for your authenticator app, encrypted. Of your recovery codes we keep only fingerprints, which cannot be turned back into the codes. We also keep when we last showed the reminder and when you asked to be reminded later.</li>
           <li><strong>Technical data:</strong> IP address, browser type and request times, collected automatically for security.</li>
           <li><strong>Contact messages:</strong> when we answer a message, we keep our reply with it.</li>
         </ul>

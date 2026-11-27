@@ -80,7 +80,7 @@ describe('Privacy policy page', () => {
     renderPage(<PrivacyPolicyPage />, '/privacy');
     const section = screen.getByRole('heading', { level: 2, name: /Information we collect/ }).closest('section') as HTMLElement;
     expect(section).toHaveTextContent(
-      'Two-step sign in: if you turn it on, we keep the key that links your authenticator app, encrypted. Of your recovery codes we keep only fingerprints, which cannot be turned back into the codes. We also keep when you asked to be reminded later.',
+      'Two-step sign in: if you start setting it up, we keep the key for your authenticator app, encrypted. Of your recovery codes we keep only fingerprints, which cannot be turned back into the codes. We also keep when we last showed the reminder and when you asked to be reminded later.',
     );
   });
 
