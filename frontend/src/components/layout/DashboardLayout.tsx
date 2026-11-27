@@ -27,6 +27,8 @@ import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 import { useApplyTheme } from '../../utils/theme';
 
 const NAV_KEY = 'ssms_nav';
+/** A new address is a new page, except under Messages: that is one page with a list beside the open conversation. */
+const pageOf = (path: string) => (/^\/messages(\/|$)/.test(path) ? '/messages' : path);
 // Screens this wide have room for the labels, so the menu starts open there.
 const WIDE_SCREEN = 1600;
 
@@ -138,7 +140,7 @@ export default function DashboardLayout() {
             <SiteAnnouncements mode="app" />
 
             {/* A new key is a new page: it fades in (shell.css). */}
-            <div key={`${location.pathname}:${user?.id ?? ''}`} className="app-content">
+            <div key={`${pageOf(location.pathname)}:${user?.id ?? ''}`} className="app-content">
               <Outlet />
             </div>
           </main>

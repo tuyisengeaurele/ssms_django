@@ -173,6 +173,18 @@ describe('A farmer', () => {
     expect(box()).toBeInTheDocument();
   });
 
+  // On a phone the list and the writing screen are two views, so Back has to bring the list back.
+  it('who started to write to the new cooperative can go back to the list', async () => {
+    auth.user = { ...FARMER, cooperativeId: 'k2', cooperativeName: 'Twisungane' };
+    api.list.mockResolvedValue(listed([row({ isOpen: false })]));
+    await open();
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Write to Twisungane' })); });
+    expect(document.querySelector('.msg-layout')).toHaveAttribute('data-view', 'thread');
+    await act(async () => { fireEvent.click(screen.getByRole('link', { name: 'Back' })); });
+    expect(document.querySelector('.msg-layout')).toHaveAttribute('data-view', 'list');
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  });
+
   it('is told when nobody can answer yet, and not when that is not known', async () => {
     auth.user = { ...FARMER, supervisor: null };
     const view = await open();

@@ -22,7 +22,10 @@ const latestFirst = (a: ConversationRow, b: ConversationRow) =>
 /** A farmer's and a supervisor's conversations. An admin has none: the route refuses one, and so does the server. */
 export default function MessagesPage() {
   const { id } = useParams<{ id?: string }>();
-  const to = useSearchParams()[0].get('to');
+  const [query] = useSearchParams();
+  const to = query.get('to');
+  // In the address, so that Back leaves it again.
+  const writingNew = query.get('new') !== null;
   const { user } = useAuth();
   const { t } = useLanguage();
   const { unread } = useMessages();
@@ -32,7 +35,6 @@ export default function MessagesPage() {
   const [rows, setRows] = useState<ConversationRow[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
   const [pages, setPages] = useState({ loaded: 1, more: false });
-  const [writingNew, setWritingNew] = useState(false);
   // For "Message" beside a farmer: who they are, once it is known that no conversation with them exists yet.
   const [chosen, setChosen] = useState<{ id: string; target: Target | null } | null>(null);
   // A conversation made on this screen keeps the key it started with, so the screen is not drawn afresh over it.
@@ -125,7 +127,6 @@ export default function MessagesPage() {
       onChanged={refresh}
       onStarted={(made) => {
         started.current.set(made, viewKey);
-        setWritingNew(false);
         navigate(`/messages/${made}`, { replace: true });
       }}
     />
@@ -178,7 +179,7 @@ export default function MessagesPage() {
         {withList ? (
           <div className="msg-side">
             {canStartNew && rows.length > 0 ? (
-              <button type="button" className="btn btn-primary msg-start" onClick={() => { setWritingNew(true); navigate('/messages'); }}>
+              <button type="button" className="btn btn-primary msg-start" onClick={() => navigate('/messages?new=1')}>
                 <Icon name="chat" size={16} />{fill(t('msgNewTo'), { name: ownCooperative!.name })}
               </button>
             ) : null}
