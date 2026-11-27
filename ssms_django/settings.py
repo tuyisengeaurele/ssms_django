@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'alerts',
     'harvest',
     'contacts',
+    'announcements',
     'audit_log',
     'logs',
     'reports',

@@ -64,6 +64,14 @@ api.interceptors.response.use(
       return api(originalConfig);
     }
 
+    // A request the page made on its own may renew a sign in that ran out, and nothing more. Whatever else a 401 means
+    // is left for a request the person made, which says so.
+    const silent = originalConfig?.silent === true;
+    if (silent && err.response?.status === 401) {
+      const code = (err.response.data as { code?: string } | undefined)?.code ?? '';
+      if (isActing() || ['support_ended', 'mfa_required', 'session_idle'].includes(code)) return Promise.reject(err);
+    }
+
     // An admin acting as a person holds a token that cannot be renewed. The refresh cookie is the admin's, and using it
     // would send the person's request as the admin. So a 401 here, whatever the reason, is the end of the visit.
     if (err.response?.status === 401 && (isActing() || (err.response?.data as { code?: string } | undefined)?.code === 'support_ended')) {
@@ -96,7 +104,7 @@ api.interceptors.response.use(
         return api(originalConfig);
       } catch (refreshError) {
         // No answer, or a 5xx while the server wakes or restarts, says nothing about the session, so it is kept.
-        if (!serverRefusedTheSession(refreshError)) return Promise.reject(err);
+        if (silent || !serverRefusedTheSession(refreshError)) return Promise.reject(err);
         endSession(endedNotice(refreshError) === 'session_idle' ? 'idle' : 'ended');
         return Promise.reject(refreshError);
       }

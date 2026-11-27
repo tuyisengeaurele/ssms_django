@@ -29,6 +29,8 @@ PUBLIC = {
     # signed token in the link is the proof (users/email_change.py).
     'EmailChangeConfirmView', 'EmailChangeUndoView',
     'ContactCreateView', 'PublicLotView', 'PhotoFileView', 'InvitationDetailView', 'DeviceIngestView',
+    # The team's banners marked for visitors, so a notice can reach somebody who cannot sign in.
+    'PublicAnnouncementsView',
     # A browser sends this report by itself, without signing in. It keeps one line and always answers 204 (core/csp.py).
     'CspReportView',
 }

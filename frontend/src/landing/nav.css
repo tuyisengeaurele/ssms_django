@@ -31,15 +31,35 @@
 .landing .l-nav {
   position: fixed;
   inset: 0 0 auto 0;
+  top: calc(-1 * var(--announcement-gone, 0px));
   z-index: 50;
   display: flex;
-  justify-content: center;
-  padding: 16px var(--l-gutter) 0;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 var(--l-gutter);
   pointer-events: none;
+}
+
+/* The team's banners run the full width, above the menu. They scroll away with the page: the header, which stays put,
+   moves up by as much of them as has been scrolled past (SiteAnnouncements counts it). */
+.landing .l-nav__announcements {
+  align-self: stretch;
+  margin-inline: calc(-1 * var(--l-gutter));
+  pointer-events: auto;
+}
+
+/* With the phone menu open the header moves up past all of them, so the menu bar is where it always is. */
+.landing .l-nav.is-open {
+  top: calc(-1 * var(--announcement-height, 0px));
+}
+
+.landing .l-nav.is-open .l-nav__announcements {
+  visibility: hidden;
 }
 
 .landing .l-nav__pill {
   pointer-events: auto;
+  margin-top: 16px;
   display: flex;
   align-items: center;
   gap: 20px;

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import LazyAnnouncements from '../components/announcements/LazyAnnouncements';
 import { useLanguage } from '../context/LanguageContext';
 import { useLanguagePicker } from '../hooks/useLanguagePicker';
 import { landingAddress } from '../i18n/landingAddress';
@@ -89,7 +90,8 @@ export function Nav() {
   );
 
   return (
-    <header className={`l-nav${condensed ? ' is-condensed' : ''}`}>
+    <header className={`l-nav${condensed ? ' is-condensed' : ''}${open ? ' is-open' : ''}`}>
+      <LazyAnnouncements mode="visitor-once" inHeader />
       <nav className="l-nav__pill" aria-label="Main">
         <Link to={landingAddress(locale)} className="l-nav__brand" aria-label={`SSMS, ${t('lpFooterName')}`}>
           <Mark />

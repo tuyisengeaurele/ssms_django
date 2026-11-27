@@ -903,3 +903,25 @@ The person is signed out everywhere and gets an email in their language. A farme
 
 **Someone says they did not turn it on.** A person who has their password turned it on. Reset it as above after checking who is asking, then have them reset the password with **Forgot password**, which signs every device out.
 
+## 34. Telling people about maintenance
+
+An admin writes it in **Announcements** in the menu, then **New announcement**.
+
+- **Times are Kigali time**, whatever the computer is set to.
+- **Announce it before it starts**, a day or more if you can. When SSMS is down, somebody who arrives then cannot be shown anything new.
+- Tick **Also show to visitors** if people need to know before they sign in.
+- Keep **Urgent** for what nobody may miss, and use it rarely. It cannot be closed, so it sits on every page until it ends.
+- Write French and Kinyarwanda when you can. Without them, everybody reads the English.
+- **End now** takes it down. An ended one cannot be changed or brought back: write a new one.
+- A banner only informs. It switches nothing off.
+
+**When it appears.** Open pages in the app get it within five minutes, or at the next change of page after a minute. The sign in pages get it within five minutes. The home, legal and lot pages get it when they are next loaded.
+
+**Seeing it.**
+
+```sql
+SELECT id, kind, show_from, show_until, ended_at, show_public, version, text_en
+FROM announcements ORDER BY show_from DESC LIMIT 20;
+```
+
+**Going back.** `python manage.py migrate announcements zero` drops the table, so **every announcement is lost**. The audit log keeps who wrote and ended them. Do it before deploying the older code.

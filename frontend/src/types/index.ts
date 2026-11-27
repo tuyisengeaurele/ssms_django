@@ -2,6 +2,39 @@ export type Role = 'ADMIN' | 'SUPERVISOR' | 'FARMER';
 
 export type BatchStage = 'EGG' | 'LARVA' | 'PUPA' | 'COCOON' | 'HARVEST';
 
+export type AnnouncementKind = 'information' | 'maintenance' | 'urgent';
+
+/** A notice from the SSMS team, drawn as a banner. */
+export interface Announcement {
+  id: number;
+  kind: AnnouncementKind;
+  /** English is always there. French and Kinyarwanda may be empty. */
+  text: { en: string; fr: string; rw: string };
+  /** Goes up when the type or the words change. */
+  version: number;
+  showUntil: string;
+}
+
+/** An announcement as the admin's page sees it: also when it starts, who sees it and how it stands. */
+export interface AdminAnnouncement extends Announcement {
+  showFrom: string;
+  showPublic: boolean;
+  endedAt: string | null;
+  status: 'scheduled' | 'showing' | 'ended';
+  createdBy: { id: string; name: string } | null;
+}
+
+/** What the admin sends to write one. A change sends only the fields that differ. */
+export interface AnnouncementBody {
+  kind: AnnouncementKind;
+  textEn: string;
+  textFr: string;
+  textRw: string;
+  showPublic: boolean;
+  showFrom: string;
+  showUntil: string;
+}
+
 export type AlertType = 'TEMPERATURE' | 'HUMIDITY' | 'DISEASE' | 'STAGE_CHANGE' | 'SYSTEM';
 
 export interface Cooperative {

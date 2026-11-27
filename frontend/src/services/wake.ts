@@ -5,6 +5,13 @@ import axios from 'axios';
  * reads are tried again and the page says so, instead of showing "We can't reach the server".
  */
 
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    /** The page made this request on its own. It is never retried, never speaks, and never signs anyone out. */
+    silent?: boolean;
+  }
+}
+
 /** How long a request keeps trying, counted from its first failure. */
 export const WAKE_DEADLINE_MS = 90_000;
 
@@ -21,7 +28,7 @@ export function wakeDelayMs(attempt: number): number {
  * so it is never repeated.
  */
 export function shouldWakeRetry(error: unknown): boolean {
-  if (!axios.isAxiosError(error) || error.code === 'ERR_CANCELED') return false;
+  if (!axios.isAxiosError(error) || error.code === 'ERR_CANCELED' || error.config?.silent) return false;
   if (error.response && ![502, 503, 504].includes(error.response.status)) return false;
   const method = (error.config?.method ?? 'get').toLowerCase();
   const url = error.config?.url ?? '';

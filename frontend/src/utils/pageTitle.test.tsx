@@ -20,6 +20,7 @@ describe('getPageInfo', () => {
     ['/admin/cooperatives', 'Cooperatives', 'Administration'],
     ['/admin/contacts', 'Messages', 'Administration'],
     ['/admin/requests', 'Cooperative requests', 'Administration'],
+    ['/admin/announcements', 'Announcements', 'Administration'],
     ['/admin/system', 'System', 'Administration'],
     ['/admin/system/health', 'System', 'Administration'],
     ['/admin/system/logs', 'System', 'Administration'],

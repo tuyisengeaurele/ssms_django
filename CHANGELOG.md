@@ -1,5 +1,21 @@
 # Changelog
 
+## Team announcements (roadmap phase 6, part A)
+
+### Added
+- **Announcements page for admins.** Write a notice of up to 200 characters in English, with French and Kinyarwanda if you like. Pick Information, Maintenance or Urgent, say from when until when in Kigali time, and tick whether visitors see it too. A preview shows each language. **Edit** changes it and **End now** takes it down. Nothing is deleted, and every change is in the audit log with the old and new words.
+- **Banners** under the top bar for everybody signed in. Ticked ones also show on the sign in and account pages, the home page, the privacy and terms pages and the public lot page. At most two show, Urgent first. Information and Maintenance can be closed and stay closed on that device until their type or words change. Urgent stays until it ends. When French or Kinyarwanda is missing, the English shows.
+- **New ones arrive without a reload.** The app asks when a page changes and every five minutes while the tab is visible. The sign in pages ask every five minutes. The home, legal and lot pages ask once.
+
+### Changed
+- The check for announcements does not count as using the site, so it never keeps a sign in alive on a screen nobody is at. If it gets no answer, nothing shows: no retry, no message, and nobody is signed out.
+
+### API
+`GET /api/announcements` (anybody signed in) and `GET /api/announcements/public` (no sign in, only the ones for visitors, kept for a minute). For admins: `GET` and `POST /api/admin/announcements`, `PATCH /api/admin/announcements/<id>` and `POST /api/admin/announcements/<id>/end`. New error codes: `announcement_times`, `announcement_past`, `announcement_ended`.
+
+### Database
+`announcements.0001` adds one table. It changes nothing that is already there.
+
 ## Two-step sign in for farmers and supervisors (roadmap phase 5)
 
 ### Added
