@@ -1,5 +1,29 @@
 # Changelog
 
+## Two-step sign in for farmers and supervisors (roadmap phase 5)
+
+### Added
+- **Anyone can turn it on.** Settings, Security, **Turn on**: the password, then an authenticator app (scan the square or type the key), a 6 digit code, and 8 recovery codes that must be marked as saved. Turning it on signs the other devices out, and the screen says so first. It is off by default and never required for farmers and supervisors. Admins must have it, as before.
+- **Turning it off** needs the password and a code from the app or a recovery code. It signs the other devices out. Admins cannot turn it off.
+- **Sign in** asks for a code from anyone who has it on, after the password. The code step says what to do without a phone. A password reset does not turn it off.
+- **A reminder** for farmers and supervisors after sign in, and at a password change, a new device and before a first harvest lot is shared. **Remind me later** waits 3, 7, 30 and then 90 days. After three, signing in stops asking. It never shows to admins, support visits, shared computers, accounts without a phone number or accounts being closed, and never on top of another dialog. If it cannot be asked within 1.5 seconds, nothing waits for it. A dashboard keeps a quiet **Secure your account** line.
+- **Recovery codes** can be printed as well as copied and downloaded. Printing leaves only the codes on the paper.
+- **Emails** in English, French or Kinyarwanda when it is turned on, turned off or reset.
+
+### Changed
+- **An admin can reset it for any role.** The button shows only where it is on. A farmer or supervisor then signs in with the password. An admin sets it up again at the next sign in.
+- **The privacy page** says what two-step sign in keeps.
+- The admin Logs page names the two-step events and can filter by them.
+
+### Fixed
+- After a refused code, typing a new one did nothing until all six digits were deleted by hand. Typing now starts a new code. This also affected the admin sign in.
+
+### API
+`POST /api/auth/mfa/enroll/start`, `/enroll/confirm`, `/disable`, `/prompt` and `/prompt/seen`. `GET /api/auth/mfa` adds `required`, `prompt` (with `?trigger=`) and `reminderLine`, and is open to every role. Sign in answers add `newDevice`. The signed in two-step actions share a limit of 10 a minute for each person.
+
+### Database
+No change. The reminder's fields have been there since phase 3.
+
 ## Privacy page: email, contact replies and cookies
 
 ### Changed

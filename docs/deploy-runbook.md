@@ -886,3 +886,20 @@ ORDER BY m.created_at DESC LIMIT 20;
 
 **Going back.** `python manage.py migrate contacts 0002` drops the table and the column, so **the stored replies are
 lost**. The marks that say who answered and when stay. Do it before deploying the older code.
+
+## 33. Two-step sign in: someone lost their phone
+
+Farmers and supervisors may turn two-step sign in on. Admins always have it.
+
+**They still have a recovery code.** At the code step, **Use a recovery code**. Each code works once. In Settings, Security they can then make new codes, which needs the app, or turn it off, which takes a second recovery code.
+
+**No phone and no codes.** An admin resets it. Anyone who knows the password and talks the team into a reset gets in, so check who is asking first:
+
+1. Call the phone number that is already on the account. Do not use a number given in the message that asks for the reset.
+2. If that number cannot be reached, ask the supervisor of their cooperative to confirm the person.
+3. Admin, **Users**, the person's row, **Reset authenticator** (it shows only where it is on), then **Reset**. The admin is asked for a code of their own first.
+
+The person is signed out everywhere and gets an email in their language. A farmer or supervisor signs in with the password and can turn it on again in Settings. An admin sets it up at the next sign in. If the last admin is locked out, use `python manage.py reset_admin_mfa <email>` on the server.
+
+**Someone says they did not turn it on.** A person who has their password turned it on. Reset it as above after checking who is asking, then have them reset the password with **Forgot password**, which signs every device out.
+
