@@ -188,10 +188,11 @@ class MfaStatusView(APIView):
     resource = 'second_factor'
 
     def get(self, request):
-        """GET /api/auth/mfa: is the app on, since when, and how many recovery codes are left. Nothing secret."""
+        """GET /api/auth/mfa: is the app on and must it be, since when, and how many recovery codes are left. Nothing secret."""
         factor = SecondFactor.objects.filter(user=request.user, enabled_at__isnull=False).first()
         return api_success({
             'enabled': factor is not None,
+            'required': request.user.role == Role.ADMIN,
             'enabled_at': factor.enabled_at if factor else None,
             'recovery_codes_left': mfa.recovery_codes_left(request.user) if factor else 0,
         })

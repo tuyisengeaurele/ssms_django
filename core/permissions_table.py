@@ -89,9 +89,9 @@ PERMISSIONS: dict[str, dict[str, frozenset]] = {
     'audit_log': {'read': ADMIN_ONLY},
     'logs': {'read': ADMIN_ONLY},
     'contacts': {'read': ADMIN_ONLY, 'update': ADMIN_ONLY, 'create': ADMIN_ONLY, 'delete': ADMIN_ONLY},
-    # An admin's authenticator app: its status, new recovery codes, a fresh code before something sensitive, and
-    # resetting another admin's.
-    'second_factor': {'read': ADMIN_ONLY, 'create': ADMIN_ONLY, 'step_up': ADMIN_ONLY, 'reset': ADMIN_ONLY},
+    # The authenticator app. Everyone sees and looks after their own. Only an admin is ever asked for a fresh code before
+    # something sensitive, and only an admin resets somebody else's.
+    'second_factor': {'read': ALL, 'create': ALL, 'step_up': ADMIN_ONLY, 'reset': ADMIN_ONLY},
     # An admin asking to look at a farmer's or supervisor's account, and the person's side of it: the pending request,
     # the answer, ending it, and the history of visits.
     'support_access': {
