@@ -84,9 +84,26 @@ describe('Privacy policy page', () => {
     );
   });
 
+  it('says who can read a message, that it is stored as text, and what a move changes', () => {
+    renderPage(<PrivacyPolicyPage />, '/privacy');
+    const section = screen.getByRole('heading', { level: 2, name: /Information we collect/ }).closest('section') as HTMLElement;
+    expect(section).toHaveTextContent(
+      "Messages. A farmer and the supervisors of their cooperative can write to each other in SSMS. We keep each message, who wrote it and when. In SSMS only that farmer and those supervisors can open the conversation. The SSMS team cannot open it in SSMS, and support access never shows it. If a farmer moves to another cooperative, they and the old cooperative's supervisors can still read the old conversation, and nobody can add to it. Messages are stored as text in our database, so whoever runs the database could technically read them. Do not send passwords or other secrets.",
+    );
+  });
+
+  // The same year the nightly job counts (MESSAGE_RETENTION_DAYS).
+  it('says how long a message is kept, and what closing an account does to it', () => {
+    renderPage(<PrivacyPolicyPage />, '/privacy');
+    const section = screen.getByRole('heading', { level: 2, name: /Data retention/ }).closest('section') as HTMLElement;
+    expect(section).toHaveTextContent(
+      'Messages are deleted 12 months after they are sent. If you close your account, your messages stay in the conversation without your name until then.',
+    );
+  });
+
   it('is dated the day of its latest change', () => {
     renderPage(<PrivacyPolicyPage />, '/privacy');
-    expect(screen.getByText(/November 27, 2026/)).toBeInTheDocument();
+    expect(screen.getByText(/November 28, 2026/)).toBeInTheDocument();
   });
 
   it('explains the QR code on a harvest lot, what a stranger sees, and how to switch it off', () => {
