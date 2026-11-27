@@ -2208,6 +2208,8 @@ export const pageTranslations = {
   annMaintenance: k("Maintenance", "Maintenance", "Gusana"),
   annUrgent: k("Urgent", "Urgent", "Byihutirwa"),
   annClose: k("Close announcement", "Fermer l'annonce", "Funga itangazo"),
+  // Messages between farmers and supervisors. Keys start with "msg".
+  msgUnread: k("{n} unread", "{n} non lus", "{n} butarasomwa"),
   ptAnnouncements: k("Announcements", "Annonces", "Amatangazo ya SSMS"),
   annNew: k("New announcement", "Nouvelle annonce", "Itangazo rishya"),
   annEditTitle: k("Edit announcement", "Modifier l'annonce", "Hindura itangazo"),

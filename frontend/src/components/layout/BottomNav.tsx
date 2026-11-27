@@ -1,6 +1,8 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useMessages } from '../../context/MessagesContext';
+import { fill } from '../../utils/fill';
 import { Role } from '../../types';
 import { Icon, type IconName } from '../ui/Icon';
 
@@ -15,13 +17,13 @@ export const TABS: Record<Role, Tab[]> = {
   FARMER: [
     { to: '/farmer', labelKey: 'navDashboard', icon: 'dashboard' },
     { to: '/farms', labelKey: 'navMyFarms', icon: 'farms' },
-    { to: '/batches', labelKey: 'ptBatches', icon: 'batches' },
+    { to: '/messages', labelKey: 'ptMessages', icon: 'chat' },
     { to: '/alerts', labelKey: 'ptAlerts', icon: 'alerts' },
   ],
   SUPERVISOR: [
     { to: '/supervisor', labelKey: 'ptSupervisor', icon: 'overview' },
     { to: '/farms', labelKey: 'ptFarms', icon: 'farms' },
-    { to: '/detections/reports', labelKey: 'navDetectionsShort', icon: 'detections' },
+    { to: '/messages', labelKey: 'ptMessages', icon: 'chat' },
     { to: '/alerts', labelKey: 'ptAlerts', icon: 'alerts' },
   ],
   ADMIN: [
@@ -41,26 +43,30 @@ interface Props {
 export default function BottomNav({ alertCount = 0, onMore }: Props) {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { unread: unreadMessages } = useMessages();
   if (!user) return null;
 
   return (
     <nav className="bottom-nav" aria-label={t('shellQuickMenu')}>
       {TABS[user.role].map((tab) => {
         const label = t(tab.labelKey);
-        const unread = tab.to === '/alerts' && alertCount > 0;
+        const count = tab.to === '/alerts' ? alertCount : tab.to === '/messages' ? unreadMessages : 0;
+        const shown = count > 99 ? '99+' : String(count);
+        // The link's name replaces what is inside it, so the count of messages is part of the name.
+        const name = tab.to === '/messages' && count > 0 ? `${label}, ${fill(t('msgUnread'), { n: shown })}` : label;
         return (
           <NavLink
             key={tab.to}
             to={tab.to}
             end={tab.to === '/farmer' || tab.to === '/admin' || tab.to === '/supervisor'}
-            aria-label={label}
+            aria-label={name}
             className={({ isActive }) => `bottom-nav-item${isActive ? ' active' : ''}`}
           >
             <span className="bottom-nav-icon">
               <Icon name={tab.icon} size={22} />
-              {unread && (
-                <span className="bottom-nav-badge" aria-label={`${alertCount > 99 ? '99+' : alertCount} unread`}>
-                  {alertCount > 99 ? '99+' : alertCount}
+              {count > 0 && (
+                <span className="bottom-nav-badge" aria-label={tab.to === '/messages' ? fill(t('msgUnread'), { n: shown }) : `${shown} unread`}>
+                  {shown}
                 </span>
               )}
             </span>

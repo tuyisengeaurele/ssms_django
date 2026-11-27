@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useMessages } from '../../context/MessagesContext';
 import { Role } from '../../types';
 import { fill } from '../../utils/fill';
 import { Icon, type IconName } from '../ui/Icon';
@@ -14,6 +15,8 @@ interface NavItem {
   badge?: number;
   /** What a screen reader says about the badge. Without it the badge counts unread alerts. */
   badgeLabel?: string;
+  /** The link's whole name for a screen reader, when the label alone would leave the count unsaid. */
+  name?: string;
 }
 
 interface NavGroup {
@@ -28,20 +31,27 @@ export const ROLE_LABEL_KEY: Record<Role, string> = {
 };
 
 /** The menu of each kind of person, then a last group with Settings, which every kind of person has. */
-export function getNavGroups(role: Role | undefined, alertCount: number, t: (k: string) => string, decisionCount = 0): NavGroup[] {
-  const groups = pageGroups(role, alertCount, t, decisionCount);
+export function getNavGroups(role: Role | undefined, alertCount: number, t: (k: string) => string, decisionCount = 0, unreadMessages = 0): NavGroup[] {
+  const groups = pageGroups(role, alertCount, t, decisionCount, unreadMessages);
   if (groups.length === 0) return groups;
   return [...groups, { label: t('ptSectionAccount'), items: [{ to: '/settings', label: t('ptSettings'), icon: 'settings' }] }];
 }
 
-function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) => string, decisionCount: number): NavGroup[] {
+function messagesItem(unread: number, t: (k: string) => string): NavItem {
+  const item: NavItem = { to: '/messages', label: t('ptMessages'), icon: 'chat', badge: unread };
+  if (unread <= 0) return item;
+  const said = fill(t('msgUnread'), { n: unread > 99 ? '99+' : unread });
+  return { ...item, badgeLabel: said, name: `${item.label}, ${said}` };
+}
+
+function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) => string, decisionCount: number, unreadMessages: number): NavGroup[] {
   const alerts: NavItem = { to: '/alerts', label: t('ptAlerts'), icon: 'alerts', badge: alertCount };
   const supply: NavItem = { to: '/supply', label: t('ptSupply'), icon: 'batches' };
   const decisions: NavItem = { to: '/decisions', label: t('ptDecisions'), icon: 'inbox', badge: decisionCount, badgeLabel: fill(t('dcsBadge'), { n: decisionCount > 99 ? '99+' : decisionCount }) };
 
   if (role === 'FARMER') {
     return [
-      { label: t('navGroupOverview'), items: [{ to: '/farmer', label: t('navDashboard'), icon: 'dashboard' }] },
+      { label: t('navGroupOverview'), items: [{ to: '/farmer', label: t('navDashboard'), icon: 'dashboard' }, messagesItem(unreadMessages, t)] },
       {
         label: t('navGroupFarming'),
         items: [
@@ -69,6 +79,7 @@ function pageGroups(role: Role | undefined, alertCount: number, t: (k: string) =
           { to: '/supervisor', label: t('ptSupervisor'), icon: 'overview' },
           decisions,
           supply,
+          messagesItem(unreadMessages, t),
           { to: '/supervisor/cooperative', label: t('ptMyCooperative'), icon: 'cooperatives' },
         ],
       },
@@ -135,7 +146,8 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
   const { user, logout } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const groups = getNavGroups(user?.role, alertCount, t, decisionCount);
+  const { unread } = useMessages();
+  const groups = getNavGroups(user?.role, alertCount, t, decisionCount, unread);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   // On a phone the menu covers the page, so Escape has to close it as it does every other overlay.
@@ -190,7 +202,7 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, alertCou
                   end={item.to === '/farmer' || item.to === '/admin' || item.to === '/supervisor'}
                   className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
                   onClick={onMobileClose}
-                  aria-label={item.label}
+                  aria-label={item.name ?? item.label}
                   data-tip={item.label}
                 >
                   <Icon name={item.icon} className="sidebar-item-icon" />

@@ -15,6 +15,48 @@ export interface Announcement {
   showUntil: string;
 }
 
+/** A message between a farmer and their cooperative's supervisors. */
+export interface ChatMessage {
+  id: string;
+  body: string;
+  fromFarmer: boolean;
+  mine: boolean;
+  /** Null when the writer's account is gone. A closed account is `former`, with no name. */
+  sender: { id: string; name: string; former: boolean } | null;
+  createdAt: string;
+}
+
+export interface ConversationRow {
+  id: string;
+  farmer: { id: string; name: string; photoUrl: string | null; former: boolean };
+  cooperative: { id: string; name: string };
+  /** False once the farmer has left the cooperative. The words stay, and nothing can be added. */
+  isOpen: boolean;
+  unread: number;
+  lastMessage: { preview: string; fromFarmer: boolean; mine: boolean; createdAt: string } | null;
+}
+
+export interface ConversationPage {
+  conversation: ConversationRow;
+  /** Fifty at most, the oldest first. */
+  messages: ChatMessage[];
+  hasOlder: boolean;
+  otherReadAt: string | null;
+}
+
+/** What the check every 30 seconds brings. */
+export interface MessageNews {
+  unreadTotal: number;
+  conversation: { isOpen: boolean; otherReadAt: string | null; messages: ChatMessage[] } | null;
+}
+
+export interface PaginatedMessages<T> {
+  success: boolean;
+  message: string;
+  data: T[];
+  pagination: { page: number; pageSize: number; totalItems: number; totalPages: number; hasNext: boolean; hasPrev: boolean };
+}
+
 /** An announcement as the admin's page sees it: also when it starts, who sees it and how it stands. */
 export interface AdminAnnouncement extends Announcement {
   showFrom: string;
