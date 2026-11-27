@@ -243,6 +243,28 @@ describe('the reminder about two-step sign in, before a farmer shares a first lo
     expect(await screen.findByTestId('qr')).toBeInTheDocument();
   });
 
+  // The farmer can leave the page (the Back button) while the reminder is up. Closing it afterwards must not publish a
+  // page they walked away from.
+  it('shares nothing if the lot dialog is gone by the time the reminder closes', async () => {
+    const tree = (withLot: boolean) => (
+      <LanguageProvider>
+        <ToastProvider>
+          <MfaReminderProvider blocked={false}>
+            {withLot ? <LotQrModal record={RECORD} onClose={vi.fn()} /> : <p>another page</p>}
+          </MfaReminderProvider>
+        </ToastProvider>
+      </LanguageProvider>
+    );
+    const view = render(tree(true));
+    await makeTheCode();
+    const reminder = await screen.findByRole('dialog', { name: 'Protect your account' });
+    view.rerender(tree(false));
+    fireEvent.click(within(reminder).getByRole('button', { name: 'Remind me later' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(api.create).not.toHaveBeenCalled();
+  });
+
   it('never holds up the share when the server cannot say', async () => {
     mfa.status.mockRejectedValue(new Error('no connection'));
     openWithReminder();

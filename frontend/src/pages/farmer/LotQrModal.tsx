@@ -67,6 +67,12 @@ export default function LotQrModal({ record, onClose, onChange }: LotQrModalProp
   const [confirmStop, setConfirmStop] = useState(false);
   const sheet = useRef<HTMLDivElement>(null);
   const id = record?.id;
+  // The lot this dialog is showing right now, or null once the page has gone. Read after a wait.
+  const showing = useRef<string | null>(null);
+  useEffect(() => {
+    showing.current = id ?? null;
+    return () => { showing.current = null; };
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -89,6 +95,8 @@ export default function LotQrModal({ record, onClose, onChange }: LotQrModalProp
     try {
       // Sharing a first lot is a moment to suggest two-step sign in. It never stops the share.
       await reminder.ask('sensitive_action');
+      // The farmer may have left while it was up. Nothing is published from a page they walked away from.
+      if (showing.current !== record.id) return;
       const res = await lotService.createShare(record.id);
       setToken(res.data.data.token);
       onChange?.(record.id, true);
