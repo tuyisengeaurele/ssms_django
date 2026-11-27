@@ -67,6 +67,11 @@ describe('message styles', () => {
     expect(css.indexOf('@media (max-width: 767px) and (max-height: 560px)')).toBeGreaterThan(css.indexOf('@media (max-width: 767px) {'));
   });
 
+  // Without its own rule the box takes the browser's grey, which is too faint in dark mode.
+  it('write the hint in the empty box in a colour that can be read in both themes', () => {
+    expect(rule('.msg-input::placeholder')).toMatch(/color:\s*var\(--text-muted\)/);
+  });
+
   it('take their colours from the theme, so dark mode follows', () => {
     expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });

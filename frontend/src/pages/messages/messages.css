@@ -309,6 +309,10 @@
   max-height: 30dvh;
 }
 
+.msg-input::placeholder {
+  color: var(--text-muted);
+}
+
 .msg-send {
   flex: none;
 }
