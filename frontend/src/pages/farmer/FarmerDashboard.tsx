@@ -143,6 +143,8 @@ export default function FarmerDashboard() {
       <div className="stack-24">
         {batches.length > 0 && <TodayCard items={attentionFor(batches, ranges)} />}
 
+        <TwoStepLine />
+
         <QuickActions role="FARMER" counts={{ alerts: unread }} />
 
         <div className="dash-body">
@@ -178,7 +180,6 @@ export default function FarmerDashboard() {
         </div>}
 
         <div className="stack-24">
-        <TwoStepLine />
           <Panel
             title={`${t('fhBatches')} (${batches.length})`}
             flush

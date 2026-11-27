@@ -149,7 +149,6 @@ export default function SupervisorDashboard() {
       />
 
       <div className="stack-24">
-        <TwoStepLine />
       {(user?.role === 'ADMIN' || user?.cooperativeId) && <DecisionsCard />}
 
       {user?.role === 'SUPERVISOR' && !user.cooperativeId && (
@@ -158,6 +157,8 @@ export default function SupervisorDashboard() {
           <span>{t('svNoCoop')}</span>
         </div>
       )}
+
+      <TwoStepLine />
 
       <QuickActions role={user?.role === 'ADMIN' ? 'ADMIN_MONITOR' : 'SUPERVISOR'} counts={{ alerts: unread }} />
 

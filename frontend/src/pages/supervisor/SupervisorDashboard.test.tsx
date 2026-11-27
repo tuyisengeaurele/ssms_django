@@ -355,4 +355,17 @@ describe('SupervisorDashboard, the quiet two-step line', () => {
     expect(reminder.setUp).toHaveBeenCalled();
     reminder.line = false;
   });
+
+  // Near the top, where it is seen on a phone without scrolling past the charts: above the shortcuts, below anything that
+  // needs doing today.
+  it('sits above the shortcuts', async () => {
+    reminder.line = true;
+    const { container } = open();
+    const line = (await screen.findByText('Secure your account')).closest('[role="note"]') as HTMLElement;
+    const shortcuts = container.querySelector('nav.qa') as HTMLElement;
+    expect(shortcuts).not.toBeNull();
+    expect(line.compareDocumentPosition(shortcuts) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(line.closest('.dash-body')).toBeNull();
+    reminder.line = false;
+  });
 });
