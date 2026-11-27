@@ -2056,6 +2056,7 @@ export const pageTranslations = {
     "Kwinjira k’ubuyobozi bisaba kode ya porogaramu.",
   ),
   adMfaPrint: k("Print", "Imprimer", "Capa"),
+  mfaLost: k("Lost your phone? Use a recovery code, or ask the SSMS team.", "Téléphone perdu ? Utilisez un code de secours ou demandez à l'équipe SSMS.", "Watakaje telefoni? Koresha kode yo kugarura, cyangwa ubaze itsinda rya SSMS."),
   adMfaOn: k("On", "Activée", "Irakora"),
   adMfaOff: k("Off", "Désactivée", "Ntirakora"),
   adMfaOnSince: k("On since {date}", "Activée depuis le {date}", "Irakora kuva {date}"),

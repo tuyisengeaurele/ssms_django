@@ -16,7 +16,7 @@ interface Props extends SignInDetails {
   onExpired: (message: string) => void;
 }
 
-/** The second step for an admin whose authenticator app is on: the 6 digit code, or a recovery code. */
+/** The second step for anyone with the authenticator app on: the 6 digit code, or a recovery code. */
 export default function MfaCodeStep({ challenge, device, sharedDevice, onSignedIn, onExpired }: Props) {
   const { t } = useLanguage();
   const { getErrorMessage } = useApiError();
@@ -89,6 +89,7 @@ export default function MfaCodeStep({ challenge, device, sharedDevice, onSignedI
           </button>
         </div>
       </form>
+      <p className="l-mfa__hint">{t('mfaLost')}</p>
     </>
   );
 }

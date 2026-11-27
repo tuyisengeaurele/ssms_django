@@ -152,3 +152,10 @@ describe('MfaCodeStep', () => {
     expect(screen.getByLabelText('Code à 6 chiffres')).toBeInTheDocument();
   });
 });
+
+describe('MfaCodeStep, without the phone', () => {
+  it('says what to do when the phone is lost', () => {
+    open();
+    expect(screen.getByText('Lost your phone? Use a recovery code, or ask the SSMS team.')).toBeInTheDocument();
+  });
+});
