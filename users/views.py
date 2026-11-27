@@ -97,10 +97,12 @@ class LoginView(APIView):
                 return api_error(message, 401, code=getattr(non_field[0], 'code', None))
             return api_error('Please check what you entered and try again.', 422, errors, code='invalid_input')
         user = serializer.validated_data['user']
-        if user.role == Role.ADMIN:
-            # An admin is not signed in by a password. Nothing is cleared yet either: the failure count is cleared only
-            # when a code is accepted, or someone with the password could keep guessing codes, a few at a time.
-            step = 'code' if mfa.is_enabled(user) else 'setup'
+        enabled = mfa.is_enabled(user)
+        if user.role == Role.ADMIN or enabled:
+            # An admin, or anyone who turned two-step sign in on, is not signed in by a password. Nothing is cleared yet
+            # either: the failure count is cleared only when a code is accepted, or someone with the password could keep
+            # guessing codes, a few at a time. Only an admin is ever sent to set it up here.
+            step = 'code' if enabled else 'setup'
             return api_success({'mfa': {'step': step, 'challenge': mfa_challenge.issue(user, step)}}, 'One more step to sign in.')
         lockout.clear(email)
         return finish_sign_in(request, user, mfa_verified=False)

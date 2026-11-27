@@ -1,4 +1,5 @@
-"""The code step of an admin's sign in, and the first time set-up of the authenticator app.
+"""The code step of a sign in, for an admin and for anyone who turned two-step sign in on, and an admin's first set-up of
+the authenticator app.
 
 None of these needs a session: the caller holds a challenge (users/mfa_challenge.py) from a correct password. They are
 open to anyone on purpose, throttled per address, and add no detail about why a challenge is refused.
@@ -41,13 +42,16 @@ def _start_over(message: str = CHALLENGE_GONE):
 
 
 def _open(request, step: str):
-    """The challenge in the request and the admin it names. Returns (held, user, None) or (None, None, answer)."""
+    """The challenge in the request and the person it names. Returns (held, user, None) or (None, None, answer).
+
+    The code step is for anyone with the app on. Setting it up from a sign in is for admins alone: everyone else sets it
+    up from inside the app, where the password is asked again."""
     try:
         held = mfa_challenge.read(request.data.get('challenge'))
     except mfa_challenge.ChallengeError:
         return None, None, _start_over()
-    user = User.objects.filter(pk=held.user_id, is_active=True, role=Role.ADMIN).first()
-    if held.step != step or user is None:
+    user = User.objects.filter(pk=held.user_id, is_active=True).first()
+    if held.step != step or user is None or (step == 'setup' and user.role != Role.ADMIN):
         return None, None, _start_over()
     return held, user, None
 
@@ -75,7 +79,7 @@ class _MfaView(APIView):
 
 class MfaVerifyView(_MfaView):
     def post(self, request):
-        """POST /api/auth/mfa/verify: a code from the app, or a recovery code, finishes an admin's sign in."""
+        """POST /api/auth/mfa/verify: a code from the app, or a recovery code, finishes a sign in."""
         held, user, problem = _open(request, 'code')
         if problem:
             return problem
@@ -84,7 +88,7 @@ class MfaVerifyView(_MfaView):
             return too_many_attempts(request, user.email, wait)
         factor = SecondFactor.objects.filter(user=user, enabled_at__isnull=False).first()
         if factor is None:
-            # Reset while the admin was typing. Starting over leads to set-up.
+            # Reset while the person was typing. Starting over leads an admin to set-up, and signs anyone else in.
             return _start_over()
 
         recovery = request.data.get('recovery_code')

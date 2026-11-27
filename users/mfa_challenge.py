@@ -1,8 +1,9 @@
-"""The challenge an admin holds between a correct password and a correct code.
+"""The challenge a person holds between a correct password and a correct code.
 
-A correct password does not sign an admin in. It hands back this signed value, good for five minutes, naming one person
-and one step (`code` when the second factor is on, `setup` when it is not). The mfa endpoints take it and nothing else
-does: it is not a JWT, so no other endpoint treats it as a login.
+A correct password does not sign in an admin, or anyone who turned two-step sign in on. It hands back this signed value,
+good for five minutes, naming one person and one step (`code` when the second factor is on, `setup` for an admin whose
+second factor is not). The mfa endpoints take it and nothing else does: it is not a JWT, so no other endpoint treats it
+as a login.
 
 A challenge dies when it is spent, when it expires, or after five wrong codes. Spent and wrong-code state live in the
 shared cache, so every worker agrees. The email lockout (core/lockout.py) is the main limit on guessing. This is a second

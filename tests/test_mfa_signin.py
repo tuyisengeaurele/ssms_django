@@ -246,12 +246,21 @@ def test_a_challenge_for_an_account_that_was_turned_off_is_refused():
     assert client.post(VERIFY, {'challenge': token, 'code': totp(secret)}, format='json').status_code == 401
 
 
-def test_a_challenge_for_someone_who_is_no_longer_an_admin_is_refused():
+def test_someone_who_stops_being_an_admin_still_needs_the_code_and_signs_in_as_what_they_are_now():
     user = UserFactory(role='ADMIN')
     secret = enable_factor(user)
     client, token = challenge_for(user)
     type(user).objects.filter(pk=user.pk).update(role='FARMER')
-    assert client.post(VERIFY, {'challenge': token, 'code': totp(secret)}, format='json').status_code == 401
+    response = client.post(VERIFY, {'challenge': token, 'code': totp(secret)}, format='json')
+    assert response.status_code == 200 and response.json()['data']['user']['role'] == 'FARMER'
+
+
+def test_a_set_up_challenge_for_someone_who_is_no_longer_an_admin_is_refused():
+    user = UserFactory(role='ADMIN')
+    client, token = challenge_for(user)
+    type(user).objects.filter(pk=user.pk).update(role='FARMER')
+    assert client.post(SETUP_START, {'challenge': token}, format='json').status_code == 401
+    assert not SecondFactor.objects.filter(user=user).exists()
 
 
 def test_a_second_factor_reset_during_sign_in_sends_the_admin_back_to_start_over():
