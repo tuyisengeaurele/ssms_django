@@ -21,6 +21,9 @@ vi.mock('../../services/sessions.service', () => ({
   sessionsService: { list: vi.fn().mockResolvedValue({ data: { data: [] } }) },
 }));
 
+const reminder = vi.hoisted(() => ({ ask: vi.fn(), refresh: vi.fn(), setUp: vi.fn(), open: false, line: false }));
+vi.mock('../../components/auth/mfaReminderContext', () => ({ useMfaReminder: () => reminder }));
+
 import SecuritySettings from './SecuritySettings';
 
 function open() {
@@ -93,6 +96,7 @@ describe('Security settings', () => {
     await waitFor(() => expect(screen.queryByLabelText('Current password')).not.toBeInTheDocument());
     // The server ended every other session, so this device keeps the fresh one it was given.
     expect(getAccessToken()).toBe('fresh-jwt');
+    expect(reminder.ask).toHaveBeenCalledWith('password_changed');
     expect(JSON.stringify({ ...localStorage, ...sessionStorage })).not.toContain('fresh-jwt');
   });
 

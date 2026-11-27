@@ -9,6 +9,11 @@ vi.mock('../../services/lot.service', () => ({ lotService: { getShare: api.get, 
 // The picture itself is the library's job. What matters here is what it is asked to encode.
 vi.mock('qrcode.react', () => ({ QRCodeSVG: ({ value }: { value: string }) => <svg data-testid="qr" data-value={value} /> }));
 
+const mfa = vi.hoisted(() => ({ status: vi.fn(), snooze: vi.fn(), seen: vi.fn() }));
+vi.mock('../../services/mfa.service', () => ({ mfaService: mfa }));
+vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'u', role: 'FARMER' }, acting: null }) }));
+
+import MfaReminderProvider from '../../components/auth/MfaReminderProvider';
 import LotQrModal from './LotQrModal';
 
 const RECORD = { id: 'r1', batchId: 'b1', cocoonWeightKg: 18.5, qualityGrade: 'A', harvestedAt: '2026-10-01T09:00:00Z', createdAt: '', farmName: 'Hillside Farm' } as never;
@@ -201,5 +206,47 @@ describe('in French', () => {
     localStorage.setItem('ssms_locale', 'fr');
     open();
     expect(await screen.findByRole('dialog', { name: 'Code QR de ce lot' })).toBeInTheDocument();
+  });
+});
+
+describe('the reminder about two-step sign in, before a farmer shares a first lot', () => {
+  const answer = (show: boolean) =>
+    ({ data: { data: { enabled: false, required: false, enabledAt: null, recoveryCodesLeft: 0, prompt: { show, trigger: show ? 'sensitive_action' : null }, reminderLine: false } } });
+
+  const openWithReminder = () => render(
+    <LanguageProvider>
+      <ToastProvider>
+        <MfaReminderProvider blocked={false}>
+          <LotQrModal record={RECORD} onClose={vi.fn()} />
+        </MfaReminderProvider>
+      </ToastProvider>
+    </LanguageProvider>,
+  );
+  const makeTheCode = async () => fireEvent.click(within(await dialog()).getByRole('button', { name: 'Create the QR code' }));
+
+  beforeEach(() => {
+    mfa.snooze.mockResolvedValue({ data: { data: null } });
+    mfa.seen.mockResolvedValue({ data: { data: null } });
+    mfa.status.mockImplementation(async (trigger?: string) => answer(trigger === 'sensitive_action'));
+  });
+
+  it('comes first, alone on the screen, and the code is made once it is closed', async () => {
+    openWithReminder();
+    await makeTheCode();
+    const reminder = await screen.findByRole('dialog', { name: 'Protect your account' });
+    // Two dialogs never stack: the lot dialog steps aside.
+    await waitFor(() => expect(screen.getAllByRole('dialog')).toHaveLength(1));
+    expect(api.create).not.toHaveBeenCalled();
+    fireEvent.click(within(reminder).getByRole('button', { name: 'Remind me later' }));
+    await waitFor(() => expect(api.create).toHaveBeenCalledWith('r1'));
+    expect(await dialog()).toBeInTheDocument();
+    expect(await screen.findByTestId('qr')).toBeInTheDocument();
+  });
+
+  it('never holds up the share when the server cannot say', async () => {
+    mfa.status.mockRejectedValue(new Error('no connection'));
+    openWithReminder();
+    await makeTheCode();
+    await waitFor(() => expect(api.create).toHaveBeenCalledWith('r1'));
   });
 });
