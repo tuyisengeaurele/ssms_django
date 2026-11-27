@@ -522,6 +522,14 @@ a.topbar-note:hover {
   line-height: 1.4;
 }
 
+.note-preview {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
 .note-meta {
   margin-top: 2px;
   font-size: 0.76rem;

@@ -368,7 +368,6 @@ export const landingTranslations = {
   ),
   lpFormName: k('Name', 'Nom', 'Izina'),
   lpFormEmail: k('Email', 'E-mail', 'Imeri'),
-  lpFormSubject: k('Subject', 'Objet', 'Impamvu'),
   lpFormMessage: k('Message', 'Message', 'Ubutumwa'),
   lpFormSend: k('Send message', 'Envoyer le message', 'Ohereza ubutumwa'),
   lpFormSending: k('Sending', 'Envoi en cours', 'Birimo koherezwa'),

@@ -10,6 +10,19 @@
 ### Still open
 The web layer under the service, `starlette` 0.37.2, has known flaws of its own, and GitHub does not list them because the requirements file does not name it. Fixing them needs a newer FastAPI. With the check above, a stranger can no longer reach the ones in upload handling.
 
+## Replying to contact messages, the website (roadmap 4.4, part 2)
+
+### Changed
+- **The contact form** asks for a name, an email and a message. The subject box is gone. It also sends the language of the page, which only settles a message whose words do not. The empty room above **Send message** is gone.
+- **The messages page** answers in the app. The link to a mail app and the mark as answered buttons are gone. Rows show the name, the start of the message, the date and **New** or **Answered**, with the dates in one column. On a phone each message takes two lines and the marks now show. Search covers the replies too.
+- **The notification bell** shows the sender and the start of the message, not the subject.
+
+### Added
+- **The reply box.** **Reply** opens it under the message, in 120 ms, or at once for people who ask for less motion. It shows who gets the email and its language, which can be changed. Ctrl or Cmd with Enter sends. Escape closes the box first. A draft stays while the page is open. While sending, nothing can be pressed twice or closed. A failure keeps the text and brings the error into view. If another admin answered first, their reply is shown.
+
+### Removed
+- `POST` and `DELETE /api/admin/contacts/<id>/replied`. Messages marked by hand before keep who and when, and can still get one reply.
+
 ## Replying to contact messages, the server (roadmap 4.4, part 1)
 
 ### Changed
@@ -25,8 +38,7 @@ The web layer under the service, `starlette` 0.37.2, has known flaws of its own,
 ### Database
 Migration `contacts.0003` adds the column `contact_messages.language` and the table `contact_replies`.
 
-### Not yet
-The messages page and the contact form change in part 2. French and Kinyarwanda are drafts until a native speaker reads them.
+French and Kinyarwanda are drafts until a native speaker reads them.
 
 ## Email through the website's sender
 

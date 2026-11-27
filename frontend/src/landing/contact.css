@@ -84,6 +84,12 @@
   font-size: 0.92rem;
 }
 
+/* Nothing to say, no room taken. The element stays on the page, so a screen reader announces what arrives in it. */
+.landing .l-contact__error:empty {
+  min-height: 0;
+  margin: 0;
+}
+
 .landing .l-contact__send {
   width: 100%;
   padding: 18px 24px;

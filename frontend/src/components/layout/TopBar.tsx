@@ -27,6 +27,12 @@ const SHORTCUT = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navi
 
 // ── Notifications ────────────────────────────────────────────────────────────
 
+/** The start of a message on one line. The stylesheet keeps it to two, and the panel never holds a whole long message. */
+const startOf = (message: string) => {
+  const line = message.replace(/\s+/g, ' ').trim();
+  return line.length > 140 ? `${line.slice(0, 139)}…` : line;
+};
+
 function NotificationPanel({ isAdmin, alertCount, onClose }: { isAdmin: boolean; alertCount: number; onClose: () => void }) {
   const { t, locale } = useLanguage();
   const [tab, setTab] = useState<'alerts' | 'messages'>('alerts');
@@ -94,7 +100,7 @@ function NotificationPanel({ isAdmin, alertCount, onClose }: { isAdmin: boolean;
           messages.map((m) => (
             <Link key={m.id} to="/admin/contacts" onClick={onClose} className="topbar-note">
               <div>
-                <p className="note-text">{m.subject}</p>
+                <p className="note-text note-preview">{startOf(m.message)}</p>
                 <p className="note-meta">{m.name} · {timeAgo(m.createdAt, locale)}</p>
               </div>
             </Link>
