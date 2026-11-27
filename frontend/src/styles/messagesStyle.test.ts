@@ -55,6 +55,18 @@ describe('message styles', () => {
     expect(blocks('@media (min-width: 768px)').join('\n')).toMatch(/\.msg-back\s*\{\s*display:\s*none/);
   });
 
+  // A phone held sideways, or a keyboard that takes room from the page, leaves about 400 pixels.
+  it('fit a short screen, so the box to write in stays above the bottom bar', () => {
+    const short = blocks('@media (max-width: 767px) and (max-height: 560px)').join('');
+    expect(short).toMatch(/\.msg-layout\s*\{[^}]*height:\s*calc\(100dvh - var\(--topbar-height\) - 88px - env\(safe-area-inset-bottom, 0px\)\)/);
+    expect(short).toMatch(/\.msg-layout\s*\{[^}]*min-height:\s*200px/);
+    // The bar at the top already names the page, so its heading only has to stay for screen readers.
+    expect(short).toMatch(/\.msg-page > \.page-header\s*\{[^}]*clip-path:\s*inset\(50%\)/);
+    expect(short).not.toMatch(/\.msg-page > \.page-header\s*\{[^}]*display:\s*none/);
+    expect(short).not.toMatch(/bottom-nav/);
+    expect(css.indexOf('@media (max-width: 767px) and (max-height: 560px)')).toBeGreaterThan(css.indexOf('@media (max-width: 767px) {'));
+  });
+
   it('take their colours from the theme, so dark mode follows', () => {
     expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });

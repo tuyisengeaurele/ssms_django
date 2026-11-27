@@ -176,7 +176,7 @@ export default function MessagesPage() {
   }
 
   return (
-    <div>
+    <div className="msg-page">
       <PageHeader title={t('ptMessages')} />
       <div className={`msg-layout${withList ? '' : ' msg-layout--one'}`} data-view={inThread ? 'thread' : 'list'}>
         {withList ? (

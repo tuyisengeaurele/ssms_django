@@ -369,3 +369,36 @@
     max-width: 92%;
   }
 }
+
+/* A short screen: a phone held sideways, or a keyboard that takes room from the page. The bar at the top already names
+   the page, so its heading is left to screen readers and the conversation gets the room. */
+@media (max-width: 767px) and (max-height: 560px) {
+  .msg-page > .page-header {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .msg-layout {
+    height: calc(100dvh - var(--topbar-height) - 88px - env(safe-area-inset-bottom, 0px));
+    min-height: 200px;
+  }
+
+  .app-content:has(.msg-layout) {
+    padding-top: 6px;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .msg-head,
+  .msg-composer,
+  .msg-closed {
+    padding: 6px 12px;
+  }
+
+  .form-textarea.msg-input {
+    min-height: 44px;
+  }
+}
