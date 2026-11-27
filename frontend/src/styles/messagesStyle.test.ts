@@ -67,6 +67,14 @@ describe('message styles', () => {
     expect(css.indexOf('@media (max-width: 767px) and (max-height: 560px)')).toBeGreaterThan(css.indexOf('@media (max-width: 767px) {'));
   });
 
+  // Beside Back on a phone, one line holds about eight letters: not enough to tell who is being written to.
+  it('give the name above a conversation a second line before cutting it', () => {
+    expect(rule('.msg-title')).toMatch(/-webkit-line-clamp:\s*2/);
+    expect(rule('.msg-title')).toMatch(/overflow-wrap:\s*anywhere/);
+    expect(rule('.msg-title')).not.toMatch(/nowrap/);
+    expect(rule('.msg-title')).toMatch(/min-width:\s*0/);
+  });
+
   // Without its own rule the box takes the browser's grey, which is too faint in dark mode.
   it('write the hint in the empty box in a colour that can be read in both themes', () => {
     expect(rule('.msg-input::placeholder')).toMatch(/color:\s*var\(--text-muted\)/);

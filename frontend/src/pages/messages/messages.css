@@ -129,11 +129,15 @@
 }
 
 .msg-title {
+  display: -webkit-box;
+  min-width: 0;
   margin: 0;
   overflow: hidden;
   font-size: 1.05rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .msg-status,
