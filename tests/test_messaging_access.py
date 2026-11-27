@@ -130,7 +130,7 @@ def test_the_list_can_be_asked_for_one_farmers_conversation(world):
     neighbour = farmer_of(world.coop)
     say(talk(neighbour), neighbour, 'Another.')
     found = client(world.supervisor).get(LIST, {'farmer': world.farmer.pk}).data
-    assert [r['id'] for r in found['data']] == [world.talk.pk] and found['pagination']['total_items'] == 1
+    assert [r['id'] for r in found['data']] == [world.talk.pk] and found['pagination']['totalItems'] == 1
     assert client(world.supervisor).get(LIST, {'farmer': 'nothing-here'}).data['data'] == []
 
 
