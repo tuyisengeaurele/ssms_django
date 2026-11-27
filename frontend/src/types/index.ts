@@ -426,6 +426,8 @@ export interface ApiResponse<T> {
 export interface AuthResponse {
   user: User;
   token: string;
+  /** True when this account had not signed in from this kind of device before. */
+  newDevice?: boolean;
 }
 
 /** What an admin gets for a correct password: not a sign in yet, but the next step and the challenge that goes with it. */

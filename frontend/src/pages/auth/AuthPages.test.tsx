@@ -190,6 +190,29 @@ describe('Login page', () => {
     expect(screen.getByText(/signed out sooner/i)).toBeInTheDocument();
   });
 
+  // The dashboard reads this once, to ask the server whether to remind the person about two-step sign in.
+  it.each([[false, 'login'], [true, 'new_device']])('leaves the moment for the dashboard (a new device: %s)', async (newDevice, moment) => {
+    sessionStorage.clear();
+    api.login.mockResolvedValue({ data: { data: { user: { role: 'FARMER' }, token: 'abc', newDevice } } });
+    open();
+    fill('Email address', 'a@b.rw');
+    fill('Password', 'Secret123');
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    await waitFor(() => expect(login).toHaveBeenCalled());
+    expect(sessionStorage.getItem('ssms_prompt')).toBe(moment);
+  });
+
+  it('leaves no moment behind when a code is still to come', async () => {
+    sessionStorage.clear();
+    api.login.mockResolvedValue({ data: { data: { mfa: { step: 'code', challenge: 'chal-1' } } } });
+    open();
+    fill('Email address', 'a@b.rw');
+    fill('Password', 'Secret123');
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    await screen.findByRole('button', { name: 'Verify' });
+    expect(sessionStorage.getItem('ssms_prompt')).toBeNull();
+  });
+
   it('tells the server when the computer is shared', async () => {
     api.login.mockResolvedValue({ data: { data: { user: { role: 'FARMER' }, token: 'abc' } } });
     open();

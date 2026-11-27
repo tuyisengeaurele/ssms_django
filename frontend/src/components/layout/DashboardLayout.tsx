@@ -9,6 +9,7 @@ import TopBar from './TopBar';
 import BottomNav from './BottomNav';
 import QuickSearch from './QuickSearch';
 import IdleWarningModal from './IdleWarningModal';
+import MfaReminderProvider from '../auth/MfaReminderProvider';
 import ActingBanner from '../support/ActingBanner';
 import SupportActiveBanner from '../support/SupportActiveBanner';
 import SupportRequestModal from '../support/SupportRequestModal';
@@ -112,32 +113,35 @@ export default function DashboardLayout() {
   };
 
   return (
-    <div className="app-layout">
-      <Sidebar
-        collapsed={rail}
-        mobileOpen={mobileOpen}
-        onMobileClose={() => setMobileOpen(false)}
-        alertCount={alertCount}
-        decisionCount={decisionCount}
-      />
+    // The reminder about two-step sign in never opens over a support request or the idle warning.
+    <MfaReminderProvider blocked={Boolean(support.request) || idle.warning}>
+      <div className="app-layout">
+        <Sidebar
+          collapsed={rail}
+          mobileOpen={mobileOpen}
+          onMobileClose={() => setMobileOpen(false)}
+          alertCount={alertCount}
+          decisionCount={decisionCount}
+        />
 
-      <main className={`app-main ${rail ? 'sidebar-collapsed' : ''}`}>
-        {/* Right before the top bar, so the bar can sit under it (see support.css). */}
-        <ActingBanner />
-        <SupportResume />
-        <SupportActiveBanner active={support.active} onEnded={support.refresh} />
-        <TopBar onMenuToggle={toggleMenu} onSearch={() => setSearchOpen(true)} alertCount={alertCount} />
+        <main className={`app-main ${rail ? 'sidebar-collapsed' : ''}`}>
+          {/* Right before the top bar, so the bar can sit under it (see support.css). */}
+          <ActingBanner />
+          <SupportResume />
+          <SupportActiveBanner active={support.active} onEnded={support.refresh} />
+          <TopBar onMenuToggle={toggleMenu} onSearch={() => setSearchOpen(true)} alertCount={alertCount} />
 
-        {/* A new key is a new page: it fades in (shell.css). */}
-        <div key={`${location.pathname}:${user?.id ?? ''}`} className="app-content">
-          <Outlet />
-        </div>
-      </main>
+          {/* A new key is a new page: it fades in (shell.css). */}
+          <div key={`${location.pathname}:${user?.id ?? ''}`} className="app-content">
+            <Outlet />
+          </div>
+        </main>
 
-      <BottomNav alertCount={alertCount} onMore={() => setMobileOpen(true)} />
-      <QuickSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
-      <IdleWarningModal open={idle.warning} secondsLeft={idle.secondsLeft} onStay={idle.stay} onSignOut={logout} />
-      <SupportRequestModal request={support.request} onAnswered={support.refresh} />
-    </div>
+        <BottomNav alertCount={alertCount} onMore={() => setMobileOpen(true)} />
+        <QuickSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+        <IdleWarningModal open={idle.warning} secondsLeft={idle.secondsLeft} onStay={idle.stay} onSignOut={logout} />
+        <SupportRequestModal request={support.request} onAnswered={support.refresh} />
+      </div>
+    </MfaReminderProvider>
   );
 }

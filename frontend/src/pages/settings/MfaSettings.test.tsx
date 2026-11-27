@@ -8,6 +8,9 @@ import { setReducedMotion } from '../../test/setup';
 const mfa = vi.hoisted(() => ({ status: vi.fn(), newRecoveryCodes: vi.fn(), enrollStart: vi.fn(), enrollConfirm: vi.fn(), disable: vi.fn() }));
 vi.mock('../../services/mfa.service', () => ({ mfaService: mfa }));
 
+const reminder = vi.hoisted(() => ({ ask: vi.fn(), refresh: vi.fn(), setUp: vi.fn(), open: false, line: false }));
+vi.mock('../../components/auth/mfaReminderContext', () => ({ useMfaReminder: () => reminder }));
+
 import MfaSettings from './MfaSettings';
 
 const CODES = ['AAAAA-BBBBB', 'CCCCC-DDDDD', 'EEEEE-FFFFF', 'GGGGG-HHHHH', 'JJJJJ-KKKKK', 'MMMMM-NNNNN', 'PPPPP-QQQQQ', 'RRRRR-SSSSS'];
@@ -145,6 +148,7 @@ describe('MfaSettings, turning it on and off', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Done' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(await screen.findByText('8 recovery codes left')).toBeInTheDocument();
+    expect(reminder.refresh).toHaveBeenCalled();
   });
 
   it('offers to turn it off while it is on, and reads the status again after', async () => {
@@ -158,6 +162,7 @@ describe('MfaSettings, turning it on and off', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Turn off' }));
     expect(await screen.findByText('Off')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Turn on' })).toBeInTheDocument();
+    expect(reminder.refresh).toHaveBeenCalled();
   });
 
   it('never offers an admin to turn it off', async () => {

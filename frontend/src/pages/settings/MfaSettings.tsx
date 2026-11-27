@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import CodeModal from '../../components/auth/CodeModal';
+import { useMfaReminder } from '../../components/auth/mfaReminderContext';
 import RecoveryCodes from '../../components/auth/RecoveryCodes';
 import TurnOffTwoStepDialog from '../../components/auth/TurnOffTwoStepDialog';
 import TwoStepSetup from '../../components/auth/TwoStepSetup';
@@ -17,6 +18,7 @@ import { dateFormat } from '../../utils/dateFormat';
 export default function MfaSettings() {
   const { t, tn, locale } = useLanguage();
   const { success } = useToast();
+  const { refresh } = useMfaReminder();
   const [settingUp, setSettingUp] = useState(false);
   // True once the recovery codes are on screen: from then on the dialog closes only when they are kept.
   const [mustFinish, setMustFinish] = useState(false);
@@ -47,6 +49,7 @@ export default function MfaSettings() {
     closeSetup();
     setVersion((n) => n + 1);
     success(t('mfaTurnedOn'));
+    refresh();
   };
 
   const turnedOff = () => {
@@ -54,6 +57,7 @@ export default function MfaSettings() {
     setFresh(null);
     setVersion((n) => n + 1);
     success(t('mfaTurnedOff'));
+    refresh();
   };
 
   const makeNewCodes = async (code: string) => {
