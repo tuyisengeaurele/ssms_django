@@ -53,6 +53,9 @@ export function useConversation({ conversationId, farmerId, asFarmer, onStarted,
   // Kept in step by hand, so what arrives is compared with what is held right now.
   const held = useRef<ChatMessage[]>([]);
   const heldFor = useRef<string | null>(null);
+  // The time of the latest message the server has shown this page, which is where the next check starts from. A message
+  // just sent does not move it: the other side may have written before it, and that would never be asked for.
+  const heardUpTo = useRef('');
   const waitingToBeRead = useRef(false);
   const openNow = useRef(true);
   const latest = useRef({ onStarted, onChanged, onArrived, atEnd });
@@ -63,6 +66,12 @@ export function useConversation({ conversationId, farmerId, asFarmer, onStarted,
     setMessages(held.current);
   }, []);
 
+  const heard = useCallback((shown: ChatMessage[]) => {
+    for (const m of shown) {
+      if (!heardUpTo.current || Date.parse(m.createdAt) > Date.parse(heardUpTo.current)) heardUpTo.current = m.createdAt;
+    }
+  }, []);
+
   /** The list says which are closed, and closing changes no count, so it is told when this one closes. */
   const nowOpen = useCallback((open: boolean) => {
     if (openNow.current && !open) latest.current.onChanged();
@@ -70,10 +79,11 @@ export function useConversation({ conversationId, farmerId, asFarmer, onStarted,
     setOpen(open);
   }, []);
 
-  /** Marks the newest message read, when somebody can see it: the tab is visible and it is on the screen. */
+  /** Marks the other side's messages read, when somebody can see the newest: the tab is visible and it is on the screen. */
   const markIfSeen = useCallback(() => {
     const id = heldFor.current;
-    const newest = held.current[held.current.length - 1];
+    // Theirs, never one's own: only theirs count as unread, and each of them up to here has been shown.
+    const newest = [...held.current].reverse().find((m) => m.fromFarmer !== asFarmer);
     if (!waitingToBeRead.current || !id || !newest) return;
     if (document.visibilityState !== 'visible' || !latest.current.atEnd()) return;
     waitingToBeRead.current = false;
@@ -84,7 +94,7 @@ export function useConversation({ conversationId, farmerId, asFarmer, onStarted,
       },
       () => { waitingToBeRead.current = true; },   // tried again the next time it is looked at
     );
-  }, [setUnread]);
+  }, [setUnread, asFarmer]);
 
   const load = useCallback(async (id: string) => {
     setState('loading');
@@ -92,6 +102,8 @@ export function useConversation({ conversationId, farmerId, asFarmer, onStarted,
       const found = (await messageService.one(id)).data.data;
       heldFor.current = id;
       held.current = [];
+      heardUpTo.current = '';
+      heard(found.messages);
       keep(found.messages);
       setConversation(found.conversation);
       setHasOlder(found.hasOlder);
@@ -103,7 +115,7 @@ export function useConversation({ conversationId, farmerId, asFarmer, onStarted,
     } catch (error) {
       setState(axios.isAxiosError(error) && error.response?.status === 404 ? 'missing' : 'failed');
     }
-  }, [keep]);
+  }, [keep, heard]);
 
   useEffect(() => {
     // After a first message the address gains the new conversation's number. What is on the screen is that conversation.
@@ -117,6 +129,7 @@ export function useConversation({ conversationId, farmerId, asFarmer, onStarted,
     const arrived = (news: ConversationNews) => {
       nowOpen(news.isOpen);
       setOtherReadAt(news.otherReadAt);
+      heard(news.messages);
       const known = new Set(held.current.map((m) => m.id));
       const fresh = news.messages.filter((m) => !known.has(m.id));
       if (fresh.length === 0) return;
@@ -127,8 +140,8 @@ export function useConversation({ conversationId, farmerId, asFarmer, onStarted,
       if (said.length > 0) latest.current.onArrived(said[said.length - 1]);
       latest.current.onChanged();
     };
-    return watch({ id: shownId, since: () => held.current[held.current.length - 1]?.createdAt ?? new Date(0).toISOString() }, arrived);
-  }, [shownId, watch, keep, asFarmer, nowOpen]);
+    return watch({ id: shownId, since: () => heardUpTo.current || new Date(0).toISOString() }, arrived);
+  }, [shownId, watch, keep, heard, asFarmer, nowOpen]);
 
   useEffect(() => {
     document.addEventListener('visibilitychange', markIfSeen);

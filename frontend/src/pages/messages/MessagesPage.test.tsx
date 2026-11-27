@@ -505,6 +505,20 @@ describe('News from the shared check', () => {
     expect(shared.watched!.open.since()).toBe('2026-11-27T09:20:00+00:00');
   });
 
+  // The other side may have written since the last check. Asking from the time of a message just sent would pass it by.
+  it('is not moved on by a message the person sent, so nothing written just before it is missed', async () => {
+    await open('/messages/c1');
+    const mine = message('m4', 'Hello.', { createdAt: '2026-11-27T09:30:00+00:00' });
+    api.send.mockResolvedValue(sentAs(mine));
+    write('Hello.');
+    await press();
+    expect(texts()).toContain('Hello.');
+    expect(shared.watched!.open.since()).toBe(ANSWER.createdAt);
+    await bring({ messages: [theirs('m3', 'Wait for me.', { createdAt: '2026-11-27T09:20:00+00:00' }), mine] });
+    expect(texts()).toEqual(['The worms stopped eating.', 'I will come today.', 'Wait for me.', 'Hello.']);
+    expect(shared.watched!.open.since()).toBe(mine.createdAt);
+  });
+
   // The check looks a little further back than asked, so what the page has comes again.
   it('draws each message once, in order, however often it comes', async () => {
     await open('/messages/c1');
@@ -569,6 +583,15 @@ describe('Marking what has been read', () => {
     expect(scroller().scrollTop).toBe(1000);
     expect(api.read.mock.calls).toEqual([['c1', 'm3']]);
     expect(screen.queryByRole('button', { name: 'New messages' })).not.toBeInTheDocument();
+  });
+
+  it('marks as far as the other side’s newest message, not as far as one sent after it', async () => {
+    await open('/messages/c1');
+    await bring({ messages: [
+      theirs('m3', 'Wait for me.', { createdAt: '2026-11-27T09:20:00+00:00' }),
+      message('m4', 'Hello.', { createdAt: '2026-11-27T09:30:00+00:00' }),
+    ] });
+    expect(api.read.mock.calls).toEqual([['c1', 'm3']]);
   });
 
   it('tries again later when the mark did not arrive', async () => {
