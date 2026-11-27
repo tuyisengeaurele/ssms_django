@@ -65,6 +65,17 @@ describe('Privacy policy page', () => {
     expect(section).toHaveTextContent('Contact messages: when we answer a message, we keep our reply with it.');
   });
 
+  // Sign in is kept in an HttpOnly cookie and the language in a second one; storage holds the rest. The page once said
+  // storage held both, and nothing else.
+  it('says what is really kept in the browser: two cookies and a few small settings', () => {
+    renderPage(<PrivacyPolicyPage />, '/privacy');
+    const section = screen.getByRole('heading', { level: 2, name: /Cookies and local storage/ }).closest('section') as HTMLElement;
+    expect(section).toHaveTextContent(
+      "SSMS keeps you signed in with a cookie that scripts on the page cannot read, and keeps your language choice in a second cookie. Your browser's storage also keeps small settings, such as your language, light or dark theme and menu layout, and a note that you are signed in. We do not use tracking or advertising cookies, so the site does not show a cookie banner. You can clear all of these in your browser settings.",
+    );
+    expect(section).not.toHaveTextContent(/only these two things/);
+  });
+
   it('is dated the day of its latest change', () => {
     renderPage(<PrivacyPolicyPage />, '/privacy');
     expect(screen.getByText(/November 27, 2026/)).toBeInTheDocument();

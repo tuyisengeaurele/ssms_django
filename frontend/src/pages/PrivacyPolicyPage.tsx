@@ -74,7 +74,7 @@ const sections: LegalSection[] = [
     title: 'Cookies and local storage',
     body: (
       <p>
-        SSMS keeps your sign in session and your language choice in your browser's local storage. We do not use tracking or advertising cookies. Because we store only these two things, the site does not show a cookie banner. You can clear local storage at any time in your browser settings.
+        SSMS keeps you signed in with a cookie that scripts on the page cannot read, and keeps your language choice in a second cookie. Your browser's storage also keeps small settings, such as your language, light or dark theme and menu layout, and a note that you are signed in. We do not use tracking or advertising cookies, so the site does not show a cookie banner. You can clear all of these in your browser settings.
       </p>
     ),
   },

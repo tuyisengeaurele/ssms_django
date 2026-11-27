@@ -1,9 +1,12 @@
 # Changelog
 
-## Privacy page: email and contact replies
+## Privacy page: email, contact replies and cookies
 
 ### Changed
 - The privacy page says that SSMS sends email through Gmail, that each email passes through Vercel on its way, and that a reply to a contact message is kept with it. The date at the top is 27 November 2026.
+
+### Fixed
+- **Cookies and local storage** said that sign in and the language were kept in local storage, and that nothing else was. Sign in is kept in a cookie that scripts cannot read, the language in a second cookie, and the browser's storage holds a few small settings.
 
 ## Disease check service: uploads (security)
 
