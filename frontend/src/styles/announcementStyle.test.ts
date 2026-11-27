@@ -23,8 +23,9 @@ function blocks(opening: string): string[] {
   return out;
 }
 
-function rule(selector: string): string {
-  const found = [...css.matchAll(/(^|\n)\s*([^{}@\n][^{}]*)\{([^}]*)\}/g)].filter((m) => m[2].split(',').some((s) => s.trim() === selector));
+/** What every rule for exactly this selector says, in the banner's stylesheet unless another is given. */
+function rule(selector: string, sheet: string = css): string {
+  const found = [...sheet.matchAll(/(^|\n)\s*([^{}@\n][^{}]*)\{([^}]*)\}/g)].filter((m) => m[2].split(',').some((s) => s.trim() === selector));
   return found.map((m) => m[3]).join('\n');
 }
 
@@ -45,22 +46,20 @@ describe('announcements in the fixed public header', () => {
     expect(landing).toMatch(/section\[id\]\s*\{\s*scroll-margin-top:\s*24px;\s*\}/);
   });
 
-  const block = (selector: string) => new RegExp(`(^|\\n)${selector.replace(/\./g, '\\.')}\\s*\\{([^}]*)\\}`).exec(nav.replace(/\r/g, ''))?.[2] ?? '';
-
   // The header stays put, so it moves up by as much of the banners as has been scrolled past. Only the menu stays behind.
   it('scroll away with the page, leaving the menu at the top', () => {
-    expect(block('.landing .l-nav')).toMatch(/top:\s*calc\(-1 \* var\(--announcement-gone, 0px\)\)/);
+    expect(rule('.landing .l-nav', nav)).toMatch(/top:\s*calc\(-1 \* var\(--announcement-gone, 0px\)\)/);
   });
 
   it('are shown whole, with nothing cut off, and can be clicked', () => {
-    expect(block('.landing .l-nav__announcements')).toMatch(/pointer-events:\s*auto/);
-    expect(block('.landing .l-nav__announcements')).not.toMatch(/max-height|overflow/);
+    expect(rule('.landing .l-nav__announcements', nav)).toMatch(/pointer-events:\s*auto/);
+    expect(rule('.landing .l-nav__announcements', nav)).not.toMatch(/max-height|overflow/);
   });
 
   // Hidden is not enough: their space would leave the menu bar, and its close button, across the middle of the menu.
   it('are moved off the screen, all of them, while the phone menu is open', () => {
-    expect(block('.landing .l-nav.is-open')).toMatch(/top:\s*calc\(-1 \* var\(--announcement-height, 0px\)\)/);
-    expect(block('.landing .l-nav.is-open .l-nav__announcements')).toMatch(/visibility:\s*hidden/);
+    expect(rule('.landing .l-nav.is-open', nav)).toMatch(/top:\s*calc\(-1 \* var\(--announcement-height, 0px\)\)/);
+    expect(rule('.landing .l-nav.is-open .l-nav__announcements', nav)).toMatch(/visibility:\s*hidden/);
   });
 });
 
