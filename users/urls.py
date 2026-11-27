@@ -13,7 +13,7 @@ from .mfa_views import (
     MfaVerifyView,
 )
 from .notification_views import NotificationPreferencesView
-from .mfa_enroll_views import MfaEnrollConfirmView, MfaEnrollStartView
+from .mfa_enroll_views import MfaDisableView, MfaEnrollConfirmView, MfaEnrollStartView
 from .password_reset_views import PasswordResetConfirmView, PasswordResetRequestView
 from .photo_views import PhotoView
 from .session_views import SessionDetailView, SessionListView, SessionPingView, SessionRevokeOthersView
@@ -27,6 +27,7 @@ urlpatterns = [
     path('mfa/recovery-codes', MfaRecoveryCodesView.as_view(), name='auth_mfa_recovery_codes'),
     path('mfa/enroll/start',   MfaEnrollStartView.as_view(),   name='auth_mfa_enroll_start'),
     path('mfa/enroll/confirm', MfaEnrollConfirmView.as_view(), name='auth_mfa_enroll_confirm'),
+    path('mfa/disable',        MfaDisableView.as_view(),       name='auth_mfa_disable'),
     path('mfa/verify',        MfaVerifyView.as_view(),        name='auth_mfa_verify'),
     path('mfa/step-up',       MfaStepUpView.as_view(),        name='auth_mfa_step_up'),
     path('mfa/setup/start',   MfaSetupStartView.as_view(),    name='auth_mfa_setup_start'),

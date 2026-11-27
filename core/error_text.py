@@ -17,6 +17,7 @@ CODE_KEYS = {
     'mfa_wrong_code': 'erMfaWrongCode',
     'mfa_already_on': 'erMfaAlreadyOn',
     'mfa_start_again': 'erMfaStartAgain',
+    'mfa_not_on': 'erMfaNotOn',
     'email_same': 'erEmailSame',
     'link_invalid': 'erLinkInvalid',
     'link_expired': 'erLinkExpired',

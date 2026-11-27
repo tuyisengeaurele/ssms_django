@@ -1,12 +1,13 @@
-"""Two-step sign in from inside the app, for a person who is signed in: turning it on.
+"""Two-step sign in from inside the app, for a person who is signed in: turning it on and off.
 
 The password is asked again. Without it, someone who borrowed a signed in phone could add their own authenticator app and
-lock the owner out. A wrong password or code answers 422, never 401, so the website does not take it for an ended session,
+lock the owner out, or take the owner's away. A wrong password or code answers 422, never 401, so the website does not take it for an ended session,
 and each one counts toward the email's lock.
 
 Nothing here writes a password, a secret, a code or a recovery code to a log, an event or the audit log.
 """
 import logging
+from datetime import timedelta
 
 from django.contrib.auth import authenticate
 from django.db import transaction
@@ -29,6 +30,9 @@ from .sessions import end_all_but
 from .signin import too_many_attempts
 
 logger = logging.getLogger(__name__)
+
+# Somebody who has just turned it off is not asked to turn it on again at their next sign in.
+QUIET_AFTER_TURNING_OFF = timedelta(days=30)
 
 
 def _refuse(code: str, status: int):
@@ -133,3 +137,32 @@ class MfaEnrollConfirmView(_AccountView):
         log_action(request, 'UPDATE', 'User', user.pk, 'Turned on the second factor')
         _tell('on', user)
         return api_success({'recovery_codes': codes}, 'Two-step sign in is on.')
+
+
+class MfaDisableView(_AccountView):
+    actions = {'post': 'disable'}
+
+    def post(self, request):
+        """POST /api/auth/mfa/disable: the password, and a code from the app or a recovery code, turn it off."""
+        user = request.user
+        problem = _password_problem(request, 'Turning two-step sign in off')
+        if problem:
+            return problem
+        factor = SecondFactor.objects.filter(user=user, enabled_at__isnull=False).first()
+        if factor is None:
+            return _refuse('mfa_not_on', 400)
+        recovery = request.data.get('recovery_code')
+        good = mfa.use_recovery_code(user, recovery) if recovery else mfa.check_code(factor, request.data.get('code'))
+        if not good:
+            return _miss(request, 'mfa_failed', 'Turning two-step sign in off', 'mfa_wrong_code')
+
+        with transaction.atomic():
+            mfa.reset(user)
+            user.mfa_prompt_snoozed_until = timezone.now() + QUIET_AFTER_TURNING_OFF
+            user.save(update_fields=['mfa_prompt_snoozed_until'])
+            end_all_but(user, _sign_in_of(request), 'mfa_disabled')
+        lockout.clear(user.email)
+        record_security_event('mfa_disabled', request, user=user)
+        log_action(request, 'UPDATE', 'User', user.pk, 'Turned off the second factor')
+        _tell('off', user)
+        return api_success(None, 'Two-step sign in is off.')

@@ -34,6 +34,7 @@ KINDS = {
     'mfa_recovery_used': 'Signed in with a recovery code',
     'mfa_recovery_regenerated': 'New recovery codes made',
     'mfa_reset': 'Authenticator app reset',
+    'mfa_disabled': 'Authenticator app turned off',
     'support_requested': 'Support access asked for',
     'support_allowed': 'Support access allowed',
     'support_rejected': 'Support access refused by the person',
