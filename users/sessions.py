@@ -96,6 +96,8 @@ def start_session(request, user, hints=None, shared: bool = False, mfa_verified:
     refresh = _issue(session)
     _remember(session, refresh['jti'])
     session.save(update_fields=['tokens'])
+    # Not stored: the answer to this sign in says it, so the website can pick the right moment for a reminder.
+    session.is_new_device = new_device
     if new_device:
         record_security_event('new_device', request, user=user, detail=info.label)
         _tell_about_new_device(user, info, now)
