@@ -1,6 +1,14 @@
 # Changelog
 
-# Changelog
+## Disease check service: uploads (security)
+
+### Fixed
+- **The caller is checked first.** A call without the right key, or one that says it is over the size limit, is now refused before anything is read. Before this, the service read and took apart the whole upload and only then answered 401 or 413, so anyone could make it hold a large upload in memory.
+- A key with characters such as é now gets 401. It used to cause a server error.
+- **The upload library** `python-multipart` goes from 0.0.9 to 0.0.32, which fixes the 8 alerts GitHub had open for it.
+
+### Still open
+The web layer under the service, `starlette` 0.37.2, has known flaws of its own, and GitHub does not list them because the requirements file does not name it. Fixing them needs a newer FastAPI. With the check above, a stranger can no longer reach the ones in upload handling.
 
 ## Replying to contact messages, the website (roadmap 4.4, part 2)
 

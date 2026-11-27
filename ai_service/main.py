@@ -20,7 +20,8 @@ import os
 
 import numpy as np
 from decision import DEFAULT_UNCERTAIN_BELOW, SILKWORM_RESULTS, decide, read_limit  # noqa: F401
-from fastapi import Depends, FastAPI, File, Header, HTTPException, Request, UploadFile
+from fastapi import APIRouter, FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.routing import APIRoute
 from PIL import Image
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -129,18 +130,37 @@ def preprocess(image: Image.Image) -> np.ndarray:
 # Guards
 # ─────────────────────────────────────────────────────────────────────────────
 
-def require_secret(x_internal_secret: str | None = Header(default=None)) -> None:
+def require_secret(given: str | None) -> None:
     if ALLOW_INSECURE and not SECRET:
         return
-    if not x_internal_secret or not hmac.compare_digest(x_internal_secret, SECRET):
+    # As bytes: compare_digest refuses text with characters outside ASCII, and a stranger chooses these.
+    if not given or not hmac.compare_digest(given.encode(), SECRET.encode()):
         raise HTTPException(status_code=401, detail="Not allowed.")
 
 
 def limit_body(request: Request) -> None:
-    """Turn away an oversize upload before the body is read."""
+    """Turn away an upload that says it is too large."""
     declared = request.headers.get("content-length")
     if declared and declared.isdigit() and int(declared) > MAX_BYTES + 64 * 1024:
         raise HTTPException(status_code=413, detail="That photo is too large.")
+
+
+class GuardedRoute(APIRoute):
+    """A route that checks who is calling, and how much they send, before it reads anything.
+
+    FastAPI reads and takes apart an upload before it runs a route's dependencies, so a check written as a
+    dependency comes too late to protect the memory or the upload parser from a stranger.
+    """
+
+    def get_route_handler(self):
+        handle = super().get_route_handler()
+
+        async def guarded(request: Request):
+            require_secret(request.headers.get("x-internal-secret"))
+            limit_body(request)
+            return await handle(request)
+
+        return guarded
 
 
 def read_photo(data: bytes) -> Image.Image:
@@ -177,7 +197,10 @@ def health():
     return {"status": "ok", "classes": [SILKWORM_RESULTS[n] for n in CLASS_NAMES if n in SILKWORM_RESULTS]}
 
 
-@app.post("/predict", dependencies=[Depends(require_secret), Depends(limit_body)])
+uploads = APIRouter(route_class=GuardedRoute)
+
+
+@uploads.post("/predict")
 async def predict(file: UploadFile = File(...)):
     """
     Accept a photo and say what the model sees.
@@ -209,3 +232,6 @@ async def predict(file: UploadFile = File(...)):
             if name in SILKWORM_RESULTS
         },
     }
+
+
+app.include_router(uploads)
