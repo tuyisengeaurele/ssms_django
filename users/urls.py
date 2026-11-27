@@ -4,6 +4,13 @@ from .closure_views import CancelDeleteAccountView, DeleteAccountView
 from .email_change_views import EmailChangeConfirmView, EmailChangeUndoView, EmailChangeView
 from .email_verification_views import ResendVerificationView, VerifyEmailView
 from .export_views import ExportView
+from .mfa_enroll_views import (
+    MfaDisableView,
+    MfaEnrollConfirmView,
+    MfaEnrollStartView,
+    MfaPromptSeenView,
+    MfaPromptView,
+)
 from .mfa_views import (
     MfaRecoveryCodesView,
     MfaSetupConfirmView,
@@ -13,13 +20,6 @@ from .mfa_views import (
     MfaVerifyView,
 )
 from .notification_views import NotificationPreferencesView
-from .mfa_enroll_views import (
-    MfaDisableView,
-    MfaEnrollConfirmView,
-    MfaEnrollStartView,
-    MfaPromptSeenView,
-    MfaPromptView,
-)
 from .password_reset_views import PasswordResetConfirmView, PasswordResetRequestView
 from .photo_views import PhotoView
 from .session_views import SessionDetailView, SessionListView, SessionPingView, SessionRevokeOthersView
