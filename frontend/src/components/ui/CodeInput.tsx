@@ -28,6 +28,14 @@ export default function CodeInput({ id, value, onChange, length = 6, invalid, on
     if (el) el.setSelectionRange(el.value.length, el.value.length);
   };
 
+  const take = (typed: string) => {
+    const now = typed.replace(/\D/g, '');
+    // A refused code fills the box, and the cursor stays at its end. What is typed next starts a new code, or it would
+    // fall off the end and the box would go on showing the old one.
+    const afresh = invalid && digits.length === length && now.length > length && now.startsWith(digits);
+    onChange((afresh ? now.slice(length) : now).slice(0, length));
+  };
+
   return (
     <div className="code-input" data-invalid={invalid ? 'true' : undefined}>
       <div className="code-input__boxes" aria-hidden="true">
@@ -50,7 +58,7 @@ export default function CodeInput({ id, value, onChange, length = 6, invalid, on
         inputMode="numeric"
         autoComplete="one-time-code"
         aria-invalid={invalid ? 'true' : undefined}
-        onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, length))}
+        onChange={(e) => take(e.target.value)}
         onFocus={(e) => { setFocused(true); toEnd(); onFocus?.(e); }}
         onBlur={(e) => { setFocused(false); onBlur?.(e); }}
         onClick={toEnd}

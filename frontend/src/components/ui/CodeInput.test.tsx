@@ -77,3 +77,38 @@ describe('CodeInput', () => {
     expect(document.getElementById('c')).toBeDisabled();
   });
 });
+
+// The cursor stays at the end and the box holds six digits. So after a refused code, whatever was typed next fell off the
+// end, and the box went on showing the old code until all six were deleted by hand.
+describe('CodeInput after a refused code', () => {
+  const type = (value: string) => fireEvent.change(field(), { target: { value } });
+
+  it('starts a new code with the next digit typed', () => {
+    const heard = vi.fn();
+    render(<Harness start="000000" invalid onValue={heard} />);
+    type('0000001');
+    expect(heard).toHaveBeenLastCalledWith('1');
+    expect(field()).toHaveValue('1');
+  });
+
+  it('takes a whole new code pasted after the old one', () => {
+    render(<Harness start="000000" invalid />);
+    type('000000123456');
+    expect(field()).toHaveValue('123456');
+  });
+
+  it('takes a code that replaces the old one, and still lets a digit be deleted', () => {
+    render(<Harness start="000000" invalid />);
+    type('654321');
+    expect(field()).toHaveValue('654321');
+    type('65432');
+    expect(field()).toHaveValue('65432');
+  });
+
+  it('keeps a full code that was not refused as it is, so one key too many changes nothing', () => {
+    render(<Harness start="123456" />);
+    type('1234567');
+    expect(field()).toHaveValue('123456');
+  });
+});
+

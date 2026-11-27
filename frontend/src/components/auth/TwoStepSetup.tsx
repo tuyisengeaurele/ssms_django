@@ -142,7 +142,7 @@ export default function TwoStepSetup({ onDone, onCancel, onCodesShown }: Props) 
         <CodeInput
           id="two-step-code"
           value={code}
-          invalid={wrongCode}
+          invalid={wrongCode && Boolean(error)}
           onChange={(next) => { setCode(next); setError(''); }}
           required
           autoFocus
