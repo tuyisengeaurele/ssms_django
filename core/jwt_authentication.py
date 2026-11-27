@@ -21,7 +21,7 @@ TOUCH_EVERY = timedelta(seconds=60)
 
 # Requests the page makes by itself, whether or not anybody is there. They do not move the idle clock, or a tab left open
 # on a shared computer would never sign out. The idle limit still applies to them, so they cannot revive a stale sign in.
-BACKGROUND_PATHS = frozenset({'/api/support-access/for-me/pending'})
+BACKGROUND_PATHS = frozenset({'/api/support-access/for-me/pending', '/api/announcements'})
 
 MFA_MESSAGE = 'Please sign in again and enter the code from your authenticator app.'
 SUPPORT_ENDED_MESSAGE = 'The support session has ended.'
