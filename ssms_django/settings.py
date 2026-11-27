@@ -247,6 +247,8 @@ REST_FRAMEWORK = {
         'detection': '20/minute',   # photo checks, per person
         'lot': '30/minute',   # strangers opening the page behind a lot's QR code
         'support': '5/hour',   # an admin asking to look at somebody's account
+        'message_send': '20/minute',   # messages between farmers and supervisors, per person
+        'message_day': '300/day',
     },
 }
 

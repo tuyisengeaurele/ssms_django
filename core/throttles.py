@@ -62,6 +62,14 @@ class ContactReplyThrottle(UserRateThrottle):
     scope = 'contact_reply'   # each reply is an email to an outside address, 30 an hour per admin
 
 
+class MessageSendThrottle(UserRateThrottle):
+    scope = 'message_send'   # messages a person sends, 20 a minute
+
+
+class MessageDayThrottle(UserRateThrottle):
+    scope = 'message_day'   # and 300 a day, so one account cannot fill other people's screens
+
+
 class InvitationRateThrottle(AnonRateThrottle):
     scope = 'invitation'   # a stranger asking about invitation links, 20 a minute per address
 

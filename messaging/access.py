@@ -72,6 +72,14 @@ def with_state(qs, user):
     )
 
 
+def unread_total(user) -> int:
+    """How many messages from the other side this person's side has not read, over all they may read."""
+    mark = Coalesce(F(f'conversation__{read_mark(user)}'), Value(NEVER), output_field=DateTimeField())
+    return Message.objects.filter(
+        conversation__in=conversations_for(user), from_farmer=not is_farmer(user), created_at__gt=mark,
+    ).count()
+
+
 def get_conversation_or_404(user, pk) -> Conversation:
     conversation = with_state(conversations_for(user), user).select_related('farmer', 'cooperative').filter(pk=pk).first()
     if conversation is None:
