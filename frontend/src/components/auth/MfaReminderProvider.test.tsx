@@ -43,7 +43,13 @@ const tree = (blocked = false) => (
   </LanguageProvider>
 );
 
-const reminder = () => screen.findByRole('dialog', { name: 'Protect your account' });
+// findByRole can answer after React has drawn the dialog and before it has run what follows a drawing: the focus move, and
+// telling the server the reminder was seen. On a busy machine it does. Once the focus is inside, both have run.
+const reminder = async () => {
+  const dialog = await screen.findByRole('dialog', { name: 'Protect your account' });
+  await waitFor(() => expect(dialog).toContainElement(document.activeElement as HTMLElement));
+  return dialog;
+};
 const noDialog = () => waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
 const justSignedIn = (trigger: MfaTrigger = 'login') => sessionStorage.setItem('ssms_prompt', trigger);
 const settle = () => act(async () => { await Promise.resolve(); });
