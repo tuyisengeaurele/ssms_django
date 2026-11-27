@@ -239,6 +239,7 @@ REST_FRAMEWORK = {
         'account_export': '3/hour',   # downloading all of one's data, per person
         'health_test': '5/minute',   # the test buttons on the Health tab
         'mfa': '10/minute',   # second factor codes and set-up, per address
+        'mfa_account': '10/minute',   # two-step settings of a signed in person: the limit above does not see them
         'report': '20/minute',   # PDF reports, per person
         'export': '10/minute',   # CSV and PDF exports of a list, per person
         'detection': '20/minute',   # photo checks, per person

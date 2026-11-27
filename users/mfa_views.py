@@ -19,7 +19,7 @@ from core import lockout
 from core.mail import Email, send_email
 from core.mfa_guard import require_recent_mfa
 from core.permissions import RolePermission
-from core.throttles import MfaRateThrottle
+from core.throttles import MfaAccountThrottle, MfaRateThrottle, UserRateThrottle
 from core.utils import api_error, api_success
 from logs.security import record_security_event
 
@@ -205,6 +205,7 @@ class MfaStatusView(APIView):
 class MfaRecoveryCodesView(APIView):
     permission_classes = [IsAuthenticated, RolePermission]
     resource = 'second_factor'
+    throttle_classes = [UserRateThrottle, MfaAccountThrottle]
 
     def post(self, request):
         """POST /api/auth/mfa/recovery-codes: a current app code replaces all eight recovery codes. They are shown once."""
