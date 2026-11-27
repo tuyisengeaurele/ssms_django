@@ -107,7 +107,7 @@
 }
 
 /* The admin's form and list. */
-.announcement-input {
+.form-textarea.announcement-input {
   min-height: 64px;
 }
 

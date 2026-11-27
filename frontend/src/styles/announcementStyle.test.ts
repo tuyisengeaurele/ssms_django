@@ -58,6 +58,11 @@ describe('announcements in the fixed public header', () => {
 });
 
 describe('announcement styles', () => {
+  // The shared text box style asks for a taller box and may load after this one, so one class alone would lose to it.
+  it('keep the three text boxes of the form short', () => {
+    expect(css).toMatch(/\.form-textarea\.announcement-input\s*\{[^}]*min-height:\s*64px/);
+  });
+
   it('wrap a long unbroken word, and let the words shrink beside the icon', () => {
     expect(rule('.announcement-text')).toMatch(/overflow-wrap:\s*anywhere/);
     expect(rule('.announcement-body')).toMatch(/min-width:\s*0/);
