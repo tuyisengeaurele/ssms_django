@@ -150,6 +150,27 @@ def _security_events(user) -> list[dict]:
     ]
 
 
+def _messages(user) -> list[dict]:
+    """A farmer gets both sides of their own conversations. Anybody gets what they wrote in somebody else's, and none of
+    the other side. No name, email, number or id of another person."""
+    from django.db.models import Q
+
+    from messaging.models import Message
+
+    found = (
+        Message.objects.filter(Q(conversation__farmer=user) | Q(sender=user))
+        .select_related('conversation__cooperative')
+        .order_by('created_at', 'id')
+    )
+    rows = []
+    for m in found:
+        row = {'cooperative': m.conversation.cooperative.name}
+        if m.conversation.farmer_id == user.pk:
+            row['from'] = 'you' if m.sender_id == user.pk else 'cooperative'
+        rows.append({**row, 'body': m.body, 'sent_at': _when(m.created_at)})
+    return rows
+
+
 def build_export(user) -> dict:
     """Everything SSMS holds about this person, as plain data."""
     return {
@@ -162,5 +183,6 @@ def build_export(user) -> dict:
         'detections': _detections(user),
         'allowance': _allowance(user),
         'cooperatives': _cooperatives(user),
+        'messages': _messages(user),
         'security_events': _security_events(user),
     }

@@ -431,6 +431,9 @@ LOGGING = {
     'root': {'handlers': ['console'], 'level': LOG_LEVEL},
 }
 
+# Messages between farmers and supervisors are removed this many days after they were sent (prune_messages, nightly).
+MESSAGE_RETENTION_DAYS = 365
+
 # ── Sentry error monitoring ───────────────────────────────────────────────────
 SENTRY_DSN = config('SENTRY_DSN', default='')
 

@@ -56,3 +56,6 @@ jobs:
 
       - name: Anonymise accounts whose closure is due
         run: python manage.py anonymise_accounts
+
+      - name: Remove messages older than a year
+        run: python manage.py prune_messages
