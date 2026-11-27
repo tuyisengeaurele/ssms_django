@@ -140,6 +140,8 @@ def test_every_route_that_uses_the_session_login_is_stopped_unless_it_is_listed_
 def test_the_open_list_is_exactly_what_the_gate_screen_needs():
     assert OPEN_URL_NAMES == frozenset({
         'auth_me', 'auth_logout', 'auth_session_ping', 'auth_mfa_status', 'auth_mfa_recovery_codes', 'auth_mfa_step_up',
+        # The team's banners, such as a maintenance notice, show on this screen too.
+        'announcements_current',
     })
 
 
@@ -188,7 +190,10 @@ def test_a_scheduled_account_is_refused_with_deletion_scheduled_on_every_route_b
 
 
 def test_the_open_list_for_a_scheduled_account_is_exactly_what_its_screen_needs():
-    assert DELETION_OPEN_URL_NAMES == frozenset({'auth_me', 'auth_logout', 'auth_session_ping', 'auth_delete_account_cancel'})
+    assert DELETION_OPEN_URL_NAMES == frozenset({
+        'auth_me', 'auth_logout', 'auth_session_ping', 'auth_delete_account_cancel',
+        'announcements_current',   # the team's banners show on the closure screen too
+    })
 
 
 def test_the_deletion_reason_comes_before_the_phone_reason(jwt_client):

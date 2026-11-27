@@ -17,10 +17,12 @@ from rest_framework.exceptions import PermissionDenied
 # the gate never meets them.
 OPEN_URL_NAMES = frozenset({
     'auth_me', 'auth_logout', 'auth_session_ping', 'auth_mfa_status', 'auth_mfa_recovery_codes', 'auth_mfa_step_up',
+    # A notice from the team, such as maintenance, is for everybody, whatever screen they are held at.
+    'announcements_current',
 })
 
 # The routes an account with a scheduled closure still needs: to see its date, to stay signed in, to sign out, and to keep the account.
-DELETION_OPEN_URL_NAMES = frozenset({'auth_me', 'auth_logout', 'auth_session_ping', 'auth_delete_account_cancel'})
+DELETION_OPEN_URL_NAMES = frozenset({'auth_me', 'auth_logout', 'auth_session_ping', 'auth_delete_account_cancel', 'announcements_current'})
 
 PHONE_MESSAGE = 'Please add your phone number to continue.'
 DELETION_MESSAGE = 'This account is scheduled to be removed. Keep it to continue.'
