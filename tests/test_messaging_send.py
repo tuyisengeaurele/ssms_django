@@ -252,10 +252,12 @@ def marks(conversation):
     return conversation.farmer_read_at, conversation.staff_read_at
 
 
-def test_sending_marks_the_senders_side_read_up_to_that_message(world):  # noqa: F811
-    message = sent(world.supervisor, conversation_id=world.talk.pk)['message']
-    farmer_mark, staff_mark = marks(world.talk)
-    assert farmer_mark is None and staff_mark == Message.objects.get(pk=message['id']).created_at
+# The other side may have written since the sender's page last looked. Only the page knows what was on the screen.
+def test_sending_marks_nothing_as_read(world):  # noqa: F811
+    sent(world.supervisor, conversation_id=world.talk.pk)
+    assert marks(world.talk) == (None, None)
+    assert updates(world.supervisor)['unread_total'] == 1
+    assert updates(world.farmer, conversation=world.talk.pk, since=world.said.created_at.isoformat())['conversation']['other_read_at'] is None
 
 
 def test_reading_moves_this_sides_mark_forward_and_never_back(world):  # noqa: F811

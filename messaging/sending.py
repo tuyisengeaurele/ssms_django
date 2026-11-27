@@ -4,7 +4,7 @@ from rest_framework.exceptions import NotFound
 
 from users.models import Role, User
 
-from .access import conversations_for, get_conversation_or_404, is_farmer, open_q, read_mark
+from .access import conversations_for, get_conversation_or_404, is_farmer, open_q
 from .models import Conversation, Message
 
 
@@ -72,8 +72,6 @@ def save_message(user, conversation, body: str, client_id: str):
         message = Message.objects.create(
             conversation=conversation, sender=user, from_farmer=is_farmer(user), body=body, client_id=client_id,
         )
-        # Somebody who writes has read what is there.
-        Conversation.objects.filter(pk=conversation.pk).update(
-            last_message_at=message.created_at, **{read_mark(user): message.created_at},
-        )
+        # No read mark moves here: the other side may have written since the sender's page last looked.
+        Conversation.objects.filter(pk=conversation.pk).update(last_message_at=message.created_at)
     return message, True
