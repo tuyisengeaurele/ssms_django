@@ -1,3 +1,4 @@
+import TwoStepLine from '../../components/auth/TwoStepLine';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -148,6 +149,7 @@ export default function SupervisorDashboard() {
       />
 
       <div className="stack-24">
+        <TwoStepLine />
       {(user?.role === 'ADMIN' || user?.cooperativeId) && <DecisionsCard />}
 
       {user?.role === 'SUPERVISOR' && !user.cooperativeId && (

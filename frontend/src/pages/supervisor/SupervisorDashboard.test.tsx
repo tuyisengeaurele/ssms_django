@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
@@ -19,6 +19,9 @@ vi.mock('../../services/sensor.service', () => ({
   batchSupervisorService: { getActive: api.active },
   detectionService2: { getRecent: api.recent },
 }));
+
+const reminder = vi.hoisted(() => ({ ask: vi.fn(), refresh: vi.fn(), setUp: vi.fn(), open: false, line: false }));
+vi.mock('../../components/auth/mfaReminderContext', () => ({ useMfaReminder: () => reminder }));
 
 import SupervisorDashboard from './SupervisorDashboard';
 
@@ -340,5 +343,16 @@ describe('Supervisor dashboard, layout', () => {
     for (const title of ['Temperature, last 24 hours', 'Humidity, last 24 hours']) {
       expect(within(body.querySelector('.dash-main') as HTMLElement).getByRole('heading', { name: title })).toBeInTheDocument();
     }
+  });
+});
+
+describe('SupervisorDashboard, the quiet two-step line', () => {
+  it('shows it when the reminder was put off, and opens the set-up from it', async () => {
+    reminder.line = true;
+    open();
+    const line = (await screen.findByText('Secure your account')).closest('[role="note"]') as HTMLElement;
+    fireEvent.click(within(line).getByRole('button', { name: 'Set up' }));
+    expect(reminder.setUp).toHaveBeenCalled();
+    reminder.line = false;
   });
 });

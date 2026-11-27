@@ -1,3 +1,4 @@
+import TwoStepLine from '../../components/auth/TwoStepLine';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -177,6 +178,7 @@ export default function FarmerDashboard() {
         </div>}
 
         <div className="stack-24">
+        <TwoStepLine />
           <Panel
             title={`${t('fhBatches')} (${batches.length})`}
             flush

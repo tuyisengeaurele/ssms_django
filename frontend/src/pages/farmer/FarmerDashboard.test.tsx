@@ -18,6 +18,9 @@ vi.mock('../../services/sensor.service', () => ({
   batchSupervisorService: { getActive: api.active },
 }));
 
+const reminder = vi.hoisted(() => ({ ask: vi.fn(), refresh: vi.fn(), setUp: vi.fn(), open: false, line: false }));
+vi.mock('../../components/auth/mfaReminderContext', () => ({ useMfaReminder: () => reminder }));
+
 import FarmerDashboard from './FarmerDashboard';
 
 const batch = (i: number, stage: string, farmId = `f${i}`) => ({
@@ -358,5 +361,16 @@ describe('Farmer dashboard', () => {
     expect(container.querySelector('.stat-card, .stat-card-glow')).toBeNull();
     expect(container.textContent).not.toMatch(/\d+[smh] ago/);
     expect(container.innerHTML.toLowerCase()).not.toMatch(/gradient|#d97706|#2563eb|#dc2626|#16a34a|#1e40af|#7c3aed|brand-50/);
+  });
+});
+
+describe('FarmerDashboard, the quiet two-step line', () => {
+  it('shows it when the reminder was put off, and opens the set-up from it', async () => {
+    reminder.line = true;
+    open();
+    const line = (await screen.findByText('Secure your account')).closest('[role="note"]') as HTMLElement;
+    fireEvent.click(within(line).getByRole('button', { name: 'Set up' }));
+    expect(reminder.setUp).toHaveBeenCalled();
+    reminder.line = false;
   });
 });
