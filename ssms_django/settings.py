@@ -6,7 +6,7 @@ import sentry_sdk
 from decouple import config
 
 from core.config import parse_list
-from core.logging import sentry_before_send
+from core.logging import sentry_options
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -440,6 +440,5 @@ if SENTRY_DSN:
         traces_sample_rate=config('SENTRY_TRACES_SAMPLE_RATE', default=0.1, cast=float),
         profiles_sample_rate=config('SENTRY_PROFILES_SAMPLE_RATE', default=0.1, cast=float),
         environment=config('DJANGO_ENV', default='production'),
-        send_default_pii=False,
-        before_send=sentry_before_send,
+        **sentry_options(),
     )
