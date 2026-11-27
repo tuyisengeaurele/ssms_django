@@ -430,6 +430,24 @@ describe('Writing', () => {
     expect(within(thread()).getByText('Please call me.')).toBeInTheDocument();
   });
 
+  // Closing changes no count, so nothing else would make the list say so.
+  it('reads the list again when a send finds it closed', async () => {
+    api.send.mockRejectedValue(refused(409, 'conversation_closed'));
+    await open('/messages/c1');
+    const before = api.list.mock.calls.length;
+    write('Too late.');
+    await press();
+    expect(api.list.mock.calls.length).toBe(before + 1);
+  });
+
+  it('reads the list again once when the check finds it closed, and not at every check after', async () => {
+    await open('/messages/c1');
+    const before = api.list.mock.calls.length;
+    await bring({ isOpen: false });
+    await bring({ isOpen: false });
+    expect(api.list.mock.calls.length).toBe(before + 1);
+  });
+
   it('keeps what was being typed when the check finds it closed', async () => {
     await open('/messages/c1');
     write('Half a sentence');

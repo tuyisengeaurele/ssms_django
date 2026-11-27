@@ -54,12 +54,20 @@ export function useConversation({ conversationId, farmerId, asFarmer, onStarted,
   const held = useRef<ChatMessage[]>([]);
   const heldFor = useRef<string | null>(null);
   const waitingToBeRead = useRef(false);
+  const openNow = useRef(true);
   const latest = useRef({ onStarted, onChanged, onArrived, atEnd });
   latest.current = { onStarted, onChanged, onArrived, atEnd };
 
   const keep = useCallback((more: ChatMessage[]) => {
     held.current = merge(held.current, more);
     setMessages(held.current);
+  }, []);
+
+  /** The list says which are closed, and closing changes no count, so it is told when this one closes. */
+  const nowOpen = useCallback((open: boolean) => {
+    if (openNow.current && !open) latest.current.onChanged();
+    openNow.current = open;
+    setOpen(open);
   }, []);
 
   /** Marks the newest message read, when somebody can see it: the tab is visible and it is on the screen. */
@@ -88,6 +96,7 @@ export function useConversation({ conversationId, farmerId, asFarmer, onStarted,
       setConversation(found.conversation);
       setHasOlder(found.hasOlder);
       setOtherReadAt(found.otherReadAt);
+      openNow.current = found.conversation.isOpen;
       setOpen(found.conversation.isOpen);
       waitingToBeRead.current = found.conversation.unread > 0;
       setState('ready');
@@ -106,7 +115,7 @@ export function useConversation({ conversationId, farmerId, asFarmer, onStarted,
   useEffect(() => {
     if (!shownId) return undefined;
     const arrived = (news: ConversationNews) => {
-      setOpen(news.isOpen);
+      nowOpen(news.isOpen);
       setOtherReadAt(news.otherReadAt);
       const known = new Set(held.current.map((m) => m.id));
       const fresh = news.messages.filter((m) => !known.has(m.id));
@@ -119,7 +128,7 @@ export function useConversation({ conversationId, farmerId, asFarmer, onStarted,
       latest.current.onChanged();
     };
     return watch({ id: shownId, since: () => held.current[held.current.length - 1]?.createdAt ?? new Date(0).toISOString() }, arrived);
-  }, [shownId, watch, keep, asFarmer]);
+  }, [shownId, watch, keep, asFarmer, nowOpen]);
 
   useEffect(() => {
     document.addEventListener('visibilitychange', markIfSeen);
@@ -135,15 +144,16 @@ export function useConversation({ conversationId, farmerId, asFarmer, onStarted,
       keep([message]);
       setPending((list) => list.filter((p) => p.clientId !== item.clientId));
       setConversation(now);
+      openNow.current = now.isOpen;
       setOpen(now.isOpen);
       if (first) latest.current.onStarted(now.id);
       latest.current.onChanged();
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.data?.code === 'conversation_closed') setOpen(false);
+      if (axios.isAxiosError(error) && error.response?.data?.code === 'conversation_closed') nowOpen(false);
       const problem = getErrorMessage(error);
       setPending((list) => list.map((p) => (p.clientId === item.clientId ? { ...p, failed: true, problem } : p)));
     }
-  }, [farmerId, keep, getErrorMessage]);
+  }, [farmerId, keep, getErrorMessage, nowOpen]);
 
   const send = useCallback((body: string) => {
     const item: Pending = { clientId: newId(), body, failed: false, problem: '' };

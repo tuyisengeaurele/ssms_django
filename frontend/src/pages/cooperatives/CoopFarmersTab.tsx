@@ -353,8 +353,8 @@ export default function CoopFarmersTab() {
                             <span className="cell-strong">{f.name}</span>
                             <span className="cell-sub">{f.email}</span>
                             <span className="person-actions">
-                              <MessageButton farmerId={f.id} name={f.name} />
                               <PhoneLink phone={f.phone} name={f.name} />
+                              <MessageButton farmerId={f.id} name={f.name} />
                             </span>
                           </div>
                         </div>
