@@ -1,3 +1,4 @@
+import asyncio
 import importlib
 import io
 
@@ -76,6 +77,58 @@ def test_local_development_can_switch_the_secret_off_on_purpose(monkeypatch):
 
 def test_health_needs_no_secret(client):
     assert client.get('/health').status_code == 200
+
+
+# ── nothing is read before the caller is checked ────────────────────────────────────────────
+
+def knock(app, headers, body=b''):
+    """One POST /predict, said straight to the app. Gives the status, and whether the app ever asked for the body."""
+    asked, sent = [], []
+
+    async def receive():
+        asked.append(True)
+        return {'type': 'http.request', 'body': body, 'more_body': False}
+
+    async def send(message):
+        sent.append(message)
+
+    scope = {
+        'type': 'http', 'asgi': {'version': '3.0'}, 'http_version': '1.1', 'method': 'POST', 'scheme': 'http',
+        'path': '/predict', 'raw_path': b'/predict', 'query_string': b'', 'root_path': '',
+        'headers': [(name.lower().encode(), value.encode('latin-1')) for name, value in headers.items()],
+        'client': ('127.0.0.1', 50000), 'server': ('testserver', 80),
+    }
+    asyncio.run(app(scope, receive, send))
+    status = next(message['status'] for message in sent if message['type'] == 'http.response.start')
+    return status, bool(asked)
+
+
+UPLOAD_TYPES = ['multipart/form-data; boundary=edge', 'application/x-www-form-urlencoded']
+
+
+@pytest.mark.parametrize('content_type', UPLOAD_TYPES)
+@pytest.mark.parametrize('secret', [None, 'guess'])
+def test_a_stranger_is_refused_before_anything_is_read(app, content_type, secret):
+    headers = {'Content-Type': content_type, 'Content-Length': '20000000'}
+    if secret:
+        headers['X-Internal-Secret'] = secret
+    assert knock(app.app, headers) == (401, False)
+
+
+def test_an_oversize_upload_is_refused_before_it_is_read(app):
+    headers = {'Content-Type': UPLOAD_TYPES[0], 'Content-Length': '20000000', 'X-Internal-Secret': SECRET}
+    assert knock(app.app, headers) == (413, False)
+
+
+def test_a_caller_who_passes_both_checks_is_read(app):
+    # The other half of the tests above: it shows that knock() does notice a body being read.
+    headers = {'Content-Type': UPLOAD_TYPES[0], 'Content-Length': '0', 'X-Internal-Secret': SECRET}
+    assert knock(app.app, headers) == (422, True)
+
+
+def test_a_secret_with_unusual_characters_is_simply_wrong(app):
+    headers = {'Content-Type': UPLOAD_TYPES[0], 'X-Internal-Secret': 'sécret'}
+    assert knock(app.app, headers) == (401, False)
 
 
 # ── what it accepts ─────────────────────────────────────────────────────────────────────────
