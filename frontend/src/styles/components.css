@@ -1505,6 +1505,16 @@ tr.is-off td:last-child { opacity: 1; }
   font-size: 1rem;
 }
 
+/* Printing the recovery codes: only the list is left on the paper. */
+@media print {
+  body.printing-codes * { visibility: hidden; }
+  body.printing-codes .modal-overlay { position: static; background: none; backdrop-filter: none; }
+  body.printing-codes .modal-box { animation: none; transform: none; box-shadow: none; overflow: visible; }
+  body.printing-codes .print-codes,
+  body.printing-codes .print-codes * { visibility: visible; color: #000; }
+  body.printing-codes .print-codes { position: fixed; top: 0; left: 0; right: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 24px; padding: 0; border: 0; background: none; list-style: none; font-size: 14pt; }
+}
+
 /* The allowance card on the farmer's dashboard */
 .allowance-amount { font-family: var(--font-display); font-size: 2rem; line-height: 1.1; margin: 0 0 4px; }
 .allowance-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 14px; }

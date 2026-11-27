@@ -2055,6 +2055,7 @@ export const pageTranslations = {
     "La connexion administrateur demande un code de cette application.",
     "Kwinjira k’ubuyobozi bisaba kode ya porogaramu.",
   ),
+  adMfaPrint: k("Print", "Imprimer", "Capa"),
   adMfaOn: k("On", "Activée", "Irakora"),
   adMfaOff: k("Off", "Désactivée", "Ntirakora"),
   adMfaOnSince: k("On since {date}", "Activée depuis le {date}", "Irakora kuva {date}"),
