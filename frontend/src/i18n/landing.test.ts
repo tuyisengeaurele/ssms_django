@@ -36,7 +36,7 @@ const REQUIRED = [
   'lpFaq1Q', 'lpFaq1A', 'lpFaq2Q', 'lpFaq2A', 'lpFaq3Q', 'lpFaq3A',
   'lpFaq4Q', 'lpFaq4A', 'lpFaq5Q', 'lpFaq5A', 'lpFaq6Q', 'lpFaq6A',
   'lpContactTitle', 'lpContactSub',
-  'lpFormName', 'lpFormEmail', 'lpFormSubject', 'lpFormMessage', 'lpFormSend', 'lpFormSending',
+  'lpFormName', 'lpFormEmail', 'lpFormMessage', 'lpFormSend', 'lpFormSending',
   'lpFormSentTitle', 'lpFormSentBody', 'lpFormErrorGeneric', 'lpFormErrorNetwork', 'lpFormErrorBusy',
   'lpFormRequired', 'lpFormEmailInvalid', 'lpFormMessageShort',
   'lpCtaTitle', 'lpCtaButton',

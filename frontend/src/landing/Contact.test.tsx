@@ -22,7 +22,6 @@ function reply(status: number, body: unknown = { success: status < 400 }) {
 async function fillValid() {
   await userEvent.type(screen.getByLabelText('Name'), 'Aline');
   await userEvent.type(screen.getByLabelText('Email'), 'aline+test@example.rw');
-  await userEvent.type(screen.getByLabelText('Subject'), 'Cooperative setup');
   await userEvent.type(screen.getByLabelText('Message'), 'We would like to start with twelve farmers.');
 }
 
@@ -41,15 +40,38 @@ describe('Contact form', () => {
   it('asks for every field before sending anything', async () => {
     wrap(<Contact />);
     await userEvent.click(screen.getByRole('button', { name: 'Send message' }));
-    expect(screen.getAllByText('This field is required.')).toHaveLength(4);
+    expect(screen.getAllByText('This field is required.')).toHaveLength(3);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('asks only for a name, an email and a message', () => {
+    const { container } = wrap(<Contact />);
+    const asked = Array.from(container.querySelectorAll('.l-field label')).map((label) => label.textContent);
+    expect(asked).toEqual(['Name', 'Email', 'Message']);
+    expect(screen.queryByLabelText('Subject')).not.toBeInTheDocument();
+  });
+
+  it('tells the server which language the page is in, with no box for it', async () => {
+    fetchMock.mockResolvedValue(reply(201));
+    render(
+      <MemoryRouter>
+        <LanguageProvider initialLocale="rw">
+          <Contact />
+        </LanguageProvider>
+      </MemoryRouter>,
+    );
+    await userEvent.type(screen.getByLabelText('Izina'), 'Aline');
+    await userEvent.type(screen.getByLabelText('Imeri'), 'aline@example.rw');
+    await userEvent.type(screen.getByLabelText('Ubutumwa'), 'Ubutumwa burebure buhagije.');
+    await userEvent.click(screen.getByRole('button', { name: 'Ohereza ubutumwa' }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).language).toBe('rw');
   });
 
   it('checks the email address', async () => {
     wrap(<Contact />);
     await userEvent.type(screen.getByLabelText('Name'), 'Aline');
     await userEvent.type(screen.getByLabelText('Email'), 'not-an-email');
-    await userEvent.type(screen.getByLabelText('Subject'), 'Hello');
     await userEvent.type(screen.getByLabelText('Message'), 'A message that is long enough.');
     await userEvent.click(screen.getByRole('button', { name: 'Send message' }));
     expect(screen.getByText('Enter a valid email address.')).toBeInTheDocument();
@@ -61,7 +83,6 @@ describe('Contact form', () => {
     wrap(<Contact />);
     await userEvent.type(screen.getByLabelText('Name'), 'Aline');
     await userEvent.type(screen.getByLabelText('Email'), 'a@b.rw');
-    await userEvent.type(screen.getByLabelText('Subject'), 'Hello');
     await userEvent.type(screen.getByLabelText('Message'), 'short');
     await userEvent.click(screen.getByRole('button', { name: 'Send message' }));
     expect(screen.getByText('Write at least 10 characters.')).toBeInTheDocument();
@@ -79,8 +100,8 @@ describe('Contact form', () => {
     expect(JSON.parse(init.body)).toEqual({
       name: 'Aline',
       email: 'aline+test@example.rw',
-      subject: 'Cooperative setup',
       message: 'We would like to start with twelve farmers.',
+      language: 'en',
       website: '',
     });
   });
@@ -160,21 +181,21 @@ describe('submitContact', () => {
 
   it('reports ok for a success reply and the status for a failure', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(reply(201)).mockResolvedValueOnce(reply(429, { success: false })));
-    const payload = { name: 'a', email: 'a@b.rw', subject: 's', message: 'long enough message', website: '' };
+    const payload = { name: 'a', email: 'a@b.rw', message: 'long enough message', language: 'en', website: '' };
     expect(await submitContact(payload)).toEqual({ ok: true, status: 201 });
     expect(await submitContact(payload)).toEqual({ ok: false, status: 429 });
   });
 
   it('reports status 0 when the network fails', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')));
-    const payload = { name: 'a', email: 'a@b.rw', subject: 's', message: 'long enough message', website: '' };
+    const payload = { name: 'a', email: 'a@b.rw', message: 'long enough message', language: 'en', website: '' };
     expect(await submitContact(payload)).toEqual({ ok: false, status: 0 });
   });
 
   it('adds the bot check token when there is one', async () => {
     const mock = vi.fn().mockResolvedValue(reply(201));
     vi.stubGlobal('fetch', mock);
-    await submitContact({ name: 'a', email: 'a@b.rw', subject: 's', message: 'long enough message', website: '' }, 'tok123');
+    await submitContact({ name: 'a', email: 'a@b.rw', message: 'long enough message', language: 'en', website: '' }, 'tok123');
     expect(JSON.parse(mock.mock.calls[0][1].body).turnstileToken).toBe('tok123');
   });
 });
