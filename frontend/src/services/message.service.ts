@@ -14,7 +14,9 @@ export interface NewMessage {
 }
 
 export const messageService = {
-  list: (page = 1) => api.get<PaginatedMessages<ConversationRow>>('/messages/conversations', { params: { page } }),
+  /** `farmer` asks for one farmer's conversation only. */
+  list: (page = 1, farmer?: string) =>
+    api.get<PaginatedMessages<ConversationRow>>('/messages/conversations', { params: farmer ? { page, farmer } : { page } }),
 
   one: (id: string, before?: string) =>
     api.get<ApiResponse<ConversationPage>>(`/messages/conversations/${id}`, { params: before ? { before } : undefined }),

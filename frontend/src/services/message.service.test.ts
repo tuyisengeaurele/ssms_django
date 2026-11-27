@@ -14,11 +14,13 @@ beforeEach(() => {
 describe('Reading conversations', () => {
   it('lists a page of them, and opens one at its end or before a message', () => {
     messageService.list();
+    messageService.list(1, 'f1');
     messageService.list(3);
     messageService.one('c1');
     messageService.one('c1', 'm9');
     expect(http.get.mock.calls).toEqual([
       ['/messages/conversations', { params: { page: 1 } }],
+      ['/messages/conversations', { params: { page: 1, farmer: 'f1' } }],
       ['/messages/conversations', { params: { page: 3 } }],
       ['/messages/conversations/c1', { params: undefined }],
       ['/messages/conversations/c1', { params: { before: 'm9' } }],
