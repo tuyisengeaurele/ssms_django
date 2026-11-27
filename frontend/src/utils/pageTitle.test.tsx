@@ -42,6 +42,8 @@ describe('getPageInfo', () => {
     ['/batches/abc123/detect', 'Disease check', 'Farming'],
     ['/batches/abc123/harvest', 'Harvest records', 'Farming'],
     ['/alerts', 'Alerts', 'Monitoring'],
+    ['/messages', 'Messages', 'Farming'],
+    ['/messages/abc123', 'Messages', 'Farming'],
     ['/devices', 'Devices', 'Monitoring'],
     ['/settings/account', 'Settings', 'Account'],
     ['/settings/security', 'Settings', 'Account'],

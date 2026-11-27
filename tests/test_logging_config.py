@@ -7,7 +7,7 @@ from unittest import mock
 import pytest
 
 from core import request_id
-from core.logging import JsonFormatter, RequestIdFilter, sentry_before_send
+from core.logging import JsonFormatter, RequestIdFilter, sentry_before_send, sentry_options
 
 
 def line_for(message, level=logging.INFO, exc_info=None, name='ssms.test'):
@@ -100,7 +100,8 @@ def test_an_error_report_outside_a_request_is_left_alone():
 def test_the_reporter_is_given_the_hook():
     import ssms_django.settings as site
     source = open(site.__file__, encoding='utf-8').read()
-    assert 'before_send=sentry_before_send' in source
+    assert '**sentry_options()' in source
+    assert sentry_options()['before_send'] is sentry_before_send
 
 
 @pytest.mark.django_db

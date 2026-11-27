@@ -28,14 +28,14 @@ const names = () => within(screen.getByRole('navigation', { name: 'Quick menu' }
 describe('Bottom tab bar', () => {
   it('gives a farmer the four pages they use most, then More', () => {
     renderAt('/farmer');
-    expect(names()).toEqual(['Dashboard', 'My Farms', 'Batches', 'Alerts']);
+    expect(names()).toEqual(['Dashboard', 'My Farms', 'Messages', 'Alerts']);
     expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
   });
 
   it('gives a supervisor their own four', () => {
     auth.value = { user: { name: 'Sup', role: 'SUPERVISOR' } };
     renderAt('/supervisor');
-    expect(names()).toEqual(['Dashboard', 'Farms', 'Disease checks', 'Alerts']);
+    expect(names()).toEqual(['Dashboard', 'Farms', 'Messages', 'Alerts']);
   });
 
   it('gives an administrator their own four', () => {
@@ -45,8 +45,8 @@ describe('Bottom tab bar', () => {
   });
 
   it('marks the page you are on', () => {
-    renderAt('/batches');
-    expect(screen.getByRole('link', { name: 'Batches' })).toHaveAttribute('aria-current', 'page');
+    renderAt('/messages');
+    expect(screen.getByRole('link', { name: 'Messages' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'My Farms' })).not.toHaveAttribute('aria-current');
   });
 

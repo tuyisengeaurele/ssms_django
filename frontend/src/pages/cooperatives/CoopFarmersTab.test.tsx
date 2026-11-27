@@ -67,6 +67,15 @@ describe('The farmers of my cooperative', () => {
     expect(within(gad).queryByRole('link', { name: /Call|WhatsApp/ })).not.toBeInTheDocument();
   });
 
+  it('offers to write to each farmer, with or without a number, beside Call and WhatsApp', async () => {
+    open();
+    const bruce = await rowOf('Bruce Ishimwe');
+    const write = within(bruce).getByRole('link', { name: 'Message Bruce Ishimwe' });
+    expect(write).toHaveAttribute('href', '/messages?to=f1');
+    expect(write.closest('.person-actions')).toContainElement(within(bruce).getByRole('link', { name: 'Call Bruce Ishimwe' }));
+    expect(within(await rowOf('Gad Anaclet')).getByRole('link', { name: 'Message Gad Anaclet' })).toHaveAttribute('href', '/messages?to=f2');
+  });
+
   it('has an invite button and no title of its own, because the cooperative page has one', async () => {
     open();
     expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();

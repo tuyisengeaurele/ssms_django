@@ -6,7 +6,7 @@ import sentry_sdk
 from decouple import config
 
 from core.config import parse_list
-from core.logging import sentry_before_send
+from core.logging import sentry_options
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'harvest',
     'contacts',
     'announcements',
+    'messaging',
     'audit_log',
     'logs',
     'reports',
@@ -246,6 +247,8 @@ REST_FRAMEWORK = {
         'detection': '20/minute',   # photo checks, per person
         'lot': '30/minute',   # strangers opening the page behind a lot's QR code
         'support': '5/hour',   # an admin asking to look at somebody's account
+        'message_send': '20/minute',   # messages between farmers and supervisors, per person
+        'message_day': '300/day',
     },
 }
 
@@ -428,6 +431,9 @@ LOGGING = {
     'root': {'handlers': ['console'], 'level': LOG_LEVEL},
 }
 
+# Messages between farmers and supervisors are removed this many days after they were sent (prune_messages, nightly).
+MESSAGE_RETENTION_DAYS = 365
+
 # ── Sentry error monitoring ───────────────────────────────────────────────────
 SENTRY_DSN = config('SENTRY_DSN', default='')
 
@@ -437,6 +443,5 @@ if SENTRY_DSN:
         traces_sample_rate=config('SENTRY_TRACES_SAMPLE_RATE', default=0.1, cast=float),
         profiles_sample_rate=config('SENTRY_PROFILES_SAMPLE_RATE', default=0.1, cast=float),
         environment=config('DJANGO_ENV', default='production'),
-        send_default_pii=False,
-        before_send=sentry_before_send,
+        **sentry_options(),
     )

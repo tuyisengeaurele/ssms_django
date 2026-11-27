@@ -466,3 +466,21 @@ describe('Farm details page', () => {
     expect(container.textContent).not.toMatch(/\u{1F4CD}/u);
   });
 });
+
+describe('Writing to the owner from the farm page', () => {
+  const owner = () => screen.getByText('Mugisha Serge').closest('div')!;
+
+  it('is offered to a supervisor, beside the owner', async () => {
+    auth.role = 'SUPERVISOR';
+    open();
+    await screen.findByText('Mugisha Serge');
+    expect(within(owner()).getByRole('link', { name: 'Message Mugisha Serge' })).toHaveAttribute('href', '/messages?to=u1');
+  });
+
+  it.each(['FARMER', 'ADMIN'])('is not offered to a %s', async (role) => {
+    auth.role = role;
+    open();
+    await screen.findByText('Mugisha Serge');
+    expect(screen.queryByRole('link', { name: 'Message Mugisha Serge' })).not.toBeInTheDocument();
+  });
+});

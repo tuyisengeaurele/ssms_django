@@ -1,5 +1,30 @@
 # Changelog
 
+## Messages between farmers and supervisors (roadmap phase 6, part B, release 1 of 3)
+
+### Added
+- **A Messages page** for farmers and supervisors. A farmer writes to their cooperative, and any of its supervisors can answer. A supervisor starts one with **Message** beside a farmer, on the cooperative's farmer list or a farm's page.
+- **New messages arrive without a reload.** A visible page asks every 30 seconds. The menu and the phone's bottom bar show how many are unread, and **Read** shows once the other side has seen yours.
+- **Nothing is lost on a weak connection.** A message that did not go says **Not sent**, with **Try again**. Sending it again never saves it twice.
+- **A closed conversation stays readable.** It closes when the farmer moves or leaves the cooperative, asks to close the account, or the cooperative is switched off. It opens again if the farmer comes back.
+
+### Changed
+- On a phone, **Messages** takes the bottom bar place of **Batches** for farmers and **Disease checks** for supervisors. Both stay under **More**.
+- Error reports no longer carry what was sent to the server, on any page. For messages they also drop the program's local values and the trail of what happened.
+- The checks the page makes by itself do not count as using the site, so an open page still signs out when nobody is there.
+
+### Who can read them
+The farmer, and the supervisors of that cooperative. An admin has no way in, and support access is refused. After a move, the farmer and the old cooperative's supervisors keep the old conversation, and nobody can add to it. Messages are stored as plain text in the database.
+
+### Retention and your data
+A message is removed 12 months after it was sent, by the nightly job. A farmer's data download holds both sides of their conversations. Anyone else's holds only what they wrote.
+
+### API
+`GET /api/messages/conversations`, `GET /api/messages/conversations/<id>`, `POST /api/messages/send`, `POST /api/messages/read` and `GET /api/messages/updates`. 20 messages a minute and 300 a day for each person. New error codes: `message_empty`, `message_too_long`, `conversation_closed`, `message_no_cooperative`.
+
+### Database
+`messaging.0001` adds two tables, `conversations` and `messages`. It changes nothing that is already there.
+
 ## Team announcements (roadmap phase 6, part A)
 
 ### Added

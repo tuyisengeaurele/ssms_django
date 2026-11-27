@@ -42,6 +42,7 @@ const ROUTES: Array<[RegExp, PageInfo]> = [
   [/^\/harvests$/, { titleKey: 'ptHarvests', sectionKey: FARMING }],
   [/^\/detections\/reports$/, { titleKey: 'ptDetectionReports', sectionKey: MONITORING }],
   [/^\/alerts$/, { titleKey: 'ptAlerts', sectionKey: MONITORING }],
+  [/^\/messages(\/[^/]+)?$/, { titleKey: 'ptMessages', sectionKey: FARMING }],
   [/^\/devices$/, { titleKey: 'ptDevices', sectionKey: MONITORING }],
   [/^\/settings\/(account|security|appearance|safe-ranges)$/, { titleKey: 'ptSettings', sectionKey: ACCOUNT }],
 ];

@@ -43,6 +43,7 @@ const AlertsPage = lazy(() => import('./pages/shared/AlertsPage'));
 const DevicesPage = lazy(() => import('./pages/shared/DevicesPage'));
 const BatchesPage = lazy(() => import('./pages/farmer/BatchesPage'));
 const AdminContactsPage = lazy(() => import('./pages/admin/AdminContactsPage'));
+const MessagesPage = lazy(() => import('./pages/messages/MessagesPage'));
 const AdminRequestsPage = lazy(() => import('./pages/admin/AdminRequestsPage'));
 const AdminAnnouncementsPage = lazy(() => import('./pages/admin/AdminAnnouncementsPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
@@ -98,6 +99,11 @@ export default function App() {
               <Route path="/alerts"                    element={<AlertsPage />} />
               <Route path="/devices"                   element={<DevicesPage />} />
               {settingsRoutes()}
+
+              {/* Farmer + Supervisor: their conversations. An admin has none. */}
+              <Route element={<ProtectedRoute allowedRoles={['FARMER', 'SUPERVISOR']} />}>
+                <Route path="/messages/:id?" element={<MessagesPage />} />
+              </Route>
 
               {/* Supervisor + Admin */}
               <Route element={<ProtectedRoute allowedRoles={['SUPERVISOR', 'ADMIN']} />}>

@@ -89,6 +89,9 @@ PERMISSIONS: dict[str, dict[str, frozenset]] = {
     'audit_log': {'read': ADMIN_ONLY},
     'logs': {'read': ADMIN_ONLY},
     'contacts': {'read': ADMIN_ONLY, 'update': ADMIN_ONLY, 'create': ADMIN_ONLY, 'delete': ADMIN_ONLY},
+    # Farmers and their cooperative's supervisors writing to each other. Admins have no way in. Which conversations a
+    # person may read is `messaging.access`.
+    'messages': {'read': NON_ADMIN, 'create': NON_ADMIN, 'mark_read': NON_ADMIN},
     # The SSMS team's banners. Everybody signed in reads what is showing. Only an admin sees the rest, writes and ends them.
     'announcements': {'read': ALL, 'list_all': ADMIN_ONLY, 'create': ADMIN_ONLY, 'update': ADMIN_ONLY},
     # The authenticator app. Everyone sees and looks after their own. Only an admin is ever asked for a fresh code before

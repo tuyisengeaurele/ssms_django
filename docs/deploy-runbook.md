@@ -925,3 +925,31 @@ FROM announcements ORDER BY show_from DESC LIMIT 20;
 ```
 
 **Going back.** `python manage.py migrate announcements zero` drops the table, so **every announcement is lost**. The audit log keeps who wrote and ended them. Do it before deploying the older code.
+
+## 35. Messages between farmers and supervisors
+
+**Who can read them.** The farmer and the supervisors of that cooperative. There is no admin screen, on purpose, and support access is refused. Whoever runs the database could read the words. **Do not**, unless the person asks you to or the law requires it.
+
+**Somebody cannot send.** "This conversation is closed" means one of these:
+
+- the farmer is no longer in that cooperative
+- the farmer asked to close the account, or it is switched off
+- the cooperative is switched off
+
+A farmer in a new cooperative starts a new conversation. Each person can send 20 a minute and 300 a day.
+
+**Messages arrive late.** An open page asks every 30 seconds, and not at all while its tab is hidden. Nothing is emailed yet.
+
+**Counting, without reading the words.**
+
+```sql
+SELECT c.cooperative_id, count(DISTINCT c.id) AS conversations, count(m.id) AS messages, max(m.created_at) AS latest
+FROM conversations c LEFT JOIN messages m ON m.conversation_id = c.id
+GROUP BY c.cooperative_id;
+```
+
+**Removal.** The nightly job runs `python manage.py prune_messages`. It removes messages older than `MESSAGE_RETENTION_DAYS` (365) and the conversations left empty, and prints how many. It cannot be undone. A backup still holds them until the backup is removed.
+
+**Error reports.** They never carry what was sent to the server. For anything under `/api/messages` they also drop local values and breadcrumbs. If you add a route that carries private words, add it to `PRIVATE_ROUTES` in `core/logging.py`.
+
+**Going back.** `python manage.py migrate messaging zero` drops both tables, so **every message is lost**. Back up first. Do it before deploying the older code.

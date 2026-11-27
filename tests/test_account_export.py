@@ -26,7 +26,7 @@ pytestmark = pytest.mark.django_db
 
 EXPORT = '/api/auth/export'
 PASSWORD = 'Garden-Tree-4721'
-KEYS = {'profile', 'farms', 'rooms', 'batches', 'harvests', 'detections', 'allowance', 'cooperatives', 'security_events', 'generated_at'}
+KEYS = {'profile', 'farms', 'rooms', 'batches', 'harvests', 'detections', 'allowance', 'cooperatives', 'messages', 'security_events', 'generated_at'}
 
 
 @pytest.fixture

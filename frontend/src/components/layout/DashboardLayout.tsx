@@ -11,6 +11,7 @@ import QuickSearch from './QuickSearch';
 import IdleWarningModal from './IdleWarningModal';
 import SiteAnnouncements from '../announcements/SiteAnnouncements';
 import MfaReminderProvider from '../auth/MfaReminderProvider';
+import { MessagesProvider } from '../../context/MessagesContext';
 import ActingBanner from '../support/ActingBanner';
 import SupportActiveBanner from '../support/SupportActiveBanner';
 import SupportRequestModal from '../support/SupportRequestModal';
@@ -26,6 +27,8 @@ import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 import { useApplyTheme } from '../../utils/theme';
 
 const NAV_KEY = 'ssms_nav';
+/** A new address is a new page, except under Messages: that is one page with a list beside the open conversation. */
+const pageOf = (path: string) => (/^\/messages(\/|$)/.test(path) ? '/messages' : path);
 // Screens this wide have room for the labels, so the menu starts open there.
 const WIDE_SCREEN = 1600;
 
@@ -114,37 +117,40 @@ export default function DashboardLayout() {
   };
 
   return (
-    // The reminder about two-step sign in never opens over a support request or the idle warning.
-    <MfaReminderProvider blocked={Boolean(support.request) || idle.warning}>
-      <div className="app-layout">
-        <Sidebar
-          collapsed={rail}
-          mobileOpen={mobileOpen}
-          onMobileClose={() => setMobileOpen(false)}
-          alertCount={alertCount}
-          decisionCount={decisionCount}
-        />
+    // One check for new messages, for the menu's count and the open conversation.
+    <MessagesProvider>
+      {/* The reminder about two-step sign in never opens over a support request or the idle warning. */}
+      <MfaReminderProvider blocked={Boolean(support.request) || idle.warning}>
+        <div className="app-layout">
+          <Sidebar
+            collapsed={rail}
+            mobileOpen={mobileOpen}
+            onMobileClose={() => setMobileOpen(false)}
+            alertCount={alertCount}
+            decisionCount={decisionCount}
+          />
 
-        <main className={`app-main ${rail ? 'sidebar-collapsed' : ''}`}>
-          {/* Right before the top bar, so the bar can sit under it (see support.css). */}
-          <ActingBanner />
-          <SupportResume />
-          <SupportActiveBanner active={support.active} onEnded={support.refresh} />
-          <TopBar onMenuToggle={toggleMenu} onSearch={() => setSearchOpen(true)} alertCount={alertCount} />
-          {/* After the bar, so nothing comes between the bar and a support banner. */}
-          <SiteAnnouncements mode="app" />
+          <main className={`app-main ${rail ? 'sidebar-collapsed' : ''}`}>
+            {/* Right before the top bar, so the bar can sit under it (see support.css). */}
+            <ActingBanner />
+            <SupportResume />
+            <SupportActiveBanner active={support.active} onEnded={support.refresh} />
+            <TopBar onMenuToggle={toggleMenu} onSearch={() => setSearchOpen(true)} alertCount={alertCount} />
+            {/* After the bar, so nothing comes between the bar and a support banner. */}
+            <SiteAnnouncements mode="app" />
 
-          {/* A new key is a new page: it fades in (shell.css). */}
-          <div key={`${location.pathname}:${user?.id ?? ''}`} className="app-content">
-            <Outlet />
-          </div>
-        </main>
+            {/* A new key is a new page: it fades in (shell.css). */}
+            <div key={`${pageOf(location.pathname)}:${user?.id ?? ''}`} className="app-content">
+              <Outlet />
+            </div>
+          </main>
 
-        <BottomNav alertCount={alertCount} onMore={() => setMobileOpen(true)} />
-        <QuickSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
-        <IdleWarningModal open={idle.warning} secondsLeft={idle.secondsLeft} onStay={idle.stay} onSignOut={logout} />
-        <SupportRequestModal request={support.request} onAnswered={support.refresh} />
-      </div>
-    </MfaReminderProvider>
+          <BottomNav alertCount={alertCount} onMore={() => setMobileOpen(true)} />
+          <QuickSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+          <IdleWarningModal open={idle.warning} secondsLeft={idle.secondsLeft} onStay={idle.stay} onSignOut={logout} />
+          <SupportRequestModal request={support.request} onAnswered={support.refresh} />
+        </div>
+      </MfaReminderProvider>
+    </MessagesProvider>
   );
 }

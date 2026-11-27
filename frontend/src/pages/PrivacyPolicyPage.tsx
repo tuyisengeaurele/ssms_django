@@ -17,6 +17,7 @@ const sections: LegalSection[] = [
           <li><strong>Two-step sign in:</strong> if you start setting it up, we keep the key for your authenticator app, encrypted. Of your recovery codes we keep only fingerprints, which cannot be turned back into the codes. We also keep when we last showed the reminder and when you asked to be reminded later.</li>
           <li><strong>Technical data:</strong> IP address, browser type and request times, collected automatically for security.</li>
           <li><strong>Contact messages:</strong> when we answer a message, we keep our reply with it.</li>
+          <li><strong>Messages.</strong> A farmer and the supervisors of their cooperative can write to each other in SSMS. We keep each message, who wrote it and when. In SSMS only that farmer and those supervisors can open the conversation. The SSMS team cannot open it in SSMS, and support access never shows it. If a farmer moves to another cooperative, they and the old cooperative's supervisors can still read the old conversation, and nobody can add to it. Messages are stored as text in our database, so whoever runs the database could technically read them. Do not send passwords or other secrets.</li>
         </ul>
       </>
     ),
@@ -82,9 +83,14 @@ const sections: LegalSection[] = [
   {
     title: 'Data retention',
     body: (
-      <p>
-        Account and farm data stays for as long as your account is active. Sensor readings older than 90 days may be removed automatically to save storage. Disease check images on Cloudinary stay until you ask us to delete them. Audit log entries are kept for at least 12 months.
-      </p>
+      <>
+        <p>
+          Account and farm data stays for as long as your account is active. Sensor readings older than 90 days may be removed automatically to save storage. Disease check images on Cloudinary stay until you ask us to delete them. Audit log entries are kept for at least 12 months.
+        </p>
+        <p>
+          Messages are deleted 12 months after they are sent. If you close your account, your messages stay in the conversation without your name until then.
+        </p>
+      </>
     ),
   },
   {
@@ -141,7 +147,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalLayout
       title="Privacy Policy"
-      updated="November 27, 2026"
+      updated="November 28, 2026"
       intro={
         <>
           This policy explains how the Smart Sericulture Management System (SSMS, we, our) collects, uses and protects information about the people who use the platform. By registering or using SSMS you agree to it.

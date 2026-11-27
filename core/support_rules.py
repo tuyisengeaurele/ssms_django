@@ -38,6 +38,8 @@ REFUSED_PAIRS = frozenset({('account', 'sessions'), ('alerts', 'stream_ticket'),
 REFUSED_RESOURCES = frozenset({
     'support_access', 'second_factor', 'admin_users', 'system_health', 'audit_log', 'logs', 'contacts', 'reports',
     'account_security', 'account_photo', 'cooperative_requests', 'cooperative_options',
+    # Private words between a farmer and their supervisors. Not even to look at.
+    'messages',
 })
 
 
