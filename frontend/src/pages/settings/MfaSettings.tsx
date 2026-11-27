@@ -20,8 +20,8 @@ export default function MfaSettings() {
   const { success } = useToast();
   const { refresh } = useMfaReminder();
   const [settingUp, setSettingUp] = useState(false);
-  // True once the recovery codes are on screen: from then on the dialog closes only when they are kept.
-  const [mustFinish, setMustFinish] = useState(false);
+  // While a code is being checked, and while the recovery codes are on screen, the set-up dialog cannot be closed.
+  const [locked, setLocked] = useState(false);
   const [turningOff, setTurningOff] = useState(false);
   // Counted up to read the status again after a change.
   const [version, setVersion] = useState(0);
@@ -42,7 +42,7 @@ export default function MfaSettings() {
 
   const closeSetup = () => {
     setSettingUp(false);
-    setMustFinish(false);
+    setLocked(false);
   };
 
   const turnedOn = () => {
@@ -123,9 +123,9 @@ export default function MfaSettings() {
         onCancel={() => setAsking(false)}
       />
 
-      <Modal open={settingUp} onClose={closeSetup} title={t('mfaTurnOnTitle')} dismissible={!mustFinish}>
+      <Modal open={settingUp} onClose={closeSetup} title={t('mfaTurnOnTitle')} dismissible={!locked}>
         {/* Drawn only while open, so nothing typed or shown outlives the dialog. */}
-        {settingUp ? <TwoStepSetup onDone={turnedOn} onCancel={closeSetup} onCodesShown={() => setMustFinish(true)} /> : null}
+        {settingUp ? <TwoStepSetup onDone={turnedOn} onCancel={closeSetup} onLock={setLocked} /> : null}
       </Modal>
 
       <TurnOffTwoStepDialog open={turningOff} onClose={() => setTurningOff(false)} onDone={turnedOff} />

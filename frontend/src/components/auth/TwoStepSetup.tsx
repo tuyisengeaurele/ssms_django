@@ -10,8 +10,11 @@ import RecoveryCodes from './RecoveryCodes';
 interface Props {
   onDone: () => void;
   onCancel: () => void;
-  /** The code was accepted and the recovery codes are on screen. The dialog around this must stop being closable. */
-  onCodesShown?: () => void;
+  /**
+   * True from the moment the code is sent, because the server may already be turning it on: the dialog around this must
+   * not be closable then, nor while the recovery codes are on screen. False again if the code is refused.
+   */
+  onLock?: (locked: boolean) => void;
 }
 
 const CODE_LENGTH = 6;
@@ -24,7 +27,7 @@ const isStartAgain = (err: unknown) =>
  * Turning two-step sign in on from inside the app, as the body of a dialog: the password, the authenticator app, then the
  * recovery codes. It is on once the code is accepted, so from there the only way forward is to keep the codes.
  */
-export default function TwoStepSetup({ onDone, onCancel, onCodesShown }: Props) {
+export default function TwoStepSetup({ onDone, onCancel, onLock }: Props) {
   const { t } = useLanguage();
   const { getErrorMessage } = useApiError();
   const [password, setPassword] = useState('');
@@ -59,11 +62,12 @@ export default function TwoStepSetup({ onDone, onCancel, onCodesShown }: Props) 
     setError('');
     setWrongCode(false);
     setBusy(true);
+    onLock?.(true);
     try {
       const res = await mfaService.enrollConfirm(plain(code));
       setCodes(res.data.data.recoveryCodes);
-      onCodesShown?.();
     } catch (err) {
+      onLock?.(false);
       setError(getErrorMessage(err));
       if (isStartAgain(err)) {
         setStart(null);

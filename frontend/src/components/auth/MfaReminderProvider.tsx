@@ -45,8 +45,8 @@ export default function MfaReminderProvider({ blocked, children }: Props) {
   const eligible = !acting && (user?.role === 'FARMER' || user?.role === 'SUPERVISOR');
 
   const [view, setView] = useState<View | null>(null);
-  // The recovery codes are on screen: the dialog closes only when they are kept.
-  const [mustFinish, setMustFinish] = useState(false);
+  // While a code is being checked, and while the recovery codes are on screen, the dialog cannot be closed.
+  const [locked, setLocked] = useState(false);
   const [line, setLine] = useState(false);
 
   const waiting = useRef<(() => void)[]>([]);
@@ -66,7 +66,7 @@ export default function MfaReminderProvider({ blocked, children }: Props) {
 
   const close = useCallback(() => {
     setView(null);
-    setMustFinish(false);
+    setLocked(false);
     letGo();
   }, [letGo]);
 
@@ -143,7 +143,7 @@ export default function MfaReminderProvider({ blocked, children }: Props) {
         open={open}
         onClose={putOff}
         title={t(intro ? 'adMfaSetupTitle' : 'mfaTurnOnTitle')}
-        dismissible={!mustFinish}
+        dismissible={!locked}
         initialFocus="[data-first]"
         footer={
           intro ? (
@@ -165,7 +165,7 @@ export default function MfaReminderProvider({ blocked, children }: Props) {
           </div>
         ) : view ? (
           // Drawn only while it is wanted, so nothing typed or shown outlives the dialog.
-          <TwoStepSetup onDone={done} onCancel={putOff} onCodesShown={() => setMustFinish(true)} />
+          <TwoStepSetup onDone={done} onCancel={putOff} onLock={setLocked} />
         ) : null}
       </Modal>
     </MfaReminderContext.Provider>

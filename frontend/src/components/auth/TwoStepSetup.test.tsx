@@ -15,9 +15,9 @@ const refused = (status: number, data: object) =>
 function open() {
   const onDone = vi.fn();
   const onCancel = vi.fn();
-  const onCodesShown = vi.fn();
-  render(<LanguageProvider><TwoStepSetup onDone={onDone} onCancel={onCancel} onCodesShown={onCodesShown} /></LanguageProvider>);
-  return { onDone, onCancel, onCodesShown };
+  const onLock = vi.fn();
+  render(<LanguageProvider><TwoStepSetup onDone={onDone} onCancel={onCancel} onLock={onLock} /></LanguageProvider>);
+  return { onDone, onCancel, onLock };
 }
 
 const type = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
@@ -81,6 +81,20 @@ describe('turning two-step sign in on', () => {
     expect(screen.getByText('If refused, turn on automatic date and time on your phone.')).toBeInTheDocument();
   });
 
+  it('locks the dialog as soon as the code is on its way, and unlocks it if the code is refused', async () => {
+    let refuse: (reason: unknown) => void = () => {};
+    mfa.enrollConfirm.mockReturnValue(new Promise((_resolve, reject) => { refuse = reject; }));
+    const { onLock } = open();
+    await toTheScan();
+    expect(onLock).not.toHaveBeenCalled();
+    type('6 digit code', '123456');
+    press('Turn on');
+    expect(onLock).toHaveBeenLastCalledWith(true);
+    refuse(refused(422, { code: 'mfa_wrong_code', message: 'That code is not right.' }));
+    await screen.findByRole('alert');
+    expect(onLock).toHaveBeenLastCalledWith(false);
+  });
+
   it('goes back to the password when the set-up has to start again', async () => {
     mfa.enrollConfirm.mockRejectedValue(refused(409, { code: 'mfa_start_again', message: 'Please start the setup again.' }));
     open();
@@ -92,10 +106,10 @@ describe('turning two-step sign in on', () => {
   });
 
   it('shows the recovery codes and lets nothing continue until they are kept', async () => {
-    const { onDone, onCodesShown } = open();
+    const { onDone, onLock } = open();
     await toTheCodes();
     expect(mfa.enrollConfirm).toHaveBeenCalledWith('123456');
-    expect(onCodesShown).toHaveBeenCalledTimes(1);
+    expect(onLock).toHaveBeenLastCalledWith(true);
     CODES.forEach((code) => expect(screen.getByText(code)).toBeInTheDocument());
     // It is on by now: there is nothing left to cancel, only the codes to keep.
     expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();

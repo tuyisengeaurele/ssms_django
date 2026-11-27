@@ -183,6 +183,29 @@ describe('setting it up from the reminder', () => {
   });
 });
 
+describe('while the code is being checked', () => {
+  // The server may already be turning it on and signing other devices out, so this is no moment to look cancelled.
+  it('cannot be closed, and can again if the code is refused', async () => {
+    let refuse: (reason: unknown) => void = () => {};
+    mfa.enrollConfirm.mockReturnValue(new Promise((_resolve, reject) => { refuse = reject; }));
+    justSignedIn();
+    render(tree());
+    fireEvent.click(within(await reminder()).getByRole('button', { name: 'Set up now' }));
+    fireEvent.change(await screen.findByLabelText('Your password'), { target: { value: 'my password' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    fireEvent.change(await screen.findByLabelText('6 digit code'), { target: { value: '123456' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Turn on' }));
+    expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.getByRole('dialog', { name: 'Turn on two-step sign in' })).toBeInTheDocument();
+    expect(mfa.snooze).not.toHaveBeenCalled();
+    await act(async () => { refuse(new Error('no')); await Promise.resolve(); });
+    fireEvent.click(await screen.findByRole('button', { name: 'Close' }));
+    await noDialog();
+    expect(mfa.snooze).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('the quiet line', () => {
   it('shows when the server says so, and opens the set-up with nothing in between', async () => {
     serverShows(true);
