@@ -92,7 +92,8 @@ PERMISSIONS: dict[str, dict[str, frozenset]] = {
     # The authenticator app. Everyone sees and looks after their own. Only an admin is ever asked for a fresh code before
     # something sensitive, and only an admin resets somebody else's.
     'second_factor': {
-        'read': ALL, 'create': ALL, 'enroll': ALL, 'disable': NON_ADMIN, 'step_up': ADMIN_ONLY, 'reset': ADMIN_ONLY,
+        'read': ALL, 'create': ALL, 'enroll': ALL, 'disable': NON_ADMIN, 'prompt': NON_ADMIN,
+        'step_up': ADMIN_ONLY, 'reset': ADMIN_ONLY,
     },
     # An admin asking to look at a farmer's or supervisor's account, and the person's side of it: the pending request,
     # the answer, ending it, and the history of visits.

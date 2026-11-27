@@ -18,9 +18,11 @@ from audit_log.utils import log_action
 from core import lockout
 from core.mail import send_email
 from core.mfa_guard import require_recent_mfa
+from core.mfa_prompt import may_be_reminded, should_prompt
 from core.permissions import RolePermission
 from core.throttles import MfaAccountThrottle, MfaRateThrottle, UserRateThrottle
 from core.utils import api_error, api_success
+from harvest.models import HarvestRecord
 from logs.security import record_security_event
 
 from . import mfa, mfa_challenge
@@ -193,13 +195,30 @@ class MfaStatusView(APIView):
     resource = 'second_factor'
 
     def get(self, request):
-        """GET /api/auth/mfa: is the app on and must it be, since when, and how many recovery codes are left. Nothing secret."""
-        factor = SecondFactor.objects.filter(user=request.user, enabled_at__isnull=False).first()
+        """GET /api/auth/mfa: is the app on and must it be, since when, and how many recovery codes are left. Nothing secret.
+
+        With `?trigger=` it also says whether to show the reminder at that moment. Asking changes nothing."""
+        user = request.user
+        factor = SecondFactor.objects.filter(user=user, enabled_at__isnull=False).first()
+        trigger = request.query_params.get('trigger')
+        session = UserSession.objects.filter(pk=getattr(request, 'session_id', None) or '', user=user).first()
+        who = {
+            'enabled': factor is not None,
+            'shared_device': bool(session and session.is_shared_device),
+            'acting': getattr(request, 'acting_admin', None) is not None,
+        }
+        show = bool(trigger) and should_prompt(user, trigger, timezone.now(), **who)
+        if show and trigger == 'sensitive_action':
+            # The moment is the first lot a farmer shares, not each one after it.
+            show = not HarvestRecord.objects.filter(batch__farm__owner=user, shared_at__isnull=False).exists()
         return api_success({
             'enabled': factor is not None,
-            'required': request.user.role == Role.ADMIN,
+            'required': user.role == Role.ADMIN,
             'enabled_at': factor.enabled_at if factor else None,
-            'recovery_codes_left': mfa.recovery_codes_left(request.user) if factor else 0,
+            'recovery_codes_left': mfa.recovery_codes_left(user) if factor else 0,
+            'prompt': {'show': show, 'trigger': trigger if show else None},
+            # The quiet line on a dashboard: for somebody who has put the reminder off at least once.
+            'reminder_line': may_be_reminded(user, **who) and user.mfa_prompt_dismissals > 0,
         })
 
 

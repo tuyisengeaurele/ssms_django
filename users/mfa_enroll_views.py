@@ -1,4 +1,5 @@
-"""Two-step sign in from inside the app, for a person who is signed in: turning it on and off.
+"""Two-step sign in from inside the app, for a person who is signed in: turning it on and off, and the answers to the
+reminder.
 
 The password is asked again. Without it, someone who borrowed a signed in phone could add their own authenticator app and
 lock the owner out, or take the owner's away. A wrong password or code answers 422, never 401, so the website does not take it for an ended session,
@@ -18,6 +19,7 @@ from rest_framework.views import APIView
 from audit_log.utils import log_action
 from core import lockout
 from core.mail import send_email
+from core.mfa_prompt import snooze
 from core.permissions import RolePermission
 from core.throttles import MfaAccountThrottle, UserRateThrottle
 from core.utils import api_error, api_success
@@ -166,3 +168,28 @@ class MfaDisableView(_AccountView):
         log_action(request, 'UPDATE', 'User', user.pk, 'Turned off the second factor')
         _tell('off', user)
         return api_success(None, 'Two-step sign in is off.')
+
+
+class _ReminderView(APIView):
+    permission_classes = [IsAuthenticated, RolePermission]
+    resource = 'second_factor'
+    actions = {'post': 'prompt'}
+
+
+class MfaPromptView(_ReminderView):
+    def post(self, request):
+        """POST /api/auth/mfa/prompt: "remind me later". The wait gets longer each time."""
+        if request.data.get('action') != 'snooze':
+            return api_error(status_code=422, code='invalid_input')
+        until = snooze(request.user, timezone.now())
+        record_security_event('mfa_prompt_snoozed', request, user=request.user,
+                              detail=f'Put off {request.user.mfa_prompt_dismissals} time(s)')
+        return api_success({'snoozed_until': until})
+
+
+class MfaPromptSeenView(_ReminderView):
+    def post(self, request):
+        """POST /api/auth/mfa/prompt/seen: the reminder was shown, so it is not shown again for a day."""
+        request.user.mfa_prompted_at = timezone.now()
+        request.user.save(update_fields=['mfa_prompted_at'])
+        return api_success(None)

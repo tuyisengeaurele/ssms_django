@@ -1177,6 +1177,7 @@ export const pageTranslations = {
   lgKind_mfa_recovery_used: k("Recovery code used", "Code de secours utilisé", "Kode yo kugarura yakoreshejwe"),
   lgKind_mfa_recovery_regenerated: k("New recovery codes made", "Nouveaux codes de secours créés", "Kode nshya zo kugarura zakozwe"),
   lgKind_mfa_reset: k("Authenticator app reset", "Application d'authentification réinitialisée", "Porogaramu yo kwemeza yasubijwe ku ntangiriro"),
+  lgKind_mfa_prompt_snoozed: k("Two-step reminder put off", "Rappel de la connexion en deux étapes remis à plus tard", "Kwibutsa kwinjira mu ntambwe ebyiri byimuriwe ikindi gihe"),
   lgKind_permission_denied: k("Refused for the role", "Refusé pour le rôle", "Byanzwe kubera inshingano"),
   lgKind_throttled: k("Slowed down", "Ralenti", "Byadindijwe"),
   lgKind_csp_violation: k("Browser blocked something the page tried to load", "Le navigateur a bloqué un élément que la page voulait charger", "Mushakisha yahagaritse ikintu urupapuro rwashakaga gufungura"),
