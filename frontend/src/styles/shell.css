@@ -570,13 +570,16 @@ a.topbar-note:hover {
 }
 
 @media (max-width: 768px) {
+  /* Hidden as well as slid away: off the screen alone, its links stay in the Tab order and are still read out. */
   .app-sidebar {
     width: min(86vw, var(--sidebar-width)) !important;
     transform: translateX(-100%);
+    visibility: hidden;
   }
 
   .app-sidebar.mobile-open {
     transform: none;
+    visibility: visible;
     box-shadow: var(--shadow-xl);
   }
 
@@ -692,6 +695,14 @@ a.topbar-note:hover {
 
   .topbar-section {
     display: none;
+  }
+}
+
+/* A change of visibility counts as visible while it lasts: the menu shows from the first moment of opening, and stays
+   until it has slid away. Only for people who have not asked for less motion. */
+@media (max-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .app-sidebar {
+    transition: width var(--duration-slow) var(--ease-out), transform var(--duration-slow) var(--ease-out), visibility var(--duration-slow) linear;
   }
 }
 
