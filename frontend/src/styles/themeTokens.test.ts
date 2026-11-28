@@ -53,9 +53,16 @@ describe('theme tokens', () => {
       }
     });
 
-    it('reads faint text and placeholders at 3 to 1 at least', () => {
+    it('reads faint text at 3 to 1 at least', () => {
       expect(ratio(tokens, '--text-faint', '--surface')).toBeGreaterThanOrEqual(3);
-      expect(ratio(tokens, '--placeholder', '--surface')).toBeGreaterThanOrEqual(3);
+    });
+
+    // The hint in an empty box is text somebody has to read, so AA asks the same of it as of any other. Boxes sit on
+    // cards, on the page, on inset tiles and on the pill of a search box.
+    it('reads the hint in an empty box at 4.5 to 1 on every ground a box sits on', () => {
+      for (const bg of ['--bg', '--surface', '--surface-2', '--ivory']) {
+        expect(ratio(tokens, '--placeholder', bg), `--placeholder on ${bg}`).toBeGreaterThanOrEqual(4.5);
+      }
     });
 
     it('reads links and the primary colour on the page and on cards', () => {

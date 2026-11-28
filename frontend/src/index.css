@@ -120,7 +120,7 @@
   --tint-2:           rgba(11, 31, 23, 0.12);
   --input-border:     rgba(11, 31, 23, 0.18);
   --input-border-hover: rgba(11, 31, 23, 0.34);
-  --placeholder:      #8a968f;
+  --placeholder:      var(--text-muted);
   --skel-a:           #ebe6da;
   --skel-b:           #f3efe5;
   --caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230B1F17' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
@@ -269,7 +269,7 @@
   --tint-2:           rgba(255, 255, 255, 0.14);
   --input-border:     rgba(255, 255, 255, 0.22);
   --input-border-hover: rgba(255, 255, 255, 0.4);
-  --placeholder:      #8B948F;
+  --placeholder:      var(--text-muted);
   --skel-a:           #151C18;
   --skel-b:           #1E2722;
   --caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23EBF0ED' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
