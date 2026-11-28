@@ -1,5 +1,12 @@
 # Changelog
 
+## Readable hints and the phone menu
+
+### Fixed
+- **Hints in empty boxes** now reach 4.5 to 1 in both themes, in the app and on the sign in pages. Text areas without a form class used the browser's grey.
+- **The closed menu on a phone** is hidden as well as slid away, so Tab no longer walks through links nobody can see and a screen reader no longer reads them.
+- **The phone menu's heading** shows the name above its second line again. The two had run together on phones.
+
 ## Security updates
 
 ### Changed
