@@ -1,5 +1,14 @@
 # Changelog
 
+## Security updates
+
+### Changed
+- **Disease check service:** FastAPI 0.160.0 and Starlette 1.10.0. The old Starlette, 0.37.2, had seven published flaws. Starlette is now pinned, and a test stops an older one coming back.
+- **Lint tool**, used only while building: `typescript-eslint` 8.74.0, which brings a fixed `minimatch`.
+
+### Known and left
+`protobuf` 4.25.9 comes with TensorFlow 2.17, which does not allow the fixed version. Its flaw is in `ParseDict()`, which the service never calls. Clearing it means moving to a newer TensorFlow and checking the model's answers again.
+
 ## Messages between farmers and supervisors (roadmap phase 6, part B, release 1 of 3)
 
 ### Added
