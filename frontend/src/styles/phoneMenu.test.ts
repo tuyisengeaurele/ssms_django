@@ -41,6 +41,13 @@ describe('the menu on a phone', () => {
     expect(rule(wide, '.app-sidebar')).not.toMatch(/visibility/);
   });
 
+  // A screen under 1600 wide starts with the rail chosen, a phone included. Giving the labels back with "revert" took the
+  // column away from the heading, so the name and the line under it ran together.
+  it('keeps the heading on two lines when the rail was the choice', () => {
+    expect(rule(phone, '.app-sidebar.collapsed .sidebar-logo-text')).toMatch(/display:\s*flex/);
+    expect(phone).not.toMatch(/\.app-sidebar\.collapsed \.sidebar-logo-text[^{}]*,[^{}]*\{[^}]*display:\s*revert/);
+  });
+
   // A change of visibility counts as visible for the whole of its transition: shown from the first moment of opening,
   // and kept until the slide out is over.
   it('takes as long over its visibility as over its slide, so it is seen leaving', () => {

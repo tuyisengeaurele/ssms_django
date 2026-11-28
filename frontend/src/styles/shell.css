@@ -588,10 +588,14 @@ a.topbar-note:hover {
     overflow: hidden;
   }
 
-  .app-sidebar.collapsed .sidebar-logo-text,
   .app-sidebar.collapsed .sidebar-section-label,
   .app-sidebar.collapsed .sidebar-item-label {
     display: revert;
+  }
+
+  /* Named, because "revert" would drop the column and run the name into the line under it. */
+  .app-sidebar.collapsed .sidebar-logo-text {
+    display: flex;
   }
 
   .app-sidebar.collapsed .sidebar-nav {
