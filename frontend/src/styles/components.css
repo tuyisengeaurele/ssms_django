@@ -259,7 +259,9 @@
 .form-input.error:focus,
 .form-select.error:focus { box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger-ink) 16%, transparent); }
 
-.form-input::placeholder { color: var(--placeholder); }
+/* Every box, with or without a form class: without this a text area takes the browser's grey, too faint on dark. */
+input::placeholder,
+textarea::placeholder { color: var(--placeholder); opacity: 1; }
 
 .form-error {
   display: flex;

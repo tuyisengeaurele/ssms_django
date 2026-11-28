@@ -251,7 +251,7 @@
 }
 
 .landing .l-field input::placeholder {
-  color: #8a968f;
+  color: var(--l-muted);
 }
 
 .landing .l-field input:hover {
