@@ -14,3 +14,9 @@ def pinned(name):
 def test_the_upload_library_has_none_of_the_known_flaws():
     # 0.0.31 is the first release with every advisory against it fixed, as of November 2026.
     assert pinned('python-multipart') >= (0, 0, 31)
+
+
+def test_the_web_layer_has_none_of_the_known_flaws():
+    # 1.3.1 is the first release with every advisory against it fixed, as of November 2026. Pinned here although FastAPI
+    # asks for it too: FastAPI alone would accept releases far older than that.
+    assert pinned('starlette') >= (1, 3, 1)
